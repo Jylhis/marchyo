@@ -1,12 +1,12 @@
 { pkgs, ... }:
 {
   config = {
-    boot={
-    plymouth = {
-      enable = true;
-      themePackages = [ pkgs.plymouth-omarchy-theme ];
-      theme = "omarchy";
-    };
+    boot = {
+      plymouth = {
+        enable = true;
+        themePackages = [ pkgs.plymouth-omarchy-theme ];
+        theme = "omarchy";
+      };
       initrd.verbose = false;
       loader.timeout = 5;
       consoleLogLevel = 0;

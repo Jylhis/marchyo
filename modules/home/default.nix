@@ -1,26 +1,6 @@
+let
+  inherit ((import ../../lib/default.nix)) getNixFilesExcept;
+in
 {
-  imports = [
-    ../generic/fontconfig.nix
-    ../generic/git.nix
-    ../generic/shell.nix
-    ./_1password.nix
-    ./theme.nix
-    ./btop.nix
-    ./fastfetch.nix
-    ./xournalpp.nix
-    ./ghostty.nix
-    ./git.nix
-    ./help.nix
-    ./hypridle.nix
-    ./hyprland.nix
-    ./hyprlock.nix
-    ./hyprpaper.nix
-    ./kitty.nix
-    ./locale.nix
-    ./mako.nix
-    ./packages.nix
-    ./shell.nix
-    ./waybar.nix
-    ./wofi.nix
-  ];
+  imports = (getNixFilesExcept ./. "marchyo.nix") ++ (getNixFilesExcept ../generic "default.nix");
 }

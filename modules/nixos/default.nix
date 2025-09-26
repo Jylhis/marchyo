@@ -1,14 +1,8 @@
 {
   imports = [
     ./nix-settings.nix
-    ./printing.nix
     ./_1password.nix
-    ../generic/shell.nix
-    ../generic/git.nix
-    ../generic/fontconfig.nix
     ./boot.nix
-    ./options.nix
-    ./packages.nix
     ./containers.nix
     ./fonts.nix
     ./graphics.nix
@@ -19,6 +13,7 @@
     ./locale.nix
     ./media.nix
     ./network.nix
+    ./office.nix
     ./performance.nix
     ./plymouth.nix
     ./security.nix

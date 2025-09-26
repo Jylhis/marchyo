@@ -2,17 +2,17 @@
   description = "Marchyo";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts.url = "https://flakehub.com/f/hercules-ci/flake-parts/0.1.*";
     # flake-compat.url = "github:nix-community/flake-compat";
     # flake-utils.url = "github:numtide/flake-utils";
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
@@ -23,7 +23,14 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+    flake-parts.lib.mkFlake { inherit inputs; } ({withSystem,flake-parts-lib,...}:
+let
+  inherit (flake-parts-lib) importApply;
+  flakeModules.default = importApply ./modules/flake { inherit withSystem; };
+  nixosModules.default = ./modules/nixos;
+  homeModules.default = ./modules/home;
+  in
+{
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -34,20 +41,42 @@
         inputs.home-manager.flakeModules.home-manager
         inputs.treefmt-nix.flakeModule
         ./modules/flake/treefmt.nix
+	flakeModules
       ];
 
-      flake = {
-        nixosModules = {
-          default = ./modules/nixos/marchyo.nix;
-        };
-        homeModules = {
-          default = ./modules/home/marchyo.nix;
-        };
-        flakeModules = {
-          default = ./modules/flake/marchyo.nix;
-        };
-
+      perSystem ={pkgs,...}:{
+	packages.default = pkgs.hello;
       };
 
-    };
+      flake = {
+        
+        inherit flakeModules nixosModules homeModules;
+
+
+	treefmt = {
+        projectRootFile = "flake.nix";
+
+        programs={
+	nixfmt.enable = true;
+        actionlint.enable = true;
+        deadnix.enable = true;
+        shellcheck.enable = true;
+        statix.enable = true;
+	};
+        settings.formatter.shellcheck = {
+          excludes = [
+            "**/.envrc"
+            ".envrc"
+          ];
+          options = [
+            "-s"
+            "bash"
+          ];
+        };
+      };
+      };
+
+
+
+    });
 }
