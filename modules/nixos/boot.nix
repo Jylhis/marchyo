@@ -1,4 +1,7 @@
 { lib, ... }:
 {
-  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
+  boot.loader.systemd-boot = {
+    enable = true;
+    configurationLimit = lib.mkDefault 5;
+  };
 }

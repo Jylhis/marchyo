@@ -1,8 +1,8 @@
 { lib, pkgs, ... }:
 {
-  time.timeZone = lib.mkDefault "Europe/Zurich";
+  time.timeZone = lib.mkDefault "Europe/Zurich"; # TODO: options
   i18n = {
-    defaultLocale = "en_US.UTF-8";
+    defaultLocale = lib.mkDefault "en_US.UTF-8"; # TODO: option
     supportedLocales = [
       "all"
     ];
