@@ -1,12 +1,11 @@
-{ config, lib, ... }:
+{ lib, ... }:
 {
   nix = {
-    # gc.automatic = lib.mkDefault true;
-    # optimise.automatic = lib.mkDefault true;
+    gc.automatic = lib.mkDefault true;
+    optimise.automatic = lib.mkDefault true;
 
     settings = {
-      accept-flake-config = true;
-      trusted-users = [ "@wheel" ] ++ (builtins.attrNames config.marchyo.users);
+      trusted-users = [ "@wheel" ];
       tarball-ttl = lib.mkDefault 604800;
       download-buffer-size = lib.mkDefault "256M";
       experimental-features = [
@@ -28,4 +27,6 @@
       ];
     };
   };
+
+  nixpkgs.config.allowUnfree = true;
 }

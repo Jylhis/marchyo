@@ -1,17 +1,18 @@
-{ lib, config, ... }:
+{ lib, pkgs, ... }:
 {
-  time.timeZone = lib.mkDefault config.marchyo.timezone;
+  time.timeZone = lib.mkDefault "Europe/Zurich";
   i18n = {
-    defaultLocale = lib.mkDefault config.marchyo.defaultLocale;
-    supportedLocales = [ "all" ];
-    # FIXME: ctrl+;
-    #inputMethod = {
-    #  enable = true;
-    #  type = "fcitx5";
-    #  fcitx5.addons = with pkgs; [
-    #    fcitx5-mozc
-    #    fcitx5-gtk
-    #  ];
-    #};
+    defaultLocale = "en_US.UTF-8";
+    supportedLocales = [
+      "all"
+    ];
+    inputMethod = {
+      enable = true;
+      type = "fcitx5";
+      fcitx5.addons = with pkgs; [
+        fcitx5-mozc
+        fcitx5-gtk
+      ];
+    };
   };
 }

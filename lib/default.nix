@@ -1,15 +1,7 @@
 {
-  lib,
-  ...
-}:
-{
-
-  mapListToAttrs =
-    m: f:
-    lib.listToAttrs (
-      map (name: {
-        inherit name;
-        value = f name;
-      }) m
+  getNixFilesExcept =
+    path: _exclude_name:
+    builtins.map (fn: ./${fn}) (
+      builtins.filter (fn: fn != "default.nix") (builtins.attrNames (builtins.readDir path))
     );
 }

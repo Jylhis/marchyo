@@ -1,20 +1,14 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   documentation = {
-    enable = lib.mkDefault true;
-    doc.enable = lib.mkDefault true;
-    dev.enable = lib.mkDefault true;
-    info.enable = lib.mkDefault true;
-    man.enable = lib.mkDefault true;
+    enable = true;
+    doc.enable = true;
+    dev.enable = true;
+    info.enable = true;
+    man.enable = true;
     nixos = {
-      enable = lib.mkDefault true;
-      # Include custom module sources for better documentation
-      extraModuleSources = lib.mkDefault [
-        # Include the marchyo modules in the documentation
-        ../../modules/nixos
-        ../../modules/home
-        ../../modules/generic
-      ];
+      enable = true;
+      # extraModuleSources # TODO
     };
   };
   environment.systemPackages = with pkgs; [
@@ -23,6 +17,6 @@
     linux-doc
     clang-manpages
     zeal
-    stdmanpages
+
   ];
 }

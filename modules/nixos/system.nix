@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
-  inherit ((import ../../lib { inherit lib; })) mapListToAttrs;
-  mUsers = lib.filterAttrs (_name: user: user.enable) config.marchyo.users;
-in
+{ pkgs, ... }:
 {
   services = {
     earlyoom.enable = true;
   };
-
   programs = {
     nix-ld.enable = true;
   };
@@ -20,21 +10,7 @@ in
   environment.systemPackages = with pkgs; [
     sysz # systemctl tui
     lazyjournal # journald and logs
+    fastfetch # shows system information
+    btop # beautiful resource manager
   ];
-
-  # Create users defined in marchyo.users
-  users.users = mapListToAttrs (builtins.attrNames mUsers) (
-    name:
-    let
-      user = mUsers.${name};
-    in
-    {
-      isNormalUser = true;
-      description = user.fullname;
-      extraGroups = [
-        "wheel"
-        "networkmanager"
-      ];
-    }
-  );
 }

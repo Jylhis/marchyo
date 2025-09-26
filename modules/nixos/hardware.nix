@@ -1,12 +1,11 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   hardware = {
-    # Use lib.mkDefault so tests can override this
-    enableRedistributableFirmware = lib.mkDefault true;
+    enableAllFirmware = true;
   };
 
   # Thunderbolt
-  services.hardware.bolt.enable = lib.mkDefault true;
+  services.hardware.bolt.enable = true;
 
   # Bluetooth
   hardware.bluetooth = {
@@ -23,9 +22,9 @@
 
   # Power management
   services = {
-    power-profiles-daemon.enable = lib.mkDefault true;
-    upower.enable = lib.mkDefault true;
-    thermald.enable = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
+    power-profiles-daemon.enable = true;
+    upower.enable = true;
+    thermald.enable = true;
   };
 
 }
