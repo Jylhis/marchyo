@@ -235,7 +235,7 @@
           "stayfocused, class:(clipse)"
 
           # 1Password
-          "noscreenshare, class:^(1Password)$"
+          #"noscreenshare, class:^(1Password)$"
 
           # Jetbrains
           # Fixing popup size issue
@@ -458,7 +458,7 @@
 
           # Use XCompose file
           "XCOMPOSEFILE,~/.XCompose"
-          "GTK_THEME,${if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita-dark"}"
+          # "GTK_THEME,${if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita-dark"}"
         ];
 
         # Startup applications

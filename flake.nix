@@ -29,7 +29,10 @@
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
         nixosModules.default = ./modules/nixos/default.nix;
-        homeModules.default = ./modules/home/default.nix;
+        homeModules = {
+          default = ./modules/home/default.nix;
+          _1password = ./modules/home/_1password.nix;
+        };
       in
       {
         systems = [

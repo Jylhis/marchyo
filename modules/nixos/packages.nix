@@ -16,7 +16,7 @@ let
     impala # TUI for managing your Wi-Fi connection
     fastfetch # shows system information
     bluetui # bluetooth
-    lazyssh
+    # lazyssh
     sysz # systemctl tui
     lazyjournal # journald and logs
   ];
