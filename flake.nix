@@ -41,37 +41,32 @@
           inputs.disko.flakeModules.default
           inputs.home-manager.flakeModules.home-manager
           inputs.treefmt-nix.flakeModule
-
           flakeModules.default
         ];
 
-        perSystem =
-          { pkgs, ... }:
-          {
-            packages.default = pkgs.hello;
+        perSystem = {
+          treefmt = {
+            projectRootFile = "flake.nix";
 
-            treefmt = {
-              projectRootFile = "flake.nix";
-
-              programs = {
-                nixfmt.enable = true;
-                actionlint.enable = true;
-                deadnix.enable = true;
-                shellcheck.enable = true;
-                statix.enable = true;
-              };
-              settings.formatter.shellcheck = {
-                excludes = [
-                  "**/.envrc"
-                  ".envrc"
-                ];
-                options = [
-                  "-s"
-                  "bash"
-                ];
-              };
+            programs = {
+              nixfmt.enable = true;
+              actionlint.enable = true;
+              deadnix.enable = true;
+              shellcheck.enable = true;
+              statix.enable = true;
+            };
+            settings.formatter.shellcheck = {
+              excludes = [
+                "**/.envrc"
+                ".envrc"
+              ];
+              options = [
+                "-s"
+                "bash"
+              ];
             };
           };
+        };
 
         flake = {
           # inherit flakeModules;

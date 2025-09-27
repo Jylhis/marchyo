@@ -4,8 +4,10 @@
     boot = {
       plymouth = {
         enable = true;
-        themePackages = [ pkgs.plymouth-omarchy-theme ];
-        theme = "omarchy";
+        themePackages = [
+          (pkgs.callPackage ../../packages/plymouth-marchyo-theme/package.nix { })
+        ];
+        theme = "marchyo";
       };
       initrd.verbose = false;
       loader.timeout = 5;

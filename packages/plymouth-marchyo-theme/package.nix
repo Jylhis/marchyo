@@ -1,11 +1,10 @@
 {
   stdenvNoCC,
-  fetchFromGitHub,
   lib,
   ...
 }:
-stdenvNoCC.mkDerivation rec {
-  pname = "plymouth-omarchy-theme";
+stdenvNoCC.mkDerivation {
+  pname = "plymouth-marchyo-theme";
   version = "v3.0.0";
   src = ./.;
 
@@ -14,13 +13,13 @@ stdenvNoCC.mkDerivation rec {
 
   installPhase = ''
     runHook preInstall
-    mkdir -p $out/share/plymouth/themes/omarchy
-    cp * $out/share/plymouth/themes/omarchy
+    mkdir -p $out/share/plymouth/themes/marchyo
+    cp * $out/share/plymouth/themes/marchyo
     find $out/share/plymouth/themes/ -name \*.plymouth -exec sed -i "s@\/usr\/@$out\/@" {} \;
     runHook postInstall
   '';
   meta = {
-    description = "Marchyo splash screen. Forked from https://github.com/basecamp/omarchy/tree/2df8c5f7e0a2aafb8c9aacb322408d2ed7682ea5";
+    description = "Marchyo splash screen. Forked from https://github.com/basecamp/marchyo/tree/2df8c5f7e0a2aafb8c9aacb322408d2ed7682ea5";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
