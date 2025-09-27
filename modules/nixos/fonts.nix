@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
   # Fonts
+  imports = [
+    ../generic/fontconfig.nix
+  ];
   # https://learn.omacom.io/2/the-omarchy-manual/94/fonts
   fonts = {
     enableDefaultPackages = true;
@@ -17,13 +20,8 @@
 
     ];
     fontconfig = {
-      enable = true;
       cache32Bit = true;
-      defaultFonts = {
-        serif = [ "Liberation Serif" ];
-        sansSerif = [ "Liberation Sans" ];
-        monospace = [ "CaskaydiaMono Nerd Font" ];
-      };
+
       antialias = true;
       hinting = {
         enable = true;

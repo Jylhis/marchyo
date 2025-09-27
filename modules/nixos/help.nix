@@ -17,6 +17,6 @@
     linux-doc
     clang-manpages
     zeal
-
+    stdmanpages
   ];
 }

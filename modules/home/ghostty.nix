@@ -20,7 +20,6 @@
       #theme = "omarchy"; # FIXME
       keybind = [
         "ctrl+k=reset"
-        "f11=toggle_fullscreen"
       ];
     };
   };

@@ -23,60 +23,62 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } ({withSystem,flake-parts-lib,...}:
-let
-  inherit (flake-parts-lib) importApply;
-  flakeModules.default = importApply ./modules/flake { inherit withSystem; };
-  nixosModules.default = ./modules/nixos;
-  homeModules.default = ./modules/home;
-  in
-{
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      imports = [
-        inputs.flake-parts.flakeModules.flakeModules
-        inputs.disko.flakeModules.default
-        inputs.home-manager.flakeModules.home-manager
-        inputs.treefmt-nix.flakeModule
-        ./modules/flake/treefmt.nix
-	flakeModules
-      ];
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { withSystem, flake-parts-lib, ... }:
+      let
+        inherit (flake-parts-lib) importApply;
+        flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
+        nixosModules.default = ./modules/nixos/default.nix;
+        homeModules.default = ./modules/home/default.nix;
+      in
+      {
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+        ];
+        imports = [
+          inputs.flake-parts.flakeModules.flakeModules
+          inputs.disko.flakeModules.default
+          inputs.home-manager.flakeModules.home-manager
+          inputs.treefmt-nix.flakeModule
 
-      perSystem ={pkgs,...}:{
-	packages.default = pkgs.hello;
-      };
+          flakeModules.default
+        ];
 
-      flake = {
-        
-        inherit flakeModules nixosModules homeModules;
+        perSystem =
+          { pkgs, ... }:
+          {
+            packages.default = pkgs.hello;
 
+            treefmt = {
+              projectRootFile = "flake.nix";
 
-	treefmt = {
-        projectRootFile = "flake.nix";
+              programs = {
+                nixfmt.enable = true;
+                actionlint.enable = true;
+                deadnix.enable = true;
+                shellcheck.enable = true;
+                statix.enable = true;
+              };
+              settings.formatter.shellcheck = {
+                excludes = [
+                  "**/.envrc"
+                  ".envrc"
+                ];
+                options = [
+                  "-s"
+                  "bash"
+                ];
+              };
+            };
+          };
 
-        programs={
-	nixfmt.enable = true;
-        actionlint.enable = true;
-        deadnix.enable = true;
-        shellcheck.enable = true;
-        statix.enable = true;
-	};
-        settings.formatter.shellcheck = {
-          excludes = [
-            "**/.envrc"
-            ".envrc"
-          ];
-          options = [
-            "-s"
-            "bash"
-          ];
+        flake = {
+          # inherit flakeModules;
+          inherit flakeModules nixosModules homeModules;
+
         };
-      };
-      };
 
-
-
-    });
+      }
+    );
 }

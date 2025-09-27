@@ -1,6 +1,13 @@
-let
-  inherit ((import ../../lib/default.nix)) getNixFilesExcept;
-in
 {
-  imports = (getNixFilesExcept ./. "marchyo.nix") ++ (getNixFilesExcept ../generic "default.nix");
+  imports = [
+    ./help.nix
+    ./locale.nix
+    ./_1password.nix
+    ../generic/shell.nix
+    ../generic/fontconfig.nix
+    ./btop.nix
+    ./mako.nix
+    ./ghostty.nix
+    ./kitty.nix
+  ];
 }

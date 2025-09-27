@@ -1,22 +1,20 @@
 { lib, pkgs, ... }:
 let
-  usePodman = false;
+  backend = "docker"; # podman, containerd
 in
 {
 
   virtualisation = {
     containers.enable = true;
-    podman = lib.mkIf usePodman {
+    podman = lib.mkIf (backend == "podman") {
       dockerSocket.enable = true;
       defaultNetwork.settings.dns_enable = true;
       dockerCompat = true;
     };
 
-    docker = lib.mkIf (!usePodman) {
-
+    docker = lib.mkIf (backend == "docker") {
       enable = true;
       daemon.settings.features.cdi = true;
-
     };
   };
 
@@ -26,10 +24,10 @@ in
       buildah
       skopeo
     ]
-    ++ (lib.optionals usePodman [
+    ++ (lib.optionals (backend == "podman") [
       pkgs.lazypodman # made in the same spirit like Lazygit
     ])
-    ++ (lib.optionals (!usePodman) [ pkgs.lazydocker ]);
+    ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
 
   # TODO: Add users to podman/docker group
 }

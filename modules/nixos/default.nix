@@ -2,7 +2,9 @@
   imports = [
     ./nix-settings.nix
     ./_1password.nix
+    ../generic/shell.nix
     ./boot.nix
+    ./packages.nix
     ./containers.nix
     ./fonts.nix
     ./graphics.nix
