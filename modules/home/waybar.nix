@@ -21,7 +21,7 @@
           "group/tray-expander"
           "bluetooth"
           "network"
-          "wireplumber"
+          "pulseaudio"
           "cpu"
           "power-profiles-daemon"
           "battery"

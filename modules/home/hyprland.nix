@@ -39,15 +39,13 @@
       settings = {
 
         # Default apps
-
-        "$notes" = lib.mkDefault "obsidian";
-        "$browser" = lib.mkDefault "brave --new-window --ozone-platform=wayland";
+        "$terminal" = lib.mkDefault "kitty";
         "$fileManager" = lib.mkDefault "nautilus --new-window";
-        "$messenger" = lib.mkDefault "signal-desktop";
+        "$browser" = lib.mkDefault "brave --new-window --ozone-platform=wayland";
         "$music" = lib.mkDefault "spotify";
         "$passwordManager" = lib.mkDefault "1password";
+        "$messenger" = lib.mkDefault "signal-desktop";
         "$webapp" = lib.mkDefault "$browser --app";
-        "$terminal" = lib.mkDefault "kitty";
 
         ecosystem.no_update_news = true;
         xwayland.force_zero_scaling = true;
@@ -237,7 +235,7 @@
           "stayfocused, class:(clipse)"
 
           # 1Password
-          #"noscreenshare, class:^(1Password)$"
+          "noscreenshare, class:^(1Password)$"
 
           # Jetbrains
           # Fixing popup size issue
@@ -279,7 +277,6 @@
           "SUPER, B, Web browser, exec, $browser"
           "SUPER, M, Music player, exec, $music"
           "SUPER, E, Emacs, exec, emacsclient -c -a emacs"
-          "SUPER, O, Obsidian, exec, $notes"
           # "SUPER, N, Neovim, exec, $terminal -e nvim"
           # "SUPER, T, Top, exec, $terminal"
           "SUPER, D, Lazy Docker, exec, $terminal -e lazydocker"
@@ -442,26 +439,26 @@
           "HYPRCURSOR_THEME,Adwaita"
 
           # Force all apps to use Wayland
-          # "GDK_BACKEND,wayland,x11,*"
-          # "QT_QPA_PLATFORM,wayland;xcb"
-          # "QT_STYLE_OVERRIDE,kvantum"
-          # "SDL_VIDEODRIVER,wayland"
-          # "MOZ_ENABLE_WAYLAND,1"
-          # "ELECTRON_OZONE_PLATFORM_HINT,wayland"
-          # "OZONE_PLATFORM,wayland"
-          # "XDG_SESSION_TYPE,wayland"
-          # "XDG_CURRENT_DESKTOP,Hyprland"
-          # "XDG_SESSION_DESKTOP,Hyprland"
+          "GDK_BACKEND,wayland,x11,*"
+          "QT_QPA_PLATFORM,wayland;xcb"
+          "QT_STYLE_OVERRIDE,kvantum"
+          "SDL_VIDEODRIVER,wayland"
+          "MOZ_ENABLE_WAYLAND,1"
+          "ELECTRON_OZONE_PLATFORM_HINT,wayland"
+          "OZONE_PLATFORM,wayland"
+          "XDG_SESSION_TYPE,wayland"
+          "XDG_CURRENT_DESKTOP,Hyprland"
+          "XDG_SESSION_DESKTOP,Hyprland"
 
           # Make Chromium use XCompose and all Wayland
-          # "CHROMIUM_FLAGS,\"--enable-features=UseOzonePlatform --ozone-platform=wayland --gtk-version=4\""
+          "CHROMIUM_FLAGS,\"--enable-features=UseOzonePlatform --ozone-platform=wayland --gtk-version=4\""
 
           # Make .desktop files available for wofi
           "XDG_DATA_DIRS,$XDG_DATA_DIRS:$HOME/.nix-profile/share:/nix/var/nix/profiles/default/share"
 
           # Use XCompose file
           "XCOMPOSEFILE,~/.XCompose"
-          # "GTK_THEME,${if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita-dark"}"
+          "GTK_THEME,${if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita-dark"}"
         ];
 
         # Startup applications
@@ -480,6 +477,8 @@
         ];
       };
     };
+
+    services.hyprsunset.enable = true;
 
     # Additional packages for Hyprland
     home.packages = with pkgs; [
@@ -535,7 +534,5 @@
     ];
 
     services.hyprpolkitagent.enable = true;
-    services.hyprsunset.enable = true;
-    services.gnome-keyring.enable = true;
   };
 }

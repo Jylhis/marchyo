@@ -9,5 +9,10 @@
     ./mako.nix
     ./ghostty.nix
     ./kitty.nix
+    ./hypridle.nix
+    ./hyprland.nix
+    ./hyprlock.nix
+    ./waybar.nix
+    ./wofi.nix
   ];
 }

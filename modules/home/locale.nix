@@ -1,4 +1,3 @@
-_:
 {
   i18n = {
     # FIXME: ctrl+;
