@@ -1,17 +1,18 @@
 {
   imports = [
-    ./help.nix
-    ./locale.nix
-    ./_1password.nix
-    ../generic/shell.nix
     ../generic/fontconfig.nix
+    ../generic/shell.nix
+    ./_1password.nix
     ./btop.nix
-    ./mako.nix
+    ./fastfetch.nix
     ./ghostty.nix
-    ./kitty.nix
+    ./help.nix
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
+    ./kitty.nix
+    ./locale.nix
+    ./mako.nix
     ./waybar.nix
     ./wofi.nix
   ];
