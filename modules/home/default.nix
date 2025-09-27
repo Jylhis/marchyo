@@ -1,0 +1,19 @@
+{
+  imports = [
+    ../generic/fontconfig.nix
+    ../generic/shell.nix
+    ./_1password.nix
+    ./btop.nix
+    ./fastfetch.nix
+    ./ghostty.nix
+    ./help.nix
+    ./hypridle.nix
+    ./hyprland.nix
+    ./hyprlock.nix
+    ./kitty.nix
+    ./locale.nix
+    ./mako.nix
+    ./waybar.nix
+    ./wofi.nix
+  ];
+}

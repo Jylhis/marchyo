@@ -1,0 +1,26 @@
+{
+  imports = [
+    ./nix-settings.nix
+    ./_1password.nix
+    ../generic/shell.nix
+    ./boot.nix
+    ./packages.nix
+    ./containers.nix
+    ./fonts.nix
+    ./graphics.nix
+    ./hardware.nix
+    ./help.nix
+    ./hyprland.nix
+    ./hyprlock.nix
+    ./locale.nix
+    ./media.nix
+    ./network.nix
+    ./office.nix
+    ./performance.nix
+    ./plymouth.nix
+    ./security.nix
+    ./system.nix
+    ./wayland.nix
+    ./update-diff.nix
+  ];
+}
