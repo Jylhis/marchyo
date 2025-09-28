@@ -1,7 +1,7 @@
 _: {
   programs = {
     bash = {
-      enable = true;
+      # enable = true; # TODO: Only for home-manager
 
       # https://github.com/basecamp/omarchy/blob/master/default/bash/aliases
       shellAliases = {

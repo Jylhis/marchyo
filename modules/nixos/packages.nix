@@ -16,7 +16,7 @@ let
     impala # TUI for managing your Wi-Fi connection
     fastfetch # shows system information
     bluetui # bluetooth
-    lazyssh
+    # lazyssh
     sysz # systemctl tui
     lazyjournal # journald and logs
   ];
@@ -139,7 +139,7 @@ in
       shellTools ++ tuiTools ++ guiTools ++ commercialGUITools ++ devTools ++ basicTools;
 
     # Enable wayland support on chrome
-    environment.sessionVariables.NIXOS_OZONE_WL = "1";
+    # environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
     # TODO:
     # https://github.com/basecamp/omarchy/blob/master/config/xournalpp/settings.xml
