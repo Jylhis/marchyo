@@ -16,7 +16,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
-      url = "github:nix-community/disko";
+      url = "https://flakehub.com/f/nix-community/disko/1.12.0.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
