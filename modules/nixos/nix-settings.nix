@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   nix = {
     # gc.automatic = lib.mkDefault true;
@@ -6,7 +6,7 @@
 
     settings = {
       accept-flake-config = true;
-      trusted-users = [ "@wheel" ];
+      trusted-users = [ "@wheel" ] ++ (builtins.attrNames config.marchyo.users);
       tarball-ttl = lib.mkDefault 604800;
       download-buffer-size = lib.mkDefault "256M";
       experimental-features = [

@@ -4,6 +4,7 @@
     ./_1password.nix
     ../generic/shell.nix
     ./boot.nix
+    ./options.nix
     ./packages.nix
     ./containers.nix
     ./fonts.nix

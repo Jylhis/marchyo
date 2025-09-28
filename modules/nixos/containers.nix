@@ -1,6 +1,13 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   backend = "docker"; # podman, containerd
+  inherit ((import ../../lib { inherit lib; })) mapListToAttrs;
+  mUsers = builtins.attrNames config.marchyo.users;
 in
 {
 
@@ -29,5 +36,9 @@ in
     ])
     ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
 
-  # TODO: Add users to podman/docker group
+  users.users = mapListToAttrs mUsers (_name: {
+    extraGroups = [
+      config.users.groups."${backend}".name
+    ];
+  });
 }
