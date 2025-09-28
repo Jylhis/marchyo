@@ -2,7 +2,10 @@
   imports = [
     ../generic/fontconfig.nix
     ../generic/shell.nix
+    ../generic/git.nix
     ./_1password.nix
+    ./git.nix
+    ./shell.nix
     ./btop.nix
     ./fastfetch.nix
     ./ghostty.nix

@@ -23,6 +23,14 @@ let
             	    use `users.users.{name}.name`
           '';
         };
+        fullname = mkOption {
+          type = types.str;
+          description = "Your full name";
+        };
+        email = mkOption {
+          type = types.str;
+          description = "Your email address";
+        };
       };
     };
 in

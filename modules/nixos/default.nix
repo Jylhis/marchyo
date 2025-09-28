@@ -3,6 +3,8 @@
     ./nix-settings.nix
     ./_1password.nix
     ../generic/shell.nix
+    ../generic/git.nix
+    ../generic/fontconfig.nix
     ./boot.nix
     ./options.nix
     ./packages.nix
