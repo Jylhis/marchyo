@@ -277,6 +277,7 @@
           "SUPER, B, Web browser, exec, $browser"
           "SUPER, M, Music player, exec, $music"
           "SUPER, E, Emacs, exec, emacsclient -c -a emacs"
+	  "SUPER, O, Obsidian, exec, $notes"
           # "SUPER, N, Neovim, exec, $terminal -e nvim"
           # "SUPER, T, Top, exec, $terminal"
           "SUPER, D, Lazy Docker, exec, $terminal -e lazydocker"
