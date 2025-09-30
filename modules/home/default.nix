@@ -1,22 +1,23 @@
 {
-  imports = [
+  imports = [    
     ../generic/fontconfig.nix
-    ./packages.nix
-    ../generic/shell.nix
     ../generic/git.nix
+    ../generic/shell.nix
     ./_1password.nix
-    ./git.nix
-    ./shell.nix
     ./btop.nix
     ./fastfetch.nix
     ./ghostty.nix
+    ./git.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
+    ./hyprpaper.nix
     ./kitty.nix
     ./locale.nix
     ./mako.nix
+    ./packages.nix
+    ./shell.nix
     ./waybar.nix
     ./wofi.nix
   ];
