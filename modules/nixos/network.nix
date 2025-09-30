@@ -2,8 +2,10 @@
 {
   # services.resolved.enable = true;
   networking = {
-    networkmanager.enable = true;
-    wifi.backend = "iwd";
+    networkmanager = {
+      enable = true;
+      wifi.backend = "iwd";
+    };
   };
   environment.systemPackages = with pkgs; [
     impala # TUI for managing your Wi-Fi connection, NOTE: doesnt support network manager
