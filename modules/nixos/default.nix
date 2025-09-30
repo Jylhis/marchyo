@@ -1,6 +1,7 @@
 {
   imports = [
     ./nix-settings.nix
+    ./printing.nix
     ./_1password.nix
     ../generic/shell.nix
     ../generic/git.nix
