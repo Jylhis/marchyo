@@ -39,13 +39,15 @@
       settings = {
 
         # Default apps
-        "$terminal" = lib.mkDefault "kitty";
-        "$fileManager" = lib.mkDefault "nautilus --new-window";
+
+        "$notes" = lib.mkDefault "obsidian";
         "$browser" = lib.mkDefault "brave --new-window --ozone-platform=wayland";
+        "$fileManager" = lib.mkDefault "nautilus --new-window";
+        "$messenger" = lib.mkDefault "signal-desktop";
         "$music" = lib.mkDefault "spotify";
         "$passwordManager" = lib.mkDefault "1password";
-        "$messenger" = lib.mkDefault "signal-desktop";
         "$webapp" = lib.mkDefault "$browser --app";
+        "$terminal" = lib.mkDefault "kitty";
 
         ecosystem.no_update_news = true;
         xwayland.force_zero_scaling = true;
@@ -479,8 +481,6 @@
       };
     };
 
-    services.hyprsunset.enable = true;
-
     # Additional packages for Hyprland
     home.packages = with pkgs; [
       # Core Wayland tools
@@ -535,5 +535,7 @@
     ];
 
     services.hyprpolkitagent.enable = true;
+    services.hyprsunset.enable = true;
+    services.gnome-keyring.enable = true;
   };
 }

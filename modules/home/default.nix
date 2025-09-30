@@ -1,5 +1,5 @@
 {
-  imports = [    
+  imports = [
     ../generic/fontconfig.nix
     ../generic/git.nix
     ../generic/shell.nix
