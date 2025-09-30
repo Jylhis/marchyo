@@ -29,12 +29,14 @@ let
     libreoffice # Standard office suite
     signal-desktop # E2E messaging
     mpv # simple fast media player
+    brave
   ];
 
   # Commercial GUIs
   # https://learn.omacom.io/2/the-omarchy-manual/61/commercial-guis
   commercialGUITools = with pkgs; [
     spotify
+    obsidian
   ];
 
   # Development tools
