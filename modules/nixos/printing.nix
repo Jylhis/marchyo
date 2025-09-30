@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  printing = {
+  services.printing = {
     enable = true;
     drivers = with pkgs; [
       cups-filters
