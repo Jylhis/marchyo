@@ -80,7 +80,7 @@ in
         settings = {
           add_newline = true;
           command_timeout = 200;
-          format = "[$directory$git_branch$git_status]($style)$character";
+          format = "$hostname$nix_shell[$directory$git_branch$git_status]($style)$character";
 
           # error_symbol = "[✗](bold cyan)";
           # success_symbol = "[❯](bold cyan)";
@@ -91,6 +91,10 @@ in
             truncation_symbol = "…/";
             repo_root_style = "bold cyan";
             repo_root_format = "[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
+          };
+
+          hostname = {
+            ssh_only = true;
           };
 
           git_branch = {
