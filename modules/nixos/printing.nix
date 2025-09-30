@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 {
   printing = {
     enable = true;
