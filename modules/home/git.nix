@@ -8,7 +8,7 @@ let
   userConfig = osConfig.marchyo.users."${config.home.username}";
 in
 {
-  programs = lib.mkIf userConfig.enable{
+  programs = lib.mkIf userConfig.enable {
     lazygit.enable = lib.mkDefault true;
     git = {
       userName = userConfig.fullname;

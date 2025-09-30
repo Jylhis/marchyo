@@ -68,6 +68,9 @@ in
 
     # Shell
     programs = {
+      television = {
+        enable = true;
+      };
       zoxide.enable = true; # Replacement for cd
       # TODO compress and decompress commands
       starship = {

@@ -1,6 +1,7 @@
 {
   imports = [
     ../generic/fontconfig.nix
+    ./packages.nix
     ../generic/shell.nix
     ../generic/git.nix
     ./_1password.nix
