@@ -2,6 +2,14 @@
 {
   # services.resolved.enable = true;
   networking = {
+    wireless = {
+      iwd = {
+        enable = true;
+        settings = {
+          AutoConnect = true;
+        };
+      };
+    };
     networkmanager = {
       enable = true;
       wifi.backend = "iwd";
