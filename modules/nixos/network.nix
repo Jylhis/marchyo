@@ -5,9 +5,6 @@
     wireless = {
       iwd = {
         enable = true;
-        settings = {
-          AutoConnect = true;
-        };
       };
     };
     networkmanager = {
