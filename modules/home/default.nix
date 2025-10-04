@@ -6,6 +6,7 @@
     ./_1password.nix
     ./theme.nix
     ./btop.nix
+    ./chromium.nix
     ./fastfetch.nix
     ./xournalpp.nix
     ./ghostty.nix
@@ -20,7 +21,9 @@
     ./mako.nix
     ./packages.nix
     ./shell.nix
+    ./wallpaper.nix
     ./waybar.nix
     ./wofi.nix
+    ./xournalpp.nix
   ];
 }

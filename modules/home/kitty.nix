@@ -12,6 +12,7 @@
     };
     settings = {
       bold_italic_font = "auto";
+      italic_font = "auto";
       background_opacity = "0.95";
       window_padding_width = 14;
       window_padding_height = 14;
@@ -25,6 +26,7 @@
 
       # Tab configuration
       tab_bar_style = "powerline";
+      tab_powerline_style = "slanted";
       tab_bar_edge = "bottom";
       tab_title_template = "{title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}";
 

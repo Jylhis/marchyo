@@ -173,7 +173,8 @@
         };
         "custom/light_dark" = {
           "format" = "󰔎 ";
-          "on-click" = "$HOME/.config/hypr/scripts/DarkLight.sh"; # TODO
+          "on-click" = "darklight";
+          "tooltip" = "Toggle dark/light mode";
         };
         power-profiles-daemon = {
           format = "{icon}";
