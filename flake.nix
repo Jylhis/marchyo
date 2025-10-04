@@ -9,16 +9,21 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-parts.url = "https://flakehub.com/f/hercules-ci/flake-parts/0.1.*";
-    # flake-compat.url = "github:nix-community/flake-compat";
-    # flake-utils.url = "github:numtide/flake-utils";
     home-manager = {
       url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Disk partitioning tool - imported for future use
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # 1Password shell plugins - provides automatic shell integration
+    onepassword-shell-plugins = {
+      url = "github:1Password/shell-plugins";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-colors.url = "github:misterio77/nix-colors";
   };
 
   outputs =
@@ -28,7 +33,12 @@
       let
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
-        nixosModules.default = ./modules/nixos/default.nix;
+        nixosModules.default = {
+          imports = [
+            ./modules/nixos/default.nix
+            inputs.onepassword-shell-plugins.nixosModules.default
+          ];
+        };
         homeModules = {
           default = ./modules/home/default.nix;
           _1password = ./modules/home/_1password.nix;
@@ -47,29 +57,44 @@
           flakeModules.default
         ];
 
-        perSystem = {
-          treefmt = {
-            projectRootFile = "flake.nix";
+        perSystem =
+          { system, ... }:
+          {
+            treefmt = {
+              projectRootFile = "flake.nix";
 
-            programs = {
-              nixfmt.enable = true;
-              actionlint.enable = true;
-              deadnix.enable = true;
-              shellcheck.enable = true;
-              statix.enable = true;
+              programs = {
+                nixfmt.enable = true;
+                actionlint.enable = true;
+                deadnix.enable = true;
+                shellcheck.enable = true;
+                statix.enable = true;
+              };
+              settings.formatter.shellcheck = {
+                excludes = [
+                  "**/.envrc"
+                  ".envrc"
+                ];
+                options = [
+                  "-s"
+                  "bash"
+                ];
+              };
             };
-            settings.formatter.shellcheck = {
-              excludes = [
-                "**/.envrc"
-                ".envrc"
-              ];
-              options = [
-                "-s"
-                "bash"
-              ];
-            };
+
+            # Import and expose tests as checks
+            checks =
+              let
+                tests = import ./tests {
+                  inherit system;
+                  inherit (inputs.nixpkgs) lib;
+                  inherit (inputs) nixpkgs home-manager;
+                  nixosModules = nixosModules.default;
+                  homeModules = homeModules.default;
+                };
+              in
+              tests;
           };
-        };
 
         flake = {
           # inherit flakeModules;

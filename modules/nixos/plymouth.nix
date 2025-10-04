@@ -1,18 +1,18 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   config = {
     boot = {
       plymouth = {
-        enable = true;
-        themePackages = [
+        enable = lib.mkDefault true;
+        themePackages = lib.mkDefault [
           (pkgs.callPackage ../../packages/plymouth-marchyo-theme/package.nix { })
         ];
-        theme = "marchyo";
+        theme = lib.mkDefault "marchyo";
       };
-      initrd.verbose = false;
-      loader.timeout = 5;
-      consoleLogLevel = 0;
-      kernelParams = [
+      initrd.verbose = lib.mkDefault false;
+      loader.timeout = lib.mkDefault 5;
+      consoleLogLevel = lib.mkDefault 0;
+      kernelParams = lib.mkDefault [
         "quiet"
         "splash"
         "loglevel=3"
