@@ -4,6 +4,7 @@
     ../generic/git.nix
     ../generic/shell.nix
     ./_1password.nix
+    ./theme.nix
     ./btop.nix
     ./fastfetch.nix
     ./ghostty.nix
