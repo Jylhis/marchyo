@@ -15,7 +15,7 @@ buildGoModule rec {
     rev = "v${version}";
     hash = "sha256-TuxBdN8sjj0lH4DCPtj83HI9FlBaqAmPlpttnKuf+9Y=";
   };
- postPatch = ''
+  postPatch = ''
     substituteInPlace go.mod \
       --replace-fail "go 1.25.1" "go ${go.version}"
   '';
