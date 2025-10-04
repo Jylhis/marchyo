@@ -1,67 +1,83 @@
+{ config, lib, ... }:
 {
-  security = {
-    # Polkit Configuration
-    polkit = {
-      enable = true;
-      debug = false; # Set to true to see rule evaluation logs
+  options.marchyo.security = {
+    apparmor.enable = lib.mkEnableOption "AppArmor security hardening" // {
+      default = false;
+    };
+  };
 
-      # Custom polkit rules for common system operations
-      #   extraConfig = ''
-      #     // Allow users in wheel group to execute actions without password for certain operations
-      #     polkit.addRule(function(action, subject) {
-      #       if (subject.isInGroup("wheel")) {
-      #         // Network management
-      #         if (action.id == "org.freedesktop.NetworkManager.settings.modify.system" ||
-      #             action.id == "org.freedesktop.NetworkManager.network-control" ||
-      #             action.id == "org.freedesktop.NetworkManager.enable-disable-network" ||
-      #             action.id == "org.freedesktop.NetworkManager.enable-disable-wifi") {
-      #           return polkit.Result.YES;
-      #         }
+  config = {
+    security = {
+      # AppArmor security hardening
+      apparmor = lib.mkIf config.marchyo.security.apparmor.enable {
+        enable = true;
+        killUnconfinedConfinables = true;
 
-      #         // Power management
-      #         if (action.id == "org.freedesktop.login1.power-off" ||
-      #             action.id == "org.freedesktop.login1.reboot" ||
-      #             action.id == "org.freedesktop.login1.suspend" ||
-      #             action.id == "org.freedesktop.login1.hibernate") {
-      #           return polkit.Result.YES;
-      #         }
+        packages = [ ];
+      };
 
-      #         // Package management (for wheel group, require auth but allow)
-      #         if (action.id == "org.nixos.nix.store" ||
-      #             action.id.indexOf("org.freedesktop.packagekit") == 0) {
-      #           return polkit.Result.AUTH_ADMIN_KEEP;
-      #         }
-      #       }
+      # Polkit Configuration
+      polkit = {
+        enable = true;
+        debug = false; # Set to true to see rule evaluation logs
 
-      #       return polkit.Result.NOT_HANDLED;
-      #     });
+        # Custom polkit rules for common system operations
+        #   extraConfig = ''
+        #     // Allow users in wheel group to execute actions without password for certain operations
+        #     polkit.addRule(function(action, subject) {
+        #       if (subject.isInGroup("wheel")) {
+        #         // Network management
+        #         if (action.id == "org.freedesktop.NetworkManager.settings.modify.system" ||
+        #             action.id == "org.freedesktop.NetworkManager.network-control" ||
+        #             action.id == "org.freedesktop.NetworkManager.enable-disable-network" ||
+        #             action.id == "org.freedesktop.NetworkManager.enable-disable-wifi") {
+        #           return polkit.Result.YES;
+        #         }
 
-      #     // Allow users to manage their own systemd user services
-      #     polkit.addRule(function(action, subject) {
-      #       if (action.id == "org.freedesktop.systemd1.manage-unit-files" ||
-      #           action.id == "org.freedesktop.systemd1.manage-units") {
-      #         if (action.lookup("unit").indexOf(subject.user) == 0) {
-      #           return polkit.Result.YES;
-      #         }
-      #       }
+        #         // Power management
+        #         if (action.id == "org.freedesktop.login1.power-off" ||
+        #             action.id == "org.freedesktop.login1.reboot" ||
+        #             action.id == "org.freedesktop.login1.suspend" ||
+        #             action.id == "org.freedesktop.login1.hibernate") {
+        #           return polkit.Result.YES;
+        #         }
 
-      #       return polkit.Result.NOT_HANDLED;
-      #     });
+        #         // Package management (for wheel group, require auth but allow)
+        #         if (action.id == "org.nixos.nix.store" ||
+        #             action.id.indexOf("org.freedesktop.packagekit") == 0) {
+        #           return polkit.Result.AUTH_ADMIN_KEEP;
+        #         }
+        #       }
 
-      #     // Storage management - allow wheel users to mount/unmount
-      #     polkit.addRule(function(action, subject) {
-      #       if (subject.isInGroup("wheel")) {
-      #         if (action.id == "org.freedesktop.udisks2.filesystem-mount" ||
-      #             action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
-      #             action.id == "org.freedesktop.udisks2.filesystem-unmount") {
-      #           return polkit.Result.YES;
-      #         }
-      #       }
+        #       return polkit.Result.NOT_HANDLED;
+        #     });
 
-      #       return polkit.Result.NOT_HANDLED;
-      #     });
-      #   '';
-      # };
+        #     // Allow users to manage their own systemd user services
+        #     polkit.addRule(function(action, subject) {
+        #       if (action.id == "org.freedesktop.systemd1.manage-unit-files" ||
+        #           action.id == "org.freedesktop.systemd1.manage-units") {
+        #         if (action.lookup("unit").indexOf(subject.user) == 0) {
+        #           return polkit.Result.YES;
+        #         }
+        #       }
+
+        #       return polkit.Result.NOT_HANDLED;
+        #     });
+
+        #     // Storage management - allow wheel users to mount/unmount
+        #     polkit.addRule(function(action, subject) {
+        #       if (subject.isInGroup("wheel")) {
+        #         if (action.id == "org.freedesktop.udisks2.filesystem-mount" ||
+        #             action.id == "org.freedesktop.udisks2.filesystem-mount-system" ||
+        #             action.id == "org.freedesktop.udisks2.filesystem-unmount") {
+        #           return polkit.Result.YES;
+        #         }
+        #       }
+
+        #       return polkit.Result.NOT_HANDLED;
+        #     });
+        #   '';
+      };
 
       # # Real-time Kit (already enabled, keeping for audio/video priority)
       # rtkit.enable = true;
