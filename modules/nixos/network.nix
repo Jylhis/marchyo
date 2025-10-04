@@ -1,6 +1,5 @@
 { pkgs, ... }:
 {
-  # services.resolved.enable = true;
   networking = {
     wireless = {
       iwd = {

@@ -1,14 +1,8 @@
-# The importApply argument. Use this to reference things defined locally,
-# as opposed to the flake where this is imported.
+# Flake module for marchyo - currently minimal
+# This module can be extended in the future for additional flake-level functionality
+
 _localFlake:
 
-# Regular module arguments; self, inputs, etc all reference the final user flake,
-# where this module was imported.
 {
-  perSystem = {
-    # A copy of hello that was defined by this flake, not the user's flake.
-
-    # packages.greeter = localFlake.withSystem system ({ config, ... }: config.packages.default);
-  };
-
+  perSystem = _: { };
 }

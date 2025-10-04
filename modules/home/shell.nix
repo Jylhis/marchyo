@@ -1,5 +1,4 @@
 {
-
   programs = {
     bash = {
       enableCompletion = true;
@@ -40,9 +39,9 @@
         "cmdhist" # Save multi-line commands as one command
       ];
       initExtra = ''
-        		  # Enable history expansion with space
-                  # E.g. typing !!<space> will replace the !! with your last command
-                  bind Space:magic-space
+        # Enable history expansion with space
+        # E.g. typing !!<space> will replace the !! with your last command
+        bind Space:magic-space
       '';
     };
     readline = {

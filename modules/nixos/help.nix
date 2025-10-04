@@ -1,13 +1,13 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   documentation = {
-    enable = true;
-    doc.enable = true;
-    dev.enable = true;
-    info.enable = true;
-    man.enable = true;
+    enable = lib.mkDefault true;
+    doc.enable = lib.mkDefault true;
+    dev.enable = lib.mkDefault true;
+    info.enable = lib.mkDefault true;
+    man.enable = lib.mkDefault true;
     nixos = {
-      enable = true;
+      enable = lib.mkDefault true;
       # extraModuleSources # TODO
     };
   };
