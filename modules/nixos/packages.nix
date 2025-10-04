@@ -36,7 +36,6 @@ let
   # Media applications
   mediaTools = with pkgs; [
     mpv # simple fast media player
-    spotify
     pinta # basic image editing tool
   ];
 

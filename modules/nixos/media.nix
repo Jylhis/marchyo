@@ -1,13 +1,22 @@
-{ pkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    # File format support
-    libheif
-    libheif.out
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+{
+  environment.systemPackages =
+    with pkgs;
+    [
+      # File format support
+      libheif
+      libheif.out
 
-    # Players
-    spotify
-    mpv
-  ];
+      # Players
+      mpv
+    ]
+    ++ (lib.optionals config.nixpkgs.config.allowUnfree [
+      pkgs.spotify
+    ]);
 
 }

@@ -6,7 +6,6 @@
       cups-filters
       cups-browsed
       gutenprint
-      gutenprintBin
       brlaser
     ];
   };

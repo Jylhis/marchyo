@@ -6,7 +6,7 @@
   };
 
   # Thunderbolt
-  services.hardware.bolt.enable = true;
+  services.hardware.bolt.enable = lib.mkDefault true;
 
   # Bluetooth
   hardware.bluetooth = {
@@ -23,9 +23,9 @@
 
   # Power management
   services = {
-    power-profiles-daemon.enable = true;
-    upower.enable = true;
-    thermald.enable = true;
+    power-profiles-daemon.enable = lib.mkDefault true;
+    upower.enable = lib.mkDefault true;
+    thermald.enable = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
   };
 
 }
