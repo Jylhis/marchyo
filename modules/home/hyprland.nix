@@ -508,57 +508,63 @@ in
     };
 
     # Additional packages for Hyprland
-    home.packages = with pkgs; [
-      # Core Wayland tools
-      wl-clipboard
-      wl-clip-persist
-      cliphist
+    home.packages =
+      with pkgs;
+      [
+        # Core Wayland tools
+        wl-clipboard
+        wl-clip-persist
+        cliphist
 
-      # Wallpaper and theming
-      wallust
-      pywal
+        # Wallpaper and theming
+        wallust
+        pywal
 
-      # Screenshots and screen recording
-      grim
-      slurp
-      wf-recorder
+        # Screenshots and screen recording
+        grim
+        slurp
+        wf-recorder
 
-      # System monitoring and control
-      brightnessctl
-      playerctl
-      pavucontrol
-      pwvucontrol
+        # System monitoring and control
+        brightnessctl
+        playerctl
+        pavucontrol
+        pwvucontrol
 
-      # File management
-      xdg-utils
-      mimeo
+        # File management
+        xdg-utils
+        mimeo
 
-      # Fonts
-      nerd-fonts.jetbrains-mono
-      nerd-fonts.caskaydia-cove
+        # Fonts
+        nerd-fonts.jetbrains-mono
+        nerd-fonts.caskaydia-cove
 
-      # Utilities
-      killall
-      pciutils
-      usbutils
+        # Utilities
+        killall
+        pciutils
+        usbutils
 
-      # Development tools integration
-      git-cliff
-      lazygit
+        # Development tools integration
+        git-cliff
+        lazygit
 
-      # System integration
-      libnotify
-      kanshi
+        # System integration
+        libnotify
+        kanshi
 
-      # Network
-      networkmanagerapplet
+        # Network
+        networkmanagerapplet
 
-      # Audio
-      wireplumber
+        # Audio
+        wireplumber
 
-      # Power management
-      power-profiles-daemon
-    ];
+        # Power management
+        power-profiles-daemon
+      ]
+      ++ [
+        # Custom scripts
+        (pkgs.writeShellScriptBin "darklight" (builtins.readFile ../../assets/scripts/darklight.sh))
+      ];
 
     services.hyprpolkitagent.enable = true;
     services.hyprsunset.enable = true;

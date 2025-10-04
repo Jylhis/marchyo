@@ -8,6 +8,7 @@
     ./theme.nix
     ./bat.nix
     ./btop.nix
+    ./chromium.nix
     ./fastfetch.nix
     ./fzf.nix
     ./xournalpp.nix
@@ -28,5 +29,6 @@
     ./waybar.nix
     ./vicinae.nix
     ./wofi.nix
+    ./xournalpp.nix
   ];
 }
