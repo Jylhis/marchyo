@@ -1,7 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   hardware = {
-    enableAllFirmware = true;
+    # Use lib.mkDefault so tests can override this
+    enableAllFirmware = lib.mkDefault true;
   };
 
   # Thunderbolt
