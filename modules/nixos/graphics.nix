@@ -10,7 +10,7 @@
   # GPU optimizations
   hardware.graphics = {
     enable = lib.mkDefault true;
-    enable32Bit = lib.mkDefault true;
+    enable32Bit = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
 
     # Intel specific packages - only on x86_64
     extraPackages = lib.mkDefault (
