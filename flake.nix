@@ -50,9 +50,12 @@
         };
       in
       {
+        # Supported systems: x86_64 (AMD64/Intel) and aarch64 (ARM64)
+        # Both architectures support NixOS modules, Home Manager, and packages
+        # Note: ISO images may need platform-specific adjustments for ARM devices
         systems = [
           "x86_64-linux"
-          # "aarch64-linux"
+          "aarch64-linux"
         ];
         imports = [
           inputs.flake-parts.flakeModules.flakeModules

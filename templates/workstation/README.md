@@ -4,7 +4,6 @@ This is a full-featured developer workstation configuration with desktop environ
 
 ## Quick Start
 
-
 1. **Initialize your configuration**:
    ```bash
    nix flake init -t github:marchyo/marchyo#workstation
@@ -21,21 +20,10 @@ This is a full-featured developer workstation configuration with desktop environ
    - Adjust timezone and locale settings
    - Review and modify development tools
 
-4. **RUN VM**
-```shell
-# With disko
-nix run -L '.#nixosConfigurations.workstation.config.system.build.vmWithDisko'
-
-# Without
-nixos-rebuild build-vm --flake .#workstation
-./result/bin/run-workstation-vm
-```
-
 4. **Build and switch**:
    ```bash
    sudo nixos-rebuild switch --flake .#workstation
    ```
-
 
 ## Included Features
 
@@ -277,10 +265,4 @@ Monitor system resources:
 ```bash
 btop  # Modern resource monitor
 htop  # Classic resource monitor
-```
-
-# Run VM
-
-```shell
-nix run -L '.#nixosConfigurations.default.config.system.build.vmWithDisko'
 ```
