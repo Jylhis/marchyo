@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-colors.url = "github:misterio77/nix-colors";
+    # Secrets management with sops-nix
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -28,12 +33,17 @@
       let
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
-        nixosModules.default = {
-          imports = [
-            ./modules/nixos/default.nix
-            inputs.disko.nixosModules.disko
-          ];
-        };
+        nixosModules.default =
+          { ... }:
+          {
+            imports = [
+              inputs.sops-nix.nixosModules.sops
+              ./modules/nixos/default.nix
+            ];
+            _module.args = {
+              inherit inputs;
+            };
+          };
         homeModules = {
           default = ./modules/home/default.nix;
           _1password = ./modules/home/_1password.nix;
