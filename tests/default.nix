@@ -38,5 +38,27 @@ let
       home-manager
       ;
   };
+  isoTests = import ./isos {
+    pkgs = testPkgs;
+    inherit
+      lib
+      nixpkgs
+      nixosModules
+      system
+      ;
+  };
+  profileTests = import ./profiles {
+    pkgs = testPkgs;
+    inherit
+      lib
+      nixosModules
+      homeModules
+      home-manager
+      ;
+  };
+  securityTests = import ./security {
+    pkgs = testPkgs;
+    inherit lib nixosModules;
+  };
 in
-nixosTests // homeTests // integrationTests
+nixosTests // homeTests // integrationTests // isoTests // profileTests // securityTests
