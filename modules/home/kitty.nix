@@ -49,6 +49,7 @@
       "alt+7" = "goto_tab 7";
       "alt+8" = "goto_tab 8";
       "alt+9" = "goto_tab 9";
+      "f11" = "toggle_fullscreen";
     };
   };
 }
