@@ -8,12 +8,14 @@
     ../generic/git.nix
     ../generic/fontconfig.nix
     ./boot.nix
+    ./cachix.nix
     ./options.nix
     ./packages.nix
     ./containers.nix
     ./desktop-config.nix
     ./development-config.nix
     ./fonts.nix
+    ./gaming.nix
     ./graphics.nix
     ./hardware.nix
     ./help.nix
@@ -29,5 +31,6 @@
     ./wayland.nix
     ./update-diff.nix
     ./update-notifications.nix
+    ./virtualization.nix
   ];
 }
