@@ -7,6 +7,7 @@
     ./theme.nix
     ./btop.nix
     ./fastfetch.nix
+    ./xournalpp.nix
     ./ghostty.nix
     ./git.nix
     ./help.nix

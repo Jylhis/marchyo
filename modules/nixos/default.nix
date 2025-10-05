@@ -19,7 +19,6 @@
     ./locale.nix
     ./media.nix
     ./network.nix
-    ./office.nix
     ./performance.nix
     ./plymouth.nix
     ./security.nix
