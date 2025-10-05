@@ -21,6 +21,7 @@
     ./mako.nix
     ./packages.nix
     ./shell.nix
+    ./shell-enhancements.nix
     ./waybar.nix
     ./wofi.nix
   ];
