@@ -4,44 +4,51 @@
 # After making changes, rebuild with:
 #   sudo nixos-rebuild switch --flake .#hostname
 
-{ config, pkgs, lib, inputs, ... }:
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 
 {
   # System Settings
-  networking.hostName = "hostname";  # Change this to your hostname
-  time.timeZone = "Europe/Zurich";   # Change to your timezone
+  networking.hostName = "hostname"; # Change this to your hostname
+  time.timeZone = "Europe/Zurich"; # Change to your timezone
 
   # Marchyo Configuration
   marchyo = {
     # Feature Flags - Enable the modules you need
-    desktop.enable = true;      # Hyprland desktop environment
-    development.enable = true;  # Docker, Git, development tools
-    media.enable = false;       # Spotify, MPV, media applications
-    office.enable = true;       # LibreOffice, document viewers
+    desktop.enable = true; # Hyprland desktop environment
+    development.enable = true; # Docker, Git, development tools
+    media.enable = false; # Spotify, MPV, media applications
+    office.enable = true; # LibreOffice, document viewers
 
     # System Settings
-    timezone = "Europe/Zurich";        # Sync with time.timeZone above
+    timezone = "Europe/Zurich"; # Sync with time.timeZone above
     defaultLocale = "en_US.UTF-8";
 
     # User Configuration
-    users.yourname = {             # Change 'yourname' to your username
+    users.yourname = {
+      # Change 'yourname' to your username
       enable = true;
       fullname = "Your Full Name"; # Change to your actual name
-      email = "you@example.com";   # Change to your email
+      email = "you@example.com"; # Change to your email
     };
   };
 
   # User Account
-  users.users.yourname = {         # Match the username from marchyo.users
+  users.users.yourname = {
+    # Match the username from marchyo.users
     isNormalUser = true;
     description = "Your Full Name";
 
     # Groups
     extraGroups = [
-      "wheel"          # Enable sudo
+      "wheel" # Enable sudo
       "networkmanager" # Network management
-      "video"          # Video devices
-      "audio"          # Audio devices
+      "video" # Video devices
+      "audio" # Audio devices
     ];
 
     # Optional: Set an initial password (change after first login!)
@@ -59,14 +66,15 @@
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs; };
 
-    users.yourname = {  # Match your username
+    users.yourname = {
+      # Match your username
       imports = [
         inputs.marchyo.homeModules.default
         # Add additional home modules here
       ];
 
       home = {
-        username = "yourname";  # Match your username
+        username = "yourname"; # Match your username
         homeDirectory = "/home/yourname";
         stateVersion = "24.11";
 
