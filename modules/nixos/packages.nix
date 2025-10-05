@@ -31,7 +31,7 @@ let
     signal-desktop # E2E messaging
     brave
     localsend # send files to other devices on the same network
-    gnome-file-roller # Archive manager
+    file-roller # Archive manager
     nautilus # GNOME Files (file explorer)
   ];
 
