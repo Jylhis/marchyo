@@ -1,7 +1,7 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
   inherit (lib) mkOption types;
-  # cfg = config.marchyo;
+  cfg = config.marchyo;
 
   userOpts =
     { name, ... }:
@@ -37,6 +37,35 @@ let
 in
 {
   options.marchyo = {
+    profile = mkOption {
+      type = types.nullOr (
+        types.enum [
+          "base"
+          "desktop"
+          "developer"
+          "gaming"
+          "server"
+        ]
+      );
+      default = null;
+      description = "Which Marchyo profile to use. Setting this automatically imports the corresponding profile from profiles/";
+      example = "desktop";
+    };
+
+    hostname = mkOption {
+      type = types.str;
+      default = "nixos";
+      description = "System hostname";
+      example = "my-workstation";
+    };
+
+    stateVersion = mkOption {
+      type = types.str;
+      default = "24.11";
+      description = "NixOS state version - should match the NixOS release version you first installed";
+      example = "24.11";
+    };
+
     users = mkOption {
       default = { };
       type = with types; attrsOf (submodule userOpts);
@@ -133,5 +162,10 @@ in
         '';
       };
     };
+  };
+
+  config = {
+    networking.hostName = cfg.hostname;
+    system.stateVersion = cfg.stateVersion;
   };
 }

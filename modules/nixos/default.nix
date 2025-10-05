@@ -28,5 +28,6 @@
     ./system.nix
     ./wayland.nix
     ./update-diff.nix
+    ./update-notifications.nix
   ];
 }
