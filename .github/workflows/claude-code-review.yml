@@ -5,7 +5,7 @@ on:
 jobs:
   claude-review:
     if: |
-      (!contains(fromJSON('["FIRST_TIME_CONTRIBUTOR", "NONE"]'), github.event.comment.author_association) && contains(github.event.comment.body, '@claude'))
+      (github.event.comment.author_association == 'OWNER' && contains(github.event.comment.body, '@claude-review'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
