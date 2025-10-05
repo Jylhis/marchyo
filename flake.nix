@@ -53,8 +53,59 @@
         ];
 
         perSystem =
-          { system, ... }:
           {
+            pkgs,
+            system,
+            ...
+          }:
+          {
+            # Development shell
+            devShells.default = pkgs.mkShell {
+              packages = with pkgs; [
+                # Nix development tools
+                nil # Nix LSP
+                nixd # Alternative Nix LSP
+                nixpkgs-fmt # Nix formatter
+                alejandra # Alternative Nix formatter
+                statix # Nix linter
+                deadnix # Find dead Nix code
+                nix-tree # Visualize Nix dependencies
+                nix-diff # Compare Nix derivations
+                nvd # Nix version diff
+
+                # Documentation tools
+                mdbook # Documentation generator
+                mdbook-mermaid # Mermaid diagrams for mdbook
+
+                # Git tools
+                git-cliff # Changelog generator
+
+                # Testing utilities
+                nixos-rebuild # For testing configurations
+
+                # Utilities
+                jq # JSON processor
+                yq # YAML processor
+              ];
+
+              shellHook = ''
+                echo "🚀 Welcome to Marchyo development environment"
+                echo ""
+                echo "Available commands:"
+                echo "  nix flake check  - Validate flake and run tests"
+                echo "  nix fmt          - Format all Nix files"
+                echo "  nix build        - Build packages and configurations"
+                echo "  nix develop      - Enter development shell (you are here)"
+                echo ""
+                echo "Useful aliases:"
+                echo "  statix check .   - Run Nix linter"
+                echo "  deadnix .        - Find dead Nix code"
+                echo "  nvd diff         - Compare Nix versions"
+                echo "  git-cliff        - Generate changelog"
+                echo ""
+              '';
+            };
+
             treefmt = {
               projectRootFile = "flake.nix";
 
