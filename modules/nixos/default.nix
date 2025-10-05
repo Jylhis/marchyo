@@ -17,15 +17,19 @@
     ./fonts.nix
     ./gaming.nix
     ./graphics.nix
+    ./hardened.nix
     ./hardware.nix
     ./help.nix
+    ./impermanence.nix
     ./hyprland.nix
     ./hyprlock.nix
     ./locale.nix
     ./media.nix
+    ./monitoring.nix
     ./network.nix
     ./performance.nix
     ./plymouth.nix
+    ./secrets.nix
     ./security.nix
     ./system.nix
     ./wayland.nix
