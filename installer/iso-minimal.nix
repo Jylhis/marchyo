@@ -27,7 +27,7 @@
   ];
 
   # System identification
-  networking.hostName = "marchyo-installer";
+  networking.hostName = lib.mkForce "marchyo-installer";
 
   # ISO metadata
   image.fileName = lib.mkForce "marchyo-installer-minimal-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";

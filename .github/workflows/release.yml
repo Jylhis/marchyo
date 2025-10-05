@@ -1,0 +1,180 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v1.0.0)"
+        required: true
+        type: string
+permissions:
+  contents: write
+  packages: read
+jobs:
+  build-isos:
+    name: Build ISO - ${{ matrix.iso-type }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        iso-type:
+          - minimal
+          - graphical
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v28
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+            substituters = https://cache.nixos.org https://nix-community.cachix.org https://marchyo.cachix.org
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= marchyo.cachix.org-1:YOUR_CACHIX_KEY_HERE
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: marchyo
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          skipPush: ${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
+      - name: Build ${{ matrix.iso-type }} ISO
+        run: |
+          nix build .#nixosConfigurations.iso-${{ matrix.iso-type }}.config.system.build.isoImage \
+            --print-build-logs \
+            --show-trace
+      - name: Get ISO details
+        id: iso-info
+        run: |
+          ISO_PATH=$(readlink -f result/iso/*.iso)
+          ISO_NAME=$(basename "$ISO_PATH")
+          SHA256=$(sha256sum "$ISO_PATH" | cut -d' ' -f1)
+
+          {
+            echo "path=$ISO_PATH"
+            echo "name=$ISO_NAME"
+            echo "sha256=$SHA256"
+          } >> "$GITHUB_OUTPUT"
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iso-${{ matrix.iso-type }}
+          path: ${{ steps.iso-info.outputs.path }}
+          retention-days: 7
+      - name: Create checksum file
+        run: |
+          echo "${{ steps.iso-info.outputs.sha256 }}  ${{ steps.iso-info.outputs.name }}" > ${{ matrix.iso-type }}.sha256
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksum-${{ matrix.iso-type }}
+          path: ${{ matrix.iso-type }}.sha256
+          retention-days: 7
+  create-release:
+    name: Create GitHub Release
+    needs: build-isos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Check if pre-release
+          if [[ "$VERSION" =~ -(rc|beta|alpha) ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+
+          # Copy ISOs
+          cp artifacts/iso-minimal/*.iso release-assets/ || true
+          cp artifacts/iso-graphical/*.iso release-assets/ || true
+
+          # Combine checksums
+          cat artifacts/checksum-minimal/*.sha256 > release-assets/SHA256SUMS
+          cat artifacts/checksum-graphical/*.sha256 >> release-assets/SHA256SUMS
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate changelog
+          if [[ -n "$PREV_TAG" ]]; then
+            CHANGELOG=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges --max-count=20)
+          fi
+
+          # Create release notes
+          cat << EOF > release-notes.md
+          ## Marchyo ${VERSION}
+
+          ### Downloads
+
+          Two ISO variants are available:
+
+          - **minimal**: Minimal installation ISO with core system only
+          - **graphical**: Full-featured ISO with Hyprland desktop environment
+
+          Verify downloads using the included SHA256SUMS file:
+          \`\`\`bash
+          sha256sum -c SHA256SUMS
+          \`\`\`
+
+          ### Changes
+
+          ${CHANGELOG}
+
+          ### Installation
+
+          1. Download the appropriate ISO for your needs
+          2. Verify the checksum matches SHA256SUMS
+          3. Write to USB: \`dd if=marchyo-*.iso of=/dev/sdX bs=4M status=progress\`
+          4. Boot from USB and follow installation prompts
+
+          ### System Requirements
+
+          - x86_64 processor
+          - 2GB RAM minimum (4GB recommended for graphical)
+          - 20GB disk space minimum
+          - UEFI boot support
+
+          EOF
+
+          {
+            echo "notes<<EOF"
+            cat release-notes.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Marchyo ${{ steps.version.outputs.version }}"
+          body: ${{ steps.release-notes.outputs.notes }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: release-assets/*
+          draft: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
