@@ -18,11 +18,6 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # 1Password shell plugins - provides automatic shell integration
-    onepassword-shell-plugins = {
-      url = "github:1Password/shell-plugins";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nix-colors.url = "github:misterio77/nix-colors";
   };
 
@@ -36,7 +31,6 @@
         nixosModules.default = {
           imports = [
             ./modules/nixos/default.nix
-            inputs.onepassword-shell-plugins.nixosModules.default
           ];
         };
         homeModules = {
