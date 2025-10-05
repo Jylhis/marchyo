@@ -12,7 +12,7 @@
 #   3. Add hardware-configuration.nix
 #   4. Deploy with nixos-rebuild
 
-{ config, pkgs, lib, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -26,10 +26,10 @@
   # Marchyo Configuration
   marchyo = {
     # Enable all productivity features
-    desktop.enable = true;      # Hyprland, Wayland, Fonts, Graphics
-    development.enable = true;  # Docker, GitHub CLI, Dev tools
-    media.enable = false;       # Optional: Enable for Spotify, MPV
-    office.enable = true;       # LibreOffice, Document viewers
+    desktop.enable = true; # Hyprland, Wayland, Fonts, Graphics
+    development.enable = true; # Docker, GitHub CLI, Dev tools
+    media.enable = false; # Optional: Enable for Spotify, MPV
+    office.enable = true; # LibreOffice, Document viewers
 
     # Localization
     timezone = "Europe/Zurich";
@@ -47,10 +47,10 @@
   users.users.developer = {
     isNormalUser = true;
     extraGroups = [
-      "wheel"        # Sudo access
-      "networkmanager"  # Network management
-      "video"        # Video devices
-      "audio"        # Audio devices
+      "wheel" # Sudo access
+      "networkmanager" # Network management
+      "video" # Video devices
+      "audio" # Audio devices
     ];
     # Optional: Set initial password
     # initialPassword = "changeme";

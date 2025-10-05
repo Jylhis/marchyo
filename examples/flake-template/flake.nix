@@ -19,7 +19,6 @@
 
   outputs =
     {
-      self,
       nixpkgs,
       marchyo,
       home-manager,

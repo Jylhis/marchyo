@@ -6,12 +6,11 @@
 }:
 let
   inherit (lib) mkIf mkDefault;
-  cfg = config.marchyo;
 in
 {
   # Enable VS Code when development tools are enabled
   # VS Code is a popular editor for Nix and general development
-  programs.vscode = mkIf cfg.development.enable {
+  programs.vscode = mkIf (config.marchyo.development.enable or false) {
     enable = mkDefault true;
 
     # Install VS Code extensions for Nix, Git, and general development

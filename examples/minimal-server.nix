@@ -9,7 +9,7 @@
 #   3. Add hardware-configuration.nix
 #   4. Deploy with nixos-rebuild
 
-{ config, pkgs, lib, ... }:
+{ ... }:
 
 {
   imports = [

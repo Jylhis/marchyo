@@ -12,7 +12,7 @@
 #   3. Add hardware-configuration.nix
 #   4. Deploy with nixos-rebuild
 
-{ config, pkgs, lib, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [
@@ -25,9 +25,9 @@
 
   # Marchyo Configuration
   marchyo = {
-    desktop.enable = true;      # Hyprland with optimizations
+    desktop.enable = true; # Hyprland with optimizations
     development.enable = false; # Not needed for gaming-only system
-    media.enable = true;        # MPV, media players
+    media.enable = true; # MPV, media players
     office.enable = false;
 
     timezone = "Europe/Zurich";
@@ -48,7 +48,7 @@
       "networkmanager"
       "video"
       "audio"
-      "gamemode"  # For gamemode optimizations
+      "gamemode" # For gamemode optimizations
     ];
   };
 
@@ -88,22 +88,22 @@
     # dolphin-emu
 
     # Game tools
-    mangohud  # FPS overlay
-    goverlay  # MangoHud configurator
-    protonup-qt  # Proton-GE manager
+    mangohud # FPS overlay
+    goverlay # MangoHud configurator
+    protonup-qt # Proton-GE manager
 
     # Voice chat
     discord
     # mumble
 
     # Performance monitoring
-    nvtopPackages.full  # GPU monitoring
+    nvtopPackages.full # GPU monitoring
   ];
 
   # Graphics optimizations
   hardware.graphics = {
     enable = true;
-    enable32Bit = true;  # Required for 32-bit games
+    enable32Bit = true; # Required for 32-bit games
   };
 
   # Kernel optimizations for gaming
@@ -133,7 +133,7 @@
   };
 
   # Network optimization for gaming
-  services.mullvad-vpn.enable = false;  # Enable if using Mullvad VPN
+  services.mullvad-vpn.enable = false; # Enable if using Mullvad VPN
   networking.firewall = {
     enable = true;
     # Open ports for game-specific needs
@@ -165,7 +165,7 @@
       # wf-recorder  # Already in Hyprland module
 
       # Performance tools
-      piper  # Gaming mouse configuration
+      piper # Gaming mouse configuration
     ];
   };
 
