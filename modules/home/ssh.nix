@@ -30,13 +30,13 @@
       # GitHub - use git user and ensure keys are added to agent
       "github.com" = {
         user = "git";
-        addKeysToAgent = true;
+        addKeysToAgent = "yes";
       };
 
       # GitLab - use git user
       "gitlab.com" = {
         user = "git";
-        addKeysToAgent = true;
+        addKeysToAgent = "yes";
       };
 
       # Local network hosts - skip strict host key checking

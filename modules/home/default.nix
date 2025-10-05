@@ -13,6 +13,7 @@
     ./fzf.nix
     ./xournalpp.nix
     ./git.nix
+    ./git-advanced.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
