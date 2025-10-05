@@ -8,6 +8,7 @@
     ./theme.nix
     ./bat.nix
     ./btop.nix
+    ./direnv.nix
     ./fastfetch.nix
     ./fzf.nix
     ./xournalpp.nix
