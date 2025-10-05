@@ -50,13 +50,8 @@ let
   ];
 
   # Development tools
+  # Note: Docker/container tools are in virtualization.nix
   devTools = with pkgs; [
-    # Docker
-    docker-compose
-    buildah
-    skopeo
-    lazydocker
-
     # Service CLIs
     gh # Github
   ];

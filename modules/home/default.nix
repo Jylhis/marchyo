@@ -22,6 +22,7 @@
     ./packages.nix
     ./shell.nix
     ./shell-enhancements.nix
+    ./ssh.nix
     ./waybar.nix
     ./wofi.nix
   ];
