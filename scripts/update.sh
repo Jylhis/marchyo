@@ -135,7 +135,7 @@ fi
 echo ""
 
 # Step 8: Show new generation
-CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\\d+')
+CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\d+')
 echo -e "${GREEN}✓ Now running generation $CURRENT_GEN${NC}"
 echo ""
 

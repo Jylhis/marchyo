@@ -59,7 +59,7 @@ check_info() {
 # System Information
 echo -e "${BLUE}System Information:${NC}"
 HOSTNAME=$(hostname)
-CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\\d+' || echo "unknown")
+CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\d+' || echo "unknown")
 KERNEL=$(uname -r)
 UPTIME=$(uptime -p)
 

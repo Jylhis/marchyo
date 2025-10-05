@@ -1,9 +1,9 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
+    enable = lib.mkDefault true;
+    nix-direnv.enable = lib.mkDefault true;
 
     config = {
       global = {
@@ -15,20 +15,11 @@
       };
     };
 
-    # Enable bash integration if bash is enabled
-    enableBashIntegration = config.programs.bash.enable;
-
-    # Enable fish integration if fish is enabled
-    enableFishIntegration = config.programs.fish.enable;
-
-    # Enable zsh integration if zsh is enabled
-    enableZshIntegration = config.programs.zsh.enable or false;
+    # Shell integrations are automatically enabled by Home Manager
+    # based on which shells are enabled (bash, fish, zsh)
   };
 
-  # Add direnv to PATH
-  home.packages = [ pkgs.direnv ];
-
-  # Shell integration note
+  # Custom direnvrc for nix-direnv
   home.file.".direnvrc".text = ''
     # Source nix-direnv for improved Nix support
     source ${pkgs.nix-direnv}/share/nix-direnv/direnvrc
