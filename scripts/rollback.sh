@@ -28,7 +28,7 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 # Get current generation
-CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\\d+')
+CURRENT_GEN=$(readlink -f /run/current-system | grep -oP '(?<=system-)\d+')
 echo -e "${GREEN}Current generation: $CURRENT_GEN${NC}"
 echo ""
 
@@ -56,7 +56,7 @@ if [[ $# -eq 1 ]]; then
   TARGET_GEN=$1
 else
   # Interactive mode
-  read -p "Enter generation number to rollback to (or 'q' to quit): " TARGET_GEN
+  read -r -p "Enter generation number to rollback to (or 'q' to quit): " TARGET_GEN
 
   if [[ "$TARGET_GEN" == "q" ]] || [[ -z "$TARGET_GEN" ]]; then
     echo -e "${YELLOW}Rollback cancelled${NC}"
@@ -89,7 +89,7 @@ echo ""
 # Show differences if nvd is available
 if command -v nvd &> /dev/null; then
   echo -e "${YELLOW}→ Changes:${NC}"
-  sudo nvd diff /run/current-system /nix/var/nix/profiles/system-${TARGET_GEN}-link || true
+  sudo nvd diff /run/current-system "/nix/var/nix/profiles/system-${TARGET_GEN}-link" || true
   echo ""
 fi
 
@@ -105,7 +105,7 @@ echo ""
 echo -e "${YELLOW}→ Switching to generation $TARGET_GEN...${NC}"
 
 # Switch to target generation
-if sudo /nix/var/nix/profiles/system-${TARGET_GEN}-link/bin/switch-to-configuration switch; then
+if sudo "/nix/var/nix/profiles/system-${TARGET_GEN}-link/bin/switch-to-configuration" switch; then
   echo ""
   echo -e "${GREEN}✓ Successfully rolled back to generation $TARGET_GEN${NC}"
   echo ""
