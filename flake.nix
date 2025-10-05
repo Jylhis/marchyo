@@ -50,9 +50,12 @@
         };
       in
       {
+        # Supported systems: x86_64 (AMD64/Intel) and aarch64 (ARM64)
+        # Both architectures support NixOS modules, Home Manager, and packages
+        # Note: ISO images may need platform-specific adjustments for ARM devices
         systems = [
           "x86_64-linux"
-          # "aarch64-linux"
+          "aarch64-linux"
         ];
         imports = [
           inputs.flake-parts.flakeModules.flakeModules
@@ -157,6 +160,61 @@
           # inherit flakeModules;
           inherit flakeModules nixosModules homeModules;
 
+          # ISO images for installation
+          packages.x86_64-linux = withSystem "x86_64-linux" (_: {
+            # Minimal CLI installer ISO
+            iso-minimal =
+              (inputs.nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  { nixpkgs.config.allowUnfree = true; }
+                  ./installer/iso-minimal.nix
+                  nixosModules.default
+                ];
+              }).config.system.build.isoImage;
+
+            # Graphical installer ISO with Calamares
+            iso-graphical =
+              (inputs.nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  { nixpkgs.config.allowUnfree = true; }
+                  (
+                    { modulesPath, ... }:
+                    {
+                      imports = [
+                        "${modulesPath}/installer/cd-dvd/installation-cd-graphical-calamares.nix"
+                      ];
+                    }
+                  )
+                  ./installer/iso-graphical.nix
+                  nixosModules.default
+                ];
+              }).config.system.build.isoImage;
+          });
+
+          # Disko disk configuration modules for reference/import
+          diskoConfigurations = {
+            simple-uefi = ./disko/simple-uefi.nix;
+            luks-btrfs = ./disko/luks-btrfs.nix;
+            zfs = ./disko/zfs.nix;
+          };
+
+          # Flake templates for bootstrapping new configurations
+          templates = {
+            default = {
+              path = ./templates/default;
+              description = "Basic Marchyo configuration with minimal desktop setup";
+            };
+            minimal = {
+              path = ./templates/minimal;
+              description = "Minimal server configuration without desktop environment";
+            };
+            workstation = {
+              path = ./templates/workstation;
+              description = "Full developer workstation with desktop and development tools";
+            };
+          };
         };
 
       }

@@ -14,12 +14,11 @@
 }:
 
 {
-  imports = [
-    <nixpkgs/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix>
-  ];
+  # Note: modulesPath import is handled in flake.nix
+  # This file should NOT import the base ISO config directly
 
   # System Identification
-  networking.hostName = "marchyo-installer-graphical";
+  networking.hostName = lib.mkForce "marchyo-installer-graphical";
   system.stateVersion = "24.11";
 
   # Enable Flakes and Modern Nix Commands
@@ -46,17 +45,15 @@
   };
 
   # Desktop Environment Customization
-  services.xserver = {
+  services.xserver.enable = true;
+
+  # Use Plasma 6 desktop environment
+  services.desktopManager.plasma6.enable = true;
+
+  # Auto-login for convenience
+  services.displayManager.autoLogin = {
     enable = true;
-
-    # Use a lightweight desktop environment
-    desktopManager.plasma5.enable = true;
-
-    # Auto-login for convenience
-    displayManager.autoLogin = {
-      enable = true;
-      user = "nixos";
-    };
+    user = "nixos";
   };
 
   # Custom wallpaper with Marchyo branding
@@ -107,13 +104,12 @@
 
     # GUI Partitioning
     gparted
-    gnome.gnome-disk-utility
+    gnome-disk-utility
 
     # Text Editors
     vim
     nano
-    kate
-    gedit
+    kdePackages.kate
     # vscode  # Commented out due to large size (~300MB)
 
     # Terminal Emulators
@@ -122,7 +118,7 @@
 
     # File Managers
     pcmanfm
-    dolphin
+    kdePackages.dolphin
 
     # System Information
     neofetch
@@ -187,37 +183,9 @@
     Categories=System;Documentation;
   '';
 
-  # Calamares Configuration for Marchyo
-  services.calamares = {
-    enable = true;
-    settings = {
-      # Branding
-      branding = {
-        componentName = "marchyo";
-        strings = {
-          productName = "Marchyo";
-          shortProductName = "Marchyo";
-          version = config.system.nixos.release;
-          shortVersion = config.system.nixos.release;
-          versionedName = "Marchyo ${config.system.nixos.release}";
-          shortVersionedName = "Marchyo ${config.system.nixos.release}";
-          bootloaderEntryName = "Marchyo";
-        };
-      };
-
-      # Installation workflow
-      sequence = [
-        "welcome"
-        "location"
-        "keyboard"
-        "partition"
-        "users"
-        "summary"
-        "install"
-        "finished"
-      ];
-    };
-  };
+  # Note: Calamares configuration is provided by the base graphical ISO
+  # The installation-cd-graphical-calamares.nix module already includes Calamares
+  # Custom branding and workflow configuration would go here if needed
 
   # Helpful Message on Login
   environment.etc."issue".text = lib.mkForce ''
