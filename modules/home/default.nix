@@ -11,6 +11,7 @@
     ./xournalpp.nix
     ./ghostty.nix
     ./git.nix
+    ./git-advanced.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
@@ -23,7 +24,9 @@
     ./shell.nix
     ./shell-enhancements.nix
     ./ssh.nix
+    ./terminal-multiplexer.nix
     ./waybar.nix
+    ./welcome.nix
     ./wofi.nix
   ];
 }
