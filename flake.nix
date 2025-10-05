@@ -63,6 +63,7 @@
                 deadnix.enable = true;
                 shellcheck.enable = true;
                 statix.enable = true;
+                yamlfmt.enable = true;
               };
               settings.formatter.shellcheck = {
                 excludes = [

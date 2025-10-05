@@ -5,7 +5,7 @@ on:
       - "main"
     paths-ignore:
       - .github/**
-      - .claude/** 
+      - .claude/**
 jobs:
   flakehub-publish:
     runs-on: "ubuntu-latest"
