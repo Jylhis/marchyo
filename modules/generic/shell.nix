@@ -2,7 +2,7 @@ _: {
   programs = {
     # Only options that work in both NixOS and Home Manager
     bash = {
-      enable = true;
+
       # shellAliases works in both contexts
       shellAliases = {
         ls = "eza -lh --group-directories-first --icons=auto";
