@@ -8,7 +8,7 @@
     };
     networkmanager = {
       enable = true;
-      wifi.backend = "iwd";
+      # wifi.backend = "iwd";
     };
   };
   environment.systemPackages = with pkgs; [
