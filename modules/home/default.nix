@@ -6,10 +6,12 @@
     ./_1password.nix
     ./theme.nix
     ./btop.nix
+    ./direnv.nix
     ./fastfetch.nix
     ./xournalpp.nix
     ./ghostty.nix
     ./git.nix
+    ./git-advanced.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
@@ -20,7 +22,11 @@
     ./mako.nix
     ./packages.nix
     ./shell.nix
+    ./shell-enhancements.nix
+    ./ssh.nix
+    ./terminal-multiplexer.nix
     ./waybar.nix
+    ./welcome.nix
     ./wofi.nix
   ];
 }

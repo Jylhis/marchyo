@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-colors.url = "github:misterio77/nix-colors";
+    # Secrets management with sops-nix
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -28,20 +33,29 @@
       let
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
-        nixosModules.default = {
-          imports = [
-            ./modules/nixos/default.nix
-          ];
-        };
+        nixosModules.default =
+          { ... }:
+          {
+            imports = [
+              inputs.sops-nix.nixosModules.sops
+              ./modules/nixos/default.nix
+            ];
+            _module.args = {
+              inherit inputs;
+            };
+          };
         homeModules = {
           default = ./modules/home/default.nix;
           _1password = ./modules/home/_1password.nix;
         };
       in
       {
+        # Supported systems: x86_64 (AMD64/Intel) and aarch64 (ARM64)
+        # Both architectures support NixOS modules, Home Manager, and packages
+        # Note: ISO images may need platform-specific adjustments for ARM devices
         systems = [
           "x86_64-linux"
-          # "aarch64-linux"
+          "aarch64-linux"
         ];
         imports = [
           inputs.flake-parts.flakeModules.flakeModules
@@ -52,8 +66,59 @@
         ];
 
         perSystem =
-          { system, ... }:
           {
+            pkgs,
+            system,
+            ...
+          }:
+          {
+            # Development shell
+            devShells.default = pkgs.mkShell {
+              packages = with pkgs; [
+                # Nix development tools
+                nil # Nix LSP
+                nixd # Alternative Nix LSP
+                nixpkgs-fmt # Nix formatter
+                alejandra # Alternative Nix formatter
+                statix # Nix linter
+                deadnix # Find dead Nix code
+                nix-tree # Visualize Nix dependencies
+                nix-diff # Compare Nix derivations
+                nvd # Nix version diff
+
+                # Documentation tools
+                mdbook # Documentation generator
+                mdbook-mermaid # Mermaid diagrams for mdbook
+
+                # Git tools
+                git-cliff # Changelog generator
+
+                # Testing utilities
+                nixos-rebuild # For testing configurations
+
+                # Utilities
+                jq # JSON processor
+                yq # YAML processor
+              ];
+
+              shellHook = ''
+                echo "🚀 Welcome to Marchyo development environment"
+                echo ""
+                echo "Available commands:"
+                echo "  nix flake check  - Validate flake and run tests"
+                echo "  nix fmt          - Format all Nix files"
+                echo "  nix build        - Build packages and configurations"
+                echo "  nix develop      - Enter development shell (you are here)"
+                echo ""
+                echo "Useful aliases:"
+                echo "  statix check .   - Run Nix linter"
+                echo "  deadnix .        - Find dead Nix code"
+                echo "  nvd diff         - Compare Nix versions"
+                echo "  git-cliff        - Generate changelog"
+                echo ""
+              '';
+            };
+
             treefmt = {
               projectRootFile = "flake.nix";
 
@@ -95,6 +160,61 @@
           # inherit flakeModules;
           inherit flakeModules nixosModules homeModules;
 
+          # ISO images for installation
+          packages.x86_64-linux = withSystem "x86_64-linux" (_: {
+            # Minimal CLI installer ISO
+            iso-minimal =
+              (inputs.nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  { nixpkgs.config.allowUnfree = true; }
+                  ./installer/iso-minimal.nix
+                  nixosModules.default
+                ];
+              }).config.system.build.isoImage;
+
+            # Graphical installer ISO with Calamares
+            iso-graphical =
+              (inputs.nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  { nixpkgs.config.allowUnfree = true; }
+                  (
+                    { modulesPath, ... }:
+                    {
+                      imports = [
+                        "${modulesPath}/installer/cd-dvd/installation-cd-graphical-calamares.nix"
+                      ];
+                    }
+                  )
+                  ./installer/iso-graphical.nix
+                  nixosModules.default
+                ];
+              }).config.system.build.isoImage;
+          });
+
+          # Disko disk configuration modules for reference/import
+          diskoConfigurations = {
+            simple-uefi = ./disko/simple-uefi.nix;
+            luks-btrfs = ./disko/luks-btrfs.nix;
+            zfs = ./disko/zfs.nix;
+          };
+
+          # Flake templates for bootstrapping new configurations
+          templates = {
+            default = {
+              path = ./templates/default;
+              description = "Basic Marchyo configuration with minimal desktop setup";
+            };
+            minimal = {
+              path = ./templates/minimal;
+              description = "Minimal server configuration without desktop environment";
+            };
+            workstation = {
+              path = ./templates/workstation;
+              description = "Full developer workstation with desktop and development tools";
+            };
+          };
         };
 
       }

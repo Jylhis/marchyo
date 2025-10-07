@@ -7,23 +7,31 @@
     ../generic/git.nix
     ../generic/fontconfig.nix
     ./boot.nix
+    ./cachix.nix
     ./options.nix
     ./packages.nix
     ./containers.nix
     ./fonts.nix
+    ./gaming.nix
     ./graphics.nix
+    ./hardened.nix
     ./hardware.nix
     ./help.nix
+    ./impermanence.nix
     ./hyprland.nix
     ./hyprlock.nix
     ./locale.nix
     ./media.nix
+    ./monitoring.nix
     ./network.nix
     ./performance.nix
     ./plymouth.nix
+    ./secrets.nix
     ./security.nix
     ./system.nix
     ./wayland.nix
     ./update-diff.nix
+    ./update-notifications.nix
+    ./virtualization.nix
   ];
 }

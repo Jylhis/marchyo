@@ -1,2 +1,20 @@
 .claude/*.local.json
 result
+
+# Secrets - prevent committing unencrypted secrets
+secrets/secrets.yaml
+secrets/*.yaml
+secrets/**/*.yaml
+# Allow example files and sops config
+!secrets/.sops.yaml
+!secrets/**/*.example
+!secrets/**/*.yaml.example
+
+# Age keys
+.config/sops/
+*.age
+**/age/keys.txt
+
+# Sops temporary files
+secrets/**/*.yaml.dec
+secrets/**/*.dec
