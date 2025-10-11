@@ -94,7 +94,10 @@
         flake = {
           # inherit flakeModules;
           inherit flakeModules nixosModules homeModules;
-
+          diskoConfigurations = {
+            simple-uefi = ./disko/simple-uefi.nix;
+            luks-btrfs = ./disko/luks-btrfs.nix;
+          };
         };
 
       }
