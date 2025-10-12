@@ -7,6 +7,7 @@
 let
   inherit ((import ../../lib { inherit lib; })) mapListToAttrs;
   mUsers = lib.filterAttrs (_name: user: user.enable) config.marchyo.users;
+  forMarchyoUsers = attr: mapListToAttrs (builtins.attrNames mUsers) (_name: attr);
 in
 {
   services = {
@@ -22,19 +23,27 @@ in
     lazyjournal # journald and logs
   ];
 
-  # Create users defined in marchyo.users
-  users.users = mapListToAttrs (builtins.attrNames mUsers) (
-    name:
-    let
-      user = mUsers.${name};
-    in
+  home-manager.users = forMarchyoUsers (
+    { osConfig, ... }:
     {
+      imports = [
+        ../home
+      ];
+      home.stateVersion = lib.mkDefault osConfig.system.stateVersion;
+    }
+  );
+
+  users.users = forMarchyoUsers (
+    { name, ... }:
+    {
+
       isNormalUser = true;
-      description = user.fullname;
+      description = mUsers.${name}.fullname;
       extraGroups = [
         "wheel"
         "networkmanager"
       ];
+
     }
   );
 }

@@ -25,7 +25,6 @@ let
   # Shared user configuration
   testUser = {
     users.users.testuser = {
-      isNormalUser = true;
       uid = 1000;
       group = "testuser";
     };

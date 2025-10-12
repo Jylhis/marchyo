@@ -47,7 +47,6 @@
         };
 
         users.users.testuser = {
-          isNormalUser = true;
           uid = 1000;
         };
 
