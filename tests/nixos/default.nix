@@ -1,14 +1,14 @@
 {
   pkgs,
   nixosModules,
+  lib,
   ...
 }:
 let
   # Shared test configuration to avoid duplication
   testDefaults = {
     # Disable non-redistributable firmware for tests
-    hardware.enableAllFirmware = false;
-    hardware.enableRedistributableFirmware = true;
+    hardware.enableAllFirmware = lib.mkForce false;
     # Disable 32bit graphics on non-x86_64 tests
     hardware.graphics.enable32Bit = false;
 
