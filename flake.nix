@@ -31,6 +31,7 @@
         nixosModules.default = {
           imports = [
             ./modules/nixos/default.nix
+            inputs.disko.nixosModules.disko
           ];
         };
         homeModules = {
@@ -95,8 +96,7 @@
           # inherit flakeModules;
           inherit flakeModules nixosModules homeModules;
           diskoConfigurations = {
-            simple-uefi = ./disko/simple-uefi.nix;
-            luks-btrfs = ./disko/luks-btrfs.nix;
+	    btrfs = ./disko/btrfs.nix;
           };
         };
 
