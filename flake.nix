@@ -130,16 +130,6 @@
                 statix.enable = true;
                 yamlfmt.enable = true;
               };
-              settings.formatter.shellcheck = {
-                excludes = [
-                  "**/.envrc"
-                  ".envrc"
-                ];
-                options = [
-                  "-s"
-                  "bash"
-                ];
-              };
             };
 
             # Import and expose tests as checks

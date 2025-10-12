@@ -105,7 +105,7 @@ jobs:
           echo "::group::Building ${{ matrix.target }}"
 
           # Build with statistics tracking
-          BUILD_START=$(date +%s)
+          BUILD_START="$(date +%s)"
 
           nix build \
             --print-build-logs \
@@ -113,10 +113,10 @@ jobs:
             --keep-going \
             ".#checks.${{ matrix.system }}.${{ matrix.target }}"
 
-          BUILD_END=$(date +%s)
-          BUILD_TIME=$((BUILD_END - BUILD_START))
+          BUILD_END="$(date +%s)"
+          BUILD_TIME="$((BUILD_END - BUILD_START))"
 
-          echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
+          echo "build_time=$BUILD_TIME" >> "$GITHUB_OUTPUT"
           echo "::endgroup::"
 
           echo "::notice::Built ${{ matrix.target }} in ${BUILD_TIME}s"
@@ -126,22 +126,24 @@ jobs:
           echo "::group::Build statistics"
 
           # Get derivation info
-          DRV_PATH=$(nix path-info --derivation ".#checks.${{ matrix.system }}.${{ matrix.target }}")
-          OUT_PATH=$(nix path-info ".#checks.${{ matrix.system }}.${{ matrix.target }}")
+          DRV_PATH="$(nix path-info --derivation ".#checks.${{ matrix.system }}.${{ matrix.target }}")"
+          OUT_PATH="$(nix path-info ".#checks.${{ matrix.system }}.${{ matrix.target }}")"
 
           # Calculate closure size
-          CLOSURE_SIZE=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
+          CLOSURE_SIZE="$(nix path-info -S "$OUT_PATH" | awk '{print $2}')"
 
-          echo "closure_size=$CLOSURE_SIZE" >> $GITHUB_OUTPUT
-          echo "derivation=$DRV_PATH" >> $GITHUB_OUTPUT
-          echo "output=$OUT_PATH" >> $GITHUB_OUTPUT
+          {
+            echo "closure_size=$CLOSURE_SIZE"
+            echo "derivation=$DRV_PATH"
+            echo "output=$OUT_PATH"
+          } >> "$GITHUB_OUTPUT"
 
           echo "::notice::Closure size: $CLOSURE_SIZE bytes"
           echo "::endgroup::"
       - name: Post build summary
         if: always()
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ## Build Results: ${{ matrix.target }} (${{ matrix.system }})
 
           - **Status**: ${{ steps.build.outcome }}
@@ -181,17 +183,17 @@ jobs:
         run: |
           echo "::group::Building ${{ matrix.iso }}"
 
-          BUILD_START=$(date +%s)
+          BUILD_START="$(date +%s)"
 
           nix build \
             --print-build-logs \
             --show-trace \
             ".#${{ matrix.iso }}"
 
-          BUILD_END=$(date +%s)
+          BUILD_END="$(date +%s)"
           BUILD_TIME=$((BUILD_END - BUILD_START))
 
-          echo "build_time=$BUILD_TIME" >> $GITHUB_OUTPUT
+          echo "build_time=$BUILD_TIME" >> "$GITHUB_OUTPUT"
           echo "::endgroup::"
 
           echo "::notice::Built ${{ matrix.iso }} in ${BUILD_TIME}s"
@@ -200,27 +202,27 @@ jobs:
         run: |
           echo "::group::ISO statistics"
 
-          OUT_PATH=$(nix path-info ".#${{ matrix.iso }}")
+          OUT_PATH="$(nix path-info ".#${{ matrix.iso }}")"
           ISO_PATH="${OUT_PATH}/iso"
 
           if [ -d "$ISO_PATH" ]; then
-            ISO_FILE=$(find "$ISO_PATH" -name "*.iso" | head -1)
+            ISO_FILE="$(find "$ISO_PATH" -name "*.iso" | head -1)"
             if [ -n "$ISO_FILE" ]; then
-              ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
-              echo "iso_size=$ISO_SIZE" >> $GITHUB_OUTPUT
-              echo "iso_file=$ISO_FILE" >> $GITHUB_OUTPUT
+              ISO_SIZE="$(du -h "$ISO_FILE" | cut -f1)"
+              echo "iso_size=$ISO_SIZE" >> "$GITHUB_OUTPUT"
+              echo "iso_file=$ISO_FILE" >> "$GITHUB_OUTPUT"
               echo "::notice::ISO size: $ISO_SIZE"
             fi
           fi
 
-          CLOSURE_SIZE=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
-          echo "closure_size=$CLOSURE_SIZE" >> $GITHUB_OUTPUT
+          CLOSURE_SIZE="$(nix path-info -S "$OUT_PATH" | awk '{print $2}')"
+          echo "closure_size=$CLOSURE_SIZE" >> "$GITHUB_OUTPUT"
 
           echo "::endgroup::"
       - name: Post ISO build summary
         if: always()
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ## ISO Build Results: ${{ matrix.iso }}
 
           - **Status**: ${{ steps.build.outcome }}
@@ -285,7 +287,7 @@ jobs:
           echo "::notice::All critical checks passed successfully!"
       - name: Post summary
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
           # Marchyo CI/CD Summary
 
           All checks, builds, and security audits completed successfully.
