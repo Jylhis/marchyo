@@ -90,13 +90,60 @@
                 };
               in
               tests;
+
+            packages =
+              let
+                installer-minimal =
+                  (inputs.nixpkgs.lib.nixosSystem {
+                    system = "x86_64-linux";
+                    modules = [
+                      ./installer/iso-minimal.nix
+                    ];
+                  }).config.system.build;
+
+                installer-graphical =
+                  (inputs.nixpkgs.lib.nixosSystem {
+                    system = "x86_64-linux";
+                    modules = [
+                      ./installer/iso-graphical.nix
+                    ];
+                  }).config.system.build;
+                profile-developer =
+                  (inputs.nixpkgs.lib.nixosSystem {
+                    system = "x86_64-linux";
+                    modules = [
+                      { nixpkgs.config.allowUnfree = true; }
+                      nixosModules.default
+                      ./profiles/developer.nix
+                    ];
+                  }).config.system.build;
+
+                test-system =
+                  (inputs.nixpkgs.lib.nixosSystem {
+                    system = "x86_64-linux";
+                    modules = [
+                      { nixpkgs.config.allowUnfree = true; }
+                      nixosModules.default
+                      ./disko/btrfs.nix
+                      ./profiles/developer.nix
+                    ];
+                  }).config.system.build.vmWithDisko;
+              in
+              {
+                installer-minimal-iso = installer-minimal.isoImage;
+                installer-minimal-vm = installer-minimal.vm;
+                installer-graphical-iso = installer-graphical.isoImage;
+                installer-graphical-vm = installer-graphical.vm;
+                profile-developer-vm = profile-developer.vm;
+                inherit test-system;
+              };
           };
 
         flake = {
           # inherit flakeModules;
           inherit flakeModules nixosModules homeModules;
           diskoConfigurations = {
-	    btrfs = ./disko/btrfs.nix;
+            btrfs = ./disko/btrfs.nix;
           };
           inherit (inputs.nixpkgs) legacyPackages lib;
           templates = rec {
