@@ -15,6 +15,7 @@ let
             If set to false, the user account will not have any Marchyo stuff.
           '';
         };
+
         name = mkOption {
           type = types.str;
           default = name;

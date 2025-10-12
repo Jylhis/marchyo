@@ -43,7 +43,6 @@
               { inputs', ... }:
               inputs.marchyo.lib.nixosSystem {
                 specialArgs = {
-
                   inherit inputs inputs';
                 };
                 modules = [
@@ -57,12 +56,4 @@
         };
       }
     );
-  # {
-  #   nixpkgs,
-  #   marchyo,
-  #   ...
-  # }:
-  # {
-
-  # };
 }
