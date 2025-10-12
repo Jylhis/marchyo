@@ -1,2 +1,4 @@
 .claude/*.local.json
 result
+*.qcow2
+*.fd
