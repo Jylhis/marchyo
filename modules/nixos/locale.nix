@@ -1,8 +1,8 @@
-{ config, ... }:
+{ lib, config, ... }:
 {
-  time.timeZone = config.marchyo.timezone;
+  time.timeZone = lib.mkDefault config.marchyo.timezone;
   i18n = {
-    inherit (config.marchyo) defaultLocale;
+    defaultLocale = lib.mkDefault config.marchyo.defaultLocale;
     supportedLocales = [ "all" ];
     # FIXME: ctrl+;
     #inputMethod = {
