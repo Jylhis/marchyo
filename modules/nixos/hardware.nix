@@ -2,7 +2,7 @@
 {
   hardware = {
     # Use lib.mkDefault so tests can override this
-    enableAllFirmware = lib.mkDefault true;
+    enableRedistributableFirmware = lib.mkDefault true;
   };
 
   # Thunderbolt
