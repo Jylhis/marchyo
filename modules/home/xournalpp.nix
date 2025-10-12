@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -11,7 +10,7 @@
     };
   };
 
-  config = lib.mkIf config.marchyo.xournalpp.enable {
+  config = {
     home.packages = [ pkgs.xournalpp ];
 
     # Xournal++ configuration

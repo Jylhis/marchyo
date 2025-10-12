@@ -3,12 +3,11 @@
 # - Autostart: 1password
 {
   lib,
-  config,
   pkgs,
   ...
 }:
 {
-  config = lib.mkIf config.wayland.windowManager.hyprland.enable {
+  config = {
 
     home.pointerCursor = {
       gtk.enable = true;

@@ -28,11 +28,22 @@
       let
         inherit (flake-parts-lib) importApply;
         flakeModules.default = importApply ./modules/flake/default.nix { inherit withSystem; };
-        nixosModules.default = {
-          imports = [
-            ./modules/nixos/default.nix
-            inputs.disko.nixosModules.disko
-          ];
+        nixosModules = {
+          default = {
+            imports = [
+              inputs.disko.nixosModules.disko
+              inputs.home-manager.nixosModules.home-manager
+              {
+                home-manager = {
+                  useGlobalPkgs = true;
+                  useUserPackages = true;
+                };
+              }
+              ./modules/nixos/default.nix
+            ];
+
+          };
+          inherit (inputs.home-manager.nixosModules) home-manager;
         };
         homeModules = {
           default = ./modules/home/default.nix;
