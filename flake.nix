@@ -98,6 +98,13 @@
           diskoConfigurations = {
 	    btrfs = ./disko/btrfs.nix;
           };
+          templates = rec {
+            default = workstation;
+            workstation = {
+              path = ./templates/workstation;
+              description = "Full developer workstation with desktop and development tools";
+            };
+          };
         };
 
       }
