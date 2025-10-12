@@ -98,6 +98,7 @@
           diskoConfigurations = {
 	    btrfs = ./disko/btrfs.nix;
           };
+          inherit (inputs.nixpkgs) legacyPackages lib;
           templates = rec {
             default = workstation;
             workstation = {
