@@ -46,8 +46,9 @@
                   inherit inputs inputs';
                 };
                 modules = [
+                  inputs.home-manager.nixosModules.home-manager
                   inputs.marchyo.nixosModules.default
-                  inputs.marchyo.diskoConfigurations.btrfs
+                  # inputs.marchyo.diskoConfigurations.btrfs
                   ./configuration.nix
                 ];
               }
