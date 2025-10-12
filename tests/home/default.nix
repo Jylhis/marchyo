@@ -23,7 +23,7 @@
               useUserPackages = true;
               users.testuser = {
                 imports = [ homeModules ];
-                home.stateVersion = "24.11";
+                home.stateVersion = "25.11";
               };
             };
           }
@@ -41,7 +41,7 @@
           email = "test@example.com";
         };
 
-        system.stateVersion = "24.11";
+        system.stateVersion = "25.11";
 
         boot.loader.grub.enable = false;
         fileSystems."/" = {
@@ -78,7 +78,7 @@
               useUserPackages = true;
               users.testuser = {
                 imports = [ homeModules ];
-                home.stateVersion = "24.11";
+                home.stateVersion = "25.11";
               };
             };
           }
@@ -96,7 +96,7 @@
           email = "test@example.com";
         };
 
-        system.stateVersion = "24.11";
+        system.stateVersion = "25.11";
 
         boot.loader.grub.enable = false;
         fileSystems."/" = {

@@ -26,7 +26,7 @@
               useUserPackages = true;
               users.testuser = {
                 imports = [ homeModules ];
-                home.stateVersion = "24.11";
+                home.stateVersion = "25.11";
               };
             };
           }
@@ -57,7 +57,7 @@
           fsType = "ext4";
         };
 
-        system.stateVersion = "24.11";
+        system.stateVersion = "25.11";
       };
 
     testScript = ''
