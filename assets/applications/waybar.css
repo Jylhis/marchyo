@@ -36,7 +36,8 @@
 #battery,
 #network,
 #bluetooth,
-#pulseaudio,
+#wireplumber,
+#power-profiles-daemon,
 #custom-omarchy,
 #custom-screenrecording-indicator,
 #custom-update {
