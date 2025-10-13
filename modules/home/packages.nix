@@ -6,7 +6,6 @@
     zoxide.enable = true;
     nh.enable = true;
     ripgrep.enable = true;
-    television.enable = true;
     fd.enable = true;
   };
 }
