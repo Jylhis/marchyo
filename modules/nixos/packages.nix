@@ -68,6 +68,7 @@ in
       television.enable = true;
       zoxide.enable = true; # Replacement for cd
       lazygit.enable = true;
+      fzf.fuzzyCompletion = true;
     };
 
     services = {
