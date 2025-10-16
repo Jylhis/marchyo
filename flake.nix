@@ -20,6 +20,7 @@
     };
     nix-colors.url = "github:misterio77/nix-colors";
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
 
   outputs =
@@ -39,6 +40,7 @@
                   useGlobalPkgs = true;
                 };
               }
+              inputs.determinate.nixosModules.default
               ./modules/nixos/default.nix
             ];
 
