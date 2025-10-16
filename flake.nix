@@ -19,6 +19,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-colors.url = "github:misterio77/nix-colors";
+    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
   };
 
   outputs =
@@ -155,6 +156,7 @@
           diskoConfigurations = {
             btrfs = ./disko/btrfs.nix;
           };
+          overlays.default = import ./overlays { inherit inputs; };
           inherit (inputs.nixpkgs) legacyPackages lib;
           templates = rec {
             default = workstation;
