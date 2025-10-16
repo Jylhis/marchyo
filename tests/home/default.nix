@@ -20,7 +20,6 @@
           {
             home-manager = {
               useGlobalPkgs = true;
-              useUserPackages = true;
               users.testuser = {
                 imports = [ homeModules ];
                 home.stateVersion = "25.11";
@@ -75,7 +74,6 @@
           {
             home-manager = {
               useGlobalPkgs = true;
-              useUserPackages = true;
               users.testuser = {
                 imports = [ homeModules ];
                 home.stateVersion = "25.11";

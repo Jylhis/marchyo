@@ -36,7 +36,6 @@
               {
                 home-manager = {
                   useGlobalPkgs = true;
-                  useUserPackages = true;
                 };
               }
               ./modules/nixos/default.nix
