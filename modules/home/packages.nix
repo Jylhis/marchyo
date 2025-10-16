@@ -1,5 +1,6 @@
 {
   programs = {
+    bash.enable = true;
     bat.enable = true;
     jq.enable = true;
     eza.enable = true;
