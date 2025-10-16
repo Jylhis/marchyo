@@ -18,7 +18,10 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-colors.url = "github:misterio77/nix-colors";
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
