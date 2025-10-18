@@ -19,6 +19,7 @@
         ];
         modules-right = [
           "group/tray-expander"
+          "hyprland/language"
           "bluetooth"
           "network"
           "wireplumber"
@@ -49,6 +50,10 @@
             "4" = [ ];
             "5" = [ ];
           };
+        };
+        "hyprland/language" = {
+          format = "{short}";
+          tooltip-format = "{long}";
         };
         "custom/omarchy" = {
           "format" = "<span font='omarchy-ttf'>\ue900</span>";

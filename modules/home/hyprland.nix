@@ -1,9 +1,7 @@
-# TODO:
-# - Darkmode/lightmode
-# - Autostart: 1password
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 {
@@ -57,8 +55,15 @@
 
         # Enhanced input configuration
         input = {
-          # kb_layout = "us,fi";
-          # kb_options = "ctrl:swapcaps,grp:win_space_toggle";
+          kb_layout = lib.mkIf (config.home.keyboard.layout != null) (
+            lib.mkDefault config.home.keyboard.layout
+          );
+          kb_options = lib.mkIf (config.home.keyboard.options != null) (
+            lib.mkDefault (lib.strings.join "," config.home.keyboard.options)
+          );
+          kb_variant = lib.mkIf (config.home.keyboard.variant != null) (
+            lib.mkDefault (lib.strings.join "," config.home.keyboard.variant)
+          );
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;
