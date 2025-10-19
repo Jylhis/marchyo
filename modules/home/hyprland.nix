@@ -2,8 +2,25 @@
   lib,
   pkgs,
   config,
+  osConfig,
   ...
 }:
+let
+  inherit (lib) mkDefault;
+  colors = if config ? colorScheme then config.colorScheme.palette else null;
+  variant = if config ? colorScheme then config.colorScheme.variant else "dark";
+
+  # Helper to convert hex to rgb() format
+  toRgb =
+    color:
+    let
+      inherit (lib.strings) toInt substring;
+      r = toInt "0x${substring 0 2 color}";
+      g = toInt "0x${substring 2 2 color}";
+      b = toInt "0x${substring 4 2 color}";
+    in
+    "rgb(${toString r} ${toString g} ${toString b})";
+in
 {
   config = {
 
@@ -16,8 +33,7 @@
 
     qt = {
       style = {
-        # name = if config.colorScheme.variant == "light" then "adwaita" else "adwaita-dark";
-        name = lib.mkDefault "adwaita";
+        name = mkDefault (if variant == "light" then "adwaita" else "adwaita-dark");
         package = pkgs.adwaita-qt;
       };
     };
@@ -26,8 +42,7 @@
       enable = true;
 
       theme = {
-        # name = if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita:dark";
-        name = lib.mkDefault "adwaita";
+        name = mkDefault (if variant == "light" then "Adwaita" else "Adwaita-dark");
         package = pkgs.gnome-themes-extra;
       };
     };
@@ -89,10 +104,12 @@
           gaps_out = 10;
           border_size = 2;
 
-          "col.active_border" = "rgba(33ccffee) rgba(00ff99ee) 45deg";
-          "col.inactive_border" = "rgba(595959aa)";
-          # "col.active_border" = activeBorder;
-          # "col.inactive_border" = inactiveBorder;
+          "col.active_border" = mkDefault (
+            if colors != null then toRgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
+          );
+          "col.inactive_border" = mkDefault (
+            if colors != null then toRgb colors.base03 else "rgba(595959aa)"
+          );
           resize_on_border = false;
           allow_tearing = false;
 
@@ -110,7 +127,7 @@
             enabled = true;
             range = 2;
             render_power = 3;
-            color = "rgba(1a1a1aee)";
+            color = mkDefault (if colors != null then toRgb colors.base00 else "rgba(1a1a1aee)");
           };
 
           blur = {
@@ -465,7 +482,9 @@
 
           # Use XCompose file
           "XCOMPOSEFILE,~/.XCompose"
-          # "GTK_THEME,${if config.colorScheme.variant == "light" then "Adwaita" else "Adwaita-dark"}"
+        ]
+        ++ lib.optionals (config ? colorScheme) [
+          "GTK_THEME,${if variant == "light" then "Adwaita" else "Adwaita-dark"}"
         ];
 
         # Startup applications

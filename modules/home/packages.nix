@@ -15,7 +15,6 @@
       enable = true;
 
     };
-    fzf.enable = true;
     aria2.enable = true;
     tealdeer = {
       enable = true;
