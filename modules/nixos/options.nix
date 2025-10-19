@@ -91,5 +91,25 @@ in
       example = "de_DE.UTF-8";
       description = "System default locale";
     };
+
+    theme = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable nix-colors theming system";
+      };
+
+      scheme = mkOption {
+        type = types.nullOr (types.either types.str types.attrs);
+        default = null;
+        example = "dracula";
+        description = ''
+          Color scheme to use. Can be:
+          - A scheme name from nix-colors (e.g., "dracula", "gruvbox-dark-medium")
+          - A custom attribute set defining base00-base0F colors
+          - null to use default scheme
+        '';
+      };
+    };
   };
 }

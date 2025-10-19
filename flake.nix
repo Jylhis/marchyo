@@ -18,10 +18,7 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    stylix = {
-      url = "github:nix-community/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-colors.url = "github:misterio77/nix-colors";
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
@@ -41,6 +38,9 @@
               {
                 home-manager = {
                   useGlobalPkgs = true;
+                  extraSpecialArgs = {
+                    inherit (inputs) nix-colors;
+                  };
                 };
               }
               inputs.determinate.nixosModules.default
@@ -164,7 +164,10 @@
           overlays.default = import ./overlays { inherit inputs; };
           inherit (inputs.nixpkgs) legacyPackages;
           lib = inputs.nixpkgs.lib // {
-            marchyo = import ./lib { inherit (inputs.nixpkgs) lib; };
+            marchyo = import ./lib {
+              inherit (inputs.nixpkgs) lib;
+              inherit inputs nixosModules;
+            };
           };
           templates = rec {
             default = workstation;
