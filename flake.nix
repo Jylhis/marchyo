@@ -96,10 +96,11 @@
               };
             };
 
-            # Import and expose tests as checks
+            # Import and expose tests
+            # Lightweight checks run during `nix flake check`
             checks =
               let
-                tests = import ./tests {
+                allTests = import ./tests {
                   inherit system;
                   inherit (inputs.nixpkgs) lib;
                   inherit (inputs) nixpkgs home-manager;
@@ -107,7 +108,7 @@
                   homeModules = homeModules.default;
                 };
               in
-              tests;
+              allTests.checks;
 
             packages =
               let
@@ -157,32 +158,50 @@
               };
           };
 
-        flake = {
-          # inherit flakeModules;
-          inherit flakeModules nixosModules homeModules;
-          diskoConfigurations = {
-            btrfs = ./disko/btrfs.nix;
-          };
-          overlays.default = import ./overlays { inherit inputs; };
-          inherit (inputs.nixpkgs) legacyPackages;
-          lib = inputs.nixpkgs.lib // {
-            marchyo =
-              import ./lib {
-                inherit (inputs.nixpkgs) lib;
-                inherit inputs nixosModules;
-              }
-              // {
-                colorSchemes = import ./colorschemes;
-              };
-          };
-          templates = rec {
-            default = workstation;
-            workstation = {
-              path = ./templates/workstation;
-              description = "Full developer workstation with desktop and development tools";
+        flake =
+          let
+            # Import VM tests for all systems
+            mkVMTests = system:
+              let
+                allTests = import ./tests {
+                  inherit system;
+                  inherit (inputs.nixpkgs) lib;
+                  inherit (inputs) nixpkgs home-manager;
+                  nixosModules = nixosModules.default;
+                  homeModules = homeModules.default;
+                };
+              in
+              allTests.vmTests;
+          in
+          {
+            # inherit flakeModules;
+            inherit flakeModules nixosModules homeModules;
+            diskoConfigurations = {
+              btrfs = ./disko/btrfs.nix;
             };
+            overlays.default = import ./overlays { inherit inputs; };
+            inherit (inputs.nixpkgs) legacyPackages;
+            lib = inputs.nixpkgs.lib // {
+              marchyo =
+                import ./lib {
+                  inherit (inputs.nixpkgs) lib;
+                  inherit inputs nixosModules;
+                }
+                // {
+                  colorSchemes = import ./colorschemes;
+                };
+            };
+            templates = rec {
+              default = workstation;
+              workstation = {
+                path = ./templates/workstation;
+                description = "Full developer workstation with desktop and development tools";
+              };
+            };
+            # VM tests - slow, resource-intensive tests that don't run during `nix flake check`
+            # Run with: nix build .#vmTests.<system>.<test-name>
+            vmTests = inputs.nixpkgs.lib.genAttrs [ "x86_64-linux" ] mkVMTests;
           };
-        };
 
       }
     );
