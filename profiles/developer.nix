@@ -97,7 +97,6 @@
     tree
     ripgrep
     fd
-    bat
     eza
   ];
 

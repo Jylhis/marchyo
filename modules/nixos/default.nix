@@ -4,6 +4,7 @@
     ./printing.nix
     ./_1password.nix
     ../generic/shell.nix
+    ../generic/packages.nix
     ../generic/git.nix
     ../generic/fontconfig.nix
     ./boot.nix

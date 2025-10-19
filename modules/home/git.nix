@@ -9,7 +9,6 @@ let
 in
 {
   programs = lib.mkIf userConfig.enable {
-    lazygit.enable = lib.mkDefault true;
     git = {
       userName = userConfig.fullname;
       userEmail = userConfig.email;

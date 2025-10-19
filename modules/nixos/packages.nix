@@ -13,6 +13,21 @@ let
     ripgrep # Modern grep
     eza # Replacement for ls
     fd # Replacement for find
+    sd # Replacement for sed
+    choose
+    procs
+    dust
+    duf
+    gdu
+    gping
+    xh
+    aria2
+    just
+    tealdeer
+    dog
+    lnav
+    tailspin
+    nix-output-monitor
   ];
 
   # TUI tools
@@ -67,7 +82,6 @@ in
     programs = {
       television.enable = true;
       zoxide.enable = true; # Replacement for cd
-      lazygit.enable = true;
       fzf.fuzzyCompletion = true;
     };
 

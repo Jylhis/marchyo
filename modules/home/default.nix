@@ -3,6 +3,8 @@
     ../generic/fontconfig.nix
     ../generic/git.nix
     ../generic/shell.nix
+    ../generic/packages.nix
+    ./containers.nix
     ./_1password.nix
     ./theme.nix
     ./btop.nix
