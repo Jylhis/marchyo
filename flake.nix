@@ -40,13 +40,14 @@
                   useGlobalPkgs = true;
                   extraSpecialArgs = {
                     inherit (inputs) nix-colors;
+                    colorSchemes = inputs.nix-colors.colorSchemes // (import ./colorschemes);
                   };
                 };
               }
               inputs.determinate.nixosModules.default
               ./modules/nixos/default.nix
             ];
-
+            config._module.args.colorSchemes = inputs.nix-colors.colorSchemes // (import ./colorschemes);
           };
           inherit (inputs.home-manager.nixosModules) home-manager;
         };
@@ -164,10 +165,14 @@
           overlays.default = import ./overlays { inherit inputs; };
           inherit (inputs.nixpkgs) legacyPackages;
           lib = inputs.nixpkgs.lib // {
-            marchyo = import ./lib {
-              inherit (inputs.nixpkgs) lib;
-              inherit inputs nixosModules;
-            };
+            marchyo =
+              import ./lib {
+                inherit (inputs.nixpkgs) lib;
+                inherit inputs nixosModules;
+              }
+              // {
+                colorSchemes = import ./colorschemes;
+              };
           };
           templates = rec {
             default = workstation;

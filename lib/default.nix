@@ -36,7 +36,8 @@ let
         modules = [ nixosModules.default ] ++ modules;
         specialArgs = {
           inherit inputs;
-        } // extraSpecialArgs;
+        }
+        // extraSpecialArgs;
       };
 in
 {

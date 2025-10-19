@@ -41,16 +41,15 @@
 
             workstation = withSystem "x86_64-linux" (
               { inputs', ... }:
-              inputs.marchyo.lib.nixosSystem {
-                specialArgs = {
-                  inherit inputs inputs';
-                };
+              inputs.marchyo.lib.marchyo.mkNixosSystem {
+                system = "x86_64-linux";
                 modules = [
-                  inputs.home-manager.nixosModules.home-manager
-                  inputs.marchyo.nixosModules.default
                   # inputs.marchyo.diskoConfigurations.btrfs
                   ./configuration.nix
                 ];
+                extraSpecialArgs = {
+                  inherit inputs';
+                };
               }
             );
           };
