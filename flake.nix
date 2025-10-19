@@ -162,7 +162,10 @@
             btrfs = ./disko/btrfs.nix;
           };
           overlays.default = import ./overlays { inherit inputs; };
-          inherit (inputs.nixpkgs) legacyPackages lib;
+          inherit (inputs.nixpkgs) legacyPackages;
+          lib = inputs.nixpkgs.lib // {
+            marchyo = import ./lib { inherit (inputs.nixpkgs) lib; };
+          };
           templates = rec {
             default = workstation;
             workstation = {
