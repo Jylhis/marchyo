@@ -66,7 +66,8 @@
           inputs.disko.flakeModules.default
           inputs.home-manager.flakeModules.home-manager
           inputs.treefmt-nix.flakeModule
-          flakeModules.default
+          # Note: flakeModules.default is for users of marchyo, not for marchyo itself
+          # Importing it here would cause infinite recursion
         ];
 
         perSystem =
