@@ -81,7 +81,6 @@ in
     # Shell
     programs = {
       television.enable = true;
-      zoxide.enable = true; # Replacement for cd
       fzf.fuzzyCompletion = true;
     };
 
