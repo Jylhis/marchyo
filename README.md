@@ -222,6 +222,40 @@ programs.kitty = {
 };
 ```
 
+## Documentation
+
+Marchyo provides comprehensive auto-generated documentation:
+
+### Building Documentation
+
+```bash
+# Build all documentation
+nix build .#docs-all
+
+# Build specific documentation
+nix build .#docs-options-nixos    # NixOS options reference
+nix build .#docs-colorschemes      # Color scheme catalog
+nix build .#docs-api               # Library API reference
+
+# Serve documentation locally
+nix run .#docs-serve
+# Opens http://localhost:8080
+```
+
+### Available Documentation
+
+- **NixOS Options Reference** - Complete reference for all `marchyo.*` configuration options
+- **API Reference** - Documentation for library functions (`mkNixosSystem`, `mapListToAttrs`, color utilities)
+- **Colorscheme Catalog** - Visual preview of all available Base16 color schemes with usage examples
+
+### Viewing Documentation
+
+After building, open the documentation in your browser:
+
+```bash
+firefox result/index.html
+```
+
 ## Development
 
 ### Commands
@@ -230,6 +264,7 @@ programs.kitty = {
 - `nix flake show` - Display flake outputs
 - `nix fmt` - Format Nix code
 - `nix develop` - Enter development shell
+- `nix run .#docs-serve` - Serve documentation locally
 
 ### Testing
 

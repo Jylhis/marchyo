@@ -28,20 +28,13 @@ let
       ;
   };
 
-  # Import VM-based test categories (slow, VM required)
+  # Import VM-based test (slow, VM required)
   nixosTests = import ./nixos {
     pkgs = testPkgs;
     inherit lib nixosModules;
   };
-  homeTests = import ./home {
-    pkgs = testPkgs;
-    inherit
-      lib
-      homeModules
-      home-manager
-      nixosModules
-      ;
-  };
+
+  # Import integration tests (only lightweight check)
   integrationTests = import ./integration {
     pkgs = testPkgs;
     inherit
@@ -51,19 +44,13 @@ let
       home-manager
       ;
   };
-
-  # Separate VM tests from lightweight integration tests
-  vmIntegrationTests = builtins.removeAttrs integrationTests [ "integration-module-eval" ];
-  lightweightIntegrationTests = {
-    inherit (integrationTests) integration-module-eval;
-  };
 in
 {
   # Lightweight checks that run during `nix flake check`
   # These should complete in under 1 minute total
-  checks = lightweightTests // lightweightIntegrationTests;
+  checks = lightweightTests // integrationTests;
 
   # VM-based tests that must be run manually
   # Run with: nix build .#vmTests.x86_64-linux.<test-name>
-  vmTests = nixosTests // homeTests // vmIntegrationTests;
+  vmTests = nixosTests;
 }

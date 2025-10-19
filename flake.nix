@@ -71,7 +71,13 @@
         ];
 
         perSystem =
-          { system, ... }:
+          {
+            system,
+            pkgs,
+            lib,
+            config,
+            ...
+          }:
           {
             treefmt = {
               projectRootFile = "flake.nix";
@@ -155,6 +161,84 @@
                 installer-graphical-vm = installer-graphical.vm;
                 profile-developer-vm = profile-developer.vm;
                 inherit test-system;
+
+                # Documentation packages
+                docs-options-nixos = import ./docs/build/options-nixos.nix {
+                  inherit lib pkgs;
+                  nixosModules = nixosModules.default;
+                };
+
+                docs-colorschemes = import ./docs/build/colorschemes.nix {
+                  inherit lib pkgs;
+                  stdenvNoCC = pkgs.stdenvNoCC;
+                };
+
+                docs-api = import ./docs/build/api.nix {
+                  inherit lib pkgs;
+                  stdenvNoCC = pkgs.stdenvNoCC;
+                };
+
+                # Combined documentation package
+                docs-all = pkgs.runCommand "marchyo-docs-all" { } ''
+                  mkdir -p $out/{options-nixos,colorschemes,api}
+
+                  ${pkgs.rsync}/bin/rsync -a ${config.packages.docs-options-nixos}/ $out/options-nixos/
+                  ${pkgs.rsync}/bin/rsync -a ${config.packages.docs-colorschemes}/ $out/colorschemes/
+                  ${pkgs.rsync}/bin/rsync -a ${config.packages.docs-api}/ $out/api/
+
+                  # Create index.html
+                  cat > $out/index.html <<'EOF'
+                  <!DOCTYPE html>
+                  <html lang="en">
+                  <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Marchyo Documentation</title>
+                    <style>
+                      body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+                      @media (prefers-color-scheme: dark) {
+                        body { background: #1a1a1a; color: #e0e0e0; }
+                        h1 { color: #e0e0e0; }
+                        .description { color: #aaa; }
+                      }
+                      h1 { color: #333; }
+                      ul { list-style: none; padding: 0; }
+                      li { margin: 15px 0; }
+                      a { color: #0066cc; text-decoration: none; font-size: 1.2em; }
+                      a:hover { text-decoration: underline; }
+                      .description { color: #666; margin-left: 20px; font-size: 0.95em; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>Marchyo Documentation</h1>
+                    <ul>
+                      <li>
+                        <a href="options-nixos/html/">NixOS Module Options</a>
+                        <div class="description">All marchyo.* NixOS configuration options</div>
+                      </li>
+                      <li>
+                        <a href="api/html/">API Reference</a>
+                        <div class="description">Library functions and helpers</div>
+                      </li>
+                      <li>
+                        <a href="colorschemes/">Color Schemes</a>
+                        <div class="description">Available Base16 color schemes with visual previews</div>
+                      </li>
+                    </ul>
+                  </body>
+                  </html>
+                  EOF
+                '';
+
+                # Development server helper
+                docs-serve = pkgs.writeShellScriptBin "docs-serve" ''
+                  echo "Building documentation..."
+                  DOCS_PATH=$(nix build .#docs-all --no-link --print-out-paths)
+                  echo "Documentation built at: $DOCS_PATH"
+                  echo "Starting server at http://localhost:8080"
+                  echo "Press Ctrl+C to stop"
+                  ${pkgs.python3}/bin/python -m http.server 8080 -d "$DOCS_PATH"
+                '';
               };
           };
 
