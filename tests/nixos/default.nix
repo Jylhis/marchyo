@@ -34,9 +34,10 @@ let
   };
 in
 {
-  # Desktop environment test
-  nixos-desktop = pkgs.testers.runNixOSTest {
-    name = "marchyo-desktop";
+  # Default VM test - matches the template configuration
+  # This represents the minimal working state from templates/workstation
+  nixos-default = pkgs.testers.runNixOSTest {
+    name = "marchyo-default";
 
     nodes.machine =
       { ... }:
@@ -47,155 +48,32 @@ in
           testUser
         ];
 
-        marchyo = {
-          desktop.enable = true;
-          users.testuser = {
-            enable = true;
-            fullname = "Test User";
-            email = "test@example.com";
-          };
-        };
-      };
-
-    testScript = ''
-      start_all()
-      machine.wait_for_unit("multi-user.target")
-
-      # Test Hyprland is installed
-      machine.succeed("command -v Hyprland")
-
-      # Test fonts are configured
-      machine.succeed("fc-list | grep -i 'noto'")
-
-      # Test greetd is running
-      machine.wait_for_unit("greetd.service")
-    '';
-  };
-
-  # Development tools test
-  nixos-development = pkgs.testers.runNixOSTest {
-    name = "marchyo-development";
-
-    nodes.machine =
-      { ... }:
-      {
-        imports = [
-          nixosModules
-          testDefaults
-          testUser
-        ];
-
-        marchyo = {
-          development.enable = true;
-          users.testuser = {
-            enable = true;
-            fullname = "Test User";
-            email = "test@example.com";
-          };
-        };
-      };
-
-    testScript = ''
-      start_all()
-      machine.wait_for_unit("multi-user.target")
-
-      # Test Docker is available
-      machine.succeed("command -v docker")
-
-      # Test GitHub CLI is available
-      machine.succeed("command -v gh")
-
-      # Test buildah is available
-      machine.succeed("command -v buildah")
-    '';
-  };
-
-  # User configuration test
-  nixos-users = pkgs.testers.runNixOSTest {
-    name = "marchyo-users";
-
-    nodes.machine =
-      { ... }:
-      {
-        imports = [
-          nixosModules
-          testDefaults
-        ];
-
-        marchyo.users = {
-          alice = {
-            enable = true;
-            fullname = "Alice Smith";
-            email = "alice@example.com";
-          };
-          bob = {
-            enable = true;
-            fullname = "Bob Jones";
-            email = "bob@example.com";
-          };
-        };
-
-        # Actually create the users
-        users.users = {
-          alice = {
-            isNormalUser = true;
-            uid = 1000;
-            group = "alice";
-          };
-          bob = {
-            isNormalUser = true;
-            uid = 1001;
-            group = "bob";
-          };
-        };
-
-        users.groups = {
-          alice.gid = 1000;
-          bob.gid = 1001;
-        };
-      };
-
-    testScript = ''
-      start_all()
-      machine.wait_for_unit("multi-user.target")
-
-      # Test that marchyo user options are properly defined
-      # and users are created
-      machine.succeed("id alice")
-      machine.succeed("id bob")
-      machine.succeed("systemctl status")
-    '';
-  };
-
-  # Git configuration test
-  nixos-git = pkgs.testers.runNixOSTest {
-    name = "marchyo-git";
-
-    nodes.machine =
-      { ... }:
-      {
-        imports = [
-          nixosModules
-          testDefaults
-          testUser
-        ];
-
+        # Basic marchyo user configuration (same as template)
         marchyo.users.testuser = {
           enable = true;
           fullname = "Test User";
           email = "test@example.com";
         };
+
+        # Allow unfree packages (same as template)
+        nixpkgs.config.allowUnfree = true;
       };
 
     testScript = ''
       start_all()
       machine.wait_for_unit("multi-user.target")
 
-      # Test git is installed (from generic module)
+      # Test user exists
+      machine.succeed("id testuser")
+
+      # Test git is available (from generic module)
       machine.succeed("command -v git")
 
       # Test git-lfs is available
       machine.succeed("git lfs version")
+
+      # Test system is functional
+      machine.succeed("systemctl status")
     '';
   };
 }

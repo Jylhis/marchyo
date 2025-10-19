@@ -36,7 +36,8 @@ let
         modules = [ nixosModules.default ] ++ modules;
         specialArgs = {
           inherit inputs;
-        } // extraSpecialArgs;
+        }
+        // extraSpecialArgs;
       };
 in
 {
@@ -51,4 +52,6 @@ in
     );
 
   inherit mkNixosSystem;
+
+  colors = import ./colors.nix { inherit lib; };
 }

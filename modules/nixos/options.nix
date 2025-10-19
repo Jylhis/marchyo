@@ -95,8 +95,23 @@ in
     theme = {
       enable = mkOption {
         type = types.bool;
-        default = false;
+        default = true;
         description = "Enable nix-colors theming system";
+      };
+
+      variant = mkOption {
+        type = types.enum [
+          "light"
+          "dark"
+        ];
+        default = "dark";
+        example = "light";
+        description = ''
+          Theme variant preference (light or dark).
+          Used to select default color scheme when scheme is null:
+          - "dark" defaults to modus-vivendi-tinted
+          - "light" defaults to modus-operandi-tinted
+        '';
       };
 
       scheme = mkOption {
@@ -106,8 +121,9 @@ in
         description = ''
           Color scheme to use. Can be:
           - A scheme name from nix-colors (e.g., "dracula", "gruvbox-dark-medium")
+          - A custom color scheme name (e.g., "modus-vivendi-tinted", "modus-operandi-tinted")
           - A custom attribute set defining base00-base0F colors
-          - null to use default scheme
+          - null to use default scheme based on variant
         '';
       };
     };
