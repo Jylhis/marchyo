@@ -1,6 +1,5 @@
 # Main test suite entry point
-# This file aggregates all lightweight tests that run during `nix flake check`
-# Fast tests only - should complete in under 1 minute total
+# Fast evaluation-based tests that run during `nix flake check`
 {
   system,
   lib,
@@ -17,8 +16,8 @@ let
     config.allowUnfree = true;
   };
 
-  # Import lightweight tests (fast, no VM required)
-  lightweightTests = import ./lightweight {
+  # Import module evaluation tests
+  moduleTests = import ./module-tests.nix {
     pkgs = testPkgs;
     inherit
       lib
@@ -29,17 +28,11 @@ let
       ;
   };
 
-  # Import integration tests (only lightweight check)
-  integrationTests = import ./integration {
+  # Import lib function unit tests
+  libTests = import ./lib-tests.nix {
     pkgs = testPkgs;
-    inherit
-      lib
-      nixosModules
-      homeModules
-      home-manager
-      nix-colors
-      ;
+    inherit lib;
   };
 in
-# Return only lightweight checks that run during `nix flake check`
-lightweightTests // integrationTests
+# Return all checks
+moduleTests // libTests
