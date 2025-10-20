@@ -11,6 +11,8 @@
     ./options.nix
     ./packages.nix
     ./containers.nix
+    ./desktop-config.nix
+    ./development-config.nix
     ./fonts.nix
     ./graphics.nix
     ./hardware.nix

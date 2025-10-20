@@ -19,8 +19,11 @@
   # System hostname
   networking.hostName = "workstation";
 
-  # Desktop environment - Hyprland with full features
-  # marchyo.desktop.hyprland.enable = true;
+  # Enable desktop environment (includes Hyprland, office apps, media apps)
+  marchyo.desktop.enable = true;
+
+  # Enable development tools (docker, virtualization, dev tools)
+  marchyo.development.enable = true;
 
   # Bootloader configuration
   boot.loader = {

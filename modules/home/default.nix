@@ -4,7 +4,6 @@
     ../generic/git.nix
     ../generic/shell.nix
     ../generic/packages.nix
-    ./containers.nix
     ./_1password.nix
     ./theme.nix
     ./bat.nix
