@@ -288,6 +288,8 @@ in
         layerrule = [
           # Proper background blur for launchers
           "blur,vicinae"
+          "ignorealpha 0, vicinae"
+          "noanim, vicinae"
           "blur,wofi"
           "blur,waybar"
           "noanim, selection"
@@ -491,6 +493,7 @@ in
         exec-once = [
           # Essential services
           "kanshi"
+          "vicinae server"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"
