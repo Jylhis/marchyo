@@ -58,7 +58,7 @@ in
         xwayland.force_zero_scaling = true;
 
         monitor = lib.mkAfter [
-          ", preferred, auto, 1"
+          ", preferred, auto, 1, vrr, 1"
         ];
 
         # Enhanced input configuration
@@ -106,9 +106,13 @@ in
           );
           "col.inactive_border" = mkDefault (if colors != null then rgb colors.base03 else "rgba(595959aa)");
           resize_on_border = false;
-          allow_tearing = false;
+          allow_tearing = true;
 
           layout = "dwindle";
+        };
+
+        render = {
+          direct_scanout = true;
         };
 
         # Modern decorations with performance considerations
