@@ -51,4 +51,6 @@ in
     );
 
   inherit mkNixosSystem;
+
+  colors = import ./colors.nix { inherit lib; };
 }

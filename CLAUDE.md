@@ -56,6 +56,48 @@ Key external dependencies:
 - home-manager for user environment management
 - disko for disk partitioning (imported but not actively used in visible configs)
 - treefmt-nix for code formatting
+- nix-colors for Base16 theming system
+
+### Colorschemes
+Marchyo provides a unified theming system combining nix-colors Base16 schemes with custom colorschemes:
+
+**Built-in nix-colors schemes** - Access 200+ schemes from the nix-colors library (e.g., `dracula`, `gruvbox-dark-medium`, `catppuccin-mocha`)
+
+**Custom colorschemes** (in `colorschemes/` directory):
+- `modus-operandi-tinted` - Light theme by Protesilaos Stavrou
+- `modus-vivendi-tinted` - Dark theme by Protesilaos Stavrou
+
+**Usage examples:**
+```nix
+# Use a nix-colors scheme
+marchyo.theme = {
+  enable = true;
+  scheme = "dracula";
+};
+
+# Use a custom scheme
+marchyo.theme = {
+  enable = true;
+  scheme = "modus-vivendi-tinted";
+};
+
+# Use a completely custom scheme
+marchyo.theme = {
+  enable = true;
+  scheme = {
+    slug = "my-custom";
+    name = "My Custom Scheme";
+    author = "Your Name";
+    variant = "dark";
+    palette = {
+      base00 = "000000";
+      # ... base01-base0F
+    };
+  };
+};
+```
+
+Colorschemes are accessible via `flake.lib.marchyo.colorSchemes` for external use.
 
 ## Packages
 - `packages/plymouth-marchyo-theme/` - Custom Plymouth boot theme

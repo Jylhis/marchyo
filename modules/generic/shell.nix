@@ -25,7 +25,5 @@ _: {
     fish = {
       enable = true;
     };
-
-    starship.enable = true;
   };
 }
