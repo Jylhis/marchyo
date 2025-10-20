@@ -40,13 +40,14 @@
                   useGlobalPkgs = true;
                   extraSpecialArgs = {
                     inherit (inputs) nix-colors;
+                    colorSchemes = inputs.nix-colors.colorSchemes // (import ./colorschemes);
                   };
                 };
               }
               inputs.determinate.nixosModules.default
               ./modules/nixos/default.nix
             ];
-
+            config._module.args.colorSchemes = inputs.nix-colors.colorSchemes // (import ./colorschemes);
           };
           inherit (inputs.home-manager.nixosModules) home-manager;
         };
@@ -100,7 +101,7 @@
                 tests = import ./tests {
                   inherit system;
                   inherit (inputs.nixpkgs) lib;
-                  inherit (inputs) nixpkgs home-manager;
+                  inherit (inputs) nixpkgs home-manager nix-colors;
                   nixosModules = nixosModules.default;
                   homeModules = homeModules.default;
                 };

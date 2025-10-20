@@ -1,5 +1,4 @@
-@define-color background #1e1e1e;
-@define-color foreground #e0e0e0;
+/* Colors are defined via Nix colorScheme in waybar.nix */
 
 * {
   background-color: @background;
@@ -72,22 +71,22 @@ tooltip {
 }
 
 #custom-screenrecording-indicator.active {
-  color: #a55555;
+  color: @urgent;
 }
 
 menu {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border: 1px solid #3e3e3e;
+  background-color: @background;
+  color: @foreground;
+  border: 1px solid @border;
   padding: 4px;
 }
 
 menuitem {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
+  background-color: @background;
+  color: @foreground;
   padding: 4px 8px;
 }
 
 menuitem:hover {
-  background-color: #2e2e2e;
+  background-color: @accent;
 }

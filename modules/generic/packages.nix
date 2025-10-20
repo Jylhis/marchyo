@@ -1,8 +1,5 @@
 {
   programs = {
-    bat = {
-      enable = true;
-    };
     zoxide = {
       enable = true;
     };

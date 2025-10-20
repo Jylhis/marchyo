@@ -7,21 +7,26 @@
     ./containers.nix
     ./_1password.nix
     ./theme.nix
+    ./bat.nix
     ./btop.nix
     ./fastfetch.nix
+    ./fzf.nix
     ./xournalpp.nix
-    ./ghostty.nix
     ./git.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
     ./hyprpaper.nix
+    ./k9s.nix
     ./kitty.nix
+    ./lazygit.nix
     ./locale.nix
     ./mako.nix
+    ./obsidian.nix
     ./packages.nix
     ./shell.nix
+    ./starship.nix
     ./waybar.nix
     ./wofi.nix
   ];
