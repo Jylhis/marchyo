@@ -41,20 +41,46 @@
 
             workstation = withSystem "x86_64-linux" (
               { inputs', ... }:
-              inputs.marchyo.lib.nixosSystem {
-                specialArgs = {
-                  inherit inputs inputs';
-                };
+              inputs.marchyo.lib.marchyo.mkNixosSystem {
+                system = "x86_64-linux";
                 modules = [
-                  inputs.home-manager.nixosModules.home-manager
-                  inputs.marchyo.nixosModules.default
                   # inputs.marchyo.diskoConfigurations.btrfs
                   ./configuration.nix
                 ];
+                extraSpecialArgs = {
+                  inherit inputs';
+                };
               }
             );
           };
         };
+
+        # Example of using Marchyo helpers in perSystem
+        # See docs/HELPERS.md for comprehensive documentation
+        perSystem =
+          { marchyo, ... }:
+          {
+            # Expose Marchyo's custom packages
+            packages = {
+              inherit (marchyo.packages) plymouth-marchyo-theme hyprmon;
+
+              # Build a VM for testing
+              vm = marchyo.builders.vm "workstation";
+
+              # Build the full system
+              system = marchyo.builders.toplevel "workstation";
+            };
+
+            # Use the pre-configured development shell
+            devShells.default = marchyo.devShells.default;
+
+            # Useful apps for system management
+            apps = {
+              show = marchyo.apps.show-systems;
+              vm = marchyo.apps.build-vm;
+              colors = marchyo.apps.list-colorschemes;
+            };
+          };
       }
     );
 }
