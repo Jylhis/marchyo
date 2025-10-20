@@ -24,7 +24,6 @@ Marchyo is a NixOS configuration flake providing modular system and home-manager
 - `modules/nixos/` - NixOS system configuration modules
 - `modules/home/` - Home Manager user configuration modules
 - `modules/generic/` - Shared modules between NixOS and Home Manager
-- `modules/flake/` - Flake-specific modules and utilities
 
 ### Key Modules
 - `modules/nixos/options.nix` - Defines custom options under `marchyo.*` namespace
@@ -102,8 +101,37 @@ Colorschemes are accessible via `flake.lib.marchyo.colorSchemes` for external us
 ## Packages
 - `packages/plymouth-marchyo-theme/` - Custom Plymouth boot theme
 
+## Using Marchyo
+
+### As a Library
+Use `marchyo.lib.marchyo.mkNixosSystem` to create NixOS configurations with Marchyo modules:
+
+```nix
+{
+  inputs.marchyo.url = "github:yourusername/marchyo";
+
+  outputs = { marchyo, ... }: {
+    nixosConfigurations.myhost = marchyo.lib.marchyo.mkNixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./hardware-configuration.nix
+        { marchyo.desktop.enable = true; }
+      ];
+    };
+  };
+}
+```
+
+### Available Outputs
+- `nixosModules.default` - Default NixOS module with Marchyo configuration
+- `homeModules.default` - Default Home Manager module
+- `lib.marchyo` - Utility functions including `mkNixosSystem`
+- `diskoConfigurations` - Disk partitioning configurations
+- `overlays.default` - Nixpkgs overlay
+- `templates` - Project templates
+
 ## Development Notes
-- The flake supports both x86_64-linux and aarch64-linux systems
+- The flake supports x86_64-linux systems
 - All Nix files should follow the project's formatting standards enforced by treefmt
 - Use `nix flake check` before committing to ensure configuration validity
-- Custom utility functions are available in `lib/default.nix` including `mapListToAttrs`
+- Custom utility functions are available in `lib/default.nix` including `mapListToAttrs` and `mkNixosSystem`

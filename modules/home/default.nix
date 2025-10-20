@@ -23,7 +23,6 @@
     ./lazygit.nix
     ./locale.nix
     ./mako.nix
-    ./obsidian.nix
     ./packages.nix
     ./shell.nix
     ./starship.nix

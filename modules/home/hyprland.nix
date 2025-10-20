@@ -63,15 +63,19 @@ in
 
         # Enhanced input configuration
         input = {
-          kb_layout = lib.mkIf (config.home.keyboard.layout != null) (
-            lib.mkDefault config.home.keyboard.layout
-          );
-          kb_options = lib.mkIf (config.home.keyboard.options != null) (
-            lib.mkDefault (lib.strings.join "," config.home.keyboard.options)
-          );
-          kb_variant = lib.mkIf (config.home.keyboard.variant != null) (
-            lib.mkDefault (lib.strings.join "," config.home.keyboard.variant)
-          );
+          kb_layout = lib.mkIf (
+            (config.home ? keyboard) && (config.home.keyboard ? layout) && (config.home.keyboard.layout != null)
+          ) (lib.mkDefault config.home.keyboard.layout);
+          kb_options = lib.mkIf (
+            (config.home ? keyboard)
+            && (config.home.keyboard ? options)
+            && (config.home.keyboard.options != null)
+          ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.options));
+          kb_variant = lib.mkIf (
+            (config.home ? keyboard)
+            && (config.home.keyboard ? variant)
+            && (config.home.keyboard.variant != null)
+          ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.variant));
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;
@@ -100,9 +104,7 @@ in
           "col.active_border" = mkDefault (
             if colors != null then rgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
           );
-          "col.inactive_border" = mkDefault (
-            if colors != null then rgb colors.base03 else "rgba(595959aa)"
-          );
+          "col.inactive_border" = mkDefault (if colors != null then rgb colors.base03 else "rgba(595959aa)");
           resize_on_border = false;
           allow_tearing = false;
 
