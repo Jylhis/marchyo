@@ -2,21 +2,26 @@
   description = "Marchyo Developer Workstation Configuration";
 
   inputs = {
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*";
     marchyo.url = "github:Jylhis/marchyo";
   };
 
   outputs =
-    { marchyo, ... }:
+    {
+      nixpkgs,
+      marchyo,
+      ...
+    }@inputs:
     {
       nixosConfigurations = {
-        workstation = marchyo.lib.marchyo.mkNixosSystem {
+        workstation = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [
-            # marchyo.diskoConfigurations.btrfs
+            marchyo.nixosModules.default
             ./configuration.nix
           ];
-          extraSpecialArgs = {
-            # Add any extra arguments here
+          specialArgs = {
+            inherit inputs;
           };
         };
       };

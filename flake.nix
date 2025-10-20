@@ -12,11 +12,6 @@
       url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Disk partitioning tool - imported for future use
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nix-colors.url = "github:misterio77/nix-colors";
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
@@ -26,7 +21,6 @@
     inputs@{
       nixpkgs,
       home-manager,
-      disko,
       nix-colors,
       treefmt-nix,
       determinate,
@@ -42,7 +36,6 @@
       nixosModules = {
         default = {
           imports = [
-            disko.nixosModules.disko
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -70,10 +63,6 @@
       # Flake-level outputs (not per-system)
       inherit nixosModules homeModules;
 
-      diskoConfigurations = {
-        btrfs = ./disko/btrfs.nix;
-      };
-
       overlays.default = import ./overlays { inherit inputs; };
 
       inherit (nixpkgs) legacyPackages;
@@ -82,7 +71,6 @@
         marchyo =
           import ./lib {
             inherit (nixpkgs) lib;
-            inherit inputs nixosModules;
           }
           // {
             colorSchemes = import ./colorschemes;

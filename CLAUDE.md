@@ -34,7 +34,8 @@ Marchyo is a NixOS configuration flake providing modular system and home-manager
 ### Configuration Categories
 NixOS modules are organized by function:
 - System: boot, hardware, performance, security
-- Desktop: hyprland, wayland, graphics, fonts
+- Desktop: hyprland, wayland, graphics, fonts, desktop-config (automatic setup when desktop.enable = true)
+- Development: development-config (automatic setup when development.enable = true)
 - Network: networking configuration
 - Applications: office, media, containers
 - Utilities: printing, locale, update management
@@ -45,6 +46,15 @@ Home Manager modules cover:
 - Development: git configuration
 - System tools: btop, fastfetch
 
+### Feature Flags
+Marchyo uses feature flags to enable groups of related functionality:
+- `marchyo.desktop.enable` - Enables desktop environment (Hyprland, fonts, audio, bluetooth, etc.). Automatically enables office and media apps by default.
+- `marchyo.development.enable` - Enables development tools (git, docker, virtualization, build tools, etc.)
+- `marchyo.office.enable` - Enables office applications (LibreOffice, etc.)
+- `marchyo.media.enable` - Enables media applications (Spotify, MPV, etc.)
+
+Simply set these to `true` in your configuration to enable the full stack of related packages and services.
+
 ### Custom Options
 The flake defines custom options under the `marchyo` namespace in `options.nix`:
 - `marchyo.users.*` - User account configuration with email, fullname, and enable flags
@@ -53,9 +63,12 @@ The flake defines custom options under the `marchyo` namespace in `options.nix`:
 Key external dependencies:
 - nixos-hardware for hardware-specific configurations
 - home-manager for user environment management
-- disko for disk partitioning (imported but not actively used in visible configs)
 - treefmt-nix for code formatting
 - nix-colors for Base16 theming system
+- determinate for Determinate Systems tools (nix installer, etc.)
+- fh for FlakeHub CLI
+
+Note: disko configurations are available in the `disko/` directory but disko is not a required dependency. Add it to your flake inputs if you need disk partitioning.
 
 ### Colorschemes
 Marchyo provides a unified theming system combining nix-colors Base16 schemes with custom colorschemes:
@@ -104,19 +117,31 @@ Colorschemes are accessible via `flake.lib.marchyo.colorSchemes` for external us
 ## Using Marchyo
 
 ### As a Library
-Use `marchyo.lib.marchyo.mkNixosSystem` to create NixOS configurations with Marchyo modules:
+Import Marchyo's NixOS modules and use feature flags to enable functionality:
 
 ```nix
 {
   inputs.marchyo.url = "github:yourusername/marchyo";
 
-  outputs = { marchyo, ... }: {
-    nixosConfigurations.myhost = marchyo.lib.marchyo.mkNixosSystem {
+  outputs = { nixpkgs, marchyo, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
+        marchyo.nixosModules.default
         ./hardware-configuration.nix
-        { marchyo.desktop.enable = true; }
+        {
+          # Enable feature flags
+          marchyo.desktop.enable = true;
+          marchyo.development.enable = true;
+
+          # Configure user
+          marchyo.users.myuser = {
+            fullname = "Your Name";
+            email = "you@example.com";
+          };
+        }
       ];
+      specialArgs = { inherit inputs; };
     };
   };
 }
@@ -125,13 +150,15 @@ Use `marchyo.lib.marchyo.mkNixosSystem` to create NixOS configurations with Marc
 ### Available Outputs
 - `nixosModules.default` - Default NixOS module with Marchyo configuration
 - `homeModules.default` - Default Home Manager module
-- `lib.marchyo` - Utility functions including `mkNixosSystem`
-- `diskoConfigurations` - Disk partitioning configurations
+- `lib.marchyo` - Utility functions and color helpers
+- `lib.marchyo.colorSchemes` - Custom colorschemes (modus-operandi-tinted, modus-vivendi-tinted)
 - `overlays.default` - Nixpkgs overlay
-- `templates` - Project templates
+- `templates` - Project templates (workstation template with desktop + development setup)
 
 ## Development Notes
 - The flake supports x86_64-linux systems
 - All Nix files should follow the project's formatting standards enforced by treefmt
 - Use `nix flake check` before committing to ensure configuration validity
-- Custom utility functions are available in `lib/default.nix` including `mapListToAttrs` and `mkNixosSystem`
+- Custom utility functions are available in `lib/default.nix`
+- Use feature flags (`marchyo.desktop.enable`, `marchyo.development.enable`, etc.) to enable groups of functionality
+- The `disko/` directory contains example disk partitioning configurations - add disko as a flake input if needed

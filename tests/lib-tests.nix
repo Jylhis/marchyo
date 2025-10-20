@@ -49,11 +49,11 @@ in
     colors.toRgba "00ff00" "1.0" == "rgba(0, 255, 0, 1.0)"
   ) "Expected toRgba to handle full opacity";
 
-  # Test mapListToAttrs helper
-  test-mapListToAttrs-simple =
+  # Test lib.genAttrs (replacement for mapListToAttrs)
+  test-genAttrs-simple =
     let
       result =
-        marchyoLib.mapListToAttrs
+        lib.genAttrs
           [
             "a"
             "b"
@@ -63,22 +63,22 @@ in
             value = name;
           });
     in
-    assertTest "mapListToAttrs-simple" (
+    assertTest "genAttrs-simple" (
       result.a.value == "a" && result.b.value == "b" && result.c.value == "c"
-    ) "Expected mapListToAttrs to map list to attribute set";
+    ) "Expected lib.genAttrs to map list to attribute set";
 
-  test-mapListToAttrs-empty =
+  test-genAttrs-empty =
     let
-      result = marchyoLib.mapListToAttrs [ ] (name: {
+      result = lib.genAttrs [ ] (name: {
         value = name;
       });
     in
-    assertTest "mapListToAttrs-empty" (result == { }) "Expected mapListToAttrs to handle empty list";
+    assertTest "genAttrs-empty" (result == { }) "Expected lib.genAttrs to handle empty list";
 
-  test-mapListToAttrs-transform =
+  test-genAttrs-transform =
     let
       result =
-        marchyoLib.mapListToAttrs
+        lib.genAttrs
           [
             "foo"
             "bar"
@@ -87,7 +87,7 @@ in
             uppercased = lib.toUpper name;
           });
     in
-    assertTest "mapListToAttrs-transform" (
+    assertTest "genAttrs-transform" (
       result.foo.uppercased == "FOO" && result.bar.uppercased == "BAR"
-    ) "Expected mapListToAttrs to apply transformation function";
+    ) "Expected lib.genAttrs to apply transformation function";
 }

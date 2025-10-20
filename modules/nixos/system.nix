@@ -5,9 +5,8 @@
   ...
 }:
 let
-  inherit ((import ../../lib { inherit lib; })) mapListToAttrs;
   mUsers = lib.filterAttrs (_name: user: user.enable) config.marchyo.users;
-  forMarchyoUsers = attr: mapListToAttrs (builtins.attrNames mUsers) (_name: attr);
+  forMarchyoUsers = attr: lib.genAttrs (builtins.attrNames mUsers) (_name: attr);
 in
 {
   services = {
