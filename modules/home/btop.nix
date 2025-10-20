@@ -1,81 +1,147 @@
 {
+  lib,
+  config,
+  osConfig ? { },
+  ...
+}:
+let
+  inherit (lib) mkIf mkMerge mkDefault;
+  hasOsConfig = osConfig != { } && osConfig ? marchyo;
+  cfg = if hasOsConfig then osConfig.marchyo.theme else null;
+  colors = if config ? colorScheme then config.colorScheme.palette else null;
+  hex = color: "#${color}";
+in
+{
   programs.btop = {
     enable = true;
-    settings = {
-      color_theme = "current";
-      theme_background = true;
-      truecolor = true;
-      force_tty = false;
-      presets = "cpu:1:default,proc:0:default cpu:0:default,mem:0:default,net:0:default cpu:0:block,net:0:tty";
-      vim_keys = false;
-      rounded_corners = true;
-      graph_symbol = "braille";
-      graph_symbol_cpu = "default";
-      graph_symbol_mem = "default";
-      graph_symbol_net = "default";
-      graph_symbol_proc = "default";
-      shown_boxes = "cpu mem net proc";
-      update_ms = 2000;
-      proc_sorting = "cpu lazy";
-      proc_reversed = false;
-      proc_tree = false;
-      proc_colors = true;
-      proc_gradient = true;
-      proc_per_core = false;
-      proc_mem_bytes = true;
-      proc_cpu_graphs = true;
-      proc_info_smaps = false;
-      proc_filter_kernel = false;
-      proc_left = false;
-      proc_aggregate = false;
-      cpu_graph_upper = "Auto";
-      cpu_graph_lower = "Auto";
-      show_gpu_info = "Auto";
-      cpu_invert_lower = true;
-      cpu_single_graph = false;
-      cpu_bottom = false;
-      show_uptime = true;
-      check_temp = true;
-      cpu_sensor = "Auto";
-      show_coretemp = true;
-      cpu_core_map = "";
-      temp_scale = "celsius";
-      base_10_sizes = false;
-      show_cpu_freq = true;
-      clock_format = "%X";
-      background_update = true;
-      custom_cpu_name = "";
-      disks_filter = "";
-      mem_graphs = true;
-      mem_below_net = false;
-      zfs_arc_cached = true;
-      show_swap = true;
-      swap_disk = true;
-      show_disks = true;
-      only_physical = true;
-      use_fstab = true;
-      zfs_hide_datasets = false;
-      disk_free_priv = false;
-      show_io_stat = true;
-      io_mode = false;
-      io_graph_combined = false;
-      io_graph_speeds = "";
-      net_download = 100;
-      net_upload = 100;
-      net_auto = true;
-      net_sync = true;
-      net_iface = "";
-      show_battery = true;
-      selected_battery = "Auto";
-      log_level = "WARNING";
-      nvml_measure_pcie_speeds = true;
-      gpu_mirror_graph = true;
-      custom_gpu_name0 = "";
-      custom_gpu_name1 = "";
-      custom_gpu_name2 = "";
-      custom_gpu_name3 = "";
-      custom_gpu_name4 = "";
-      custom_gpu_name5 = "";
+    settings = mkMerge [
+      {
+        color_theme = mkDefault "current";
+        theme_background = true;
+        truecolor = true;
+        force_tty = false;
+        presets = "cpu:1:default,proc:0:default cpu:0:default,mem:0:default,net:0:default cpu:0:block,net:0:tty";
+        vim_keys = false;
+        rounded_corners = true;
+        graph_symbol = "braille";
+        graph_symbol_cpu = "default";
+        graph_symbol_mem = "default";
+        graph_symbol_net = "default";
+        graph_symbol_proc = "default";
+        shown_boxes = "cpu mem net proc";
+        update_ms = 2000;
+        proc_sorting = "cpu lazy";
+        proc_reversed = false;
+        proc_tree = false;
+        proc_colors = true;
+        proc_gradient = true;
+        proc_per_core = false;
+        proc_mem_bytes = true;
+        proc_cpu_graphs = true;
+        proc_info_smaps = false;
+        proc_filter_kernel = false;
+        proc_left = false;
+        proc_aggregate = false;
+        cpu_graph_upper = "Auto";
+        cpu_graph_lower = "Auto";
+        show_gpu_info = "Auto";
+        cpu_invert_lower = true;
+        cpu_single_graph = false;
+        cpu_bottom = false;
+        show_uptime = true;
+        check_temp = true;
+        cpu_sensor = "Auto";
+        show_coretemp = true;
+        cpu_core_map = "";
+        temp_scale = "celsius";
+        base_10_sizes = false;
+        show_cpu_freq = true;
+        clock_format = "%X";
+        background_update = true;
+        custom_cpu_name = "";
+        disks_filter = "";
+        mem_graphs = true;
+        mem_below_net = false;
+        zfs_arc_cached = true;
+        show_swap = true;
+        swap_disk = true;
+        show_disks = true;
+        only_physical = true;
+        use_fstab = true;
+        zfs_hide_datasets = false;
+        disk_free_priv = false;
+        show_io_stat = true;
+        io_mode = false;
+        io_graph_combined = false;
+        io_graph_speeds = "";
+        net_download = 100;
+        net_upload = 100;
+        net_auto = true;
+        net_sync = true;
+        net_iface = "";
+        show_battery = true;
+        selected_battery = "Auto";
+        log_level = "WARNING";
+        nvml_measure_pcie_speeds = true;
+        gpu_mirror_graph = true;
+        custom_gpu_name0 = "";
+        custom_gpu_name1 = "";
+        custom_gpu_name2 = "";
+        custom_gpu_name3 = "";
+        custom_gpu_name4 = "";
+        custom_gpu_name5 = "";
+      }
+      (mkIf (cfg != null && cfg.enable && colors != null) {
+        color_theme = "marchyo";
+        theme_background = true;
+      })
+    ];
+    themes = mkIf (cfg != null && cfg.enable && colors != null) {
+      marchyo = with colors; ''
+        # Generated by Marchyo
+        theme[main_bg]="${hex base00}"
+        theme[main_fg]="${hex base05}"
+        theme[title]="${hex base05}"
+        theme[hi_fg]="${hex base0D}"
+        theme[selected_bg]="${hex base03}"
+        theme[selected_fg]="${hex base0D}"
+        theme[inactive_fg]="${hex base04}"
+        theme[graph_text]="${hex base06}"
+        theme[meter_bg]="${hex base03}"
+        theme[proc_misc]="${hex base06}"
+        theme[cpu_box]="${hex base0E}"
+        theme[mem_box]="${hex base0B}"
+        theme[net_box]="${hex base0C}"
+        theme[proc_box]="${hex base0D}"
+        theme[div_line]="${hex base01}"
+        theme[temp_start]="${hex base0B}"
+        theme[temp_mid]="${hex base0A}"
+        theme[temp_end]="${hex base08}"
+        theme[cpu_start]="${hex base0B}"
+        theme[cpu_mid]="${hex base0A}"
+        theme[cpu_end]="${hex base08}"
+        theme[free_start]="${hex base0A}"
+        theme[free_mid]="${hex base0B}"
+        theme[free_end]="${hex base0B}"
+        theme[cached_start]="${hex base0C}"
+        theme[cached_mid]="${hex base0C}"
+        theme[cached_end]="${hex base0A}"
+        theme[available_start]="${hex base08}"
+        theme[available_mid]="${hex base0A}"
+        theme[available_end]="${hex base0B}"
+        theme[used_start]="${hex base0A}"
+        theme[used_mid]="${hex base09}"
+        theme[used_end]="${hex base08}"
+        theme[download_start]="${hex base0B}"
+        theme[download_mid]="${hex base0A}"
+        theme[download_end]="${hex base08}"
+        theme[upload_start]="${hex base0B}"
+        theme[upload_mid]="${hex base0A}"
+        theme[upload_end]="${hex base08}"
+        theme[process_start]="${hex base0B}"
+        theme[process_mid]="${hex base0A}"
+        theme[process_end]="${hex base08}"
+      '';
     };
   };
 }
