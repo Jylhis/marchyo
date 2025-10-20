@@ -5,7 +5,7 @@
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
+      url = "https://flakehub.com/f/numtide/treefmt-nix/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -13,6 +13,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-colors.url = "github:misterio77/nix-colors";
+    vicinae.url = "github:vicinaehq/vicinae";
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
@@ -22,6 +23,7 @@
       nixpkgs,
       home-manager,
       nix-colors,
+      vicinae,
       treefmt-nix,
       determinate,
       ...
@@ -40,8 +42,9 @@
             {
               home-manager = {
                 useGlobalPkgs = true;
+                sharedModules = [ vicinae.homeManagerModules.default ];
                 extraSpecialArgs = {
-                  inherit nix-colors;
+                  inherit nix-colors vicinae;
                   colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };

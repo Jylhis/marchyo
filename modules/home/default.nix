@@ -26,6 +26,7 @@
     ./shell.nix
     ./starship.nix
     ./waybar.nix
+    ./vicinae.nix
     ./wofi.nix
   ];
 }

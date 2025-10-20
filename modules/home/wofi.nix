@@ -7,11 +7,13 @@
 let
   inherit (lib) mkIf;
   cfg = if osConfig ? marchyo then osConfig.marchyo.theme else null;
+  useWofi = if osConfig ? marchyo then osConfig.marchyo.desktop.useWofi or false else false;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   hex = color: "#${color}";
 in
 {
-  config = mkIf (cfg != null && cfg.enable && colors != null) {
+  # Only enable wofi if explicitly requested via marchyo.desktop.useWofi = true
+  config = mkIf (cfg != null && cfg.enable && colors != null && useWofi) {
     programs.wofi = {
       enable = true;
       settings = {

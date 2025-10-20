@@ -286,7 +286,8 @@ in
         # Modern keybinding system with submaps
 
         layerrule = [
-          # Proper background blur for wofi
+          # Proper background blur for launchers
+          "blur,vicinae"
           "blur,wofi"
           "blur,waybar"
           "noanim, selection"
@@ -352,7 +353,7 @@ in
           # "SUPER, G, exec, emacsclient -cF '((visibility . nil))' -e '(emacs-run-launcher)'"
 
           # Application launcher - matching Plasma's Meta key
-          "SUPER, R, exec,  wofi --show drun --sort-order=alphabetical"
+          "SUPER, R, exec, vicinae toggle"
 
           # Window management
           # "SUPER, J, togglesplit"

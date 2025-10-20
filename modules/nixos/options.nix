@@ -52,6 +52,12 @@ in
         default = false;
         description = "Enable desktop environment (Hyprland, Wayland, fonts, etc.)";
       };
+
+      useWofi = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Use wofi instead of vicinae as the application launcher";
+      };
     };
 
     development = {
