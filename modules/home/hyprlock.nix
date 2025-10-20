@@ -1,71 +1,90 @@
 {
-  programs.hyprlock = {
-    enable = true;
-    settings = {
-      general = {
-        disable_loading_bar = true;
-        grace = 10;
-        hide_cursor = true;
-        ignore_empty_input = true;
-        no_fade_in = false;
-        no_fade_out = false;
-      };
+  lib,
+  config,
+  osConfig ? { },
+  ...
+}:
+let
+  inherit (lib) mkIf;
+  hasOsConfig = osConfig != { } && osConfig ? marchyo;
+  cfg = if hasOsConfig then osConfig.marchyo.theme else null;
+  colors = if config ? colorScheme then config.colorScheme.palette else null;
 
-      animations = {
-        enabled = true;
-      };
+  # Helper to convert hex to rgb() format (Hyprlock accepts hex directly)
+  rgb = color: "rgb(${color})";
+in
+{
+  config = mkIf (cfg != null && cfg.enable && colors != null) {
+    programs.hyprlock = {
+      enable = true;
+      settings = {
+        general = {
+          disable_loading_bar = true;
+          grace = 10;
+          hide_cursor = true;
+          ignore_empty_input = true;
+          no_fade_in = false;
+          no_fade_out = false;
+        };
 
-      auth = {
-        "fingerprint:enabled" = true;
-      };
-      background = [
-        {
-          path = "screenshot";
-          blur_passes = 3;
-          blur_size = 8;
-          noise = 0.0117;
-          contrast = 0.8916;
-          brightness = 0.8172;
-          vibrancy = 0.1696;
-          vibrancy_darkness = 0.0;
-        }
-      ];
+        animations = {
+          enabled = true;
+        };
 
-      label = {
-        monitor = "";
-        text = "\$FPRINTPROMPT";
-        text_align = "center";
-        color = "rgb(211, 198, 170)";
-        font_size = 24;
-        font_family = "CaskaydiaMono Nerd Font";
-        position = "0, -100";
-        halign = "center";
-        valign = "center";
-      };
+        auth = {
+          "fingerprint:enabled" = true;
+        };
 
-      input-field = {
-        monitor = "";
-        size = "600, 100";
-        position = "0, 0";
-        halign = "center";
-        valign = "center";
+        background = [
+          {
+            path = "screenshot";
+            blur_passes = 3;
+            blur_size = 8;
+            noise = 0.0117;
+            contrast = 0.8916;
+            brightness = 0.8172;
+            vibrancy = 0.1696;
+            vibrancy_darkness = 0.0;
+          }
+        ];
 
-        # inner_color = surfaceRgb;
-        # outer_color = foregroundRgb; # #d3c6aa
-        outline_thickness = 4;
+        label = {
+          monitor = "";
+          text = "\$FPRINTPROMPT";
+          text_align = "center";
+          color = rgb colors.base05;
+          font_size = 24;
+          font_family = "CaskaydiaMono Nerd Font";
+          position = "0, -100";
+          halign = "center";
+          valign = "center";
+        };
 
-        font_family = "CaskaydiaMono Nerd Font";
-        font_size = 32;
-        # font_color = foregroundRgb;
+        input-field = {
+          monitor = "";
+          size = "600, 100";
+          position = "0, 0";
+          halign = "center";
+          valign = "center";
 
-        # placeholder_color = foregroundMutedRgb;
-        placeholder_text = "  Enter Password 󰈷";
-        check_color = "rgba(131, 192, 146, 1.0)";
-        fail_text = "<i>$PAMFAIL ($ATTEMPTS)</i>";
+          inner_color = rgb colors.base00;
+          outer_color = rgb colors.base0D;
+          outline_thickness = 4;
 
-        rounding = 0;
-        shadow_passes = 0;
-        fade_on_empty = false;
+          font_family = "CaskaydiaMono Nerd Font";
+          font_size = 32;
+          font_color = rgb colors.base05;
+
+          placeholder_color = rgb colors.base04;
+          placeholder_text = "  Enter Password 󰈷";
+          check_color = rgb colors.base0B;
+          fail_color = rgb colors.base08;
+          fail_text = "<i>\$PAMFAIL (\$ATTEMPTS)</i>";
+
+          rounding = 0;
+          shadow_passes = 0;
+          fade_on_empty = false;
+        };
       };
     };
   };
