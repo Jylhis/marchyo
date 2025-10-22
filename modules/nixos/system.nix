@@ -22,6 +22,9 @@ in
     lazyjournal # journald and logs
   ];
 
+  # Backup existing files with this extension when home-manager overwrites them
+  home-manager.backupFileExtension = "backup";
+
   home-manager.users = forMarchyoUsers (
     { osConfig, ... }:
     {
