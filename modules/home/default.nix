@@ -29,4 +29,7 @@
     ./vicinae.nix
     ./wofi.nix
   ];
+
+  # Backup existing files with this extension when home-manager overwrites them
+  home.backupFileExtension = "backup";
 }
