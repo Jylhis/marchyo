@@ -11,13 +11,10 @@
 {
   lib,
   config,
-  osConfig,
   pkgs,
   ...
 }:
 let
-  inherit (lib) mkIf;
-  cfg = if osConfig ? marchyo then osConfig.marchyo.theme else null;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   hex = color: "#${color}";
 
@@ -38,7 +35,7 @@ let
       builtins.readFile ../../assets/applications/waybar.css;
 in
 {
-  config = mkIf (cfg != null && cfg.enable) {
+  config = {
     programs.waybar = {
       enable = true;
       systemd.enable = true;

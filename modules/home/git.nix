@@ -10,6 +10,7 @@ in
 {
   programs = lib.mkIf userConfig.enable {
     git = {
+      enable = true;
       userName = userConfig.fullname;
       userEmail = userConfig.email;
       extraConfig = {
