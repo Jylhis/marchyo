@@ -14,10 +14,10 @@ let
   rgb = color: "rgb(${color})";
 in
 {
-  config = mkIf (cfg != null && cfg.enable && colors != null) {
+  config = {
     programs.hyprlock = {
       enable = true;
-      settings = {
+      settings = mkIf (cfg != null && cfg.enable && colors != null) {
         general = {
           disable_loading_bar = true;
           grace = 10;

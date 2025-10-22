@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (lib) mkIf;
+  inherit (lib) mkIf mkMerge;
   cfg = if osConfig ? marchyo then osConfig.marchyo.theme else null;
   useWofi = if osConfig ? marchyo then osConfig.marchyo.desktop.useWofi or false else false;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
@@ -152,33 +152,38 @@ let
   tomlFormat = pkgs.formats.toml { };
 in
 {
-  # Enable vicinae by default when theming is enabled, unless wofi is explicitly requested
-  config = mkIf (cfg != null && cfg.enable && colors != null && !useWofi) {
+  # Enable vicinae when wofi is not explicitly requested
+  config = mkIf (!useWofi) {
     services.vicinae = {
       enable = true;
       autoStart = true;
-      settings = {
-        # Configure window appearance
-        window = {
-          opacity = 0.95;
-          rounding = 0;
-        };
+      settings = mkMerge [
+        {
+          # Configure window appearance
+          window = {
+            opacity = 0.95;
+            rounding = 0;
+          };
 
-        # Use generated theme
-        theme = {
-          name = "marchyo-${schemeName}";
-        };
-
-        # Font configuration
-        font = {
-          size = 18;
-        };
-      };
+          # Font configuration
+          font = {
+            size = 18;
+          };
+        }
+        (mkIf (cfg != null && cfg.enable && colors != null) {
+          # Use generated theme
+          theme = {
+            name = "marchyo-${schemeName}";
+          };
+        })
+      ];
     };
 
     # Write the generated theme file using pkgs.formats.toml
-    home.file.".local/share/vicinae/themes/${themeFileName}" = mkIf (themeAttrs != null) {
-      source = tomlFormat.generate themeFileName themeAttrs;
-    };
+    home.file.".local/share/vicinae/themes/${themeFileName}" =
+      mkIf (cfg != null && cfg.enable && themeAttrs != null)
+        {
+          source = tomlFormat.generate themeFileName themeAttrs;
+        };
   };
 }
