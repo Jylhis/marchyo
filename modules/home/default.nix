@@ -23,6 +23,7 @@
     ./locale.nix
     ./mako.nix
     ./packages.nix
+    ./screenshot.nix
     ./shell.nix
     ./starship.nix
     ./waybar.nix
