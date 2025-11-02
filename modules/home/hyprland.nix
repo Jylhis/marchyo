@@ -518,9 +518,7 @@ in
       wallust
       pywal
 
-      # Screenshots and screen recording
-      grim
-      slurp
+      # Screen recording
       wf-recorder
 
       # System monitoring and control
