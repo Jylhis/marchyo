@@ -22,6 +22,7 @@
     ./lazygit.nix
     ./locale.nix
     ./mako.nix
+    ./obsidian.nix
     ./packages.nix
     ./screenshot.nix
     ./shell.nix

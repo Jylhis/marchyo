@@ -9,8 +9,44 @@ let
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   variant = if config ? colorScheme then config.colorScheme.variant else "dark";
 
-  # Helper to convert hex to rgb() format (Hyprland accepts hex directly)
-  rgb = color: "rgb(${color})";
+  # Convert 2-character hex string to decimal
+  hexToDec =
+    hex:
+    let
+      hexChars = {
+        "0" = 0;
+        "1" = 1;
+        "2" = 2;
+        "3" = 3;
+        "4" = 4;
+        "5" = 5;
+        "6" = 6;
+        "7" = 7;
+        "8" = 8;
+        "9" = 9;
+        "a" = 10;
+        "b" = 11;
+        "c" = 12;
+        "d" = 13;
+        "e" = 14;
+        "f" = 15;
+      };
+      chars = lib.strings.stringToCharacters (lib.strings.toLower hex);
+      high = hexChars.${builtins.elemAt chars 0};
+      low = hexChars.${builtins.elemAt chars 1};
+    in
+    high * 16 + low;
+
+  # Helper to convert hex to rgb() format
+  toRgb =
+    color:
+    let
+      inherit (lib.strings) substring;
+      r = hexToDec (substring 0 2 color);
+      g = hexToDec (substring 2 2 color);
+      b = hexToDec (substring 4 2 color);
+    in
+    "rgb(${toString r} ${toString g} ${toString b})";
 in
 {
   config = {
@@ -39,8 +75,6 @@ in
     };
 
     wayland.windowManager.hyprland = {
-      enable = true;
-      systemd.enable = true;
       settings = {
 
         # Default apps
@@ -58,24 +92,20 @@ in
         xwayland.force_zero_scaling = true;
 
         monitor = lib.mkAfter [
-          ", preferred, auto, 1, vrr, 1"
+          ", preferred, auto, 1"
         ];
 
         # Enhanced input configuration
         input = {
-          kb_layout = lib.mkIf (
-            (config.home ? keyboard) && (config.home.keyboard ? layout) && (config.home.keyboard.layout != null)
-          ) (lib.mkDefault config.home.keyboard.layout);
-          kb_options = lib.mkIf (
-            (config.home ? keyboard)
-            && (config.home.keyboard ? options)
-            && (config.home.keyboard.options != null)
-          ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.options));
-          kb_variant = lib.mkIf (
-            (config.home ? keyboard)
-            && (config.home.keyboard ? variant)
-            && (config.home.keyboard.variant != null)
-          ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.variant));
+          kb_layout = lib.mkIf (config.home.keyboard.layout != null) (
+            lib.mkDefault config.home.keyboard.layout
+          );
+          kb_options = lib.mkIf (config.home.keyboard.options != null) (
+            lib.mkDefault (lib.strings.join "," config.home.keyboard.options)
+          );
+          kb_variant = lib.mkIf (config.home.keyboard.variant != null) (
+            lib.mkDefault (lib.strings.join "," config.home.keyboard.variant)
+          );
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;
@@ -102,17 +132,15 @@ in
           border_size = 2;
 
           "col.active_border" = mkDefault (
-            if colors != null then rgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
+            if colors != null then toRgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
           );
-          "col.inactive_border" = mkDefault (if colors != null then rgb colors.base03 else "rgba(595959aa)");
+          "col.inactive_border" = mkDefault (
+            if colors != null then toRgb colors.base03 else "rgba(595959aa)"
+          );
           resize_on_border = false;
-          allow_tearing = true;
+          allow_tearing = false;
 
           layout = "dwindle";
-        };
-
-        render = {
-          direct_scanout = true;
         };
 
         # Modern decorations with performance considerations
@@ -126,7 +154,7 @@ in
             enabled = true;
             range = 2;
             render_power = 3;
-            color = mkDefault (if colors != null then rgb colors.base00 else "rgba(1a1a1aee)");
+            color = mkDefault (if colors != null then toRgb colors.base00 else "rgba(1a1a1aee)");
           };
 
           blur = {
@@ -286,10 +314,7 @@ in
         # Modern keybinding system with submaps
 
         layerrule = [
-          # Proper background blur for launchers
-          "blur,vicinae"
-          "ignorealpha 0, vicinae"
-          "noanim, vicinae"
+          # Proper background blur for wofi
           "blur,wofi"
           "blur,waybar"
           "noanim, selection"
@@ -355,7 +380,7 @@ in
           # "SUPER, G, exec, emacsclient -cF '((visibility . nil))' -e '(emacs-run-launcher)'"
 
           # Application launcher - matching Plasma's Meta key
-          "SUPER, R, exec, vicinae toggle"
+          "SUPER, R, exec,  wofi --show drun --sort-order=alphabetical"
 
           # Window management
           # "SUPER, J, togglesplit"
@@ -493,7 +518,6 @@ in
         exec-once = [
           # Essential services
           "kanshi"
-          "vicinae server"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"
@@ -518,7 +542,9 @@ in
       wallust
       pywal
 
-      # Screen recording
+      # Screenshots and screen recording
+      grim
+      slurp
       wf-recorder
 
       # System monitoring and control

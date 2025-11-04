@@ -11,13 +11,12 @@ let
   hex = color: "#${color}";
 in
 {
-  config = {
+  config = mkIf (cfg != null && cfg.enable && colors != null) {
     programs.bat = {
-      enable = true;
-      config = mkIf (cfg != null && cfg.enable && colors != null) {
+      config = {
         theme = "base16";
       };
-      themes = mkIf (cfg != null && cfg.enable && colors != null) {
+      themes = {
         base16 = {
           src = builtins.toFile "base16.tmTheme" ''
             <?xml version="1.0" encoding="UTF-8"?>

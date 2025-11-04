@@ -11,15 +11,15 @@ let
   hex = color: "#${color}";
 in
 {
-  config = {
+  config = mkIf (cfg != null && cfg.enable && colors != null) {
     programs.k9s = {
       enable = true;
-      settings = mkIf (cfg != null && cfg.enable && colors != null) {
+      settings = {
         ui = {
           skin = "base16";
         };
       };
-      skins = mkIf (cfg != null && cfg.enable && colors != null) {
+      skins = {
         base16 = {
           k9s = {
             body = {

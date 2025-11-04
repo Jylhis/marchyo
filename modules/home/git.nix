@@ -1,14 +1,17 @@
 {
-  osConfig,
+  osConfig ? { },
   config,
   lib,
   ...
 }:
 let
-  userConfig = osConfig.marchyo.users."${config.home.username}";
+  # Only access user config if running within NixOS
+  hasOsConfig = osConfig != { } && osConfig ? marchyo;
+  userConfig = if hasOsConfig then osConfig.marchyo.users."${config.home.username}" or null else null;
+  isEnabled = userConfig != null && userConfig.enable or false;
 in
 {
-  programs = lib.mkIf userConfig.enable {
+  programs = lib.mkIf isEnabled {
     git = {
       enable = true;
       userName = userConfig.fullname;

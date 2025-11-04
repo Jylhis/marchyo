@@ -1,20 +1,12 @@
-# Waybar configuration with systemd service override
-#
-# IMPORTANT: Waybar has a known bug with SIGUSR2 signal handling that causes
-# multiple instances to spawn after sleep/wake cycles. The signal handler
-# performs a "complete reinit over existing state" and registers new monitor
-# event handlers without cleaning up old ones.
-#
-# References:
-# - https://github.com/Alexays/Waybar/issues/3344 (Multiple instances after DPMS resume)
-# - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
 {
   lib,
   config,
-  pkgs,
+  osConfig,
   ...
 }:
 let
+  inherit (lib) mkIf;
+  cfg = if osConfig ? marchyo then osConfig.marchyo.theme else null;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   hex = color: "#${color}";
 
@@ -35,7 +27,7 @@ let
       builtins.readFile ../../assets/applications/waybar.css;
 in
 {
-  config = {
+  config = mkIf (cfg != null && cfg.enable) {
     programs.waybar = {
       enable = true;
       systemd.enable = true;
@@ -229,18 +221,6 @@ in
           };
         }
       ];
-    };
-
-    # Override the systemd service to use full restart instead of SIGUSR2
-    # This prevents the bug where SIGUSR2 causes multiple waybar instances
-    systemd.user.services.waybar = {
-      Service = {
-        # Override ExecReload to use full restart instead of SIGUSR2
-        ExecReload = lib.mkForce [
-          ""
-          "${pkgs.systemd}/bin/systemctl --user restart waybar.service"
-        ];
-      };
     };
   };
 }
