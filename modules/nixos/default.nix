@@ -8,11 +8,13 @@
     ../generic/git.nix
     ../generic/fontconfig.nix
     ./boot.nix
+    ./btrfs.nix
     ./options.nix
     ./packages.nix
     ./containers.nix
     ./desktop-config.nix
     ./development-config.nix
+    ./firewall.nix
     ./fonts.nix
     ./graphics.nix
     ./hardware.nix
