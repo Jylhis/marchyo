@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$title$</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+      background: #f5f5f5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      h1, h2, h3, h4 {
+        color: #e0e0e0 !important;
+      }
+      .option {
+        background: #2a2a2a !important;
+        border-left-color: #3498db !important;
+      }
+      .option-default {
+        background: #1a1a1a !important;
+      }
+      code {
+        background: #2a2a2a !important;
+      }
+      pre {
+        background: #1a1a1a !important;
+        color: #e0e0e0 !important;
+      }
+      #TOC {
+        background: #2a2a2a !important;
+      }
+    }
+
+    h1 {
+      color: #2c3e50;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      color: #34495e;
+      margin-top: 2.5em;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #bdc3c7;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #7f8c8d;
+      margin-top: 1.5em;
+    }
+
+    h4 {
+      color: #95a5a6;
+      margin-top: 1em;
+    }
+
+    .option {
+      background: white;
+      border-left: 4px solid #3498db;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .option-name {
+      font-family: "Monaco", "Menlo", "Consolas", monospace;
+      font-size: 1.2em;
+      color: #e74c3c;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .option-type {
+      color: #16a085;
+      font-weight: bold;
+      font-size: 0.95em;
+    }
+
+    .option-default {
+      background: #ecf0f1;
+      padding: 0.5rem 1rem;
+      border-radius: 3px;
+      font-family: monospace;
+      margin: 0.5rem 0;
+      display: inline-block;
+    }
+
+    .option-example {
+      background: #fff5e1;
+      padding: 1rem;
+      border-left: 3px solid #f39c12;
+      margin: 1rem 0;
+      border-radius: 3px;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Monaco", "Menlo", "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #TOC {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      position: sticky;
+      top: 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #TOC h2 {
+      margin-top: 0;
+      border-bottom: 2px solid #3498db;
+      color: #2c3e50;
+    }
+
+    #TOC ul {
+      margin: 0;
+      padding-left: 1.5rem;
+      list-style-type: none;
+    }
+
+    #TOC li {
+      margin: 0.3rem 0;
+    }
+
+    #TOC a {
+      color: #34495e;
+    }
+
+    #TOC a:hover {
+      color: #3498db;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      #TOC {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    .description {
+      margin: 1rem 0;
+      line-height: 1.8;
+    }
+
+    .declared-by {
+      font-size: 0.85em;
+      color: #7f8c8d;
+      margin-top: 1rem;
+    }
+
+    .declared-by a {
+      color: #7f8c8d;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+
+    .badge-required {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .badge-optional {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .badge-readonly {
+      background: #3498db;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    $if(toc)$
+    <nav id="TOC">
+      <h2>Options Index</h2>
+      $toc$
+    </nav>
+    $endif$
+
+    <main>
+      $body$
+    </main>
+  </div>
+</body>
+</html>

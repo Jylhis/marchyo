@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$title$</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.7;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+      background: #f5f5f5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      h1, h2, h3, h4 {
+        color: #e0e0e0 !important;
+      }
+      .function {
+        background: #2a2a2a !important;
+        border-left-color: #9b59b6 !important;
+      }
+      .signature {
+        background: #1a1a1a !important;
+        color: #e0e0e0 !important;
+      }
+      code {
+        background: #2a2a2a !important;
+      }
+      pre {
+        background: #1a1a1a !important;
+        color: #e0e0e0 !important;
+      }
+      #TOC {
+        background: #2a2a2a !important;
+      }
+    }
+
+    h1 {
+      color: #2c3e50;
+      border-bottom: 3px solid #9b59b6;
+      padding-bottom: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      color: #8e44ad;
+      margin-top: 2.5em;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #9b59b6;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #9b59b6;
+      margin-top: 1.8em;
+      margin-bottom: 0.8rem;
+    }
+
+    h4 {
+      color: #a569bd;
+      margin-top: 1.2em;
+    }
+
+    .function {
+      background: white;
+      border-left: 4px solid #9b59b6;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .signature {
+      font-family: "Monaco", "Menlo", "Consolas", monospace;
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 1rem;
+      border-radius: 3px;
+      margin: 1rem 0;
+      font-size: 0.95em;
+      overflow-x: auto;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Monaco", "Menlo", "Consolas", monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-size: 0.9em;
+    }
+
+    a {
+      color: #9b59b6;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #TOC {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #9b59b6;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #TOC h2 {
+      margin-top: 0;
+      border-bottom: 2px solid #9b59b6;
+      color: #2c3e50;
+    }
+
+    #TOC ul {
+      margin: 0;
+      padding-left: 1.5rem;
+      list-style-type: none;
+    }
+
+    #TOC li {
+      margin: 0.4rem 0;
+    }
+
+    #TOC a {
+      color: #34495e;
+    }
+
+    #TOC a:hover {
+      color: #9b59b6;
+    }
+
+    strong {
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      strong {
+        color: #e0e0e0;
+      }
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid #ecf0f1;
+      margin: 2.5rem 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      hr {
+        border-top-color: #444;
+      }
+    }
+
+    blockquote {
+      border-left: 4px solid #9b59b6;
+      padding-left: 1rem;
+      margin-left: 0;
+      color: #7f8c8d;
+      font-style: italic;
+    }
+
+    .parameter-list {
+      background: #f9f9f9;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .parameter-list {
+        background: #2a2a2a;
+      }
+    }
+  </style>
+</head>
+<body>
+  $if(toc)$
+  <nav id="TOC">
+    <h2>Table of Contents</h2>
+    $toc$
+  </nav>
+  $endif$
+
+  <main>
+    $body$
+  </main>
+</body>
+</html>

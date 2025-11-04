@@ -2,20 +2,30 @@
   pkgs,
   lib,
   nixosModules,
+  homeModules,
+  home-manager,
   ...
 }:
 let
   # Create test configurations by actually evaluating the modules
   # This is faster and more reliable than using nix-instantiate
-  testNixOS =
-    config:
+  testNixOS = config:
     (lib.nixosSystem {
-      inherit (pkgs) system;
+      system = pkgs.system;
       modules = [
         nixosModules
         config
       ];
     }).config.system.build.toplevel;
+
+  testHome = config:
+    (home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      modules = [
+        homeModules
+        config
+      ];
+    }).activationPackage;
 
   # Minimal NixOS config for testing
   minimalNixOS = {
@@ -33,14 +43,11 @@ in
   eval-nixos-modules = testNixOS minimalNixOS;
 
   # Test that Home Manager modules can be imported without errors
-  # Note: We don't test standalone Home Manager because our modules are designed
-  # to work with NixOS osConfig. Standalone testing would require significant
-  # mocking. Instead, we test Home Manager integration via NixOS tests.
-  # eval-home-modules = testHome {
-  #   home.stateVersion = "25.11";
-  #   home.username = "testuser";
-  #   home.homeDirectory = "/home/testuser";
-  # };
+  eval-home-modules = testHome {
+    home.stateVersion = "25.11";
+    home.username = "testuser";
+    home.homeDirectory = "/home/testuser";
+  };
 
   # Test that custom options are properly defined
   eval-custom-options = testNixOS (

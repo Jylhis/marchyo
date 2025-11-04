@@ -8,6 +8,8 @@ let
   inherit (lib) mkIf;
   cfg = if osConfig ? marchyo then osConfig.marchyo.theme else null;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
+  hex = color: "#${color}";
+  variant = if config ? colorScheme then config.colorScheme.variant else "dark";
 in
 {
   config = mkIf (cfg != null && cfg.enable && colors != null) {
