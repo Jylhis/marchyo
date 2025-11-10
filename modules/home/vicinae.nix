@@ -157,6 +157,7 @@ in
     services.vicinae = {
       enable = true;
       autoStart = true;
+      useLayerShell = false; # https://github.com/vicinaehq/vicinae/issues/398
       settings = mkMerge [
         {
           # Configure window appearance
