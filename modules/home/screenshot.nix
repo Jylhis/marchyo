@@ -2,12 +2,15 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
   ...
 }:
 let
-  inherit (lib) mkIf mkMerge mkEnableOption mkOption types;
-  hasOsConfig = osConfig != { } && osConfig ? marchyo;
+  inherit (lib)
+    mkIf
+    mkEnableOption
+    mkOption
+    types
+    ;
   cfg = config.marchyo.screenshot;
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
 in
@@ -32,12 +35,15 @@ in
 
   config = mkIf cfg.enable {
     # Install screenshot tools
-    home.packages = with pkgs; [
-      grimblast # Screenshot utility for Hyprland
-      jq # Required by grimblast
-    ] ++ lib.optionals cfg.enableAnnotation [
-      satty # Screenshot annotation tool
-    ];
+    home.packages =
+      with pkgs;
+      [
+        grimblast # Screenshot utility for Hyprland
+        jq # Required by grimblast
+      ]
+      ++ lib.optionals cfg.enableAnnotation [
+        satty # Screenshot annotation tool
+      ];
 
     # Create screenshot directory
     home.file."${cfg.directory}/.keep".text = "";
@@ -56,7 +62,8 @@ in
 
         # Screenshot all screens
         "ALT, Print, Screenshot all screens, exec, grimblast --notify copysave screen"
-      ] ++ lib.optionals cfg.enableAnnotation [
+      ]
+      ++ lib.optionals cfg.enableAnnotation [
         # Screenshot with annotation
         "SUPER SHIFT, Print, Screenshot with annotation, exec, grimblast --freeze save area - | satty --filename - --output-filename ${cfg.directory}/$(date '+%Y-%m-%d_%H-%M-%S')_annotated.png"
       ];
