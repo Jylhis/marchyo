@@ -133,5 +133,54 @@ in
         '';
       };
     };
+    inputMethod = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Enable fcitx5 input method framework for CJK input.
+
+          Note: Basic keyboard layout switching (US, Finnish, etc.) is handled
+          by XKB configuration (see marchyo.keyboard options).
+          fcitx5 is used only for complex input methods like Chinese Pinyin,
+          Japanese Mozc, and Korean Hangul.
+        '';
+      };
+
+      triggerKey = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "Super+I"
+          "Zenkaku_Hankaku"
+          "Hangul"
+        ];
+        example = [
+          "Alt+grave"
+          "Super+I"
+        ];
+        description = ''
+          List of key combinations to activate fcitx5 CJK input methods.
+          Default includes Super+I, Zenkaku_Hankaku (Japanese), and Hangul (Korean) keys.
+
+          Note: This is different from keyboard layout switching (Super+Space).
+          These keys activate CJK input methods when you need to type Chinese/Japanese/Korean.
+        '';
+      };
+
+      enableCJK = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Enable CJK (Chinese, Japanese, Korean) input methods.
+
+          When enabled, adds:
+          - Pinyin for Chinese input
+          - Mozc for Japanese input
+          - Hangul for Korean input
+
+          When disabled, only Unicode character picker is available via fcitx5.
+        '';
+      };
+    };
   };
 }

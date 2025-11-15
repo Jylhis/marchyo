@@ -13,6 +13,7 @@
     ./containers.nix
     ./desktop-config.nix
     ./development-config.nix
+    ./fcitx5.nix
     ./fonts.nix
     ./graphics.nix
     ./hardware.nix

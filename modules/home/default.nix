@@ -9,6 +9,7 @@
     ./bat.nix
     ./btop.nix
     ./fastfetch.nix
+    ./fcitx5.nix
     ./fzf.nix
     ./xournalpp.nix
     ./git.nix
