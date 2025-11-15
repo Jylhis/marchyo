@@ -296,6 +296,20 @@ in
           "noanim, walker"
         ];
 
+        # Window rules for fcitx5 input method
+        windowrulev2 = [
+          # fcitx5 input panel - keep it floating and always on top
+          "float, class:^(fcitx)$"
+          "noborder, class:^(fcitx)$"
+          "nofocus, class:^(fcitx)$"
+          "stayfocused, class:^(fcitx)$"
+
+          # fcitx5 config tool
+          "float, class:^(org.fcitx.fcitx5-config-qt)$"
+          "center, class:^(org.fcitx.fcitx5-config-qt)$"
+          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
+        ];
+
         bindd = [
           "SUPER, return, Terminal, exec, $terminal"
           "SUPER, F, File manager, exec, $fileManager"
@@ -309,6 +323,7 @@ in
           "SUPER, G, Messenger, exec, $messenger"
           # "SUPER, O, Obsidian, exec, obsidian -disable-gpu"
           "SUPER, slash, Password manager, exec, $passwordManager"
+          "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, togglesplit,"
           "SUPER, P, Pseudo window, pseudo,"
@@ -494,6 +509,7 @@ in
           # Essential services
           "kanshi"
           "vicinae server"
+          "fcitx5 -d --replace"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"
