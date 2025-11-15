@@ -1,0 +1,14 @@
+# Build artifacts
+build/
+
+# mdBook output
+book/
+
+# Generated content
+src/reference/modules/nixos-options.md
+src/reference/modules/home-options.md
+
+# Temporary files
+*.tmp
+*.bak
+*~

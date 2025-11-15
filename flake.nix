@@ -16,6 +16,10 @@
     vicinae.url = "github:vicinaehq/vicinae";
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
+    nix-mdbook = {
+      url = "github:pbar1/nix-mdbook";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -26,6 +30,7 @@
       vicinae,
       treefmt-nix,
       determinate,
+      nix-mdbook,
       ...
     }:
     let
@@ -128,6 +133,63 @@
               "-s"
               "bash"
             ];
+          };
+        }
+      );
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          # Documentation
+          docs = import ./docs {
+            inherit pkgs system;
+            inherit (nixpkgs) lib;
+            mdbook = nix-mdbook;
+            nixosModules = nixosModules.default;
+            homeModules = homeModules.default;
+          };
+
+          # Offline documentation package
+          marchyo-docs = pkgs.runCommand "marchyo-docs" { } ''
+            mkdir -p $out/bin $out/share/doc/marchyo
+            cp -r ${import ./docs {
+              inherit pkgs system;
+              inherit (nixpkgs) lib;
+              mdbook = nix-mdbook;
+              nixosModules = nixosModules.default;
+              homeModules = homeModules.default;
+            }}/* $out/share/doc/marchyo/
+
+            cat > $out/bin/marchyo-docs << 'EOF'
+            #!/bin/sh
+            echo "Starting Marchyo documentation server on http://localhost:8080"
+            ${pkgs.python3}/bin/python -m http.server 8080 \
+              --directory $out/share/doc/marchyo
+            EOF
+            chmod +x $out/bin/marchyo-docs
+          '';
+        }
+      );
+
+      apps = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          serve-docs = {
+            type = "app";
+            program = "${
+              pkgs.writeShellScript "serve-docs" ''
+                echo "Building documentation..."
+                nix build .#docs
+                echo "Starting documentation server on http://localhost:8000"
+                ${pkgs.python3}/bin/python -m http.server 8000 --directory ./result
+              ''
+            }";
           };
         }
       );

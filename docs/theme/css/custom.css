@@ -1,0 +1,77 @@
+/* Custom styling for Marchyo documentation */
+
+/* Code blocks with better contrast */
+.hljs {
+  background-color: #1e1e1e;
+  padding: 1em;
+  border-radius: 4px;
+}
+
+/* Improve link visibility */
+a {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+a:hover {
+  text-decoration-style: solid;
+}
+
+/* Better table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+th, td {
+  border: 1px solid var(--table-border-color);
+  padding: 0.5em;
+  text-align: left;
+}
+
+th {
+  background-color: var(--table-header-bg);
+  font-weight: bold;
+}
+
+/* Admonition boxes */
+.warning, .note, .tip {
+  padding: 1em;
+  margin: 1em 0;
+  border-left: 4px solid;
+  border-radius: 4px;
+}
+
+.warning {
+  background-color: rgba(255, 165, 0, 0.1);
+  border-color: orange;
+}
+
+.note {
+  background-color: rgba(65, 105, 225, 0.1);
+  border-color: royalblue;
+}
+
+.tip {
+  background-color: rgba(34, 139, 34, 0.1);
+  border-color: forestgreen;
+}
+
+/* Inline code styling */
+code {
+  background-color: var(--inline-code-color);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* Make headings more distinct */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+h1 { border-bottom: 2px solid var(--links); }
+h2 { border-bottom: 1px solid var(--table-border-color); }
