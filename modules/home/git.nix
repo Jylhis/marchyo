@@ -11,9 +11,11 @@ in
   programs = lib.mkIf userConfig.enable {
     git = {
       enable = true;
-      userName = userConfig.fullname;
-      userEmail = userConfig.email;
-      extraConfig = {
+      settings = {
+        user = {
+          name = userConfig.fullname;
+          inherit (userConfig) email;
+        };
         init.defaultBranch = lib.mkDefault "main";
         core = {
           untrackedcache = lib.mkDefault true;
