@@ -14,6 +14,7 @@
     ./desktop-config.nix
     ./development-config.nix
     ./fcitx5.nix
+    ./keyboard.nix
     ./fonts.nix
     ./graphics.nix
     ./hardware.nix

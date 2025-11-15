@@ -133,6 +133,56 @@ in
         '';
       };
     };
+
+    keyboard = {
+      layouts = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "us"
+          "fi"
+        ];
+        example = [
+          "us"
+          "de"
+          "fr"
+        ];
+        description = ''
+          Keyboard layouts to enable.
+          These are managed by XKB and work system-wide.
+          Use Super+Space to switch between layouts.
+        '';
+      };
+
+      variant = mkOption {
+        type = types.str;
+        default = "";
+        example = "intl";
+        description = ''
+          Keyboard variant for the primary layout.
+          Example: "intl" for US international layout with dead keys.
+          Leave empty for default variant.
+        '';
+      };
+
+      options = mkOption {
+        type = types.listOf types.str;
+        default = [ "grp:win_space_toggle" ]; # Note: "Win" = Super key in XKB terminology
+        example = [
+          "grp:win_space_toggle"
+          "caps:escape"
+          "compose:ralt"
+        ];
+        description = ''
+          XKB keyboard options.
+          Default enables Super+Space for layout switching.
+          Common options:
+          - grp:win_space_toggle: Use Super+Space to switch layouts (Win = Super key)
+          - caps:escape: Map Caps Lock to Escape
+          - compose:ralt: Use Right Alt as Compose key
+        '';
+      };
+    };
+
     inputMethod = {
       enable = mkOption {
         type = types.bool;

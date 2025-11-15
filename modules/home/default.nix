@@ -11,6 +11,7 @@
     ./fastfetch.nix
     ./fcitx5.nix
     ./fzf.nix
+    ./keyboard.nix
     ./xournalpp.nix
     ./git.nix
     ./help.nix
