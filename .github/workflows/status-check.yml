@@ -1,0 +1,112 @@
+name: Status Check
+
+on:
+  schedule:
+    # Run daily at 6:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    name: System Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check flake health
+        id: health
+        run: |
+          echo "🔍 Checking flake health..."
+
+          # Check flake evaluation
+          if nix flake check --print-build-logs; then
+            echo "✅ Flake check passed"
+            echo "flake_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Flake check failed"
+            echo "flake_status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test critical configurations
+        id: configs
+        run: |
+          echo "🧪 Testing critical configurations..."
+
+          # Test desktop configuration
+          if nix build .#checks.x86_64-linux.eval-desktop-module --print-build-logs; then
+            echo "✅ Desktop module OK"
+          else
+            echo "❌ Desktop module failed"
+            exit 1
+          fi
+
+          # Test development configuration
+          if nix build .#checks.x86_64-linux.eval-development-module --print-build-logs; then
+            echo "✅ Development module OK"
+          else
+            echo "❌ Development module failed"
+            exit 1
+          fi
+
+      - name: Test documentation build
+        run: |
+          echo "📚 Testing documentation build..."
+          nix build .#docs --print-build-logs
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ steps.health.outputs.flake_status }}" = "failed" ]; then
+            echo "::error::Daily health check failed!"
+          else
+            echo "::notice::Daily health check passed ✅"
+          fi
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Daily Health Check Failed';
+            const body = `## Health Check Failure
+
+            The daily health check has failed. Please investigate.
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            **Date:** ${new Date().toISOString()}
+
+            ### Quick Actions
+
+            1. Check the workflow logs above
+            2. Run \`nix flake check\` locally
+            3. Review recent commits
+
+            ---
+            *This issue was automatically created by the Status Check workflow*`;
+
+            // Check if an issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'automated,health-check'
+            });
+
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['automated', 'health-check', 'bug']
+              });
+            }

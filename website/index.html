@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Marchyo - A modular NixOS configuration flake with keyboard-driven workflows, modern TUI tools, and comprehensive theming">
+    <meta name="keywords" content="NixOS, Hyprland, Nix, Linux, configuration, flake, theming, keyboard-driven">
+    <title>Marchyo - Modular NixOS Configuration</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="hero">
+        <nav class="nav">
+            <div class="container">
+                <div class="nav-brand">
+                    <h1>Marchyo</h1>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#quickstart">Quick Start</a></li>
+                    <li><a href="#download">Download</a></li>
+                    <li><a href="docs/" class="btn-docs">Documentation</a></li>
+                    <li><a href="https://github.com/Jylhis/marchyo" class="btn-github">GitHub</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="hero-content container">
+            <h2 class="hero-title">Modular NixOS Configuration</h2>
+            <p class="hero-subtitle">
+                A curated NixOS flake with keyboard-driven workflows, modern TUI tools,
+                and comprehensive theming. Get started in minutes.
+            </p>
+            <div class="hero-buttons">
+                <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                <a href="docs/" class="btn btn-secondary">Documentation</a>
+            </div>
+            <div class="hero-code">
+                <pre><code><span class="comment"># Add to your flake</span>
+inputs.marchyo.url = <span class="string">"github:Jylhis/marchyo"</span>;
+
+<span class="comment"># Enable features</span>
+marchyo = {
+  desktop.enable = <span class="keyword">true</span>;
+  development.enable = <span class="keyword">true</span>;
+  theme.scheme = <span class="string">"dracula"</span>;
+};</code></pre>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⌨️</div>
+                        <h3>Keyboard-Driven</h3>
+                        <p>Comprehensive Hyprland setup optimized for keyboard workflows with descriptive keybindings</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3>Theming</h3>
+                        <p>200+ color schemes via nix-colors + custom Modus themes. One line to switch themes system-wide</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🛠️</div>
+                        <h3>Modern TUI Tools</h3>
+                        <p>btop, lazygit, lazydocker, k9s, and more. Beautiful terminal interfaces for everything</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Feature Flags</h3>
+                        <p>Enable desktop, development, media, or office with a single option. Sensible defaults, fully customizable</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <h3>Modular</h3>
+                        <p>60 well-organized modules (NixOS, Home Manager, Generic). Clean separation of concerns</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧪</div>
+                        <h3>Tested</h3>
+                        <p>Comprehensive test infrastructure with lightweight and VM tests. CI/CD validated</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quickstart" class="quickstart">
+            <div class="container">
+                <h2 class="section-title">Quick Start</h2>
+                <div class="quickstart-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Add to Your Flake</h3>
+                            <pre><code>{
+  inputs = {
+    nixpkgs.url = <span class="string">"github:NixOS/nixpkgs/nixos-unstable"</span>;
+    marchyo.url = <span class="string">"github:Jylhis/marchyo"</span>;
+  };
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Import Modules</h3>
+                            <pre><code>nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+  modules = [
+    marchyo.nixosModules.default
+    ./configuration.nix
+  ];
+};</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Configure</h3>
+                            <pre><code>marchyo = {
+  desktop.enable = <span class="keyword">true</span>;
+  development.enable = <span class="keyword">true</span>;
+
+  users.alice = {
+    fullname = <span class="string">"Alice Smith"</span>;
+    email = <span class="string">"alice@example.com"</span>;
+  };
+};</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Build & Enjoy</h3>
+                            <pre><code><span class="comment"># Build your system</span>
+sudo nixos-rebuild switch --flake .#myhost
+
+<span class="comment"># Start using Marchyo!</span></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quickstart-cta">
+                    <p>New to NixOS? Try our installation guide:</p>
+                    <a href="docs/tutorials/installation.html" class="btn btn-primary">Installation Guide</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="download" class="download">
+            <div class="container">
+                <h2 class="section-title">Download</h2>
+                <div class="download-options">
+                    <div class="download-card">
+                        <h3>Installer ISO</h3>
+                        <p>Boot from USB and install NixOS with Marchyo pre-configured</p>
+                        <a href="https://github.com/Jylhis/marchyo/releases/latest" class="btn btn-primary">
+                            Download Latest Release
+                        </a>
+                        <p class="download-meta">Available: Minimal CLI & Graphical</p>
+                    </div>
+                    <div class="download-card">
+                        <h3>Use as Library</h3>
+                        <p>Import Marchyo modules into your existing NixOS configuration</p>
+                        <a href="docs/tutorials/first-configuration.html" class="btn btn-secondary">
+                            Configuration Guide
+                        </a>
+                        <p class="download-meta">Recommended for existing NixOS users</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="showcase">
+            <div class="container">
+                <h2 class="section-title">What's Included</h2>
+                <div class="showcase-grid">
+                    <div class="showcase-item">
+                        <h3>Desktop Environment</h3>
+                        <ul>
+                            <li>Hyprland (Wayland compositor)</li>
+                            <li>Waybar (status bar)</li>
+                            <li>Vicinae (launcher)</li>
+                            <li>Mako (notifications)</li>
+                            <li>Kitty (terminal)</li>
+                        </ul>
+                    </div>
+                    <div class="showcase-item">
+                        <h3>Development Tools</h3>
+                        <ul>
+                            <li>Docker & libvirtd</li>
+                            <li>Git with LFS</li>
+                            <li>Direnv & nix-direnv</li>
+                            <li>LazyGit, LazyDocker</li>
+                            <li>Build tools (gcc, make, cmake)</li>
+                        </ul>
+                    </div>
+                    <div class="showcase-item">
+                        <h3>TUI Applications</h3>
+                        <ul>
+                            <li>btop (system monitor)</li>
+                            <li>k9s (Kubernetes)</li>
+                            <li>bluetui (Bluetooth)</li>
+                            <li>sysz (systemd)</li>
+                            <li>fastfetch (system info)</li>
+                        </ul>
+                    </div>
+                    <div class="showcase-item">
+                        <h3>Modern CLI Tools</h3>
+                        <ul>
+                            <li>ripgrep, fd (search)</li>
+                            <li>eza, bat (file operations)</li>
+                            <li>fzf (fuzzy finder)</li>
+                            <li>duf, gping (utilities)</li>
+                            <li>aria2, xh (network)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="community">
+            <div class="container">
+                <h2 class="section-title">Community & Support</h2>
+                <div class="community-links">
+                    <a href="https://github.com/Jylhis/marchyo" class="community-card">
+                        <div class="community-icon">📦</div>
+                        <h3>GitHub</h3>
+                        <p>Source code, issues, and contributions</p>
+                    </a>
+                    <a href="https://github.com/Jylhis/marchyo/discussions" class="community-card">
+                        <div class="community-icon">💬</div>
+                        <h3>Discussions</h3>
+                        <p>Ask questions and share configurations</p>
+                    </a>
+                    <a href="docs/" class="community-card">
+                        <div class="community-icon">📚</div>
+                        <h3>Documentation</h3>
+                        <p>Comprehensive guides and reference</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Marchyo</h3>
+                    <p>A modular NixOS configuration flake</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="docs/">Documentation</a></li>
+                        <li><a href="docs/tutorials/installation.html">Installation Guide</a></li>
+                        <li><a href="docs/reference/feature-flags.html">Configuration Reference</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Community</h3>
+                    <ul>
+                        <li><a href="https://github.com/Jylhis/marchyo">GitHub</a></li>
+                        <li><a href="https://github.com/Jylhis/marchyo/issues">Issues</a></li>
+                        <li><a href="https://github.com/Jylhis/marchyo/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Project</h3>
+                    <ul>
+                        <li><a href="https://github.com/Jylhis/marchyo/releases">Releases</a></li>
+                        <li><a href="https://github.com/Jylhis/marchyo/blob/main/LICENSE">License</a></li>
+                        <li><a href="https://github.com/Jylhis/marchyo/blob/main/CONTRIBUTING.md">Contributing</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Marchyo Contributors. Built with ❤️ using NixOS.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

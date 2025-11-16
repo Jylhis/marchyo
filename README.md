@@ -1,6 +1,13 @@
 # Marchyo
 
+[![CI](https://github.com/Jylhis/marchyo/actions/workflows/ci.yml/badge.svg)](https://github.com/Jylhis/marchyo/actions/workflows/ci.yml)
+[![Deploy Site](https://github.com/Jylhis/marchyo/actions/workflows/deploy-site.yml/badge.svg)](https://github.com/Jylhis/marchyo/actions/workflows/deploy-site.yml)
+[![FlakeHub](https://img.shields.io/endpoint?url=https://flakehub.com/f/Jylhis/marchyo/badge)](https://flakehub.com/flake/Jylhis/marchyo)
+[![Cachix](https://img.shields.io/badge/cachix-marchyo-blue)](https://app.cachix.org/cache/marchyo)
+
 A modular NixOS configuration flake providing a curated set of system and home-manager configurations with sensible defaults.
+
+**[🌐 Website](https://jylhis.github.io/marchyo/)** | **[📚 Documentation](https://jylhis.github.io/marchyo/docs/)** | **[📦 Releases](https://github.com/Jylhis/marchyo/releases)**
 
 ## Features
 

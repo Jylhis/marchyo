@@ -1,20 +1,46 @@
-name: Check, build and push to Cachix
+name: Cachix Push
+
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
+
 jobs:
-  build:
+  build-and-push:
+    name: Build and Push to Cachix
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - docs
+          - website
+          - site
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v5
-      - uses: wimpysworld/nothing-but-nix@main
-        with:
-          hatchet-protocol: 'cleave'
-      - uses: DeterminateSystems/determinate-nix-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - uses: cachix/cachix-action@v16
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
         with:
           name: marchyo
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix flake check
+          skipPush: ${{ github.event_name == 'pull_request' }}
+
+      - name: Build ${{ matrix.package }}
+        run: |
+          echo "Building ${{ matrix.package }}..."
+          nix build .#${{ matrix.package }} --print-build-logs
+
+      - name: Report cache status
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "✅ Built and pushed ${{ matrix.package }} to Cachix"

@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake-check:
+    name: Flake Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check flake
+        run: nix flake check --print-build-logs
+
+      - name: Show flake info
+        run: nix flake show
+
+  test-lightweight:
+    name: Lightweight Tests
+    runs-on: ubuntu-latest
+    needs: flake-check
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Run lightweight tests
+        run: |
+          echo "Running evaluation tests..."
+          nix build .#checks.x86_64-linux.eval-nixos-modules --print-build-logs
+          nix build .#checks.x86_64-linux.eval-desktop-module --print-build-logs
+          nix build .#checks.x86_64-linux.eval-development-module --print-build-logs
+
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: flake-check
+    strategy:
+      matrix:
+        package:
+          - docs
+          - marchyo-docs
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
+        with:
+          name: marchyo
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          skipPush: ${{ github.event_name == 'pull_request' }}
+
+      - name: Build ${{ matrix.package }}
+        run: nix build .#${{ matrix.package }} --print-build-logs
+
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check formatting
+        run: |
+          nix fmt -- --check .
+          if [ $? -ne 0 ]; then
+            echo "❌ Code is not formatted correctly."
+            echo "Run 'nix fmt' to fix formatting issues."
+            exit 1
+          fi
+          echo "✅ Code formatting is correct."
+
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [flake-check, test-lightweight, build-packages, format-check]
+    if: always()
+    steps:
+      - name: Check build status
+        run: |
+          if [ "${{ needs.flake-check.result }}" != "success" ]; then
+            echo "❌ Flake check failed"
+            exit 1
+          fi
+          if [ "${{ needs.test-lightweight.result }}" != "success" ]; then
+            echo "❌ Lightweight tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.build-packages.result }}" != "success" ]; then
+            echo "⚠️ Some packages failed to build"
+            exit 1
+          fi
+          if [ "${{ needs.format-check.result }}" != "success" ]; then
+            echo "❌ Format check failed"
+            exit 1
+          fi
+          echo "✅ All checks passed!"

@@ -171,6 +171,30 @@
             EOF
             chmod +x $out/bin/marchyo-docs
           '';
+
+          # Website
+          website = import ./website { inherit pkgs; };
+
+          # Combined site (website + docs)
+          site = pkgs.runCommand "marchyo-site" { } ''
+            mkdir -p $out
+
+            # Copy website to root
+            cp -r ${import ./website { inherit pkgs; }}/* $out/
+
+            # Copy documentation to /docs subdirectory
+            mkdir -p $out/docs
+            cp -r ${import ./docs {
+              inherit pkgs system;
+              inherit (nixpkgs) lib;
+              mdbook = nix-mdbook;
+              nixosModules = nixosModules.default;
+              homeModules = homeModules.default;
+            }}/* $out/docs/
+
+            echo "Combined site built successfully"
+            ls -la $out
+          '';
         }
       );
 
@@ -187,6 +211,32 @@
                 echo "Building documentation..."
                 nix build .#docs
                 echo "Starting documentation server on http://localhost:8000"
+                ${pkgs.python3}/bin/python -m http.server 8000 --directory ./result
+              ''
+            }";
+          };
+
+          serve-website = {
+            type = "app";
+            program = "${
+              pkgs.writeShellScript "serve-website" ''
+                echo "Building website..."
+                nix build .#website
+                echo "Starting website server on http://localhost:8000"
+                ${pkgs.python3}/bin/python -m http.server 8000 --directory ./result
+              ''
+            }";
+          };
+
+          serve-site = {
+            type = "app";
+            program = "${
+              pkgs.writeShellScript "serve-site" ''
+                echo "Building combined site (website + docs)..."
+                nix build .#site
+                echo "Starting server on http://localhost:8000"
+                echo "Website: http://localhost:8000"
+                echo "Documentation: http://localhost:8000/docs"
                 ${pkgs.python3}/bin/python -m http.server 8000 --directory ./result
               ''
             }";

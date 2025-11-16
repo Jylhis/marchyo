@@ -1,0 +1,118 @@
+name: Update Flake
+
+on:
+  schedule:
+    # Run weekly on Monday at 9:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flake:
+    name: Update Flake Inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Update flake inputs
+        id: update
+        run: |
+          # Update all inputs
+          nix flake update --commit-lock-file
+
+          # Check if there are changes
+          if git diff --quiet HEAD^ HEAD -- flake.lock; then
+            echo "No updates available"
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+          else
+            echo "Updates available"
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+
+            # Extract updated inputs
+            UPDATES=$(git log -1 --pretty=%B | tail -n +3)
+            echo "updates<<EOF" >> $GITHUB_OUTPUT
+            echo "$UPDATES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests on updated flake
+        if: steps.update.outputs.has_updates == 'true'
+        run: |
+          echo "Testing updated flake..."
+          nix flake check --print-build-logs
+
+      - name: Create Pull Request
+        if: steps.update.outputs.has_updates == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update flake inputs"
+          title: "chore: weekly flake update"
+          body: |
+            ## Automated Flake Update
+
+            This PR updates all flake inputs to their latest versions.
+
+            ### Updated Inputs
+
+            ```
+            ${{ steps.update.outputs.updates }}
+            ```
+
+            ### Checks
+
+            - ✅ `nix flake check` passed
+            - ✅ Flake lock file updated
+
+            ### Review Checklist
+
+            - [ ] Review updated input versions
+            - [ ] Check CI status
+            - [ ] Test locally if needed
+
+            ---
+
+            *This PR was automatically created by the Update Flake workflow*
+          branch: automated/flake-update
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
+
+  test-update:
+    name: Test Updated Flake
+    needs: update-flake
+    runs-on: ubuntu-latest
+    if: needs.update-flake.outputs.has_updates == 'true'
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
+        with:
+          ref: automated/flake-update
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Run comprehensive tests
+        run: |
+          # Run flake check
+          nix flake check --print-build-logs
+
+          # Build documentation to ensure it still works
+          nix build .#docs --print-build-logs
+
+          # Try building a test configuration
+          nix build .#checks.x86_64-linux.eval-all-features --print-build-logs

@@ -1,0 +1,181 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "First release, showing all commits"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            echo "Changes since $PREVIOUS_TAG"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges $PREVIOUS_TAG..HEAD)
+          fi
+
+          # Create changelog file
+          cat > CHANGELOG.md << EOF
+          # Marchyo ${{ steps.get_version.outputs.version }}
+
+          ## What's Changed
+
+          $COMMITS
+
+          ## Installation
+
+          ### Download Installer ISO
+
+          Download the minimal or graphical installer ISO from the assets below.
+
+          ### Using the Flake
+
+          \`\`\`nix
+          {
+            inputs.marchyo.url = "github:Jylhis/marchyo/${{ steps.get_version.outputs.version }}";
+          }
+          \`\`\`
+
+          ## Documentation
+
+          - [Documentation](https://jylhis.github.io/marchyo/docs/)
+          - [Installation Guide](https://jylhis.github.io/marchyo/docs/tutorials/installation.html)
+
+          **Full Changelog**: https://github.com/Jylhis/marchyo/compare/$PREVIOUS_TAG...${{ steps.get_version.outputs.version }}
+          EOF
+
+          cat CHANGELOG.md
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-isos:
+    name: Build Installer ISOs
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        iso:
+          - name: minimal
+            config: installer-minimal
+          - name: graphical
+            config: installer-graphical
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@main
+        with:
+          extra-conf: |
+            max-jobs = 2
+            cores = 2
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v16
+        with:
+          name: marchyo
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
+      - name: Build ${{ matrix.iso.name }} ISO
+        run: |
+          echo "Building ${{ matrix.iso.name }} installer ISO..."
+          nix build .#nixosConfigurations.${{ matrix.iso.config }}.config.system.build.isoImage \
+            --print-build-logs \
+            --max-jobs 2
+
+          # Find the ISO file
+          ISO_FILE=$(find result/iso -name "*.iso" -type f | head -n1)
+          ISO_NAME="marchyo-installer-${{ matrix.iso.name }}-${{ needs.create-release.outputs.version }}-x86_64-linux.iso"
+
+          echo "ISO file: $ISO_FILE"
+          ls -lh "$ISO_FILE"
+
+          # Copy with version in name
+          cp "$ISO_FILE" "$ISO_NAME"
+          echo "iso_path=$ISO_NAME" >> $GITHUB_ENV
+
+      - name: Generate checksums
+        run: |
+          sha256sum "${{ env.iso_path }}" > "${{ env.iso_path }}.sha256"
+          cat "${{ env.iso_path }}.sha256"
+
+      - name: Upload ISO to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create-release.outputs.version }}
+          files: |
+            ${{ env.iso_path }}
+            ${{ env.iso_path }}.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release:
+    name: Publish Release
+    needs: [create-release, build-isos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release published
+        run: |
+          echo "✅ Release ${{ needs.create-release.outputs.version }} published successfully!"
+          echo "📦 ISOs built and uploaded"
+          echo "🔗 https://github.com/Jylhis/marchyo/releases/tag/${{ needs.create-release.outputs.version }}"

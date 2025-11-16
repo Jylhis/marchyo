@@ -1,4 +1,4 @@
-name: Build and Deploy Documentation
+name: Deploy Site
 
 on:
   push:
@@ -6,13 +6,14 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'website/**'
       - 'modules/**'
       - 'colorschemes/**'
-      - '.github/workflows/docs.yml'
+      - '.github/workflows/deploy-site.yml'
   pull_request:
     paths:
       - 'docs/**'
-      - 'modules/**'
+      - 'website/**'
   workflow_dispatch:
 
 permissions:
@@ -25,7 +26,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-docs:
+  build-site:
+    name: Build Complete Site
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -37,10 +39,14 @@ jobs:
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Build documentation
+      - name: Build combined site
         run: |
-          echo "Building Marchyo documentation..."
-          nix build .#docs --print-build-logs
+          echo "Building Marchyo website and documentation..."
+          nix build .#site --print-build-logs
+
+          echo "Verifying build output..."
+          ls -la result/
+          ls -la result/docs/ || echo "Warning: docs directory not found"
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
@@ -53,8 +59,9 @@ jobs:
           path: result
 
   deploy:
+    name: Deploy to GitHub Pages
     if: github.ref == 'refs/heads/main'
-    needs: build-docs
+    needs: build-site
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -63,3 +70,9 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Report deployment
+        run: |
+          echo "✅ Site deployed successfully!"
+          echo "🌐 Website: ${{ steps.deployment.outputs.page_url }}"
+          echo "📚 Documentation: ${{ steps.deployment.outputs.page_url }}docs/"
