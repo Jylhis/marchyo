@@ -512,10 +512,8 @@ in
 
           # Input method framework - start fcitx5 as daemon
           # -d: run as daemon in background
-          # --replace: replace existing fcitx5 instance if any
-          # -r (via fcitx5-remote): restart to ensure clean state
+          # --replace: replace existing fcitx5 instance (ensures clean start)
           "fcitx5 -d --replace"
-          "sleep 1 && fcitx5-remote -r"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"

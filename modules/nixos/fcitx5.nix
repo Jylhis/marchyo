@@ -65,21 +65,21 @@ in
       # For older Qt apps under Xwayland, fcitx is used
       QT_IM_MODULE = "wayland;fcitx;ibus";
 
-      # Note: GTK_IM_MODULE is intentionally NOT set globally for Wayland
-      # Rationale:
-      # - Modern GTK 3.24+ and GTK 4 have native Wayland text-input-v3 protocol support
-      # - Setting GTK_IM_MODULE forces the older GTK IM module API instead of Wayland protocol
-      # - For legacy GTK apps that need explicit IM module, configure via GTK settings.ini
-      #   (see Home Manager module: gtk-3.0/settings.ini and gtk-4.0/settings.ini)
-      # - This approach gives best compatibility: Wayland-native apps use text-input protocol,
-      #   Xwayland apps use fcitx IM module
+      # Note: GTK_IM_MODULE is NOT set as an environment variable
+      # Instead, it's configured via GTK settings.ini files in the Home Manager module
+      # (see modules/home/fcitx5.nix: gtk-3.0/settings.ini and gtk-4.0/settings.ini)
+      # This sets gtk-im-module=fcitx for all GTK 3 and GTK 4 applications globally.
+      #
+      # While modern GTK 3.24+ and GTK 4 have native Wayland text-input-v3 support,
+      # we configure the fcitx IM module globally for maximum compatibility.
+      # GTK apps may still use text-input-v3 if fcitx5's Wayland IM frontend is active.
     };
 
     # Enable fcitx5 input method support at the display manager level
     # This ensures fcitx5 works at the login screen and across all sessions
     environment.sessionVariables = {
       # These variables are set for all user sessions, including login screen
-      GLFW_IM_MODULE = "ibus"; # For GLFW applications (some games, etc.)
+      GLFW_IM_MODULE = "fcitx"; # For GLFW applications (some games, ImGui apps, etc.)
     };
 
     # Install required fonts for Unicode and CJK display

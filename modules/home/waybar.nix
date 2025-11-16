@@ -105,8 +105,8 @@ in
 
               # Determine icon and text based on current IM
               case "$current_im" in
-                keyboard-us|keyboard-*)
-                  # Regular keyboard layout - show minimal indicator
+                keyboard-*)
+                  # Regular keyboard layout (us, fi, etc.) - show minimal indicator
                   if [ $is_active -eq 2 ]; then
                     echo '{"text":"󰌌","class":"active","tooltip":"Keyboard: '$current_im' (Active)"}'
                   else

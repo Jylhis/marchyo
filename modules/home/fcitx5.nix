@@ -10,9 +10,10 @@
 # - Waybar module: Displays current input method status
 #
 # Input method integration:
-# - Wayland apps: Use native text-input-v3 protocol (best compatibility)
+# - Wayland apps: Use native text-input-v3 protocol where supported
 # - Xwayland apps: Use fcitx IM module via XMODIFIERS and QT_IM_MODULE
-# - GTK apps: Use text-input-v3 on Wayland, fcitx module via settings.ini for older apps
+# - GTK apps: Use fcitx IM module (configured via gtk-3.0/settings.ini and gtk-4.0/settings.ini)
+# - Qt apps: Use Wayland protocol first, fall back to fcitx module
 #
 # Terminal support:
 # - Works in terminal emulators (Kitty, Alacritty, etc.) via Wayland protocol
@@ -41,20 +42,14 @@ in
         # This suppresses warnings about environment variables on Wayland
         waylandFrontend = true;
 
-        # CJK language addons (only installed if enableCJK is true)
-        addons = lib.optionals cfg.enableCJK (
-          with pkgs;
-          [
-            qt6Packages.fcitx5-chinese-addons # Chinese input (Pinyin, etc.)
-            fcitx5-mozc # Japanese input
-            fcitx5-hangul # Korean input
-          ]
-        );
+        # Note: CJK addons are installed at the system level (modules/nixos/fcitx5.nix)
+        # to ensure they're available for all users. No need to duplicate them here.
       };
     };
 
-    # GTK settings for older GTK apps that don't support Wayland text-input-v3
-    # Modern GTK 3/4 apps on Wayland use text-input-v3 protocol, but some older apps need this
+    # GTK input method configuration via settings.ini
+    # This sets gtk-im-module=fcitx for all GTK 3 and GTK 4 applications.
+    # Provides maximum compatibility across all GTK apps (Wayland-native and Xwayland).
     xdg.configFile = {
       # GTK 3 settings
       "gtk-3.0/settings.ini".text = ''
