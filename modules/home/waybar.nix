@@ -18,6 +18,42 @@ let
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   hex = color: "#${color}";
 
+  # fcitx5 status script for waybar
+  fcitx5StatusScript = pkgs.writeShellScript "fcitx5-status.sh" ''
+    # Get current fcitx5 input method name
+    status=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null)
+
+    # Check if fcitx5 is running
+    if [ -z "$status" ]; then
+        echo '{"text":"","class":"inactive","tooltip":"fcitx5 not running"}'
+        exit 0
+    fi
+
+    # Handle different input methods
+    case "$status" in
+        keyboard-us|keyboard-fi|keyboard*)
+            # Don't show anything for basic keyboard layouts (handled by XKB indicator)
+            echo '{"text":"","class":"keyboard","tooltip":""}'
+            ;;
+        pinyin)
+            echo '{"text":"拼","class":"active","tooltip":"Chinese Pinyin"}'
+            ;;
+        mozc)
+            echo '{"text":"あ","class":"active","tooltip":"Japanese Mozc"}'
+            ;;
+        hangul)
+            echo '{"text":"한","class":"active","tooltip":"Korean Hangul"}'
+            ;;
+        unicode)
+            echo '{"text":"⌨","class":"active","tooltip":"Unicode Picker"}'
+            ;;
+        *)
+            # Fallback for unknown input methods - show first 2 chars
+            echo '{"text":"'"''${status:0:2}"'","class":"active","tooltip":"'"$status"'"}'
+            ;;
+    esac
+  '';
+
   # Generate CSS with colorScheme
   styleWithColors =
     if colors != null then
@@ -56,6 +92,7 @@ in
           ];
           modules-right = [
             "group/tray-expander"
+            "custom/fcitx5"
             "hyprland/language"
             "bluetooth"
             "network"
@@ -91,6 +128,13 @@ in
           "hyprland/language" = {
             format = "{short}";
             tooltip-format = "{long}";
+          };
+          "custom/fcitx5" = {
+            exec = "${fcitx5StatusScript}";
+            return-type = "json";
+            interval = 1;
+            format = "{}";
+            on-click = "${pkgs.qt6Packages.fcitx5-configtool}/bin/fcitx5-configtool";
           };
           "custom/omarchy" = {
             "format" = "<span font='omarchy-ttf'>\ue900</span>";
