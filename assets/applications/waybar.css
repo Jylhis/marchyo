@@ -39,7 +39,9 @@
 #power-profiles-daemon,
 #custom-omarchy,
 #custom-screenrecording-indicator,
-#custom-update {
+#custom-update,
+#custom-fcitx5,
+#language {
   min-width: 12px;
   margin: 0 7.5px;
 }
@@ -89,4 +91,27 @@ menuitem {
 
 menuitem:hover {
   background-color: @accent;
+}
+
+/* fcitx5 input method indicator */
+#custom-fcitx5 {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+#custom-fcitx5.inactive {
+  opacity: 0.5;
+}
+
+#custom-fcitx5.active {
+  color: @accent;
+}
+
+#custom-fcitx5.cjk-active {
+  color: @warning;
+  font-weight: bold;
+}
+
+#custom-fcitx5.unicode-active {
+  color: @accent;
 }

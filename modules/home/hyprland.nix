@@ -298,16 +298,19 @@ in
 
         # Window rules for fcitx5 input method
         windowrulev2 = [
-          # fcitx5 input panel - keep it floating and always on top
+          # fcitx5 input method popup window
+          # The fcitx popup should be floating, borderless, and not steal focus
           "float, class:^(fcitx)$"
           "noborder, class:^(fcitx)$"
           "nofocus, class:^(fcitx)$"
+          "noinitialfocus, class:^(fcitx)$"
           "stayfocused, class:^(fcitx)$"
+          "pin, class:^(fcitx)$"
 
-          # fcitx5 config tool
+          # fcitx5 configuration tool
           "float, class:^(org.fcitx.fcitx5-config-qt)$"
           "center, class:^(org.fcitx.fcitx5-config-qt)$"
-          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
+          "size 900 700, class:^(org.fcitx.fcitx5-config-qt)$"
         ];
 
         bindd = [
@@ -506,7 +509,13 @@ in
           # Essential services
           "kanshi"
           "vicinae server"
+
+          # Input method framework - start fcitx5 as daemon
+          # -d: run as daemon in background
+          # --replace: replace existing fcitx5 instance if any
+          # -r (via fcitx5-remote): restart to ensure clean state
           "fcitx5 -d --replace"
+          "sleep 1 && fcitx5-remote -r"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"

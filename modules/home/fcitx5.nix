@@ -1,3 +1,27 @@
+# Home Manager fcitx5 configuration
+#
+# This module configures fcitx5 input method framework for the user session.
+# It works in conjunction with the NixOS-level fcitx5 module (modules/nixos/fcitx5.nix).
+#
+# How it works:
+# - NixOS module: Sets system-wide environment variables and installs fcitx5
+# - Home Manager module: Configures user-specific fcitx5 settings and behavior
+# - Hyprland module: Starts fcitx5 daemon and sets window rules
+# - Waybar module: Displays current input method status
+#
+# Input method integration:
+# - Wayland apps: Use native text-input-v3 protocol (best compatibility)
+# - Xwayland apps: Use fcitx IM module via XMODIFIERS and QT_IM_MODULE
+# - GTK apps: Use text-input-v3 on Wayland, fcitx module via settings.ini for older apps
+#
+# Terminal support:
+# - Works in terminal emulators (Kitty, Alacritty, etc.) via Wayland protocol
+# - Does NOT work in TTY (fcitx5 is graphical-only, requires Wayland/X11)
+#
+# Login screen:
+# - greetd/tuigreet: Text-based greeter, fcitx5 not applicable
+# - GDM/SDDM: Would work with proper environment.sessionVariables (already configured)
+#
 {
   lib,
   pkgs,
@@ -13,7 +37,11 @@ in
     i18n.inputMethod = {
       type = "fcitx5";
       fcitx5 = {
+        # Enable Wayland frontend for better integration with Wayland compositors
+        # This suppresses warnings about environment variables on Wayland
         waylandFrontend = true;
+
+        # CJK language addons (only installed if enableCJK is true)
         addons = lib.optionals cfg.enableCJK (
           with pkgs;
           [

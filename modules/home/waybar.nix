@@ -56,6 +56,7 @@ in
           ];
           modules-right = [
             "group/tray-expander"
+            "custom/fcitx5"
             "hyprland/language"
             "bluetooth"
             "network"
@@ -91,6 +92,54 @@ in
           "hyprland/language" = {
             format = "{short}";
             tooltip-format = "{long}";
+          };
+          "custom/fcitx5" = {
+            format = "{}";
+            exec = pkgs.writeShellScript "waybar-fcitx5" ''
+              # Get current input method from fcitx5
+              current_im=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null || echo "")
+
+              # Check if fcitx5 is active (returns 2 if active, 1 if inactive)
+              ${pkgs.fcitx5}/bin/fcitx5-remote 2>/dev/null
+              is_active=$?
+
+              # Determine icon and text based on current IM
+              case "$current_im" in
+                keyboard-us|keyboard-*)
+                  # Regular keyboard layout - show minimal indicator
+                  if [ $is_active -eq 2 ]; then
+                    echo '{"text":"󰌌","class":"active","tooltip":"Keyboard: '$current_im' (Active)"}'
+                  else
+                    echo '{"text":"󰌌","class":"inactive","tooltip":"Keyboard: '$current_im' (Inactive)"}'
+                  fi
+                  ;;
+                pinyin)
+                  echo '{"text":"拼","class":"cjk-active","tooltip":"Chinese Pinyin (拼音)"}'
+                  ;;
+                mozc)
+                  echo '{"text":"あ","class":"cjk-active","tooltip":"Japanese Mozc (日本語)"}'
+                  ;;
+                hangul)
+                  echo '{"text":"한","class":"cjk-active","tooltip":"Korean Hangul (한글)"}'
+                  ;;
+                unicode)
+                  echo '{"text":"","class":"unicode-active","tooltip":"Unicode Picker"}'
+                  ;;
+                *)
+                  # Unknown or no IM - show generic icon
+                  if [ $is_active -eq 2 ]; then
+                    echo '{"text":"󰌌","class":"active","tooltip":"Input Method Active"}'
+                  else
+                    echo '{"text":"󰌐","class":"inactive","tooltip":"Input Method Inactive"}'
+                  fi
+                  ;;
+              esac
+            '';
+            interval = 1;
+            on-click = "${pkgs.fcitx5}/bin/fcitx5-remote -t";
+            on-click-right = "${pkgs.qt6Packages.fcitx5-configtool}/bin/fcitx5-configtool";
+            return-type = "json";
+            tooltip = true;
           };
           "custom/omarchy" = {
             "format" = "<span font='omarchy-ttf'>\ue900</span>";

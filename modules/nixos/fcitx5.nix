@@ -1,3 +1,21 @@
+# NixOS fcitx5 configuration (system-level)
+#
+# This module sets up fcitx5 input method framework at the system level.
+# User-specific configuration is in modules/home/fcitx5.nix
+#
+# What this module does:
+# - Enables i18n.inputMethod.fcitx5 with Wayland frontend support
+# - Installs fcitx5 addons (GTK integration, CJK input methods, etc.)
+# - Sets environment variables for X11/Xwayland and Qt applications
+# - Installs required fonts for Unicode and CJK display
+# - Installs fcitx5-configtool for GUI configuration
+#
+# Environment variable strategy:
+# - XMODIFIERS: For X11/Xwayland applications
+# - QT_IM_MODULE: Fallback chain for Qt (wayland;fcitx;ibus)
+# - GTK_IM_MODULE: NOT set globally (set per-app via GTK settings.ini in Home Manager)
+#   This allows modern GTK apps to use Wayland text-input-v3 protocol
+#
 {
   pkgs,
   lib,
@@ -10,7 +28,7 @@ in
 {
   config = lib.mkIf cfg.enable {
     # Enable system-level input method framework
-    # User-level configuration is in modules/home/fcitx5.nix
+    # Note: User-level configuration is in modules/home/fcitx5.nix
     i18n.inputMethod = {
       enable = true;
       type = "fcitx5";
@@ -35,17 +53,33 @@ in
       };
     };
 
+    # Environment variables for input method integration
+    # Modern approach for Wayland with fallback for X11/Xwayland apps
     environment.variables = {
-      # XWayland support - REQUIRED for X11 apps running under Wayland
+      # XWayland and X11 support - REQUIRED for X11 apps
       XMODIFIERS = "@im=fcitx";
 
-      # Qt 6.7+ fallback chain - tries Wayland protocol first, then fcitx, then ibus
-      # Qt 6.8.2+ has native text-input-v3 support
+      # Qt input method configuration
+      # Qt 6.7+: Fallback chain tries Wayland protocol first, then fcitx
+      # Qt 6.8.2+: Has native text-input-v3 Wayland support
+      # For older Qt apps under Xwayland, fcitx is used
       QT_IM_MODULE = "wayland;fcitx;ibus";
 
-      # Note: GTK_IM_MODULE is NOT set globally
-      # - GTK 3/4 have native text-input-v3 support on Wayland
-      # - For older GTK apps that need it, configure via GTK settings.ini (see Home Manager module)
+      # Note: GTK_IM_MODULE is intentionally NOT set globally for Wayland
+      # Rationale:
+      # - Modern GTK 3.24+ and GTK 4 have native Wayland text-input-v3 protocol support
+      # - Setting GTK_IM_MODULE forces the older GTK IM module API instead of Wayland protocol
+      # - For legacy GTK apps that need explicit IM module, configure via GTK settings.ini
+      #   (see Home Manager module: gtk-3.0/settings.ini and gtk-4.0/settings.ini)
+      # - This approach gives best compatibility: Wayland-native apps use text-input protocol,
+      #   Xwayland apps use fcitx IM module
+    };
+
+    # Enable fcitx5 input method support at the display manager level
+    # This ensures fcitx5 works at the login screen and across all sessions
+    environment.sessionVariables = {
+      # These variables are set for all user sessions, including login screen
+      GLFW_IM_MODULE = "ibus"; # For GLFW applications (some games, etc.)
     };
 
     # Install required fonts for Unicode and CJK display
@@ -59,10 +93,11 @@ in
       noto-fonts-cjk-serif
     ];
 
-    # Install fcitx5 and config tool at system level
+    # Install fcitx5 configuration tool at system level
+    # Note: fcitx5 itself is automatically installed via i18n.inputMethod.fcitx5
+    # Installing it again in systemPackages can cause conflicts in some NixOS versions
     environment.systemPackages = with pkgs; [
-      fcitx5
-      qt6Packages.fcitx5-configtool
+      qt6Packages.fcitx5-configtool # GUI configuration tool
     ];
   };
 }
