@@ -169,16 +169,24 @@ in
         default = [ "grp:win_space_toggle" ]; # Note: "Win" = Super key in XKB terminology
         example = [
           "grp:win_space_toggle"
-          "caps:escape"
+          "ctrl:swapcaps"
           "compose:ralt"
         ];
         description = ''
           XKB keyboard options.
           Default enables Super+Space for layout switching.
+
           Common options:
           - grp:win_space_toggle: Use Super+Space to switch layouts (Win = Super key)
+          - ctrl:swapcaps: Swap Caps Lock and Left Control
+          - ctrl:nocaps: Make Caps Lock another Control key
           - caps:escape: Map Caps Lock to Escape
           - compose:ralt: Use Right Alt as Compose key
+
+          For a complete list of available options, see:
+          - NixOS manual: https://nixos.org/manual/nixos/stable/index.html#sec-xserver-keyboard
+          - XKB configuration: /usr/share/X11/xkb/rules/base.lst (on any Linux system)
+          - xkeyboard-config docs: https://www.freedesktop.org/wiki/Software/XKeyboardConfig/
         '';
       };
     };

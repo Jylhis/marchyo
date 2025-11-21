@@ -45,7 +45,8 @@ in
         active_border_color = mkDefault "none";
         remember_window_size = false;
 
-        wayland_enable_ime = false;
+        # Enable Wayland input method support for fcitx5
+        wayland_enable_ime = true;
 
         # Layout
         enabled_layouts = "splits,horizontal,vertical,tall";
