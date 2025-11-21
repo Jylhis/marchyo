@@ -97,8 +97,9 @@ in
           "ActiveByDefault" = false;
           # Reset state on Focus In
           "resetStateWhenFocusIn" = "No";
-          # Share Input State
-          "ShareInputState" = "No";
+          # Share Input State - set to "All" so input method state persists across all windows
+          # This ensures consistent behavior when switching between applications
+          "ShareInputState" = "All";
           # Show preedit in application
           "PreeditEnabledByDefault" = true;
           # Show Input Method Information when switch input method
