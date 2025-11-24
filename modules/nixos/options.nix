@@ -194,7 +194,7 @@ in
     inputMethod = {
       enable = mkOption {
         type = types.bool;
-        default = true;
+        default = false;
         description = ''
           Enable fcitx5 input method framework for CJK input.
 
