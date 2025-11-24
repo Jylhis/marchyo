@@ -11,7 +11,7 @@ in
   programs = lib.mkIf userConfig.enable {
     git = {
       enable = true;
-      settings = {
+      extraConfig = {
         user = {
           name = userConfig.fullname;
           inherit (userConfig) email;
