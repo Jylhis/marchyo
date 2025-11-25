@@ -38,6 +38,13 @@ in
       };
     };
 
+    dconf.settings = {
+      "org/gnome/desktop/interface" = {
+        color-scheme = if variant == "light" then "prefer-light" else "prefer-dark";
+        gtk-theme = if variant == "light" then "Adwaita" else "Adwaita-dark";
+      };
+    };
+
     wayland.windowManager.hyprland = {
       enable = true;
       systemd.enable = true;
