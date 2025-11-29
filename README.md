@@ -1,5 +1,8 @@
 # Marchyo
 
+[![FlakeHub](https://img.shields.io/endpoint?url=https://flakehub.com/f/Jylhis/marchyo/badge)](https://flakehub.com/flake/Jylhis/marchyo)
+
+
 A modular NixOS configuration flake providing a curated set of system and home-manager configurations with sensible defaults.
 
 ## Features
