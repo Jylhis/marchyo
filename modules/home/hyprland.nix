@@ -257,6 +257,9 @@ in
           "size 460 800, class:steam, title:Friends List"
           "idleinhibit fullscreen, class:steam"
 
+          # 1Password - full opacity for proper rendering
+          "opacity 1.0 1.0, class:^(1Password|1password)$"
+
           # Just dash of transparency
           "opacity 0.97 0.9, class:.*"
           # Normal chrome Youtube tabs
