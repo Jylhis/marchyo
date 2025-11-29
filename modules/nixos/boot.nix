@@ -9,7 +9,7 @@
   services.greetd = {
     enable = true;
     settings.default_session.command =
-      "${lib.getExe (pkgs.greetd.tuigreet or pkgs.tuigreet)} "
+      "${lib.getExe (pkgs.tuigreet or pkgs.greetd.tuigreet)} "
       + (lib.cli.toGNUCommandLineShell { } {
         time = true;
         cmd = "Hyprland";
