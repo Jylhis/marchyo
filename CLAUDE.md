@@ -100,15 +100,65 @@ ALL custom options are defined in `modules/nixos/options.nix`. Key option catego
 - `timezone` - System timezone (default: "Europe/Zurich")
 - `defaultLocale` - System locale (default: "en_US.UTF-8")
 
-**Keyboard** (`marchyo.keyboard.*`)
-- `layouts` - List of keyboard layouts (default: ["us", "fi"])
-- `variant` - Keyboard variant for primary layout
-- `options` - XKB options (default: ["grp:win_space_toggle"] for Super+Space layout switching)
+**Keyboard & Input Methods** (`marchyo.keyboard.*`)
 
-**Input method** (`marchyo.inputMethod.*`)
-- `enable` - Enable fcitx5 for CJK input (default: false)
-- `triggerKey` - Keys to activate CJK input (default: ["Super+I", "Zenkaku_Hankaku", "Hangul"])
-- `enableCJK` - Enable CJK input methods (default: true)
+Marchyo provides a unified input system where keyboard layouts and input methods are configured together through `marchyo.keyboard.layouts`.
+
+- `layouts` - List of keyboard layouts and input methods (default: ["us", "fi"])
+  - Simple string: `"us"`, `"fi"`, `"de"` - Basic keyboard layout
+  - Attribute set: `{ layout = "cn"; ime = "pinyin"; }` - Layout with input method engine
+  - Supported IME: `"pinyin"` (Chinese), `"mozc"` (Japanese), `"hangul"` (Korean), `"unicode"` (Unicode picker)
+- `autoActivateIME` - Auto-activate IME when switching to layout with IME (default: true)
+- `imeTriggerKey` - Keys to manually toggle IME on/off (default: ["Super+I"])
+- `options` - XKB options (default: ["grp:win_space_toggle"] for Super+Space switching)
+- `variant` - DEPRECATED: Use variant in layouts instead
+
+**Quick Examples:**
+```nix
+# English + Finnish + Chinese with Pinyin
+marchyo.keyboard.layouts = [
+  "us"
+  "fi"
+  { layout = "cn"; ime = "pinyin"; }
+];
+
+# US International + Finnish
+marchyo.keyboard.layouts = [
+  { layout = "us"; variant = "intl"; }
+  "fi"
+];
+
+# Multiple CJK languages
+marchyo.keyboard.layouts = [
+  "us"
+  { layout = "cn"; ime = "pinyin"; }
+  { layout = "jp"; ime = "mozc"; }
+  { layout = "kr"; ime = "hangul"; }
+];
+```
+
+**Switching Behavior:**
+- **Super+Space**: Cycle through all keyboard layouts and input methods
+- **Super+I**: Manually toggle IME on/off for current layout
+- **Auto-activation**: When `autoActivateIME = true` (default), switching to a layout with IME automatically activates it
+
+**Coverage:**
+- ✅ Desktop (Hyprland, Wayland) - Full IME support
+- ✅ Login screen (greetd) - Basic keyboard layouts only
+- ✅ TTY/Console - Basic keyboard layouts only (no IME)
+- ✅ Applications (browser, terminal, office) - Full IME support
+
+**Architecture:**
+- fcitx5 manages all input for consistent desktop experience
+- XKB provides fallback for TTY/console (basic layouts only)
+- Wayland text-input-v3 protocol for modern GTK/Qt apps
+- Environment variables (XMODIFIERS, QT_IM_MODULE) for compatibility
+
+**DEPRECATED Options** (use `marchyo.keyboard.layouts` instead):
+- `marchyo.inputMethod.enable` → Add IME layouts to `marchyo.keyboard.layouts`
+- `marchyo.inputMethod.triggerKey` → Use `marchyo.keyboard.imeTriggerKey`
+- `marchyo.inputMethod.enableCJK` → Add specific CJK layouts as needed
+- `marchyo.keyboard.variant` → Use `{ layout = "us"; variant = "intl"; }` in layouts
 
 ### Dependencies
 Key external dependencies (from `flake.nix`):

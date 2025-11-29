@@ -78,11 +78,22 @@ in
             && (config.home.keyboard ? options)
             && (config.home.keyboard.options != null)
           ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.options));
-          kb_variant = lib.mkIf (
-            (config.home ? keyboard)
-            && (config.home.keyboard ? variant)
-            && (config.home.keyboard.variant != null)
-          ) (lib.mkDefault (lib.strings.join "," config.home.keyboard.variant));
+          kb_variant =
+            lib.mkIf
+              (
+                (config.home ? keyboard)
+                && (config.home.keyboard ? variant)
+                && (config.home.keyboard.variant != null)
+              )
+              (
+                lib.mkDefault (
+                  # Handle both list and string types for variant
+                  if builtins.isList config.home.keyboard.variant then
+                    lib.strings.join "," config.home.keyboard.variant
+                  else
+                    config.home.keyboard.variant
+                )
+              );
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;

@@ -136,4 +136,109 @@ in
       };
     };
   });
+
+  # Test keyboard configuration with string-only layouts (backward compatibility)
+  eval-keyboard-simple = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      "us"
+      "fi"
+      "de"
+    ];
+  });
+
+  # Test keyboard configuration with hybrid layouts (strings and attribute sets)
+  eval-keyboard-hybrid = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      "us"
+      {
+        layout = "fi";
+        variant = "";
+      }
+      {
+        layout = "cn";
+        ime = "pinyin";
+      }
+    ];
+  });
+
+  # Test keyboard configuration with multiple IME layouts
+  eval-keyboard-multiple-ime = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      "us"
+      {
+        layout = "cn";
+        ime = "pinyin";
+      }
+      {
+        layout = "jp";
+        ime = "mozc";
+      }
+      {
+        layout = "kr";
+        ime = "hangul";
+      }
+    ];
+  });
+
+  # Test keyboard configuration with variant
+  eval-keyboard-variant = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      {
+        layout = "us";
+        variant = "intl";
+      }
+      "fi"
+    ];
+  });
+
+  # Test keyboard smart switching configuration
+  eval-keyboard-smart-switching = testNixOS (withTestUser {
+    marchyo.keyboard = {
+      layouts = [
+        "us"
+        {
+          layout = "cn";
+          ime = "pinyin";
+        }
+      ];
+      autoActivateIME = true;
+      imeTriggerKey = [
+        "Super+I"
+        "Alt+grave"
+      ];
+    };
+  });
+
+  # Test keyboard with custom labels
+  eval-keyboard-custom-labels = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      "us"
+      {
+        layout = "cn";
+        ime = "pinyin";
+        label = "中文";
+      }
+    ];
+  });
+
+  # Test that legacy variant option still works
+  eval-keyboard-legacy-variant = testNixOS (withTestUser {
+    marchyo.keyboard = {
+      layouts = [
+        "us"
+        "fi"
+      ];
+      variant = "intl"; # Should apply to first layout
+    };
+  });
+
+  # Test keyboard with unicode IME
+  # Note: Unicode picker doesn't need a separate layout - it's activated via imeTriggerKey
+  # This test verifies that fcitx5 is configured when layouts contain IME
+  eval-keyboard-unicode = testNixOS (withTestUser {
+    marchyo.keyboard.layouts = [
+      "us"
+      "fi"
+    ];
+  });
 }

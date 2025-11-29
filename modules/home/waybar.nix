@@ -19,6 +19,7 @@ let
   hex = color: "#${color}";
 
   # fcitx5 status script for waybar
+  # Shows current input method: keyboard layouts (us, fi, cn) or IME (拼, あ, 한)
   fcitx5StatusScript = pkgs.writeShellScript "fcitx5-status.sh" ''
     # Get current fcitx5 input method name
     status=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null)
@@ -31,25 +32,27 @@ let
 
     # Handle different input methods
     case "$status" in
-        keyboard-us|keyboard-fi|keyboard*)
-            # Don't show anything for basic keyboard layouts (handled by XKB indicator)
-            echo '{"text":"","class":"keyboard","tooltip":""}'
+        keyboard-*)
+            # Extract layout code from keyboard-us, keyboard-fi, etc.
+            layout=''${status#keyboard-}
+            # Show first 2 chars of layout code (e.g., "us", "fi", "cn")
+            echo '{"text":"'"''${layout:0:2}"'","class":"keyboard","tooltip":"Keyboard: '"$layout"'"}'
             ;;
         pinyin)
-            echo '{"text":"拼","class":"active","tooltip":"Chinese Pinyin"}'
+            echo '{"text":"拼","class":"ime-active","tooltip":"Chinese Pinyin"}'
             ;;
         mozc)
-            echo '{"text":"あ","class":"active","tooltip":"Japanese Mozc"}'
+            echo '{"text":"あ","class":"ime-active","tooltip":"Japanese Mozc"}'
             ;;
         hangul)
-            echo '{"text":"한","class":"active","tooltip":"Korean Hangul"}'
+            echo '{"text":"한","class":"ime-active","tooltip":"Korean Hangul"}'
             ;;
         unicode)
-            echo '{"text":"⌨","class":"active","tooltip":"Unicode Picker"}'
+            echo '{"text":"⌨","class":"ime-active","tooltip":"Unicode Picker"}'
             ;;
         *)
             # Fallback for unknown input methods - show first 2 chars
-            echo '{"text":"'"''${status:0:2}"'","class":"active","tooltip":"'"$status"'"}'
+            echo '{"text":"'"''${status:0:2}"'","class":"ime-active","tooltip":"'"$status"'"}'
             ;;
     esac
   '';
