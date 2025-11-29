@@ -9,115 +9,170 @@ Marchyo is a NixOS configuration flake providing modular system and home-manager
 ## Commands
 
 ### Build and Development
-- `nix flake check` - Validate flake configuration and check for errors
+- `nix flake check` - Run all lightweight tests (module evaluation, formatting, etc.) - completes in under 1 minute
 - `nix flake show` - Display flake outputs (systems, packages, modules)
-- `nix fmt` - Format Nix code using nixfmt (configured via treefmt)
+- `nix fmt` - Format Nix code using treefmt (nixfmt, deadnix, statix, actionlint, shellcheck, yamlfmt)
 - `nix develop` - Enter development shell with required tools
 
-### Building Configurations
-- `nix build .#nixosConfigurations.{hostname}` - Build specific NixOS configuration
-- `nix build .#homeConfigurations.{username}` - Build specific Home Manager configuration
+### Testing
+- `nix flake check` - Run lightweight evaluation tests (recommended for rapid iteration)
+- `nix build .#vmTests.x86_64-linux.{test-name}` - Run specific VM-based test (1-5 minutes, ~2GB RAM)
+- `nix eval .#checks.x86_64-linux --apply builtins.attrNames` - List available lightweight tests
+- `nix eval .#vmTests.x86_64-linux --apply builtins.attrNames` - List available VM tests
+
+Available VM tests: `nixos-desktop`, `nixos-development`, `nixos-users`, `nixos-git`, `home-git`, `home-packages`, `integration-all-features`
 
 ## Architecture
 
 ### Module Organization
-- `modules/nixos/` - NixOS system configuration modules
-- `modules/home/` - Home Manager user configuration modules
-- `modules/generic/` - Shared modules between NixOS and Home Manager
+- `modules/nixos/` - NixOS system configuration modules (33 modules)
+- `modules/home/` - Home Manager user configuration modules (26 modules)
+- `modules/generic/` - Shared modules between NixOS and Home Manager (fontconfig, git, shell, packages)
 
-### Key Modules
-- `modules/nixos/options.nix` - Defines custom options under `marchyo.*` namespace
-- `modules/nixos/default.nix` - Main NixOS module imports
-- `modules/home/default.nix` - Main Home Manager module imports
-- `lib/default.nix` - Custom utility functions
+### Key Files
+- `flake.nix` - Main flake definition with inputs, outputs, and module composition
+- `modules/nixos/options.nix` - Defines ALL custom options under `marchyo.*` namespace
+- `modules/nixos/default.nix` - Imports all NixOS modules (single source of truth for module list)
+- `modules/home/default.nix` - Imports all Home Manager modules (single source of truth)
+- `lib/default.nix` - Exports color utilities from `lib/colors.nix`
+- `colorschemes/default.nix` - Exports custom Base16 schemes (modus-vivendi-tinted, modus-operandi-tinted)
 
 ### Configuration Categories
-NixOS modules are organized by function:
-- System: boot, hardware, performance, security
-- Desktop: hyprland, wayland, graphics, fonts, desktop-config (automatic setup when desktop.enable = true)
-- Development: development-config (automatic setup when development.enable = true)
-- Network: networking configuration
-- Applications: office, media, containers
-- Utilities: printing, locale, update management
+**NixOS modules** organized by function:
+- **System foundation**: boot, hardware, performance, security, system, nix-settings
+- **Desktop stack**: desktop-config (auto-setup module), hyprland, wayland, graphics, fonts, plymouth, hyprlock
+- **Development stack**: development-config (auto-setup module), containers
+- **Network & services**: network, printing
+- **Applications**: media, office (via desktop-config)
+- **User experience**: locale, keyboard, fcitx5, help, update-diff
+- **External integrations**: _1password
 
-Home Manager modules cover:
-- Desktop environment: hyprland, waybar, wofi, mako
-- Terminal: kitty, ghostty, shell configuration
-- Development: git configuration
-- System tools: btop, fastfetch
+**Home Manager modules** organized by function:
+- **Desktop environment**: hyprland, waybar, wofi, vicinae, mako, hyprpaper, hypridle, hyprlock, screenshot
+- **Terminal & shell**: kitty, shell, starship, bat, fzf
+- **Development tools**: git, lazygit, k9s
+- **System utilities**: btop, fastfetch, help
+- **Theming & localization**: theme, locale, keyboard, fcitx5
+- **Applications**: xournalpp, dropbox
+- **External integrations**: _1password
 
-### Feature Flags
-Marchyo uses feature flags to enable groups of related functionality:
-- `marchyo.desktop.enable` - Enables desktop environment (Hyprland, fonts, audio, bluetooth, etc.). Automatically enables office and media apps by default.
-- `marchyo.development.enable` - Enables development tools (git, docker, virtualization, build tools, etc.)
-- `marchyo.office.enable` - Enables office applications (LibreOffice, etc.)
-- `marchyo.media.enable` - Enables media applications (Spotify, MPV, etc.)
+**Generic modules** (shared between NixOS and Home Manager):
+- fontconfig, git, shell, packages
 
-Simply set these to `true` in your configuration to enable the full stack of related packages and services.
+### Feature Flags & Auto-Configuration Modules
 
-### Custom Options
-The flake defines custom options under the `marchyo` namespace in `options.nix`:
-- `marchyo.users.*` - User account configuration with email, fullname, and enable flags
+Marchyo uses feature flags that trigger auto-configuration modules to enable groups of related functionality:
+
+**`marchyo.desktop.enable`** (implemented in `modules/nixos/desktop-config.nix`)
+- When enabled, automatically configures: printing, bluetooth, audio (pipewire), fonts, graphics, power management, XDG portals
+- Sets `marchyo.office.enable` and `marchyo.media.enable` to `true` by default (can be overridden)
+- Enables desktop services: blueman, geoclue2, tumbler, upower, locate, gnome-keyring
+
+**`marchyo.development.enable`** (implemented in `modules/nixos/development-config.nix`)
+- When enabled, automatically configures: git (with LFS), direnv, docker (with auto-prune), libvirtd (with QEMU KVM)
+- Installs development tools: gh, gnumake, cmake, gcc, docker-compose, lazydocker, virt-manager, sqlite, curl, wget, netcat, nmap, tcpdump, jq, yq, tree, ripgrep, fd, eza
+- Enables KVM kernel modules and development documentation
+
+**`marchyo.office.enable`** and **`marchyo.media.enable`**
+- Implemented in individual modules (`modules/nixos/office.nix`, `modules/nixos/media.nix`)
+- Automatically enabled when desktop is enabled (but can be disabled explicitly)
+
+### Custom Options Structure
+
+ALL custom options are defined in `modules/nixos/options.nix`. Key option categories:
+
+**User configuration** (`marchyo.users.<name>.*`)
+- `enable`, `name`, `fullname`, `email` - User account metadata passed to git and other tools
+
+**Feature flags** (trigger auto-configuration modules)
+- `marchyo.desktop.enable` - Desktop environment
+- `marchyo.desktop.useWofi` - Use wofi instead of vicinae launcher
+- `marchyo.development.enable` - Development tools
+- `marchyo.media.enable` - Media applications
+- `marchyo.office.enable` - Office applications
+
+**Theming** (`marchyo.theme.*`)
+- `enable` - Enable nix-colors theming system (default: true)
+- `variant` - "light" or "dark" (default: "dark"), selects default scheme when scheme is null
+- `scheme` - String (scheme name), attrs (custom scheme), or null (uses variant default)
+
+**Localization** (`marchyo.*`)
+- `timezone` - System timezone (default: "Europe/Zurich")
+- `defaultLocale` - System locale (default: "en_US.UTF-8")
+
+**Keyboard** (`marchyo.keyboard.*`)
+- `layouts` - List of keyboard layouts (default: ["us", "fi"])
+- `variant` - Keyboard variant for primary layout
+- `options` - XKB options (default: ["grp:win_space_toggle"] for Super+Space layout switching)
+
+**Input method** (`marchyo.inputMethod.*`)
+- `enable` - Enable fcitx5 for CJK input (default: false)
+- `triggerKey` - Keys to activate CJK input (default: ["Super+I", "Zenkaku_Hankaku", "Hangul"])
+- `enableCJK` - Enable CJK input methods (default: true)
 
 ### Dependencies
-Key external dependencies:
-- nixos-hardware for hardware-specific configurations
-- home-manager for user environment management
-- treefmt-nix for code formatting
-- nix-colors for Base16 theming system
-- determinate for Determinate Systems tools (nix installer, etc.)
-- fh for FlakeHub CLI
+Key external dependencies (from `flake.nix`):
+- **nixpkgs** - NixOS package collection (via FlakeHub)
+- **nixos-hardware** - Hardware-specific configurations
+- **home-manager** - User environment management (via FlakeHub)
+- **nix-colors** - Base16 theming system
+- **vicinae** - Default application launcher
+- **treefmt-nix** - Code formatting (via FlakeHub)
+- **determinate** - Determinate Systems tools (via FlakeHub)
+- **fh** - FlakeHub CLI (via FlakeHub)
 
-Note: disko configurations are available in the `disko/` directory but disko is not a required dependency. Add it to your flake inputs if you need disk partitioning.
+**Optional dependencies** (not in flake.nix, add if needed):
+- **disko** - Disk partitioning configurations available in `disko/` directory (btrfs.nix, luks-btrfs.nix, simple-uefi.nix)
 
-### Colorschemes
-Marchyo provides a unified theming system combining nix-colors Base16 schemes with custom colorschemes:
+### Colorschemes & Theming System
 
-**Built-in nix-colors schemes** - Access 200+ schemes from the nix-colors library (e.g., `dracula`, `gruvbox-dark-medium`, `catppuccin-mocha`)
-
-**Custom colorschemes** (in `colorschemes/` directory):
-- `modus-operandi-tinted` - Light theme by Protesilaos Stavrou
-- `modus-vivendi-tinted` - Dark theme by Protesilaos Stavrou
-
-**Usage examples:**
+**Theme composition in flake.nix:**
 ```nix
-# Use a nix-colors scheme
-marchyo.theme = {
-  enable = true;
-  scheme = "dracula";
-};
-
-# Use a custom scheme
-marchyo.theme = {
-  enable = true;
-  scheme = "modus-vivendi-tinted";
-};
-
-# Use a completely custom scheme
-marchyo.theme = {
-  enable = true;
-  scheme = {
-    slug = "my-custom";
-    name = "My Custom Scheme";
-    author = "Your Name";
-    variant = "dark";
-    palette = {
-      base00 = "000000";
-      # ... base01-base0F
-    };
-  };
-};
+colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
 ```
+This merges 200+ nix-colors schemes with Marchyo's custom schemes.
 
-Colorschemes are accessible via `flake.lib.marchyo.colorSchemes` for external use.
+**Custom colorschemes** (defined in `colorschemes/default.nix`):
+- `modus-operandi-tinted` - Light theme by Protesilaos Stavrou (from `colorschemes/modus-operandi-tinted.nix`)
+- `modus-vivendi-tinted` - Dark theme by Protesilaos Stavrou (from `colorschemes/modus-vivendi-tinted.nix`)
 
-## Packages
-- `packages/plymouth-marchyo-theme/` - Custom Plymouth boot theme
+**Theme variant defaults** (from `modules/nixos/options.nix`):
+- When `marchyo.theme.scheme = null`, the default scheme is selected based on `marchyo.theme.variant`:
+  - `variant = "dark"` → defaults to `modus-vivendi-tinted`
+  - `variant = "light"` → defaults to `modus-operandi-tinted`
+
+**Accessing colorschemes:**
+- Within flake: `config._module.args.colorSchemes` (NixOS modules) or `extraSpecialArgs.colorSchemes` (Home Manager)
+- External use: `flake.lib.marchyo.colorSchemes`
+
+**Theme propagation:**
+- NixOS modules: `config._module.args.colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);`
+- Home Manager: Passed via `extraSpecialArgs.colorSchemes` in `home-manager.extraSpecialArgs`
+
+## Packages & Additional Outputs
+
+**Custom packages** (in `packages/`):
+- `plymouth-marchyo-theme/` - Custom Plymouth boot theme
+- `hyprmon/` - Hyprland monitor configuration utility
+
+**Installer configurations** (in `installer/`):
+- `iso-graphical.nix` - Live ISO with graphical desktop environment
+- `iso-minimal.nix` - Minimal live ISO for installation
+
+**Disko configurations** (in `disko/`):
+- `btrfs.nix` - Btrfs filesystem layout
+- `luks-btrfs.nix` - LUKS-encrypted Btrfs setup
+- `simple-uefi.nix` - Simple UEFI boot configuration
+
+**Test infrastructure** (in `tests/`):
+- `lightweight/` - Fast evaluation tests (run via `nix flake check`)
+- `nixos/`, `home/`, `integration/` - VM-based tests (run manually)
+- See `tests/README.md` for comprehensive testing documentation
 
 ## Using Marchyo
 
-### As a Library
-Import Marchyo's NixOS modules and use feature flags to enable functionality:
+### As a NixOS Module
+Import Marchyo's NixOS modules and use feature flags:
 
 ```nix
 {
@@ -130,11 +185,8 @@ Import Marchyo's NixOS modules and use feature flags to enable functionality:
         marchyo.nixosModules.default
         ./hardware-configuration.nix
         {
-          # Enable feature flags
           marchyo.desktop.enable = true;
           marchyo.development.enable = true;
-
-          # Configure user
           marchyo.users.myuser = {
             fullname = "Your Name";
             email = "you@example.com";
@@ -147,18 +199,51 @@ Import Marchyo's NixOS modules and use feature flags to enable functionality:
 }
 ```
 
-### Available Outputs
-- `nixosModules.default` - Default NixOS module with Marchyo configuration
-- `homeModules.default` - Default Home Manager module
-- `lib.marchyo` - Utility functions and color helpers
+### Flake Outputs
+- `nixosModules.default` - Main NixOS module (includes home-manager integration, determinate, and Marchyo modules)
+- `nixosModules.home-manager` - Re-exported home-manager NixOS module
+- `homeModules.default` - Home Manager module (imports all modules from `modules/home/default.nix`)
+- `homeModules._1password` - Standalone 1Password Home Manager module
+- `lib.marchyo` - Utility library (currently exports `colors` from `lib/colors.nix`)
 - `lib.marchyo.colorSchemes` - Custom colorschemes (modus-operandi-tinted, modus-vivendi-tinted)
-- `overlays.default` - Nixpkgs overlay
-- `templates` - Project templates (workstation template with desktop + development setup)
+- `overlays.default` - Nixpkgs overlay (from `overlays/default.nix`)
+- `templates.workstation` - Template with desktop + development setup (default template)
+- `checks.{system}.*` - Lightweight evaluation tests
+- `vmTests.{system}.*` - VM-based integration tests (not included in `checks`)
+- `formatter.{system}` - treefmt formatter configuration
 
-## Development Notes
-- The flake supports x86_64-linux systems
-- All Nix files should follow the project's formatting standards enforced by treefmt
-- Use `nix flake check` before committing to ensure configuration validity
-- Custom utility functions are available in `lib/default.nix`
-- Use feature flags (`marchyo.desktop.enable`, `marchyo.development.enable`, etc.) to enable groups of functionality
-- The `disko/` directory contains example disk partitioning configurations - add disko as a flake input if needed
+## Development Guidelines
+
+### System Support
+- **Supported systems**: x86_64-linux only
+- System list defined in flake.nix: `systems = [ "x86_64-linux" ];`
+
+### Code Quality
+- **Always run `nix fmt` before committing** - Formats all Nix code using treefmt
+- **Always run `nix flake check` before committing** - Validates configuration and runs lightweight tests
+- Formatting tools configured: nixfmt, deadnix, statix, actionlint, shellcheck, yamlfmt
+
+### Testing Strategy
+- **Lightweight tests** (preferred): Add to `tests/lightweight/` - fast evaluation checks
+- **VM tests** (when needed): Add to `tests/nixos/`, `tests/home/`, or `tests/integration/` - runtime validation
+- See `tests/README.md` for detailed testing guidelines
+
+### Module Development
+- **Adding new custom options**: Edit `modules/nixos/options.nix` (single source of truth for all `marchyo.*` options)
+- **Adding new modules**:
+  1. Create module file in appropriate directory (`modules/nixos/`, `modules/home/`, or `modules/generic/`)
+  2. Import it in the corresponding `default.nix` file
+  3. Add lightweight evaluation test in `tests/lightweight/`
+- **Auto-configuration modules**: See `desktop-config.nix` and `development-config.nix` for examples of feature flag implementations
+
+### Colorscheme Development
+- **Adding custom colorschemes**:
+  1. Create scheme file in `colorschemes/` directory
+  2. Export it in `colorschemes/default.nix`
+  3. Schemes are automatically merged with nix-colors schemes in flake.nix
+
+### Common Patterns
+- Use `lib.mkDefault` for options that should be overridable by users
+- Use `lib.mkIf cfg.*.enable` for conditional module activation
+- Feature flags should trigger comprehensive auto-configuration (see desktop-config.nix, development-config.nix)
+- Generic modules in `modules/generic/` are shared between NixOS and Home Manager
