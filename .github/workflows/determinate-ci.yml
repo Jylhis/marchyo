@@ -11,7 +11,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wimpysworld/nothing-but-nix@main
+        with:
+          hatchet-protocol: 'cleave'
   DeterminateCI:
+    needs: cleanup
     uses: DeterminateSystems/ci/.github/workflows/workflow.yml@main
     permissions:
       id-token: write
