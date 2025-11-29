@@ -25,6 +25,13 @@
   # Enable development tools (docker, virtualization, dev tools)
   marchyo.development.enable = true;
 
+  # Keyboard layouts and input methods (defaults shown, can be customized)
+  # marchyo.keyboard.layouts = [
+  #   "us"                               # US English keyboard
+  #   "fi"                               # Finnish keyboard
+  #   { layout = "cn"; ime = "pinyin"; } # Chinese with Pinyin IME
+  # ];
+
   # Bootloader configuration
   boot.loader = {
     systemd-boot.enable = true;

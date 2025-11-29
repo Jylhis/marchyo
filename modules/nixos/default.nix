@@ -9,6 +9,7 @@
     ../generic/fontconfig.nix
     ./boot.nix
     ./options.nix
+    ./input-migration.nix
     ./packages.nix
     ./containers.nix
     ./desktop-config.nix

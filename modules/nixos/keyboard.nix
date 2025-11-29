@@ -5,25 +5,52 @@
 }:
 let
   cfg = config.marchyo.keyboard;
+
+  # Normalize all layouts to uniform structure
+  normalizedLayouts = map (
+    layout:
+    if builtins.isString layout then
+      {
+        inherit layout;
+        variant = "";
+        ime = null;
+        label = null;
+      }
+    else
+      layout
+  ) cfg.layouts;
+
+  # Extract layout codes for XKB configuration
+  simpleLayouts = map (l: l.layout) normalizedLayouts;
+
+  # Extract variants for XKB configuration
+  # Apply legacy variant option to first layout if no variant specified
+  variants = lib.imap0 (
+    i: l:
+    if i == 0 && l.variant == "" && cfg.variant != "" then
+      cfg.variant # Apply legacy variant option to first layout
+    else
+      l.variant
+  ) normalizedLayouts;
 in
 {
   config = {
-    # Apply marchyo keyboard configuration to system level
-    # This ensures console/TTY and X11 applications respect keyboard settings
+    # XKB fallback configuration for TTY/console and login screen
+    # fcitx5 manages input in the desktop environment, but TTY needs XKB
     services.xserver.xkb = {
-      layout = lib.mkDefault (lib.concatStringsSep "," cfg.layouts);
+      # Configure all layouts (including those with IME) for basic TTY support
+      layout = lib.mkDefault (lib.concatStringsSep "," simpleLayouts);
 
-      # Apply variant only to first layout when multiple layouts exist
-      # Example: layouts=["us","fi"] variant="intl" → variant="intl,"
-      variant = lib.mkDefault (
-        if cfg.variant != "" then
-          lib.concatStringsSep "," ([ cfg.variant ] ++ (lib.replicate ((lib.length cfg.layouts) - 1) ""))
-        else
-          ""
-      );
+      # Configure variants for each layout
+      variant = lib.mkDefault (lib.concatStringsSep "," variants);
 
       # Convert list of options to comma-separated string
       options = lib.mkDefault (lib.concatStringsSep "," cfg.options);
     };
+
+    # Enable console keyboard layout switching in TTY
+    # This allows Super+Space to work in virtual consoles (TTY1-TTY6)
+    # Note: IME functionality is not available in TTY (fcitx5 requires graphical environment)
+    console.useXkbConfig = true;
   };
 }
