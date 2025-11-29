@@ -14,10 +14,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
-      - uses: DeterminateSystems/determinate-nix-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run Claude Code Review
         id: claude-review

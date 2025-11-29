@@ -13,12 +13,12 @@ jobs:
       id-token: "write"
       contents: "read"
     steps:
-      - uses: "actions/checkout@v5"
+      - uses: "actions/checkout@v6"
         with:
           persist-credentials: false
       - uses: "DeterminateSystems/determinate-nix-action@v3"
-      - uses: DeterminateSystems/flakehub-cache-action@main
-      - uses: DeterminateSystems/flake-checker-action@main
+      - uses: DeterminateSystems/flakehub-cache-action@v2
+      - uses: DeterminateSystems/flake-checker-action@v12
       - uses: "DeterminateSystems/flakehub-push@main"
         with:
           name: "Jylhis/marchyo"
