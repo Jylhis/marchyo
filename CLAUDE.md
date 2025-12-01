@@ -265,8 +265,9 @@ Import Marchyo's NixOS modules and use feature flags:
 ## Development Guidelines
 
 ### System Support
-- **Supported systems**: x86_64-linux only
-- System list defined in flake.nix: `systems = [ "x86_64-linux" ];`
+- **Supported systems**: x86_64-linux, aarch64-linux
+- System list defined in flake.nix: `systems = [ "x86_64-linux" "aarch64-linux" ];`
+- Some packages (e.g., Spotify) are platform-specific and only available on supported platforms
 
 ### Code Quality
 - **Always run `nix fmt` before committing** - Formats all Nix code using treefmt

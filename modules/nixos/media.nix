@@ -15,8 +15,10 @@
       # Players
       mpv
     ]
-    ++ (lib.optionals config.nixpkgs.config.allowUnfree [
-      pkgs.spotify
-    ]);
+    ++ (lib.optionals config.nixpkgs.config.allowUnfree (
+      lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
+        pkgs.spotify
+      ]
+    ));
 
 }

@@ -21,9 +21,5 @@ _: {
         gcad = "git commit -a --amend";
       };
     };
-
-    fish = {
-      enable = true;
-    };
   };
 }
