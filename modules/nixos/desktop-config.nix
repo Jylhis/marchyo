@@ -3,6 +3,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -32,7 +33,7 @@ in
     hardware = {
       graphics = {
         enable = true;
-        enable32Bit = lib.mkDefault true;
+        enable32Bit = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
       };
       bluetooth = {
         enable = lib.mkDefault true;

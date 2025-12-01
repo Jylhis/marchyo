@@ -17,7 +17,6 @@ in
         enable = true;
         lfs.enable = true;
       };
-      fish.enable = lib.mkDefault true;
       bash.completion.enable = true;
       direnv = {
         enable = true;

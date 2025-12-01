@@ -13,7 +13,7 @@ let
   testNixOS =
     config:
     (lib.nixosSystem {
-      inherit (pkgs) system;
+      inherit (pkgs.stdenv.hostPlatform) system;
       modules = [
         nixosModules
         {

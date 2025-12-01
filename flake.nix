@@ -29,7 +29,10 @@
       ...
     }:
     let
-      systems = [ "x86_64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
 
       # Helper to generate per-system outputs
       forAllSystems = nixpkgs.lib.genAttrs systems;
