@@ -1,14 +1,8 @@
 { pkgs, ... }:
 {
   networking = {
-    wireless = {
-      iwd = {
-        enable = true;
-      };
-    };
     networkmanager = {
       enable = true;
-      # wifi.backend = "iwd";
     };
   };
   environment.systemPackages = with pkgs; [
