@@ -116,15 +116,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Free Disk Space
-        uses: insightsengineering/disk-space-reclaimer@main
-        with:
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
       - name: Additional Cleanup with nothing-but-nix
         uses: wimpysworld/nothing-but-nix@main
         with:
