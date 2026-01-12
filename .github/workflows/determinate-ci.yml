@@ -5,7 +5,6 @@ on:
         description: |
           `public`, `unlisted`, or `private` ([private flakes](https://docs.determinate.systems/flakehub/private-flakes) are available only on a [FlakeHub paid plan](https://flakehub.com/signup)).
         required: false
-        default: public
         type: string
       default-branch:
         description: |
