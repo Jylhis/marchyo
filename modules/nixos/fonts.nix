@@ -4,7 +4,6 @@
   imports = [
     ../generic/fontconfig.nix
   ];
-  # https://learn.omacom.io/2/the-omarchy-manual/94/fonts
   fonts = {
     enableDefaultPackages = true;
     fontDir.enable = true;
