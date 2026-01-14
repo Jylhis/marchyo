@@ -556,6 +556,7 @@ in
       # Wallpaper and theming
       wallust
       pywal
+      nwg-look
 
       # Screen recording
       wf-recorder
