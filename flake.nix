@@ -12,8 +12,14 @@
       url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-colors.url = "github:misterio77/nix-colors";
-    vicinae.url = "github:vicinaehq/vicinae";
+    nix-colors = {
+      url = "github:misterio77/nix-colors";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    vicinae = {
+      url = "github:vicinaehq/vicinae";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
