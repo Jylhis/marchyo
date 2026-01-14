@@ -87,7 +87,6 @@ in
           spacing = 0;
           height = 26;
           modules-left = [
-            # "custom/omarchy"
             "hyprland/workspaces"
           ];
           modules-center = [
@@ -139,11 +138,6 @@ in
             format = "{}";
             on-click = "${pkgs.qt6Packages.fcitx5-configtool}/bin/fcitx5-configtool";
           };
-          "custom/omarchy" = {
-            "format" = "<span font='omarchy-ttf'>\ue900</span>";
-            "on-click" = "omarchy-menu";
-            "tooltip-format" = "Omarchy Menu\n\nSuper + Alt + Space";
-          };
           cpu = {
             interval = 5;
             format = "󰍛";
@@ -153,7 +147,6 @@ in
             format = "{:L%A %H:%M}";
             format-alt = "{:L%d %B W%V %Y}";
             tooltip = false;
-            on-click-right = "omarchy-cmd-tzupdate"; # FIXME
           };
           network = {
             format-icons = [
@@ -207,7 +200,7 @@ in
               ];
             };
             format-full = "󰂅";
-            on-click = "omarchy-menu power";
+            on-click = "vicinae toggle";
             tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
             tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
             states = {

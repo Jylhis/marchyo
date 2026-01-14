@@ -7,7 +7,6 @@
 let
   cfg = config.marchyo;
 
-  # https://learn.omacom.io/2/the-omarchy-manual/57/shell-tools
   shellTools = with pkgs; [
     fzf # fuzzy finding of files
     ripgrep # Modern grep
@@ -30,8 +29,6 @@ let
     nix-output-monitor
   ];
 
-  # TUI tools
-  # https://learn.omacom.io/2/the-omarchy-manual/59/tuis
   tuiTools = with pkgs; [
     btop # beautiful resource manager
     fastfetch # shows system information
