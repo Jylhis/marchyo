@@ -502,20 +502,6 @@ in
           "XCURSOR_THEME,Adwaita"
           "HYPRCURSOR_THEME,Adwaita"
 
-          # Force all apps to use Wayland
-          # "GDK_BACKEND,wayland,x11,*"
-          # "QT_QPA_PLATFORM,wayland;xcb"
-          # "QT_STYLE_OVERRIDE,kvantum"
-          # "SDL_VIDEODRIVER,wayland"
-          # "MOZ_ENABLE_WAYLAND,1"
-          # "ELECTRON_OZONE_PLATFORM_HINT,wayland"
-          # "OZONE_PLATFORM,wayland"
-          # "XDG_SESSION_TYPE,wayland"
-          # "XDG_CURRENT_DESKTOP,Hyprland"
-          # "XDG_SESSION_DESKTOP,Hyprland"
-
-          # Make Chromium use XCompose and all Wayland
-          # "CHROMIUM_FLAGS,\"--enable-features=UseOzonePlatform --ozone-platform=wayland --gtk-version=4\""
 
           # Make .desktop files available for wofi
           "XDG_DATA_DIRS,$XDG_DATA_DIRS:$HOME/.nix-profile/share:/nix/var/nix/profiles/default/share"
