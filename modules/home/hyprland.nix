@@ -36,6 +36,11 @@ in
         name = mkDefault (if variant == "light" then "Adwaita" else "Adwaita-dark");
         package = pkgs.gnome-themes-extra;
       };
+
+      iconTheme = {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+      };
     };
 
     dconf.settings = {
