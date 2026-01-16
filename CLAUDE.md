@@ -120,3 +120,17 @@ The following options in `modules/nixos/options.nix` are deprecated and will be 
 
 - `marchyo.keyboard.variant` - Use `{ layout = "us"; variant = "intl"; }` in `marchyo.keyboard.layouts` instead
 - `marchyo.inputMethod.*` - Migrated to `marchyo.keyboard.layouts` with IME support
+
+## Documentation Maintenance
+
+### LLM.md
+
+The `LLM.md` file is intended for end users to share with their AI assistants. When making changes that affect user-facing configuration:
+
+1. **Update LLM.md** when:
+   - Adding/removing/changing `marchyo.*` options
+   - Deprecating options (add to "Breaking Changes & Migration" section)
+   - Changing default values
+   - Adding new feature flags
+
+2. **Keep LLM.md concise** - focus on configuration options and common tasks, not internal architecture
