@@ -32,5 +32,6 @@
     ./waybar.nix
     ./vicinae.nix
     ./wofi.nix
+    ./xdg.nix
   ];
 }
