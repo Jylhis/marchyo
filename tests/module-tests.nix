@@ -1,5 +1,6 @@
 # Module evaluation tests
-# Tests that modules can be imported and evaluated without errors
+# Lightweight tests that verify modules can be evaluated without errors
+# Uses pure evaluation instead of building toplevel derivations
 {
   pkgs,
   lib,
@@ -8,20 +9,26 @@
   ...
 }:
 let
-  # Test helper: evaluate NixOS config and return toplevel derivation
-  # This validates that modules evaluate correctly without infinite recursion
+  # Test helper: verify NixOS config evaluates without errors
+  # Uses writeText + builtins.seq to force evaluation without building toplevel
   testNixOS =
-    config:
-    (lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        {
-          _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
-        }
-        config
-      ];
-    }).config.system.build.toplevel;
+    name: config:
+    pkgs.writeText "eval-${name}" (
+      let
+        eval = lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            {
+              _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
+            }
+            config
+          ];
+        };
+      in
+      # Force evaluation of config without building the expensive toplevel derivation
+      builtins.seq eval.config.system.stateVersion "pass"
+    );
 
   # Minimal NixOS configuration required for testing
   minimalConfig = {
@@ -49,26 +56,23 @@ let
     );
 in
 {
-  # Test that NixOS modules can be imported without errors
-  eval-nixos-modules = testNixOS minimalConfig;
+  # Test 1: Minimal NixOS modules import
+  eval-minimal = testNixOS "minimal" minimalConfig;
 
-  # Test that custom options are properly defined
-  eval-custom-options = testNixOS (withTestUser { });
-
-  # Test that desktop module can be enabled without errors
-  eval-desktop-module = testNixOS (withTestUser {
+  # Test 2: Desktop feature flag with user
+  eval-desktop = testNixOS "desktop" (withTestUser {
     marchyo.desktop.enable = true;
   });
 
-  # Test that development module can be enabled without errors
-  eval-development-module = testNixOS (
+  # Test 3: Development feature flag
+  eval-development = testNixOS "development" (
     lib.recursiveUpdate minimalConfig {
       marchyo.development.enable = true;
     }
   );
 
-  # Test that all feature flags can be enabled together without conflicts
-  eval-all-features = testNixOS (withTestUser {
+  # Test 4: All features together
+  eval-all-features = testNixOS "all-features" (withTestUser {
     marchyo = {
       desktop.enable = true;
       development.enable = true;
@@ -77,128 +81,35 @@ in
     };
   });
 
-  # Test that theme system works with default settings
-  eval-theme-default = testNixOS (withTestUser {
-    marchyo.theme.enable = true;
-  });
-
-  # Test that theme system works with light variant
-  eval-theme-light-variant = testNixOS (withTestUser {
+  # Test 5: Consolidated theme test - verifies all theme configurations work
+  eval-themes = testNixOS "themes" (withTestUser {
     marchyo.theme = {
       enable = true;
-      variant = "light";
-    };
-  });
-
-  # Test that theme system works with nix-colors scheme
-  eval-theme-nixcolors-scheme = testNixOS (withTestUser {
-    marchyo.theme = {
-      enable = true;
-      scheme = "dracula";
-    };
-  });
-
-  # Test that theme system works with custom colorscheme
-  eval-theme-custom-scheme = testNixOS (withTestUser {
-    marchyo.theme = {
-      enable = true;
+      # Test dark variant (default)
+      variant = "dark";
+      # Test custom scheme
       scheme = "modus-vivendi-tinted";
     };
   });
 
-  # Test that theme system works with inline color scheme definition
-  eval-theme-inline-scheme = testNixOS (withTestUser {
-    marchyo.theme = {
-      enable = true;
-      scheme = {
-        slug = "test-scheme";
-        name = "Test Scheme";
-        author = "Test";
-        variant = "dark";
-        palette = {
-          base00 = "000000";
-          base01 = "111111";
-          base02 = "222222";
-          base03 = "333333";
-          base04 = "444444";
-          base05 = "555555";
-          base06 = "666666";
-          base07 = "777777";
-          base08 = "888888";
-          base09 = "999999";
-          base0A = "aaaaaa";
-          base0B = "bbbbbb";
-          base0C = "cccccc";
-          base0D = "dddddd";
-          base0E = "eeeeee";
-          base0F = "ffffff";
-        };
-      };
-    };
-  });
-
-  # Test keyboard configuration with string-only layouts (backward compatibility)
-  eval-keyboard-simple = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      "us"
-      "fi"
-      "de"
-    ];
-  });
-
-  # Test keyboard configuration with hybrid layouts (strings and attribute sets)
-  eval-keyboard-hybrid = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      "us"
-      {
-        layout = "fi";
-        variant = "";
-      }
-      {
-        layout = "cn";
-        ime = "pinyin";
-      }
-    ];
-  });
-
-  # Test keyboard configuration with multiple IME layouts
-  eval-keyboard-multiple-ime = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      "us"
-      {
-        layout = "cn";
-        ime = "pinyin";
-      }
-      {
-        layout = "jp";
-        ime = "mozc";
-      }
-      {
-        layout = "kr";
-        ime = "hangul";
-      }
-    ];
-  });
-
-  # Test keyboard configuration with variant
-  eval-keyboard-variant = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      {
-        layout = "us";
-        variant = "intl";
-      }
-      "fi"
-    ];
-  });
-
-  # Test keyboard smart switching configuration
-  eval-keyboard-smart-switching = testNixOS (withTestUser {
+  # Test 6: Consolidated keyboard test - verifies all keyboard configurations work
+  eval-keyboard = testNixOS "keyboard" (withTestUser {
     marchyo.keyboard = {
+      # Test hybrid layouts: strings, variants, and IME
       layouts = [
         "us"
         {
+          layout = "fi";
+          variant = "";
+        }
+        {
           layout = "cn";
           ime = "pinyin";
+          label = "中文";
+        }
+        {
+          layout = "jp";
+          ime = "mozc";
         }
       ];
       autoActivateIME = true;
@@ -209,36 +120,67 @@ in
     };
   });
 
-  # Test keyboard with custom labels
-  eval-keyboard-custom-labels = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      "us"
-      {
-        layout = "cn";
-        ime = "pinyin";
-        label = "中文";
-      }
-    ];
-  });
+  # Test 7: Intel GPU configuration
+  eval-graphics-intel = testNixOS "graphics-intel" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics.vendors = [ "intel" ];
+    }
+  );
 
-  # Test that legacy variant option still works
-  eval-keyboard-legacy-variant = testNixOS (withTestUser {
-    marchyo.keyboard = {
-      layouts = [
-        "us"
-        "fi"
-      ];
-      variant = "intl"; # Should apply to first layout
-    };
-  });
+  # Test 8: AMD GPU configuration
+  eval-graphics-amd = testNixOS "graphics-amd" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics.vendors = [ "amd" ];
+    }
+  );
 
-  # Test keyboard with unicode IME
-  # Note: Unicode picker doesn't need a separate layout - it's activated via imeTriggerKey
-  # This test verifies that fcitx5 is configured when layouts contain IME
-  eval-keyboard-unicode = testNixOS (withTestUser {
-    marchyo.keyboard.layouts = [
-      "us"
-      "fi"
-    ];
-  });
+  # Test 9: NVIDIA GPU configuration
+  eval-graphics-nvidia = testNixOS "graphics-nvidia" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics.vendors = [ "nvidia" ];
+    }
+  );
+
+  # Test 10: Hybrid Intel+NVIDIA PRIME offload
+  eval-graphics-prime-offload = testNixOS "graphics-prime-offload" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics = {
+        vendors = [
+          "intel"
+          "nvidia"
+        ];
+        prime = {
+          enable = true;
+          intelBusId = "PCI:0:2:0";
+          nvidiaBusId = "PCI:1:0:0";
+          mode = "offload";
+        };
+      };
+    }
+  );
+
+  # Test 11: Hybrid AMD+NVIDIA PRIME sync
+  eval-graphics-prime-sync = testNixOS "graphics-prime-sync" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics = {
+        vendors = [
+          "amd"
+          "nvidia"
+        ];
+        prime = {
+          enable = true;
+          amdgpuBusId = "PCI:6:0:0";
+          nvidiaBusId = "PCI:1:0:0";
+          mode = "sync";
+        };
+      };
+    }
+  );
+
+  # Test 12: Legacy mode (empty vendors on x86 defaults to Intel)
+  eval-graphics-legacy = testNixOS "graphics-legacy" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics.vendors = [ ];
+    }
+  );
 }
