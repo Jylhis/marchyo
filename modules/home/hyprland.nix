@@ -2,12 +2,19 @@
   lib,
   pkgs,
   config,
+  osConfig ? { },
   ...
 }:
 let
   inherit (lib) mkDefault;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
   variant = if config ? colorScheme then config.colorScheme.variant else "dark";
+
+  # GPU detection from NixOS config
+  hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
+  isPrimeOffload =
+    (osConfig.marchyo.graphics.prime.enable or false)
+    && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
   # Helper to convert hex to rgb() format (Hyprland accepts hex directly)
   rgb = color: "rgb(${color})";
@@ -517,6 +524,17 @@ in
         ]
         ++ lib.optionals (config ? colorScheme) [
           "GTK_THEME,${if variant == "light" then "Adwaita" else "Adwaita-dark"}"
+        ]
+        # NVIDIA GPU environment variables for Wayland
+        ++ lib.optionals hasNvidia [
+          "LIBVA_DRIVER_NAME,nvidia"
+          "__GLX_VENDOR_LIBRARY_NAME,nvidia"
+          "NVD_BACKEND,direct"
+        ]
+        # NVIDIA PRIME offload mode
+        ++ lib.optionals isPrimeOffload [
+          "__NV_PRIME_RENDER_OFFLOAD,1"
+          "__VK_LAYER_NV_optimus,NVIDIA_only"
         ];
 
         # Startup applications
