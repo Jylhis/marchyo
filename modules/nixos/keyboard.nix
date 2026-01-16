@@ -35,6 +35,16 @@ let
 in
 {
   config = {
+    assertions = [
+      {
+        assertion = cfg.layouts != [ ];
+        message = "marchyo.keyboard.layouts cannot be empty. Specify at least one layout.";
+      }
+    ];
+
+    warnings = lib.optionals (cfg.variant != "") [
+      "marchyo.keyboard.variant is deprecated. Use { layout = \"us\"; variant = \"intl\"; } in marchyo.keyboard.layouts instead."
+    ];
     # XKB fallback configuration for TTY/console and login screen
     # fcitx5 manages input in the desktop environment, but TTY needs XKB
     services.xserver.xkb = {

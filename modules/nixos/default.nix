@@ -29,6 +29,7 @@
     ./plymouth.nix
     ./security.nix
     ./system.nix
+    ./theme-assertions.nix
     ./wayland.nix
     ./update-diff.nix
   ];
