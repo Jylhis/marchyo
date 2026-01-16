@@ -27,6 +27,7 @@ in
         interval = "daily";
       };
       gnome.gnome-keyring.enable = lib.mkDefault true;
+      gvfs.enable = lib.mkDefault true;
     };
 
     # Hardware
@@ -74,7 +75,7 @@ in
     xdg.portal = {
       enable = true;
       extraPortals = [ ];
-      config.common.default = "*";
+      config.common.default = lib.mkDefault "*";
     };
   };
 }
