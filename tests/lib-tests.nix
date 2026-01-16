@@ -1,4 +1,5 @@
 # Library function unit tests
+# Lightweight tests using writeText instead of runCommand
 # Tests utility functions in lib/default.nix and lib/colors.nix
 {
   pkgs,
@@ -10,18 +11,11 @@ let
   marchyoLib = import ../lib { inherit lib; };
   inherit (marchyoLib) colors;
 
-  # Test helper: create a derivation that validates an assertion
-  # If assertion fails, the build will fail with the provided message
+  # Test helper: create a trivial derivation that fails at eval time if assertion fails
+  # Uses writeText (no sandbox spawn) instead of runCommand
   assertTest =
     name: assertion: message:
-    pkgs.runCommand "test-${name}" { } ''
-      ${
-        if assertion then
-          "echo 'PASS: ${name}' > $out"
-        else
-          "echo 'FAIL: ${name}: ${message}' >&2 && exit 1"
-      }
-    '';
+    pkgs.writeText "test-${name}" (if assertion then "pass" else throw "FAIL: ${name}: ${message}");
 in
 {
   # Test color utility functions
