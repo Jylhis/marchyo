@@ -7,7 +7,7 @@ This is a full-featured developer workstation configuration with desktop environ
 
 1. **Initialize your configuration**:
    ```bash
-   nix flake init -t github:marchyo/marchyo#workstation
+   nix flake init -t github:Jylhis/marchyo#workstation
    ```
 
 2. **Generate hardware configuration**:

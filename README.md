@@ -21,7 +21,7 @@ Add Marchyo to your flake and import the NixOS module:
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    marchyo.url = "github:yourusername/marchyo";
+    marchyo.url = "github:Jylhis/marchyo";
   };
 
   outputs = { nixpkgs, marchyo, ... }: {
@@ -39,7 +39,6 @@ Add Marchyo to your flake and import the NixOS module:
           };
         }
       ];
-      specialArgs = { inherit inputs; };
     };
   };
 }
@@ -47,7 +46,7 @@ Add Marchyo to your flake and import the NixOS module:
 
 Alternatively, use the template:
 ```bash
-nix flake init -t github:yourusername/marchyo#workstation
+nix flake init -t github:Jylhis/marchyo#workstation
 ```
 
 ## Configuration
