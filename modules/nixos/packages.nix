@@ -45,6 +45,12 @@ let
     localsend # send files to other devices on the same network
     file-roller # Archive manager
     nautilus # GNOME Files (file explorer)
+    loupe # Modern GNOME image viewer
+    gnome-disk-utility # Disk management
+    gnome-calculator # Calculator
+    gnome-system-monitor # System monitoring
+    sushi # Quick file previews in Nautilus
+    dconf-editor # For debugging dconf/GTK settings
   ];
 
   # Media applications
