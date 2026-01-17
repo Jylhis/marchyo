@@ -94,7 +94,7 @@ in
           ];
           modules-right = [
             "group/tray-expander"
-            "custom/fcitx5"
+            # "custom/fcitx5"
             "hyprland/language"
             "bluetooth"
             "network"
