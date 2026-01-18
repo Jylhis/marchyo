@@ -72,6 +72,9 @@ let
       + builtins.readFile ../../assets/applications/waybar.css
     else
       builtins.readFile ../../assets/applications/waybar.css;
+
+  # Terminal emulator to use for clicking modules
+  terminal = "${pkgs.kitty}/bin/kitty";
 in
 {
   config = {
@@ -141,7 +144,7 @@ in
           cpu = {
             interval = 5;
             format = "󰍛";
-            on-click = "kitty -e btop"; # FIXME
+            on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
           };
           clock = {
             format = "{:L%A %H:%M}";
@@ -165,7 +168,7 @@ in
             tooltip-format-disconnected = "Disconnected";
             interval = 3;
             nospacing = 1;
-            on-click = "kitty -e impala";
+            on-click = "${terminal} -e impala";
           };
           battery = {
             interval = 5;
@@ -213,7 +216,7 @@ in
             format-disabled = "󰂲";
             format-connected = "";
             tooltip-format = "Devices connected: {num_connections}";
-            on-click = "kitty -e bluetui";
+            on-click = "${terminal} -e bluetui";
           };
           wireplumber = {
             # Changed from "pulseaudio"
