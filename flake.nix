@@ -77,7 +77,14 @@
 
       overlays.default = import ./overlays { inherit inputs; };
 
-      inherit (nixpkgs) legacyPackages;
+      legacyPackages = forAllSystems (
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ (import ./overlays { inherit inputs; }) ];
+          config.allowUnfree = true;
+        }
+      );
 
       lib = nixpkgs.lib // {
         marchyo =
