@@ -74,7 +74,8 @@ let
       builtins.readFile ../../assets/applications/waybar.css;
 
   # Terminal emulator to use for clicking modules
-  terminal = "${pkgs.kitty}/bin/kitty";
+  terminal =
+    if config.programs.kitty.enable then "${pkgs.kitty}/bin/kitty" else "x-terminal-emulator";
 in
 {
   config = {
