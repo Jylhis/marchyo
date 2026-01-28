@@ -21,40 +21,60 @@ let
   # fcitx5 status script for waybar
   # Shows current input method: keyboard layouts (us, fi, cn) or IME (拼, あ, 한)
   fcitx5StatusScript = pkgs.writeShellScript "fcitx5-status.sh" ''
-    # Get current fcitx5 input method name
-    status=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null)
+    # Function to check status and print JSON
+    check_status() {
+      # Get current fcitx5 input method name
+      status=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null)
 
-    # Check if fcitx5 is running
-    if [ -z "$status" ]; then
-        echo '{"text":"","class":"inactive","tooltip":"fcitx5 not running"}'
-        exit 0
-    fi
+      # Check if fcitx5 is running
+      if [ -z "$status" ]; then
+          echo '{"text":"","class":"inactive","tooltip":"fcitx5 not running"}'
+          return
+      fi
 
-    # Handle different input methods
-    case "$status" in
-        keyboard-*)
-            # Extract layout code from keyboard-us, keyboard-fi, etc.
-            layout=''${status#keyboard-}
-            # Show first 2 chars of layout code (e.g., "us", "fi", "cn")
-            echo '{"text":"'"''${layout:0:2}"'","class":"keyboard","tooltip":"Keyboard: '"$layout"'"}'
-            ;;
-        pinyin)
-            echo '{"text":"拼","class":"ime-active","tooltip":"Chinese Pinyin"}'
-            ;;
-        mozc)
-            echo '{"text":"あ","class":"ime-active","tooltip":"Japanese Mozc"}'
-            ;;
-        hangul)
-            echo '{"text":"한","class":"ime-active","tooltip":"Korean Hangul"}'
-            ;;
-        unicode)
-            echo '{"text":"⌨","class":"ime-active","tooltip":"Unicode Picker"}'
-            ;;
-        *)
-            # Fallback for unknown input methods - show first 2 chars
-            echo '{"text":"'"''${status:0:2}"'","class":"ime-active","tooltip":"'"$status"'"}'
-            ;;
-    esac
+      # Handle different input methods
+      case "$status" in
+          keyboard-*)
+              # Extract layout code from keyboard-us, keyboard-fi, etc.
+              layout=''${status#keyboard-}
+              # Show first 2 chars of layout code (e.g., "us", "fi", "cn")
+              echo '{"text":"'"''${layout:0:2}"'","class":"keyboard","tooltip":"Keyboard: '"$layout"'"}'
+              ;;
+          pinyin)
+              echo '{"text":"拼","class":"ime-active","tooltip":"Chinese Pinyin"}'
+              ;;
+          mozc)
+              echo '{"text":"あ","class":"ime-active","tooltip":"Japanese Mozc"}'
+              ;;
+          hangul)
+              echo '{"text":"한","class":"ime-active","tooltip":"Korean Hangul"}'
+              ;;
+          unicode)
+              echo '{"text":"⌨","class":"ime-active","tooltip":"Unicode Picker"}'
+              ;;
+          *)
+              # Fallback for unknown input methods - show first 2 chars
+              echo '{"text":"'"''${status:0:2}"'","class":"ime-active","tooltip":"'"$status"'"}'
+              ;;
+      esac
+    }
+
+    # Initial check
+    check_status
+
+    # Listen for signals
+    # We listen for:
+    # 1. Signals from Fcitx5 Controller (input method changes)
+    # 2. NameOwnerChanged for org.fcitx.Fcitx5 (startup/shutdown)
+    ${pkgs.dbus}/bin/dbus-monitor --session \
+      "type='signal',interface='org.fcitx.Fcitx.Controller1'" \
+      "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='org.fcitx.Fcitx5'" \
+      2>/dev/null | while read -r line; do
+        # We only care when a member field is printed (indicating a new message header)
+        if [[ "$line" == *"member="* ]]; then
+            check_status
+        fi
+      done
   '';
 
   # Generate CSS with colorScheme
@@ -137,7 +157,6 @@ in
           "custom/fcitx5" = {
             exec = "${fcitx5StatusScript}";
             return-type = "json";
-            interval = 1;
             format = "{}";
             on-click = "${pkgs.qt6Packages.fcitx5-configtool}/bin/fcitx5-configtool";
           };
