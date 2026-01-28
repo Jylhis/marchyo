@@ -117,6 +117,7 @@ fun stop_fake_progress()
 lock.image = Image("lock.png");
 entry.image = Image("entry.png");
 bullet.image = Image("bullet.png");
+bullet.scaled_image = bullet.image.Scale(7, 7);
 
 entry.sprite = Sprite(entry.image);
 entry.x = Window.GetWidth()/2 - entry.image.GetWidth() / 2;
@@ -182,8 +183,7 @@ fun display_password_callback (prompt, bullets)
         if (!bullet.sprites[index])
           {
             # Scale bullet image to 7x7 pixels
-            scaled_bullet = bullet.image.Scale(7, 7);
-            bullet.sprites[index] = Sprite(scaled_bullet);
+            bullet.sprites[index] = Sprite(bullet.scaled_image);
             bullet.x = entry.x + 20 + index * (7 + 5);
             bullet.y = entry.y + entry.image.GetHeight() / 2 - 3.5;
             bullet.sprites[index].SetPosition(bullet.x, bullet.y, 10002);
