@@ -59,22 +59,26 @@ let
       esac
     }
 
-    # Initial check
-    check_status
-
-    # Listen for signals
+    # Listen for signals in the background to avoid race conditions
     # We listen for:
     # 1. Signals from Fcitx5 Controller (input method changes)
     # 2. NameOwnerChanged for org.fcitx.Fcitx5 (startup/shutdown)
-    ${pkgs.dbus}/bin/dbus-monitor --session \
+    ${pkgs.coreutils}/bin/stdbuf -oL ${pkgs.dbus}/bin/dbus-monitor --session \
       "type='signal',interface='org.fcitx.Fcitx.Controller1'" \
       "type='signal',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='org.fcitx.Fcitx5'" \
       2>/dev/null | while read -r line; do
         # We only care when a member field is printed (indicating a new message header)
-        if [[ "$line" == *"member="* ]]; then
+        if [[ "$line" == *member=* ]]; then
             check_status
         fi
-      done
+      done &
+    listener_pid=$!
+
+    # Initial check to get current state immediately
+    check_status
+
+    # Wait for the listener to exit to keep the script running
+    wait "$listener_pid"
   '';
 
   # Generate CSS with colorScheme
