@@ -42,15 +42,15 @@ in
           border-color = "#${colors.base0D}";
           progress-color = "over #${colors.base02}";
 
-          urgency-low = {
+          "urgency=low" = {
             border-color = "#${colors.base03}";
           };
 
-          urgency-normal = {
+          "urgency=normal" = {
             border-color = "#${colors.base0D}";
           };
 
-          urgency-critical = {
+          "urgency=critical" = {
             border-color = "#${colors.base08}";
             text-color = "#${colors.base08}";
           };
