@@ -57,11 +57,11 @@
               home-manager = {
                 useGlobalPkgs = true;
                 sharedModules = [
-                  vicinae.homeManagerModules.default
                   noctalia.homeManagerModules.default
+                  vicinae.homeManagerModules.default
                 ];
                 extraSpecialArgs = {
-                  inherit nix-colors vicinae noctalia;
+                  inherit nix-colors noctalia vicinae;
                   colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };
