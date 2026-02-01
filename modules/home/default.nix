@@ -25,6 +25,7 @@
     ./lazygit.nix
     ./locale.nix
     ./mako.nix
+    ./noctalia.nix
     ./packages.nix
     ./screenshot.nix
     ./shell.nix

@@ -355,6 +355,26 @@
         "url": "https://flakehub.com/f/NixOS/nixpkgs/0.1.%2A"
       }
     },
+    "noctalia": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769941423,
+        "narHash": "sha256-0XUE2RBowHku+bsthHkE+GUZRcCqHGMYOnBCMa+AdPo=",
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "rev": "7fef62741591053818ee0b94cf45f64967ce5bbe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "determinate": "determinate",
@@ -363,6 +383,7 @@
         "nix-colors": "nix-colors",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
+        "noctalia": "noctalia",
         "treefmt-nix": "treefmt-nix",
         "vicinae": "vicinae"
       }
