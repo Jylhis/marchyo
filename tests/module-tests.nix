@@ -10,16 +10,18 @@
 }:
 let
   # Helper to create a NixOS evaluation for testing
-  evalTestSystem = config: lib.nixosSystem {
-    inherit (pkgs.stdenv.hostPlatform) system;
-    modules = [
-      nixosModules
-      {
-        _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
-      }
-      config
-    ];
-  };
+  evalTestSystem =
+    config:
+    lib.nixosSystem {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      modules = [
+        nixosModules
+        {
+          _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
+        }
+        config
+      ];
+    };
 
   # Test helper: verify NixOS config evaluates without errors
   # Uses writeText + builtins.seq to force evaluation without building toplevel
