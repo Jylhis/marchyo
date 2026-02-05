@@ -21,6 +21,7 @@ global.animation_frame = 0;
 global.fake_progress_start_time = 0;  # Track when fake progress started
 global.password_shown = 0;  # Track if password dialog has been shown
 global.max_progress = 0.0;  # Track the maximum progress reached to prevent backwards movement
+global.last_width = 0;      # Track the last width to avoid unnecessary scaling
 
 fun refresh_callback ()
   {
@@ -63,8 +64,13 @@ fun update_progress_bar(progress)
         width = Math.Int(progress_bar.original_image.GetWidth() * progress);
         if (width < 1) width = 1;  # Ensure minimum width of 1 pixel
         
-        progress_bar.image = progress_bar.original_image.Scale(width, progress_bar.original_image.GetHeight());
-        progress_bar.sprite.SetImage(progress_bar.image);
+        # Optimization: Only scale if width changed
+        if (width != global.last_width)
+          {
+            global.last_width = width;
+            progress_bar.image = progress_bar.original_image.Scale(width, progress_bar.original_image.GetHeight());
+            progress_bar.sprite.SetImage(progress_bar.image);
+          }
       }
   }
 
