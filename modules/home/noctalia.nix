@@ -1,4 +1,9 @@
-{ lib, pkgs, noctalia, ... }:
+{
+  lib,
+  pkgs,
+  noctalia,
+  ...
+}:
 {
   config = {
     programs.noctalia-shell = {
