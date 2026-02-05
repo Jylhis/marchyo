@@ -21,7 +21,7 @@ global.animation_frame = 0;
 global.fake_progress_start_time = 0;  # Track when fake progress started
 global.password_shown = 0;  # Track if password dialog has been shown
 global.max_progress = 0.0;  # Track the maximum progress reached to prevent backwards movement
-global.last_width = 0;      # Track the last width to avoid unnecessary scaling
+global.last_width = 1;      # Track the last width to avoid unnecessary scaling
 
 fun refresh_callback ()
   {
