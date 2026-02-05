@@ -27,6 +27,7 @@ in
         interval = "daily";
       };
       gnome.gnome-keyring.enable = lib.mkDefault true;
+      gnome.evolution-data-server.enable = lib.mkDefault true;
       gvfs.enable = lib.mkDefault true;
     };
 
