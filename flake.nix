@@ -57,7 +57,7 @@
               home-manager = {
                 useGlobalPkgs = true;
                 sharedModules = [
-                  noctalia.homeManagerModules.default
+                  noctalia.homeModules.default
                   vicinae.homeManagerModules.default
                 ];
                 extraSpecialArgs = {
