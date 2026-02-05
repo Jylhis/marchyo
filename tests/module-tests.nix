@@ -9,22 +9,27 @@
   ...
 }:
 let
+  # Helper to create a NixOS evaluation for testing
+  evalTestSystem =
+    config:
+    lib.nixosSystem {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      modules = [
+        nixosModules
+        {
+          _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
+        }
+        config
+      ];
+    };
+
   # Test helper: verify NixOS config evaluates without errors
   # Uses writeText + builtins.seq to force evaluation without building toplevel
   testNixOS =
     name: config:
     pkgs.writeText "eval-${name}" (
       let
-        eval = lib.nixosSystem {
-          inherit (pkgs.stdenv.hostPlatform) system;
-          modules = [
-            nixosModules
-            {
-              _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
-            }
-            config
-          ];
-        };
+        eval = evalTestSystem config;
       in
       # Force evaluation of config without building the expensive toplevel derivation
       builtins.seq eval.config.system.stateVersion "pass"
@@ -54,8 +59,22 @@ let
         users.users.testuser.uid = 1000;
       } extraConfig
     );
+
+  # Helper to verify Home Manager configuration evaluates
+  testNixOSWithHome =
+    name: config:
+    pkgs.writeText "eval-home-${name}" (
+      let
+        eval = evalTestSystem config;
+      in
+      # Force evaluation of Home Manager configuration for the test user
+      builtins.seq eval.config.home-manager.users.testuser.home.stateVersion "pass"
+    );
 in
 {
+  # Test 0: Verify Home Manager integration
+  eval-home-manager = testNixOSWithHome "home-manager" (withTestUser { });
+
   # Test 1: Minimal NixOS modules import
   eval-minimal = testNixOS "minimal" minimalConfig;
 
