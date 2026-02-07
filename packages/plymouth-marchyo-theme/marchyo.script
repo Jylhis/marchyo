@@ -12,6 +12,7 @@ logo.sprite.SetOpacity (1);
 # Use these to adjust the progress bar timing
 global.fake_progress_limit = 0.7;  # Target percentage for fake progress (0.0 to 1.0)
 global.fake_progress_duration = 15.0;  # Duration in seconds to reach limit
+global.fake_progress_duration_inv = 1.0 / global.fake_progress_duration;  # Inverse for multiplication optimization
 
 # Progress bar animation variables
 global.fake_progress = 0.0;
@@ -31,10 +32,10 @@ fun refresh_callback ()
     if (global.fake_progress_active == 1)
       {
         # Calculate elapsed time since start
-        elapsed_time = global.animation_frame / 50.0;  # Convert frames to seconds (50 FPS)
+        elapsed_time = global.animation_frame * 0.02;  # Convert frames to seconds (50 FPS)
         
         # Calculate linear progress ratio (0 to 1) based on time
-        time_ratio = elapsed_time / global.fake_progress_duration;
+        time_ratio = elapsed_time * global.fake_progress_duration_inv;
         if (time_ratio > 1.0)
           time_ratio = 1.0;
         
