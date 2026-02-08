@@ -20,6 +20,10 @@
       url = "github:vicinaehq/vicinae";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
@@ -30,6 +34,7 @@
       home-manager,
       nix-colors,
       vicinae,
+      noctalia,
       treefmt-nix,
       determinate,
       ...
@@ -51,9 +56,12 @@
             {
               home-manager = {
                 useGlobalPkgs = true;
-                sharedModules = [ vicinae.homeManagerModules.default ];
+                sharedModules = [
+                  noctalia.homeModules.default
+                  vicinae.homeManagerModules.default
+                ];
                 extraSpecialArgs = {
-                  inherit nix-colors vicinae;
+                  inherit nix-colors noctalia vicinae;
                   colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };
