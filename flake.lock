@@ -164,6 +164,21 @@
         "url": "https://flakehub.com/f/hercules-ci/flake-parts/0.1"
       }
     },
+    "flake-schemas": {
+      "locked": {
+        "lastModified": 1765542151,
+        "narHash": "sha256-rzv+NVnOcr9pzd8RnvTscwAHAZmD8FLgxEEmHP1xGTA=",
+        "owner": "DeterminateSystems",
+        "repo": "flake-schemas",
+        "rev": "6f53c45897ef6d9e1f39e8ca9611571ac4aa4f17",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DeterminateSystems",
+        "repo": "flake-schemas",
+        "type": "github"
+      }
+    },
     "git-hooks-nix": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -197,12 +212,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1770491427,
-        "narHash": "sha256-8b+0vixdqGnIIcgsPhjdX7EGPdzcVQqYxF+ujjex654=",
-        "rev": "cbd8a72e5fe6af19d40e2741dc440d9227836860",
-        "revCount": 6203,
+        "lastModified": 1770654520,
+        "narHash": "sha256-mg5WZMIPGsFu9MxSrUcuJUPMbfMsF77el5yb/7rc10k=",
+        "rev": "6c4fdbe1ad198fac36c320fd45c5957324a80b8e",
+        "revCount": 6211,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6203%2Brev-cbd8a72e5fe6af19d40e2741dc440d9227836860/019c3984-3464-7a71-83aa-f878a6fb8d6f/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6211%2Brev-6c4fdbe1ad198fac36c320fd45c5957324a80b8e/019c433c-c59f-7f93-9fdb-74681c6f170d/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -253,11 +268,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1769302137,
-        "narHash": "sha256-QEDtctEkOsbx8nlFh4yqPEOtr4tif6KTqWwJ37IM2ds=",
+        "lastModified": 1770631810,
+        "narHash": "sha256-b7iK/x+zOXbjhRqa+XBlYla4zFvPZyU5Ln2HJkiSnzc=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "a351494b0e35fd7c0b7a1aae82f0afddf4907aa8",
+        "rev": "2889685785848de940375bf7fea5e7c5a3c8d502",
         "type": "github"
       },
       "original": {
@@ -343,12 +358,12 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1770197578,
-        "narHash": "sha256-AYqlWrX09+HvGs8zM6ebZ1pwUqjkfpnv8mewYwAo+iM=",
-        "rev": "00c21e4c93d963c50d4c0c89bfa84ed6e0694df2",
-        "revCount": 940249,
+        "lastModified": 1770562336,
+        "narHash": "sha256-ub1gpAONMFsT/GU2hV6ZWJjur8rJ6kKxdm9IlCT0j84=",
+        "rev": "d6c71932130818840fc8fe9509cf50be8c64634f",
+        "revCount": 942779,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.1.940249%2Brev-00c21e4c93d963c50d4c0c89bfa84ed6e0694df2/019c2c37-21f9-727c-86c5-0523e601d163/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.1.942779%2Brev-d6c71932130818840fc8fe9509cf50be8c64634f/019c3fb4-003d-710c-9b72-1d2bb1b28de3/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -362,11 +377,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770571663,
-        "narHash": "sha256-Vqd5senFyozLb7EM7JvScUqC56eQFfSo+xvGFuEVn+8=",
+        "lastModified": 1770663741,
+        "narHash": "sha256-WbvQaDozCrJSWCTuAmVFZLJeOtiOjCatBjUmQHipiIQ=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "f9f668dbe64396100d6a8d89618737d3503d013a",
+        "rev": "8b43787ef55f4742c241c33a6b4bd90525e85016",
         "type": "github"
       },
       "original": {
@@ -379,6 +394,7 @@
       "inputs": {
         "determinate": "determinate",
         "fh": "fh",
+        "flake-schemas": "flake-schemas",
         "home-manager": "home-manager",
         "nix-colors": "nix-colors",
         "nixos-hardware": "nixos-hardware",
@@ -447,11 +463,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1770568129,
-        "narHash": "sha256-ttlXJjnrRVxS18rLNKVWBUlup5F/mK2YILl/NN/wCU8=",
+        "lastModified": 1770670386,
+        "narHash": "sha256-sciIwfnimMj1zp0aiqWjNSG+VYJdfDcBSZ344sxq2LE=",
         "owner": "vicinaehq",
         "repo": "vicinae",
-        "rev": "eb1a25363a728ca8ba7864e5556af95f7a90310a",
+        "rev": "112bcecbc4164c7b1ef759a620b7508063f16128",
         "type": "github"
       },
       "original": {
