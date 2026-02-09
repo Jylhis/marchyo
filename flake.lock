@@ -164,21 +164,6 @@
         "url": "https://flakehub.com/f/hercules-ci/flake-parts/0.1"
       }
     },
-    "flake-schemas": {
-      "locked": {
-        "lastModified": 1765542151,
-        "narHash": "sha256-rzv+NVnOcr9pzd8RnvTscwAHAZmD8FLgxEEmHP1xGTA=",
-        "owner": "DeterminateSystems",
-        "repo": "flake-schemas",
-        "rev": "6f53c45897ef6d9e1f39e8ca9611571ac4aa4f17",
-        "type": "github"
-      },
-      "original": {
-        "owner": "DeterminateSystems",
-        "repo": "flake-schemas",
-        "type": "github"
-      }
-    },
     "git-hooks-nix": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -394,7 +379,6 @@
       "inputs": {
         "determinate": "determinate",
         "fh": "fh",
-        "flake-schemas": "flake-schemas",
         "home-manager": "home-manager",
         "nix-colors": "nix-colors",
         "nixos-hardware": "nixos-hardware",
