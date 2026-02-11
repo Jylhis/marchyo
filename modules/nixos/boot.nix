@@ -10,7 +10,7 @@
     enable = true;
     settings.default_session.command =
       "${lib.getExe (pkgs.tuigreet or pkgs.greetd.tuigreet)} "
-      + (lib.cli.toGNUCommandLineShell { } {
+      + (lib.cli.toCommandLineShellGNU { } {
         time = true;
         cmd = "Hyprland";
         remember = true;
