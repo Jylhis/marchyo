@@ -227,119 +227,119 @@ in
 
         # Window rules
         windowrule = [
-          # "setprop nofocus on  ^(kitty)$"
           # See https://wiki.hyprland.org/Configuring/Window-Rules/ for more
-          #           #           "suppressevent maximize  .*"
+          "suppressevent maximize, .*"
 
           # Browser types
-          "tag +chromium-based-browser  ([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
-          "tag +firefox-based-browser  ([fF]irefox|zen|librewolf)"
+          "tag +chromium-based-browser, ([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
+          "tag +firefox-based-browser, ([fF]irefox|zen|librewolf)"
 
           # Force chromium-based browsers into a tile to deal with --app bug
-          #           #           #           "tile  tag: chromium-based-browser"
+          "tile, tag: chromium-based-browser"
 
-          # Only a subtle opacity change  but not for video sites
-          #           #           #           "opacity 1 0.97  tag: chromium-based-browser"
-          #           #           #           "opacity 1 0.97  tag: firefox-based-browser"
+          # Only a subtle opacity change, but not for video sites
+          "opacity 1 0.97, tag: chromium-based-browser"
+          "opacity 1 0.97, tag: firefox-based-browser"
 
           # Some video sites should never have opacity applied to them
-          "opacity 1.0 1.0  initialTitle:  ((?i)(?:[a-z0-9-]+\.)*youtube\.com_/|app\.zoom\.us_/wc/home)"
+          "opacity 1.0 1.0, initialTitle:  ((?i)(?:[a-z0-9-]+\.)*youtube\.com_/|app\.zoom\.us_/wc/home)"
 
           # Floating windows
-          #           #           #           "float  tag: floating-window"
-          #           #           #           "center 1  tag: floating-window"
-          #           #           #           "size 800 600  tag: floating-window"
+          "float, tag: floating-window"
+          "center 1, tag: floating-window"
+          "size 800 600, tag: floating-window"
 
-          "tag +floating-window  (blueberry.py|Impala|Wiremix|org.gnome.NautilusPreviewer|com.gabm.satty|About|TUI.float)"
-          "tag +floating-window  (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus)  title: ^(Open.*Files?|Open Folder|Save.*Files?|Save.*As|Save|All Files)"
+          "tag +floating-window, (blueberry.py|Impala|Wiremix|org.gnome.NautilusPreviewer|com.gabm.satty|About|TUI.float)"
+          "tag +floating-window, (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), title: ^(Open.*Files?|Open Folder|Save.*Files?|Save.*As|Save|All Files)"
 
           # Fullscreen screensaver
-          "fullscreen  Screensaver"
+          "fullscreen, Screensaver"
 
           # No transparency on media windows
-          "opacity 1 1  ^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$"
+          "opacity 1 1, ^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$"
 
           # Settings management
-          "float  ^(org.pulseaudio.pavucontrol|blueberry.py)$"
+          "float, ^(org.pulseaudio.pavucontrol|blueberry.py)$"
 
-          # Float Steam  fullscreen RetroArch
-          "float  steam"
-          "center 1  steam  title: Steam"
-          "opacity 1 1  steam"
-          "size 1100 700  steam  title: Steam"
-          "size 460 800  steam  title: Friends List"
+          # Float Steam, fullscreen RetroArch
+          "float, steam"
+          "center 1, steam, title: Steam"
+          "opacity 1 1, steam"
+          "size 1100 700, steam, title: Steam"
+          "size 460 800, steam, title: Friends List"
 
           # 1Password - full opacity for proper rendering
-          "opacity 1.0 1.0  ^(1Password|1password)$"
+          "opacity 1.0 1.0, ^(1Password|1password)$"
 
           # Just dash of transparency
-          "opacity 0.97 0.9  .*"
+          "opacity 0.97 0.9, .*"
           # Normal chrome Youtube tabs
-          "opacity 1 1  ^(chromium|google-chrome|google-chrome-unstable)$  title: .*Youtube.*"
-          "opacity 1 0.97  ^(chromium|google-chrome|google-chrome-unstable)$"
-          "opacity 0.97 0.9  initialClass:  ^(chrome-.*-Default)$ # web apps"
-          "opacity 1 1  initialClass:  ^(chrome-youtube.*-Default)$ # Youtube"
-          "opacity 1 1  ^(zoom|vlc|org.kde.kdenlive|com.obsproject.Studio)$"
+          "opacity 1 1, ^(chromium|google-chrome|google-chrome-unstable)$, title: .*Youtube.*"
+          "opacity 1 0.97, ^(chromium|google-chrome|google-chrome-unstable)$"
+          "opacity 0.97 0.9, initialClass:  ^(chrome-.*-Default)$ # web apps"
+          "opacity 1 1, initialClass:  ^(chrome-youtube.*-Default)$ # Youtube"
+          "opacity 1 1, ^(zoom|vlc|org.kde.kdenlive|com.obsproject.Studio)$"
 
           # Fix some dragging issues with XWayland
-          #           #           "nofocus ^$ title: ^$ xwayland:1 floating:1 fullscreen:0 pinned:0"
+          "nofocus,^$,title: ^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
 
           # Float in the middle for clipse clipboard manager
-          "float  (clipse)"
-          "size 622 652  (clipse)"
-          #           #           "stayfocused  (clipse)"
+          "float, (clipse)"
+          "size 622 652, (clipse)"
+          "stayfocused, (clipse)"
 
           # 1Password
-          #"noscreenshare  ^(1Password)$"
+          #"noscreenshare, ^(1Password)$"
 
           # Jetbrains
           # Fixing popup size issue
-          "size 50% 50%  (.*jetbrains.*)$  title: ^$ floating:1"
+          "size 50% 50%, (.*jetbrains.*)$, title: ^$,floating:1"
 
           # Fix tab dragging (always have a single space character as their title)
-          #           #           "noinitialfocus  ^(.*jetbrains.*)$  title: ^\\s$"
-          #           #           "nofocus  ^(.*jetbrains.*)$  title: ^\\s$"
+          "noinitialfocus, ^(.*jetbrains.*)$, title: ^\\s$"
+          "nofocus, ^(.*jetbrains.*)$, title: ^\\s$"
 
           # Float LocalSend and fzf file picker
-          "float  (Share|localsend)"
-          "center 1  (Share|localsend)"
-          "tag +terminal  (Alacritty|kitty|com.mitchellh.ghostty)"
+          "float, (Share|localsend)"
+          "center 1, (Share|localsend)"
+          "tag +terminal, (Alacritty|kitty|com.mitchellh.ghostty)"
 
           # Picture-in-picture overlays
-          # "tag +pip  title: (Picture.{0 1}in.{0 1}[Pp]icture)"
-          #           #           #           "float  tag: pip"
-          #           #           #           "pin  tag: pip"
-          #           #           #           "size 600 338  tag: pip"
-          #           #           #           #           #           "keepaspectratio  tag: pip"
-          #           #           #           #           #           "noborder  tag: pip"
-          #           #           #           "opacity 1 1  tag: pip"
-          #           #           #           "move 100%-w-40 4%  tag: pip"
+          # "tag +pip, title: (Picture.{0,1}in.{0,1}[Pp]icture)"
+          "float, tag: pip"
+          "pin, tag: pip"
+          "size 600 338, tag: pip"
+          "keepaspectratio, tag: pip"
+          "noborder, tag: pip"
+          "opacity 1 1, tag: pip"
+          "move 100%-w-40 4%, tag: pip"
         ]
         ++ [
           # fcitx5 input panel - keep it floating and always on top
-          "float  ^(fcitx)$"
-          #           #           "noborder  ^(fcitx)$"
-          #           #           "nofocus  ^(fcitx)$"
-          #           #           "stayfocused  ^(fcitx)$"
+          "float, ^(fcitx)$"
+          "noborder, ^(fcitx)$"
+          "nofocus, ^(fcitx)$"
+          "stayfocused, ^(fcitx)$"
 
           # fcitx5 config tool
-          "float  ^(org.fcitx.fcitx5-config-qt)$"
-          "center 1  ^(org.fcitx.fcitx5-config-qt)$"
-          "size 800 600  ^(org.fcitx.fcitx5-config-qt)$"
+          "float, ^(org.fcitx.fcitx5-config-qt)$"
+          "center 1, ^(org.fcitx.fcitx5-config-qt)$"
+          "size 800 600, ^(org.fcitx.fcitx5-config-qt)$"
         ];
 
         # Modern keybinding system with submaps
 
         layerrule = [
           # Proper background blur for launchers
-          "blur vicinae"
-          #           "ignorezero  vicinae"
-          #           #           "noanim  vicinae"
-          "blur wofi"
-          "blur waybar"
-          #           #           "noanim  selection"
-          #           #           "noanim  walker"
+          "blur,vicinae"
+          "ignorealpha 0, vicinae"
+          "noanim, vicinae"
+          "blur,wofi"
+          "blur,waybar"
+          "noanim, selection"
+          "noanim, walker"
         ];
+
 
         bindd = [
           "SUPER, return, Terminal, exec, $terminal"
