@@ -6,6 +6,7 @@
   lib,
   nixosModules,
   nix-colors,
+  homeModules,
   ...
 }:
 let
@@ -183,4 +184,11 @@ in
       marchyo.graphics.vendors = [ ];
     }
   );
+
+  # Test 13: Explicitly evaluate Home Manager Hyprland module
+  eval-home-hyprland = testNixOS "home-hyprland" (withTestUser {
+    # Explicitly load all home modules, which includes hyprland.nix
+    home-manager.users.testuser.modules = [ homeModules ];
+    marchyo.desktop.enable = true; # Ensure desktop options are available if hyprland depends on them
+  });
 }

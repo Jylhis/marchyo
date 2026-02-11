@@ -228,7 +228,7 @@ in
         # Window rules
         windowrule = [
           # See https://wiki.hyprland.org/Configuring/Window-Rules/ for more
-          "suppressevent maximize, class:.*"
+          "suppress_event maximize, class:.*"
 
           # Browser types
           "tag +chromium-based-browser, class:([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
@@ -242,32 +242,31 @@ in
           "opacity 1 0.97, tag:firefox-based-browser"
 
           # Some video sites should never have opacity applied to them
-          "opacity 1.0 1.0, initialTitle:((?i)(?:[a-z0-9-]+\.)*youtube\.com_/|app\.zoom\.us_/wc/home)"
+          "opacity 1.0 1.0, initial_title:((?i)(?:[a-z0-9-]+\.)*youtube\.com_/|app\.zoom\.us_/wc/home)"
 
           # Floating windows
-          "float, tag:floating-window"
-          "center, tag:floating-window"
+          "float 1, tag:floating-window"
+          "center 1, tag:floating-window"
           "size 800 600, tag:floating-window"
 
           "tag +floating-window, class:(blueberry.py|Impala|Wiremix|org.gnome.NautilusPreviewer|com.gabm.satty|About|TUI.float)"
           "tag +floating-window, class:(xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), title:^(Open.*Files?|Open Folder|Save.*Files?|Save.*As|Save|All Files)"
 
           # Fullscreen screensaver
-          "fullscreen, class:Screensaver"
+          "fullscreen 1, class:Screensaver"
 
           # No transparency on media windows
           "opacity 1 1, class:^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$"
 
           # Settings management
-          "float, class:^(org.pulseaudio.pavucontrol|blueberry.py)$"
+          "float 1, class:^(org.pulseaudio.pavucontrol|blueberry.py)$"
 
           # Float Steam, fullscreen RetroArch
-          "float, class:steam"
-          "center, class:steam, title:Steam"
+          "float 1, class:steam"
+          "center 1, class:steam, title:Steam"
           "opacity 1 1, class:steam"
           "size 1100 700, class:steam, title:Steam"
           "size 460 800, class:steam, title:Friends List"
-          "idleinhibit fullscreen, class:steam"
 
           # 1Password - full opacity for proper rendering
           "opacity 1.0 1.0, class:^(1Password|1password)$"
@@ -277,17 +276,17 @@ in
           # Normal chrome Youtube tabs
           "opacity 1 1, class:^(chromium|google-chrome|google-chrome-unstable)$, title:.*Youtube.*"
           "opacity 1 0.97, class:^(chromium|google-chrome|google-chrome-unstable)$"
-          "opacity 0.97 0.9, initialClass:^(chrome-.*-Default)$ # web apps"
-          "opacity 1 1, initialClass:^(chrome-youtube.*-Default)$ # Youtube"
+          "opacity 0.97 0.9, initial_class:^(chrome-.*-Default)$ # web apps"
+          "opacity 1 1, initial_class:^(chrome-youtube.*-Default)$ # Youtube"
           "opacity 1 1, class:^(zoom|vlc|org.kde.kdenlive|com.obsproject.Studio)$"
 
           # Fix some dragging issues with XWayland
-          "nofocus,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
+          "no_focus 1,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
 
           # Float in the middle for clipse clipboard manager
-          "float, class:(clipse)"
+          "float 1, class:(clipse)"
           "size 622 652, class:(clipse)"
-          "stayfocused, class:(clipse)"
+          "stay_focused 1, class:(clipse)"
 
           # 1Password
           #"noscreenshare, class:^(1Password)$"
@@ -297,23 +296,35 @@ in
           "size 50% 50%, class:(.*jetbrains.*)$, title:^$,floating:1"
 
           # Fix tab dragging (always have a single space character as their title)
-          "noinitialfocus, class:^(.*jetbrains.*)$, title:^\\s$"
-          "nofocus, class:^(.*jetbrains.*)$, title:^\\s$"
+          "no_initial_focus 1, class:^(.*jetbrains.*)$, title:^\\s$"
+          "no_focus 1, class:^(.*jetbrains.*)$, title:^\\s$"
 
           # Float LocalSend and fzf file picker
           "float, class:(Share|localsend)"
-          "center, class:(Share|localsend)"
+          "center 1, class:(Share|localsend)"
           "tag +terminal, class:(Alacritty|kitty|com.mitchellh.ghostty)"
 
           # Picture-in-picture overlays
           # "tag +pip, title:(Picture.{0,1}in.{0,1}[Pp]icture)"
-          "float, tag:pip"
-          "pin, tag:pip"
+          "float 1, tag:pip"
+          "pin 1, tag:pip"
           "size 600 338, tag:pip"
-          "keepaspectratio, tag:pip"
-          "noborder, tag:pip"
+          "keep_aspect_ratio 1, tag:pip"
+          "noborder 1, tag:pip"
           "opacity 1 1, tag:pip"
           "move 100%-w-40 4%, tag:pip"
+        ]
+        ++ [
+          # fcitx5 input panel - keep it floating and always on top
+          "float 1, class:^(fcitx)$"
+          "noborder 1, class:^(fcitx)$"
+          "nofocus 1, class:^(fcitx)$"
+          "stayfocused 1, class:^(fcitx)$"
+
+          # fcitx5 config tool
+          "float 1, class:^(org.fcitx.fcitx5-config-qt)$"
+          "center 1, class:^(org.fcitx.fcitx5-config-qt)$"
+          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
         ];
 
         # Modern keybinding system with submaps
@@ -329,19 +340,6 @@ in
           "noanim, walker"
         ];
 
-        # Window rules for fcitx5 input method
-        windowrulev2 = [
-          # fcitx5 input panel - keep it floating and always on top
-          "float, class:^(fcitx)$"
-          "noborder, class:^(fcitx)$"
-          "nofocus, class:^(fcitx)$"
-          "stayfocused, class:^(fcitx)$"
-
-          # fcitx5 config tool
-          "float, class:^(org.fcitx.fcitx5-config-qt)$"
-          "center, class:^(org.fcitx.fcitx5-config-qt)$"
-          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
-        ];
 
         bindd = [
           "SUPER, return, Terminal, exec, $terminal"
