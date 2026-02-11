@@ -314,6 +314,16 @@ in
           "noborder, tag:pip"
           "opacity 1 1, tag:pip"
           "move 100%-w-40 4%, tag:pip"
+          # fcitx5 input panel - keep it floating and always on top
+          "float, class:^(fcitx)$"
+          "noborder, class:^(fcitx)$"
+          "nofocus, class:^(fcitx)$"
+          "stayfocused, class:^(fcitx)$"
+
+          # fcitx5 config tool
+          "float, class:^(org.fcitx.fcitx5-config-qt)$"
+          "center, class:^(org.fcitx.fcitx5-config-qt)$"
+          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
         ];
 
         # Modern keybinding system with submaps
@@ -330,18 +340,6 @@ in
         ];
 
         # Window rules for fcitx5 input method
-        windowrulev2 = [
-          # fcitx5 input panel - keep it floating and always on top
-          "float, class:^(fcitx)$"
-          "noborder, class:^(fcitx)$"
-          "nofocus, class:^(fcitx)$"
-          "stayfocused, class:^(fcitx)$"
-
-          # fcitx5 config tool
-          "float, class:^(org.fcitx.fcitx5-config-qt)$"
-          "center, class:^(org.fcitx.fcitx5-config-qt)$"
-          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
-        ];
 
         bindd = [
           "SUPER, return, Terminal, exec, $terminal"
