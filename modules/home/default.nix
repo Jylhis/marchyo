@@ -33,6 +33,7 @@
     ./waybar.nix
     ./vicinae.nix
     ./wofi.nix
+    ./worktrunk.nix
     ./xdg.nix
   ];
 }
