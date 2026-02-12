@@ -24,6 +24,10 @@
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    worktrunk = {
+      url = "github:max-sixty/worktrunk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
@@ -35,6 +39,7 @@
       nix-colors,
       vicinae,
       noctalia,
+      worktrunk,
       treefmt-nix,
       determinate,
       ...
@@ -61,7 +66,12 @@
                   vicinae.homeManagerModules.default
                 ];
                 extraSpecialArgs = {
-                  inherit nix-colors noctalia vicinae;
+                  inherit
+                    nix-colors
+                    noctalia
+                    vicinae
+                    worktrunk
+                    ;
                   colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };
