@@ -228,51 +228,53 @@ in
         # Window rules
         windowrule = [
           # See https://wiki.hyprland.org/Configuring/Window-Rules/ for more
-          "suppress_event maximize, class:.*"
+          "suppress_event maximize, match:class .*"
 
           # Browser types
-          "tag +chromium-based-browser, class:([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
-          "tag +firefox-based-browser, class:([fF]irefox|zen|librewolf)"
+          "tag +chromium-based-browser, match:class ((google-)?[cC]hrom(e|ium)|[bB]rave-browser|[mM]icrosoft-edge|Vivaldi-stable|helium)"
+          "tag +firefox-based-browser, match:class ([fF]irefox|zen|librewolf)"
 
           # Force chromium-based browsers into a tile to deal with --app bug
-          "tile, tag:chromium-based-browser"
+          "tile on, match:tag chromium-based-browser"
 
           # Only a subtle opacity change, but not for video sites
-          "opacity 1 0.97, tag:chromium-based-browser"
-          "opacity 1 0.97, tag:firefox-based-browser"
+          "opacity 1.0 0.97, match:tag chromium-based-browser"
+          "opacity 1.0 0.97, match:tag firefox-based-browser"
 
-          # Some video sites should never have opacity applied to them
-          "opacity 1.0 1.0, initial_title:((?i)(?:[a-z0-9-]+\.)*youtube\.com_/|app\.zoom\.us_/wc/home)"
+          # Video apps: remove chromium browser tag so they don't get opacity applied
+          "tag -chromium-based-browser, match:class (chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default)"
+          "tag -default-opacity, match:class (chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default)"
 
           # Floating windows
-          "float 1, tag:floating-window"
-          "center 1, tag:floating-window"
-          "size 800 600, tag:floating-window"
+          "float on, match:tag floating-window"
+          "center on, match:tag floating-window"
+          "size 875 600, match:tag floating-window"
 
-          "tag +floating-window, class:(blueberry.py|Impala|Wiremix|org.gnome.NautilusPreviewer|com.gabm.satty|About|TUI.float)"
-          "tag +floating-window, class:(xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), title:^(Open.*Files?|Open Folder|Save.*Files?|Save.*As|Save|All Files)"
+          "tag +floating-window, match:class (org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)"
+          "tag +floating-window, match:class (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), match:title ^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)"
 
           # Fullscreen screensaver
-          "fullscreen 1, class:Screensaver"
 
           # No transparency on media windows
           "opacity 1 1, class:^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$"
 
           # Settings management
           "float 1, class:^(org.pulseaudio.pavucontrol|blueberry.py)$"
+          "fullscreen 1, match:class Screensaver"
 
           # Float Steam, fullscreen RetroArch
-          "float 1, class:steam"
-          "center 1, class:steam, title:Steam"
-          "opacity 1 1, class:steam"
-          "size 1100 700, class:steam, title:Steam"
-          "size 460 800, class:steam, title:Friends List"
+          "float on, match:class steam"
+          "center on, match:class steam, match:title Steam"
+          "tag -default-opacity, match:class steam.*"
+          "opacity 1 1, match:class steam.*"
+          "size 1100 700, match:class steam, match:title Steam"
+          "size 460 800, match:class steam, match:title Friends List"
 
           # 1Password - full opacity for proper rendering
-          "opacity 1.0 1.0, class:^(1Password|1password)$"
+          "no_screen_share on, match:class ^(1[p|P]assword)$"
+          "tag +floating-window, match:class ^(1[p|P]assword)$"
 
           # Just dash of transparency
-          "opacity 0.97 0.9, class:.*"
           # Normal chrome Youtube tabs
           "opacity 1 1, class:^(chromium|google-chrome|google-chrome-unstable)$, title:.*Youtube.*"
           "opacity 1 0.97, class:^(chromium|google-chrome|google-chrome-unstable)$"
@@ -287,6 +289,7 @@ in
           "float 1, class:(clipse)"
           "size 622 652, class:(clipse)"
           "stay_focused 1, class:(clipse)"
+          "opacity 0.97 0.9, match:class .*"
 
           # 1Password
           #"noscreenshare, class:^(1Password)$"
@@ -305,39 +308,15 @@ in
           "tag +terminal, class:(Alacritty|kitty|com.mitchellh.ghostty)"
 
           # Picture-in-picture overlays
-          # "tag +pip, title:(Picture.{0,1}in.{0,1}[Pp]icture)"
-          "float 1, tag:pip"
-          "pin 1, tag:pip"
-          "size 600 338, tag:pip"
-          "keep_aspect_ratio 1, tag:pip"
-          "noborder 1, tag:pip"
-          "opacity 1 1, tag:pip"
-          "move 100%-w-40 4%, tag:pip"
-        ]
-        ++ [
-          # fcitx5 input panel - keep it floating and always on top
-          "float 1, class:^(fcitx)$"
-          "noborder 1, class:^(fcitx)$"
-          "nofocus 1, class:^(fcitx)$"
-          "stayfocused 1, class:^(fcitx)$"
-
-          # fcitx5 config tool
-          "float 1, class:^(org.fcitx.fcitx5-config-qt)$"
-          "center 1, class:^(org.fcitx.fcitx5-config-qt)$"
-          "size 800 600, class:^(org.fcitx.fcitx5-config-qt)$"
-        ];
-
-        # Modern keybinding system with submaps
-
-        layerrule = [
-          # Proper background blur for launchers
-          "blur,vicinae"
-          "ignorealpha 0, vicinae"
-          "noanim, vicinae"
-          "blur,wofi"
-          "blur,waybar"
-          "noanim, selection"
-          "noanim, walker"
+          "tag +pip, match:title (Picture.?in.?[Pp]icture)"
+          "tag -default-opacity, match:tag pip"
+          "float on, match:tag pip"
+          "pin on, match:tag pip"
+          "size 600 338, match:tag pip"
+          "keep_aspect_ratio on, match:tag pip"
+          "border_size 0, match:tag pip"
+          "opacity 1 1, match:tag pip"
+          "move (monitor_w-window_w-40) (monitor_h*0.04), match:tag pip"
         ];
 
         bindd = [
