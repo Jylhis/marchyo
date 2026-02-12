@@ -340,7 +340,6 @@ in
           "noanim, walker"
         ];
 
-
         bindd = [
           "SUPER, return, Terminal, exec, $terminal"
           "SUPER, F, File manager, exec, $fileManager"
