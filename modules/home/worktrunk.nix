@@ -13,23 +13,7 @@ in
   options.programs.worktrunk = {
     enable = lib.mkEnableOption "Worktrunk - Git worktree management CLI";
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.worktrunk;
-      defaultText = lib.literalExpression "pkgs.worktrunk";
-      description = ''
-        The Worktrunk package to use.
-
-        You can override this to use a version from a flake input:
-        ```nix
-        {
-          inputs.worktrunk.url = "github:max-sixty/worktrunk";
-          # ...
-          programs.worktrunk.package = inputs.worktrunk.packages.''${pkgs.system}.default;
-        }
-        ```
-      '';
-    };
+    package = lib.mkPackageOption pkgs "worktrunk" { };
 
     enableBashIntegration = lib.mkOption {
       type = lib.types.bool;
