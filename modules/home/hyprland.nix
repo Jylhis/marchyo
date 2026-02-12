@@ -233,6 +233,8 @@ in
           # Browser types
           "tag +chromium-based-browser, match:class ((google-)?[cC]hrom(e|ium)|[bB]rave-browser|[mM]icrosoft-edge|Vivaldi-stable|helium)"
           "tag +firefox-based-browser, match:class ([fF]irefox|zen|librewolf)"
+          "tag -default-opacity, match:tag chromium-based-browser"
+          "tag -default-opacity, match:tag firefox-based-browser"
 
           # Force chromium-based browsers into a tile to deal with --app bug
           "tile on, match:tag chromium-based-browser"
@@ -254,12 +256,6 @@ in
           "tag +floating-window, match:class (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), match:title ^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)"
 
           # Fullscreen screensaver
-
-          # No transparency on media windows
-          "opacity 1 1, class:^(zoom|vlc|mpv|org.kde.kdenlive|com.obsproject.Studio|com.github.PintaProject.Pinta|imv|org.gnome.NautilusPreviewer)$"
-
-          # Settings management
-          "float 1, class:^(org.pulseaudio.pavucontrol|blueberry.py)$"
           "fullscreen 1, match:class Screensaver"
 
           # Float Steam, fullscreen RetroArch
@@ -275,37 +271,10 @@ in
           "tag +floating-window, match:class ^(1[p|P]assword)$"
 
           # Just dash of transparency
-          # Normal chrome Youtube tabs
-          "opacity 1 1, class:^(chromium|google-chrome|google-chrome-unstable)$, title:.*Youtube.*"
-          "opacity 1 0.97, class:^(chromium|google-chrome|google-chrome-unstable)$"
-          "opacity 0.97 0.9, initial_class:^(chrome-.*-Default)$ # web apps"
-          "opacity 1 1, initial_class:^(chrome-youtube.*-Default)$ # Youtube"
-          "opacity 1 1, class:^(zoom|vlc|org.kde.kdenlive|com.obsproject.Studio)$"
-
-          # Fix some dragging issues with XWayland
-          "no_focus 1,class:^$,title:^$,xwayland:1,floating:1,fullscreen:0,pinned:0"
-
-          # Float in the middle for clipse clipboard manager
-          "float 1, class:(clipse)"
-          "size 622 652, class:(clipse)"
-          "stay_focused 1, class:(clipse)"
           "opacity 0.97 0.9, match:class .*"
 
           # 1Password
           #"noscreenshare, class:^(1Password)$"
-
-          # Jetbrains
-          # Fixing popup size issue
-          "size 50% 50%, class:(.*jetbrains.*)$, title:^$,floating:1"
-
-          # Fix tab dragging (always have a single space character as their title)
-          "no_initial_focus 1, class:^(.*jetbrains.*)$, title:^\\s$"
-          "no_focus 1, class:^(.*jetbrains.*)$, title:^\\s$"
-
-          # Float LocalSend and fzf file picker
-          "float, class:(Share|localsend)"
-          "center 1, class:(Share|localsend)"
-          "tag +terminal, class:(Alacritty|kitty|com.mitchellh.ghostty)"
 
           # Picture-in-picture overlays
           "tag +pip, match:title (Picture.?in.?[Pp]icture)"
