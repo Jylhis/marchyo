@@ -20,7 +20,6 @@
   environment.systemPackages = with pkgs; [
     man-pages
     man-pages-posix
-    linux-doc
     clang-manpages
     zeal
     stdmanpages
