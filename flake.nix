@@ -135,7 +135,6 @@
               nixosModules.default
               (
                 {
-                  config,
                   lib,
                   modulesPath,
                   ...
@@ -172,7 +171,10 @@
                   users.users.developer = {
                     isNormalUser = true;
                     password = "password";
-                    extraGroups = [ "wheel" "networkmanager" ];
+                    extraGroups = [
+                      "wheel"
+                      "networkmanager"
+                    ];
                     description = "Marchyo Developer";
                   };
                   services.getty.autologinUser = "developer";
