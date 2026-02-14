@@ -488,6 +488,7 @@ in
           "kanshi"
           "vicinae server"
           "fcitx5 -d --replace"
+          "hyprpaper"
 
           # Clipboard
           "wl-paste --type text --watch cliphist store"
