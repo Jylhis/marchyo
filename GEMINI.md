@@ -10,7 +10,6 @@ Marchyo is a modular NixOS configuration flake designed to provide a curated set
 
 *   **Modular Architecture**: Configurations are broken down into small, manageable modules for various aspects like desktop, development, media, and office environments, as well as generic shared configurations.
 *   **Feature Flags**: Simple boolean flags (`marchyo.desktop.enable`, `marchyo.development.enable`, etc.) allow users to enable entire stacks of related functionality and tools, which then auto-configure various services and packages.
-*   **Theming System**: Integrates with `nix-colors` to provide over 200 Base16 color schemes, along with custom Marchyo-specific schemes. It offers flexible options for theme variant (light/dark) and scheme selection.
 *   **Home Manager Integration**: Seamlessly manages user-specific configurations, applications, and dotfiles.
 *   **Hardware Support**: Integrates with `nixos-hardware` for common devices and provides detailed graphics configuration options, including NVIDIA-specific settings and NVIDIA PRIME support for hybrid graphics.
 *   **Configurable Options**: A rich set of custom options under the `marchyo.*` namespace allows fine-grained control over various aspects of the system and user environment, including user definitions, localization, and extensive keyboard layout and input method management.

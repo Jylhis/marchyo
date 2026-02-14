@@ -63,7 +63,6 @@ let
   officeTools = with pkgs; [
     libreoffice # Standard office suite
     papers # Document viewer
-    xournalpp # Write to PDFs
     obsidian
   ];
 

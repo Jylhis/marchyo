@@ -8,7 +8,6 @@
 let
   inherit (lib) mkDefault;
   colors = if config ? colorScheme then config.colorScheme.palette else null;
-  variant = if config ? colorScheme then config.colorScheme.variant else "dark";
 
   # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
@@ -22,39 +21,8 @@ in
 {
   config = {
 
-    home.pointerCursor = {
-      gtk.enable = true;
-      package = pkgs.adwaita-icon-theme;
-      name = "Adwaita";
-      size = 24;
-    };
-
-    qt = {
-      style = {
-        name = mkDefault (if variant == "light" then "adwaita" else "adwaita-dark");
-        package = pkgs.adwaita-qt;
-      };
-    };
-
     gtk = {
       enable = true;
-
-      theme = {
-        name = mkDefault (if variant == "light" then "Adwaita" else "Adwaita-dark");
-        package = pkgs.gnome-themes-extra;
-      };
-
-      iconTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
-      };
-    };
-
-    dconf.settings = {
-      "org/gnome/desktop/interface" = {
-        color-scheme = if variant == "light" then "prefer-light" else "prefer-dark";
-        gtk-theme = if variant == "light" then "Adwaita" else "Adwaita-dark";
-      };
     };
 
     wayland.windowManager.hyprland = {
@@ -466,9 +434,6 @@ in
 
           # Use XCompose file
           "XCOMPOSEFILE,~/.XCompose"
-        ]
-        ++ lib.optionals (config ? colorScheme) [
-          "GTK_THEME,${if variant == "light" then "Adwaita" else "Adwaita-dark"}"
         ]
         # NVIDIA GPU environment variables for Wayland
         ++ lib.optionals hasNvidia [

@@ -118,6 +118,5 @@ Contributions are welcome! Please ensure:
 
 ## Acknowledgments
 
-- [nix-colors](https://github.com/Misterio77/nix-colors) for the theming system
 - [nixos-hardware](https://github.com/NixOS/nixos-hardware) for hardware configurations
 - [home-manager](https://github.com/nix-community/home-manager) for user environment management
