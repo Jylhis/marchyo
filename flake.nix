@@ -12,9 +12,9 @@
       url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-colors = {
-      url = "github:misterio77/nix-colors";
-      inputs.nixpkgs-lib.follows = "nixpkgs";
+    stylix = {
+      url = "https://flakehub.com/f/nix-community/stylix/0.1.*";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     vicinae = {
       url = "github:vicinaehq/vicinae";
@@ -36,12 +36,12 @@
     inputs@{
       nixpkgs,
       home-manager,
-      nix-colors,
       vicinae,
       noctalia,
       worktrunk,
       treefmt-nix,
       determinate,
+      stylix,
       ...
     }:
     let
@@ -70,19 +70,19 @@
                 ];
                 extraSpecialArgs = {
                   inherit
-                    nix-colors
                     noctalia
                     vicinae
                     worktrunk
+                    stylix
                     ;
-                  colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };
             }
             determinate.nixosModules.default
+            stylix.nixosModules.stylix
+
             ./modules/nixos/default.nix
           ];
-          config._module.args.colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
         };
         inherit (home-manager.nixosModules) home-manager;
       };
@@ -204,7 +204,7 @@
           allTests = import ./tests {
             inherit system;
             inherit (nixpkgs) lib;
-            inherit nixpkgs home-manager nix-colors;
+            inherit nixpkgs home-manager;
             nixosModules = nixosModules.default;
             homeModules = homeModules.default;
           };

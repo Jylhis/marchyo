@@ -5,7 +5,6 @@
     ../generic/shell.nix
     ../generic/packages.nix
     ./_1password.nix
-    ./theme.nix
     ./bat.nix
     ./btop.nix
     ./fastfetch.nix

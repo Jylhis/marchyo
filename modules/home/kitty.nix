@@ -2,7 +2,6 @@
   lib,
   config,
   osConfig ? { },
-  pkgs,
   ...
 }:
 let
@@ -15,16 +14,11 @@ in
     enable = true;
     enableGitIntegration = config.programs.git.enable;
     shellIntegration.mode = "rc profile";
-    font = {
-      # name = "JetBrainsMono Nerd Font";
-      name = "CaskaydiaMono Nerd Font";
-      package = pkgs.nerd-fonts.caskaydia-mono;
-      size = 12;
-    };
+
     settings = mkMerge [
       {
         bold_italic_font = "auto";
-        background_opacity = "0.95";
+        # background_opacity = "0.95";
         window_padding_width = 14;
         window_padding_height = 14;
         hide_window_decorations = true;
