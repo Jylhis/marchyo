@@ -53,6 +53,9 @@
       # Helper to generate per-system outputs
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
+      # Import overlays
+      overlays = import ./overlays { inherit inputs; };
+
       # Define modules
       nixosModules = {
         default = {
@@ -93,13 +96,13 @@
       # Flake-level outputs (not per-system)
       inherit nixosModules homeModules;
 
-      overlays.default = import ./overlays { inherit inputs; };
+      overlays.default = overlays;
 
       legacyPackages = forAllSystems (
         system:
         import nixpkgs {
           inherit system;
-          overlays = [ (import ./overlays { inherit inputs; }) ];
+          overlays = [ overlays ];
           config.allowUnfree = true;
         }
       );
@@ -121,6 +124,73 @@
           description = "Full developer workstation with desktop and development tools";
         };
       };
+
+      apps = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          vm = nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              nixosModules.default
+              (
+                {
+                  config,
+                  lib,
+                  modulesPath,
+                  ...
+                }:
+                {
+                  imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
+
+                  # Set hostname first so it's available for script name
+                  networking.hostName = "marchyo-vm";
+
+                  # Apply overlays
+                  nixpkgs.overlays = [ overlays ];
+                  nixpkgs.config.allowUnfree = true;
+
+                  # VM Specs
+                  virtualisation = {
+                    memorySize = 4096;
+                    cores = 2;
+                    graphics = true;
+                  };
+
+                  # Bootloader fix
+                  boot.loader.systemd-boot.enable = lib.mkForce false;
+
+                  # Marchyo Features
+                  marchyo = {
+                    desktop.enable = true;
+                    development.enable = true;
+                    media.enable = true;
+                    office.enable = true;
+                  };
+
+                  # User config
+                  users.users.developer = {
+                    isNormalUser = true;
+                    password = "password";
+                    extraGroups = [ "wheel" "networkmanager" ];
+                    description = "Marchyo Developer";
+                  };
+                  services.getty.autologinUser = "developer";
+                }
+              )
+            ];
+          };
+          runner = pkgs.writeShellScriptBin "run-vm" ''
+            exec ${vm.config.system.build.vm}/bin/run-${vm.config.networking.hostName}-vm "$@"
+          '';
+        in
+        {
+          default = {
+            type = "app";
+            program = "${runner}/bin/run-vm";
+          };
+        }
+      );
 
       # Per-system outputs
       checks = forAllSystems (
