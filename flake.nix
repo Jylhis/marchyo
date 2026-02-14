@@ -152,7 +152,7 @@
                   # VM Specs
                   virtualisation = {
                     memorySize = 4096;
-                    cores = 2;
+                    cores = 4;
                     graphics = true;
                   };
 
@@ -165,6 +165,10 @@
                     development.enable = true;
                     media.enable = true;
                     office.enable = true;
+                    users.developer = {
+                      fullname = "Marchyo Developer";
+                      email = "dev@example.org";
+                    };
                   };
 
                   # User config
@@ -175,7 +179,6 @@
                       "wheel"
                       "networkmanager"
                     ];
-                    description = "Marchyo Developer";
                   };
                   services.getty.autologinUser = "developer";
                 }
