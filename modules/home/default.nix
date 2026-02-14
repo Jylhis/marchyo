@@ -10,7 +10,6 @@
     ./btop.nix
     ./fastfetch.nix
     ./fcitx5.nix
-    ./dropbox.nix
     ./fzf.nix
     ./keyboard.nix
     ./xournalpp.nix
