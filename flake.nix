@@ -137,6 +137,27 @@
         allTests
       );
 
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = [
+              pkgs.git
+              pkgs.nix
+              home-manager.packages.${system}.home-manager
+              pkgs.nixfmt-rfc-style
+              pkgs.deadnix
+              pkgs.statix
+              pkgs.shellcheck
+              pkgs.yamlfmt
+            ];
+          };
+        }
+      );
+
       formatter = forAllSystems (
         system:
         let
