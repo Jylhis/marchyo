@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   imports = [
     ./nix-settings.nix
@@ -35,7 +35,7 @@
     ./wayland.nix
     ./update-diff.nix
   ];
-  config = {
+  config = lib.mkIf (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
     stylix = {
       enable = true;
       autoEnable = true;
