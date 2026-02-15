@@ -1,9 +1,4 @@
-{
-  lib,
-  config,
-  osConfig,
-  ...
-}:
+_:
 {
   config = {
     programs.k9s = {
