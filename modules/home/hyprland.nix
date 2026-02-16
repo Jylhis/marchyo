@@ -6,8 +6,6 @@
   ...
 }:
 let
-  inherit (lib) mkDefault;
-  colors = if config ? colorScheme then config.colorScheme.palette else null;
 
   # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
@@ -15,8 +13,6 @@ let
     (osConfig.marchyo.graphics.prime.enable or false)
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
-  # Helper to convert hex to rgb() format (Hyprland accepts hex directly)
-  rgb = color: "rgb(${color})";
 in
 {
   config = {
@@ -99,10 +95,6 @@ in
           gaps_out = 10;
           border_size = 2;
 
-          "col.active_border" = mkDefault (
-            if colors != null then rgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
-          );
-          "col.inactive_border" = mkDefault (if colors != null then rgb colors.base03 else "rgba(595959aa)");
           resize_on_border = false;
           allow_tearing = true;
 
@@ -124,7 +116,6 @@ in
             enabled = true;
             range = 2;
             render_power = 3;
-            color = mkDefault (if colors != null then rgb colors.base00 else "rgba(1a1a1aee)");
           };
 
           blur = {
@@ -419,8 +410,8 @@ in
           "HYPRCURSOR_SIZE,24"
 
           # Cursor theme
-          "XCURSOR_THEME,Adwaita"
-          "HYPRCURSOR_THEME,Adwaita"
+          # "XCURSOR_THEME,Adwaita"
+          # "HYPRCURSOR_THEME,Adwaita"
 
           # Wayland native performance (conservative)
           "MOZ_ENABLE_WAYLAND,1"

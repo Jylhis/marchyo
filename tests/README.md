@@ -34,8 +34,6 @@ Verify NixOS modules evaluate without errors:
 
 ### Library Tests
 
-Unit tests for `lib/colors.nix` functions (`hexToDec`, `toRgb`, `toRgba`, etc.).
-
 ## Adding Tests
 
 ### Module Evaluation Test

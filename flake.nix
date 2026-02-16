@@ -107,15 +107,7 @@
         }
       );
 
-      lib = nixpkgs.lib // {
-        marchyo =
-          import ./lib {
-            inherit (nixpkgs) lib;
-          }
-          // {
-            colorSchemes = import ./colorschemes;
-          };
-      };
+      inherit (nixpkgs) lib;
 
       templates = rec {
         default = workstation;

@@ -212,7 +212,7 @@ in
       enable = mkOption {
         type = types.bool;
         default = true;
-        description = "Enable nix-colors theming system";
+        description = "Enable Stylix theming system";
       };
 
       variant = mkOption {

@@ -5,9 +5,7 @@
   ...
 }:
 let
-  inherit (lib) mkIf mkMerge mkDefault;
-  hasOsConfig = osConfig != { } && osConfig ? marchyo;
-  cfg = if hasOsConfig then osConfig.marchyo.theme else null;
+  inherit (lib) mkMerge mkDefault;
 in
 {
   programs.kitty = {
@@ -46,49 +44,6 @@ in
         enabled_layouts = "splits,horizontal,vertical,tall";
         enable_audio_bell = "no";
       }
-      (mkIf (cfg != null && cfg.enable && config ? colorScheme) (
-        with config.colorScheme.palette;
-        {
-          # UI Colors
-          foreground = "#${base05}";
-          background = "#${base00}";
-          selection_background = "#${base05}";
-          selection_foreground = "#${base00}";
-          cursor = "#${base05}";
-          cursor_text_color = "#${base00}";
-
-          # URL underline color
-          url_color = "#${base0D}";
-
-          # Terminal Colors (16 ANSI colors)
-          color0 = "#${base00}"; # black
-          color1 = "#${base08}"; # red
-          color2 = "#${base0B}"; # green
-          color3 = "#${base0A}"; # yellow
-          color4 = "#${base0D}"; # blue
-          color5 = "#${base0E}"; # magenta
-          color6 = "#${base0C}"; # cyan
-          color7 = "#${base05}"; # white
-          color8 = "#${base03}"; # bright black
-          color9 = "#${base08}"; # bright red
-          color10 = "#${base0B}"; # bright green
-          color11 = "#${base0A}"; # bright yellow
-          color12 = "#${base0D}"; # bright blue
-          color13 = "#${base0E}"; # bright magenta
-          color14 = "#${base0C}"; # bright cyan
-          color15 = "#${base07}"; # bright white
-
-          # Tab bar colors
-          active_tab_foreground = "#${base00}";
-          active_tab_background = "#${base0D}";
-          inactive_tab_foreground = "#${base04}";
-          inactive_tab_background = "#${base01}";
-
-          # Border colors
-          active_border_color = "#${base0D}";
-          inactive_border_color = "#${base03}";
-        }
-      ))
     ];
     keybindings = {
       "alt+1" = "goto_tab 1";
