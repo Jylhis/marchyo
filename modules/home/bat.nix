@@ -1,10 +1,4 @@
-{
-  lib,
-  config,
-  osConfig,
-  ...
-}:
-{
+_: {
   config = {
     programs.bat = {
       enable = true;
