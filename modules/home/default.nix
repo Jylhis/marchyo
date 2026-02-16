@@ -17,7 +17,6 @@
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
-    ./hyprpaper.nix
     ./k9s.nix
     ./kitty.nix
     ./lazygit.nix

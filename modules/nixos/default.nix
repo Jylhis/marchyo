@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
   imports = [
     ./nix-settings.nix
@@ -50,8 +50,12 @@
       # liberation_ttf
 
       # ];
+      base16Scheme =
+        if config.marchyo.theme.variant == "dark" then
+          "${pkgs.base16-schemes}/share/themes/nord.yaml"
+        else
+          "${pkgs.base16-schemes}/share/themes/nord-light.yaml";
 
-      image = ../../assets/wallpapers/kanagawa-1.png;
       fonts = {
         serif = {
           package = pkgs.liberation_ttf;
