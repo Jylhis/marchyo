@@ -1,4 +1,4 @@
-{ config, ... }:
+_:
 let
   wallpaperDir = "Pictures/Wallpapers";
 in
