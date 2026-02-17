@@ -1,16 +1,15 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 {
   options.marchyo.xournalpp = {
-    enable = lib.mkEnableOption "Xournal++ note-taking application" // {
-      default = true;
-    };
+    enable = lib.mkEnableOption "Xournal++ note-taking application";
   };
 
-  config = {
+  config = lib.mkIf config.marchyo.xournalpp.enable {
     home.packages = [ pkgs.xournalpp ];
 
     # Xournal++ configuration

@@ -1,6 +1,5 @@
 # Library function unit tests
 # Lightweight tests using writeText instead of runCommand
-# Tests utility functions in lib/default.nix and lib/colors.nix
 {
   pkgs,
   lib,
@@ -8,8 +7,6 @@
 }:
 let
   # Import library functions to test
-  marchyoLib = import ../lib { inherit lib; };
-  inherit (marchyoLib) colors;
 
   # Test helper: create a trivial derivation that fails at eval time if assertion fails
   # Uses writeText (no sandbox spawn) instead of runCommand
@@ -18,30 +15,6 @@ let
     pkgs.writeText "test-${name}" (if assertion then "pass" else throw "FAIL: ${name}: ${message}");
 in
 {
-  # Test color utility functions
-  test-colors-withHash = assertTest "colors-withHash" (
-    colors.withHash "ff0000" == "#ff0000"
-  ) "Expected withHash to add # prefix";
-
-  test-colors-toRgb = assertTest "colors-toRgb" (
-    colors.toRgb "ff0000" == "rgb(255, 0, 0)"
-  ) "Expected toRgb to convert hex to rgb format";
-
-  test-colors-toRgb-black = assertTest "colors-toRgb-black" (
-    colors.toRgb "000000" == "rgb(0, 0, 0)"
-  ) "Expected toRgb to handle black color";
-
-  test-colors-toRgb-white = assertTest "colors-toRgb-white" (
-    colors.toRgb "ffffff" == "rgb(255, 255, 255)"
-  ) "Expected toRgb to handle white color";
-
-  test-colors-toRgba = assertTest "colors-toRgba" (
-    colors.toRgba "ff0000" "0.5" == "rgba(255, 0, 0, 0.5)"
-  ) "Expected toRgba to convert hex to rgba format with alpha";
-
-  test-colors-toRgba-full-opacity = assertTest "colors-toRgba-full-opacity" (
-    colors.toRgba "00ff00" "1.0" == "rgba(0, 255, 0, 1.0)"
-  ) "Expected toRgba to handle full opacity";
 
   # Test lib.genAttrs (replacement for mapListToAttrs)
   test-genAttrs-simple =

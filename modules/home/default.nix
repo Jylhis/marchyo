@@ -5,12 +5,10 @@
     ../generic/shell.nix
     ../generic/packages.nix
     ./_1password.nix
-    ./theme.nix
     ./bat.nix
     ./btop.nix
     ./fastfetch.nix
     ./fcitx5.nix
-    ./dropbox.nix
     ./fzf.nix
     ./keyboard.nix
     ./xournalpp.nix
@@ -19,7 +17,6 @@
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
-    ./hyprpaper.nix
     ./k9s.nix
     ./kitty.nix
     ./lazygit.nix

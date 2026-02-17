@@ -1,3 +1,4 @@
+{ pkgs, config, ... }:
 {
   imports = [
     ./nix-settings.nix
@@ -7,6 +8,7 @@
     ../generic/packages.nix
     ../generic/git.nix
     ../generic/fontconfig.nix
+    ../generic/theme.nix
     ./boot.nix
     ./options.nix
     ./input-migration.nix
@@ -29,8 +31,45 @@
     ./plymouth.nix
     ./security.nix
     ./system.nix
-    ./theme-assertions.nix
     ./wayland.nix
     ./update-diff.nix
   ];
+  config = {
+    stylix = {
+      enable = true;
+      autoEnable = true;
+      # packages = with pkgs; [
+      # # Programming fonts (Nerd Font variants only)
+      # nerd-fonts.caskaydia-mono
+      # nerd-fonts.jetbrains-mono
+
+      # # UI and reading fonts
+      # inter # Modern UI font
+      # source-serif-pro # High-quality serif font
+      # liberation_ttf
+
+      # ];
+      base16Scheme =
+        if config.marchyo.theme.variant == "dark" then
+          "${pkgs.base16-schemes}/share/themes/nord.yaml"
+        else
+          "${pkgs.base16-schemes}/share/themes/nord-light.yaml";
+
+      fonts = {
+        serif = {
+          package = pkgs.liberation_ttf;
+          name = "Liberation Serif";
+        };
+        sansSerif = {
+
+          package = pkgs.liberation_ttf;
+          name = "Liberation Sans";
+        };
+        monospace = {
+          package = pkgs.nerd-fonts.caskaydia-mono;
+          name = "CaskaydiaMono Nerd Font";
+        };
+      };
+    };
+  };
 }

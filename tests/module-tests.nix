@@ -5,7 +5,6 @@
   pkgs,
   lib,
   nixosModules,
-  nix-colors,
   homeModules,
   ...
 }:
@@ -20,9 +19,6 @@ let
           inherit (pkgs.stdenv.hostPlatform) system;
           modules = [
             nixosModules
-            {
-              _module.args.colorSchemes = nix-colors.colorSchemes // (import ../colorschemes);
-            }
             config
           ];
         };

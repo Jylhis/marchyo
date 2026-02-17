@@ -1,14 +1,9 @@
 {
   lib,
-  config,
-  osConfig ? { },
   ...
 }:
 let
-  inherit (lib) mkIf mkMerge;
-  hasOsConfig = osConfig != { } && osConfig ? marchyo;
-  cfg = if hasOsConfig then osConfig.marchyo.theme else null;
-  colors = if config ? colorScheme then config.colorScheme.palette else null;
+  inherit (lib) mkMerge;
 in
 {
   config = {
@@ -35,26 +30,7 @@ in
           format = "<b>%s</b>\\n%b";
           markup = true;
         }
-        (mkIf (cfg != null && cfg.enable && colors != null) {
-          # Color configuration
-          background-color = "#${colors.base00}";
-          text-color = "#${colors.base05}";
-          border-color = "#${colors.base0D}";
-          progress-color = "over #${colors.base02}";
 
-          "urgency=low" = {
-            border-color = "#${colors.base03}";
-          };
-
-          "urgency=normal" = {
-            border-color = "#${colors.base0D}";
-          };
-
-          "urgency=critical" = {
-            border-color = "#${colors.base08}";
-            text-color = "#${colors.base08}";
-          };
-        })
       ];
     };
   };

@@ -12,9 +12,9 @@
       url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-colors = {
-      url = "github:misterio77/nix-colors";
-      inputs.nixpkgs-lib.follows = "nixpkgs";
+    stylix = {
+      url = "https://flakehub.com/f/nix-community/stylix/0.1.*";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     vicinae = {
       url = "github:vicinaehq/vicinae";
@@ -36,12 +36,12 @@
     inputs@{
       nixpkgs,
       home-manager,
-      nix-colors,
       vicinae,
       noctalia,
       worktrunk,
       treefmt-nix,
       determinate,
+      stylix,
       ...
     }:
     let
@@ -52,6 +52,9 @@
 
       # Helper to generate per-system outputs
       forAllSystems = nixpkgs.lib.genAttrs systems;
+
+      # Import overlays
+      overlays = import ./overlays { inherit inputs; };
 
       # Define modules
       nixosModules = {
@@ -67,19 +70,19 @@
                 ];
                 extraSpecialArgs = {
                   inherit
-                    nix-colors
                     noctalia
                     vicinae
                     worktrunk
+                    stylix
                     ;
-                  colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
                 };
               };
             }
             determinate.nixosModules.default
+            stylix.nixosModules.stylix
+
             ./modules/nixos/default.nix
           ];
-          config._module.args.colorSchemes = nix-colors.colorSchemes // (import ./colorschemes);
         };
         inherit (home-manager.nixosModules) home-manager;
       };
@@ -93,26 +96,18 @@
       # Flake-level outputs (not per-system)
       inherit nixosModules homeModules;
 
-      overlays.default = import ./overlays { inherit inputs; };
+      overlays.default = overlays;
 
       legacyPackages = forAllSystems (
         system:
         import nixpkgs {
           inherit system;
-          overlays = [ (import ./overlays { inherit inputs; }) ];
+          overlays = [ overlays ];
           config.allowUnfree = true;
         }
       );
 
-      lib = nixpkgs.lib // {
-        marchyo =
-          import ./lib {
-            inherit (nixpkgs) lib;
-          }
-          // {
-            colorSchemes = import ./colorschemes;
-          };
-      };
+      inherit (nixpkgs) lib;
 
       templates = rec {
         default = workstation;
@@ -122,6 +117,78 @@
         };
       };
 
+      apps = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          vm = nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              nixosModules.default
+              (
+                {
+                  lib,
+                  modulesPath,
+                  ...
+                }:
+                {
+                  imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
+
+                  # Set hostname first so it's available for script name
+                  networking.hostName = "marchyo-vm";
+
+                  # Apply overlays
+                  nixpkgs.overlays = [ overlays ];
+                  nixpkgs.config.allowUnfree = true;
+
+                  # VM Specs
+                  virtualisation = {
+                    memorySize = 4096;
+                    cores = 4;
+                    graphics = true;
+                  };
+
+                  # Bootloader fix
+                  boot.loader.systemd-boot.enable = lib.mkForce false;
+
+                  # Marchyo Features
+                  marchyo = {
+                    desktop.enable = true;
+                    development.enable = true;
+                    media.enable = true;
+                    office.enable = true;
+                    users.developer = {
+                      fullname = "Marchyo Developer";
+                      email = "dev@example.org";
+                    };
+                  };
+
+                  # User config
+                  users.users.developer = {
+                    isNormalUser = true;
+                    password = "password";
+                    extraGroups = [
+                      "wheel"
+                      "networkmanager"
+                    ];
+                  };
+                  services.getty.autologinUser = "developer";
+                }
+              )
+            ];
+          };
+          runner = pkgs.writeShellScriptBin "run-vm" ''
+            exec ${vm.config.system.build.vm}/bin/run-${vm.config.networking.hostName}-vm "$@"
+          '';
+        in
+        {
+          default = {
+            type = "app";
+            program = "${runner}/bin/run-vm";
+          };
+        }
+      );
+
       # Per-system outputs
       checks = forAllSystems (
         system:
@@ -129,7 +196,7 @@
           allTests = import ./tests {
             inherit system;
             inherit (nixpkgs) lib;
-            inherit nixpkgs home-manager nix-colors;
+            inherit nixpkgs home-manager;
             nixosModules = nixosModules.default;
             homeModules = homeModules.default;
           };

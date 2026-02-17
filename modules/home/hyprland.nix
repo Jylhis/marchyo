@@ -6,9 +6,6 @@
   ...
 }:
 let
-  inherit (lib) mkDefault;
-  colors = if config ? colorScheme then config.colorScheme.palette else null;
-  variant = if config ? colorScheme then config.colorScheme.variant else "dark";
 
   # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
@@ -16,45 +13,12 @@ let
     (osConfig.marchyo.graphics.prime.enable or false)
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
-  # Helper to convert hex to rgb() format (Hyprland accepts hex directly)
-  rgb = color: "rgb(${color})";
 in
 {
   config = {
 
-    home.pointerCursor = {
-      gtk.enable = true;
-      package = pkgs.adwaita-icon-theme;
-      name = "Adwaita";
-      size = 24;
-    };
-
-    qt = {
-      style = {
-        name = mkDefault (if variant == "light" then "adwaita" else "adwaita-dark");
-        package = pkgs.adwaita-qt;
-      };
-    };
-
     gtk = {
       enable = true;
-
-      theme = {
-        name = mkDefault (if variant == "light" then "Adwaita" else "Adwaita-dark");
-        package = pkgs.gnome-themes-extra;
-      };
-
-      iconTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
-      };
-    };
-
-    dconf.settings = {
-      "org/gnome/desktop/interface" = {
-        color-scheme = if variant == "light" then "prefer-light" else "prefer-dark";
-        gtk-theme = if variant == "light" then "Adwaita" else "Adwaita-dark";
-      };
     };
 
     wayland.windowManager.hyprland = {
@@ -131,10 +95,6 @@ in
           gaps_out = 10;
           border_size = 2;
 
-          "col.active_border" = mkDefault (
-            if colors != null then rgb colors.base0D else "rgba(33ccffee) rgba(00ff99ee) 45deg"
-          );
-          "col.inactive_border" = mkDefault (if colors != null then rgb colors.base03 else "rgba(595959aa)");
           resize_on_border = false;
           allow_tearing = true;
 
@@ -156,7 +116,6 @@ in
             enabled = true;
             range = 2;
             render_power = 3;
-            color = mkDefault (if colors != null then rgb colors.base00 else "rgba(1a1a1aee)");
           };
 
           blur = {
@@ -451,8 +410,8 @@ in
           "HYPRCURSOR_SIZE,24"
 
           # Cursor theme
-          "XCURSOR_THEME,Adwaita"
-          "HYPRCURSOR_THEME,Adwaita"
+          # "XCURSOR_THEME,Adwaita"
+          # "HYPRCURSOR_THEME,Adwaita"
 
           # Wayland native performance (conservative)
           "MOZ_ENABLE_WAYLAND,1"
@@ -466,9 +425,6 @@ in
 
           # Use XCompose file
           "XCOMPOSEFILE,~/.XCompose"
-        ]
-        ++ lib.optionals (config ? colorScheme) [
-          "GTK_THEME,${if variant == "light" then "Adwaita" else "Adwaita-dark"}"
         ]
         # NVIDIA GPU environment variables for Wayland
         ++ lib.optionals hasNvidia [

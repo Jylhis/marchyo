@@ -5,7 +5,6 @@
   lib,
   nixpkgs,
   home-manager,
-  nix-colors,
   nixosModules,
   homeModules,
 }:
@@ -24,7 +23,6 @@ let
       nixosModules
       homeModules
       home-manager
-      nix-colors
       ;
   };
 

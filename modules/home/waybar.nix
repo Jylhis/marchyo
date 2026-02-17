@@ -10,13 +10,10 @@
 # - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
 {
   lib,
-  config,
   pkgs,
   ...
 }:
 let
-  colors = if config ? colorScheme then config.colorScheme.palette else null;
-  hex = color: "#${color}";
 
   # fcitx5 status script for waybar
   # Shows current input method: keyboard layouts (us, fi, cn) or IME (拼, あ, 한)
@@ -58,20 +55,7 @@ let
   '';
 
   # Generate CSS with colorScheme
-  styleWithColors =
-    if colors != null then
-      ''
-        @define-color background ${hex colors.base00};
-        @define-color foreground ${hex colors.base05};
-        @define-color border ${hex colors.base03};
-        @define-color accent ${hex colors.base0D};
-        @define-color urgent ${hex colors.base08};
-        @define-color warning ${hex colors.base0A};
-
-      ''
-      + builtins.readFile ../../assets/applications/waybar.css
-    else
-      builtins.readFile ../../assets/applications/waybar.css;
+  styleWithColors = builtins.readFile ../../assets/applications/waybar.css;
 
   # Terminal emulator to use for clicking modules
   terminal = "${pkgs.kitty}/bin/kitty";

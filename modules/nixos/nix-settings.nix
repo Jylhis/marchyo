@@ -1,9 +1,6 @@
 { config, lib, ... }:
 {
   nix = {
-    # gc.automatic = lib.mkDefault true;
-    # optimise.automatic = lib.mkDefault true;
-
     settings = {
       accept-flake-config = true;
       trusted-users = [ "@wheel" ] ++ (builtins.attrNames config.marchyo.users);
@@ -16,12 +13,10 @@
       ];
       substituters = [
         "https://nix-community.cachix.org"
-        "https://marchyo.cachix.org"
         "https://vicinae.cachix.org"
       ];
       trusted-substituters = [
         "https://nix-community.cachix.org"
-        "https://marchyo.cachix.org"
         "https://vicinae.cachix.org"
       ];
       trusted-public-keys = [
