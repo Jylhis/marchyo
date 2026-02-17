@@ -1,10 +1,4 @@
-{
-  lib,
-  config,
-  osConfig,
-  ...
-}:
-{
+_: {
   config = {
     programs.fzf = {
       enable = true;

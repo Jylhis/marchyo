@@ -1,9 +1,5 @@
-/* Colors are defined via Nix colorScheme in waybar.nix */
-
+# TODO: Restore colors and use https://github.com/nix-community/stylix/blob/db03fed72e5ca02be34e1d24789345a943329738/modules/waybar/hm.nix#L95
 * {
-  background-color: @background;
-  color: @foreground;
-
   border: none;
   border-radius: 0;
   min-height: 0;
@@ -69,23 +65,11 @@ tooltip {
   font-size: 10px;
 }
 
-#custom-screenrecording-indicator.active {
-  color: @urgent;
-}
-
 menu {
-  background-color: @background;
-  color: @foreground;
   border: 1px solid @border;
   padding: 4px;
 }
 
 menuitem {
-  background-color: @background;
-  color: @foreground;
   padding: 4px 8px;
-}
-
-menuitem:hover {
-  background-color: @accent;
 }
