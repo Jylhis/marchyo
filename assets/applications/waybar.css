@@ -7,69 +7,18 @@
   font-size: 14px;
 }
 
-.modules-left {
-  margin-left: 8px;
-}
-
-.modules-right {
-  margin-right: 8px;
-}
-
-#workspaces button {
-  all: initial;
-  padding: 0 6px;
-  margin: 0 1.5px;
-  min-width: 9px;
-}
-
-#workspaces button.empty {
-  opacity: 0.5;
-}
-
 #tray,
-#cpu,
-#battery,
-#network,
-#bluetooth,
-#wireplumber,
 #power-profiles-daemon,
 #custom-screenrecording-indicator,
 #custom-update {
-  min-width: 12px;
-  margin: 0 7.5px;
+    padding: 0 5px;
+    min-width: 12px;
 }
 
 #custom-expand-icon {
   margin-right: 7px;
 }
 
-tooltip {
-  padding: 2px;
-}
-
 #custom-update {
   font-size: 10px;
-}
-
-#clock {
-  margin-left: 8.75px;
-}
-
-.hidden {
-  opacity: 0;
-}
-
-#custom-screenrecording-indicator {
-  min-width: 12px;
-  margin-left: 8.75px;
-  font-size: 10px;
-}
-
-menu {
-  border: 1px solid @border;
-  padding: 4px;
-}
-
-menuitem {
-  padding: 4px 8px;
 }
