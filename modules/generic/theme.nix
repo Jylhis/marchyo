@@ -4,6 +4,7 @@
 
     inherit (config.marchyo.theme) enable;
     polarity = config.marchyo.theme.variant;
+    targets.plymouth.enable = false;
   };
 
 }
