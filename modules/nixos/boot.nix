@@ -12,7 +12,7 @@
       "${lib.getExe (pkgs.tuigreet or pkgs.greetd.tuigreet)} "
       + (lib.cli.toCommandLineShellGNU { } {
         time = true;
-        cmd = "Hyprland";
+        cmd = "start-hyprland";
         remember = true;
         remember-session = true;
         user-menu = true;
