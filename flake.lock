@@ -354,12 +354,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1771269455,
-        "narHash": "sha256-BZ31eN5F99YH6vkc4AhzKGE+tJgJ52kl8f01K7wCs8w=",
-        "rev": "5f1d42a97b19803041434f66681d5c44c9ae62e3",
-        "revCount": 6243,
+        "lastModified": 1771422582,
+        "narHash": "sha256-xK5kl3OBZaF1VwziVMX+SZ2LT9Fbu5o8vRDt78uR7no=",
+        "rev": "b3ccd4bb262f4e6d3248b46cede92b90c4a42094",
+        "revCount": 6252,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6243%2Brev-5f1d42a97b19803041434f66681d5c44c9ae62e3/019c67e3-fa26-7af4-b5ae-6d170ccf5339/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6252%2Brev-b3ccd4bb262f4e6d3248b46cede92b90c4a42094/019c7104-c9bf-709c-862d-57163e72173c/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -389,11 +389,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1771405934,
-        "narHash": "sha256-qRLfXgxSpHjEja40/PXwNMeWOUc4MNTE1B09sLV4NbQ=",
+        "lastModified": 1771423359,
+        "narHash": "sha256-yRKJ7gpVmXbX2ZcA8nFi6CMPkJXZGjie2unsiMzj3Ig=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "0d58bcd2ce85879252fe47375063ccc98f7de0f8",
+        "rev": "740a22363033e9f1bb6270fbfb5a9574067af15b",
         "type": "github"
       },
       "original": {
@@ -479,12 +479,12 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1771008912,
-        "narHash": "sha256-gf2AmWVTs8lEq7z/3ZAsgnZDhWIckkb+ZnAo5RzSxJg=",
-        "rev": "a82ccc39b39b621151d6732718e3e250109076fa",
-        "revCount": 945868,
+        "lastModified": 1771369470,
+        "narHash": "sha256-0NBlEBKkN3lufyvFegY4TYv5mCNHbi5OmBDrzihbBMQ=",
+        "rev": "0182a361324364ae3f436a63005877674cf45efb",
+        "revCount": 948083,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.1.945868%2Brev-a82ccc39b39b621151d6732718e3e250109076fa/019c5b2e-592f-7d17-b9ce-868f25acfeca/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.1.948083%2Brev-0182a361324364ae3f436a63005877674cf45efb/019c71f3-061e-7c0e-b75b-ea375738503a/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -498,11 +498,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771380935,
-        "narHash": "sha256-eBFflHfFdrxTpulrEgGVv8qDN6kbMwfnTga27tuBknc=",
+        "lastModified": 1771444048,
+        "narHash": "sha256-li7Pd9wOtiYuFq+u+lMbbaoNySBz7fVTeYTxOSLcBTI=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "e0293e266677ac01259955f1d2efe39dc28ec207",
+        "rev": "cb77a08243a5956ebed2d0960f161d0644295f83",
         "type": "github"
       },
       "original": {
@@ -609,12 +609,12 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1771330061,
-        "narHash": "sha256-qBWXy3mSOEYjvZB/RZHT0joVPhNWU8GQZQljLzyMTq0=",
-        "rev": "fa45bf2d70517a8643a0edb44b02b8e6c0453d06",
-        "revCount": 1366,
+        "lastModified": 1771428844,
+        "narHash": "sha256-rTzo6bZEsdT7yHUZ0B4BYe32XQZzm8SiWKvWLJnxerE=",
+        "rev": "801843d10e9e22d7a00f660d069e2de70aa2980a",
+        "revCount": 1367,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/stylix/0.1.1366%2Brev-fa45bf2d70517a8643a0edb44b02b8e6c0453d06/019c6cb9-ddd9-703b-be26-a67af91dd49a/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/stylix/0.1.1367%2Brev-801843d10e9e22d7a00f660d069e2de70aa2980a/019c71e0-1ceb-7c17-b66f-ef8a183e1947/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -797,11 +797,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1771388094,
-        "narHash": "sha256-kL9v9BdXZmGzW2ZSHWgfJghXt4C1dPMOp5zjl4Gf+RM=",
+        "lastModified": 1771444838,
+        "narHash": "sha256-aZ3SuE1ne3aBpAA5QXBMWODkbg+W+G7UlyzCfTv1D8M=",
         "owner": "max-sixty",
         "repo": "worktrunk",
-        "rev": "a361d858727db42081f617f81cf89bd41b17a760",
+        "rev": "01715318d5a7b560fb88a925dd6772765e6a505a",
         "type": "github"
       },
       "original": {
