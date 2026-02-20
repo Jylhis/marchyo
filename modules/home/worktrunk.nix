@@ -7,11 +7,11 @@
 
 let
   cfg = config.programs.worktrunk;
-
+  tomlFormat = pkgs.formats.toml { };
 in
 {
   options.programs.worktrunk = {
-    enable = lib.mkEnableOption "Worktrunk - Git worktree management CLI";
+    enable = lib.mkEnableOption "worktrunk";
 
     package = lib.mkPackageOption pkgs "worktrunk" { };
 
@@ -44,6 +44,16 @@ in
         Adds `wt config shell init fish | source` to fish initialization.
       '';
     };
+    settings = lib.mkOption {
+      inherit (tomlFormat) type;
+      default = { };
+      description = ''
+        Configuration written to {file}`$XDG_CONFIG_HOME/worktrunk/config.toml`.
+
+        See <https://worktrunk.dev/config/> for
+        available options and documentation.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -66,5 +76,9 @@ in
       # Worktrunk shell integration
       ${lib.getExe cfg.package} config shell init fish | source
     '';
+
+    xdg.configFile."worktrunk/config.toml" = lib.mkIf (cfg.settings != { }) {
+      source = tomlFormat.generate "config.toml" cfg.settings;
+    };
   };
 }
