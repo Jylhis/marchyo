@@ -354,12 +354,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1771422582,
-        "narHash": "sha256-xK5kl3OBZaF1VwziVMX+SZ2LT9Fbu5o8vRDt78uR7no=",
-        "rev": "b3ccd4bb262f4e6d3248b46cede92b90c4a42094",
-        "revCount": 6252,
+        "lastModified": 1771531206,
+        "narHash": "sha256-1R3Wx6KUkMb4x4E5UOhW9p6rqiexzSGGWxZqSHqW5n0=",
+        "rev": "91be7cce763fa4022c7cf025a71b0c366d1b6e77",
+        "revCount": 6260,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6252%2Brev-b3ccd4bb262f4e6d3248b46cede92b90c4a42094/019c7104-c9bf-709c-862d-57163e72173c/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6260%2Brev-91be7cce763fa4022c7cf025a71b0c366d1b6e77/019c777e-3c99-7ed6-85a2-d0efc21e2a0e/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -498,11 +498,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771444048,
-        "narHash": "sha256-li7Pd9wOtiYuFq+u+lMbbaoNySBz7fVTeYTxOSLcBTI=",
+        "lastModified": 1771609315,
+        "narHash": "sha256-p5LXHaCQZKSiGzDgWjj8v280juAaTg0vgzT2C90RVxM=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "cb77a08243a5956ebed2d0960f161d0644295f83",
+        "rev": "c6f4a6bc161323ec630cc0bd1bbd3812259b5a5a",
         "type": "github"
       },
       "original": {
@@ -609,12 +609,12 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1771428844,
-        "narHash": "sha256-rTzo6bZEsdT7yHUZ0B4BYe32XQZzm8SiWKvWLJnxerE=",
-        "rev": "801843d10e9e22d7a00f660d069e2de70aa2980a",
-        "revCount": 1367,
+        "lastModified": 1771590299,
+        "narHash": "sha256-D1UT9CphcSqnuw8EXSIUfVObjPza31neDSQvhj0DP/o=",
+        "rev": "9654508da1326fae4b4e82daf5c0f7edf948f7ef",
+        "revCount": 1371,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/stylix/0.1.1367%2Brev-801843d10e9e22d7a00f660d069e2de70aa2980a/019c71e0-1ceb-7c17-b66f-ef8a183e1947/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/stylix/0.1.1371%2Brev-9654508da1326fae4b4e82daf5c0f7edf948f7ef/019c7c2a-2fba-73d6-8d69-bbe65b431749/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -774,11 +774,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1771257846,
-        "narHash": "sha256-2tz4RVC1IwSpQL/t0raRZ+ydHQje0QzN65rcJo+JjyQ=",
+        "lastModified": 1771502217,
+        "narHash": "sha256-Bx9QKfFsC0bVN6O9P8DFpyzC9SJ6nbarMfWzIH/fzIg=",
         "owner": "vicinaehq",
         "repo": "vicinae",
-        "rev": "e9d804bfddad02ff80347401ae0d42ca8202519f",
+        "rev": "54833492742d58428eaad093451fcd3469f0f3e5",
         "type": "github"
       },
       "original": {
@@ -797,11 +797,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1771444838,
-        "narHash": "sha256-aZ3SuE1ne3aBpAA5QXBMWODkbg+W+G7UlyzCfTv1D8M=",
+        "lastModified": 1771581654,
+        "narHash": "sha256-Facu5v1S9HnpAkscBxqLRv4E5E/S0iwCbX52Fn9KO70=",
         "owner": "max-sixty",
         "repo": "worktrunk",
-        "rev": "01715318d5a7b560fb88a925dd6772765e6a505a",
+        "rev": "eac55bd185013c251945601ee7a06d3a4184d2d3",
         "type": "github"
       },
       "original": {
