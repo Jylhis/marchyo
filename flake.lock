@@ -354,12 +354,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1771683283,
-        "narHash": "sha256-WxAEkAbo8dP7qiyPM6VN4ZGAxfuBVlNBNPkrqkrXVEc=",
-        "rev": "c6ed3eab64d23520bcbb858aa53fe2b533725d4a",
-        "revCount": 6268,
+        "lastModified": 1771756436,
+        "narHash": "sha256-Tl2I0YXdhSTufGqAaD1ySh8x+cvVsEI1mJyJg12lxhI=",
+        "rev": "5bd3589390b431a63072868a90c0f24771ff4cbb",
+        "revCount": 6271,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6268%2Brev-c6ed3eab64d23520bcbb858aa53fe2b533725d4a/019c808e-de28-799d-b2ec-c1c0ed423046/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/nix-community/home-manager/0.1.6271%2Brev-5bd3589390b431a63072868a90c0f24771ff4cbb/019c84eb-6ce2-71fa-b806-435b1449c102/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -498,11 +498,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771690106,
-        "narHash": "sha256-dkLvVNUgr5jOoNOc4iE8NXGmo29Wt/Dk/gPKPr8bamQ=",
+        "lastModified": 1771775931,
+        "narHash": "sha256-Mdqz6JNwbAmCmV3wpa4lgDV+UadYtMCS/0GoMQKxdNE=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "835d632e57e7b0cb7321f56ea4d83c9fac88b05c",
+        "rev": "243d408019be7153cbb92d4f2a776d2d5c3da856",
         "type": "github"
       },
       "original": {
@@ -797,11 +797,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1771660233,
-        "narHash": "sha256-fep7GUl9ST0ljJL3CpUTNT8baVXbNhZozHgP7mcJLMQ=",
+        "lastModified": 1771772622,
+        "narHash": "sha256-YsHLXYBbd5WXclV1sCdepcJR283GWoTGoOXDqJNtKUM=",
         "owner": "max-sixty",
         "repo": "worktrunk",
-        "rev": "dc0ddd03d8a39d6e005b73848dcc072f3ad568eb",
+        "rev": "c487894efb29a5635da767442efbd53beff3aecd",
         "type": "github"
       },
       "original": {

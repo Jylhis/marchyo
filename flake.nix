@@ -151,6 +151,8 @@
                   # Bootloader fix
                   boot.loader.systemd-boot.enable = lib.mkForce false;
 
+                  system.stateVersion = "25.11";
+
                   # Marchyo Features
                   marchyo = {
                     desktop.enable = true;
@@ -185,6 +187,10 @@
           default = {
             type = "app";
             program = "${runner}/bin/run-vm";
+            meta = {
+              description = "Run the Marchyo VM";
+              mainProgram = "run-vm";
+            };
           };
         }
       );
