@@ -11,6 +11,7 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 let
@@ -55,7 +56,9 @@ let
   '';
 
   # Generate CSS with colorScheme
-  styleWithColors = builtins.readFile ../../assets/applications/waybar.css;
+  styleWithColors = import ../../assets/applications/waybar.nix {
+    colors = config.lib.stylix.colors.withHashtag;
+  };
 
   # Terminal emulator to use for clicking modules
   terminal = "${pkgs.kitty}/bin/kitty";
