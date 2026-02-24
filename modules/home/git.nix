@@ -11,6 +11,27 @@ in
   programs = lib.mkIf userConfig.enable {
     git = {
       enable = true;
+      lfs.enable = lib.mkDefault true;
+      ignores = lib.mkDefault [
+        "*~"
+        # Emacs
+        "\#*\#"
+        "*.elc"
+        ".\#*"
+        # Org-mode
+        ".org-id-locations"
+        "*_archive"
+        # Intellij
+        "*.iml"
+        "*.ipr"
+        "*.iws"
+        ".idea/"
+        # VIM
+        ".*.s[a-w][a-z]"
+        "*.un~"
+        "Session.vim"
+        ".netrwhist"
+      ];
       settings = {
         user = {
           name = userConfig.fullname;
@@ -40,6 +61,9 @@ in
           sort = lib.mkDefault "-committerdate";
         };
         pull.rebase = lib.mkDefault true;
+        push = {
+          autoSetupRemote = lib.mkDefault true;
+        };
         diff = {
           colorMoved = lib.mkDefault "zebra";
           colorMovedWS = lib.mkDefault "ignore-space-at-eol";
