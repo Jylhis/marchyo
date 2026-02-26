@@ -48,7 +48,7 @@ modules/nixos/      # NixOS system-level modules (~30 modules)
 modules/home/       # Home Manager user-level modules (~33 modules)
 modules/generic/    # Shared modules used by both (fontconfig, git, shell, packages, theme)
 packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
-overlays/           # Nixpkgs overlays (fh, vicinae, noctalia, worktrunk)
+overlays/           # Nixpkgs overlays (vicinae, noctalia, worktrunk)
 tests/              # Evaluation-based test suite (no builds required)
 disko/              # Disk partitioning configurations
 templates/workstation/  # Developer workstation template

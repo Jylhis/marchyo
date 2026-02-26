@@ -2,7 +2,7 @@
   description = "Marchyo Developer Workstation Configuration";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     marchyo.url = "github:Jylhis/marchyo";
   };
 

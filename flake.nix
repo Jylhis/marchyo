@@ -28,8 +28,6 @@
       url = "github:max-sixty/worktrunk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    fh.url = "github:DeterminateSystems/fh";
-    determinate.url = "github:DeterminateSystems/determinate";
   };
 
   outputs =
@@ -40,7 +38,6 @@
       noctalia,
       worktrunk,
       treefmt-nix,
-      determinate,
       stylix,
       ...
     }:
@@ -78,7 +75,6 @@
                 };
               };
             }
-            determinate.nixosModules.default
             stylix.nixosModules.stylix
 
             ./modules/nixos/default.nix
@@ -95,6 +91,52 @@
     {
       # Flake-level outputs (not per-system)
       inherit nixosModules homeModules;
+
+      nixosConfigurations.default = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          nixosModules.default
+          (
+            { lib, ... }:
+            {
+              networking.hostName = "marchyo-default";
+              nixpkgs.overlays = [ overlays ];
+              nixpkgs.config.allowUnfree = true;
+
+              # Minimal bootable system
+              boot.loader.systemd-boot.enable = lib.mkForce false;
+              boot.loader.grub.enable = lib.mkForce false;
+              fileSystems."/" = {
+                device = "/dev/vda";
+                fsType = "ext4";
+              };
+              system.stateVersion = "25.11";
+
+              # All Marchyo features
+              marchyo = {
+                desktop.enable = true;
+                development.enable = true;
+                media.enable = true;
+                office.enable = true;
+                users.developer = {
+                  fullname = "Marchyo Developer";
+                  email = "dev@example.org";
+                };
+              };
+
+              users.users.developer = {
+                isNormalUser = true;
+                password = "password";
+                extraGroups = [
+                  "wheel"
+                  "networkmanager"
+                ];
+              };
+              services.getty.autologinUser = "developer";
+            }
+          )
+        ];
+      };
 
       overlays.default = overlays;
 
