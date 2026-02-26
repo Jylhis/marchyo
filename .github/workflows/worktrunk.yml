@@ -10,11 +10,10 @@ jobs:
     name: Build Worktrunk
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: cachix/install-nix-action@v30
       - uses: cachix/cachix-action@v15
         with:
           name: jylhis
