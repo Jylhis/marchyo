@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
-      - uses: DeterminateSystems/flakehub-cache-action@main
+      - uses: cachix/cachix-action@v15
+        with:
+          name: jylhis
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build Noctalia
         run: nix build .#noctalia
