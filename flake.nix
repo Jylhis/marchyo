@@ -2,7 +2,7 @@
   description = "Marchyo";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     treefmt-nix = {
       url = "https://flakehub.com/f/numtide/treefmt-nix/0.1.*";
