@@ -5,15 +5,15 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     treefmt-nix = {
-      url = "https://flakehub.com/f/numtide/treefmt-nix/0.1.*";
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      url = "https://flakehub.com/f/nix-community/home-manager/0.1.*";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     stylix = {
-      url = "https://flakehub.com/f/nix-community/stylix/0.1.*";
+      url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     vicinae = {
@@ -28,8 +28,8 @@
       url = "github:max-sixty/worktrunk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*";
-    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
+    fh.url = "github:DeterminateSystems/fh";
+    determinate.url = "github:DeterminateSystems/determinate";
   };
 
   outputs =
