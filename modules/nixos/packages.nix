@@ -61,7 +61,7 @@ let
 
   # Office applications
   officeTools = with pkgs; [
-    libreoffice # Standard office suite
+    # libreoffice # Standard office suite
     papers # Document viewer
     obsidian
   ];
