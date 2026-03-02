@@ -9,7 +9,6 @@
       experimental-features = [
         "nix-command"
         "flakes"
-        "ca-derivations"
       ];
       substituters = [
         "https://jylhis.cachix.org"
