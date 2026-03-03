@@ -6,7 +6,7 @@
 }:
 let
   mUsers = lib.filterAttrs (_name: user: user.enable) config.marchyo.users;
-  forMarchyoUsers = attr: lib.genAttrs (builtins.attrNames mUsers) (_name: attr);
+  forMarchyoUsers = attr: lib.mapAttrs (_name: _user: attr) mUsers;
 in
 {
   services = {
