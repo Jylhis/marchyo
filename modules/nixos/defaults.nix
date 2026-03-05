@@ -96,8 +96,8 @@ let
 
   defaultPackages =
     lib.optional (d.browser != null) browserPackages.${d.browser}
-    ++ lib.optional (d.editor != null) editorPackages.${d.editor}
-    ++ lib.optional (d.terminalEditor != null) terminalEditorPackages.${d.terminalEditor}
+    ++ lib.optional (d.editor != null && builtins.hasAttr d.editor editorPackages) editorPackages.${d.editor}
+    ++ lib.optional (d.terminalEditor != null && builtins.hasAttr d.terminalEditor terminalEditorPackages) terminalEditorPackages.${d.terminalEditor}
     ++ lib.optional (d.videoPlayer != null) videoPlayerPackages.${d.videoPlayer}
     ++ lib.optional (d.audioPlayer != null) audioPlayerPackages.${d.audioPlayer}
     ++ lib.optional (d.musicPlayer != null) musicPlayerPackages.${d.musicPlayer}
@@ -114,8 +114,8 @@ in
 
     environment.sessionVariables =
       lib.optionalAttrs (d.browser != null) { BROWSER = browserCommands.${d.browser}; }
-      // lib.optionalAttrs (d.editor != null) { VISUAL = editorVisualCommands.${d.editor}; }
-      // lib.optionalAttrs (d.terminalEditor != null) {
+      // lib.optionalAttrs (d.editor != null && builtins.hasAttr d.editor editorVisualCommands) { VISUAL = editorVisualCommands.${d.editor}; }
+      // lib.optionalAttrs (d.terminalEditor != null && builtins.hasAttr d.terminalEditor terminalEditorCommands) {
         EDITOR = terminalEditorCommands.${d.terminalEditor};
       };
   };

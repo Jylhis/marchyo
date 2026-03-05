@@ -69,6 +69,7 @@ in
         type = types.nullOr (
           types.enum [
             "emacs"
+            "jotain"
             "vscode"
             "vscodium"
             "zed"
@@ -80,6 +81,8 @@ in
           Default graphical text editor ($VISUAL). Installed automatically when
           desktop is enabled and registered as the system default for plain text
           files. Set to null to skip editor management.
+          "jotain" is externally managed (like "gmail"/"outlook" for email):
+          package installation and VISUAL are handled by programs.jotain.
         '';
       };
 
@@ -87,6 +90,7 @@ in
         type = types.nullOr (
           types.enum [
             "emacs"
+            "jotain"
             "neovim"
             "helix"
             "nano"
@@ -97,6 +101,8 @@ in
         description = ''
           Default terminal text editor ($EDITOR). Installed automatically when
           desktop is enabled. Set to null to skip terminal editor management.
+          "jotain" is externally managed (like "gmail"/"outlook" for email):
+          package installation and EDITOR are handled by programs.jotain.
         '';
       };
 
