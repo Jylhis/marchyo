@@ -181,7 +181,12 @@ in
     }
   );
 
-  # Test 13: Check Home Manager Hyprland configuration validity
+  # Test 13: Worktrunk auto-enabled with development feature flag
+  eval-worktrunk = testNixOS "worktrunk" (withTestUser {
+    marchyo.development.enable = true;
+  });
+
+  # Test 14: Check Home Manager Hyprland configuration validity
   check-home-hyprland-config =
     let
       # Define a minimal NixOS system with a user and hyprland enabled

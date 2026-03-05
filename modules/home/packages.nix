@@ -20,6 +20,5 @@
       enable = true;
     };
 
-    worktrunk.enable = true;
   };
 }
