@@ -13,6 +13,42 @@ let
     (osConfig.marchyo.graphics.prime.enable or false)
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
+  marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
+
+  browserHyprlandCommands = {
+    brave = "brave --new-window --ozone-platform=wayland";
+    google-chrome = "google-chrome --new-window --ozone-platform=wayland";
+    firefox = "firefox --new-window";
+    chromium = "chromium --new-window --ozone-platform=wayland";
+  };
+
+  fileManagerHyprlandCommands = {
+    nautilus = "nautilus --new-window";
+    thunar = "thunar";
+  };
+
+  musicHyprlandCommands = {
+    spotify = "spotify";
+  };
+
+  browserCmd =
+    let
+      b = marchyoDefaults.browser or "google-chrome";
+    in
+    if b == null then "xdg-open" else browserHyprlandCommands.${b};
+
+  fileManagerCmd =
+    let
+      fm = marchyoDefaults.fileManager or "nautilus";
+    in
+    if fm == null then "xdg-open" else fileManagerHyprlandCommands.${fm};
+
+  musicCmd =
+    let
+      m = marchyoDefaults.musicPlayer or "spotify";
+    in
+    if m == null then "spotify" else musicHyprlandCommands.${m};
+
 in
 {
   config = {
@@ -29,10 +65,10 @@ in
         # Default apps
 
         "$notes" = lib.mkDefault "obsidian";
-        "$browser" = lib.mkDefault "brave --new-window --ozone-platform=wayland";
-        "$fileManager" = lib.mkDefault "nautilus --new-window";
+        "$browser" = lib.mkDefault browserCmd;
+        "$fileManager" = lib.mkDefault fileManagerCmd;
         "$messenger" = lib.mkDefault "signal-desktop";
-        "$music" = lib.mkDefault "spotify";
+        "$music" = lib.mkDefault musicCmd;
         "$passwordManager" = lib.mkDefault "1password";
         "$webapp" = lib.mkDefault "$browser --app";
         "$terminal" = lib.mkDefault "kitty";
