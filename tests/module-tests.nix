@@ -186,6 +186,50 @@ in
     marchyo.development.enable = true;
   });
 
+  # Test 15: Default browser (google-chrome) with desktop
+  eval-defaults-browser = testNixOS "defaults-browser" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults.browser = "google-chrome";
+  });
+
+  # Test 16: Default editor (emacs) with desktop
+  eval-defaults-editor = testNixOS "defaults-editor" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults.editor = "emacs";
+  });
+
+  # Test 17: Null defaults (no apps managed by marchyo.defaults)
+  eval-defaults-null = testNixOS "defaults-null" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults.browser = null;
+    marchyo.defaults.editor = null;
+    marchyo.defaults.terminalEditor = null;
+    marchyo.defaults.videoPlayer = null;
+    marchyo.defaults.audioPlayer = null;
+    marchyo.defaults.musicPlayer = null;
+    marchyo.defaults.fileManager = null;
+    marchyo.defaults.terminalFileManager = null;
+    marchyo.defaults.imageEditor = null;
+    marchyo.defaults.email = null;
+  });
+
+  # Test 18: All defaults set to non-default values
+  eval-defaults-all = testNixOS "defaults-all" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults = {
+      browser = "firefox";
+      editor = "vscode";
+      terminalEditor = "neovim";
+      videoPlayer = "vlc";
+      audioPlayer = "vlc";
+      musicPlayer = "spotify";
+      fileManager = "thunar";
+      terminalFileManager = "ranger";
+      imageEditor = "gimp";
+      email = "thunderbird";
+    };
+  });
+
   # Test 14: Check Home Manager Hyprland configuration validity
   check-home-hyprland-config =
     let

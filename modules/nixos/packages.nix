@@ -41,10 +41,8 @@ let
   # Desktop GUI tools
   desktopTools = with pkgs; [
     signal-desktop # E2E messaging
-    brave
     localsend # send files to other devices on the same network
     file-roller # Archive manager
-    nautilus # GNOME Files (file explorer)
     loupe # Modern GNOME image viewer
     gnome-disk-utility # Disk management
     gnome-calculator # Calculator
@@ -53,11 +51,8 @@ let
     dconf-editor # For debugging dconf/GTK settings
   ];
 
-  # Media applications
-  mediaTools = with pkgs; [
-    mpv # simple fast media player
-    pinta # basic image editing tool
-  ];
+  # Media applications (browser/editor/video/audio/fileManager managed by defaults.nix)
+  mediaTools = with pkgs; [ ];
 
   # Office applications
   officeTools = with pkgs; [

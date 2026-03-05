@@ -14,6 +14,7 @@
     ./input-migration.nix
     ./packages.nix
     ./containers.nix
+    ./defaults.nix
     ./desktop-config.nix
     ./development-config.nix
     ./fcitx5.nix
