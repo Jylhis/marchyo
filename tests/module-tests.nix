@@ -230,6 +230,15 @@ in
     };
   });
 
+  # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
+  eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults = {
+      editor = "jotain";
+      terminalEditor = "jotain";
+    };
+  });
+
   # Test 14: Check Home Manager Hyprland configuration validity
   check-home-hyprland-config =
     let
