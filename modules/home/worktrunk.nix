@@ -1,12 +1,14 @@
 {
   config,
   lib,
+  osConfig ? { },
   pkgs,
   ...
 }:
 
 let
   cfg = config.programs.worktrunk;
+  devEnabled = osConfig.marchyo.development.enable or false;
   tomlFormat = pkgs.formats.toml { };
 in
 {
@@ -56,29 +58,40 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+  config = lib.mkMerge [
+    (lib.mkIf devEnabled {
+      programs.worktrunk.enable = lib.mkDefault true;
+    })
+    (lib.mkIf cfg.enable {
+      home.packages = [ cfg.package ];
 
-    # Bash integration
-    programs.bash.initExtra = lib.mkIf cfg.enableBashIntegration ''
-      # Worktrunk shell integration
-      eval "$(${lib.getExe cfg.package} config shell init bash)"
-    '';
+      # Bash integration
+      programs.bash.initExtra = lib.mkIf cfg.enableBashIntegration ''
+        # Worktrunk shell integration
+        eval "$(${lib.getExe cfg.package} config shell init bash)"
+      '';
 
-    # Zsh integration
-    programs.zsh.initExtra = lib.mkIf cfg.enableZshIntegration ''
-      # Worktrunk shell integration
-      eval "$(${lib.getExe cfg.package} config shell init zsh)"
-    '';
+      # Zsh integration
+      programs.zsh.initExtra = lib.mkIf cfg.enableZshIntegration ''
+        # Worktrunk shell integration
+        eval "$(${lib.getExe cfg.package} config shell init zsh)"
+      '';
 
-    # Fish integration
-    programs.fish.interactiveShellInit = lib.mkIf cfg.enableFishIntegration ''
-      # Worktrunk shell integration
-      ${lib.getExe cfg.package} config shell init fish | source
-    '';
+      # Fish integration
+      programs.fish.interactiveShellInit = lib.mkIf cfg.enableFishIntegration ''
+        # Worktrunk shell integration
+        ${lib.getExe cfg.package} config shell init fish | source
+      '';
 
-    xdg.configFile."worktrunk/config.toml" = lib.mkIf (cfg.settings != { }) {
-      source = tomlFormat.generate "config.toml" cfg.settings;
-    };
-  };
+      xdg.configFile."fish/completions/wt.fish" = lib.mkIf cfg.enableFishIntegration {
+        source = pkgs.runCommand "wt-fish-completions" { } ''
+          COMPLETE=fish ${lib.getExe cfg.package} > $out
+        '';
+      };
+
+      xdg.configFile."worktrunk/config.toml" = lib.mkIf (cfg.settings != { }) {
+        source = tomlFormat.generate "config.toml" cfg.settings;
+      };
+    })
+  ];
 }

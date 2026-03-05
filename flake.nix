@@ -36,7 +36,6 @@
       home-manager,
       vicinae,
       noctalia,
-      worktrunk,
       treefmt-nix,
       stylix,
       ...
@@ -69,7 +68,6 @@
                   inherit
                     noctalia
                     vicinae
-                    worktrunk
                     stylix
                     ;
                 };
