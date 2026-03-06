@@ -75,7 +75,7 @@ in
             "zed"
           ]
         );
-        default = "emacs";
+        default = "jotain";
         example = "vscode";
         description = ''
           Default graphical text editor ($VISUAL). Installed automatically when
@@ -96,7 +96,7 @@ in
             "nano"
           ]
         );
-        default = "emacs";
+        default = "jotain";
         example = "neovim";
         description = ''
           Default terminal text editor ($EDITOR). Installed automatically when
