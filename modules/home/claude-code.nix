@@ -1,0 +1,160 @@
+{
+  lib,
+  osConfig ? { },
+  ...
+}:
+let
+  devEnabled = osConfig.marchyo.development.enable or false;
+in
+{
+  config = lib.mkIf devEnabled {
+    home.file.".claude/skills/marchyo-config/SKILL.md".text = ''
+      ---
+      name: marchyo-config
+      description: Marchyo NixOS/Home Manager module development specialist. Use when creating, modifying, or debugging modules in the Marchyo flake — including options, tests, and integration patterns.
+      user-invocable: true
+      argument-hint: "[module name or task description]"
+      ---
+
+      # Marchyo Configuration Skill
+
+      Specialist knowledge for the Marchyo modular NixOS configuration flake.
+      See `CLAUDE.md` in the repository root for the authoritative reference.
+
+      ## Repository Layout
+
+      ```
+      modules/nixos/      # NixOS system-level modules (~30 modules)
+      modules/home/       # Home Manager user-level modules (~33 modules)
+      modules/generic/    # Shared modules (fontconfig, git, shell, packages, theme)
+      modules/nixos/options.nix     # ALL marchyo.* options defined here
+      modules/nixos/default.nix     # NixOS module import list
+      modules/home/default.nix      # Home Manager module import list
+      tests/module-tests.nix        # Evaluation-based test suite
+      ```
+
+      ## Key Commands
+
+      ```bash
+      nix flake check     # Validate and run all tests (REQUIRED before committing)
+      nix fmt             # Format all Nix code (REQUIRED before committing)
+      nix develop         # Enter development shell
+      nix flake show      # Inspect all flake outputs
+      nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List tests
+      ```
+
+      ## Adding a New Module
+
+      1. Create the file in `modules/nixos/`, `modules/home/`, or `modules/generic/`
+      2. Add the import to the corresponding `default.nix`
+      3. Define any new options in `modules/nixos/options.nix` under `marchyo.*`
+      4. Add an evaluation test in `tests/module-tests.nix`
+
+      ### Standard NixOS module
+
+      ```nix
+      { config, lib, pkgs, ... }:
+      let
+        cfg = config.marchyo;
+      in
+      {
+        config = lib.mkIf cfg.feature.enable {
+          # configuration here
+        };
+      }
+      ```
+
+      ### Home Manager module accessing NixOS config
+
+      ```nix
+      { config, lib, osConfig ? {}, ... }:
+      let
+        cfg = osConfig.marchyo or {};
+      in
+      { ... }
+      ```
+
+      ### Gating on a feature flag
+
+      ```nix
+      { lib, osConfig ? { }, ... }:
+      let
+        devEnabled = osConfig.marchyo.development.enable or false;
+      in
+      {
+        config = lib.mkIf devEnabled {
+          # enabled when marchyo.development.enable = true
+        };
+      }
+      ```
+
+      ## Defining Options
+
+      All options go in `modules/nixos/options.nix` under `marchyo.*`:
+
+      ```nix
+      marchyo = {
+        myFeature = {
+          enable = lib.mkEnableOption "my feature";
+          setting = lib.mkOption {
+            type = lib.types.str;
+            default = "default-value";
+            description = "Description of the setting.";
+          };
+        };
+      };
+      ```
+
+      - Every option must have a `description`
+      - Use `lib.mkEnableOption` for boolean feature flags
+      - Use `lib.mkDefault` for values consumers should be able to override
+
+      ## Writing Tests
+
+      Add evaluation tests to `tests/module-tests.nix`:
+
+      ```nix
+      eval-my-feature = testNixOS "my-feature" (withTestUser {
+        marchyo.myFeature.enable = true;
+      });
+      ```
+
+      `testNixOS` evaluates without building. `withTestUser` provides a minimal bootable base config.
+
+      ## Key Patterns
+
+      - `lib.mkIf cfg.flag` — conditional configuration
+      - `lib.mkDefault value` — overridable default; consumers can override with `=`
+      - `lib.mkForce value` — override that cannot be overridden downstream
+      - `lib.mkMerge [ ... ]` — combine multiple conditional blocks safely
+      - Feature flags cascade: `marchyo.desktop.enable = true` auto-enables media, office, etc. via `lib.mkDefault`
+
+      ## Quality Standards
+
+      - Every option must have a description
+      - Use `lib.mkEnableOption` for boolean flags that enable features
+      - Provide sensible defaults that work out of the box
+      - Avoid hardcoded paths; use options or variables
+      - Modules should be self-contained where possible
+      - Document any external dependencies or requirements
+      - Consider security implications for secrets, keys, credentials
+
+      ## Decision-Making Framework
+
+      1. **Understand first** — clarify the requirement before proposing solutions
+      2. **Check existing patterns** — reference existing Marchyo modules for consistency
+      3. **Prefer simplicity** — start with the simplest working solution
+      4. **Plan for reuse** — design modules to be usable across different contexts
+      5. **Document decisions** — explain why something is structured a particular way
+
+      ## Common Pitfalls
+
+      - Always run `nix fmt` before committing — CI will fail without it
+      - Never define `marchyo.*` options outside `modules/nixos/options.nix`
+      - Importing a module in `default.nix` is required — creating the file alone is not enough
+      - Tests are evaluation-only (no builds) — use `testNixOS` and `withTestUser`
+      - `allowUnfree = true` is set globally; no need to set it per-package
+      - `marchyo.inputMethod.*` is removed — use `marchyo.keyboard.layouts` instead
+    '';
+  };
+}
