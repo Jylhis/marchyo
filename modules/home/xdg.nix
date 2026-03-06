@@ -47,7 +47,9 @@ let
   email = defaults.email or null;
 
   browserDesktop = lib.optional (browser != null) browserDesktopFiles.${browser};
-  editorDesktop = lib.optional (editor != null && builtins.hasAttr editor editorDesktopFiles) editorDesktopFiles.${editor};
+  editorDesktop = lib.optional (
+    editor != null && builtins.hasAttr editor editorDesktopFiles
+  ) editorDesktopFiles.${editor};
   videoDesktop = lib.optional (videoPlayer != null) videoPlayerDesktopFiles.${videoPlayer};
   audioDesktop = lib.optional (audioPlayer != null) audioPlayerDesktopFiles.${audioPlayer};
   fileManagerDesktop = lib.optional (fileManager != null) fileManagerDesktopFiles.${fileManager};
