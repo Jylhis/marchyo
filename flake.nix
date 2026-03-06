@@ -157,7 +157,7 @@
         };
       };
 
-      apps = forAllSystems (
+      apps = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
