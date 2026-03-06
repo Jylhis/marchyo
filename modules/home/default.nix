@@ -7,6 +7,7 @@
     ./_1password.nix
     ./bat.nix
     ./btop.nix
+    ./claude-code.nix
     ./fastfetch.nix
     ./fcitx5.nix
     ./fzf.nix
