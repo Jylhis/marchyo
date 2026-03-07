@@ -47,7 +47,7 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 modules/nixos/      # NixOS system-level modules (~30 modules)
 modules/home/       # Home Manager user-level modules (~33 modules)
 modules/generic/    # Shared modules imported by both nixos and home default.nix (no own default.nix)
-packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
+packages/           # Custom Nix packages (plymouth-marchyo-theme)
 overlays/           # Nixpkgs overlays (vicinae, noctalia, worktrunk)
 tests/              # Evaluation-based test suite (no builds required)
 disko/              # Disk partitioning configurations
@@ -144,8 +144,8 @@ The keyboard/IME system is the most complex cross-module pattern:
 1. `modules/nixos/options.nix` — defines `marchyo.keyboard.layouts` accepting strings or attrsets
 2. `modules/nixos/keyboard.nix` — normalizes layouts (string `"us"` → `{ layout = "us"; variant = ""; ime = null; }`) and sets XKB config
 3. `modules/nixos/fcitx5.nix` — reads normalized layouts, detects which IME addons are needed, generates fcitx5 config
-4. `modules/home/keyboard.nix` — extracts layout data into `home.keyboard` for Hyprland
-5. `modules/home/hyprland.nix` — reads `osConfig.marchyo.graphics` for GPU-specific env vars and keyboard from `home.keyboard`
+4. `modules/home/keyboard.nix` — extracts layout data into `home.keyboard` for niri
+5. `modules/home/niri.nix` — reads `osConfig.marchyo.graphics` for GPU-specific env vars and keyboard from `home.keyboard`
 
 ## Available Options Reference
 
@@ -153,7 +153,7 @@ The keyboard/IME system is the most complex cross-module pattern:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.desktop.enable` | `false` | Desktop (Hyprland, audio, bluetooth, fonts) |
+| `marchyo.desktop.enable` | `false` | Desktop (Niri, audio, bluetooth, fonts) |
 | `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae launcher |
 | `marchyo.development.enable` | `false` | Dev tools (git, docker, virtualization) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |

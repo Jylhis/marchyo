@@ -40,7 +40,7 @@ nixos-rebuild build-vm --flake .#workstation
 ## Included Features
 
 ### Desktop Environment
-- Hyprland (Wayland compositor)
+- Niri (Wayland compositor)
 - Complete desktop environment with all Marchyo customizations
 - Multiple terminal emulators (Kitty, Alacritty)
 
@@ -172,15 +172,10 @@ use flake
 
 ### Multiple Monitors
 
-Hyprland configuration is in Marchyo modules. Override in your home configuration:
+Niri configuration is in Marchyo modules. Use kanshi for monitor layout management:
 
 ```nix
-wayland.windowManager.hyprland.settings = {
-  monitor = [
-    "DP-1,1920x1080@60,0x0,1"
-    "HDMI-A-1,1920x1080@60,1920x0,1"
-  ];
-};
+home.packages = [ pkgs.kanshi ];
 ```
 
 ### Productivity Apps
@@ -266,9 +261,9 @@ sudo systemctl restart docker
 
 ### Display Issues
 
-Check Hyprland logs:
+Check niri logs:
 ```bash
-journalctl --user -u hyprland
+journalctl --user -u niri
 ```
 
 ### Performance Monitoring

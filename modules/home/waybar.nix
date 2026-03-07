@@ -74,15 +74,14 @@ in
           spacing = 0;
           height = 26;
           modules-left = [
-            "hyprland/workspaces"
+            "niri/workspaces"
           ];
           modules-center = [
             "clock"
           ];
           modules-right = [
             "group/tray-expander"
-            # "custom/fcitx5"
-            "hyprland/language"
+            "custom/fcitx5"
             "bluetooth"
             "network"
             "wireplumber"
@@ -90,7 +89,7 @@ in
             "power-profiles-daemon"
             "battery"
           ];
-          "hyprland/workspaces" = {
+          "niri/workspaces" = {
             on-click = "activate";
             format = "{icon}";
             format-icons = {
@@ -106,17 +105,6 @@ in
               "9" = "9";
               active = "󱓻";
             };
-            persistent-workspaces = {
-              "1" = [ ];
-              "2" = [ ];
-              "3" = [ ];
-              "4" = [ ];
-              "5" = [ ];
-            };
-          };
-          "hyprland/language" = {
-            format = "{short}";
-            tooltip-format = "{long}";
           };
           "custom/fcitx5" = {
             exec = "${fcitx5StatusScript}";
