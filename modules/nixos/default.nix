@@ -23,8 +23,7 @@
     ./graphics.nix
     ./hardware.nix
     ./help.nix
-    ./hyprland.nix
-    ./hyprlock.nix
+    ./niri.nix
     ./locale.nix
     ./media.nix
     ./network.nix

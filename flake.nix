@@ -28,6 +28,10 @@
       url = "github:max-sixty/worktrunk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -38,6 +42,7 @@
       noctalia,
       treefmt-nix,
       stylix,
+      niri,
       ...
     }:
     let
@@ -74,6 +79,7 @@
               };
             }
             stylix.nixosModules.stylix
+            niri.nixosModules.niri
 
             ./modules/nixos/default.nix
           ];
