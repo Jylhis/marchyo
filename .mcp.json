@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "nixos": {
+      "command": "nix",
+      "args": ["run", "github:utensils/mcp-nixos", "--"]
+    },
+    "language-server": {
+      "command": "nix",
+      "args": [
+        "run",
+        "nixpkgs#mcp-language-server",
+        "--",
+        "--workspace",
+        ".",
+        "--lsp",
+        "nil"
+      ]
+    }
+  }
+}

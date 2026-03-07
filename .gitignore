@@ -2,3 +2,6 @@
 result
 *.qcow2
 *.fd
+
+# Worktrunk worktrees
+.worktrees/

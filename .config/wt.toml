@@ -1,0 +1,5 @@
+[post-create]
+beads = "mkdir -p .beads && printf '%s/.beads\\n' \"$(dirname $(git rev-parse --absolute-git-dir | sed 's|/worktrees/[^/]*$||'))\" > .beads/redirect"
+
+[pre-merge]
+check = "nix flake check"
