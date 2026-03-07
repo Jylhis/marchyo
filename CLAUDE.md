@@ -46,7 +46,7 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 ```
 modules/nixos/      # NixOS system-level modules (~30 modules)
 modules/home/       # Home Manager user-level modules (~33 modules)
-modules/generic/    # Shared modules used by both (fontconfig, git, shell, packages, theme)
+modules/generic/    # Shared modules imported by both nixos and home default.nix (no own default.nix)
 packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
 overlays/           # Nixpkgs overlays (vicinae, noctalia, worktrunk)
 tests/              # Evaluation-based test suite (no builds required)
@@ -67,9 +67,10 @@ templates/workstation/  # Developer workstation template
 - `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~470 lines). Single source of truth for the option namespace.
 - `modules/nixos/default.nix` — Import list for all NixOS modules (order matters for some modules).
 - `modules/home/default.nix` — Import list for all Home Manager modules.
-- `modules/generic/default.nix` — Shared modules imported by both NixOS and Home Manager.
 - `modules/nixos/input-migration.nix` — Assertions that enforce removal of deprecated `marchyo.inputMethod.*` options.
-- `tests/module-tests.nix` — All module evaluation tests with helper functions.
+- `tests/default.nix` — Test suite entry point; combines module-tests and lib-tests.
+- `tests/module-tests.nix` — Module evaluation tests with `testNixOS`/`withTestUser` helpers.
+- `tests/lib-tests.nix` — Unit tests for lib functions using `assertTest` helper.
 
 ## Module Patterns
 
@@ -131,7 +132,9 @@ The `testNixOS` helper evaluates the NixOS config without building derivations. 
 
 ## Testing
 
-Tests in `tests/` are fast evaluation-based checks (no builds required). They cover module imports for various feature combinations: minimal, desktop, development, all features, themes, keyboard layouts, GPU configs.
+Tests in `tests/` are fast evaluation-based checks (no builds required). Two categories:
+- **Module tests** (`module-tests.nix`): Verify NixOS configs evaluate without errors for various feature combinations (minimal, desktop, development, all features, themes, keyboard layouts, GPU configs, default apps).
+- **Lib tests** (`lib-tests.nix`): Unit tests for lib functions using `assertTest` helper.
 
 All changes must pass `nix flake check`.
 
@@ -183,7 +186,28 @@ marchyo.theme = {
 };
 ```
 
-Default schemes: `modus-vivendi-tinted` (dark), `modus-operandi-tinted` (light).
+Default schemes: `nord` (dark), `nord-light` (light). Stylix base16Scheme is set in `modules/nixos/default.nix`.
+
+### Default Applications
+
+When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control which apps are installed and set as system defaults. Set any to `null` to skip management for that category.
+
+```nix
+marchyo.defaults = {
+  browser = "google-chrome";      # brave, google-chrome, firefox, chromium
+  editor = "jotain";              # emacs, jotain, vscode, vscodium, zed
+  terminalEditor = "jotain";      # emacs, jotain, neovim, helix, nano
+  videoPlayer = "mpv";            # mpv, vlc, celluloid
+  audioPlayer = "mpv";            # mpv, vlc, amberol
+  musicPlayer = "spotify";        # spotify
+  fileManager = "nautilus";       # nautilus, thunar
+  terminalFileManager = "yazi";   # yazi, ranger, lf
+  imageEditor = "pinta";         # pinta, gimp, krita
+  email = "gmail";               # gmail, thunderbird, outlook
+};
+```
+
+`"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`.
 
 ### Keyboard & Input Methods
 
