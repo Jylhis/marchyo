@@ -23,10 +23,10 @@ nix flake show           # Display all flake outputs
 nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available tests
 ```
 
-Running a VM for local testing:
+Running a VM for local testing (x86_64-linux only):
 
 ```bash
-nix run -L '.#nixosConfigurations.default.config.system.build.vmWithDisko'
+nix run                  # Runs apps.x86_64-linux.default — a QEMU VM with all features enabled
 ```
 
 There is no way to run a single test in isolation; `nix flake check` runs them all (they are fast evaluation-only checks).
@@ -44,13 +44,14 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 ### Module Organization
 
 ```
-modules/nixos/      # NixOS system-level modules (~30 modules)
-modules/home/       # Home Manager user-level modules (~33 modules)
+modules/nixos/      # NixOS system-level modules (~31 modules)
+modules/home/       # Home Manager user-level modules (~30 modules)
 modules/generic/    # Shared modules imported by both nixos and home default.nix (no own default.nix)
 packages/           # Custom Nix packages (plymouth-marchyo-theme)
 overlays/           # Nixpkgs overlays (vicinae, noctalia, worktrunk)
 tests/              # Evaluation-based test suite (no builds required)
-disko/              # Disk partitioning configurations
+disko/              # Disk partitioning configurations (not wired into flake outputs)
+installer/          # ISO build configs (not wired into flake outputs)
 templates/workstation/  # Developer workstation template
 ```
 
@@ -60,11 +61,13 @@ templates/workstation/  # Developer workstation template
 - `homeModules.default` — Home Manager module only
 - `overlays.default` — Nixpkgs overlay
 - `templates.workstation` — Starter workstation template
+- `apps.{system}.default` — QEMU VM runner with all features enabled (x86_64-linux only)
 - `checks.{system}.*` — Test suite
+- `nixosConfigurations.default` — Reference NixOS config used by CI build and VM runner
 
 ### Key Files
 
-- `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~470 lines). Single source of truth for the option namespace.
+- `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~640 lines). Single source of truth for the option namespace.
 - `modules/nixos/default.nix` — Import list for all NixOS modules (order matters for some modules).
 - `modules/home/default.nix` — Import list for all Home Manager modules.
 - `modules/nixos/input-migration.nix` — Assertions that enforce removal of deprecated `marchyo.inputMethod.*` options.
@@ -298,10 +301,22 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## CI Pipeline
+
+`.github/workflows/validate.yml` runs three sequential stages on push to `main` and PRs:
+1. **lints** — `nix fmt -- --ci` (formatting check only, no writes)
+2. **check** — `nix flake check` (all evaluation tests)
+3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build)
+
+Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
+
 ## Gotchas
 
 - **Assertions for removed options**: `input-migration.nix` uses NixOS assertions to fail the build with migration instructions if anyone uses the removed `marchyo.inputMethod.*` options.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `options.nix` with deprecation notes in their descriptions.
+- **`marchyo.theme.scheme` is defined but not consumed**: The option exists in `options.nix` but no module reads it. Stylix `base16Scheme` is hardcoded to `nord`/`nord-light` in `modules/nixos/default.nix`. Setting `marchyo.theme.scheme` currently has no effect.
+- **Unreferenced module files**: `modules/nixos/powersave.nix` and `modules/nixos/audio.nix` exist on disk but are not imported by `modules/nixos/default.nix`. Similarly, `disko/` and `installer/` directories are not wired into flake outputs.
 - **`allowUnfree = true`**: The flake sets this globally in `legacyPackages` and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix. All must pass.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeModules` in isolation.
+- **`AI_GUIDE.md`**: Contains comprehensive option documentation. The `README.md` links to it. Content overlaps with this file; keep both in sync when changing options.
