@@ -20,7 +20,7 @@ let
       layout
   ) cfg.layouts;
 
-  # Extract layout codes for Hyprland compatibility
+  # Extract layout codes for niri compatibility
   simpleLayouts = map (l: l.layout) normalizedLayouts;
 
   # Extract variants (empty string if no variant)
@@ -31,10 +31,10 @@ let
 in
 {
   config = {
-    # Configure home.keyboard for Hyprland compatibility
-    # Note: fcitx5 is the authoritative input manager, but Hyprland reads home.keyboard
-    # This configuration is automatically picked up by Hyprland via
-    # the existing code in modules/home/hyprland.nix (lines 66-78)
+    # Configure home.keyboard for niri compatibility
+    # Note: fcitx5 is the authoritative input manager, but niri reads home.keyboard
+    # This configuration is automatically picked up by niri via
+    # the existing code in modules/home/niri.nix
     home.keyboard = lib.mkMerge [
       {
         # Concatenate layout list into comma-separated string (e.g., "us,fi,cn")

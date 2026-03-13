@@ -15,9 +15,9 @@
     ./xournalpp.nix
     ./git.nix
     ./help.nix
-    ./hypridle.nix
-    ./hyprland.nix
-    ./hyprlock.nix
+    ./niri.nix
+    ./swayidle.nix
+    ./swaylock.nix
     ./k9s.nix
     ./kitty.nix
     ./lazygit.nix

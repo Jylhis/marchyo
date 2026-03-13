@@ -220,7 +220,7 @@ in
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable desktop environment (Hyprland, Wayland, fonts, etc.)";
+        description = "Enable desktop environment (Niri, Wayland, fonts, etc.)";
       };
 
       useWofi = mkOption {

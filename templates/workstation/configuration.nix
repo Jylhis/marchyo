@@ -19,7 +19,7 @@
   # System hostname
   networking.hostName = "workstation";
 
-  # Enable desktop environment (includes Hyprland, office apps, media apps)
+  # Enable desktop environment (includes Niri, office apps, media apps)
   marchyo.desktop.enable = true;
 
   # Enable development tools (docker, virtualization, dev tools)

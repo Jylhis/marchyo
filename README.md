@@ -54,7 +54,7 @@ Marchyo is configured through a set of options under the `marchyo.*` namespace.
 
 Enable groups of related functionality with feature flags:
 
-- `marchyo.desktop.enable`: Desktop environment (Hyprland, fonts, audio, bluetooth).
+- `marchyo.desktop.enable`: Desktop environment (Niri, fonts, audio, bluetooth).
 - `marchyo.development.enable`: Development tools (git, docker, virtualization).
 - `marchyo.media.enable`: Media applications (auto-enabled with desktop).
 - `marchyo.office.enable`: Office applications (auto-enabled with desktop).

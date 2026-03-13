@@ -67,7 +67,7 @@ ALL custom options are defined in `modules/nixos/options.nix` under the `marchyo
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.desktop.enable` | `false` | Desktop environment (Hyprland, audio, bluetooth, fonts) |
+| `marchyo.desktop.enable` | `false` | Desktop environment (Niri, audio, bluetooth, fonts) |
 | `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae as the application launcher. |
 | `marchyo.development.enable` | `false` | Development tools (git, docker, virtualization) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled by desktop) |
