@@ -55,7 +55,8 @@ in
       alsa.enable = true;
       alsa.support32Bit = true;
       pulse.enable = true;
-      jack.enable = lib.mkDefault false;
+      jack.enable = lib.mkDefault true;
+      wireplumber.enable = true;
     };
 
     # Fonts
