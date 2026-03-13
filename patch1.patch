@@ -1,0 +1,9 @@
+--- modules/nixos/audio.nix
++++ modules/nixos/audio.nix
+@@ -5,5 +5,6 @@
+     alsa.enable = true;
+     pulse.enable = true;
+     jack.enable = true;
++    wireplumber.enable = true;
+   };
+ }

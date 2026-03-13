@@ -1,0 +1,10 @@
+--- modules/home/hyprland.nix
++++ modules/home/hyprland.nix
+@@ -194,6 +194,7 @@
+       # Screen recording
+       wf-recorder
+
++      slurp
+       # System monitoring and control
+       brightnessctl
+       playerctl
