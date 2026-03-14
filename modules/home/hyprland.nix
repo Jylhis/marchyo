@@ -508,6 +508,7 @@ in
       # Screen recording
       wf-recorder
 
+      slurp
       # System monitoring and control
       brightnessctl
       playerctl
