@@ -16,8 +16,8 @@ let
     pkgs.writeText "eval-${name}" (
       let
         eval = lib.nixosSystem {
-          inherit (pkgs.stdenv.hostPlatform) system;
           modules = [
+            { nixpkgs.hostPlatform = pkgs.stdenv.hostPlatform.system; }
             nixosModules
             config
           ];

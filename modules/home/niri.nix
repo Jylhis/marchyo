@@ -210,10 +210,11 @@ in
           opacity = 1.0;
           block-out-from = "screencast";
         }
-        # Picture-in-picture: full opacity, always on top
+        # Picture-in-picture: full opacity, floating
         {
           matches = [ { title = "Picture.?in.?[Pp]icture"; } ];
           opacity = 1.0;
+          open-floating = true;
         }
       ];
 
@@ -238,6 +239,17 @@ in
             "--toggle"
           ];
           "Mod+Shift+I".action.spawn = "fcitx5-configtool";
+          "Mod+E".action.spawn = [
+            "emacsclient"
+            "-c"
+            "-a"
+            "emacs"
+          ];
+          "Mod+D".action.spawn = [
+            "kitty"
+            "-e"
+            "lazydocker"
+          ];
 
           # Launcher
           "Mod+R".action.spawn = [
@@ -269,8 +281,13 @@ in
           "Mod+3".action.focus-workspace = 3;
           "Mod+4".action.focus-workspace = 4;
           "Mod+5".action.focus-workspace = 5;
+          "Mod+6".action.focus-workspace = 6;
+          "Mod+7".action.focus-workspace = 7;
+          "Mod+8".action.focus-workspace = 8;
+          "Mod+9".action.focus-workspace = 9;
           "Mod+Tab".action.focus-workspace-down = { };
           "Mod+Shift+Tab".action.focus-workspace-up = { };
+          "Mod+Ctrl+Tab".action.focus-workspace-previous = { };
 
           # Move column to workspace
           "Mod+Shift+1".action.move-column-to-workspace = 1;
@@ -278,6 +295,10 @@ in
           "Mod+Shift+3".action.move-column-to-workspace = 3;
           "Mod+Shift+4".action.move-column-to-workspace = 4;
           "Mod+Shift+5".action.move-column-to-workspace = 5;
+          "Mod+Shift+6".action.move-column-to-workspace = 6;
+          "Mod+Shift+7".action.move-column-to-workspace = 7;
+          "Mod+Shift+8".action.move-column-to-workspace = 8;
+          "Mod+Shift+9".action.move-column-to-workspace = 9;
 
           # Monitor focus
           "Mod+Comma".action.focus-monitor-left = { };
@@ -293,6 +314,18 @@ in
           # Column operations (consume/expel windows)
           "Mod+BracketLeft".action.consume-or-expel-window-left = { };
           "Mod+BracketRight".action.consume-or-expel-window-right = { };
+
+          # Mouse scroll bindings
+          "Mod+WheelScrollDown" = {
+            cooldown-ms = 150;
+            action.focus-workspace-down = { };
+          };
+          "Mod+WheelScrollUp" = {
+            cooldown-ms = 150;
+            action.focus-workspace-up = { };
+          };
+          "Mod+WheelScrollRight".action.focus-column-right = { };
+          "Mod+WheelScrollLeft".action.focus-column-left = { };
 
           # Cycle focus
           "Alt+Tab".action.focus-column-right-or-first = { };

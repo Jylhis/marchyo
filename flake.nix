@@ -97,8 +97,8 @@
       inherit nixosModules homeModules;
 
       nixosConfigurations.default = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         modules = [
+          { nixpkgs.hostPlatform = "x86_64-linux"; }
           nixosModules.default
           (
             { lib, ... }:
@@ -128,14 +128,7 @@
                 };
               };
 
-              users.users.developer = {
-                isNormalUser = true;
-                password = "password";
-                extraGroups = [
-                  "wheel"
-                  "networkmanager"
-                ];
-              };
+              users.users.developer.password = "password";
               services.getty.autologinUser = "developer";
             }
           )
@@ -168,8 +161,8 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           vm = nixpkgs.lib.nixosSystem {
-            inherit system;
             modules = [
+              { nixpkgs.hostPlatform = system; }
               nixosModules.default
               (
                 {
@@ -192,7 +185,20 @@
                     memorySize = 4096;
                     cores = 4;
                     graphics = true;
+                    qemu.options = [
+                      # Niri requires 3D GPU acceleration. Replace QEMU's default
+                      # VGA (no 3D) with virtio-vga-gl + OpenGL passthrough.
+                      "-vga none"
+                      "-device virtio-vga-gl"
+                      "-display gtk,gl=on"
+                    ];
                   };
+
+                  # Disable Plymouth in VM for visible boot/error output
+                  boot.plymouth.enable = false;
+                  boot.kernelParams = [ ];
+                  boot.consoleLogLevel = 5;
+                  boot.initrd.verbose = true;
 
                   # Bootloader fix
                   boot.loader.systemd-boot.enable = lib.mkForce false;
@@ -210,15 +216,16 @@
                   };
 
                   # User config
-                  users.users.developer = {
-                    isNormalUser = true;
-                    password = "password";
-                    extraGroups = [
-                      "wheel"
-                      "networkmanager"
-                    ];
-                  };
+                  users.users.developer.password = "password";
                   services.getty.autologinUser = "developer";
+
+                  # Autologin to niri in the VM
+                  services.greetd.settings.initial_session = {
+                    command = "niri-session";
+                    user = "developer";
+                  };
+
+                  system.stateVersion = "25.11";
                 }
               )
             ];

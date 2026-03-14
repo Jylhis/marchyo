@@ -40,7 +40,7 @@ in
         # Concatenate layout list into comma-separated string (e.g., "us,fi,cn")
         layout = lib.concatStringsSep "," simpleLayouts;
 
-        # Apply XKB options as list (Hyprland will join with commas)
+        # Apply XKB options as list (niri reads them from home.keyboard)
         # Must remain a list - don't convert to string
         inherit (cfg) options;
       }

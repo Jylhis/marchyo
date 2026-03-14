@@ -1,12 +1,20 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.marchyo;
+in
 {
   boot.loader.systemd-boot = {
     enable = true;
     configurationLimit = lib.mkDefault 5;
   };
 
-  # Login
-  services.greetd = {
+  # Login (only when desktop is enabled)
+  services.greetd = lib.mkIf cfg.desktop.enable {
     enable = true;
     settings.default_session.command =
       "${lib.getExe (pkgs.tuigreet or pkgs.greetd.tuigreet)} "
