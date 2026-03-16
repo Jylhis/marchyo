@@ -275,31 +275,16 @@ marchyo.keyboard.layouts = [
 
 **When ending a work session**, complete ALL steps below. Work is NOT complete until `git push` succeeds.
 
-1. **File issues for remaining work** — Create beads issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) — `nix flake check` and `nix fmt`
-3. **Update issue status** — Close finished work, update in-progress items
-4. **Push to remote** — This is MANDATORY:
+1. **Run quality gates** (if code changed) — `nix flake check` and `nix fmt`
+2. **Push to remote** — This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Verify** — All changes committed AND pushed
+3. **Verify** — All changes committed AND pushed
 
-**Critical rules:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing — that leaves work stranded locally
-
-### Beads Quick Reference
-
-```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
-```
+**Critical rule:** Work is NOT complete until `git push` succeeds.
 
 ## CI Pipeline
 
