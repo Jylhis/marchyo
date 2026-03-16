@@ -1,5 +1,6 @@
 # XDG MIME type associations for default applications
 {
+  config,
   lib,
   osConfig ? { },
   ...
@@ -100,6 +101,16 @@ let
 in
 {
   config = {
+    home.file."Developer/.keep".text = "";
+
+    xdg.userDirs = {
+      enable = true;
+      createDirectories = true;
+      extraConfig = {
+        DEVELOPER = "${config.home.homeDirectory}/Developer";
+      };
+    };
+
     xdg.mimeApps = {
       enable = true;
       defaultApplications = {
