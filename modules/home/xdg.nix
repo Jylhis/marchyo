@@ -101,8 +101,6 @@ let
 in
 {
   config = {
-    home.file."Developer/.keep".text = "";
-
     xdg.userDirs = {
       enable = true;
       createDirectories = true;
