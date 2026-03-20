@@ -540,6 +540,23 @@ in
         '';
       };
 
+      composeKey = mkOption {
+        type = types.nullOr types.str;
+        default = "ralt";
+        example = "rwin";
+        description = ''
+          Sets the XKB Compose key for typing special characters.
+          Common values:
+          - ralt: Right Alt key (default)
+          - rwin: Right Super/Windows key
+          - caps: Caps Lock key
+          - menu: Menu key
+          - null: Disable compose key
+
+          Set to null to disable the compose key entirely.
+        '';
+      };
+
       autoActivateIME = mkOption {
         type = types.bool;
         default = true;
