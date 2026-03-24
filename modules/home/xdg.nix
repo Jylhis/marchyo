@@ -104,6 +104,7 @@ in
     xdg.userDirs = {
       enable = true;
       createDirectories = true;
+      setSessionVariables = true;
       extraConfig = {
         DEVELOPER = "${config.home.homeDirectory}/Developer";
       };

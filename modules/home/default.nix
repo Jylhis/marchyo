@@ -14,6 +14,7 @@
     ./keyboard.nix
     ./xournalpp.nix
     ./git.nix
+    ./gtk.nix
     ./help.nix
     ./hypridle.nix
     ./hyprland.nix
