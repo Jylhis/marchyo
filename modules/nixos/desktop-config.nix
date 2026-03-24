@@ -15,6 +15,13 @@ in
     marchyo.office.enable = lib.mkDefault true;
     marchyo.media.enable = lib.mkDefault true;
 
+    # dconf is required for GTK apps to read settings (icon theme, font, etc.)
+    programs.dconf.enable = lib.mkDefault true;
+
+    # XDG icon and MIME infrastructure for proper icon/file-type discovery
+    xdg.icons.enable = lib.mkDefault true;
+    xdg.mime.enable = lib.mkDefault true;
+
     # Desktop services
     services = {
       printing.enable = lib.mkDefault true;
@@ -22,6 +29,7 @@ in
       geoclue2.enable = lib.mkDefault true;
       tumbler.enable = lib.mkDefault true;
       upower.enable = lib.mkDefault true;
+      udisks2.enable = lib.mkDefault true;
       locate = {
         enable = lib.mkDefault true;
         interval = "daily";
@@ -71,6 +79,12 @@ in
         };
       };
     };
+
+    # Nautilus extension discovery (sushi previews, etc.)
+    environment.sessionVariables.NAUTILUS_4_EXTENSION_DIR = "${config.system.path}/lib/nautilus/extensions-4";
+
+    # xdg-user-dirs-gtk generates GTK bookmarks for sidebar folders (Documents, Downloads, etc.)
+    environment.systemPackages = [ pkgs.xdg-user-dirs-gtk ];
 
     # XDG portal
     xdg.portal = {
