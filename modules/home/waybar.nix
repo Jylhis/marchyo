@@ -152,7 +152,7 @@ in
             tooltip-format-disconnected = "Disconnected";
             interval = 3;
             nospacing = 1;
-            on-click = "${terminal} -e impala";
+            on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
           };
           battery = {
             interval = 5;
@@ -200,7 +200,7 @@ in
             format-disabled = "󰂲";
             format-connected = "";
             tooltip-format = "Devices connected: {num_connections}";
-            on-click = "${terminal} -e bluetui";
+            on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
           };
           wireplumber = {
             # Changed from "pulseaudio"
