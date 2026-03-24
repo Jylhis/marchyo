@@ -116,6 +116,7 @@
                 development.enable = true;
                 media.enable = true;
                 office.enable = true;
+                graphics.vendors = [ "intel" ];
                 users.developer = {
                   fullname = "Marchyo Developer";
                   email = "dev@example.org";
@@ -190,6 +191,7 @@
 
                   # Bootloader fix
                   boot.loader.systemd-boot.enable = lib.mkForce false;
+                  system.stateVersion = "25.11";
 
                   # Marchyo Features
                   marchyo = {
@@ -197,6 +199,7 @@
                     development.enable = true;
                     media.enable = true;
                     office.enable = true;
+                    graphics.vendors = [ "intel" ];
                     users.developer = {
                       fullname = "Marchyo Developer";
                       email = "dev@example.org";
@@ -225,6 +228,7 @@
           default = {
             type = "app";
             program = "${runner}/bin/run-vm";
+            meta.description = "Run a QEMU VM with all Marchyo features enabled";
           };
         }
       );
