@@ -16,10 +16,10 @@ let
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
   browserHyprlandCommands = {
-    brave = "brave --new-window --ozone-platform=wayland";
-    google-chrome = "google-chrome --new-window --ozone-platform=wayland";
+    brave = "brave --new-window";
+    google-chrome = "google-chrome --new-window";
     firefox = "firefox --new-window";
-    chromium = "chromium --new-window --ozone-platform=wayland";
+    chromium = "chromium --new-window";
   };
 
   fileManagerHyprlandCommands = {
@@ -59,7 +59,7 @@ in
 
     wayland.windowManager.hyprland = {
       enable = true;
-      systemd.enable = true;
+      systemd.enable = false; # UWSM manages systemd integration
       settings = {
 
         # Default apps
@@ -139,6 +139,10 @@ in
 
         render = {
           direct_scanout = true;
+        };
+
+        cursor = lib.mkIf hasNvidia {
+          no_hardware_cursors = true;
         };
 
         # Modern decorations with performance considerations
