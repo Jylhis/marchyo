@@ -84,6 +84,21 @@ in
         # GBM backend (needed for Wayland compositors)
         GBM_BACKEND = lib.mkDefault "nvidia-drm";
       };
+
+      # Early kernel module loading prevents race conditions with display manager
+      boot.initrd.kernelModules = [
+        "nvidia"
+        "nvidia_modeset"
+        "nvidia_uvm"
+        "nvidia_drm"
+      ];
+    })
+
+    # NVIDIA-only VA-API (when no Intel/AMD iGPU for decode)
+    (lib.mkIf (hasNvidia && !hasIntel && !hasAmd) {
+      environment.sessionVariables = {
+        LIBVA_DRIVER_NAME = lib.mkDefault "nvidia";
+      };
     })
 
     # NVIDIA PRIME hybrid graphics configuration
@@ -118,8 +133,12 @@ in
       ];
     })
 
-    # Assertions for valid configuration
+    # Assertions and warnings
     {
+      warnings = lib.optionals (cfg.vendors == [ ] && isX86) [
+        "marchyo.graphics.vendors is empty on x86_64. This defaults to Intel behavior. Set vendors explicitly (e.g. [\"nvidia\"] or [\"amd\"])."
+      ];
+
       assertions = [
         {
           assertion = cfg.prime.enable -> (hasNvidia && (hasIntel || hasAmd));
