@@ -374,8 +374,6 @@ in
           "SUPER, 3, focusworkspaceoncurrentmonitor, 3"
           "SUPER, 4, focusworkspaceoncurrentmonitor, 4"
           "SUPER, 5, focusworkspaceoncurrentmonitor, 5"
-          "SUPER, comma, workspace, -1"
-          "SUPER, period, workspace, +1"
 
           # Window resizing
           # "SUPER CTRL, H, resizeactive, -20 0"
