@@ -1,3 +1,6 @@
+{ config, lib, ... }:
 {
-  boot.kernelParams = [ "mitigations=off" ];
+  boot.kernelParams = lib.mkIf config.marchyo.performance.disableMitigations [
+    "mitigations=off"
+  ];
 }
