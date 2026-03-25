@@ -1,10 +1,10 @@
 {
   lib,
-  osConfig,
+  osConfig ? { },
   ...
 }:
 let
-  kbdCfg = osConfig.marchyo.keyboard;
+  kbdCfg = (osConfig.marchyo or { }).keyboard or { layouts = [ ]; };
 
   # Normalize all layouts to uniform structure (same as NixOS module)
 
