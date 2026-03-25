@@ -2,7 +2,6 @@
 {
   nix = {
     settings = {
-      accept-flake-config = true;
       trusted-users = [ "@wheel" ] ++ (builtins.attrNames config.marchyo.users);
       tarball-ttl = lib.mkDefault 604800;
       download-buffer-size = lib.mkDefault "256M";
