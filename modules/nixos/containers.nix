@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   config,
   ...
 }:
@@ -24,17 +23,6 @@ in
         daemon.settings.features.cdi = true;
       };
     };
-
-    environment.systemPackages =
-      with pkgs;
-      [
-        buildah
-        skopeo
-      ]
-      ++ (lib.optionals (backend == "podman") [
-        pkgs.lazypodman # made in the same spirit like Lazygit
-      ])
-      ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
 
     users.users = lib.genAttrs mUsers (_name: {
       extraGroups = [
