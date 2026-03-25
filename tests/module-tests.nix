@@ -114,7 +114,13 @@ in
         "Super+I"
         "Alt+grave"
       ];
+      composeKey = "caps";
     };
+  });
+
+  # Test 6b: Keyboard with compose key disabled
+  eval-keyboard-no-compose = testNixOS "keyboard-no-compose" (withTestUser {
+    marchyo.keyboard.composeKey = null;
   });
 
   # Test 7: Intel GPU configuration
