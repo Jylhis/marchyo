@@ -55,7 +55,11 @@ in
       variant = lib.mkDefault (lib.concatStringsSep "," variants);
 
       # Convert list of options to comma-separated string
-      options = lib.mkDefault (lib.concatStringsSep "," cfg.options);
+      options = lib.mkDefault (
+        lib.concatStringsSep "," (
+          cfg.options ++ lib.optional (cfg.composeKey != null) "compose:${cfg.composeKey}"
+        )
+      );
     };
 
     # Enable console keyboard layout switching in TTY
