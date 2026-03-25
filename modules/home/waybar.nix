@@ -136,7 +136,7 @@ in
               ];
             };
             format-full = "󰂅";
-            on-click = "vicinae toggle";
+            on-click = "";
             tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
             tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
             states = {
