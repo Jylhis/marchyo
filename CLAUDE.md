@@ -265,11 +265,11 @@ marchyo.keyboard.layouts = [
 ];
 ```
 
-### Deprecated Options (still work, will be removed)
+### Deprecated Options
 
 - `marchyo.keyboard.variant` → use `{ layout = "us"; variant = "intl"; }` in layouts
-- `marchyo.inputMethod.triggerKey` → use `marchyo.keyboard.imeTriggerKey`
-- `marchyo.inputMethod.enableCJK` → add CJK entries to `marchyo.keyboard.layouts`
+- `marchyo.inputMethod.triggerKey` → **inert (has no effect)**, use `marchyo.keyboard.imeTriggerKey`
+- `marchyo.inputMethod.enableCJK` → **inert (has no effect)**, add CJK entries to `marchyo.keyboard.layouts`
 
 ## Session Completion
 
@@ -288,10 +288,12 @@ marchyo.keyboard.layouts = [
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three sequential stages on push to `main` and PRs:
+`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
 1. **lints** — `nix fmt -- --ci` (formatting check only, no writes)
 2. **check** — `nix flake check` (all evaluation tests)
-3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build)
+3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, runs after lints and check pass)
+
+Stages 1 and 2 run in parallel; stage 3 runs after both succeed.
 
 Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
 

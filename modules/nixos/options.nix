@@ -408,8 +408,8 @@ in
         description = ''
           Theme variant preference (light or dark).
           Used to select default color scheme when scheme is null:
-          - "dark" defaults to modus-vivendi-tinted
-          - "light" defaults to modus-operandi-tinted
+          - "dark" defaults to nord
+          - "light" defaults to nord-light
         '';
       };
 
@@ -641,9 +641,10 @@ in
           "Super+I"
         ];
         description = ''
-          DEPRECATED: Use marchyo.keyboard.imeTriggerKey instead.
+          INERT: This option has no effect. Use marchyo.keyboard.imeTriggerKey instead.
 
-          This option is kept for compatibility but will be removed in a future release.
+          This option is kept only to avoid evaluation errors for consumers who
+          haven't migrated yet. It will be removed in a future release.
         '';
       };
 
@@ -651,7 +652,7 @@ in
         type = types.bool;
         default = true;
         description = ''
-          DEPRECATED: Add CJK layouts to marchyo.keyboard.layouts instead.
+          INERT: This option has no effect. Add CJK layouts to marchyo.keyboard.layouts instead.
 
           Example:
             marchyo.keyboard.layouts = [
@@ -661,7 +662,8 @@ in
               { layout = "kr"; ime = "hangul"; }  # Korean
             ];
 
-          This option is kept for compatibility but will be removed in a future release.
+          This option is kept only to avoid evaluation errors for consumers who
+          haven't migrated yet. It will be removed in a future release.
         '';
       };
     };
