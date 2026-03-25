@@ -240,10 +240,6 @@ in
             "format" = " ";
             "tooltip" = false;
           };
-          "custom/light_dark" = {
-            "format" = "󰔎 ";
-            "on-click" = "$HOME/.config/hypr/scripts/DarkLight.sh"; # TODO
-          };
           power-profiles-daemon = {
             format = "{icon}";
             tooltip-format = "Power profile: {profile}";
