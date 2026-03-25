@@ -10,7 +10,7 @@
 }:
 let
   # Test helper: verify NixOS config evaluates without errors
-  # Uses writeText + builtins.seq to force evaluation without building toplevel
+  # Forces assertion evaluation (not just stateVersion) to catch real failures
   testNixOS =
     name: config:
     pkgs.writeText "eval-${name}" (
@@ -22,10 +22,16 @@ let
             config
           ];
         };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
       in
-      # Force evaluation of config without building the expensive toplevel derivation
-      builtins.seq eval.config.system.stateVersion "pass"
+      if failedAssertions != [ ] then
+        throw "FAIL: ${name}: unexpected assertion failure(s): ${builtins.concatStringsSep "; " failedMessages}"
+      else
+        builtins.seq eval.config.system.stateVersion "pass"
     );
+
+  # Test helper: verify NixOS config triggers a specific assertion failure
 
   # Minimal NixOS configuration required for testing
   minimalConfig = {
