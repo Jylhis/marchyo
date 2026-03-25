@@ -116,6 +116,7 @@ marchyo.keyboard = {
   options = [ "grp:win_space_toggle" ];    # Super+Space to switch
   autoActivateIME = true;                   # Auto-activate IME on switch
   imeTriggerKey = [ "Super+I" ];           # Manual IME toggle
+  composeKey = "ralt";                     # Compose key (null to disable)
 };
 ```
 
