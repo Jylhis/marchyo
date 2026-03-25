@@ -14,7 +14,7 @@ let
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
-  useWofi = (osConfig.marchyo or { }).desktop.useWofi or false;
+  useWofi = ((osConfig.marchyo or { }).desktop or { }).useWofi or false;
 
   browserHyprlandCommands = {
     brave = "brave --new-window";
