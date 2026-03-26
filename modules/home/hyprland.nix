@@ -14,6 +14,7 @@ let
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
+  useWofi = ((osConfig.marchyo or { }).desktop or { }).useWofi or false;
 
   browserHyprlandCommands = {
     brave = "brave --new-window";
@@ -344,7 +345,7 @@ in
           # "SUPER, G, exec, emacsclient -cF '((visibility . nil))' -e '(emacs-run-launcher)'"
 
           # Application launcher - matching Plasma's Meta key
-          "SUPER, R, exec, vicinae toggle"
+          (if useWofi then "SUPER, R, exec, wofi --show drun" else "SUPER, R, exec, vicinae toggle")
 
           # Window management
           # "SUPER, J, togglesplit"
@@ -374,8 +375,6 @@ in
           "SUPER, 3, focusworkspaceoncurrentmonitor, 3"
           "SUPER, 4, focusworkspaceoncurrentmonitor, 4"
           "SUPER, 5, focusworkspaceoncurrentmonitor, 5"
-          "SUPER, comma, workspace, -1"
-          "SUPER, period, workspace, +1"
 
           # Window resizing
           # "SUPER CTRL, H, resizeactive, -20 0"
@@ -482,7 +481,11 @@ in
         exec-once = [
           # Essential services
           "kanshi"
+        ]
+        ++ lib.optionals (!useWofi) [
           "vicinae server"
+        ]
+        ++ [
           "fcitx5 -d --replace"
 
           # Clipboard

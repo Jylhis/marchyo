@@ -99,7 +99,7 @@ marchyo.theme = {
   scheme = "dracula";  # or any nix-colors scheme, or null for defaults
 };
 ```
-Default schemes: `modus-vivendi-tinted` (dark), `modus-operandi-tinted` (light).
+Default schemes: `nord` (dark), `nord-light` (light). Note: `marchyo.theme.scheme` is defined but not yet consumed by any module.
 
 ### Keyboard & Input Methods
 
@@ -170,10 +170,9 @@ marchyo.keyboard.layouts = [
 
 ### Deprecated Options
 
-The following options still work but will be removed in a future release:
 - `marchyo.keyboard.variant`: Use `{ layout = "us"; variant = "intl"; }` in `marchyo.keyboard.layouts` instead.
-- `marchyo.inputMethod.triggerKey`: Use `marchyo.keyboard.imeTriggerKey` instead.
-- `marchyo.inputMethod.enableCJK`: Add CJK layouts to `marchyo.keyboard.layouts` instead.
+- `marchyo.inputMethod.triggerKey`: **Inert (has no effect)**. Use `marchyo.keyboard.imeTriggerKey` instead.
+- `marchyo.inputMethod.enableCJK`: **Inert (has no effect)**. Add CJK layouts to `marchyo.keyboard.layouts` instead.
 
 ## Development Guidelines
 

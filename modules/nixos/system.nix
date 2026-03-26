@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -16,11 +15,6 @@ in
   programs = {
     nix-ld.enable = true;
   };
-
-  environment.systemPackages = with pkgs; [
-    sysz # systemctl tui
-    lazyjournal # journald and logs
-  ];
 
   # Backup existing files with this extension when home-manager overwrites them
   home-manager.backupFileExtension = "backup";

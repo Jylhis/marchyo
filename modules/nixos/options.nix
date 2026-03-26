@@ -254,6 +254,19 @@ in
       };
     };
 
+    performance = {
+      disableMitigations = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) for maximum performance.
+          WARNING: This reduces security. Only enable on trusted single-user workstations
+          where maximum performance is required (e.g., gaming, benchmarking).
+          Do NOT enable if running untrusted code or containers.
+        '';
+      };
+    };
+
     graphics = {
       vendors = mkOption {
         type = types.listOf (
@@ -395,8 +408,8 @@ in
         description = ''
           Theme variant preference (light or dark).
           Used to select default color scheme when scheme is null:
-          - "dark" defaults to modus-vivendi-tinted
-          - "light" defaults to modus-operandi-tinted
+          - "dark" defaults to nord
+          - "light" defaults to nord-light
         '';
       };
 
@@ -616,41 +629,6 @@ in
         '';
       };
 
-      triggerKey = mkOption {
-        type = types.listOf types.str;
-        default = [
-          "Super+I"
-          "Zenkaku_Hankaku"
-          "Hangul"
-        ];
-        example = [
-          "Alt+grave"
-          "Super+I"
-        ];
-        description = ''
-          DEPRECATED: Use marchyo.keyboard.imeTriggerKey instead.
-
-          This option is kept for compatibility but will be removed in a future release.
-        '';
-      };
-
-      enableCJK = mkOption {
-        type = types.bool;
-        default = true;
-        description = ''
-          DEPRECATED: Add CJK layouts to marchyo.keyboard.layouts instead.
-
-          Example:
-            marchyo.keyboard.layouts = [
-              "us"
-              { layout = "cn"; ime = "pinyin"; }  # Chinese
-              { layout = "jp"; ime = "mozc"; }    # Japanese
-              { layout = "kr"; ime = "hangul"; }  # Korean
-            ];
-
-          This option is kept for compatibility but will be removed in a future release.
-        '';
-      };
     };
   };
 }

@@ -187,7 +187,6 @@ in
               ];
             };
             format-full = "󰂅";
-            on-click = "vicinae toggle";
             tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
             tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
             states = {
@@ -239,10 +238,6 @@ in
           "custom/expand-icon" = {
             "format" = " ";
             "tooltip" = false;
-          };
-          "custom/light_dark" = {
-            "format" = "󰔎 ";
-            "on-click" = "$HOME/.config/hypr/scripts/DarkLight.sh"; # TODO
           };
           power-profiles-daemon = {
             format = "{icon}";

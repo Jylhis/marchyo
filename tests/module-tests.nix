@@ -10,7 +10,7 @@
 }:
 let
   # Test helper: verify NixOS config evaluates without errors
-  # Uses writeText + builtins.seq to force evaluation without building toplevel
+  # Forces assertion evaluation (not just stateVersion) to catch real failures
   testNixOS =
     name: config:
     pkgs.writeText "eval-${name}" (
@@ -22,9 +22,37 @@ let
             config
           ];
         };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
       in
-      # Force evaluation of config without building the expensive toplevel derivation
-      builtins.seq eval.config.system.stateVersion "pass"
+      if failedAssertions != [ ] then
+        throw "FAIL: ${name}: unexpected assertion failure(s): ${builtins.concatStringsSep "; " failedMessages}"
+      else
+        builtins.seq eval.config.system.stateVersion "pass"
+    );
+
+  # Test helper: verify NixOS config triggers a specific assertion failure
+  testNixOSFails =
+    name: expectedMsg: config:
+    pkgs.writeText "eval-fail-${name}" (
+      let
+        eval = lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            config
+          ];
+        };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
+        hasExpectedFailure = lib.any (msg: lib.hasInfix expectedMsg msg) failedMessages;
+      in
+      if failedAssertions == [ ] then
+        throw "FAIL: ${name}: expected assertion failure containing '${expectedMsg}' but all assertions passed"
+      else if !hasExpectedFailure then
+        throw "FAIL: ${name}: assertion(s) failed but none matched '${expectedMsg}'. Got: ${builtins.concatStringsSep "; " failedMessages}"
+      else
+        "pass: assertion correctly triggered"
     );
 
   # Minimal NixOS configuration required for testing
@@ -244,6 +272,73 @@ in
       terminalEditor = "jotain";
     };
   });
+
+  # Negative test: input method migration assertion
+  eval-input-migration-assertion =
+    testNixOSFails "input-migration-assertion" "marchyo.inputMethod.enable is no longer supported"
+      (lib.recursiveUpdate minimalConfig { marchyo.inputMethod.enable = true; });
+
+  # Negative test: PRIME without bus IDs
+  eval-prime-missing-bus-ids =
+    testNixOSFails "prime-missing-bus-ids" "PRIME requires marchyo.graphics.prime.nvidiaBusId to be set"
+      (
+        lib.recursiveUpdate minimalConfig {
+          marchyo.graphics = {
+            vendors = [
+              "intel"
+              "nvidia"
+            ];
+            prime = {
+              enable = true;
+              mode = "offload";
+            };
+          };
+        }
+      );
+
+  # Negative test: empty keyboard layouts
+  eval-keyboard-empty-layouts =
+    testNixOSFails "keyboard-empty-layouts" "marchyo.keyboard.layouts cannot be empty"
+      (lib.recursiveUpdate minimalConfig { marchyo.keyboard.layouts = [ ]; });
+
+  # Test: desktop with useWofi
+  eval-desktop-useWofi = testNixOS "desktop-useWofi" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.desktop.useWofi = true;
+  });
+
+  # Test: light theme variant
+  eval-theme-light = testNixOS "theme-light" (withTestUser {
+    marchyo.theme = {
+      enable = true;
+      variant = "light";
+    };
+  });
+
+  # Test: PRIME reverse-sync mode
+  eval-graphics-prime-reverse-sync = testNixOS "graphics-prime-reverse-sync" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.graphics = {
+        vendors = [
+          "intel"
+          "nvidia"
+        ];
+        prime = {
+          enable = true;
+          intelBusId = "PCI:0:2:0";
+          nvidiaBusId = "PCI:1:0:0";
+          mode = "reverse-sync";
+        };
+      };
+    }
+  );
+
+  # Test: development without desktop (headless)
+  eval-development-no-desktop = testNixOS "development-no-desktop" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.development.enable = true;
+    }
+  );
 
   # Test 14: Check Home Manager Hyprland configuration validity
   check-home-hyprland-config =
