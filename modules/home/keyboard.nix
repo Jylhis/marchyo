@@ -46,7 +46,7 @@ in
 
         # Apply XKB options as list (Hyprland will join with commas)
         # Must remain a list - don't convert to string
-        inherit (cfg) options;
+        options = cfg.options ++ lib.optional (cfg.composeKey != null) "compose:${cfg.composeKey}";
       }
       # Only set variant if at least one layout has a variant
       # This avoids issues with empty string lists
