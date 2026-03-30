@@ -1,0 +1,32 @@
+---
+title: Localization
+description: Configure timezone and locale settings
+---
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.timezone` | `string` | `"Europe/Zurich"` | System timezone |
+| `marchyo.defaultLocale` | `string` | `"en_US.UTF-8"` | System default locale |
+
+## Example
+
+```nix
+{
+  marchyo.timezone = "America/New_York";
+  marchyo.defaultLocale = "de_DE.UTF-8";
+}
+```
+
+## Common timezones
+
+| Timezone | Region |
+|----------|--------|
+| `"Europe/Zurich"` | Central Europe (default) |
+| `"Europe/London"` | United Kingdom |
+| `"Europe/Helsinki"` | Finland |
+| `"America/New_York"` | US Eastern |
+| `"America/Los_Angeles"` | US Pacific |
+| `"Asia/Tokyo"` | Japan |
+| `"Asia/Shanghai"` | China |

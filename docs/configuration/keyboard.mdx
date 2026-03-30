@@ -1,0 +1,147 @@
+---
+title: Keyboard & Input Methods
+description: Configure keyboard layouts, variants, IMEs, and XKB options
+---
+
+Marchyo provides a unified way to configure keyboard layouts, variants, input methods (IMEs), and XKB options across the system (TTY/console) and the desktop environment (Hyprland + fcitx5).
+
+## Layouts
+
+The `marchyo.keyboard.layouts` option accepts a list of layouts. Each can be a simple string or an attribute set for advanced configuration.
+
+### Simple layouts
+
+```nix
+marchyo.keyboard.layouts = [
+  "us"
+  "fi"
+  "de"
+];
+```
+
+### Layouts with variants
+
+```nix
+marchyo.keyboard.layouts = [
+  "us"
+  { layout = "us"; variant = "intl"; }   # US International with dead keys
+  { layout = "us"; variant = "dvorak"; }
+];
+```
+
+### Layouts with input methods
+
+For CJK languages and other complex input, specify an IME:
+
+```nix
+marchyo.keyboard.layouts = [
+  "us"
+  { layout = "cn"; ime = "pinyin"; }   # Chinese with Pinyin
+  { layout = "jp"; ime = "mozc"; }     # Japanese with Mozc
+  { layout = "kr"; ime = "hangul"; }   # Korean with Hangul
+];
+```
+
+When an entry includes `ime`, the input method engine is automatically activated when you switch to that layout.
+
+### Available IMEs
+
+| IME | Language | Required package |
+|-----|----------|-----------------|
+| `"pinyin"` | Chinese | `fcitx5-chinese-addons` |
+| `"mozc"` | Japanese | `fcitx5-mozc` |
+| `"hangul"` | Korean | `fcitx5-hangul` |
+| `"unicode"` | Unicode picker | — |
+
+Required packages are installed automatically when an IME is specified.
+
+### Layout attribute set options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `layout` | `string` | — | Keyboard layout code (e.g., `"us"`, `"fi"`, `"cn"`) |
+| `variant` | `string` | `""` | Layout variant (e.g., `"intl"`, `"dvorak"`) |
+| `ime` | `string` or `null` | `null` | Input method engine |
+| `label` | `string` or `null` | `null` | Display label (auto-generated if null) |
+
+## Keyboard switching
+
+### XKB options
+
+Use `marchyo.keyboard.options` for standard XKB options. Default: `["grp:win_space_toggle"]` (Super+Space to switch layouts).
+
+```nix
+marchyo.keyboard.options = [
+  "grp:win_space_toggle"   # Super+Space to switch inputs
+  "ctrl:swapcaps"          # Swap Caps Lock and Left Control
+  "caps:escape"            # Map Caps Lock to Escape
+];
+```
+
+### Compose key
+
+The compose key lets you type special characters via key sequences (e.g., Compose + `'` + `e` = `é`).
+
+```nix
+marchyo.keyboard.composeKey = "ralt";  # Default: Right Alt
+```
+
+| Value | Key |
+|-------|-----|
+| `"ralt"` | Right Alt (default) |
+| `"rwin"` | Right Super/Windows |
+| `"caps"` | Caps Lock |
+| `"menu"` | Menu key |
+| `null` | Disable compose key |
+
+## IME behavior
+
+### Auto-activation
+
+By default, switching to a layout with an IME activates it automatically. Disable this to require manual activation:
+
+```nix
+marchyo.keyboard.autoActivateIME = false;
+```
+
+### Manual IME toggle
+
+Configure a key to manually toggle IME on/off:
+
+```nix
+marchyo.keyboard.imeTriggerKey = [ "Super+I" ];   # Default
+```
+
+## Full example
+
+```nix
+marchyo.keyboard = {
+  layouts = [
+    "us"
+    { layout = "fi"; }
+    { layout = "us"; variant = "intl"; }
+    { layout = "cn"; ime = "pinyin"; }
+    { layout = "jp"; ime = "mozc"; }
+  ];
+  options = [ "grp:win_space_toggle" ];
+  composeKey = "ralt";
+  autoActivateIME = true;
+  imeTriggerKey = [ "Super+I" ];
+};
+```
+
+## How it works
+
+1. **NixOS (`services.xserver.xkb`)** — Basic layout codes and variants are applied to the console/TTY for fallback support outside the graphical environment.
+2. **Hyprland (`home.keyboard`)** — Layout and XKB options are passed to Hyprland's input configuration.
+3. **fcitx5** — Acts as the authoritative input manager in the graphical environment, managing layouts, IMEs, and layout switching.
+
+## All options reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.keyboard.layouts` | list of strings or attrsets | `["us" "fi"]` | Keyboard layouts and input methods |
+| `marchyo.keyboard.options` | list of strings | `["grp:win_space_toggle"]` | XKB keyboard options |
+| `marchyo.keyboard.composeKey` | string or null | `"ralt"` | Compose key |
+| `marchyo.keyboard.autoActivateIME` | bool | `true` | Auto-activate IME on layout switch |
+| `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Manual IME toggle keys |

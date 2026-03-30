@@ -1,0 +1,59 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Marchyo",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#5E81AC",
+    "light": "#88C0D0",
+    "dark": "#2E3440",
+    "anchors": {
+      "from": "#5E81AC",
+      "to": "#88C0D0"
+    }
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "configuration/feature-flags",
+        "configuration/users",
+        "configuration/localization",
+        "configuration/theming",
+        "configuration/keyboard",
+        "configuration/graphics",
+        "configuration/default-apps",
+        "configuration/performance"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/workstation-template",
+        "guides/migration"
+      ]
+    },
+    {
+      "group": "Development",
+      "pages": [
+        "development/architecture",
+        "development/adding-modules",
+        "development/testing",
+        "development/contributing"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/Jylhis/marchyo"
+  }
+}

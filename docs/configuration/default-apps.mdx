@@ -1,0 +1,64 @@
+---
+title: Default Applications
+description: Configure which applications are installed and set as system defaults
+---
+
+When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control which applications are installed and registered as system defaults. Set any option to `null` to skip management for that category.
+
+## Options
+
+| Option | Default | Choices |
+|--------|---------|---------|
+| `marchyo.defaults.browser` | `"google-chrome"` | `"brave"`, `"google-chrome"`, `"firefox"`, `"chromium"` |
+| `marchyo.defaults.editor` | `"jotain"` | `"emacs"`, `"jotain"`, `"vscode"`, `"vscodium"`, `"zed"` |
+| `marchyo.defaults.terminalEditor` | `"jotain"` | `"emacs"`, `"jotain"`, `"neovim"`, `"helix"`, `"nano"` |
+| `marchyo.defaults.videoPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"celluloid"` |
+| `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"amberol"` |
+| `marchyo.defaults.musicPlayer` | `"spotify"` | `"spotify"` |
+| `marchyo.defaults.fileManager` | `"nautilus"` | `"nautilus"`, `"thunar"` |
+| `marchyo.defaults.terminalFileManager` | `"yazi"` | `"yazi"`, `"ranger"`, `"lf"` |
+| `marchyo.defaults.imageEditor` | `"pinta"` | `"pinta"`, `"gimp"`, `"krita"` |
+| `marchyo.defaults.email` | `"gmail"` | `"gmail"`, `"thunderbird"`, `"outlook"` |
+
+## Example
+
+```nix
+marchyo.defaults = {
+  browser = "firefox";
+  editor = "vscode";
+  terminalEditor = "neovim";
+  videoPlayer = "mpv";
+  audioPlayer = "mpv";
+  musicPlayer = "spotify";
+  fileManager = "nautilus";
+  terminalFileManager = "yazi";
+  imageEditor = "gimp";
+  email = "thunderbird";
+};
+```
+
+## Skipping management
+
+Set any option to `null` to prevent Marchyo from installing or configuring that category:
+
+```nix
+marchyo.defaults = {
+  browser = null;        # Don't manage browser
+  musicPlayer = null;    # Don't install a music player
+};
+```
+
+## Externally managed applications
+
+Some choices are "externally managed" — Marchyo does not install a package for them:
+
+- **`"jotain"`** (editor/terminalEditor) — Package installation and `$EDITOR`/`$VISUAL` are handled by `programs.jotain` outside of Marchyo.
+- **`"gmail"`** and **`"outlook"`** (email) — Web applications opened in the default browser. No package is installed.
+
+## How defaults work
+
+When a default is set, Marchyo:
+
+1. **Installs the package** (unless externally managed)
+2. **Registers MIME type associations** — e.g., setting `browser = "firefox"` registers Firefox as the handler for `text/html`, `x-scheme-handler/http`, etc.
+3. **Sets environment variables** — e.g., `editor` sets `$VISUAL`, `terminalEditor` sets `$EDITOR`
