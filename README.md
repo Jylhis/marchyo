@@ -80,7 +80,7 @@ marchyo.theme.scheme = "dracula";  # or "gruvbox-dark-medium", "catppuccin-mocha
 
 Custom schemes `modus-vivendi-tinted` (dark) and `modus-operandi-tinted` (light) are also available.
 
-**For a complete list of all available options and their documentation, please see [AI_GUIDE.md](AI_GUIDE.md).**
+**For complete documentation of all available options, see the [Marchyo documentation](docs/).**
 
 ## Development
 

@@ -1,0 +1,106 @@
+---
+title: Architecture
+description: How Marchyo is organized and how modules interact
+---
+
+## Repository structure
+
+```
+modules/
+  nixos/          # NixOS system-level modules (~31 modules)
+  home/           # Home Manager user-level modules (~30 modules)
+  generic/        # Shared modules imported by both nixos and home
+packages/         # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
+overlays/         # Nixpkgs overlays (vicinae, noctalia, worktrunk)
+tests/            # Evaluation-based test suite
+templates/        # Flake templates (workstation)
+```
+
+## Module organization
+
+### NixOS modules (`modules/nixos/`)
+
+System-level modules that configure services, packages, and system settings. All custom options are defined in `modules/nixos/options.nix` — this is the single source of truth for the `marchyo.*` namespace.
+
+Key files:
+- `options.nix` — All `marchyo.*` option definitions
+- `default.nix` — Import list for all NixOS modules (order matters for some)
+- `desktop-config.nix` — Feature flag cascading (desktop enables media, office, etc.)
+- `defaults.nix` — Default application management
+- `keyboard.nix` — Layout normalization and XKB configuration
+- `fcitx5.nix` — Input method engine configuration
+- `input-migration.nix` — Assertions for removed `marchyo.inputMethod.*` options
+
+### Home Manager modules (`modules/home/`)
+
+User-level modules that configure dotfiles, user applications, and Hyprland settings. These modules access NixOS config via `osConfig`:
+
+```nix
+{ config, lib, osConfig ? {}, ... }:
+let
+  cfg = osConfig.marchyo or {};
+in
+{ ... }
+```
+
+### Generic modules (`modules/generic/`)
+
+Shared modules imported by both NixOS and Home Manager `default.nix` files. These contain configuration that applies at both levels (e.g., fontconfig, git).
+
+## Module patterns
+
+### Standard NixOS module
+
+```nix
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.marchyo;
+in
+{
+  config = lib.mkIf cfg.feature.enable {
+    # configuration here
+  };
+}
+```
+
+### Key Nix functions
+
+| Function | Purpose |
+|----------|---------|
+| `lib.mkIf condition { ... }` | Conditionally include a config block |
+| `lib.mkDefault value` | Set a value at lower priority (consumers can override) |
+| `lib.mkMerge [ ... ]` | Combine multiple conditional blocks safely |
+
+### Feature flag cascading
+
+When `marchyo.desktop.enable = true`, the desktop-config module auto-enables related flags using `lib.mkDefault` so consumers can override:
+
+```nix
+config = lib.mkIf cfg.desktop.enable {
+  marchyo.office.enable = lib.mkDefault true;
+  marchyo.media.enable = lib.mkDefault true;
+};
+```
+
+## Cross-module data flow
+
+The keyboard/IME system is the most complex cross-module pattern:
+
+1. **`options.nix`** — Defines `marchyo.keyboard.layouts` accepting strings or attrsets
+2. **`keyboard.nix`** — Normalizes layouts (string `"us"` → `{ layout = "us"; variant = ""; ime = null; }`) and sets XKB config
+3. **`fcitx5.nix`** — Reads normalized layouts, detects IME addons needed, generates fcitx5 config
+4. **`modules/home/keyboard.nix`** — Extracts layout data into `home.keyboard` for Hyprland
+5. **`modules/home/hyprland.nix`** — Reads `osConfig.marchyo.graphics` for GPU env vars and keyboard from `home.keyboard`
+
+## Flake inputs
+
+| Input | Purpose |
+|-------|---------|
+| `nixpkgs` | NixOS unstable channel |
+| `nixos-hardware` | Hardware-specific modules |
+| `home-manager` | User environment management |
+| `stylix` | System-wide theming |
+| `treefmt-nix` | Multi-tool code formatter |
+| `vicinae` | Application launcher |
+| `noctalia` | Shell configuration |
+| `worktrunk` | Additional tooling |

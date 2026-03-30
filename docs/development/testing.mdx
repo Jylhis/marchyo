@@ -1,0 +1,81 @@
+---
+title: Testing
+description: How to run and write tests for Marchyo
+---
+
+Tests in Marchyo are fast evaluation-based checks that verify NixOS configurations evaluate without errors. They don't build any derivations, so they complete in under a minute.
+
+## Running tests
+
+```bash
+# Run all tests
+nix flake check
+
+# List available tests
+nix eval .#checks.x86_64-linux --apply builtins.attrNames
+```
+
+There is no way to run a single test in isolation — `nix flake check` runs them all.
+
+## Test structure
+
+```
+tests/
+  default.nix        # Entry point combining all tests
+  module-tests.nix   # Module evaluation tests
+  lib-tests.nix      # Library function unit tests
+```
+
+### Module tests
+
+Verify that NixOS configurations evaluate without errors for various feature combinations:
+
+| Test | Description |
+|------|-------------|
+| `eval-minimal` | Minimal NixOS modules import |
+| `eval-desktop` | Desktop feature flag |
+| `eval-development` | Development feature flag |
+| `eval-all-features` | All features enabled together |
+| `eval-themes` | Theme configurations |
+| `eval-keyboard` | Keyboard layouts and IME |
+| `eval-graphics-*` | GPU configurations (Intel, AMD, NVIDIA, PRIME) |
+
+### Library tests
+
+Unit tests for lib functions using the `assertTest` helper.
+
+## Writing tests
+
+### Module evaluation test
+
+Add to `tests/module-tests.nix`:
+
+```nix
+eval-my-feature = testNixOS "my-feature" (withTestUser {
+  marchyo.myFeature.enable = true;
+});
+```
+
+The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion).
+
+### Library test
+
+Add to `tests/lib-tests.nix`:
+
+```nix
+test-my-function = pkgs.runCommand "test-my-function" { } ''
+  result=$(nix eval --raw --expr '(import ../lib { inherit (pkgs) lib; }).myFunction "input"')
+  [[ "$result" == "expected" ]] || exit 1
+  touch $out
+'';
+```
+
+## CI pipeline
+
+The GitHub Actions workflow (`.github/workflows/validate.yml`) runs three stages:
+
+1. **Lints** — `nix fmt -- --ci` (formatting check)
+2. **Check** — `nix flake check` (all evaluation tests)
+3. **Build** — Full system build (runs after lints and check pass)
+
+Stages 1 and 2 run in parallel; stage 3 runs after both succeed. Builds use [Cachix](https://app.cachix.org) for caching.

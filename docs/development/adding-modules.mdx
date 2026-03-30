@@ -1,0 +1,95 @@
+---
+title: Adding Modules
+description: How to create new modules and options
+---
+
+## Creating a new module
+
+### 1. Create the module file
+
+Create a new file in the appropriate directory:
+
+- `modules/nixos/` — System-level configuration
+- `modules/home/` — User-level configuration
+- `modules/generic/` — Shared between both
+
+### 2. Write the module
+
+Follow the standard module structure:
+
+```nix
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.marchyo;
+in
+{
+  config = lib.mkIf cfg.myFeature.enable {
+    # Your configuration here
+    environment.systemPackages = with pkgs; [
+      some-package
+    ];
+  };
+}
+```
+
+### 3. Register the import
+
+Add the file to the corresponding `default.nix`:
+
+```nix
+# modules/nixos/default.nix
+{
+  imports = [
+    ./my-feature.nix
+    # ... other imports
+  ];
+}
+```
+
+### 4. Define options
+
+Add any new options to `modules/nixos/options.nix` under the `marchyo.*` namespace:
+
+```nix
+myFeature = {
+  enable = mkOption {
+    type = types.bool;
+    default = false;
+    description = "Enable my feature";
+  };
+};
+```
+
+### 5. Add a test
+
+Add an evaluation test in `tests/module-tests.nix`:
+
+```nix
+eval-my-feature = testNixOS "my-feature" (withTestUser {
+  marchyo.myFeature.enable = true;
+});
+```
+
+## Home Manager modules
+
+Home Manager modules that need NixOS config use `osConfig`:
+
+```nix
+{ config, lib, osConfig ? {}, ... }:
+let
+  cfg = osConfig.marchyo or {};
+in
+{
+  config = lib.mkIf (cfg ? myFeature && cfg.myFeature.enable) {
+    # User-level configuration
+  };
+}
+```
+
+## Best practices
+
+- **Use `lib.mkIf`** for feature-gated configuration blocks
+- **Use `lib.mkDefault`** for values consumers should be able to override
+- **Use `lib.mkMerge`** when a module has multiple conditional branches
+- **Define all options in `options.nix`** — never define `marchyo.*` options in individual modules
+- **Add a test** for every new feature flag

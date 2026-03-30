@@ -1,0 +1,24 @@
+---
+title: Performance
+description: Performance tuning options
+---
+
+## CPU mitigations
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.performance.disableMitigations` | `bool` | `true` | Disable CPU vulnerability mitigations for maximum performance |
+
+```nix
+marchyo.performance.disableMitigations = true;
+```
+
+<Warning>
+Disabling CPU mitigations (Spectre, Meltdown, etc.) reduces security. Only enable on trusted single-user workstations where maximum performance is required (e.g., gaming, benchmarking). Do **not** enable if running untrusted code or containers.
+</Warning>
+
+To keep mitigations enabled:
+
+```nix
+marchyo.performance.disableMitigations = false;
+```

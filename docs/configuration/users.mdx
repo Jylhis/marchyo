@@ -1,0 +1,54 @@
+---
+title: Users
+description: Configure user accounts with metadata for git and applications
+---
+
+Marchyo manages user accounts through the `marchyo.users` option. Each user gets a system account with associated metadata used by git, applications, and Home Manager.
+
+## Basic usage
+
+```nix
+marchyo.users.myuser = {
+  fullname = "Your Name";
+  email = "your@email.com";
+};
+```
+
+This creates a user account named `myuser` with the provided name and email configured across git and other applications.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.users.<name>.enable` | `bool` | `true` | Whether to apply Marchyo configuration to this user |
+| `marchyo.users.<name>.fullname` | `string` | — | Full name (used in git config and applications) |
+| `marchyo.users.<name>.email` | `string` | — | Email address (used in git config and applications) |
+
+## Multiple users
+
+You can define multiple users:
+
+```nix
+marchyo.users = {
+  alice = {
+    fullname = "Alice Smith";
+    email = "alice@example.com";
+  };
+  bob = {
+    fullname = "Bob Jones";
+    email = "bob@example.com";
+  };
+};
+```
+
+## Disabling a user
+
+To keep a user definition but exclude it from Marchyo configuration:
+
+```nix
+marchyo.users.myuser = {
+  enable = false;
+  fullname = "Your Name";
+  email = "your@email.com";
+};
+```

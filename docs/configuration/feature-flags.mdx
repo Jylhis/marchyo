@@ -1,0 +1,61 @@
+---
+title: Feature Flags
+description: Enable entire stacks of functionality with simple boolean flags
+---
+
+Feature flags are the primary way to configure Marchyo. Each flag enables a group of related packages, services, and configurations.
+
+## Available flags
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.desktop.enable` | `false` | Desktop environment (Hyprland, Wayland, audio, bluetooth, fonts) |
+| `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae as the application launcher |
+| `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
+| `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
+| `marchyo.office.enable` | `false` | Office applications (LibreOffice, Papers, etc.) |
+
+## Cascading defaults
+
+When you enable `marchyo.desktop.enable`, related flags are automatically enabled at a lower priority using `lib.mkDefault`:
+
+```nix
+# Enabling desktop...
+marchyo.desktop.enable = true;
+
+# ...automatically enables these (you can override them):
+# marchyo.office.enable = true;
+# marchyo.media.enable = true;
+```
+
+Since these use `lib.mkDefault`, you can override them:
+
+```nix
+{
+  marchyo.desktop.enable = true;
+  marchyo.media.enable = false;   # Disable media despite desktop being on
+}
+```
+
+## Desktop environment
+
+When `marchyo.desktop.enable = true`, Marchyo configures:
+
+- **Hyprland** — Wayland compositor with pre-configured keybindings and window rules
+- **Audio** — PipeWire with PulseAudio and ALSA compatibility
+- **Bluetooth** — Enabled and configured
+- **Fonts** — Curated set of fonts including Nerd Fonts
+- **Theming** — Stylix-based consistent theming across GTK, Qt, and terminal apps
+- **Application launcher** — Vicinae (default) or wofi
+- **Terminal emulators** — Kitty and Alacritty
+- **Default applications** — Configurable via [`marchyo.defaults.*`](/configuration/default-apps)
+
+## Development tools
+
+When `marchyo.development.enable = true`, Marchyo configures:
+
+- **Git** with Git LFS and GitHub CLI
+- **Docker** with docker-compose
+- **Virtualization** via QEMU/KVM (libvirtd)
+- **Container tools** — Buildah, kubectl
+- **Shell enhancements** — Starship prompt, zoxide, fzf, ripgrep, fd

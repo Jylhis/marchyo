@@ -1,0 +1,56 @@
+---
+title: Contributing
+description: Guidelines for contributing to Marchyo
+---
+
+## Requirements
+
+Before submitting changes, ensure:
+
+1. **All Nix files are formatted** — Run `nix fmt` before committing
+2. **All tests pass** — Run `nix flake check`
+3. **Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)** — e.g., `feat:`, `fix:`, `chore:`
+
+## Development commands
+
+| Command | Description |
+|---------|-------------|
+| `nix flake check` | Validate configuration and run all tests |
+| `nix fmt` | Format all code (nixfmt, deadnix, statix, shellcheck, yamlfmt) |
+| `nix develop` | Enter development shell with necessary tools |
+| `nix flake show` | Display all flake outputs |
+| `nix run` | Run a QEMU VM with all features enabled (x86_64-linux) |
+
+## Code formatting
+
+`nix fmt` runs multiple tools:
+
+- **nixfmt** — Nix code formatting
+- **deadnix** — Unused variable detection
+- **statix** — Nix linting
+- **shellcheck** — Shell script linting
+- **yamlfmt** — YAML formatting
+
+All must pass. CI enforces formatting with `nix fmt -- --ci`.
+
+## Adding features
+
+1. Create the module file in the appropriate `modules/` subdirectory
+2. Add the import to the corresponding `default.nix`
+3. Define new options in `modules/nixos/options.nix` under `marchyo.*`
+4. Add an evaluation test in `tests/module-tests.nix`
+5. Run `nix fmt` and `nix flake check`
+
+See [Adding Modules](/development/adding-modules) for detailed instructions.
+
+## Commit message format
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+feat: add support for custom wallpapers
+fix: resolve audio crackling on PipeWire
+chore: update flake inputs
+docs: add keyboard configuration guide
+refactor: simplify GPU vendor detection
+```

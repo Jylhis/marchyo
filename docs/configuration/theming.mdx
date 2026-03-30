@@ -1,0 +1,83 @@
+---
+title: Theming
+description: Customize system appearance with Stylix and base16 color schemes
+---
+
+Marchyo uses [Stylix](https://github.com/danth/stylix) for consistent theming across GTK, Qt, terminal applications, and the Hyprland compositor.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.theme.enable` | `bool` | `true` | Enable the Stylix theming system |
+| `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
+| `marchyo.theme.scheme` | `string`, `attrs`, or `null` | `null` | Color scheme to use |
+
+## Basic usage
+
+```nix
+marchyo.theme = {
+  enable = true;
+  variant = "dark";
+};
+```
+
+## Color schemes
+
+The `scheme` option accepts:
+
+- **A scheme name** from nix-colors (e.g., `"dracula"`, `"gruvbox-dark-medium"`, `"catppuccin-mocha"`)
+- **A custom scheme name** (e.g., `"modus-vivendi-tinted"`, `"modus-operandi-tinted"`)
+- **A custom attribute set** defining base00–base0F colors
+- **`null`** to use the default scheme based on `variant`
+
+### Default schemes
+
+| Variant | Default scheme |
+|---------|---------------|
+| `"dark"` | `nord` |
+| `"light"` | `nord-light` |
+
+### Using a named scheme
+
+```nix
+marchyo.theme = {
+  variant = "dark";
+  scheme = "dracula";
+};
+```
+
+### Using a custom color set
+
+```nix
+marchyo.theme = {
+  variant = "dark";
+  scheme = {
+    base00 = "282828";
+    base01 = "3c3836";
+    base02 = "504945";
+    base03 = "665c54";
+    base04 = "bdae93";
+    base05 = "d5c4a1";
+    base06 = "ebdbb2";
+    base07 = "fbf1c7";
+    base08 = "fb4934";
+    base09 = "fe8019";
+    base0A = "fabd2f";
+    base0B = "b8bb26";
+    base0C = "8ec07c";
+    base0D = "83a598";
+    base0E = "d3869b";
+    base0F = "d65d0e";
+  };
+};
+```
+
+## Light mode
+
+```nix
+marchyo.theme = {
+  variant = "light";
+  scheme = "nord-light";
+};
+```

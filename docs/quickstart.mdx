@@ -1,0 +1,98 @@
+---
+title: Quick Start
+description: Get up and running with Marchyo in minutes
+---
+
+## Option 1: Use the workstation template
+
+The fastest way to get started is with the built-in template:
+
+```bash
+nix flake init -t github:Jylhis/marchyo#workstation
+```
+
+This creates a complete configuration with desktop environment, development tools, and sensible defaults. See the [Workstation Template guide](/guides/workstation-template) for details.
+
+## Option 2: Add to an existing flake
+
+Add Marchyo as an input and import the NixOS module:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    marchyo.url = "github:Jylhis/marchyo";
+  };
+
+  outputs = { nixpkgs, marchyo, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        marchyo.nixosModules.default
+        ./hardware-configuration.nix
+        {
+          marchyo.desktop.enable = true;
+          marchyo.development.enable = true;
+          marchyo.users.myuser = {
+            fullname = "Your Name";
+            email = "your.email@example.com";
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+## Option 3: Home Manager only
+
+If you only want the Home Manager modules without the NixOS system modules:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    marchyo.url = "github:Jylhis/marchyo";
+    home-manager.url = "github:nix-community/home-manager";
+  };
+
+  outputs = { nixpkgs, marchyo, home-manager, ... }: {
+    homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      modules = [
+        marchyo.homeModules.default
+      ];
+    };
+  };
+}
+```
+
+## Minimal example
+
+A minimal configuration that enables only the desktop environment:
+
+```nix
+{
+  marchyo.desktop.enable = true;
+  marchyo.users.myuser = {
+    fullname = "Your Name";
+    email = "you@example.com";
+  };
+}
+```
+
+Enabling `marchyo.desktop.enable` automatically enables media and office applications via cascading defaults. You can override any of these:
+
+```nix
+{
+  marchyo.desktop.enable = true;
+  marchyo.media.enable = false;   # Override: disable media apps
+}
+```
+
+## Next steps
+
+- [Feature Flags](/configuration/feature-flags) — Learn about the available feature groups
+- [User Configuration](/configuration/users) — Configure user accounts
+- [Theming](/configuration/theming) — Customize the look and feel
+- [Keyboard](/configuration/keyboard) — Set up keyboard layouts and input methods

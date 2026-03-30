@@ -1,0 +1,137 @@
+---
+title: Workstation Template
+description: Bootstrap a full developer workstation configuration
+---
+
+Marchyo includes a workstation template that provides a complete developer setup with desktop environment, development tools, and sensible defaults.
+
+## Getting started
+
+### 1. Initialize the template
+
+```bash
+nix flake init -t github:Jylhis/marchyo#workstation
+```
+
+### 2. Generate hardware configuration
+
+```bash
+nixos-generate-config --show-hardware-config > hardware-configuration.nix
+```
+
+### 3. Customize `configuration.nix`
+
+Edit the generated configuration:
+
+- Change `networking.hostName` to your workstation name
+- Update `marchyo.users.developer` with your details
+- Adjust timezone and locale settings
+- Review and modify development tools
+
+### 4. Test in a VM (optional)
+
+```bash
+# With disko
+nix run -L '.#nixosConfigurations.workstation.config.system.build.vmWithDisko'
+
+# Without disko
+nixos-rebuild build-vm --flake .#workstation
+./result/bin/run-workstation-vm
+```
+
+### 5. Build and switch
+
+```bash
+sudo nixos-rebuild switch --flake .#workstation
+```
+
+## What's included
+
+### Desktop environment
+- Hyprland (Wayland compositor) with all Marchyo customizations
+- Multiple terminal emulators (Kitty, Alacritty)
+
+### Development tools
+- **Editors** — Vim/Neovim, VS Code
+- **Version control** — Git with Git LFS, GitHub CLI
+- **Containers** — Docker with docker-compose, kubectl
+- **Virtualization** — QEMU/KVM via libvirtd
+- **DevOps** — Terraform, Ansible
+
+### Terminal enhancements
+- Starship prompt
+- Zoxide (smart `cd`)
+- fzf (fuzzy finder)
+- ripgrep (fast `grep`)
+- fd (fast `find`)
+
+## Customization tips
+
+### Adding programming languages
+
+```nix
+environment.systemPackages = with pkgs; [
+  python3
+  nodejs
+  rustc cargo
+  go
+  jdk17
+];
+```
+
+### VS Code extensions
+
+```nix
+programs.vscode = {
+  enable = true;
+  extensions = with pkgs.vscode-extensions; [
+    ms-python.python
+    rust-lang.rust-analyzer
+  ];
+};
+```
+
+### Using Podman instead of Docker
+
+```nix
+virtualisation.podman = {
+  enable = true;
+  dockerCompat = true;
+  defaultNetwork.settings.dns_enabled = true;
+};
+```
+
+### Project-specific dev shells with direnv
+
+```nix
+programs.direnv = {
+  enable = true;
+  nix-direnv.enable = true;
+};
+```
+
+Then in your project directory, create a `.envrc`:
+
+```bash
+use flake
+```
+
+### Multi-monitor setup
+
+Override Hyprland monitor configuration in your home config:
+
+```nix
+wayland.windowManager.hyprland.settings = {
+  monitor = [
+    "DP-1,1920x1080@60,0x0,1"
+    "HDMI-A-1,1920x1080@60,1920x0,1"
+  ];
+};
+```
+
+## Updating
+
+```bash
+nix flake update
+sudo nixos-rebuild switch --flake .#workstation
+```
