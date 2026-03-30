@@ -306,4 +306,4 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
 - **`allowUnfree = true`**: The flake sets this globally in `legacyPackages` and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix. All must pass.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeModules` in isolation.
-- **`AI_GUIDE.md`**: Contains comprehensive option documentation. The `README.md` links to it. Content overlaps with this file; keep both in sync when changing options.
+- **`docs/`**: Contains Mintlify documentation. The `README.md` links to it. Option documentation in `docs/configuration/` should be kept in sync with `options.nix`.

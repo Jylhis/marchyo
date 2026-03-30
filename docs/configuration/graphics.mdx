@@ -1,0 +1,142 @@
+---
+title: Graphics (GPU)
+description: Configure GPU vendors, NVIDIA drivers, and hybrid graphics
+---
+
+Marchyo supports Intel, AMD, and NVIDIA GPUs, including hybrid graphics configurations with NVIDIA PRIME.
+
+## GPU vendors
+
+Specify which GPU vendors are present in your system:
+
+```nix
+marchyo.graphics.vendors = [ "intel" ];
+```
+
+For hybrid graphics laptops with two GPUs:
+
+```nix
+marchyo.graphics.vendors = [ "intel" "nvidia" ];
+```
+
+<Info>
+Find your GPU with: `lspci | grep -E 'VGA|3D'`
+</Info>
+
+| Vendor | Description |
+|--------|-------------|
+| `"intel"` | Intel integrated graphics (iGPU) |
+| `"amd"` | AMD GPUs (integrated or discrete) |
+| `"nvidia"` | NVIDIA discrete GPUs |
+
+When `vendors` is empty (default), Intel packages are applied on x86_64 for backward compatibility.
+
+## NVIDIA options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.graphics.nvidia.open` | `bool` | `true` | Use open-source kernel modules (recommended for RTX 20xx+, required for RTX 50xx) |
+| `marchyo.graphics.nvidia.powerManagement` | `bool` | `false` | Experimental power management (may improve laptop battery life) |
+
+```nix
+marchyo.graphics.nvidia = {
+  open = true;
+  powerManagement = false;
+};
+```
+
+<Warning>
+Set `nvidia.open = false` for older GPUs (Maxwell, Pascal, Volta). The open-source modules only support Turing (RTX 20xx) and newer.
+</Warning>
+
+## NVIDIA PRIME (hybrid graphics)
+
+For laptops with both an integrated GPU and a discrete NVIDIA GPU:
+
+```nix
+marchyo.graphics = {
+  vendors = [ "intel" "nvidia" ];
+
+  prime = {
+    enable = true;
+    intelBusId = "PCI:0:2:0";
+    nvidiaBusId = "PCI:1:0:0";
+    mode = "offload";
+  };
+};
+```
+
+### Finding bus IDs
+
+Run `lspci | grep -E 'VGA|3D'` and convert hex bus IDs to the `PCI:bus:device:function` format (convert hex values to decimal).
+
+### PRIME options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.graphics.prime.enable` | `bool` | `false` | Enable NVIDIA PRIME |
+| `marchyo.graphics.prime.intelBusId` | `string` | `""` | PCI bus ID of Intel iGPU |
+| `marchyo.graphics.prime.amdgpuBusId` | `string` | `""` | PCI bus ID of AMD iGPU |
+| `marchyo.graphics.prime.nvidiaBusId` | `string` | `""` | PCI bus ID of NVIDIA dGPU |
+| `marchyo.graphics.prime.mode` | `string` | `"offload"` | PRIME render mode |
+
+### PRIME modes
+
+| Mode | Description |
+|------|-------------|
+| `"offload"` | On-demand rendering (default). Power efficient — use `nvidia-offload <command>` to run apps on the discrete GPU. |
+| `"sync"` | Always use discrete GPU. Best performance but more power consumption. |
+| `"reverse-sync"` | iGPU for display, dGPU for compute. |
+
+## Examples
+
+### Intel-only desktop
+
+```nix
+marchyo.graphics.vendors = [ "intel" ];
+```
+
+### AMD-only desktop
+
+```nix
+marchyo.graphics.vendors = [ "amd" ];
+```
+
+### NVIDIA desktop
+
+```nix
+marchyo.graphics = {
+  vendors = [ "nvidia" ];
+  nvidia.open = true;
+};
+```
+
+### Intel + NVIDIA laptop (offload)
+
+```nix
+marchyo.graphics = {
+  vendors = [ "intel" "nvidia" ];
+  nvidia.open = true;
+  prime = {
+    enable = true;
+    intelBusId = "PCI:0:2:0";
+    nvidiaBusId = "PCI:1:0:0";
+    mode = "offload";
+  };
+};
+```
+
+### AMD + NVIDIA laptop (sync)
+
+```nix
+marchyo.graphics = {
+  vendors = [ "amd" "nvidia" ];
+  nvidia.open = true;
+  prime = {
+    enable = true;
+    amdgpuBusId = "PCI:6:0:0";
+    nvidiaBusId = "PCI:1:0:0";
+    mode = "sync";
+  };
+};
+```

@@ -1,0 +1,50 @@
+---
+title: Introduction
+description: A modular NixOS configuration flake with sensible defaults
+---
+
+Marchyo is a modular NixOS configuration flake providing a curated set of system and Home Manager configurations with sensible defaults. It simplifies managing NixOS systems by offering organized, configurable modules you can enable with simple feature flags.
+
+## Features
+
+- **Modular architecture** — Configurations broken into small, manageable modules for desktop, development, media, and office environments.
+- **Feature flags** — Enable entire stacks with a single boolean (`marchyo.desktop.enable = true`).
+- **Home Manager integration** — Seamless user environment management for dotfiles and user-level applications.
+- **Hardware support** — Integration with `nixos-hardware` for common devices, including NVIDIA PRIME hybrid graphics.
+- **Extensive options** — Fine-grained control through the `marchyo.*` option namespace.
+
+## How it works
+
+Marchyo is distributed as a Nix flake. You add it as an input to your own NixOS configuration and import its module:
+
+```nix
+{
+  inputs.marchyo.url = "github:Jylhis/marchyo";
+
+  outputs = { nixpkgs, marchyo, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      modules = [
+        marchyo.nixosModules.default
+        { marchyo.desktop.enable = true; }
+      ];
+    };
+  };
+}
+```
+
+The `nixosModules.default` output includes both NixOS system modules and Home Manager integration. If you only need Home Manager, use `homeModules.default` instead.
+
+## Flake outputs
+
+| Output | Description |
+|--------|-------------|
+| `nixosModules.default` | Main NixOS module (includes Home Manager) |
+| `homeModules.default` | Home Manager module only |
+| `overlays.default` | Nixpkgs overlay |
+| `templates.workstation` | Starter workstation template |
+| `apps.{system}.default` | QEMU VM runner (x86_64-linux) |
+| `checks.{system}.*` | Evaluation test suite |
+
+## All options live under `marchyo.*`
+
+Every custom option is defined in a single file (`modules/nixos/options.nix`) under the `marchyo.*` namespace. Browse the [Configuration](/configuration/feature-flags) section for the full reference.
