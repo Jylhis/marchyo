@@ -25,7 +25,6 @@ let
 
   pythonEnv = pkgs.python3.withPackages (ps: [
     ps.requests
-    ps.prefixspan
   ]);
 
   analysisScript = pkgs.writeTextFile {
@@ -35,13 +34,7 @@ let
       #!${pythonEnv}/bin/python
       """Weekly activity analysis: mine shell command patterns, let a local
       LLM interpret them. Output is an org-mode report under ~/org/."""
-      import sqlite3, datetime, pathlib, os, sys
-      try:
-          import requests
-          from prefixspan import PrefixSpan
-      except ImportError as e:
-          print(f"missing dependency: {e}", file=sys.stderr)
-          sys.exit(1)
+      import sqlite3, datetime, pathlib, os, requests
 
       ATUIN_DB = pathlib.Path.home() / ".local/share/atuin/history.db"
       REPORT   = pathlib.Path.home() / "org/activity-report.org"
@@ -75,11 +68,32 @@ let
               sessions.setdefault(sess, []).append(tokenize(cmd))
           return list(sessions.values())
 
+      def _prefixspan(sequences, min_support):
+          """Inline PrefixSpan frequent subsequence mining."""
+          results = []
+
+          def _mine(prefix, db):
+              counts = {}
+              for seq in db:
+                  seen = set()
+                  for item in seq:
+                      if item not in seen:
+                          counts[item] = counts.get(item, 0) + 1
+                          seen.add(item)
+              for item, count in counts.items():
+                  if count >= min_support:
+                      new_prefix = prefix + [item]
+                      results.append((count, new_prefix))
+                      projected = [seq[seq.index(item) + 1:] for seq in db if item in seq]
+                      _mine(new_prefix, projected)
+
+          _mine([], sequences)
+          return results
+
       def mine(sessions, min_support: int = 5, min_len: int = 2):
           if not sessions:
               return []
-          ps = PrefixSpan(sessions)
-          return [p for p in ps.frequent(min_support) if len(p[1]) >= min_len]
+          return [p for p in _prefixspan(sessions, min_support) if len(p[1]) >= min_len]
 
       def ask_llm(patterns) -> str:
           if not patterns:
