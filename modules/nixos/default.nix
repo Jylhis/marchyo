@@ -32,6 +32,7 @@
     ./plymouth.nix
     ./security.nix
     ./system.nix
+    ./tracking
     ./wayland.nix
     ./update-diff.nix
   ];
