@@ -263,6 +263,14 @@ in
     };
   });
 
+  # Tracking: analysis module (exercises inline PrefixSpan + Ollama wiring)
+  eval-tracking-analysis = testNixOS "tracking-analysis" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      analysis.enable = true;
+    };
+  });
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;

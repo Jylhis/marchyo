@@ -609,11 +609,14 @@ in
         description = ''
           Enable the local-first self-tracking stack.
 
-          When true, this provides the top-level framework and opt-in sub-modules
-          for capturing shell, desktop, editor, git, and system activity to local
-          SQLite/JSONL stores for later analysis. All sub-modules default to false
-          so enabling this option by itself has minimal effect — opt in to the
-          collectors you want.
+          When true, enables the full local-first self-tracking stack:
+          shell history (atuin), desktop focus (ActivityWatch), editor heartbeats
+          (wakapi), git activity, system file-watch, log aggregation (Vector), and
+          weekly LLM analysis. All collectors default to enabled; set any
+          sub-option to false to opt out.
+
+          Screenshot capture (`marchyo.tracking.desktop.screenshots.enable`)
+          defaults to false and must be enabled explicitly.
 
           All data stays on disk under the user's home directory or
           /var/lib. No network egress unless the aggregation sink is
