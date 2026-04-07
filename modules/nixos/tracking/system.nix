@@ -38,7 +38,7 @@ in
         rules = [
           "-a always,exit -F arch=b64 -S execve -k exec_log"
         ]
-        ++ map (u: "-w /home/${u}/.config -p wa -k config_changes") mUsers;
+        ++ map (u: "-w ${config.users.users.${u}.home}/.config -p wa -k config_changes") mUsers;
       };
     })
 

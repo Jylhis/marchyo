@@ -89,10 +89,11 @@ in
       };
 
       # Retention: prune screenshots older than retentionDays for each
-      # configured marchyo user. Uses absolute /home/<user> paths because
-      # system tmpfiles does not have access to per-user %h expansion.
+      # configured marchyo user. Uses each user's declared home directory
+      # because system tmpfiles does not have access to per-user %h expansion.
       systemd.tmpfiles.rules = map (
-        u: "e /home/${u}/.local/share/screenshots - - - ${toString desktopCfg.screenshots.retentionDays}d -"
+        u:
+        "e ${config.users.users.${u}.home}/.local/share/screenshots - - - ${toString desktopCfg.screenshots.retentionDays}d -"
       ) mUsers;
     })
   ]);

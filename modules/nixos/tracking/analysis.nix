@@ -41,7 +41,7 @@ let
           from prefixspan import PrefixSpan
       except ImportError as e:
           print(f"missing dependency: {e}", file=sys.stderr)
-          sys.exit(0)
+          sys.exit(1)
 
       ATUIN_DB = pathlib.Path.home() / ".local/share/atuin/history.db"
       REPORT   = pathlib.Path.home() / "org/activity-report.org"
@@ -60,7 +60,9 @@ let
           if not ATUIN_DB.exists():
               return []
           cutoff = int((datetime.datetime.now() - datetime.timedelta(days=days)).timestamp() * 1e9)
-          con = sqlite3.connect(str(ATUIN_DB))
+          # Read-only open: avoids locking the active atuin daemon's DB and
+          # guarantees the analysis cannot modify history.
+          con = sqlite3.connect(f"file:{ATUIN_DB}?mode=ro", uri=True)
           try:
               rows = con.execute(
                   "SELECT session, command FROM history WHERE timestamp > ? ORDER BY timestamp",

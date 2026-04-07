@@ -13,10 +13,18 @@ let
   cfg = config.marchyo.tracking;
   gitCfg = cfg.git;
 
+  # The scan window is wider than the timer interval (2 days for a daily
+  # timer) so that missed runs — suspend, shutdown, Persistent=true catching
+  # up late — do not create tracking gaps. Duplicates are avoided with a
+  # per-repo seen-hash state file: we refuse to re-emit commits whose short
+  # hash we have already logged.
   scanScript = pkgs.writeShellScript "marchyo-tracking-git-scan" ''
     set -eu
     OUT="$HOME/${cfg.dataDir}"
+    STATE="$OUT/.git-activity-seen"
     ${pkgs.coreutils}/bin/mkdir -p "$OUT"
+    : > "$STATE.new"
+    [ -f "$STATE" ] || : > "$STATE"
     EMAIL=$(${pkgs.git}/bin/git config --global --get user.email || echo "")
     if [ -z "$EMAIL" ]; then
       exit 0
@@ -30,10 +38,15 @@ let
       repo=$(${pkgs.coreutils}/bin/dirname "$gitdir")
       name=$(${pkgs.coreutils}/bin/basename "$repo")
       branch=$(${pkgs.git}/bin/git -C "$repo" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-      ${pkgs.git}/bin/git -C "$repo" log --since="1 day ago" \
+      ${pkgs.git}/bin/git -C "$repo" log --since="2 days ago" \
         --author="$EMAIL" \
         --format="%aI%x09%h%x09%s" 2>/dev/null \
       | while IFS=$'\t' read -r ts hash msg; do
+        key="$name:$hash"
+        echo "$key" >> "$STATE.new"
+        if ${pkgs.gnugrep}/bin/grep -Fxq "$key" "$STATE"; then
+          continue
+        fi
         ${pkgs.jq}/bin/jq -cn \
           --arg ts "$ts" --arg repo "$name" --arg branch "$branch" \
           --arg hash "$hash" --arg msg "$msg" \
@@ -41,6 +54,9 @@ let
           >> "$OUT/git-activity.jsonl"
       done
     done
+    # Replace the state file with what we observed this run so it trims
+    # over time as old commits drop out of the 2-day window.
+    ${pkgs.coreutils}/bin/mv "$STATE.new" "$STATE"
   '';
 in
 {

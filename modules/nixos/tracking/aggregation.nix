@@ -14,7 +14,7 @@ let
   aggCfg = cfg.aggregation;
   mUsers = builtins.attrNames config.marchyo.users;
 
-  jsonlPaths = map (u: "/home/${u}/${cfg.dataDir}/*.jsonl") mUsers;
+  jsonlPaths = map (u: "${config.users.users.${u}.home}/${cfg.dataDir}/*.jsonl") mUsers;
 
   lokiSink = {
     type = "loki";
