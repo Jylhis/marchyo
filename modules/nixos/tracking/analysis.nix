@@ -158,7 +158,6 @@ in
 
     environment.systemPackages = [
       pythonEnv
-      analysisScript
     ];
 
     systemd.user.services.marchyo-tracking-weekly-analysis = {
