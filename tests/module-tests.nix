@@ -242,6 +242,27 @@ in
     };
   });
 
+  # Tracking: top-level enable with all sub-collectors off
+  eval-tracking-minimal = testNixOS "tracking-minimal" (withTestUser {
+    marchyo.tracking.enable = true;
+  });
+
+  # Tracking: shell history collector only
+  eval-tracking-shell = testNixOS "tracking-shell" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      shell.enable = true;
+    };
+  });
+
+  # Tracking: git scan collector
+  eval-tracking-git = testNixOS "tracking-git" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      git.enable = true;
+    };
+  });
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
