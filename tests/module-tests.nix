@@ -263,6 +263,15 @@ in
     };
   });
 
+  # Tracking: editor with wakatime API key configured
+  eval-tracking-editor-wakatime = testNixOS "tracking-editor-wakatime" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      editor.enable = true;
+    };
+    marchyo.users.testuser.wakatimeApiKey = "waka_test_00000000-0000-0000-0000-000000000000";
+  });
+
   # Tracking: analysis module (exercises inline PrefixSpan + Ollama wiring)
   eval-tracking-analysis = testNixOS "tracking-analysis" (withTestUser {
     marchyo.tracking = {
