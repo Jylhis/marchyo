@@ -32,6 +32,16 @@ let
           type = types.str;
           description = "Your email address";
         };
+
+        wakatimeApiKey = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            WakaTime API key for editor heartbeat tracking.
+            When set together with marchyo.tracking.editor.enable, a
+            ~/.wakatime.cfg is generated and WAKATIME_API_KEY is exported.
+          '';
+        };
       };
     };
 in
