@@ -71,7 +71,7 @@ in
         "$music" = lib.mkDefault musicCmd;
         "$passwordManager" = lib.mkDefault "1password";
         "$webapp" = lib.mkDefault "$browser --app";
-        "$terminal" = lib.mkDefault "kitty";
+        "$terminal" = lib.mkDefault "ghostty";
 
         ecosystem.no_update_news = true;
         xwayland.force_zero_scaling = true;
