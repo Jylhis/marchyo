@@ -58,7 +58,7 @@ let
   styleWithColors = builtins.readFile ../../assets/applications/waybar.css;
 
   # Terminal emulator to use for clicking modules
-  terminal = "${pkgs.kitty}/bin/kitty";
+  terminal = "${pkgs.ghostty}/bin/ghostty";
 in
 {
   config = {

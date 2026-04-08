@@ -20,7 +20,7 @@
     ./hyprland.nix
     ./hyprlock.nix
     ./k9s.nix
-    ./kitty.nix
+    ./ghostty.nix
     ./lazygit.nix
     ./locale.nix
     ./mako.nix
