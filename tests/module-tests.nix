@@ -280,6 +280,26 @@ in
     };
   });
 
+  # Tracking: Langfuse LLM observability (PostgreSQL + Docker container)
+  eval-tracking-langfuse = testNixOS "tracking-langfuse" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      langfuse.enable = true;
+    };
+  });
+
+  # Tracking: Langfuse with custom port and image tag
+  eval-tracking-langfuse-custom = testNixOS "tracking-langfuse-custom" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      langfuse = {
+        enable = true;
+        port = 4000;
+        imageTag = "2.80.1";
+      };
+    };
+  });
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
