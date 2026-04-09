@@ -1,0 +1,109 @@
+{
+  "pins": {
+    "flake-compat": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "edolstra",
+        "repo": "flake-compat"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+      "url": "https://github.com/edolstra/flake-compat/archive/5edf11c44bc78a0d334f6334cdaf7d60d732daab.tar.gz",
+      "hash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns="
+    },
+    "home-manager": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "home-manager"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "7ba4ee4228ed36123c7cb75d50524b43514ef992",
+      "url": "https://github.com/nix-community/home-manager/archive/7ba4ee4228ed36123c7cb75d50524b43514ef992.tar.gz",
+      "hash": "sha256-oBYyowo6yfgb95Z78s3uTnAd9KkpJpwzjJbfnpLaM2Y="
+    },
+    "nixpkgs": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NixOS",
+        "repo": "nixpkgs"
+      },
+      "branch": "nixos-unstable",
+      "submodules": false,
+      "revision": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+      "url": "https://github.com/NixOS/nixpkgs/archive/68d8aa3d661f0e6bd5862291b5bb263b2a6595c9.tar.gz",
+      "hash": "sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw="
+    },
+    "noctalia": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "0fcaa49875bf0c994bb5c604320454ef72e6ba8b",
+      "url": "https://github.com/noctalia-dev/noctalia-shell/archive/0fcaa49875bf0c994bb5c604320454ef72e6ba8b.tar.gz",
+      "hash": "sha256-UVL4JnAHXs90AiKfhjXBQ83KhiXHAyZ4TdaPkA/ts/g="
+    },
+    "stylix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "stylix"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "d27951a6539951d87f75cf0a7cda8a3a24016019",
+      "url": "https://github.com/nix-community/stylix/archive/d27951a6539951d87f75cf0a7cda8a3a24016019.tar.gz",
+      "hash": "sha256-wbFF5cRxQOCzL/wHOKYm21t5AHPH2Lfp0mVPCOAvEoc="
+    },
+    "treefmt-nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "numtide",
+        "repo": "treefmt-nix"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "790751ff7fd3801feeaf96d7dc416a8d581265ba",
+      "url": "https://github.com/numtide/treefmt-nix/archive/790751ff7fd3801feeaf96d7dc416a8d581265ba.tar.gz",
+      "hash": "sha256-pc20NRoMdiar8oPQceQT47UUZMBTiMdUuWrYu2obUP0="
+    },
+    "vicinae": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "vicinaehq",
+        "repo": "vicinae"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "919c1183836c45a9004bdec6e4d6ca583c29d39d",
+      "url": "https://github.com/vicinaehq/vicinae/archive/919c1183836c45a9004bdec6e4d6ca583c29d39d.tar.gz",
+      "hash": "sha256-lZCVEL2bXAZ43Ab1SI7CwNhlr3vc1XRoLgMJ54sHYTw="
+    },
+    "worktrunk": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "max-sixty",
+        "repo": "worktrunk"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "b6ddf736d79c8f06f6c260bd99c1f95a0669a9a3",
+      "url": "https://github.com/max-sixty/worktrunk/archive/b6ddf736d79c8f06f6c260bd99c1f95a0669a9a3.tar.gz",
+      "hash": "sha256-RTppRWUltWQjp5zIleJrD8d/WOU+iT+cO4ivG/xNOXQ="
+    }
+  },
+  "version": 7
+}

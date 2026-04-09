@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Marchyo is a modular NixOS configuration flake providing curated system and Home Manager configurations with sensible defaults. It is distributed as a Nix flake meant to be used as an input in other NixOS configurations.
+Marchyo is a modular NixOS configuration providing curated system and Home Manager configurations with sensible defaults. It uses npins for dependency pinning and devenv.sh for development. It is also distributed as a Nix flake so it can be used as an input in other NixOS configurations.
 
 **Key features:**
 - Modular architecture: configurations broken into small, manageable modules
@@ -13,27 +13,43 @@ Marchyo is a modular NixOS configuration flake providing curated system and Home
 - Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
 - All custom options live under the `marchyo.*` namespace
 
-## Commands
+## Development Setup
+
+Enter the development environment (provides `just`, `npins`, `nil`, `treefmt`):
 
 ```bash
-nix flake check          # Validate configuration and run all tests (run before every commit)
-nix fmt                  # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt) — run before every commit
-nix develop              # Enter development shell
+devenv shell             # Or use direnv with .envrc
+```
+
+## Commands
+
+Primary development commands (run inside devenv shell):
+
+```bash
+just check               # Run all evaluation tests (via npins/default.nix)
+just fmt                 # Format all code (nixfmt, deadnix, statix, shellcheck, yamlfmt) — run before every commit
+just build               # Build the reference NixOS configuration
+just run                 # Run QEMU VM with all features enabled (x86_64-linux only)
+just test                # Alias for check
+just update              # Update all npins sources
+just pins                # Show npins status
+```
+
+Flake-compatible commands (for consumers and CI):
+
+```bash
+nix flake check          # Validate configuration and run all tests
+nix fmt                  # Format all code via treefmt
 nix flake show           # Display all flake outputs
+nix run                  # Run QEMU VM
 nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available tests
 ```
 
-Running a VM for local testing (x86_64-linux only):
-
-```bash
-nix run                  # Runs apps.x86_64-linux.default — a QEMU VM with all features enabled
-```
-
-There is no way to run a single test in isolation; `nix flake check` runs them all (they are fast evaluation-only checks).
+There is no way to run a single test in isolation; `just check` runs them all (they are fast evaluation-only checks).
 
 ## Code Style
 
-- Format with `nix fmt` before committing — this is mandatory, CI enforces it
+- Format with `just fmt` (or `nix fmt`) before committing — this is mandatory, CI enforces it
 - Follow conventional commit message format (e.g. `feat:`, `fix:`, `chore:`)
 - Use `lib.mkIf cfg.someFlag` for conditional configuration
 - Use `lib.mkDefault` for options that consumers should be able to override
@@ -44,6 +60,7 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 ### Module Organization
 
 ```
+npins/              # Pinned dependencies (npins sources.json + default.nix)
 modules/nixos/      # NixOS system-level modules (~31 modules)
 modules/home/       # Home Manager user-level modules (~30 modules)
 modules/generic/    # Shared modules imported by both nixos and home default.nix (no own default.nix)
@@ -67,6 +84,12 @@ templates/workstation/  # Developer workstation template
 
 ### Key Files
 
+- `default.nix` — npins-based entry point (developer workflow). Provides the same outputs as `flake.nix` using npins for pinning.
+- `flake.nix` — Flake entry point (consumer-facing). Kept for compatibility with flake-based configurations.
+- `treefmt.nix` — Shared treefmt configuration used by both `flake.nix` and `default.nix`.
+- `devenv.nix` — Development environment (provides just, npins, nil, pre-commit hooks).
+- `justfile` — Task runner for common development operations.
+- `npins/sources.json` — Pinned dependency versions (managed by `npins`).
 - `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~640 lines). Single source of truth for the option namespace.
 - `modules/nixos/default.nix` — Import list for all NixOS modules (order matters for some modules).
 - `modules/home/default.nix` — Import list for all Home Manager modules.
@@ -275,7 +298,7 @@ marchyo.keyboard.layouts = [
 
 **When ending a work session**, complete ALL steps below. Work is NOT complete until `git push` succeeds.
 
-1. **Run quality gates** (if code changed) — `nix flake check` and `nix fmt`
+1. **Run quality gates** (if code changed) — `just check` and `just fmt` (or `nix flake check` and `nix fmt`)
 2. **Push to remote** — This is MANDATORY:
    ```bash
    git pull --rebase
@@ -288,10 +311,11 @@ marchyo.keyboard.layouts = [
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
+`.github/workflows/validate.yml` runs on push to `main` and PRs:
 1. **lints** — `nix fmt -- --ci` (formatting check only, no writes)
-2. **check** — `nix flake check` (all evaluation tests)
-3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, runs after lints and check pass)
+2. **check** — `nix flake check` (all evaluation tests via flake)
+3. **check-npins** — `nix-build -A checks.x86_64-linux` (evaluation tests via npins/default.nix)
+4. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, runs after lints and check pass)
 
 Stages 1 and 2 run in parallel; stage 3 runs after both succeed.
 

@@ -5,3 +5,8 @@ result
 
 # Worktrunk worktrees
 .worktrees/
+
+# devenv
+.devenv/
+.devenv.flake.nix
+devenv.lock

@@ -253,28 +253,7 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in
-        treefmt-nix.lib.mkWrapper pkgs {
-          projectRootFile = "flake.nix";
-
-          programs = {
-            nixfmt.enable = true;
-            actionlint.enable = false;
-            deadnix.enable = true;
-            shellcheck.enable = true;
-            statix.enable = true;
-            yamlfmt.enable = true;
-          };
-          settings.formatter.shellcheck = {
-            excludes = [
-              "**/.envrc"
-              ".envrc"
-            ];
-            options = [
-              "-s"
-              "bash"
-            ];
-          };
-        }
+        treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix)
       );
     };
 }
