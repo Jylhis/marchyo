@@ -809,11 +809,10 @@ in
           description = ''
             Enable a local Langfuse instance for LLM observability and tracing.
 
-            Runs the Langfuse server as a Docker container with a dedicated
-            PostgreSQL database. The UI is available at
-            http://localhost:<port>. All data stays local.
+            Runs Langfuse as a native NixOS service (built from source) with
+            a dedicated PostgreSQL database. The web UI and API are available
+            at http://localhost:<port>. All data stays local.
 
-            Requires Docker (provided by marchyo's container module).
             This collector is NOT auto-enabled by marchyo.tracking.enable
             and must be opted into explicitly.
           '';
@@ -825,16 +824,6 @@ in
           description = ''
             Port on which the Langfuse web UI and API listen.
             Defaults to 3030 to avoid conflict with wakapi (port 3000).
-          '';
-        };
-
-        imageTag = mkOption {
-          type = types.str;
-          default = "2";
-          example = "2.80.1";
-          description = ''
-            Docker image tag for langfuse/langfuse. Use "2" to track the
-            latest v2 release, or pin to a specific version.
           '';
         };
       };
