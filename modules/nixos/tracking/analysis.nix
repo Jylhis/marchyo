@@ -1,10 +1,10 @@
-# Weekly activity analysis: Ollama + PrefixSpan + LLM report.
+# Weekly activity analysis: llama-server (llama.cpp) + PrefixSpan + LLM report.
 #
 # Runs a Python script on a weekly user timer that:
 #   1. Tokenises recent atuin history into per-session command sequences
 #   2. Mines frequent sub-sequences via PrefixSpan
 #   3. Sends only the aggregated patterns (never raw history) to a local
-#      Ollama model for automation suggestions, written as an org-mode file.
+#      llama-server instance for automation suggestions, written as an org-mode file.
 {
   config,
   lib,
@@ -15,13 +15,13 @@ let
   cfg = config.marchyo.tracking;
   aCfg = cfg.analysis;
 
-  ollamaPackage =
-    if aCfg.ollamaAcceleration == "cuda" then
-      pkgs.ollama-cuda
-    else if aCfg.ollamaAcceleration == "rocm" then
-      pkgs.ollama-rocm
+  llamaCppPackage =
+    if aCfg.acceleration == "cuda" then
+      pkgs.llama-cpp.override { cudaSupport = true; }
+    else if aCfg.acceleration == "rocm" then
+      pkgs.llama-cpp.override { rocmSupport = true; }
     else
-      pkgs.ollama;
+      pkgs.llama-cpp;
 
   pythonEnv = pkgs.python3.withPackages (ps: [
     ps.requests
@@ -38,8 +38,7 @@ let
 
       ATUIN_DB = pathlib.Path.home() / ".local/share/atuin/history.db"
       REPORT   = pathlib.Path.home() / "org/activity-report.org"
-      OLLAMA   = "http://127.0.0.1:11434/api/generate"
-      MODEL    = os.environ.get("MARCHYO_TRACKING_MODEL", "${aCfg.model}")
+      LLAMA    = "http://127.0.0.1:8012/completion"
 
       def tokenize(cmd: str) -> str:
           parts = cmd.strip().split()
@@ -116,17 +115,17 @@ let
           )
           try:
               r = requests.post(
-                  OLLAMA,
+                  LLAMA,
                   json={
-                      "model": MODEL,
                       "prompt": prompt,
                       "stream": False,
-                      "options": {"temperature": 0.3, "num_ctx": 8192},
+                      "temperature": 0.3,
+                      "n_predict": 4096,
                   },
                   timeout=600,
               )
               r.raise_for_status()
-              return r.json().get("response", "* LLM returned no response\n")
+              return r.json().get("content", "* LLM returned no response\n")
           except Exception as exc:
               return f"* LLM call failed: {exc}\n"
 
@@ -148,12 +147,15 @@ let
 in
 {
   config = lib.mkIf (cfg.enable && aCfg.enable) {
-    services.ollama = {
-      enable = true;
-      package = ollamaPackage;
-      host = "127.0.0.1";
-      port = 11434;
-      loadModels = [ aCfg.model ];
+    systemd.services.marchyo-llama-server = {
+      description = "llama-server for marchyo tracking analysis";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${llamaCppPackage}/bin/llama-server -m ${aCfg.model} --host 127.0.0.1 --port 8012 -c 8192";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
     };
 
     environment.systemPackages = [
@@ -162,8 +164,8 @@ in
 
     systemd.user.services.marchyo-tracking-weekly-analysis = {
       description = "Marchyo tracking: weekly activity analysis";
-      after = [ "ollama.service" ];
-      wants = [ "ollama.service" ];
+      after = [ "marchyo-llama-server.service" ];
+      wants = [ "marchyo-llama-server.service" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${analysisScript}";
