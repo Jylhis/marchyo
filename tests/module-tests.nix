@@ -272,11 +272,14 @@ in
     marchyo.users.testuser.wakatimeApiKey = "waka_test_00000000-0000-0000-0000-000000000000";
   });
 
-  # Tracking: analysis module (exercises inline PrefixSpan + Ollama wiring)
+  # Tracking: analysis module (exercises inline PrefixSpan + llama-server wiring)
   eval-tracking-analysis = testNixOS "tracking-analysis" (withTestUser {
     marchyo.tracking = {
       enable = true;
-      analysis.enable = true;
+      analysis = {
+        enable = true;
+        model = "/tmp/dummy.gguf";
+      };
     };
   });
 
