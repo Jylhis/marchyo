@@ -16,24 +16,29 @@ Marchyo is a modular NixOS configuration flake providing curated system and Home
 ## Commands
 
 ```bash
-nix flake check          # Validate configuration and run all tests (run before every commit)
-nix fmt                  # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt) — run before every commit
-nix develop              # Enter development shell
+# Justfile recipes (preferred workflow)
+just check               # Lint + eval checks (nix flake check, statix, deadnix)
+just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
+just build               # Build reference NixOS configuration
+just update              # Update all pins in sync: npins -> devenv.lock -> flake.lock
+just verify              # Verify all lock files reference the same nixpkgs rev
+just vm                  # Run QEMU VM (x86_64-linux only)
+
+# Direct Nix commands
+nix flake check          # Validate configuration and run all tests
+nix fmt                  # Format all Nix code via treefmt-nix
 nix flake show           # Display all flake outputs
 nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available tests
-```
 
-Running a VM for local testing (x86_64-linux only):
-
-```bash
-nix run                  # Runs apps.x86_64-linux.default — a QEMU VM with all features enabled
+# Development shell
+devenv shell             # Enter development shell (no experimental features needed)
 ```
 
 There is no way to run a single test in isolation; `nix flake check` runs them all (they are fast evaluation-only checks).
 
 ## Code Style
 
-- Format with `nix fmt` before committing — this is mandatory, CI enforces it
+- Format with `just fmt` (or `nix fmt`) before committing — this is mandatory, CI enforces it
 - Follow conventional commit message format (e.g. `feat:`, `fix:`, `chore:`)
 - Use `lib.mkIf cfg.someFlag` for conditional configuration
 - Use `lib.mkDefault` for options that consumers should be able to override
@@ -41,14 +46,26 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 
 ## Architecture
 
+### Hybrid Non-Flake + Flake Architecture
+
+All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper (~40 lines) that imports `default.nix` and forwards outputs. Development uses `devenv.sh` (no experimental features required). npins is the single source of truth for the nixpkgs revision, synchronized across `npins/sources.json`, `devenv.lock`, and `flake.lock`.
+
 ### Module Organization
 
 ```
+default.nix         # Source of truth — takes { inputs }, returns all outputs
+overlay.nix         # Nixpkgs overlay (vicinae, noctalia, worktrunk, hyprmon, plymouth-marchyo-theme)
+flake.nix           # Thin re-export wrapper — imports default.nix, forwards outputs
+treefmt.nix         # Formatter config for treefmt-nix
+devenv.nix          # Development shell configuration
+devenv.yaml         # devenv inputs (nixpkgs pinned to npins rev)
+Justfile            # Task runner (check, fmt, build, update, verify)
+statix.toml         # Statix linter configuration
+npins/              # Nixpkgs pin — single source of truth for nixpkgs revision
 modules/nixos/      # NixOS system-level modules (~31 modules)
 modules/home/       # Home Manager user-level modules (~30 modules)
 modules/generic/    # Shared modules imported by both nixos and home default.nix (no own default.nix)
 packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
-overlays/           # Nixpkgs overlays (vicinae, noctalia, worktrunk)
 tests/              # Evaluation-based test suite (no builds required)
 disko/              # Disk partitioning configurations (not wired into flake outputs)
 installer/          # ISO build configs (not wired into flake outputs)
@@ -67,6 +84,10 @@ templates/workstation/  # Developer workstation template
 
 ### Key Files
 
+- `default.nix` — **Source of truth** for all outputs. Takes `{ inputs }:`, returns nixosModules, homeModules, overlays, templates, nixosConfigurations, and per-system constructors (mkChecks, mkFormatter, mkApps, legacyPackages).
+- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function exposing external packages (vicinae, noctalia, worktrunk) and custom packages (hyprmon, plymouth-marchyo-theme).
+- `flake.nix` — Thin wrapper. Imports `default.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
+- `npins/sources.json` — Single source of truth for the nixpkgs revision. All lock files sync to this.
 - `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~640 lines). Single source of truth for the option namespace.
 - `modules/nixos/default.nix` — Import list for all NixOS modules (order matters for some modules).
 - `modules/home/default.nix` — Import list for all Home Manager modules.
@@ -139,7 +160,7 @@ Tests in `tests/` are fast evaluation-based checks (no builds required). Two cat
 - **Module tests** (`module-tests.nix`): Verify NixOS configs evaluate without errors for various feature combinations (minimal, desktop, development, all features, themes, keyboard layouts, GPU configs, default apps).
 - **Lib tests** (`lib-tests.nix`): Unit tests for lib functions using `assertTest` helper.
 
-All changes must pass `nix flake check`.
+All changes must pass `just check` (or `nix flake check`).
 
 ## Cross-Module Data Flow
 
@@ -275,7 +296,7 @@ marchyo.keyboard.layouts = [
 
 **When ending a work session**, complete ALL steps below. Work is NOT complete until `git push` succeeds.
 
-1. **Run quality gates** (if code changed) — `nix flake check` and `nix fmt`
+1. **Run quality gates** (if code changed) — `just check` and `just fmt`
 2. **Push to remote** — This is MANDATORY:
    ```bash
    git pull --rebase
@@ -303,7 +324,8 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `options.nix` with deprecation notes in their descriptions.
 - **`marchyo.theme.scheme` is defined but not consumed**: The option exists in `options.nix` but no module reads it. Stylix `base16Scheme` is hardcoded to `nord`/`nord-light` in `modules/nixos/default.nix`. Setting `marchyo.theme.scheme` currently has no effect.
 - **Unreferenced module files**: `modules/nixos/powersave.nix` and `modules/nixos/audio.nix` exist on disk but are not imported by `modules/nixos/default.nix`. Similarly, `disko/` and `installer/` directories are not wired into flake outputs.
-- **`allowUnfree = true`**: The flake sets this globally in `legacyPackages` and in test configs.
-- **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix. All must pass.
+- **`allowUnfree = true`**: Set globally in `legacyPackages` (via `default.nix`) and in test configs.
+- **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.
+- **Nixpkgs pin sync**: npins is the single source of truth. Run `just update` to bump nixpkgs and sync all lock files. Run `just verify` to check they're aligned. Renovate can update `flake.lock` but won't update npins — `just verify` in CI catches drift.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeModules` in isolation.
 - **`docs/`**: Contains Mintlify documentation. The `README.md` links to it. Option documentation in `docs/configuration/` should be kept in sync with `options.nix`.

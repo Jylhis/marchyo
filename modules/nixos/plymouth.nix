@@ -5,7 +5,7 @@
       plymouth = {
         enable = lib.mkDefault true;
         themePackages = lib.mkDefault [
-          (pkgs.callPackage ../../packages/plymouth-marchyo-theme/package.nix { })
+          pkgs.plymouth-marchyo-theme
         ];
         theme = lib.mkDefault "marchyo";
       };
