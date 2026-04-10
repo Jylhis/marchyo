@@ -800,6 +800,32 @@ in
           '';
         };
       };
+
+      langfuse = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Enable a local Langfuse instance for LLM observability and tracing.
+
+            Runs Langfuse as a native NixOS service (built from source) with
+            a dedicated PostgreSQL database. The web UI and API are available
+            at http://localhost:<port>. All data stays local.
+
+            This collector is NOT auto-enabled by marchyo.tracking.enable
+            and must be opted into explicitly.
+          '';
+        };
+
+        port = mkOption {
+          type = types.port;
+          default = 3030;
+          description = ''
+            Port on which the Langfuse web UI and API listen.
+            Defaults to 3030 to avoid conflict with wakapi (port 3000).
+          '';
+        };
+      };
     };
 
     inputMethod = {

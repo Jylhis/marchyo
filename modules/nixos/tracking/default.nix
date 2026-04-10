@@ -11,6 +11,7 @@ in
     ./system.nix
     ./aggregation.nix
     ./analysis.nix
+    ./langfuse.nix
   ];
 
   # When tracking is enabled, auto-enable all collectors except screenshots.
