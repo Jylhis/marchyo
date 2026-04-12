@@ -10,7 +10,6 @@
     [
       # File format support
       libheif
-      libheif.out
 
       # Players
       mpv
