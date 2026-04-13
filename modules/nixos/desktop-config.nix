@@ -67,17 +67,11 @@ in
       wireplumber.enable = true;
     };
 
-    # Fonts
+    # Fonts — defaultFonts are set in modules/generic/fontconfig.nix and
+    # overridden by Stylix in modules/nixos/default.nix.
     fonts = {
       enableDefaultPackages = true;
-      fontconfig = {
-        enable = true;
-        defaultFonts = {
-          monospace = [ "JetBrainsMono Nerd Font" ];
-          sansSerif = [ "Inter" ];
-          serif = [ "Liberation Serif" ];
-        };
-      };
+      fontconfig.enable = true;
     };
 
     # Nautilus extension discovery (sushi previews, etc.)
