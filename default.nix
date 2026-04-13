@@ -11,6 +11,44 @@ let
 
   overlay = import ./overlay.nix { inherit inputs; };
 
+  # Shared config used by both nixosConfigurations.default and mkApps VM.
+  sharedDemoConfig =
+    { lib, ... }:
+    {
+      nixpkgs.overlays = [ overlay ];
+      nixpkgs.config.allowUnfree = true;
+
+      boot.loader.systemd-boot.enable = lib.mkForce false;
+      boot.loader.grub.enable = lib.mkForce false;
+      fileSystems."/" = {
+        device = "/dev/vda";
+        fsType = "ext4";
+      };
+      system.stateVersion = "25.11";
+
+      marchyo = {
+        desktop.enable = true;
+        development.enable = true;
+        media.enable = true;
+        office.enable = true;
+        graphics.vendors = [ "intel" ];
+        users.developer = {
+          fullname = "Marchyo Developer";
+          email = "dev@example.org";
+        };
+      };
+
+      users.users.developer = {
+        isNormalUser = true;
+        password = "password";
+        extraGroups = [
+          "wheel"
+          "networkmanager"
+        ];
+      };
+      services.getty.autologinUser = "developer";
+    };
+
   nixosModules = {
     default = {
       imports = [
@@ -62,44 +100,8 @@ in
     system = "x86_64-linux";
     modules = [
       nixosModules.default
-      (
-        { lib, ... }:
-        {
-          networking.hostName = "marchyo-default";
-          nixpkgs.overlays = [ overlay ];
-          nixpkgs.config.allowUnfree = true;
-
-          boot.loader.systemd-boot.enable = lib.mkForce false;
-          boot.loader.grub.enable = lib.mkForce false;
-          fileSystems."/" = {
-            device = "/dev/vda";
-            fsType = "ext4";
-          };
-          system.stateVersion = "25.11";
-
-          marchyo = {
-            desktop.enable = true;
-            development.enable = true;
-            media.enable = true;
-            office.enable = true;
-            graphics.vendors = [ "intel" ];
-            users.developer = {
-              fullname = "Marchyo Developer";
-              email = "dev@example.org";
-            };
-          };
-
-          users.users.developer = {
-            isNormalUser = true;
-            password = "password";
-            extraGroups = [
-              "wheel"
-              "networkmanager"
-            ];
-          };
-          services.getty.autologinUser = "developer";
-        }
-      )
+      sharedDemoConfig
+      { networking.hostName = "marchyo-default"; }
     ];
   };
 
@@ -136,50 +138,17 @@ in
         inherit system;
         modules = [
           nixosModules.default
+          sharedDemoConfig
           (
-            {
-              lib,
-              modulesPath,
-              ...
-            }:
+            { modulesPath, ... }:
             {
               imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
-
               networking.hostName = "marchyo-vm";
-
-              nixpkgs.overlays = [ overlay ];
-              nixpkgs.config.allowUnfree = true;
-
               virtualisation = {
                 memorySize = 4096;
                 cores = 4;
                 graphics = true;
               };
-
-              boot.loader.systemd-boot.enable = lib.mkForce false;
-              system.stateVersion = "25.11";
-
-              marchyo = {
-                desktop.enable = true;
-                development.enable = true;
-                media.enable = true;
-                office.enable = true;
-                graphics.vendors = [ "intel" ];
-                users.developer = {
-                  fullname = "Marchyo Developer";
-                  email = "dev@example.org";
-                };
-              };
-
-              users.users.developer = {
-                isNormalUser = true;
-                password = "password";
-                extraGroups = [
-                  "wheel"
-                  "networkmanager"
-                ];
-              };
-              services.getty.autologinUser = "developer";
             }
           )
         ];
