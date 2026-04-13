@@ -19,7 +19,7 @@ update:
     npins update
     REV=$(jq -r '.pins.nixpkgs.revision' npins/sources.json)
     echo "Syncing all locks to nixpkgs $REV"
-    sed -i '' "s|url: github:NixOS/nixpkgs/.*|url: github:NixOS/nixpkgs/$REV|" devenv.yaml
+    printf 'inputs:\n  nixpkgs:\n    url: github:NixOS/nixpkgs/%s\n' "$REV" > devenv.yaml
     devenv update
     nix flake lock --override-input nixpkgs "github:NixOS/nixpkgs/$REV"
     echo "Done. All locks pinned to $REV"
