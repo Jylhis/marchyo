@@ -1,7 +1,6 @@
 { lib, ... }:
 let
   inherit (lib) mkOption types;
-  # cfg = config.marchyo;
 
   userOpts =
     { name, ... }:
