@@ -14,50 +14,7 @@
   ...
 }:
 let
-
-  # fcitx5 status script for waybar
-  # Shows current input method: keyboard layouts (us, fi, cn) or IME (拼, あ, 한)
-  fcitx5StatusScript = pkgs.writeShellScript "fcitx5-status.sh" ''
-    # Get current fcitx5 input method name
-    status=$(${pkgs.fcitx5}/bin/fcitx5-remote -n 2>/dev/null)
-
-    # Check if fcitx5 is running
-    if [ -z "$status" ]; then
-        echo '{"text":"","class":"inactive","tooltip":"fcitx5 not running"}'
-        exit 0
-    fi
-
-    # Handle different input methods
-    case "$status" in
-        keyboard-*)
-            # Extract layout code from keyboard-us, keyboard-fi, etc.
-            layout=''${status#keyboard-}
-            # Show first 2 chars of layout code (e.g., "us", "fi", "cn")
-            echo '{"text":"'"''${layout:0:2}"'","class":"keyboard","tooltip":"Keyboard: '"$layout"'"}'
-            ;;
-        pinyin)
-            echo '{"text":"拼","class":"ime-active","tooltip":"Chinese Pinyin"}'
-            ;;
-        mozc)
-            echo '{"text":"あ","class":"ime-active","tooltip":"Japanese Mozc"}'
-            ;;
-        hangul)
-            echo '{"text":"한","class":"ime-active","tooltip":"Korean Hangul"}'
-            ;;
-        unicode)
-            echo '{"text":"⌨","class":"ime-active","tooltip":"Unicode Picker"}'
-            ;;
-        *)
-            # Fallback for unknown input methods - show first 2 chars
-            echo '{"text":"'"''${status:0:2}"'","class":"ime-active","tooltip":"'"$status"'"}'
-            ;;
-    esac
-  '';
-
-  # Generate CSS with colorScheme
-  styleWithColors = builtins.readFile ../../assets/applications/waybar.css;
-
-  # Terminal emulator to use for clicking modules
+  waybarStyle = builtins.readFile ../../assets/applications/waybar.css;
   terminal = "${pkgs.ghostty}/bin/ghostty";
 in
 {
@@ -65,7 +22,7 @@ in
     programs.waybar = {
       enable = true;
       systemd.enable = true;
-      style = styleWithColors;
+      style = waybarStyle;
       settings = [
         {
           "reload_style_on_change" = true;
@@ -81,7 +38,6 @@ in
           ];
           modules-right = [
             "group/tray-expander"
-            # "custom/fcitx5"
             "hyprland/language"
             "bluetooth"
             "network"
@@ -117,13 +73,6 @@ in
           "hyprland/language" = {
             format = "{short}";
             tooltip-format = "{long}";
-          };
-          "custom/fcitx5" = {
-            exec = "${fcitx5StatusScript}";
-            return-type = "json";
-            interval = 1;
-            format = "{}";
-            on-click = "${pkgs.qt6Packages.fcitx5-configtool}/bin/fcitx5-configtool";
           };
           cpu = {
             interval = 5;
@@ -203,7 +152,6 @@ in
             on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
           };
           wireplumber = {
-            # Changed from "pulseaudio"
             format = "{icon}";
             format-icons = {
               default = [
@@ -216,10 +164,8 @@ in
             scroll-step = 5;
             on-click = "pavucontrol";
             tooltip-format = "Playing at {volume}%";
-            on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; # Updated command
-            # "on-click": "$TERMINAL --class=Wiremix -e wiremix",
-            # "on-click-right": "pamixer -t",
-            max-volume = 150; # Optional: allow volume over 100%
+            on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+            max-volume = 150;
           };
           tray = {
             spacing = 13;
