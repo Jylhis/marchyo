@@ -6,7 +6,7 @@
   nixpkgs,
   home-manager,
   nixosModules,
-  homeModules,
+  homeManagerModules,
 }:
 let
   # Create pkgs with unfree allowed for tests
@@ -21,7 +21,7 @@ let
     inherit
       lib
       nixosModules
-      homeModules
+      homeManagerModules
       home-manager
       ;
   };

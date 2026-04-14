@@ -1,5 +1,5 @@
 {
-  inputs,
+  marchyo,
   ...
 }:
 
@@ -40,7 +40,7 @@
 
   home-manager.users.developer = {
     imports = [
-      inputs.marchyo.homeModules.default
+      marchyo.homeManagerModules.default
     ];
     home.stateVersion = "25.11";
   };
