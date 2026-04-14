@@ -49,27 +49,31 @@ let
       services.getty.autologinUser = "developer";
     };
 
+  # Shared home-manager settings for module outputs
+  hmSharedConfig = {
+    home-manager = {
+      useGlobalPkgs = true;
+      sharedModules = [
+        noctalia.homeModules.default
+        vicinae.homeManagerModules.default
+      ];
+      extraSpecialArgs = {
+        inherit
+          noctalia
+          vicinae
+          stylix
+          ;
+      };
+    };
+  };
+
   nixosModules = {
     default = {
       imports = [
         home-manager.nixosModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            sharedModules = [
-              noctalia.homeModules.default
-              vicinae.homeManagerModules.default
-            ];
-            extraSpecialArgs = {
-              inherit
-                noctalia
-                vicinae
-                stylix
-                ;
-            };
-          };
-        }
+        hmSharedConfig
         stylix.nixosModules.stylix
+        { nixpkgs.overlays = [ overlay ]; }
 
         ./modules/nixos/default.nix
       ];
@@ -77,14 +81,25 @@ let
     inherit (home-manager.nixosModules) home-manager;
   };
 
-  homeModules = {
+  darwinModules = {
+    default = {
+      imports = [
+        home-manager.darwinModules.home-manager
+        hmSharedConfig
+        { nixpkgs.overlays = [ overlay ]; }
+
+        ./modules/darwin/default.nix
+      ];
+    };
+  };
+
+  homeManagerModules = {
     default = ./modules/home/default.nix;
     _1password = ./modules/home/_1password.nix;
   };
 in
 {
-  inherit nixosModules homeModules;
-  inherit (nixpkgs) lib;
+  inherit nixosModules darwinModules homeManagerModules;
 
   overlays.default = overlay;
 
@@ -113,6 +128,18 @@ in
       config.allowUnfree = true;
     };
 
+  mkPackages =
+    { system }:
+    let
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+      };
+    in
+    {
+      inherit (pkgs) hyprmon plymouth-marchyo-theme;
+    };
+
   mkChecks =
     { system }:
     import ./tests {
@@ -120,7 +147,7 @@ in
       inherit (nixpkgs) lib;
       inherit nixpkgs home-manager;
       nixosModules = nixosModules.default;
-      homeModules = homeModules.default;
+      homeManagerModules = homeManagerModules.default;
     };
 
   mkFormatter =

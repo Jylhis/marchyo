@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nix-darwin = {
+      url = "github:LnL7/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,23 +38,29 @@
     inputs@{ nixpkgs, ... }:
     let
       marchyo = import ./default.nix { inherit inputs; };
-      systems = [
+      linuxSystems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+      allSystems = linuxSystems ++ [
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
+      forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
+      forAllSystems = nixpkgs.lib.genAttrs allSystems;
     in
     {
       inherit (marchyo)
         nixosModules
-        homeModules
+        darwinModules
+        homeManagerModules
         nixosConfigurations
         overlays
-        lib
         templates
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
-      checks = forAllSystems (system: marchyo.mkChecks { inherit system; });
+      packages = forLinuxSystems (system: marchyo.mkPackages { inherit system; });
+      checks = forLinuxSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });
       apps = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (system: marchyo.mkApps { inherit system; });
     };
