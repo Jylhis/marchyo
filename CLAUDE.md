@@ -22,9 +22,10 @@ Marchyo is a modular NixOS configuration flake providing curated system, Home Ma
 just check               # Lint + eval checks (nix flake check, statix, deadnix)
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
 just build               # Build reference NixOS configuration
-just update              # Update all pins in sync: npins -> devenv.lock -> flake.lock
-just verify              # Verify all lock files reference the same nixpkgs rev
-just vm                  # Run QEMU VM (x86_64-linux only)
+just update              # Update all inputs: flake.lock -> devenv.lock
+just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
+just run                 # Run default configuration VM (x86_64-linux only)
+just vm                  # Alias for just run
 
 # Direct Nix commands
 nix flake check          # Validate configuration and run all tests
@@ -50,20 +51,21 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 
 ### Hybrid Non-Flake + Flake Architecture
 
-All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper (~40 lines) that imports `default.nix` and forwards outputs. Development uses `devenv.sh` (no experimental features required). npins is the single source of truth for the nixpkgs revision, synchronized across `npins/sources.json`, `devenv.lock`, and `flake.lock`.
+All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. `default.nix` is a flake-compat shim for non-flake consumers (devenv, `nix-build`). Development uses `devenv.sh` (no experimental features required). `flake.lock` is the single source of truth for the nixpkgs revision, synchronized to `devenv.lock` via `just update`.
 
 ### Module Organization
 
 ```
-default.nix         # Source of truth — takes { inputs }, returns all outputs
+flake.nix           # Flake entry point — imports outputs.nix, wraps per-system outputs
+flake.lock          # Single source of truth for all pinned inputs (nixpkgs, home-manager, etc.)
+outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
+default.nix         # Flake-compat shim — exposes flake outputs to non-flake consumers
 overlay.nix         # Nixpkgs overlay (vicinae, noctalia, worktrunk, hyprmon, plymouth-marchyo-theme)
-flake.nix           # Thin re-export wrapper — imports default.nix, forwards outputs
 treefmt.nix         # Formatter config for treefmt-nix
 devenv.nix          # Development shell configuration
-devenv.yaml         # devenv inputs (nixpkgs pinned to npins rev)
+devenv.yaml         # devenv inputs (nixpkgs pinned to same rev as flake.lock)
 Justfile            # Task runner (check, fmt, build, update, verify)
 statix.toml         # Statix linter configuration
-npins/              # Nixpkgs pin — single source of truth for nixpkgs revision
 modules/nixos/      # NixOS system-level modules (~31 modules)
 modules/darwin/     # nix-darwin modules (imports shared options + generic modules)
 modules/home/       # Home Manager user-level modules (~30 modules)
@@ -96,10 +98,11 @@ Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate
 
 ### Key Files
 
-- `default.nix` — **Source of truth** for all outputs. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
+- `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`. Includes `flake-compat` as a non-flake input.
+- `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, stylix, etc.). `devenv.lock` syncs to this via `just update`.
+- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
+- `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. All packages are Linux-only (wrapped in `lib.optionalAttrs stdenv.isLinux`).
-- `flake.nix` — Thin wrapper. Imports `default.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
-- `npins/sources.json` — Single source of truth for the nixpkgs revision. All lock files sync to this.
 - `modules/nixos/options.nix` — **All** `marchyo.*` options are defined here (~640 lines). Single source of truth for the option namespace.
 - `modules/nixos/default.nix` — Import list for all NixOS modules (order matters for some modules).
 - `modules/darwin/default.nix` — Import list for nix-darwin modules (imports shared options + generic modules).
@@ -337,9 +340,9 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `options.nix` with deprecation notes in their descriptions.
 - **`marchyo.theme.scheme` is defined but not consumed**: The option exists in `options.nix` but no module reads it. Stylix `base16Scheme` is hardcoded to `nord`/`nord-light` in `modules/nixos/default.nix`. Setting `marchyo.theme.scheme` currently has no effect.
 - **Unreferenced module files**: `modules/nixos/powersave.nix` and `modules/nixos/audio.nix` exist on disk but are not imported by `modules/nixos/default.nix`. Similarly, `disko/` and `installer/` directories are not wired into flake outputs.
-- **`allowUnfree = true`**: Set globally in `legacyPackages` (via `default.nix`) and in test configs.
+- **`allowUnfree = true`**: Set globally in `legacyPackages` (via `outputs.nix`) and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.
-- **Nixpkgs pin sync**: npins is the single source of truth for the nixpkgs revision; all other flake inputs (home-manager, stylix, etc.) are flake-only and pinned solely in `flake.lock`. Run `just update` to bump nixpkgs and sync all lock files (npins → devenv.yaml → devenv.lock → flake.lock). Run `just verify` to check they're aligned. Renovate updates `flake.lock` independently via `lockFileMaintenance` but does not update npins or devenv.lock — CI's `verify` job catches this drift so the PR will fail until `just update` is run to re-sync.
+- **Nixpkgs pin sync**: `flake.lock` is the single source of truth for the nixpkgs revision and all other flake inputs. Run `just update` to bump all inputs and sync `devenv.lock` to the same nixpkgs rev (`nix flake update` → extract rev → update `devenv.yaml` → `devenv update`). Run `just verify` to check they're aligned. Renovate updates `flake.lock` independently via `lockFileMaintenance` but does not update `devenv.lock` — CI's `verify` job catches this drift so the PR will fail until `just update` is run to re-sync.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeManagerModules` in isolation.
 - **Shared treefmt config**: `treefmt.nix` is the single source of truth for formatting. Both the flake formatter (`nix fmt`) and the devenv shell (`treefmt`) use it. devenv.yaml includes `treefmt-nix` as an input for this purpose.
 - **Darwin module is minimal**: `darwinModules.default` imports shared options, nix-settings, and generic modules. Desktop/Wayland/systemd modules are NixOS-only. The overlay is embedded but all packages are Linux-only (`optionalAttrs`).
