@@ -7,13 +7,11 @@ in
 
   packages = [
     treefmt
-    pkgs.npins
     pkgs.just
     pkgs.jq
   ];
 
   enterTest = ''
-    npins --version
     just --version
     jq --version
     treefmt --version

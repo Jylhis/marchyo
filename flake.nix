@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -37,7 +41,7 @@
   outputs =
     inputs@{ nixpkgs, ... }:
     let
-      marchyo = import ./default.nix { inherit inputs; };
+      marchyo = import ./outputs.nix { inherit inputs; };
       linuxSystems = [
         "x86_64-linux"
         "aarch64-linux"
