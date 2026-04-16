@@ -34,17 +34,24 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Check nixpkgs rev sync
+      - name: Check shared input rev sync
         run: |
-          FLAKE_REV=$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)
-          DEVENV_REV=$(jq -r '.nodes.nixpkgs.locked.rev' devenv.lock)
-          echo "flake:  $FLAKE_REV"
-          echo "devenv: $DEVENV_REV"
-          if [ "$FLAKE_REV" != "$DEVENV_REV" ]; then
-            echo "::error::nixpkgs revs diverged across lock files"
-            exit 1
-          fi
-          echo "All locks pinned to $FLAKE_REV"
+          set -euo pipefail
+          INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
+          fail=0
+          for name in $INPUTS; do
+            FLAKE_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' flake.lock) \
+              || { echo "::error::$name missing from flake.lock"; fail=1; continue; }
+            DEVENV_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' devenv.lock) \
+              || { echo "::error::$name missing from devenv.lock"; fail=1; continue; }
+            echo "$name: flake=$FLAKE_REV devenv=$DEVENV_REV"
+            if [ "$FLAKE_REV" != "$DEVENV_REV" ]; then
+              echo "::error::$name rev diverged across lock files"
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ] || exit 1
+          echo "All shared inputs pinned in sync."
   build:
     runs-on: ubuntu-latest
     needs: [lints, check, verify]
