@@ -36,9 +36,14 @@ in
   };
 
   config = mkIf config.programs._1password.enable {
-    # Ensure 1Password is installed before configuring SSH agent
+    # Darwin path is quoted because it contains a space.
     programs.ssh.extraConfig = lib.optionalString config.programs.ssh.enable ''
-      IdentityAgent ~/.1password/agent.sock
+      IdentityAgent ${
+        if pkgs.stdenv.isDarwin then
+          "\"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\""
+        else
+          "~/.1password/agent.sock"
+      }
       Include ~/.ssh/1Password/config
     '';
 
