@@ -14,6 +14,7 @@ let
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
+  useWofi = ((osConfig.marchyo or { }).desktop or { }).useWofi or false;
 
   browserHyprlandCommands = {
     brave = "brave --new-window";
@@ -323,7 +324,7 @@ in
           "SUPER, mouse_up, Scroll active workspace backward, workspace, e-1"
         ];
         bind = [
-          "SUPER, R, exec, vicinae toggle"
+          (if useWofi then "SUPER, R, exec, wofi --show drun" else "SUPER, R, exec, vicinae toggle")
 
           "SUPER, Page_Up, fullscreen, 0"
 
@@ -414,7 +415,11 @@ in
         exec-once = [
           # Essential services
           "kanshi"
+        ]
+        ++ lib.optionals (!useWofi) [
           "vicinae server"
+        ]
+        ++ [
           "fcitx5 -d --replace"
 
           # Clipboard

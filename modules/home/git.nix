@@ -1,11 +1,21 @@
 {
-  osConfig,
+  osConfig ? { },
   config,
   lib,
   ...
 }:
 let
-  userConfig = osConfig.marchyo.users."${config.home.username}";
+  marchyoUsers = (osConfig.marchyo or { }).users or { };
+  hasUser = builtins.hasAttr config.home.username marchyoUsers;
+  userConfig =
+    if hasUser then
+      marchyoUsers.${config.home.username}
+    else
+      {
+        enable = false;
+        fullname = "";
+        email = "";
+      };
 in
 {
   programs = lib.mkIf userConfig.enable {

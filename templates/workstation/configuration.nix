@@ -44,15 +44,15 @@
     ];
     home.stateVersion = "25.11";
   };
-  # User account
+  # User account — change password after first login
   users.users.developer = {
-    #   isNormalUser = true;
-    initialPassword = "";
-    #   description = "Developer Name";
-    #   extraGroups = [
-    #     "networkmanager"
-    #     "wheel"
-    #   ];
+    isNormalUser = true;
+    initialPassword = "changeme";
+    description = "Developer Name";
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
   };
 
   nixpkgs.config.allowUnfree = true;

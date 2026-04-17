@@ -44,21 +44,13 @@ in
       };
     };
 
-    # Development tools
+    # Development tools (shell/tui/container tools are in packages.nix)
     environment.systemPackages = with pkgs; [
-      # Version control
-      git
-      gh
-
       # Build tools
       gnumake
       cmake
       gcc
       pkg-config
-
-      # Container tools
-      docker-compose
-      lazydocker
 
       # Virtual machines
       virt-manager
@@ -78,9 +70,6 @@ in
       jq
       yq
       tree
-      ripgrep
-      fd
-      eza
     ];
 
     # Enable KVM modules
