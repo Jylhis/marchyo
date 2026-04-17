@@ -310,18 +310,10 @@ marchyo.keyboard.layouts = [
 
 ## Session Completion
 
-**When ending a work session**, complete ALL steps below. Work is NOT complete until `git push` succeeds.
+**When ending a work session**, complete ALL steps below. Work is NOT complete until changes are committed.
 
 1. **Run quality gates** (if code changed) — `just check` and `just fmt`
-2. **Push to remote** — This is MANDATORY:
-   ```bash
-   git pull --rebase
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-3. **Verify** — All changes committed AND pushed
-
-**Critical rule:** Work is NOT complete until `git push` succeeds.
+2. **Verify** — All changes committed
 
 ## CI Pipeline
 
