@@ -272,12 +272,26 @@ in
     marchyo.users.testuser.wakatimeApiKey = "waka_test_00000000-0000-0000-0000-000000000000";
   });
 
-  # Tracking: analysis module (exercises inline PrefixSpan + Ollama wiring)
+  # Tracking: analysis module — stats-only (no model)
   eval-tracking-analysis = testNixOS "tracking-analysis" (withTestUser {
     marchyo.tracking = {
       enable = true;
       analysis.enable = true;
     };
+  });
+
+  # Tracking: analysis module — with LLM model configured
+  eval-tracking-analysis-with-model = testNixOS "tracking-analysis-model" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      analysis.enable = true;
+      analysis.model = "/data/models/test.gguf";
+    };
+  });
+
+  # Tracking: full cascade does NOT auto-enable analysis
+  eval-tracking-no-auto-analysis = testNixOS "tracking-no-auto-analysis" (withTestUser {
+    marchyo.tracking.enable = true;
   });
 
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)

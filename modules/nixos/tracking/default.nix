@@ -24,7 +24,8 @@ in
       system.auditd = lib.mkDefault true;
       system.fileWatch = lib.mkDefault true;
       aggregation.enable = lib.mkDefault true;
-      analysis.enable = lib.mkDefault true;
+      # analysis.enable is deliberately left out: it requires explicit opt-in
+      # because it pulls in a Python env and optionally llama.cpp.
       # desktop.screenshots.enable is deliberately left false
     };
   };
