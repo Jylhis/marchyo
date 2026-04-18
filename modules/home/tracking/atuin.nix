@@ -17,6 +17,8 @@ in
     programs.atuin = {
       enable = true;
       enableBashIntegration = true;
+      enableZshIntegration = true;
+      enableFishIntegration = true;
       settings = {
         search_mode = "fuzzy";
         filter_mode = "global";
