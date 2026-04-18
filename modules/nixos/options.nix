@@ -707,6 +707,74 @@ in
           default = 3000;
           description = "Port for the local wakapi service.";
         };
+
+        plugins = {
+          brave.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Brave browser.";
+          };
+
+          chrome.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Google Chrome.";
+          };
+
+          chromium.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Chromium.";
+          };
+
+          firefox.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Firefox.";
+          };
+
+          emacs.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Emacs via wakatime-mode.";
+          };
+
+          vscode.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for VS Code.";
+          };
+
+          vscodium.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for VS Codium.";
+          };
+
+          neovim.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Neovim via vim-wakatime.";
+          };
+
+          vim.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Vim via vim-wakatime.";
+          };
+
+          helix.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Helix.";
+          };
+
+          zed.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Zed.";
+          };
+        };
       };
 
       git = {
