@@ -17,9 +17,12 @@ let
     WATCH_DIRS=()
     [ -d "$HOME/Developer" ] && WATCH_DIRS+=("$HOME/Developer")
     [ -d "$HOME/.config" ]   && WATCH_DIRS+=("$HOME/.config")
-    if [ ''${#WATCH_DIRS[@]} -eq 0 ]; then
-      exec ${pkgs.coreutils}/bin/sleep infinity
-    fi
+    while [ ''${#WATCH_DIRS[@]} -eq 0 ]; do
+      ${pkgs.coreutils}/bin/sleep 60
+      WATCH_DIRS=()
+      [ -d "$HOME/Developer" ] && WATCH_DIRS+=("$HOME/Developer")
+      [ -d "$HOME/.config" ]   && WATCH_DIRS+=("$HOME/.config")
+    done
     exec ${pkgs.inotify-tools}/bin/inotifywait -m -r \
       --exclude '(\.git|node_modules|target|__pycache__|\.cache|result|\.direnv)' \
       -e close_write,create,delete,moved_to \
