@@ -1,5 +1,34 @@
 {
   programs = {
+    zsh = {
+      enableCompletion = true;
+      enableVteIntegration = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      historySubstringSearch.enable = true;
+
+      history = {
+        ignoreDups = true;
+        ignoreAllDups = true;
+        ignoreSpace = true;
+        extended = true;
+        share = true;
+      };
+
+      initContent = ''
+        HISTORY_IGNORE="(exit|ls|bg|fg|history|clear|cd|rm|cat)"
+
+        bindkey " " magic-space
+
+        zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+        zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
+
+        setopt CORRECT
+        setopt AUTO_CD
+        setopt GLOB_DOTS
+      '';
+    };
+
     bash = {
       enable = true;
       enableCompletion = true;

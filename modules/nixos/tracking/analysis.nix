@@ -168,10 +168,6 @@ in
       };
     };
 
-    environment.systemPackages = [
-      pythonEnv
-    ];
-
     systemd.user.services.marchyo-tracking-weekly-analysis = {
       description = "Marchyo tracking: weekly activity analysis";
       serviceConfig = {

@@ -47,7 +47,7 @@ let
     let
       m = marchyoDefaults.musicPlayer or "spotify";
     in
-    if m == null then "spotify" else musicHyprlandCommands.${m};
+    if m == null then "xdg-open" else musicHyprlandCommands.${m};
 
 in
 {
@@ -210,15 +210,6 @@ in
           preserve_split = true;
           force_split = 2;
         };
-        # dwindle = {
-
-        #   smart_split = false;
-        #   smart_resizing = true;
-
-        #   special_scale_factor = 0.9;
-        #   split_width_multiplier = 1.2;
-        #   use_active_for_splits = true;
-        # };
 
         master = {
           new_status = "master";
@@ -269,11 +260,7 @@ in
           "no_screen_share on, match:class ^(1[p|P]assword)$"
           "tag +floating-window, match:class ^(1[p|P]assword)$"
 
-          # Just dash of transparency
           "opacity 0.97 0.9, match:class .*"
-
-          # 1Password
-          #"noscreenshare, class:^(1Password)$"
 
           # Picture-in-picture overlays
           "tag +pip, match:title (Picture.?in.?[Pp]icture)"
@@ -336,37 +323,9 @@ in
           "SUPER, mouse_up, Scroll active workspace backward, workspace, e-1"
         ];
         bind = [
-          # Quick access applications
-          # "SUPER, B, exec, $browser"
-          # "SUPER, T, exec, $terminal"
-          # "SUPER, F, exec, $fileManager"
-          # "SUPER, M, exec, $music"
-          # "SUPER, G, exec, emacsclient -cF '((visibility . nil))' -e '(emacs-run-launcher)'"
-
-          # Application launcher - matching Plasma's Meta key
           "SUPER, R, exec, vicinae toggle"
 
-          # Window management
-          # "SUPER, J, togglesplit"
-          # "SUPER, P, pseudo"
-          # "SUPER, V, togglefloating"
-          # "SUPER, Q, killactive"
-
-          # Window focus - matching Plasma's Meta+Alt+Arrow
-          # "SUPER, Left, movefocus, l"
-          # "SUPER, Right, movefocus, r"
-          # "SUPER, Up, movefocus, u"
-          # "SUPER, Down, movefocus, d"
-
-          # Window tiling - matching Plasma's Meta+Arrow
-          # "SUPER ALT, Left, movewindow, l"
-          # "SUPER ALT, Right, movewindow, r"
-          # "SUPER ALT, Up, movewindow, u"
-          # "SUPER ALT, Down, movewindow, d"
-
-          # Window maximize/minimize
-          "SUPER, Page_Up, fullscreen, 0" # Maximize Window
-          # "SUPER, Page_Down, movetoworkspacesilent, special" # Window Minimize equivalent
+          "SUPER, Page_Up, fullscreen, 0"
 
           # Workspace switching
           "SUPER, 1, focusworkspaceoncurrentmonitor, 1"
@@ -375,25 +334,9 @@ in
           "SUPER, 4, focusworkspaceoncurrentmonitor, 4"
           "SUPER, 5, focusworkspaceoncurrentmonitor, 5"
 
-          # Window resizing
-          # "SUPER CTRL, H, resizeactive, -20 0"
-          # "SUPER CTRL, L, resizeactive, 20 0"
-          # "SUPER CTRL, K, resizeactive, 0 -20"
-          # "SUPER CTRL, J, resizeactive, 0 20"
-
-          # Move windows to workspaces
-          # "SUPER SHIFT, 1, movetoworkspace, 1"
-          # "SUPER SHIFT, 2, movetoworkspace, 2"
-          # "SUPER SHIFT, 3, movetoworkspace, 3"
-          # "SUPER SHIFT, 4, movetoworkspace, 4"
-
           # Special workspace (scratchpad)
           "SUPER, S, togglespecialworkspace, magic"
           "SUPER SHIFT, S, movetoworkspace, special:magic"
-          # "SUPER, grave, togglespecialworkspace, magic"
-          # "SUPER SHIFT, grave, movetoworkspace, special:magic"
-          # "SUPER, minus, togglespecialworkspace, term"
-          # "SUPER SHIFT, minus, movetoworkspace, special:term"
 
           # Session management
           "SUPER, L, exec, hyprlock"
@@ -435,10 +378,6 @@ in
           "2"
           "3"
           "4"
-
-          # Special workspaces
-          # "special:magic, gapsout:50"
-          # "special:term, gapsout:30, gapsin:10"
         ];
 
         # Environment variables for optimal performance
@@ -447,13 +386,8 @@ in
           "XCURSOR_SIZE,24"
           "HYPRCURSOR_SIZE,24"
 
-          # Cursor theme
-          # "XCURSOR_THEME,Adwaita"
-          # "HYPRCURSOR_THEME,Adwaita"
-
-          # Wayland native performance (conservative)
-          "MOZ_ENABLE_WAYLAND,1"
-          "ELECTRON_OZONE_PLATFORM_HINT,auto"
+          # MOZ_ENABLE_WAYLAND and ELECTRON_OZONE_PLATFORM_HINT are set in
+          # modules/nixos/wayland.nix at the NixOS session level.
           "XDG_SESSION_TYPE,wayland"
           "XDG_CURRENT_DESKTOP,Hyprland"
           "XDG_SESSION_DESKTOP,Hyprland"
@@ -487,10 +421,7 @@ in
           "wl-paste --type text --watch cliphist store"
           "wl-paste --type image --watch cliphist store"
 
-          # Authentication and system
-          # "nm-applet"
           "1password --silent"
-
         ];
       };
     };
@@ -502,9 +433,6 @@ in
       wl-clip-persist
       cliphist
 
-      # Wallpaper and theming
-      wallust
-      pywal
       nwg-look
 
       # Screen recording
@@ -530,16 +458,9 @@ in
       pciutils
       usbutils
 
-      # Development tools integration
-      git-cliff
-      lazygit
-
       # System integration
       libnotify
       kanshi
-
-      # Network
-      networkmanagerapplet
 
       # Audio
       wireplumber
