@@ -1,6 +1,5 @@
-[disabled]
 # W20 (repeated_keys) fires on flat-attribute module style like:
 #   nixpkgs.config.allowUnfree = true;
 #   nixpkgs.hostPlatform = "...";
 # This is idiomatic in NixOS configs.
-repeated_keys = true
+disabled = ["repeated_keys"]
