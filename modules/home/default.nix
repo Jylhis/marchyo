@@ -31,7 +31,7 @@
     ./starship.nix
     ./waybar.nix
     ./vicinae.nix
-    ./wakatime.nix
+    ./tracking
     ./wofi.nix
     ./worktrunk.nix
     ./xdg.nix

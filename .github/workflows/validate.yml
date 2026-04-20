@@ -28,9 +28,33 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix flake check
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shared input rev sync
+        run: |
+          set -euo pipefail
+          INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
+          fail=0
+          for name in $INPUTS; do
+            FLAKE_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' flake.lock) \
+              || { echo "::error::$name missing from flake.lock"; fail=1; continue; }
+            DEVENV_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' devenv.lock) \
+              || { echo "::error::$name missing from devenv.lock"; fail=1; continue; }
+            echo "$name: flake=$FLAKE_REV devenv=$DEVENV_REV"
+            if [ "$FLAKE_REV" != "$DEVENV_REV" ]; then
+              echo "::error::$name rev diverged across lock files"
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ] || exit 1
+          echo "All shared inputs pinned in sync."
   build:
     runs-on: ubuntu-latest
-    needs: [lints, check]
+    needs: [lints, check, verify]
     permissions:
       contents: read
     steps:

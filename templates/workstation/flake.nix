@@ -2,16 +2,14 @@
   description = "Marchyo Developer Workstation Configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     marchyo.url = "github:Jylhis/marchyo";
   };
 
   outputs =
-    {
-      nixpkgs,
-      marchyo,
-      ...
-    }@inputs:
+    { marchyo, ... }:
+    let
+      inherit (marchyo.inputs) nixpkgs;
+    in
     {
       nixosConfigurations = {
         workstation = nixpkgs.lib.nixosSystem {
@@ -21,7 +19,7 @@
             ./configuration.nix
           ];
           specialArgs = {
-            inherit inputs;
+            inherit marchyo;
           };
         };
       };
