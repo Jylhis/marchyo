@@ -3,7 +3,6 @@
 
   programs = {
     nixfmt.enable = true;
-    actionlint.enable = false;
     deadnix.enable = true;
     shellcheck.enable = true;
     statix.enable = true;
