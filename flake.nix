@@ -59,6 +59,8 @@
         darwinModules
         homeManagerModules
         nixosConfigurations
+        darwinConfigurations
+        homeConfigurations
         overlays
         templates
         ;
