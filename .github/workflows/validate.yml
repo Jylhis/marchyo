@@ -32,7 +32,7 @@ jobs:
           - {system: x86_64-linux, runner: ubuntu-latest}
           - {system: aarch64-linux, runner: ubuntu-24.04-arm}
           - {system: aarch64-darwin, runner: macos-latest}
-          - {system: x86_64-darwin, runner: macos-13}
+          - {system: x86_64-darwin, runner: macos-14}
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
