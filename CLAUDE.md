@@ -317,12 +317,13 @@ marchyo.keyboard.layouts = [
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
-1. **lints** — `nix fmt -- --ci` (formatting check only, no writes)
-2. **check** — `nix flake check` (all evaluation tests)
-3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, runs after lints and check pass)
+`.github/workflows/validate.yml` runs four stages on push to `main` and PRs:
+1. **lints** — `nix fmt -- --ci` (formatting check only, no writes) — matrix across all 4 supported systems
+2. **check** — `nix flake check` (evaluation tests on Linux, flake output validation on macOS) — matrix across all 4 supported systems
+3. **verify** — shell script checking `flake.lock` / `devenv.lock` rev parity (ubuntu-latest only)
+4. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, ubuntu-latest only, runs after all other stages pass)
 
-Stages 1 and 2 run in parallel; stage 3 runs after both succeed.
+Stages 1-3 run in parallel; stage 4 runs after all succeed.
 
 Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
 
