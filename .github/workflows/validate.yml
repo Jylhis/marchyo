@@ -5,7 +5,15 @@ on:
   workflow_dispatch:
 jobs:
   lints:
-    runs-on: ubuntu-latest
+    name: Lint (${{ matrix.system }})
+    strategy:
+      matrix:
+        include:
+          - { system: x86_64-linux, runner: ubuntu-latest }
+          - { system: aarch64-linux, runner: ubuntu-24.04-arm }
+          - { system: aarch64-darwin, runner: macos-latest }
+          - { system: x86_64-darwin, runner: macos-13 }
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     steps:
@@ -17,7 +25,15 @@ jobs:
           skipPush: true
       - run: nix fmt -- --ci
   check:
-    runs-on: ubuntu-latest
+    name: Check (${{ matrix.system }})
+    strategy:
+      matrix:
+        include:
+          - { system: x86_64-linux, runner: ubuntu-latest }
+          - { system: aarch64-linux, runner: ubuntu-24.04-arm }
+          - { system: aarch64-darwin, runner: macos-latest }
+          - { system: x86_64-darwin, runner: macos-13 }
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
     steps:
