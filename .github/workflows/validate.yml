@@ -81,4 +81,4 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build toplevel
-        run: nix build .#nixosConfigurations.default.config.system.build.toplevel
+        run: nix build .#nixosConfigurations.x86_64.config.system.build.toplevel

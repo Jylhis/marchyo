@@ -3,14 +3,12 @@
   options,
   ...
 }:
+let
+  hasProgram = name: options ? programs && options.programs ? ${name};
+in
 {
-  programs = {
-    zoxide = {
-      enable = true;
-    };
-    nh.enable = true;
-  }
-  // lib.optionalAttrs (lib.hasAttrByPath [ "trippy" ] options.programs) {
-    trippy.enable = true;
-  };
+  programs =
+    (if hasProgram "zoxide" then { zoxide.enable = true; } else { })
+    // (if hasProgram "nh" then { nh.enable = true; } else { })
+    // (if hasProgram "trippy" then { trippy.enable = true; } else { });
 }

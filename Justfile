@@ -1,3 +1,7 @@
+# List all available recipes
+default:
+    @just --list
+
 # Run all checks (lint + eval)
 check:
     nix flake check --no-build
@@ -8,9 +12,17 @@ check:
 fmt:
     nix fmt
 
-# Build the reference NixOS configuration
-build:
-    nix build .#nixosConfigurations.default.config.system.build.toplevel
+# Build NixOS configuration (config: x86_64, aarch64)
+build-nixos config="x86_64":
+    nix build .#nixosConfigurations.{{config}}.config.system.build.toplevel
+
+# Build Darwin configuration (config: aarch64, x86_64)
+build-darwin config="aarch64":
+    nix build .#darwinConfigurations.{{config}}.config.system.build.toplevel
+
+# Build Home Manager configuration (config: x86_64-linux, aarch64-linux, aarch64-darwin, x86_64-darwin)
+build-home config="x86_64-linux":
+    nix build .#homeConfigurations.{{config}}.activationPackage
 
 # Update all inputs: flake.lock -> devenv.yaml + devenv.lock
 update:
