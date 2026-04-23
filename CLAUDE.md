@@ -92,7 +92,9 @@ templates/workstation/  # Developer workstation template
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{linux}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
-- `nixosConfigurations.default` — Reference NixOS config used by CI build and VM runner
+- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux); `x86_64` is built by CI and backs the VM runner
+- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs
+- `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
 
 Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate nixpkgs input needed.
 
@@ -317,15 +319,16 @@ marchyo.keyboard.layouts = [
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs four stages on push to `main` and PRs:
-1. **lints** — `nix fmt -- --ci` (formatting check only, no writes) — matrix across all 4 supported systems
-2. **check** — `nix flake check` (evaluation tests on Linux, flake output validation on macOS) — matrix across all 4 supported systems
-3. **verify** — shell script checking `flake.lock` / `devenv.lock` rev parity (ubuntu-latest only)
-4. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, ubuntu-latest only, runs after all other stages pass)
+`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
+1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
+2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is the last release to support it and `aarch64-darwin` covers evaluation equivalently.
+3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
 
-Stages 1-3 run in parallel; stage 4 runs after all succeed.
+Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
-Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
+`.github/workflows/pages.yml` builds and deploys docs to GitHub Pages. It only fires when `docs/**`, flake sources, or the workflow itself change.
+
+Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Dependabot groups all `nix` and `github-actions` bumps into single weekly PRs.
 
 ## Gotchas
 
