@@ -19,7 +19,8 @@ let
     gcam = "git commit -a -m";
     gcad = "git commit -a --amend";
   };
-  hasBashAliases = options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;
+  hasBashAliases =
+    options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;
   hasZshAliases = options ? programs && options.programs ? zsh && options.programs.zsh ? shellAliases;
 in
 {

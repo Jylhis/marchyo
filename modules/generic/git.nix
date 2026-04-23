@@ -1,4 +1,9 @@
-{ lib, pkgs, options, ... }:
+{
+  lib,
+  pkgs,
+  options,
+  ...
+}:
 {
   config =
     if (options ? programs && options.programs ? git) then
