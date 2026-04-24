@@ -238,7 +238,11 @@ in
       modules = [
         nixosModules.default
         sharedNixosConfig
-        { networking.hostName = "marchyo-aarch64"; }
+        {
+          networking.hostName = "marchyo-aarch64";
+          # Intel GPU drivers are x86-only; clear for aarch64
+          marchyo.graphics.vendors = nixpkgs.lib.mkForce [ ];
+        }
       ];
     };
   };

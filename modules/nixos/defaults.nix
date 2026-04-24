@@ -113,19 +113,28 @@ let
     ) emailPackages.${d.email};
 in
 {
-  config = lib.mkIf cfg.desktop.enable {
-    environment.systemPackages = defaultPackages;
+  config = lib.mkIf cfg.desktop.enable (
+    lib.mkMerge [
+      # google-chrome and spotify are x86_64-only on Linux
+      (lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64) {
+        marchyo.defaults.browser = lib.mkDefault "chromium";
+        marchyo.defaults.musicPlayer = lib.mkDefault null;
+      })
+      {
+        environment.systemPackages = defaultPackages;
 
-    environment.sessionVariables =
-      lib.optionalAttrs (d.browser != null) { BROWSER = browserCommands.${d.browser}; }
-      // lib.optionalAttrs (d.editor != null && builtins.hasAttr d.editor editorVisualCommands) {
-        VISUAL = editorVisualCommands.${d.editor};
+        environment.sessionVariables =
+          lib.optionalAttrs (d.browser != null) { BROWSER = browserCommands.${d.browser}; }
+          // lib.optionalAttrs (d.editor != null && builtins.hasAttr d.editor editorVisualCommands) {
+            VISUAL = editorVisualCommands.${d.editor};
+          }
+          //
+            lib.optionalAttrs
+              (d.terminalEditor != null && builtins.hasAttr d.terminalEditor terminalEditorCommands)
+              {
+                EDITOR = terminalEditorCommands.${d.terminalEditor};
+              };
       }
-      //
-        lib.optionalAttrs
-          (d.terminalEditor != null && builtins.hasAttr d.terminalEditor terminalEditorCommands)
-          {
-            EDITOR = terminalEditorCommands.${d.terminalEditor};
-          };
-  };
+    ]
+  );
 }
