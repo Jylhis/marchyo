@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v31
       - name: Format check
         run: nix fmt -- --ci
@@ -49,9 +49,9 @@ jobs:
           - {system: aarch64-darwin, runner: macos-latest}
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v16
+      - uses: cachix/cachix-action@v17
         with:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -62,9 +62,9 @@ jobs:
     needs: [lint, check]
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v16
+      - uses: cachix/cachix-action@v17
         with:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
