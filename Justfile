@@ -4,7 +4,26 @@ default:
 
 # Run all checks (lint + eval)
 check:
-    nix flake check --no-build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "$(uname)" == "Darwin" ]]; then
+      # nix flake check deeply evaluates all nixosConfigurations, which
+      # requires Linux builders unavailable on macOS. Evaluate only the
+      # outputs that are buildable on the current platform.
+      echo "darwin: evaluating module exports..."
+      nix eval .#nixosModules  --apply builtins.attrNames > /dev/null
+      nix eval .#darwinModules --apply builtins.attrNames > /dev/null
+      nix eval .#homeManagerModules --apply builtins.attrNames > /dev/null
+      echo "darwin: evaluating darwin configurations..."
+      for cfg in $(nix eval .#darwinConfigurations --apply builtins.attrNames --json | nix run nixpkgs#jq -- -r '.[]'); do
+        nix eval ".#darwinConfigurations.$cfg.config.system.build.toplevel" --apply '(_: "ok")' > /dev/null
+        echo "  ok: darwinConfigurations.$cfg"
+      done
+      echo "darwin: checking formatter..."
+      nix build --dry-run .#formatter."$(nix eval --impure --raw --expr builtins.currentSystem)" 2>/dev/null
+    else
+      nix flake check --no-build
+    fi
     statix check .
     deadnix --fail --exclude .devenv result .
 
