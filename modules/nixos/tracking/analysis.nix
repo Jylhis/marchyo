@@ -128,7 +128,7 @@ let
           path = DATA_DIR / "git-activity.jsonl"
           if not path.exists():
               return {}
-          cutoff = datetime.datetime.now() - datetime.timedelta(days=DAYS)
+          cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS)
           repos: dict[str, dict] = defaultdict(lambda: {"commits": 0, "branches": set(), "messages": []})
           commits_by_day: dict[str, int] = Counter()
           for line in path.read_text().splitlines():
@@ -138,7 +138,7 @@ let
                   continue
               try:
                   ts = datetime.datetime.fromisoformat(e.get("ts", ""))
-                  if ts.replace(tzinfo=None) < cutoff:
+                  if ts.replace(tzinfo=None) < cutoff.replace(tzinfo=None):
                       continue
               except (ValueError, TypeError):
                   continue
@@ -161,7 +161,7 @@ let
           path = DATA_DIR / "file-changes.jsonl"
           if not path.exists():
               return {}
-          cutoff = datetime.datetime.now() - datetime.timedelta(days=DAYS)
+          cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS)
           by_dir: dict[str, int] = Counter()
           by_event: dict[str, int] = Counter()
           total = 0
@@ -172,10 +172,10 @@ let
                   continue
               try:
                   ts = datetime.datetime.fromisoformat(e.get("ts", ""))
-                  if ts < cutoff:
+                  if ts.replace(tzinfo=None) < cutoff.replace(tzinfo=None):
                       continue
               except (ValueError, TypeError):
-                  pass
+                  continue
               fpath = e.get("path", "")
               parts = pathlib.PurePosixPath(fpath).parts
               top_dir = "/".join(parts[:5]) if len(parts) >= 5 else str(pathlib.PurePosixPath(fpath).parent)
@@ -208,14 +208,22 @@ let
 
           for bucket_id, info in buckets.items():
               btype = info.get("type", "")
+              events = []
               try:
-                  events_r = requests.get(
-                      f"http://127.0.0.1:5600/api/0/buckets/{bucket_id}/events",
-                      params={"start": start, "end": end, "limit": 5000},
-                      timeout=10,
-                  )
-                  events_r.raise_for_status()
-                  events = events_r.json()
+                  page_limit = 10000
+                  offset = 0
+                  while True:
+                      events_r = requests.get(
+                          f"http://127.0.0.1:5600/api/0/buckets/{bucket_id}/events",
+                          params={"start": start, "end": end, "limit": page_limit, "offset": offset},
+                          timeout=30,
+                      )
+                      events_r.raise_for_status()
+                      page = events_r.json()
+                      events.extend(page)
+                      if len(page) < page_limit:
+                          break
+                      offset += page_limit
               except Exception:
                   continue
 
@@ -224,7 +232,6 @@ let
                       dur = ev.get("duration", 0)
                       app = ev.get("data", {}).get("app", "unknown")
                       app_durations[app] += dur
-                      total_active += dur
               elif "afk" in btype:
                   for ev in events:
                       dur = ev.get("duration", 0)
