@@ -55,30 +55,42 @@ in
     programs.zsh.initExtra = shellInit;
     programs.fish.interactiveShellInit = fishInit;
 
+    # Merge the OTEL `env` block into ~/.claude/settings.json without
+    # touching other user-managed keys (model, theme, hooks, permissions, …).
     home.activation.marchyoClaudeCodeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       header=""
       if [ -r "${authFile}" ]; then
         header=$(cat "${authFile}")
       fi
       run mkdir -p "$HOME/.claude"
-      run ${pkgs.jq}/bin/jq -n \
+      newEnv=$(${pkgs.jq}/bin/jq -nc \
         --arg ep  "${baseEnv.OTEL_EXPORTER_OTLP_ENDPOINT}" \
         --arg pr  "${baseEnv.OTEL_EXPORTER_OTLP_PROTOCOL}" \
         --arg mi  "${baseEnv.OTEL_METRIC_EXPORT_INTERVAL}" \
         --arg li  "${baseEnv.OTEL_LOGS_EXPORT_INTERVAL}" \
         --arg hdr "$header" \
         '{
-          env: ({
-            CLAUDE_CODE_ENABLE_TELEMETRY: "1",
-            OTEL_METRICS_EXPORTER: "otlp",
-            OTEL_LOGS_EXPORTER: "otlp",
-            OTEL_EXPORTER_OTLP_PROTOCOL: $pr,
-            OTEL_EXPORTER_OTLP_ENDPOINT: $ep,
-            OTEL_METRIC_EXPORT_INTERVAL: $mi,
-            OTEL_LOGS_EXPORT_INTERVAL: $li
-          } + (if $hdr == "" then {} else { OTEL_EXPORTER_OTLP_HEADERS: $hdr } end))
-        }' > "$HOME/.claude/settings.json.tmp"
-      run mv "$HOME/.claude/settings.json.tmp" "$HOME/.claude/settings.json"
+          CLAUDE_CODE_ENABLE_TELEMETRY: "1",
+          OTEL_METRICS_EXPORTER: "otlp",
+          OTEL_LOGS_EXPORTER: "otlp",
+          OTEL_EXPORTER_OTLP_PROTOCOL: $pr,
+          OTEL_EXPORTER_OTLP_ENDPOINT: $ep,
+          OTEL_METRIC_EXPORT_INTERVAL: $mi,
+          OTEL_LOGS_EXPORT_INTERVAL: $li
+        } + (if $hdr == "" then {} else { OTEL_EXPORTER_OTLP_HEADERS: $hdr } end)')
+      settings="$HOME/.claude/settings.json"
+      tmp="$settings.tmp"
+      if [ -f "$settings" ]; then
+        if ${pkgs.jq}/bin/jq --argjson env "$newEnv" '.env = ((.env // {}) + $env)' "$settings" > "$tmp"; then
+          run mv "$tmp" "$settings"
+        else
+          echo "marchyo: ~/.claude/settings.json is not valid JSON; leaving it untouched" >&2
+          rm -f "$tmp"
+        fi
+      else
+        ${pkgs.jq}/bin/jq -n --argjson env "$newEnv" '{env: $env}' > "$tmp"
+        run mv "$tmp" "$settings"
+      fi
     '';
   };
 }
