@@ -3,7 +3,7 @@
 # Desktop/Wayland/systemd modules are NixOS-only and not imported here.
 {
   imports = [
-    ../nixos/options.nix
+    ../nixos/options
     ../nixos/nix-settings.nix
     ../generic/theme.nix
     ../generic/fontconfig.nix

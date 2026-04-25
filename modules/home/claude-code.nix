@@ -24,13 +24,16 @@ in
       ## Repository Layout
 
       ```
-      modules/nixos/      # NixOS system-level modules (~30 modules)
-      modules/home/       # Home Manager user-level modules (~33 modules)
-      modules/generic/    # Shared modules (fontconfig, git, shell, packages, theme)
-      modules/nixos/options.nix     # ALL marchyo.* options defined here
-      modules/nixos/default.nix     # NixOS module import list
-      modules/home/default.nix      # Home Manager module import list
-      tests/module-tests.nix        # Evaluation-based test suite
+      modules/nixos/                # NixOS system-level modules (auto-discovered)
+      modules/home/                 # Home Manager user-level modules (auto-discovered)
+      modules/generic/              # Shared modules (fontconfig, git, shell, packages, theme)
+      modules/nixos/options/        # marchyo.* option declarations split by namespace (auto-discovered)
+      modules/nixos/default.nix     # NixOS module entry — uses lib/discover-modules.nix
+      modules/home/default.nix      # Home Manager module entry — uses lib/discover-modules.nix
+      lib/systems.nix               # Single source of truth for the system list
+      lib/discover-modules.nix      # Auto-import helper for module directories
+      tests/eval/*.nix              # Evaluation tests, one file per feature (auto-discovered)
+      tests/lib.nix                 # Shared test helpers (testNixOS, withTestUser)
       ```
 
       ## Key Commands
@@ -45,10 +48,9 @@ in
 
       ## Adding a New Module
 
-      1. Create the file in `modules/nixos/`, `modules/home/`, or `modules/generic/`
-      2. Add the import to the corresponding `default.nix`
-      3. Define any new options in `modules/nixos/options.nix` under `marchyo.*`
-      4. Add an evaluation test in `tests/module-tests.nix`
+      1. Create the file in `modules/nixos/`, `modules/home/`, or `modules/generic/` — auto-discovery picks it up (no import edit for nixos/home; darwin requires a manual edit)
+      2. Define any new options under `modules/nixos/options/` — auto-discovered (one file per namespace)
+      3. Add an evaluation test under `tests/eval/<feature>.nix` — auto-discovered
 
       ### Standard NixOS module
 
@@ -90,7 +92,7 @@ in
 
       ## Defining Options
 
-      All options go in `modules/nixos/options.nix` under `marchyo.*`:
+      Options go under `modules/nixos/options/` — pick the namespace file (`keyboard.nix`, `graphics.nix`, ...) or create a new one. Each file declares `options.marchyo.<namespace>`:
 
       ```nix
       marchyo = {
@@ -111,15 +113,21 @@ in
 
       ## Writing Tests
 
-      Add evaluation tests to `tests/module-tests.nix`:
+      Drop tests into the matching `tests/eval/<feature>.nix` (or create a new file there). Each file is a function returning an attrset of named tests:
 
       ```nix
-      eval-my-feature = testNixOS "my-feature" (withTestUser {
-        marchyo.myFeature.enable = true;
-      });
+      { helpers, ... }:
+      let
+        inherit (helpers) testNixOS withTestUser;
+      in
+      {
+        eval-my-feature = testNixOS "my-feature" (withTestUser {
+          marchyo.myFeature.enable = true;
+        });
+      }
       ```
 
-      `testNixOS` evaluates without building. `withTestUser` provides a minimal bootable base config.
+      `testNixOS` evaluates without building. `withTestUser` provides a minimal bootable base config. Files are auto-discovered.
 
       ## Key Patterns
 
@@ -150,8 +158,8 @@ in
       ## Common Pitfalls
 
       - Always run `nix fmt` before committing — CI will fail without it
-      - Never define `marchyo.*` options outside `modules/nixos/options.nix`
-      - Importing a module in `default.nix` is required — creating the file alone is not enough
+      - Never define `marchyo.*` options outside `modules/nixos/options/`
+      - Auto-discovery imports every `.nix` file under `modules/{nixos,home}/` — leftover scratch files become dead modules
       - Tests are evaluation-only (no builds) — use `testNixOS` and `withTestUser`
       - `allowUnfree = true` is set globally; no need to set it per-package
       - `marchyo.inputMethod.*` is removed — use `marchyo.keyboard.layouts` instead

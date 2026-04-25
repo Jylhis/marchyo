@@ -1,39 +1,9 @@
+{ lib, ... }:
 {
-  imports = [
+  imports = (import ../../lib/discover-modules.nix { inherit lib; }) ./. ++ [
     ../generic/fontconfig.nix
     ../generic/git.nix
     ../generic/shell.nix
     ../generic/packages.nix
-    ./_1password.nix
-    ./bat.nix
-    ./btop.nix
-    ./claude-code.nix
-    ./fastfetch.nix
-    ./fcitx5.nix
-    ./fzf.nix
-    ./keyboard.nix
-    ./xournalpp.nix
-    ./git.nix
-    ./gtk.nix
-    ./help.nix
-    ./hypridle.nix
-    ./hyprland.nix
-    ./hyprlock.nix
-    ./k9s.nix
-    ./ghostty.nix
-    ./lazygit.nix
-    ./locale.nix
-    ./mako.nix
-    ./noctalia.nix
-    ./packages.nix
-    ./screenshot.nix
-    ./shell.nix
-    ./starship.nix
-    ./waybar.nix
-    ./vicinae.nix
-    ./tracking
-    ./wofi.nix
-    ./worktrunk.nix
-    ./xdg.nix
   ];
 }
