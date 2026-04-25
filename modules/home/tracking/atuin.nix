@@ -5,6 +5,7 @@
 # which installs the system package and writes a reference /etc config.
 {
   osConfig,
+  config,
   lib,
   ...
 }:
@@ -16,9 +17,9 @@ in
   config = lib.mkIf enabled {
     programs.atuin = {
       enable = true;
-      enableBashIntegration = true;
-      enableZshIntegration = true;
-      enableFishIntegration = true;
+      enableBashIntegration = config.programs.bash.enable;
+      enableZshIntegration = config.programs.zsh.enable;
+      enableFishIntegration = config.programs.fish.enable;
       settings = {
         search_mode = "fuzzy";
         filter_mode = "global";
