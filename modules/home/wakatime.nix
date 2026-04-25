@@ -4,17 +4,19 @@
 # this module writes ~/.wakatime.cfg pointing at the local wakapi instance
 # and exports WAKATIME_API_KEY into the session environment.
 {
-  osConfig,
+  osConfig ? { },
   config,
   lib,
   ...
 }:
 let
-  trackingCfg = osConfig.marchyo.tracking or { };
-  editorEnabled = (trackingCfg.enable or false) && (trackingCfg.editor.enable or false);
-  editorPort = trackingCfg.editor.port or 3000;
+  marchyoCfg = osConfig.marchyo or { };
+  trackingCfg = marchyoCfg.tracking or { };
+  editorCfg = trackingCfg.editor or { };
+  editorEnabled = (trackingCfg.enable or false) && (editorCfg.enable or false);
+  editorPort = editorCfg.port or 3000;
 
-  userConfig = osConfig.marchyo.users."${config.home.username}" or { };
+  userConfig = (marchyoCfg.users or { })."${config.home.username}" or { };
   apiKey = userConfig.wakatimeApiKey or null;
 
   enabled = editorEnabled && apiKey != null;
