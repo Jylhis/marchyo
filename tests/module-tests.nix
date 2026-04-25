@@ -352,6 +352,41 @@ in
       };
     };
   });
+
+  # Tracking: Grafana Cloud aggregation (Loki + Prometheus remote_write)
+  eval-tracking-grafana-cloud = testNixOS "tracking-grafana-cloud" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      aggregation = {
+        enable = true;
+        grafanaCloud = {
+          enable = true;
+          loki = {
+            endpoint = "https://logs-prod-eu-west-0.grafana.net";
+            userId = "1234567";
+          };
+          prometheus = {
+            enable = true;
+            endpoint = "https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push";
+            userId = "1234567";
+          };
+          environmentFile = "/var/lib/marchyo/grafana-cloud.env";
+        };
+      };
+    };
+  });
+
+  # Tracking: Claude Code OTLP telemetry to Grafana Cloud
+  eval-tracking-claude-code = testNixOS "tracking-claude-code" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      claudeCode = {
+        enable = true;
+        authHeaderFile = "/var/lib/marchyo/claude-code-otlp-auth";
+      };
+    };
+  });
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
