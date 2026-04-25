@@ -1,5 +1,8 @@
-# Main test suite entry point
-# Fast evaluation-based tests that run during `nix flake check`
+# Test suite entry point.
+# Discovers every `.nix` file under `tests/eval/` and merges the attrsets
+# they return. Each eval test file receives shared helpers from `tests/lib.nix`.
+#
+# Run via `nix flake check` (fast, evaluation-only).
 {
   system,
   lib,
@@ -9,28 +12,41 @@
   homeManagerModules,
 }:
 let
-  # Create pkgs with unfree allowed for tests
   testPkgs = import nixpkgs {
     inherit system;
     config.allowUnfree = true;
   };
 
-  # Import module evaluation tests
-  moduleTests = import ./module-tests.nix {
+  helpers = import ./lib.nix {
     pkgs = testPkgs;
-    inherit
-      lib
-      nixosModules
-      homeManagerModules
-      home-manager
-      ;
+    inherit lib nixosModules;
   };
 
-  # Import lib function unit tests
+  evalDir = ./eval;
+  evalFiles = lib.mapAttrsToList (name: _: evalDir + "/${name}") (
+    lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".nix" name) (
+      builtins.readDir evalDir
+    )
+  );
+
+  evalTests = lib.foldl' (
+    acc: f:
+    acc
+    // (import f {
+      inherit
+        helpers
+        lib
+        home-manager
+        nixosModules
+        homeManagerModules
+        ;
+      pkgs = testPkgs;
+    })
+  ) { } evalFiles;
+
   libTests = import ./lib-tests.nix {
     pkgs = testPkgs;
     inherit lib;
   };
 in
-# Return all checks
-moduleTests // libTests
+evalTests // libTests
