@@ -74,8 +74,10 @@ test-my-function = pkgs.runCommand "test-my-function" { } ''
 
 The GitHub Actions workflow (`.github/workflows/validate.yml`) runs three stages:
 
-1. **Lints** — `nix fmt -- --ci` (formatting check)
-2. **Check** — `nix flake check` (all evaluation tests)
-3. **Build** — Full system build (runs after lints and check pass)
+1. **Lint** — `nix fmt -- --ci` plus a `flake.lock` / `devenv.lock` rev-parity check on a single Linux runner.
+2. **Check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`.
+3. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (runs after lint and check pass).
 
-Stages 1 and 2 run in parallel; stage 3 runs after both succeed. Builds use [Cachix](https://app.cachix.org) for caching.
+Stages 1 and 2 run in parallel; stage 3 runs after both succeed. Concurrency groups cancel superseded PR runs automatically. Builds use [Cachix](https://app.cachix.org) (`jylhis` cache).
+
+A separate `.github/workflows/pages.yml` workflow deploys the docs to GitHub Pages, scoped via path filters to `docs/**` and flake sources so unrelated commits don't trigger redeploys.

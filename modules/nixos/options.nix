@@ -1,7 +1,6 @@
 { lib, ... }:
 let
   inherit (lib) mkOption types;
-  # cfg = config.marchyo;
 
   userOpts =
     { name, ... }:
@@ -841,20 +840,19 @@ in
           type = types.bool;
           default = false;
           description = ''
-            Enable local LLM-powered weekly activity analysis via Ollama plus
-            a pre-mining stage (PrefixSpan). Pulls the configured model on
-            first run; expect multi-GB VRAM requirements.
+            Enable local LLM-powered weekly activity analysis via llama-server
+            (llama.cpp) plus a pre-mining stage (PrefixSpan). Requires a GGUF
+            model file; expect multi-GB VRAM requirements for larger models.
           '';
         };
 
         model = mkOption {
-          type = types.str;
-          default = "qwen2.5:14b";
-          example = "mistral:7b";
-          description = "Ollama model tag to load for weekly analysis.";
+          type = types.path;
+          example = "/data/models/qwen2.5-14b-q4_k_m.gguf";
+          description = "Filesystem path to a GGUF model file for llama-server.";
         };
 
-        ollamaAcceleration = mkOption {
+        acceleration = mkOption {
           type = types.nullOr (
             types.enum [
               "cuda"
@@ -864,8 +862,8 @@ in
           default = null;
           example = "cuda";
           description = ''
-            Hardware acceleration backend for Ollama. When null the CPU build
-            is used. Set to "cuda" or "rocm" for GPU inference.
+            Hardware acceleration backend for llama-server. When null the CPU
+            build is used. Set to "cuda" or "rocm" for GPU inference.
           '';
         };
       };

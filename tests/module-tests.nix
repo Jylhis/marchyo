@@ -5,7 +5,7 @@
   pkgs,
   lib,
   nixosModules,
-  homeModules,
+  homeManagerModules,
   ...
 }:
 let
@@ -324,7 +324,7 @@ in
           (withTestUser {
             marchyo.desktop.enable = true;
             home-manager.users.testuser = {
-              imports = [ homeModules ];
+              imports = [ homeManagerModules ];
             };
           })
         ];
