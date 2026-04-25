@@ -38,9 +38,7 @@ in
       chromium.enable = lib.mkDefault (
         d.browser == "chromium" || config.programs.chromium.enable or false
       );
-      firefox.enable = lib.mkDefault (
-        d.browser == "firefox" || config.programs.firefox.enable or false
-      );
+      firefox.enable = lib.mkDefault (d.browser == "firefox" || config.programs.firefox.enable or false);
       emacs.enable = lib.mkDefault (
         d.editor == "emacs"
         || d.terminalEditor == "emacs"
@@ -53,9 +51,7 @@ in
         d.terminalEditor == "neovim" || config.programs.neovim.enable or false
       );
       vim.enable = lib.mkDefault (config.programs.vim.enable or false);
-      helix.enable = lib.mkDefault (
-        d.terminalEditor == "helix" || config.programs.helix.enable or false
-      );
+      helix.enable = lib.mkDefault (d.terminalEditor == "helix" || config.programs.helix.enable or false);
       zed.enable = lib.mkDefault (d.editor == "zed");
     };
   };
