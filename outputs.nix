@@ -33,6 +33,11 @@ let
         media.enable = true;
         office.enable = true;
         graphics.vendors = [ "intel" ];
+        # The marchyo-cli package uses a fixed-output derivation with a
+        # placeholder hash (lib.fakeHash); the reference VM builds in CI must
+        # not pull it in. Set this to true once the real FOD hash is
+        # materialized in packages/marchyo-cli/package.nix.
+        cli.enable = false;
         users.developer = {
           fullname = "Marchyo Developer";
           email = "dev@example.org";
@@ -316,6 +321,10 @@ in
     in
     {
       inherit (pkgs) hyprmon plymouth-marchyo-theme;
+      # marchyo-cli is exposed via the overlay (consumed by modules/nixos/cli.nix)
+      # but not surfaced as a flake-level package output yet. The package.nix
+      # uses a fixed-output derivation with lib.fakeHash; once the FOD hash is
+      # materialized on first successful local build, add `marchyo-cli` here.
     };
 
   mkDocs =
