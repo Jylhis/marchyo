@@ -46,6 +46,36 @@ let
 in
 {
   options.marchyo = {
+    cli = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        example = false;
+        description = ''
+          Whether to install the `marchyo` user CLI system-wide. The CLI lets
+          end users inspect their Marchyo configuration, toggle settings, and
+          wrap nixos-rebuild. Setting changes are persisted to
+          /etc/marchyo/cli-state.json and merged into config.marchyo.* with
+          lib.mkDefault priority by the cli-state module.
+        '';
+      };
+
+      stateFile = mkOption {
+        type = types.str;
+        default = "/etc/marchyo/cli-state.json";
+        description = ''
+          Path to the JSON sidecar file written by the `marchyo` CLI. Values
+          read from this file are merged into config.marchyo.* with
+          lib.mkDefault priority — hand-written flake config always wins.
+
+          Note: reading the state file requires impure flake evaluation
+          (`nixos-rebuild --impure ...`). The `marchyo rebuild` CLI command
+          handles this automatically. Pure flake checks (e.g.
+          `nix flake check`) treat a missing or unreadable file as empty.
+        '';
+      };
+    };
+
     users = mkOption {
       default = { };
       type = with types; attrsOf (submodule userOpts);

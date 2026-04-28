@@ -329,6 +329,19 @@ in
     }
   );
 
+  # CLI module: defaults to enabled, installs `marchyo` system-wide
+  eval-cli-default = testNixOS "cli-default" (withTestUser { });
+
+  # CLI module: explicitly disabled (no marchyo binary installed)
+  eval-cli-disabled = testNixOS "cli-disabled" (withTestUser {
+    marchyo.cli.enable = false;
+  });
+
+  # CLI module: state file path can be overridden (e.g. for testing)
+  eval-cli-custom-state = testNixOS "cli-custom-state" (withTestUser {
+    marchyo.cli.stateFile = "/var/lib/marchyo/cli-state.json";
+  });
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
