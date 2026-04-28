@@ -33,7 +33,7 @@
     ./vicinae.nix
     ./tracking
     ./wofi.nix
-    ./worktrunk.nix
+
     ./xdg.nix
   ];
 }
