@@ -6,4 +6,5 @@ prev.lib.optionalAttrs prev.stdenv.isLinux {
 
   hyprmon = final.callPackage ./packages/hyprmon/package.nix { };
   plymouth-marchyo-theme = final.callPackage ./packages/plymouth-marchyo-theme/package.nix { };
+  marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
 }
