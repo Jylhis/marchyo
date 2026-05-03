@@ -6,9 +6,9 @@
         fonts.fontconfig = {
           enable = true;
           defaultFonts = {
-            serif = [ "Liberation Serif" ];
+            serif = [ "Literata" ];
             sansSerif = [ "Liberation Sans" ];
-            monospace = [ "CaskaydiaMono Nerd Font" ];
+            monospace = [ "JetBrainsMono Nerd Font" ];
           };
         };
       }

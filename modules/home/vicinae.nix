@@ -14,15 +14,14 @@ in
       enable = true;
       settings = mkMerge [
         {
-          # Configure window appearance
+          # Jylhis Design System — no transparency, paper metaphor
           window = {
-            opacity = 0.95;
-            rounding = 0;
+            opacity = 1.0;
+            rounding = 4;
           };
 
-          # Font configuration
           font = {
-            size = 18;
+            size = 14;
           };
         }
 

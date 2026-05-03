@@ -60,22 +60,62 @@ let
       stylix = {
         autoEnable = true;
         base16Scheme =
-          if config.marchyo.theme.variant == "dark" then
-            "${pkgs.base16-schemes}/share/themes/nord.yaml"
+          if config.marchyo.theme.scheme != null then
+            "${pkgs.base16-schemes}/share/themes/${config.marchyo.theme.scheme}.yaml"
+          else if config.marchyo.theme.variant == "dark" then
+            {
+              scheme = "Jylhis Roast";
+              author = "Markus Jylhankangas (jylhis.com)";
+              base00 = "1a1714";
+              base01 = "242019";
+              base02 = "2a2520";
+              base03 = "8a7f72";
+              base04 = "b0a496";
+              base05 = "e8e0d4";
+              base06 = "f0eae0";
+              base07 = "363230";
+              base08 = "ff5f59";
+              base09 = "e89b5e";
+              base0A = "d0bc00";
+              base0B = "b3c785";
+              base0C = "80c8b3";
+              base0D = "2fafff";
+              base0E = "c8a5ff";
+              base0F = "d4884a";
+            }
           else
-            "${pkgs.base16-schemes}/share/themes/nord-light.yaml";
+            {
+              scheme = "Jylhis Paper";
+              author = "Markus Jylhankangas (jylhis.com)";
+              base00 = "faf7f2";
+              base01 = "f0ebe3";
+              base02 = "e8e1d6";
+              base03 = "8a7f72";
+              base04 = "6b5f54";
+              base05 = "2c2825";
+              base06 = "1e1b18";
+              base07 = "fefdfb";
+              base08 = "a60000";
+              base09 = "9a5a2a";
+              base0A = "6f5500";
+              base0B = "3d5a1f";
+              base0C = "134a4a";
+              base0D = "0031a9";
+              base0E = "4a2d80";
+              base0F = "b5703c";
+            };
         fonts = {
           serif = {
-            package = pkgs.liberation_ttf;
-            name = "Liberation Serif";
+            package = pkgs.literata;
+            name = "Literata";
           };
           sansSerif = {
             package = pkgs.liberation_ttf;
             name = "Liberation Sans";
           };
           monospace = {
-            package = pkgs.nerd-fonts.caskaydia-mono;
-            name = "CaskaydiaMono Nerd Font";
+            package = pkgs.nerd-fonts.jetbrains-mono;
+            name = "JetBrainsMono Nerd Font";
           };
         };
       };

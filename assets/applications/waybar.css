@@ -1,24 +1,93 @@
- /* TODO: Restore colors and use https://github.com/nix-community/stylix/blob/db03fed72e5ca02be34e1d24789345a943329738/modules/waybar/hm.nix#L95 */
+/* Jylhis Design System — Waybar
+ * Roast (dark) palette, copper accent, JetBrains Mono.
+ * Source of truth: github.com/Jylhis/design tokens.json
+ */
+
 * {
-  border: none;
-  border-radius: 0;
-  min-height: 0;
-  font-family: CaskaydiaMono Nerd Font;
-  font-size: 14px;
+    font-family: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
 }
 
+window#waybar {
+    background: #1a1714;
+    color: #e8e0d4;
+    border-bottom: 1px solid #3d3830;
+}
+
+#workspaces,
+#mode,
+#clock,
+#battery,
+#network,
+#pulseaudio,
+#wireplumber,
+#cpu,
+#memory,
 #tray,
+#bluetooth,
 #power-profiles-daemon,
-#custom-screenrecording-indicator,
-#custom-update {
-    padding: 0 5px;
-    min-width: 12px;
+#custom-nix,
+#custom-expand-icon,
+#hyprland-language {
+    padding: 0 10px;
 }
 
-#custom-expand-icon {
-  margin-right: 7px;
+/* Workspaces — accent left-border on active (KEYBOARD.md selected-item) */
+#workspaces button {
+    padding: 0 10px;
+    color: #b0a496;
+    background: transparent;
+    border-left: 3px solid transparent;
+    border-radius: 0;
 }
 
-#custom-update {
-  font-size: 10px;
+#workspaces button.active {
+    color: #e89b5e;
+    background: #363230;
+    border-left: 3px solid #e89b5e;
+}
+
+#workspaces button:hover {
+    color: #e89b5e;
+    background: transparent;
+    box-shadow: inset 0 -2px 0 #e89b5e;
+    text-shadow: none;
+}
+
+/* Clock */
+#clock {
+    color: #e8e0d4;
+}
+
+/* Battery semantic states — Modus Vivendi accents */
+#battery.warning { color: #d0bc00; }
+#battery.critical { color: #ff5f59; }
+#battery.charging { color: #44bc44; }
+
+/* Network / audio */
+#network.disconnected,
+#wireplumber.muted,
+#pulseaudio.muted {
+    color: #6b6157;
+}
+
+/* Tray */
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention {
+    color: #e89b5e;
+    -gtk-icon-effect: highlight;
+}
+
+/* Custom modules */
+#custom-nix { color: #80c8b3; }
+
+/* Focus ring — keyboard navigation */
+button:focus {
+    outline: 2px solid #e89b5e;
+    outline-offset: -2px;
 }

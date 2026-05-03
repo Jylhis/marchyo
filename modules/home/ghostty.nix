@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  osConfig ? { },
   ...
 }:
 let
@@ -11,6 +12,9 @@ let
     optionalAttrs
     ;
   inherit (pkgs.stdenv) isDarwin;
+
+  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  ghosttyTheme = if themeVariant == "dark" then "jylhis-roast" else "jylhis-paper";
 
   linuxKeybinds = [
     "alt+1=goto_tab:1"
@@ -48,6 +52,12 @@ let
   ];
 in
 {
+  # Install Jylhis Ghostty theme files from design system source
+  xdg.configFile."ghostty/themes/jylhis-paper".source =
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-paper";
+  xdg.configFile."ghostty/themes/jylhis-roast".source =
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-roast";
+
   programs.ghostty = {
     enable = true;
 
@@ -63,6 +73,8 @@ in
     enableZshIntegration = config.programs.zsh.enable;
 
     settings = {
+      theme = ghosttyTheme;
+      font-family = "JetBrainsMono Nerd Font";
       window-padding-x = 14;
       window-padding-y = 14;
       cursor-style = "block";
