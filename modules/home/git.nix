@@ -19,7 +19,7 @@ in
         init.defaultBranch = lib.mkDefault "main";
         core = {
           untrackedcache = lib.mkDefault true;
-          fsmonitor = lib.mkDefault true;
+          fsmonitor = lib.mkDefault false;
         };
         merge = {
           conflictStyle = lib.mkDefault "zdiff3";

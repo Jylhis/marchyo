@@ -1,44 +1,72 @@
+name: Validate
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
 jobs:
-  lints:
+  lint:
+    name: Lint & verify
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
-      - uses: cachix/cachix-action@v15
-        with:
-          name: jylhis
-          skipPush: true
-      - run: nix fmt -- --ci
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - name: Format check
+        run: nix fmt -- --ci
+      - name: Verify lock-file rev sync
+        run: |
+          set -euo pipefail
+          INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
+          fail=0
+          for name in $INPUTS; do
+            FLAKE_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' flake.lock) \
+              || { echo "::error::$name missing from flake.lock"; fail=1; continue; }
+            DEVENV_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' devenv.lock) \
+              || { echo "::error::$name missing from devenv.lock"; fail=1; continue; }
+            echo "$name: flake=$FLAKE_REV devenv=$DEVENV_REV"
+            if [ "$FLAKE_REV" != "$DEVENV_REV" ]; then
+              echo "::error::$name rev diverged across lock files"
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ] || exit 1
+          echo "All shared inputs pinned in sync."
   check:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    name: Check (${{ matrix.system }})
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {system: x86_64-linux, runner: ubuntu-latest}
+          - {system: aarch64-linux, runner: ubuntu-24.04-arm}
+          - {system: aarch64-darwin, runner: macos-15-intel}
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
-      - uses: cachix/cachix-action@v15
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v16
         with:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix flake check
+      - run: nix flake check --accept-flake-config
   build:
+    name: Build toplevel
     runs-on: ubuntu-latest
-    needs: [lints, check]
-    permissions:
-      contents: read
+    needs: [lint, check]
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v30
-      - uses: cachix/cachix-action@v15
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v16
         with:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build toplevel
-        run: nix build .#nixosConfigurations.default.config.system.build.toplevel
+        run: nix build --accept-flake-config .#nixosConfigurations.x86_64.config.system.build.toplevel

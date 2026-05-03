@@ -5,7 +5,7 @@
   pkgs,
   lib,
   nixosModules,
-  homeModules,
+  homeManagerModules,
   ...
 }:
 let
@@ -193,11 +193,6 @@ in
     }
   );
 
-  # Test 13: Worktrunk auto-enabled with development feature flag
-  eval-worktrunk = testNixOS "worktrunk" (withTestUser {
-    marchyo.development.enable = true;
-  });
-
   # Test 15: Default browser (google-chrome) with desktop
   eval-defaults-browser = testNixOS "defaults-browser" (withTestUser {
     marchyo.desktop.enable = true;
@@ -300,7 +295,7 @@ in
           (withTestUser {
             marchyo.desktop.enable = true;
             home-manager.users.testuser = {
-              imports = [ homeModules ];
+              imports = [ homeManagerModules ];
             };
           })
         ];
