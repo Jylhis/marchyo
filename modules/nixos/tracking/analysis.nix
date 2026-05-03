@@ -1,10 +1,10 @@
-# Weekly activity analysis: Ollama + PrefixSpan + LLM report.
+# Weekly activity analysis: llama-server (llama.cpp) + PrefixSpan + LLM report.
 #
 # Runs a Python script on a weekly user timer that:
 #   1. Tokenises recent atuin history into per-session command sequences
 #   2. Mines frequent sub-sequences via PrefixSpan
 #   3. Sends only the aggregated patterns (never raw history) to a local
-#      Ollama model for automation suggestions, written as an org-mode file.
+#      llama-server instance for automation suggestions, written as an org-mode file.
 {
   config,
   lib,
@@ -15,13 +15,13 @@ let
   cfg = config.marchyo.tracking;
   aCfg = cfg.analysis;
 
-  ollamaPackage =
-    if aCfg.ollamaAcceleration == "cuda" then
-      pkgs.ollama-cuda
-    else if aCfg.ollamaAcceleration == "rocm" then
-      pkgs.ollama-rocm
+  llamaCppPackage =
+    if aCfg.acceleration == "cuda" then
+      pkgs.llama-cpp.override { cudaSupport = true; }
+    else if aCfg.acceleration == "rocm" then
+      pkgs.llama-cpp.override { rocmSupport = true; }
     else
-      pkgs.ollama;
+      pkgs.llama-cpp;
 
   pythonEnv = pkgs.python3.withPackages (ps: [
     ps.requests
@@ -34,12 +34,11 @@ let
       #!${pythonEnv}/bin/python
       """Weekly activity analysis: mine shell command patterns, let a local
       LLM interpret them. Output is an org-mode report under ~/org/."""
-      import sqlite3, datetime, pathlib, os, requests
+      import sqlite3, datetime, pathlib, os, time, requests
 
       ATUIN_DB = pathlib.Path.home() / ".local/share/atuin/history.db"
       REPORT   = pathlib.Path.home() / "org/activity-report.org"
-      OLLAMA   = "http://127.0.0.1:11434/api/generate"
-      MODEL    = os.environ.get("MARCHYO_TRACKING_MODEL", "${aCfg.model}")
+      LLAMA    = "http://127.0.0.1:8012/completion"
 
       def tokenize(cmd: str) -> str:
           parts = cmd.strip().split()
@@ -114,21 +113,27 @@ let
               "4. Flag if this should become a Nix-packaged tool instead.\n\n"
               "Output in org-mode with * headlines and #+begin_src bash blocks.\n"
           )
-          try:
-              r = requests.post(
-                  OLLAMA,
-                  json={
-                      "model": MODEL,
-                      "prompt": prompt,
-                      "stream": False,
-                      "options": {"temperature": 0.3, "num_ctx": 8192},
-                  },
-                  timeout=600,
-              )
-              r.raise_for_status()
-              return r.json().get("response", "* LLM returned no response\n")
-          except Exception as exc:
-              return f"* LLM call failed: {exc}\n"
+          for attempt in range(3):
+              try:
+                  r = requests.post(
+                      LLAMA,
+                      json={
+                          "prompt": prompt,
+                          "stream": False,
+                          "temperature": 0.3,
+                          "n_predict": 4096,
+                      },
+                      timeout=600,
+                  )
+                  r.raise_for_status()
+                  return r.json().get("content", "* LLM returned no response\n")
+              except requests.ConnectionError:
+                  if attempt < 2:
+                      time.sleep(10)
+                      continue
+                  return "* LLM call failed: llama-server not reachable after 3 attempts\n"
+              except Exception as exc:
+                  return f"* LLM call failed: {exc}\n"
 
       def main() -> None:
           sessions = load_sessions(days=7)
@@ -148,22 +153,23 @@ let
 in
 {
   config = lib.mkIf (cfg.enable && aCfg.enable) {
-    services.ollama = {
-      enable = true;
-      package = ollamaPackage;
-      host = "127.0.0.1";
-      port = 11434;
-      loadModels = [ aCfg.model ];
+    systemd.services.marchyo-llama-server = {
+      description = "llama-server for marchyo tracking analysis";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${llamaCppPackage}/bin/llama-server -m ${aCfg.model} --host 127.0.0.1 --port 8012 -c 8192";
+        Restart = "on-failure";
+        RestartSec = 5;
+        DynamicUser = true;
+        ProtectSystem = "strict";
+        ProtectHome = "read-only";
+        NoNewPrivileges = true;
+      };
     };
-
-    environment.systemPackages = [
-      pythonEnv
-    ];
 
     systemd.user.services.marchyo-tracking-weekly-analysis = {
       description = "Marchyo tracking: weekly activity analysis";
-      after = [ "ollama.service" ];
-      wants = [ "ollama.service" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${analysisScript}";

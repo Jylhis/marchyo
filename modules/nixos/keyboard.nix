@@ -5,20 +5,8 @@
 }:
 let
   cfg = config.marchyo.keyboard;
-
-  # Normalize all layouts to uniform structure
-  normalizedLayouts = map (
-    layout:
-    if builtins.isString layout then
-      {
-        inherit layout;
-        variant = "";
-        ime = null;
-        label = null;
-      }
-    else
-      layout
-  ) cfg.layouts;
+  keyboardLib = import ../generic/keyboard-lib.nix;
+  normalizedLayouts = map keyboardLib.normalizeLayout cfg.layouts;
 
   # Extract layout codes for XKB configuration
   simpleLayouts = map (l: l.layout) normalizedLayouts;

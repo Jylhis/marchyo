@@ -6,20 +6,8 @@
 }:
 let
   kbdCfg = config.marchyo.keyboard;
-
-  # Normalize all layouts to uniform structure
-  normalizedLayouts = map (
-    layout:
-    if builtins.isString layout then
-      {
-        inherit layout;
-        variant = "";
-        ime = null;
-        label = null;
-      }
-    else
-      layout
-  ) kbdCfg.layouts;
+  keyboardLib = import ../generic/keyboard-lib.nix;
+  normalizedLayouts = map keyboardLib.normalizeLayout kbdCfg.layouts;
 
   # Check if any layout requires IME
   hasIME = lib.any (l: l.ime != null) normalizedLayouts;
