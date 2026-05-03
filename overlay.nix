@@ -1,6 +1,10 @@
 { inputs }:
 final: prev:
-prev.lib.optionalAttrs prev.stdenv.isLinux {
+{
+  jylhis-themes = final.callPackage "${inputs.jylhis-design}/nix/themes.nix" { };
+  jylhis-design-src = inputs.jylhis-design;
+}
+// prev.lib.optionalAttrs prev.stdenv.isLinux {
   vicinae = inputs.vicinae.packages.${final.stdenv.hostPlatform.system}.default;
   noctalia = inputs.noctalia.packages.${final.stdenv.hostPlatform.system}.default;
 

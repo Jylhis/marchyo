@@ -29,7 +29,7 @@ in
           layer = "top";
           position = "top";
           spacing = 0;
-          height = 26;
+          height = 28;
           modules-left = [
             "hyprland/workspaces"
           ];
@@ -48,20 +48,8 @@ in
           ];
           "hyprland/workspaces" = {
             on-click = "activate";
-            format = "{icon}";
-            format-icons = {
-              default = "";
-              "1" = "1";
-              "2" = "2";
-              "3" = "3";
-              "4" = "4";
-              "5" = "5";
-              "6" = "6";
-              "7" = "7";
-              "8" = "8";
-              "9" = "9";
-              active = "󱓻";
-            };
+            format = "{name}";
+            disable-scroll = true;
             persistent-workspaces = {
               "1" = [ ];
               "2" = [ ];
@@ -76,91 +64,46 @@ in
           };
           cpu = {
             interval = 5;
-            format = "󰍛";
+            format = "cpu {usage}%";
             on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
           };
           clock = {
-            format = "{:L%A %H:%M}";
-            format-alt = "{:L%d %B W%V %Y}";
+            format = "{:%a %d %b \u00b7 %H:%M}";
+            format-alt = "{:%d %B W%V %Y}";
             tooltip = false;
           };
           network = {
-            format-icons = [
-              "󰤯"
-              "󰤟"
-              "󰤢"
-              "󰤥"
-              "󰤨"
-            ];
-            format = "{icon}";
-            format-wifi = "{icon}";
-            format-ethernet = "󰀂";
-            format-disconnected = "󰖪";
-            tooltip-format-wifi = "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-disconnected = "Disconnected";
+            format-wifi = "{essid} {signalStrength}%";
+            format-ethernet = "eth";
+            format-disconnected = "offline";
+            tooltip-format = "{ipaddr}  {ifname}";
             interval = 3;
-            nospacing = 1;
             on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
           };
           battery = {
             interval = 5;
-            format = "{capacity}% {icon}";
-            format-discharging = "{icon}";
-            format-charging = "{icon}";
-            format-plugged = "";
-            format-icons = {
-              charging = [
-                "󰢜"
-                "󰂆"
-                "󰂇"
-                "󰂈"
-                "󰢝"
-                "󰂉"
-                "󰢞"
-                "󰂊"
-                "󰂋"
-                "󰂅"
-              ];
-              default = [
-                "󰁺"
-                "󰁻"
-                "󰁼"
-                "󰁽"
-                "󰁾"
-                "󰁿"
-                "󰂀"
-                "󰂁"
-                "󰂂"
-                "󰁹"
-              ];
-            };
-            format-full = "󰂅";
+            format = "bat {capacity}%";
+            format-charging = "chg {capacity}%";
+            format-plugged = "pwr";
+            format-full = "bat full";
             on-click = "vicinae toggle";
-            tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
-            tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
+            tooltip-format-discharging = "{power:>1.0f}W\u2193 {capacity}%";
+            tooltip-format-charging = "{power:>1.0f}W\u2191 {capacity}%";
             states = {
               warning = 20;
               critical = 10;
             };
           };
           bluetooth = {
-            format = "󰂯";
-            format-disabled = "󰂲";
-            format-connected = "";
+            format = "bt";
+            format-disabled = "bt off";
+            format-connected = "bt {num_connections}";
             tooltip-format = "Devices connected: {num_connections}";
             on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
           };
           wireplumber = {
-            format = "{icon}";
-            format-icons = {
-              default = [
-                ""
-                ""
-                ""
-              ];
-            };
-            format-muted = "";
+            format = "vol {volume}%";
+            format-muted = "vol mute";
             scroll-step = 5;
             on-click = "pavucontrol";
             tooltip-format = "Playing at {volume}%";
@@ -168,7 +111,7 @@ in
             max-volume = 150;
           };
           tray = {
-            spacing = 13;
+            spacing = 10;
             icon-size = 12;
           };
           "group/tray-expander" = {
@@ -183,7 +126,7 @@ in
             ];
           };
           "custom/expand-icon" = {
-            "format" = " ";
+            "format" = "\u00b7";
             "tooltip" = false;
           };
           power-profiles-daemon = {
@@ -191,9 +134,9 @@ in
             tooltip-format = "Power profile: {profile}";
             tooltip = true;
             format-icons = {
-              power-saver = "󰡳";
-              balanced = "󰊚";
-              performance = "󰡴";
+              power-saver = "eco";
+              balanced = "bal";
+              performance = "perf";
             };
           };
         }

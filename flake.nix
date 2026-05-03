@@ -32,6 +32,10 @@
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    jylhis-design = {
+      url = "github:Jylhis/design";
+      flake = false;
+    };
 
   };
 
