@@ -16,6 +16,30 @@ let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   ghosttyTheme = if themeVariant == "dark" then "jylhis-roast" else "jylhis-paper";
 
+  # Generate a Ghostty theme file from mkPalette so the paper ANSI 7/15
+  # readability override is applied (see modules/generic/jylhis-palette.nix).
+  mkGhosttyTheme =
+    variant:
+    let
+      palette = import ../generic/jylhis-palette.nix {
+        inherit pkgs lib;
+        inherit variant;
+      };
+      paletteLines = lib.concatStringsSep "\n" (
+        lib.imap0 (i: hex: "palette = ${toString i}=#${hex}") palette.ansi16
+      );
+    in
+    ''
+      ${paletteLines}
+
+      background  = ${palette.hex.bg}
+      foreground  = ${palette.hex.text}
+      cursor-color = ${palette.hex.cursor}
+      cursor-text  = ${palette.hex.bg}
+      selection-background = ${palette.hex."selection-bg"}
+      selection-foreground = ${palette.hex.text}
+    '';
+
   linuxKeybinds = [
     "alt+1=goto_tab:1"
     "alt+2=goto_tab:2"
@@ -52,11 +76,10 @@ let
   ];
 in
 {
-  # Install Jylhis Ghostty theme files from design system source
-  xdg.configFile."ghostty/themes/jylhis-paper".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-paper";
-  xdg.configFile."ghostty/themes/jylhis-roast".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-roast";
+  # Install marchyo-derived Ghostty themes (both variants, active one set
+  # in programs.ghostty.settings.theme).
+  xdg.configFile."ghostty/themes/jylhis-roast".text = mkGhosttyTheme "dark";
+  xdg.configFile."ghostty/themes/jylhis-paper".text = mkGhosttyTheme "light";
 
   programs.ghostty = {
     enable = true;
