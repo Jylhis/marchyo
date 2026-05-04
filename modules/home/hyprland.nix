@@ -17,6 +17,15 @@ let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
 
+  palette = import ../generic/jylhis-palette.nix {
+    inherit pkgs lib;
+    variant = themeVariant;
+  };
+
+  # Convert "#RRGGBB" → "rgb(RRGGBB)" / "rgba(RRGGBBAA)" for Hyprland color syntax
+  rgb = h: "rgb(${lib.removePrefix "#" h})";
+  rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
+
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
   browserHyprlandCommands = {
@@ -130,7 +139,7 @@ in
           disable_hyprland_logo = lib.mkDefault true;
           disable_splash_rendering = true;
           focus_on_activate = true;
-          background_color = lib.mkForce (if isDark then "rgb(1a1714)" else "rgb(faf7f2)");
+          background_color = lib.mkForce (rgb palette.hex.bg);
         };
         # Layout — Jylhis Design System (tokens.json spacing)
         general = {
@@ -138,10 +147,9 @@ in
           gaps_out = 12;
           border_size = 2;
 
-          "col.active_border" = lib.mkForce (
-            if isDark then "rgba(e89b5eff) rgba(d4884aff) 45deg" else "rgba(9a5a2aff) rgba(b5703cff) 45deg"
-          );
-          "col.inactive_border" = lib.mkForce (if isDark then "rgba(5a5248aa)" else "rgba(d5cec4aa)");
+          "col.active_border" =
+            lib.mkForce "${rgba palette.hex.accent "ff"} ${rgba palette.hex.brand "ff"} 45deg";
+          "col.inactive_border" = lib.mkForce (rgba palette.hex."border-strong" "aa");
 
           resize_on_border = true;
           hover_icon_on_border = true;
@@ -171,8 +179,8 @@ in
             range = 8;
             render_power = 2;
             offset = "0 2";
-            color = lib.mkForce (if isDark then "rgba(00000066)" else "rgba(00000033)");
-            color_inactive = lib.mkForce (if isDark then "rgba(00000022)" else "rgba(00000011)");
+            color = lib.mkForce (if isDark then "rgba(00000066)" else "rgba(2c2825aa)");
+            color_inactive = lib.mkForce (if isDark then "rgba(00000022)" else "rgba(2c282544)");
           };
 
           blur = {
@@ -389,7 +397,7 @@ in
           "XDG_CURRENT_DESKTOP,Hyprland"
           "XDG_SESSION_DESKTOP,Hyprland"
 
-          # Make .desktop files available for wofi
+          # Make .desktop files available for the launcher and discovery tools
           "XDG_DATA_DIRS,$XDG_DATA_DIRS:$HOME/.nix-profile/share:/nix/var/nix/profiles/default/share"
 
           # Use XCompose file

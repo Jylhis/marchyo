@@ -196,7 +196,6 @@ The keyboard/IME system is the most complex cross-module pattern:
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.desktop.enable` | `false` | Desktop (Hyprland, audio, bluetooth, fonts) |
-| `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae launcher |
 | `marchyo.development.enable` | `false` | Dev tools (git, docker, virtualization) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |
 | `marchyo.office.enable` | `false` | Office apps (auto-enabled with desktop) |
@@ -334,7 +333,8 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 
 - **Assertions for removed options**: `input-migration.nix` uses NixOS assertions to fail the build with migration instructions if anyone uses the removed `marchyo.inputMethod.*` options.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `options.nix` with deprecation notes in their descriptions.
-- **`marchyo.theme.scheme` is defined but not consumed**: The option exists in `options.nix` but no module reads it. Stylix `base16Scheme` is hardcoded to `nord`/`nord-light` in `modules/nixos/default.nix`. Setting `marchyo.theme.scheme` currently has no effect.
+- **Theme source of truth**: All theme assets (palette, ANSI 16, Hyprland colors, Waybar CSS, Mako config, GTK overrides, fzf colors, bat tmThemes, starship.toml, ghostty themes, hyprlock colors, console.colors) come from `pkgs.jylhis-design-src` (the unpacked `inputs.jylhis-design` flake input). The base16 mapping is computed from `tokens.json` by `modules/generic/jylhis-palette.nix`'s `mkPalette { variant, pkgs, lib }` helper. The upstream `${inputs.jylhis-design}/nix/home-manager-module.nix` is imported via `modules/home/jylhis-theme.nix` and writes ghostty themes, mako config, gtk CSS, starship.toml, and `FZF_DEFAULT_OPTS` directly. Only `marchyo.theme.scheme = "<name>"` overrides this and points at a `pkgs.base16-schemes` YAML instead.
+- **Stylix target disablement**: marchyo overrides Stylix for surfaces it themes directly: `plymouth, hyprland, waybar, mako, ghostty, gtk, fzf, bat, hyprlock, console, starship`. See `modules/generic/theme.nix`. The remaining Stylix targets (qt, vicinae, kde, gnome, fontconfig, …) still receive base16-derived theming.
 - **Unreferenced module files**: `modules/nixos/powersave.nix` and `modules/nixos/audio.nix` exist on disk but are not imported by `modules/nixos/default.nix`. Similarly, `disko/` and `installer/` directories are not wired into flake outputs.
 - **`allowUnfree = true`**: Set globally in `legacyPackages` (via `outputs.nix`) and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.

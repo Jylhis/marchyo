@@ -177,11 +177,11 @@
     "jylhis-design": {
       "flake": false,
       "locked": {
-        "lastModified": 1777754700,
-        "narHash": "sha256-pm8J6cUf/MGJjP35kVrH2fFUn7hu4jZJQl2kYa8RQmI=",
+        "lastModified": 1777817302,
+        "narHash": "sha256-r/znrsLFVac79iQJu/FcWREWQnsBuK/ZjBJzGGEy30E=",
         "owner": "Jylhis",
         "repo": "design",
-        "rev": "4a8326edcc4b22dbe6920a33e0246e9c411e3cb4",
+        "rev": "2fb7b8f00858f6326129a2cf389a81de32005c90",
         "type": "github"
       },
       "original": {

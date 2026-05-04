@@ -1,4 +1,4 @@
-# Waybar configuration with systemd service override
+# Waybar configuration with systemd service override.
 #
 # IMPORTANT: Waybar has a known bug with SIGUSR2 signal handling that causes
 # multiple instances to spawn after sleep/wake cycles. The signal handler
@@ -8,13 +8,53 @@
 # References:
 # - https://github.com/Alexays/Waybar/issues/3344 (Multiple instances after DPMS resume)
 # - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
+#
+# Theming: composes the upstream Jylhis design CSS (Roast or Paper) with a small
+# marchyo overlay covering selectors not present upstream (wireplumber, bluetooth,
+# power-profiles-daemon, hyprland/language, the tray expander). The upstream HM
+# module's waybar target is disabled in modules/home/jylhis-theme.nix so we own
+# the file.
 {
   lib,
   pkgs,
+  osConfig ? { },
   ...
 }:
 let
-  waybarStyle = builtins.readFile ../../assets/applications/waybar.css;
+  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  isDark = themeVariant == "dark";
+
+  palette = import ../generic/jylhis-palette.nix {
+    inherit pkgs lib;
+    variant = themeVariant;
+  };
+
+  upstreamFile = if isDark then "style.css" else "style-paper.css";
+  upstreamCss = builtins.readFile "${pkgs.jylhis-themes}/share/jylhis/waybar/${upstreamFile}";
+
+  # marchyo additions — selectors and tweaks not in upstream design
+  marchyoCss = ''
+
+    /* marchyo additions — selectors not in upstream Jylhis design */
+    #wireplumber,
+    #bluetooth,
+    #power-profiles-daemon,
+    #hyprland-language,
+    #custom-expand-icon {
+      padding: 0 10px;
+    }
+
+    #wireplumber.muted,
+    #network.disconnected {
+      color: ${palette.hex."text-faint"};
+    }
+
+    #tray > .needs-attention {
+      color: ${palette.hex.accent};
+      -gtk-icon-effect: highlight;
+    }
+  '';
+
   terminal = "${pkgs.ghostty}/bin/ghostty";
 in
 {
@@ -22,7 +62,7 @@ in
     programs.waybar = {
       enable = true;
       systemd.enable = true;
-      style = waybarStyle;
+      style = upstreamCss + marchyoCss;
       settings = [
         {
           "reload_style_on_change" = true;
@@ -30,12 +70,8 @@ in
           position = "top";
           spacing = 0;
           height = 28;
-          modules-left = [
-            "hyprland/workspaces"
-          ];
-          modules-center = [
-            "clock"
-          ];
+          modules-left = [ "hyprland/workspaces" ];
+          modules-center = [ "clock" ];
           modules-right = [
             "group/tray-expander"
             "hyprland/language"
@@ -68,7 +104,7 @@ in
             on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
           };
           clock = {
-            format = "{:%a %d %b \u00b7 %H:%M}";
+            format = "{:%a %d %b · %H:%M}";
             format-alt = "{:%d %B W%V %Y}";
             tooltip = false;
           };
@@ -87,8 +123,8 @@ in
             format-plugged = "pwr";
             format-full = "bat full";
             on-click = "vicinae toggle";
-            tooltip-format-discharging = "{power:>1.0f}W\u2193 {capacity}%";
-            tooltip-format-charging = "{power:>1.0f}W\u2191 {capacity}%";
+            tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
+            tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
             states = {
               warning = 20;
               critical = 10;
@@ -126,7 +162,7 @@ in
             ];
           };
           "custom/expand-icon" = {
-            "format" = "\u00b7";
+            "format" = "·";
             "tooltip" = false;
           };
           power-profiles-daemon = {
@@ -147,7 +183,6 @@ in
     # This prevents the bug where SIGUSR2 causes multiple waybar instances
     systemd.user.services.waybar = {
       Service = {
-        # Override ExecReload to use full restart instead of SIGUSR2
         ExecReload = lib.mkForce [
           ""
           "${pkgs.systemd}/bin/systemctl --user restart waybar.service"

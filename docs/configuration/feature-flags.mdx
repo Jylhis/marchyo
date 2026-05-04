@@ -10,7 +10,6 @@ Feature flags are the primary way to configure Marchyo. Each flag enables a grou
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.desktop.enable` | `false` | Desktop environment (Hyprland, Wayland, audio, bluetooth, fonts) |
-| `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae as the application launcher |
 | `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
 | `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
 | `marchyo.office.enable` | `false` | Office applications (LibreOffice, Papers, etc.) |
@@ -46,7 +45,7 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Bluetooth** — Enabled and configured
 - **Fonts** — Curated set of fonts including Nerd Fonts
 - **Theming** — Stylix-based consistent theming across GTK, Qt, and terminal apps
-- **Application launcher** — Vicinae (default) or wofi
+- **Application launcher** — Vicinae
 - **Terminal emulators** — Kitty and Alacritty
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/configuration/default-apps)
 

@@ -8,7 +8,6 @@
 let
   desktopEnabled = (osConfig.marchyo or { }).desktop.enable or false;
   home = config.home.homeDirectory;
-  gtkCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
 in
 {
   config = lib.mkMerge [
@@ -22,7 +21,6 @@ in
           name = "Adwaita";
         };
         gtk3 = {
-          extraCss = gtkCss;
           bookmarks = [
             "file://${config.xdg.userDirs.documents}"
             "file://${config.xdg.userDirs.download}"
@@ -32,7 +30,6 @@ in
             "file://${home}/Developer"
           ];
         };
-        gtk4.extraCss = gtkCss;
       };
     })
   ];

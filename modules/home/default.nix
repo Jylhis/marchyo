@@ -4,6 +4,7 @@
     ../generic/git.nix
     ../generic/shell.nix
     ../generic/packages.nix
+    ../generic/theme.nix
     ./_1password.nix
     ./bat.nix
     ./btop.nix
@@ -19,11 +20,11 @@
     ./hypridle.nix
     ./hyprland.nix
     ./hyprlock.nix
+    ./jylhis-theme.nix
     ./k9s.nix
     ./ghostty.nix
     ./lazygit.nix
     ./locale.nix
-    ./mako.nix
     ./noctalia.nix
     ./packages.nix
     ./screenshot.nix
@@ -31,7 +32,6 @@
     ./waybar.nix
     ./vicinae.nix
     ./tracking
-    ./wofi.nix
 
     ./xdg.nix
   ];
