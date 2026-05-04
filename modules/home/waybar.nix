@@ -30,7 +30,7 @@ let
   };
 
   upstreamFile = if isDark then "style.css" else "style-paper.css";
-  upstreamCss = builtins.readFile "${pkgs.jylhis-themes}/share/jylhis/waybar/${upstreamFile}";
+  upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
   # marchyo additions — selectors and tweaks not in upstream design
   marchyoCss = ''

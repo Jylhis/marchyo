@@ -6,14 +6,14 @@
 #   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use
 #   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
-# Source of truth: ${pkgs.jylhis-themes}/share/jylhis/tokens.json (tracked via flake.lock).
+# Source of truth: ${pkgs.jylhis-design-src}/tokens.json (tracked via flake.lock).
 {
   pkgs,
   lib,
   variant ? "dark",
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-themes}/share/jylhis/tokens.json");
+  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/tokens.json");
   key = if variant == "dark" then "dark" else "light";
   sh = lib.removePrefix "#";
 
