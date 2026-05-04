@@ -20,7 +20,7 @@ let
     };
 in
 {
-  imports = [ "${inputs.jylhis-design}/nix/home-manager-module.nix" ];
+  imports = [ inputs.jylhis-design.homeManagerModules.default ];
 
   jylhis.theme = {
     inherit (cfg) enable;

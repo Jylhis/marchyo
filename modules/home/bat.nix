@@ -6,7 +6,7 @@
 let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
-  designSrc = "${pkgs.jylhis-design-src}/platforms/bat";
+  designSrc = "${pkgs.jylhis-themes}/share/jylhis/bat";
 in
 {
   config = {
