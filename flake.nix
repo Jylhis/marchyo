@@ -34,7 +34,7 @@
     };
     jylhis-design = {
       url = "github:Jylhis/design";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
