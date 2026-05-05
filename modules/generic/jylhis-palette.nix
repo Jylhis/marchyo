@@ -2,7 +2,14 @@
 #
 # Reads tokens.json from the upstream design system and exposes:
 #   - base16   : { scheme, author, base00..base0F } for Stylix
-#   - ansi16   : 16-element list of 6-digit hex strings (no '#') for console.colors
+#   - ansi16   : 16-element list of 6-digit hex strings — ANSI escape palette
+#                tuned for terminal apps that paint their own bg (Ghostty etc.)
+#   - tty16    : 16-element list — kernel-TTY palette. Same as ansi16 except
+#                slots 0/7/15 come from semantic tokens (bg/text/text-heading)
+#                so the bare TTY (slot 0 = actual background) and any greeter
+#                inheriting it stay readable in both Paper and Roast variants.
+#                Mirrors the override done in the upstream design generator
+#                (scripts/generate.mjs) for jylhis-{paper,roast}.nix.
 #   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use
 #   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
@@ -44,6 +51,16 @@ in
   };
 
   ansi16 = map (e: sh e.${key}) tokens.ansi;
+
+  tty16 =
+    let
+      overrides = {
+        "0" = sh p.bg.${key};
+        "7" = sh p.text.${key};
+        "15" = sh p."text-heading".${key};
+      };
+    in
+    lib.imap0 (i: e: overrides.${toString i} or (sh e.${key})) tokens.ansi;
 
   hex = lib.mapAttrs (_: tok: tok.${key}) (p // s // sy);
 
