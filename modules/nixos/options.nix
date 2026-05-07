@@ -942,6 +942,31 @@ in
           description = ''
             Filesystem path to a GGUF model file for llama-server.
             When null, analysis produces a stats-only report without LLM insights.
+
+            The model must be in GGUF format (used by llama.cpp). Choose a
+            model based on your available hardware:
+
+            CPU-only (8 GB+ RAM):
+              - Qwen2.5-3B-Instruct (Q4_K_M, ~2 GB)
+              - Phi-3-mini-4k-instruct (Q4_K_M, ~2.3 GB)
+
+            GPU with 8 GB VRAM:
+              - Qwen2.5-7B-Instruct (Q4_K_M, ~4.7 GB)
+              - Mistral-7B-Instruct (Q4_K_M, ~4.4 GB)
+
+            GPU with 16 GB+ VRAM:
+              - Qwen2.5-14B-Instruct (Q4_K_M, ~8.9 GB)
+
+            Download from https://huggingface.co — search for the model name
+            with "GGUF" and pick the Q4_K_M quantisation (good balance of
+            quality and size). Example using curl:
+
+              curl -L -o ~/models/qwen2.5-7b-q4_k_m.gguf \
+                "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m.gguf"
+
+            Then set:
+              marchyo.tracking.analysis.model = "/home/you/models/qwen2.5-7b-q4_k_m.gguf";
+              marchyo.tracking.analysis.acceleration = "cuda"; # if using GPU
           '';
         };
 
