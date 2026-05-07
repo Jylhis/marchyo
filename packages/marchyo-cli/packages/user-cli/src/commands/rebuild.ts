@@ -1,22 +1,34 @@
-import { detectFlake, nixosRebuild } from "@marchyo/core";
+import {
+  detectFlake,
+  nixosRebuild,
+  info,
+  usageError,
+  type Runtime,
+} from "@marchyo/core";
 
-export type RebuildOpts = { dry: boolean };
+export type RebuildOpts = { dryRun: boolean };
 
-export async function runRebuild(opts: RebuildOpts): Promise<void> {
+export async function runRebuild(
+  rt: Runtime,
+  opts: RebuildOpts,
+): Promise<number> {
   const flake = await detectFlake();
   if (!flake) {
-    console.error(
-      "error: could not detect flake. Place one at /etc/nixos/flake.nix or run from a flake directory.",
+    return usageError(
+      rt,
+      "could not detect flake",
+      "place a flake at /etc/nixos/flake.nix or run from a flake directory",
     );
-    process.exit(1);
   }
 
-  console.log(
-    `rebuilding from ${flake.path} (${flake.source}, ${opts.dry ? "dry" : "switch"}) ...`,
+  info(
+    rt,
+    `rebuilding from ${flake.path} (${flake.source}, ${
+      opts.dryRun ? "dry-activate" : "switch"
+    }) ...`,
   );
-  const code = await nixosRebuild({
+  return await nixosRebuild({
     flakePath: flake.path,
-    dryActivate: opts.dry,
+    dryActivate: opts.dryRun,
   });
-  process.exit(code);
 }

@@ -5,43 +5,68 @@ import {
   mergeState,
   detectFlake,
   nixosRebuild,
+  ok,
+  err,
+  info,
+  data,
+  usageError,
+  type Runtime,
+  type State,
 } from "@marchyo/core";
 
-export type ThemeOpts = { rebuild: boolean };
+export async function runThemeGet(rt: Runtime): Promise<number> {
+  const state = await readState().catch(() => ({}) as State);
+  const variant = state.theme?.variant ?? null;
+  data(rt, { theme: { variant } }, () =>
+    variant ?? "(unset, falling back to flake default)",
+  );
+  return 0;
+}
 
-export async function runTheme(variant: string, opts: ThemeOpts): Promise<void> {
+export type ThemeSetOpts = { rebuild: boolean };
+
+export async function runThemeSet(
+  rt: Runtime,
+  variant: string,
+  opts: ThemeSetOpts,
+): Promise<number> {
   const parsed = ThemeVariant.safeParse(variant);
   if (!parsed.success) {
-    console.error(`error: variant must be 'dark' or 'light' (got '${variant}')`);
-    process.exit(1);
+    return usageError(
+      rt,
+      `invalid theme variant: "${variant}"`,
+      `marchyo theme set dark   (allowed: dark, light)`,
+    );
   }
 
-  const prev = await readState();
+  const prev = await readState().catch(() => ({}) as State);
   const next = mergeState(prev, { theme: { variant: parsed.data } });
   try {
     await writeState(next);
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("EACCES")) {
-      console.error(
-        "error: cannot write /etc/marchyo/cli-state.json — re-run with sudo",
-      );
-      process.exit(1);
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("EACCES")) {
+      err(rt, "cannot write /etc/marchyo/cli-state.json");
+      return 1;
     }
-    throw err;
+    throw e;
   }
 
-  console.log(`theme.variant set to '${parsed.data}'`);
+  ok(rt, `theme.variant set to '${parsed.data}'`);
+  data(rt, { theme: { variant: parsed.data } }, () => parsed.data);
 
-  if (opts.rebuild) {
-    const flake = await detectFlake();
-    if (!flake) {
-      console.error("error: could not detect flake; pass --flake or set _flake.path in state");
-      process.exit(1);
-    }
-    console.log(`rebuilding from ${flake.path} ...`);
-    const code = await nixosRebuild({ flakePath: flake.path });
-    process.exit(code);
-  } else {
-    console.log("run 'marchyo rebuild' to apply.");
+  if (!opts.rebuild) {
+    info(rt, "run 'marchyo rebuild' to apply.");
+    return 0;
   }
+
+  const flake = await detectFlake();
+  if (!flake) {
+    return usageError(
+      rt,
+      "could not detect flake",
+      "place a flake at /etc/nixos/flake.nix or run from a flake directory",
+    );
+  }
+  info(rt, `rebuilding from ${flake.path} ...`);
+  return await nixosRebuild({ flakePath: flake.path });
 }
