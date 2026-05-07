@@ -1,5 +1,13 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import {
+  ok,
+  warn,
+  info,
+  data,
+  usageError,
+  type Runtime,
+} from "@marchyo/core";
 
 const NAME_RE = /^[a-z][a-z0-9-]*$/;
 
@@ -19,14 +27,16 @@ in
 `;
 
 export async function runScaffoldModule(
+  rt: Runtime,
   name: string,
   repoPath: string,
-): Promise<void> {
+): Promise<number> {
   if (!NAME_RE.test(name)) {
-    console.error(
-      `error: name must match ${NAME_RE} (got '${name}')`,
+    return usageError(
+      rt,
+      `name must match /^[a-z][a-z0-9-]*$/ (got '${name}')`,
+      `marchyoctl scaffold module my-feature`,
     );
-    process.exit(1);
   }
 
   const modulePath = join(repoPath, "modules", "nixos", `${name}.nix`);
@@ -34,37 +44,46 @@ export async function runScaffoldModule(
   const testsPath = join(repoPath, "tests", "module-tests.nix");
 
   if (existsSync(modulePath)) {
-    console.error(`error: ${modulePath} already exists`);
-    process.exit(1);
+    return usageError(rt, `${modulePath} already exists`);
   }
   if (!existsSync(importsPath)) {
-    console.error(`error: ${importsPath} not found — is --repo correct?`);
-    process.exit(1);
+    return usageError(
+      rt,
+      `${importsPath} not found`,
+      `pass --repo <path-to-marchyo-checkout>`,
+    );
   }
   if (!existsSync(testsPath)) {
-    console.error(`error: ${testsPath} not found — is --repo correct?`);
-    process.exit(1);
+    return usageError(
+      rt,
+      `${testsPath} not found`,
+      `pass --repo <path-to-marchyo-checkout>`,
+    );
   }
 
   await Bun.write(modulePath, MODULE_TEMPLATE(name));
-  console.log(`created ${modulePath}`);
+  ok(rt, `created ${modulePath}`);
+  const created: string[] = [modulePath];
 
   const imports = await Bun.file(importsPath).text();
   const importLine = `    ./${name}.nix\n`;
   if (imports.includes(importLine.trim())) {
-    console.log(`(${importsPath} already imports ${name}.nix)`);
+    info(rt, `${importsPath} already imports ${name}.nix`);
   } else {
     const updated = imports.replace(
       /(\s*)\];\n\s*config = \{/,
-      (_match, indent) => `${indent}  ${importLine.trim()}\n${indent}];\n${indent}config = {`,
+      (_match, indent) =>
+        `${indent}  ${importLine.trim()}\n${indent}];\n${indent}config = {`,
     );
     if (updated === imports) {
-      console.warn(
-        `warn: could not auto-edit ${importsPath}; add './${name}.nix' to its imports list manually`,
+      warn(
+        rt,
+        `could not auto-edit ${importsPath}; add './${name}.nix' to its imports list manually`,
       );
     } else {
       await Bun.write(importsPath, updated);
-      console.log(`updated ${importsPath}`);
+      ok(rt, `updated ${importsPath}`);
+      created.push(importsPath);
     }
   }
 
@@ -75,14 +94,16 @@ export async function runScaffoldModule(
   });
 `;
   if (tests.includes(`eval-${name} = testNixOS`)) {
-    console.log(`(${testsPath} already has eval-${name})`);
+    info(rt, `${testsPath} already has eval-${name}`);
   } else {
     const updated = tests.replace(/\}\s*$/, `${testStub}}\n`);
     await Bun.write(testsPath, updated);
-    console.log(`updated ${testsPath}`);
+    ok(rt, `updated ${testsPath}`);
+    created.push(testsPath);
   }
 
-  console.log(
-    `\nNext: implement ${modulePath}, then run 'just check' to validate.`,
-  );
+  info(rt, `next: implement ${modulePath}, then run 'just check' to validate.`);
+
+  data(rt, { name, created }, () => created.join("\n"));
+  return 0;
 }

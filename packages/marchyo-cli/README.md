@@ -28,13 +28,28 @@ empty state via `builtins.tryEval` guards.
 
 ## First-cut commands
 
-| Binary       | Command                                | Purpose                                    |
-|--------------|----------------------------------------|--------------------------------------------|
-| `marchyo`    | `status`                               | Ink dashboard of current config + system   |
-| `marchyo`    | `theme <dark\|light> [--rebuild]`      | Persist theme variant; optionally rebuild  |
-| `marchyo`    | `rebuild [--dry]`                      | `nixos-rebuild switch --impure --flake`    |
-| `marchyoctl` | `scaffold module <name>`               | New module + import + stub eval test       |
-| `marchyoctl` | `options search <q>`                   | Fuzzy-search `marchyo.*` option tree (TUI) |
+| Binary       | Command                                  | Purpose                                    |
+|--------------|------------------------------------------|--------------------------------------------|
+| `marchyo`    | `status`                                 | Ink dashboard of current config + system   |
+| `marchyo`    | `theme get`                              | Print current theme variant                |
+| `marchyo`    | `theme set <dark\|light> [--rebuild]`    | Persist theme variant; optionally rebuild  |
+| `marchyo`    | `rebuild [-n,--dry-run]`                 | `nixos-rebuild switch --impure --flake`    |
+| `marchyoctl` | `scaffold module <name>`                 | New module + import + stub eval test       |
+| `marchyoctl` | `options search <q>`                     | Fuzzy-search `marchyo.*` option tree (TUI) |
+
+## Standard flags (both binaries)
+
+Following the [Jylhis CLI/TUI guidelines](https://github.com/jylhis/design):
+
+- `-F, --format <text|json>` — output format (`text` default; `json` is scriptable / a11y-friendly)
+- `--no-color` (or `NO_COLOR=1`) — disable color
+- `--plain` — strip color, glyphs, animation; use word prefixes (`ok:`, `error:`) instead of `✓`/`✗`
+- `--no-animation` — disable spinners
+- `--no-input` — disable interactive prompts (also auto-set under `CI`)
+- `-q, --quiet` — suppress non-error output
+- `-v, --verbose` — increase verbosity (repeatable)
+
+Output discipline: data goes to **stdout**, diagnostics (`✓ ok`, `✗ Error:`, `! Warning:`, `i info`) go to **stderr**. Exit codes: `0` success, `1` runtime failure, `2` usage error.
 
 ## Local development
 
