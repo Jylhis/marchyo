@@ -12,7 +12,7 @@ export async function nixEval(
   const args = ["eval", "--impure", "--expr", expr];
   if (opts.json) args.push("--json");
   if (opts.apply) args.push("--apply", opts.apply);
-  const result = await $`nix ${args}`.quiet().text();
+  const result = await $`nix ${args}`.text();
   return result.trim();
 }
 
