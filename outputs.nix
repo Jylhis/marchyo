@@ -52,7 +52,18 @@ let
 
   # Shared config for darwinConfigurations.
   sharedDarwinConfig =
-    { pkgs, config, ... }:
+    {
+      pkgs,
+      config,
+      lib,
+      ...
+    }:
+    let
+      palette = import ./modules/generic/jylhis-palette.nix {
+        inherit pkgs lib;
+        inherit (config.marchyo.theme) variant;
+      };
+    in
     {
       nixpkgs.config.allowUnfree = true;
       system.stateVersion = 6;
@@ -60,22 +71,22 @@ let
       stylix = {
         autoEnable = true;
         base16Scheme =
-          if config.marchyo.theme.variant == "dark" then
-            "${pkgs.base16-schemes}/share/themes/nord.yaml"
+          if config.marchyo.theme.scheme != null then
+            "${pkgs.base16-schemes}/share/themes/${config.marchyo.theme.scheme}.yaml"
           else
-            "${pkgs.base16-schemes}/share/themes/nord-light.yaml";
+            palette.base16;
         fonts = {
           serif = {
-            package = pkgs.liberation_ttf;
-            name = "Liberation Serif";
+            package = pkgs.literata;
+            name = "Literata";
           };
           sansSerif = {
             package = pkgs.liberation_ttf;
             name = "Liberation Sans";
           };
           monospace = {
-            package = pkgs.nerd-fonts.caskaydia-mono;
-            name = "CaskaydiaMono Nerd Font";
+            package = pkgs.nerd-fonts.jetbrains-mono;
+            name = "JetBrainsMono Nerd Font";
           };
         };
       };
@@ -115,7 +126,6 @@ let
       };
       desktop = {
         enable = false;
-        useWofi = false;
       };
       development.enable = false;
       graphics = {
@@ -148,7 +158,12 @@ let
       };
       extraSpecialArgs = {
         osConfig = mockOsConfig;
-        inherit noctalia vicinae stylix;
+        inherit
+          inputs
+          noctalia
+          vicinae
+          stylix
+          ;
       };
       modules = [
         homeManagerModules.default
@@ -172,6 +187,7 @@ let
       ];
       extraSpecialArgs = {
         inherit
+          inputs
           noctalia
           vicinae
           stylix
