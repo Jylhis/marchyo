@@ -92,7 +92,9 @@ templates/workstation/  # Developer workstation template
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{linux}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
-- `nixosConfigurations.default` — Reference NixOS config used by CI build and VM runner
+- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux); `x86_64` is built by CI and backs the VM runner
+- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs
+- `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
 
 Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate nixpkgs input needed.
 
@@ -194,7 +196,6 @@ The keyboard/IME system is the most complex cross-module pattern:
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.desktop.enable` | `false` | Desktop (Hyprland, audio, bluetooth, fonts) |
-| `marchyo.desktop.useWofi` | `false` | Use wofi instead of vicinae launcher |
 | `marchyo.development.enable` | `false` | Dev tools (git, docker, virtualization) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |
 | `marchyo.office.enable` | `false` | Office apps (auto-enabled with desktop) |
@@ -318,19 +319,22 @@ marchyo.keyboard.layouts = [
 ## CI Pipeline
 
 `.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
-1. **lints** — `nix fmt -- --ci` (formatting check only, no writes)
-2. **check** — `nix flake check` (all evaluation tests)
-3. **build** — `nix build .#nixosConfigurations.default.config.system.build.toplevel` (full system build, runs after lints and check pass)
+1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
+2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is the last release to support it and `aarch64-darwin` covers evaluation equivalently.
+3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
 
-Stages 1 and 2 run in parallel; stage 3 runs after both succeed.
+Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
-Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds.
+`.github/workflows/pages.yml` builds and deploys docs to GitHub Pages. It only fires when `docs/**`, flake sources, or the workflow itself change.
+
+Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Dependabot groups all `nix` and `github-actions` bumps into single weekly PRs.
 
 ## Gotchas
 
 - **Assertions for removed options**: `input-migration.nix` uses NixOS assertions to fail the build with migration instructions if anyone uses the removed `marchyo.inputMethod.*` options.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `options.nix` with deprecation notes in their descriptions.
-- **`marchyo.theme.scheme` is defined but not consumed**: The option exists in `options.nix` but no module reads it. Stylix `base16Scheme` is hardcoded to `nord`/`nord-light` in `modules/nixos/default.nix`. Setting `marchyo.theme.scheme` currently has no effect.
+- **Theme source of truth**: All theme assets (palette, ANSI 16, Hyprland colors, Waybar CSS, Mako config, GTK overrides, fzf colors, bat tmThemes, starship.toml, ghostty themes, hyprlock colors, console.colors) come from `pkgs.jylhis-design-src` (the unpacked `inputs.jylhis-design` flake input). The base16 mapping is computed from `tokens.json` by `modules/generic/jylhis-palette.nix`'s `mkPalette { variant, pkgs, lib }` helper. The upstream `${inputs.jylhis-design}/nix/home-manager-module.nix` is imported via `modules/home/jylhis-theme.nix` and writes ghostty themes, mako config, gtk CSS, starship.toml, and `FZF_DEFAULT_OPTS` directly. Only `marchyo.theme.scheme = "<name>"` overrides this and points at a `pkgs.base16-schemes` YAML instead.
+- **Stylix target disablement**: marchyo overrides Stylix for surfaces it themes directly: `plymouth, hyprland, waybar, mako, ghostty, gtk, fzf, bat, hyprlock, console, starship`. See `modules/generic/theme.nix`. The remaining Stylix targets (qt, vicinae, kde, gnome, fontconfig, …) still receive base16-derived theming.
 - **Unreferenced module files**: `modules/nixos/powersave.nix` and `modules/nixos/audio.nix` exist on disk but are not imported by `modules/nixos/default.nix`. Similarly, `disko/` and `installer/` directories are not wired into flake outputs.
 - **`allowUnfree = true`**: Set globally in `legacyPackages` (via `outputs.nix`) and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.

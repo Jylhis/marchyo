@@ -90,8 +90,20 @@ in
       enable = true;
       # Test dark variant (default)
       variant = "dark";
-      # Test custom scheme
-      scheme = "modus-vivendi-tinted";
+      # Test custom scheme override (must exist in pkgs.base16-schemes)
+      scheme = "nord";
+    };
+  });
+
+  # Test 5b: Paper (light) variant with desktop — catches dark-only regressions
+  # in waybar / hyprland / mako / hyprlock / fzf / starship / etc.
+  eval-themes-paper = testNixOS "themes-paper" (withTestUser {
+    marchyo = {
+      desktop.enable = true;
+      theme = {
+        enable = true;
+        variant = "light";
+      };
     };
   });
 
@@ -192,11 +204,6 @@ in
       marchyo.graphics.vendors = [ ];
     }
   );
-
-  # Test 13: Worktrunk auto-enabled with development feature flag
-  eval-worktrunk = testNixOS "worktrunk" (withTestUser {
-    marchyo.development.enable = true;
-  });
 
   # Test 15: Default browser (google-chrome) with desktop
   eval-defaults-browser = testNixOS "defaults-browser" (withTestUser {

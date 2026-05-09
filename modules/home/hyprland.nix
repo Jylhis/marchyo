@@ -13,6 +13,19 @@ let
     (osConfig.marchyo.graphics.prime.enable or false)
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
+  # Theme variant for color selection
+  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  isDark = themeVariant == "dark";
+
+  palette = import ../generic/jylhis-palette.nix {
+    inherit pkgs lib;
+    variant = themeVariant;
+  };
+
+  # Convert "#RRGGBB" → "rgb(RRGGBB)" / "rgba(RRGGBBAA)" for Hyprland color syntax
+  rgb = h: "rgb(${lib.removePrefix "#" h})";
+  rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
+
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
   browserHyprlandCommands = {
@@ -106,6 +119,8 @@ in
                     config.home.keyboard.variant
                 )
               );
+          repeat_rate = 40;
+          repeat_delay = 280;
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;
@@ -124,14 +139,20 @@ in
           disable_hyprland_logo = lib.mkDefault true;
           disable_splash_rendering = true;
           focus_on_activate = true;
+          background_color = lib.mkForce (rgb palette.hex.bg);
         };
-        # Performance-optimized general settings
+        # Layout — Jylhis Design System (tokens.json spacing)
         general = {
-          gaps_in = 5;
-          gaps_out = 10;
+          gaps_in = 6;
+          gaps_out = 12;
           border_size = 2;
 
-          resize_on_border = false;
+          "col.active_border" =
+            lib.mkForce "${rgba palette.hex.accent "ff"} ${rgba palette.hex.brand "ff"} 45deg";
+          "col.inactive_border" = lib.mkForce (rgba palette.hex."border-strong" "aa");
+
+          resize_on_border = true;
+          hover_icon_on_border = true;
           allow_tearing = true;
 
           layout = "dwindle";
@@ -145,63 +166,47 @@ in
           no_hardware_cursors = true;
         };
 
-        # Modern decorations with performance considerations
+        # Decoration — flat paper aesthetic, no blur, minimal shadow
         decoration = {
-          rounding = 0;
-          active_opacity = 1.0;
-          inactive_opacity = 0.95;
-          fullscreen_opacity = 1.0;
+          rounding = 4;
+
+          # Dim inactive instead of opacity — paper metaphor
+          dim_inactive = true;
+          dim_strength = 0.08;
 
           shadow = {
             enabled = true;
-            range = 2;
-            render_power = 3;
+            range = 8;
+            render_power = 2;
+            offset = "0 2";
+            color = lib.mkForce (if isDark then "rgba(00000066)" else "rgba(2c2825aa)");
+            color_inactive = lib.mkForce (if isDark then "rgba(00000022)" else "rgba(2c282544)");
           };
 
           blur = {
-            enabled = true;
-            size = 3;
-            passes = 1;
-
-            vibrancy = 0.1696;
+            enabled = false;
           };
         };
 
-        # Smooth, professional animations
+        # Motion — Jylhis Design System tokens (tokens.json motion)
         animations = {
           enabled = true;
 
           bezier = [
-            "easeOutQuint,0.23,1,0.32,1"
-            "easeInOutCubic,0.65,0.05,0.36,1"
-            "linear,0,0,1,1"
-            "almostLinear,0.5,0.5,0.75,1.0"
-            "quick,0.15,0,0.1,1"
-            "easeinoutsine, 0.37, 0, 0.63, 1"
-            "fluent_decel, 0, 0.2, 0.4, 1"
-            "easeOutCirc, 0, 0.55, 0.45, 1"
-            "easeOutCubic, 0.33, 1, 0.68, 1"
+            "fast, 0.25, 0.1, 0.25, 1.0"
+            "base, 0.2, 0.6, 0.2, 1.0"
+            "slow, 0.16, 1.0, 0.3, 1.0"
+            "spring, 0.34, 1.25, 0.64, 1.0"
           ];
 
           animation = [
-            "border, 1, 2.7, easeOutCirc"
-            "windows, 1, 4.79, easeOutQuint"
-            "windowsMove, 1, 2, easeinoutsine, slide"
-            "windowsIn, 1, 3, easeOutCubic, popin 30%"
-            "windowsOut, 1, 3, fluent_decel, popin 70%"
-            "fadeIn, 1, 3, easeOutCubic"
-            "fadeOut, 1, 2, easeOutCubic"
-            "fadeSwitch, 1, 2, easeOutCirc"
-            "fadeShadow, 1, 2, easeOutCirc"
-            "fadeDim, 1, 3, fluent_decel"
-            "fade, 1, 3.03, quick"
-            "layers, 1, 3.81, easeOutQuint"
-            "layersIn, 1, 4, easeOutQuint, fade"
-            "layersOut, 1, 1.5, linear, fade"
-            "fadeLayersIn, 1, 1.79, almostLinear"
-            "fadeLayersOut, 1, 1.39, almostLinear"
-            "workspaces, 1, 2, fluent_decel, slide"
-            "specialWorkspace, 1, 3, fluent_decel, slidevert"
+            "windows, 1, 2.5, base, popin 90%"
+            "windowsOut, 1, 1.5, fast, popin 98%"
+            "border, 1, 2.0, base"
+            "borderangle, 0"
+            "fade, 1, 1.5, fast"
+            "workspaces, 1, 2.5, slow, slidefade 12%"
+            "specialWorkspace, 1, 3.0, spring, slidefadevert -20%"
           ];
         };
 
@@ -392,7 +397,7 @@ in
           "XDG_CURRENT_DESKTOP,Hyprland"
           "XDG_SESSION_DESKTOP,Hyprland"
 
-          # Make .desktop files available for wofi
+          # Make .desktop files available for the launcher and discovery tools
           "XDG_DATA_DIRS,$XDG_DATA_DIRS:$HOME/.nix-profile/share:/nix/var/nix/profiles/default/share"
 
           # Use XCompose file

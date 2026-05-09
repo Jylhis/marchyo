@@ -32,10 +32,11 @@
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    worktrunk = {
-      url = "github:max-sixty/worktrunk";
+    jylhis-design = {
+      url = "github:Jylhis/design";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
   };
 
   outputs =
@@ -59,11 +60,19 @@
         darwinModules
         homeManagerModules
         nixosConfigurations
+        darwinConfigurations
+        homeConfigurations
         overlays
         templates
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
-      packages = forLinuxSystems (system: marchyo.mkPackages { inherit system; });
+      packages = forAllSystems (
+        system:
+        (nixpkgs.lib.optionalAttrs (builtins.elem system linuxSystems) (
+          marchyo.mkPackages { inherit system; }
+        ))
+        // marchyo.mkDocs { inherit system; }
+      );
       checks = forLinuxSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });
       apps = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (system: marchyo.mkApps { inherit system; });

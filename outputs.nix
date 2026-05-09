@@ -3,6 +3,7 @@ let
   inherit (inputs)
     nixpkgs
     home-manager
+    nix-darwin
     vicinae
     noctalia
     stylix
@@ -11,8 +12,8 @@ let
 
   overlay = import ./overlay.nix { inherit inputs; };
 
-  # Shared config used by both nixosConfigurations.default and mkApps VM.
-  sharedDemoConfig =
+  # Shared config used by both nixosConfigurations and mkApps VM.
+  sharedNixosConfig =
     { lib, ... }:
     {
       nixpkgs.overlays = [ overlay ];
@@ -49,6 +50,133 @@ let
       services.getty.autologinUser = "developer";
     };
 
+  # Shared config for darwinConfigurations.
+  sharedDarwinConfig =
+    {
+      pkgs,
+      config,
+      lib,
+      ...
+    }:
+    let
+      palette = import ./modules/generic/jylhis-palette.nix {
+        inherit pkgs lib;
+        inherit (config.marchyo.theme) variant;
+      };
+    in
+    {
+      nixpkgs.config.allowUnfree = true;
+      system.stateVersion = 6;
+
+      stylix = {
+        autoEnable = true;
+        base16Scheme =
+          if config.marchyo.theme.scheme != null then
+            "${pkgs.base16-schemes}/share/themes/${config.marchyo.theme.scheme}.yaml"
+          else
+            palette.base16;
+        fonts = {
+          serif = {
+            package = pkgs.literata;
+            name = "Literata";
+          };
+          sansSerif = {
+            package = pkgs.liberation_ttf;
+            name = "Liberation Sans";
+          };
+          monospace = {
+            package = pkgs.nerd-fonts.jetbrains-mono;
+            name = "JetBrainsMono Nerd Font";
+          };
+        };
+      };
+
+      marchyo = {
+        development.enable = true;
+        users.developer = {
+          fullname = "Marchyo Developer";
+          email = "dev@example.org";
+        };
+      };
+
+      users.users.developer = {
+        home = "/Users/developer";
+      };
+    };
+
+  # Mock osConfig for standalone Home Manager configurations.
+  # Provides the minimum structure that HM modules access directly
+  # (without `or` defaults).
+  mockOsConfig = {
+    marchyo = {
+      keyboard = {
+        layouts = [ "us" ];
+        options = [ ];
+        autoActivateIME = false;
+        imeTriggerKey = [ ];
+        composeKey = null;
+      };
+      defaultLocale = "en_US.UTF-8";
+      users.developer = {
+        enable = true;
+        name = "developer";
+        fullname = "Marchyo Developer";
+        email = "dev@example.org";
+        wakatimeApiKey = null;
+      };
+      desktop = {
+        enable = false;
+      };
+      development.enable = false;
+      graphics = {
+        vendors = [ ];
+        prime = {
+          enable = false;
+          mode = "";
+        };
+      };
+      defaults = { };
+      tracking = { };
+      theme = {
+        enable = false;
+        variant = "dark";
+      };
+    };
+  };
+
+  # Helper to build standalone Home Manager configurations.
+  mkHomeConfiguration =
+    {
+      system,
+      homeDirectory,
+    }:
+    home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+        config.allowUnfree = true;
+      };
+      extraSpecialArgs = {
+        osConfig = mockOsConfig;
+        inherit
+          inputs
+          noctalia
+          vicinae
+          stylix
+          ;
+      };
+      modules = [
+        homeManagerModules.default
+        noctalia.homeModules.default
+        vicinae.homeManagerModules.default
+        {
+          home.username = "developer";
+          home.homeDirectory = homeDirectory;
+          home.stateVersion = "25.11";
+        }
+      ];
+    };
+
   # Shared home-manager settings for module outputs
   hmSharedConfig = {
     home-manager = {
@@ -59,6 +187,7 @@ let
       ];
       extraSpecialArgs = {
         inherit
+          inputs
           noctalia
           vicinae
           stylix
@@ -111,13 +240,62 @@ in
     };
   };
 
-  nixosConfigurations.default = nixpkgs.lib.nixosSystem {
-    system = "x86_64-linux";
-    modules = [
-      nixosModules.default
-      sharedDemoConfig
-      { networking.hostName = "marchyo-default"; }
-    ];
+  nixosConfigurations = {
+    x86_64 = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        nixosModules.default
+        sharedNixosConfig
+        { networking.hostName = "marchyo-x86-64"; }
+      ];
+    };
+    aarch64 = nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        nixosModules.default
+        sharedNixosConfig
+        {
+          networking.hostName = "marchyo-aarch64";
+          # Intel GPU drivers are x86-only; clear for aarch64
+          marchyo.graphics.vendors = nixpkgs.lib.mkForce [ ];
+        }
+      ];
+    };
+  };
+
+  darwinConfigurations = {
+    aarch64 = nix-darwin.lib.darwinSystem {
+      system = "aarch64-darwin";
+      modules = [
+        darwinModules.default
+        stylix.darwinModules.stylix
+        sharedDarwinConfig
+        { networking.hostName = "marchyo-aarch64"; }
+      ];
+    };
+    x86_64 = nix-darwin.lib.darwinSystem {
+      system = "x86_64-darwin";
+      modules = [
+        darwinModules.default
+        stylix.darwinModules.stylix
+        sharedDarwinConfig
+        { networking.hostName = "marchyo-x86-64"; }
+      ];
+    };
+  };
+
+  # Standalone Home Manager configurations (Linux only — many HM modules
+  # depend on Wayland/Hyprland and are not darwin-compatible).
+  # Darwin home-manager is tested through darwinConfigurations instead.
+  homeConfigurations = {
+    "x86_64-linux" = mkHomeConfiguration {
+      system = "x86_64-linux";
+      homeDirectory = "/home/developer";
+    };
+    "aarch64-linux" = mkHomeConfiguration {
+      system = "aarch64-linux";
+      homeDirectory = "/home/developer";
+    };
   };
 
   legacyPackages =
@@ -138,6 +316,32 @@ in
     in
     {
       inherit (pkgs) hyprmon plymouth-marchyo-theme;
+    };
+
+  mkDocs =
+    { system }:
+    let
+      pkgs = nixpkgs.legacyPackages.${system};
+      # NixOS module eval is always x86_64-linux regardless of build host.
+      nixosConfig = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          nixosModules.default
+          sharedNixosConfig
+          { networking.hostName = "marchyo-docs"; }
+        ];
+      };
+      docs = import ./docs {
+        inherit pkgs;
+        inherit (nixpkgs) lib;
+        inherit nixosConfig;
+        sourceRoot = ./.;
+      };
+    in
+    {
+      docs = docs.site;
+      docs-options = docs.optionsReference;
+      docs-lib = docs.libReference;
     };
 
   mkChecks =
@@ -165,7 +369,7 @@ in
         inherit system;
         modules = [
           nixosModules.default
-          sharedDemoConfig
+          sharedNixosConfig
           (
             { modulesPath, ... }:
             {
