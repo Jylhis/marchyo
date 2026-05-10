@@ -17,14 +17,23 @@ packages/
 ## State model
 
 The user CLI persists settings as JSON at `/etc/marchyo/cli-state.json`. The
-NixOS module `modules/nixos/cli-state.nix` reads that file and merges values
-into `config.marchyo.*` with `lib.mkDefault` priority — hand-written flake
-configuration always wins.
+NixOS module `modules/nixos/cli-state.nix` exposes a `marchyo.cli.persistedState`
+option that, when populated, merges into `config.marchyo.*` with `lib.mkDefault`
+priority — hand-written flake configuration always wins.
 
-Reading absolute paths outside a flake's source tree requires **impure**
-evaluation, so `marchyo rebuild` invokes `nixos-rebuild --impure` automatically.
-Pure flake checks (`nix flake check`) treat the missing/unreadable file as
-empty state via `builtins.tryEval` guards.
+The marchyo flake itself never reads absolute paths, so `nix flake check`
+remains pure. End-user flakes opt in by reading the JSON sidecar themselves:
+
+```nix
+# in your flake.nix configuration module
+{
+  marchyo.cli.persistedState =
+    builtins.fromJSON (builtins.readFile /etc/marchyo/cli-state.json);
+}
+```
+
+Then rebuild with `nixos-rebuild switch --impure --flake ...`. The
+`marchyo rebuild` CLI command passes `--impure` automatically.
 
 ## First-cut commands
 

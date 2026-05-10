@@ -60,18 +60,24 @@ in
         '';
       };
 
-      stateFile = mkOption {
-        type = types.str;
-        default = "/etc/marchyo/cli-state.json";
+      persistedState = mkOption {
+        type = types.attrs;
+        default = { };
         description = ''
-          Path to the JSON sidecar file written by the `marchyo` CLI. Values
-          read from this file are merged into config.marchyo.* with
-          lib.mkDefault priority — hand-written flake config always wins.
+          State produced by the `marchyo` user CLI, merged into
+          config.marchyo.* with `lib.mkDefault` priority so hand-written
+          flake config always wins.
 
-          Note: reading the state file requires impure flake evaluation
-          (`nixos-rebuild --impure ...`). The `marchyo rebuild` CLI command
-          handles this automatically. Pure flake checks (e.g.
-          `nix flake check`) treat a missing or unreadable file as empty.
+          The marchyo flake itself never reads absolute paths, so
+          `nix flake check` stays pure. The user CLI writes JSON to
+          /etc/marchyo/cli-state.json; to wire it into your system, add
+          to your flake.nix:
+
+              marchyo.cli.persistedState =
+                builtins.fromJSON (builtins.readFile /etc/marchyo/cli-state.json);
+
+          and run `nixos-rebuild switch --impure --flake ...`. The
+          `marchyo rebuild` CLI command passes `--impure` automatically.
         '';
       };
     };
