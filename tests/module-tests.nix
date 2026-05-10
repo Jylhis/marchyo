@@ -337,9 +337,11 @@ in
     marchyo.cli.enable = false;
   });
 
-  # CLI module: state file path can be overridden (e.g. for testing)
-  eval-cli-custom-state = testNixOS "cli-custom-state" (withTestUser {
-    marchyo.cli.stateFile = "/var/lib/marchyo/cli-state.json";
+  # CLI module: persistedState merges into config.marchyo.* with mkDefault
+  eval-cli-with-state = testNixOS "cli-with-state" (withTestUser {
+    marchyo.cli.persistedState = {
+      theme.variant = "light";
+    };
   });
 
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
