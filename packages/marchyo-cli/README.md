@@ -17,9 +17,11 @@ packages/
 ## State model
 
 The user CLI persists settings as JSON at `/etc/marchyo/cli-state.json`. The
-NixOS module `modules/nixos/cli-state.nix` exposes a `marchyo.cli.persistedState`
-option that, when populated, merges into `config.marchyo.*` with `lib.mkDefault`
-priority — hand-written flake configuration always wins.
+NixOS module `modules/nixos/cli-state.nix` reads a **top-level** `marchyoCliState`
+option (intentionally outside the `marchyo.*` namespace — declaring it under
+`marchyo.cli.*` would create a self-cycle in module evaluation) and merges its
+contents into `config.marchyo.*` with `lib.mkDefault` priority. Hand-written
+flake configuration always wins.
 
 The marchyo flake itself never reads absolute paths, so `nix flake check`
 remains pure. End-user flakes opt in by reading the JSON sidecar themselves:
@@ -27,7 +29,7 @@ remains pure. End-user flakes opt in by reading the JSON sidecar themselves:
 ```nix
 # in your flake.nix configuration module
 {
-  marchyo.cli.persistedState =
+  marchyoCliState =
     builtins.fromJSON (builtins.readFile /etc/marchyo/cli-state.json);
 }
 ```

@@ -337,9 +337,11 @@ in
     marchyo.cli.enable = false;
   });
 
-  # CLI module: persistedState merges into config.marchyo.* with mkDefault
+  # CLI module: marchyoCliState merges into config.marchyo.* with mkDefault.
+  # Note: marchyoCliState is a top-level option (not under marchyo.*) on
+  # purpose to avoid a self-cycle in cli-state.nix.
   eval-cli-with-state = testNixOS "cli-with-state" (withTestUser {
-    marchyo.cli.persistedState = {
+    marchyoCliState = {
       theme.variant = "light";
     };
   });
