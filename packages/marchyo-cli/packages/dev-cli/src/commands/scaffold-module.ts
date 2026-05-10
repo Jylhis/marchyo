@@ -1,13 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import {
-  ok,
-  warn,
-  info,
-  data,
-  usageError,
-  type Runtime,
-} from "@marchyo/core";
+import { ok, info, data, usageError, type Runtime } from "@marchyo/core";
 
 const NAME_RE = /^[a-z][a-z0-9-]*$/;
 
@@ -17,7 +10,7 @@ let
 in
 {
   options.marchyo.${name} = {
-    enable = lib.mkEnableOption "${name} module";
+    enable = lib.mkEnableOption "the ${name} module";
   };
 
   config = lib.mkIf cfg.enable {
@@ -76,15 +69,18 @@ export async function runScaffoldModule(
         `${indent}  ${importLine.trim()}\n${indent}];\n${indent}config = {`,
     );
     if (updated === imports) {
-      warn(
+      // Fail loudly per §2.6: name the field, the expected shape, and the
+      // recovery action. Don't ship a silent half-success that produces a
+      // broken default.nix.
+      return usageError(
         rt,
-        `could not auto-edit ${importsPath}; add './${name}.nix' to its imports list manually`,
+        `could not auto-edit ${importsPath}: imports/config block not in expected shape`,
+        `add './${name}.nix' to the imports list in ${importsPath} manually, then re-run 'just check'`,
       );
-    } else {
-      await Bun.write(importsPath, updated);
-      ok(rt, `updated ${importsPath}`);
-      created.push(importsPath);
     }
+    await Bun.write(importsPath, updated);
+    ok(rt, `updated ${importsPath}`);
+    created.push(importsPath);
   }
 
   const tests = await Bun.file(testsPath).text();

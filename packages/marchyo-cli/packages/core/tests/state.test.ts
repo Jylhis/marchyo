@@ -33,16 +33,49 @@ test("StateSchema rejects unknown top-level keys", () => {
   expect(() => StateSchema.parse({ unknownKey: 1 })).toThrow();
 });
 
-test("readState returns empty on missing file", async () => {
+test("readState returns empty when both paths absent", async () => {
   const path = tempPath();
-  expect(await readState(path)).toEqual(EMPTY_STATE);
+  expect(await readState(path, path)).toEqual(EMPTY_STATE);
   rmSync(path.replace(/\/state\.json$/, ""), { recursive: true, force: true });
 });
 
-test("writeState then readState round-trips", async () => {
+test("readState user file overlays system file", async () => {
+  const sysDir = mkdtempSync(join(tmpdir(), "marchyo-sys-"));
+  const usrDir = mkdtempSync(join(tmpdir(), "marchyo-usr-"));
+  try {
+    const sysPath = join(sysDir, "state.json");
+    const usrPath = join(usrDir, "state.json");
+    await writeState({ theme: { variant: "dark" } }, { path: sysPath });
+    await writeState({ theme: { variant: "light" } }, { path: usrPath });
+    expect(await readState(sysPath, usrPath)).toEqual({
+      theme: { variant: "light" },
+    });
+  } finally {
+    rmSync(sysDir, { recursive: true, force: true });
+    rmSync(usrDir, { recursive: true, force: true });
+  }
+});
+
+test("userStatePath honors XDG_CONFIG_HOME", async () => {
+  const { userStatePath } = await import("../src/state.ts");
+  expect(userStatePath({ XDG_CONFIG_HOME: "/tmp/xdg" })).toBe(
+    "/tmp/xdg/marchyo/state.json",
+  );
+});
+
+test("userStatePath falls back to ~/.config when XDG unset", async () => {
+  const { userStatePath } = await import("../src/state.ts");
+  const path = userStatePath({});
+  expect(path.endsWith("/.config/marchyo/state.json")).toBe(true);
+});
+
+test("writeState then readState round-trips via explicit path", async () => {
   const path = tempPath();
-  await writeState({ theme: { variant: "light" } }, path);
-  expect(await readState(path)).toEqual({ theme: { variant: "light" } });
+  const res = await writeState({ theme: { variant: "light" } }, { path });
+  expect(res.path).toBe(path);
+  // readState merges system+user; pass the temp file as both so we exercise
+  // the round-trip without touching real /etc/* or $HOME paths.
+  expect(await readState(path, path)).toEqual({ theme: { variant: "light" } });
   rmSync(path.replace(/\/state\.json$/, ""), { recursive: true, force: true });
 });
 
