@@ -29,7 +29,7 @@ let
     '';
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = lib.fakeHash;
+    outputHash = "sha256-c3MEHCrrYskHCLzJNkJDb7nuL5HXmz4nkWpG1NwpiRo=";
   };
 in
 stdenvNoCC.mkDerivation {
@@ -45,9 +45,9 @@ stdenvNoCC.mkDerivation {
     chmod -R u+w ./node_modules
     export HOME="$NIX_BUILD_TOP"
 
-    bun build --compile --target=bun-linux-x64 \
+    bun build --compile \
       packages/user-cli/src/cli.tsx --outfile marchyo
-    bun build --compile --target=bun-linux-x64 \
+    bun build --compile \
       packages/dev-cli/src/cli.tsx --outfile marchyoctl
 
     runHook postBuild
@@ -64,7 +64,7 @@ stdenvNoCC.mkDerivation {
     description = "Marchyo CLI utilities — `marchyo` (user) and `marchyoctl` (developer)";
     homepage = "https://github.com/jylhis/marchyo";
     license = lib.licenses.mit;
-    platforms = lib.platforms.linux;
+    platforms = lib.platforms.linux ++ lib.platforms.darwin;
     mainProgram = "marchyo";
   };
 }
