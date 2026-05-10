@@ -11,8 +11,8 @@
   ],
   "scripts": {
     "build": "bun run build:user && bun run build:dev",
-    "build:user": "bun build --compile --target=bun-linux-x64 packages/user-cli/src/cli.tsx --outfile dist/marchyo",
-    "build:dev": "bun build --compile --target=bun-linux-x64 packages/dev-cli/src/cli.tsx --outfile dist/marchyoctl",
+    "build:user": "bun build --compile packages/user-cli/src/cli.tsx --outfile dist/marchyo",
+    "build:dev": "bun build --compile packages/dev-cli/src/cli.tsx --outfile dist/marchyoctl",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
