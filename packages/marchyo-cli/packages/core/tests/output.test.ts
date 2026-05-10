@@ -77,14 +77,20 @@ test("--quiet suppresses ok/info/warn but not err", () => {
   }
 });
 
-test("--plain swaps glyphs for words", () => {
+test("--plain swaps glyphs for word prefixes", () => {
   const cap = captureStdio();
   try {
     const rt = buildRuntime({ plain: true }, {}, true);
     ok(rt, "saved");
     err(rt, "boom");
+    warn(rt, "iffy");
+    info(rt, "fyi");
     expect(cap.stderr).toContain("ok: saved");
-    expect(cap.stderr).toContain("error: Error: boom");
+    // Single signal per spec: no "Error:" / "Warning:" duplication
+    expect(cap.stderr).toContain("error: boom");
+    expect(cap.stderr).not.toContain("Error: boom");
+    expect(cap.stderr).toContain("warning: iffy");
+    expect(cap.stderr).toContain("info: fyi");
     expect(cap.stderr).not.toContain("✓");
     expect(cap.stderr).not.toContain("✗");
   } finally {
@@ -120,7 +126,7 @@ test("usageError returns 2 and emits err + hint", () => {
     const rt = buildRuntime({}, {}, true);
     const code = usageError(rt, "bad input", "marchyo theme set dark");
     expect(code).toBe(2);
-    expect(cap.stderr).toContain("Error: bad input");
+    expect(cap.stderr).toContain("✗ bad input");
     expect(cap.stderr).toContain("Try: marchyo theme set dark");
   } finally {
     cap.restore();

@@ -31,22 +31,18 @@ test("--help exits 0 and shows Examples block", async () => {
 test("scaffold module with bad name exits 2", async () => {
   const r = await run(["scaffold", "module", "BadName"]);
   expect(r.code).toBe(2);
-  expect(r.stderr).toContain("Error:");
+  // glyph (or, in plain mode, "error:" prefix) — never both
+  expect(r.stderr).toMatch(/(✗|error:)/);
+  expect(r.stderr).not.toContain("Error: name must");
   expect(r.stderr).toContain("Try: marchyoctl scaffold module");
 });
 
 test("scaffold module with missing repo exits 2", async () => {
   const dir = mkdtempSync(join(tmpdir(), "marchyo-scaffold-test-"));
   try {
-    const r = await run([
-      "scaffold",
-      "module",
-      "foo",
-      "--repo",
-      dir,
-    ]);
+    const r = await run(["scaffold", "module", "foo", "--repo", dir]);
     expect(r.code).toBe(2);
-    expect(r.stderr).toContain("Error:");
+    expect(r.stderr).toMatch(/(✗|error:)/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

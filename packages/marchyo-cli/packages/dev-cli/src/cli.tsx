@@ -1,6 +1,11 @@
 #!/usr/bin/env bun
 import { Command, Option } from "commander";
-import { buildRuntime, type RuntimeFlags } from "@marchyo/core";
+import {
+  buildRuntime,
+  FormatError,
+  type Runtime,
+  type RuntimeFlags,
+} from "@marchyo/core";
 import { runScaffoldModule } from "./commands/scaffold-module.ts";
 import { runOptionsSearch } from "./commands/options-search.tsx";
 
@@ -10,19 +15,21 @@ program
   .name("marchyoctl")
   .description("Marchyo developer CLI — scaffold modules and inspect options")
   .version("0.1.0")
+  .option("-F, --format <fmt>", "output format (text | json)", "text")
+  .option("--json", "alias for --format json")
   .addOption(
-    new Option("-F, --format <fmt>", "output format")
-      .choices(["text", "json"])
-      .default("text"),
+    new Option("--color <when>", "color usage")
+      .choices(["auto", "always", "never"])
+      .default("auto"),
   )
-  .option("--no-color", "disable color output (also honors NO_COLOR)")
+  .option("--no-color", "disable color (alias for --color=never)")
   .option("--plain", "strip color, glyphs, and animation (a11y mode)")
   .option("--no-animation", "disable spinners and progress animation")
-  .option("--no-input", "disable interactive prompts")
+  .option("--no-input", "disable interactive prompts (also auto-set under CI=1)")
   .option("-q, --quiet", "suppress non-error output")
   .option(
     "-v, --verbose",
-    "increase verbosity (repeatable)",
+    "increase verbosity (repeatable; also bumped by MARCHYO_DEBUG=1)",
     (_, prev: number) => prev + 1,
     0,
   );
@@ -34,12 +41,27 @@ Examples:
   $ marchyoctl scaffold module foo
   $ marchyoctl options search keyboard
   $ marchyoctl options search keyboard --format json
+
+Color: honors NO_COLOR, CLICOLOR_FORCE, FORCE_COLOR, --color, --no-color.
+       --plain is a stronger a11y switch (no color, no glyphs, no animation).
 `,
 );
 
-function rt() {
-  const o = program.opts<RuntimeFlags>();
-  return buildRuntime(o);
+function rt(): Runtime {
+  const o = program.opts<RuntimeFlags & { json?: boolean }>();
+  const flags: RuntimeFlags = {
+    ...o,
+    format: o.format === "text" && o.json ? "json" : o.format,
+  };
+  try {
+    return buildRuntime(flags);
+  } catch (e) {
+    if (e instanceof FormatError) {
+      process.stderr.write(`✗ ${e.message}\n`);
+      process.exit(2);
+    }
+    throw e;
+  }
 }
 
 const scaffold = program

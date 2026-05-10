@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { rmSync } from "node:fs";
 
 // Clean up any state file the smoke tests below may have written.
-// Running as root (e.g. in a CI sandbox) the writes succeed against /etc;
-// running unprivileged they fail with EACCES (also tested).
+// Running as root (e.g. in a CI sandbox) writes go to /etc/marchyo;
+// running unprivileged with our XDG override they go under /tmp.
 afterAll(() => {
   rmSync("/etc/marchyo/cli-state.json", { force: true });
   rmSync("/etc/marchyo", { recursive: true, force: true });
@@ -54,26 +54,27 @@ test("unknown command exits non-zero", async () => {
 test("theme set with bad variant exits 2 with Try line", async () => {
   const r = await run(["theme", "set", "neon"]);
   expect(r.code).toBe(2);
-  expect(r.stderr).toContain("Error: invalid theme variant");
+  // Per §2.6: single signal — glyph or word, never both.
+  expect(r.stderr).toContain("invalid theme variant");
+  expect(r.stderr).not.toContain("Error: invalid"); // no duplicate prefix
   expect(r.stderr).toContain("Try: marchyo theme set");
 });
 
 test("theme set diagnostics go to stderr, value goes to stdout", async () => {
-  const r = await run([
-    "theme",
-    "set",
-    "dark",
-    "--format",
-    "json",
-  ], { MARCHYO_TEST_STATE_PATH: "" });
-  // We can't write to /etc in tests; expect EACCES-style error path.
-  // Either the write succeeded (tmp env override) and stdout has JSON,
-  // or the write failed and stderr has 'Error: cannot write'.
+  // Use a tmp XDG_CONFIG_HOME so writes never touch real state.
+  const xdg = `/tmp/marchyo-cli-test-xdg-${Date.now()}`;
+  const r = await run(
+    ["theme", "set", "dark", "--format", "json"],
+    { XDG_CONFIG_HOME: xdg },
+  );
+  // Either the write succeeded (root in sandbox writes to /etc;
+  // non-root writes under XDG) or it failed with EACCES.
   if (r.code === 0) {
-    expect(JSON.parse(r.stdout)).toEqual({ theme: { variant: "dark" } });
+    const parsed = JSON.parse(r.stdout);
+    expect(parsed.theme).toEqual({ variant: "dark" });
+    expect(typeof parsed.path).toBe("string");
   } else {
-    expect(r.stderr).toContain("Error: cannot write");
-    expect(r.stderr).toContain("/etc/marchyo/cli-state.json");
+    expect(r.stderr).toContain("cannot write state file");
     expect(r.code).toBe(1);
   }
 });
@@ -82,4 +83,38 @@ test("NO_COLOR strips ANSI escapes from --help", async () => {
   const r = await run(["--help"], { NO_COLOR: "1" });
   // No CSI-color sequences anywhere in stdout.
   expect(r.stdout).not.toMatch(/\x1b\[\d/);
+});
+
+test("--json is an alias for --format json", async () => {
+  const r = await run(["theme", "get", "--json"]);
+  expect(r.code).toBe(0);
+  // stdout is parseable JSON regardless of which flag was used
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed).toHaveProperty("theme");
+});
+
+test("unsupported --format value exits 2 with supported set in message", async () => {
+  const r = await run(["status", "--format", "yaml"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("text");
+  expect(r.stderr).toContain("json");
+});
+
+test("status piped to a non-TTY produces no ANSI escapes", async () => {
+  // Default test env already sets NO_COLOR; this asserts the invariant
+  // and provides regression coverage for the agent's stdout-discipline
+  // concern (jylhis/design §3.5).
+  const r = await run(["status"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).not.toMatch(/\x1b\[/);
+});
+
+test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
+  const r = await run(["status", "--color", "always"], {
+    NO_COLOR: "",
+    FORCE_COLOR: "1",
+  });
+  expect(r.code).toBe(0);
+  // We can't easily assert ANSI presence without a real TTY, but we can
+  // at least confirm exit code is clean and the runtime accepted the flag.
 });

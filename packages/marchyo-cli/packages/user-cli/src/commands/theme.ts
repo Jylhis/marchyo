@@ -41,18 +41,20 @@ export async function runThemeSet(
 
   const prev = await readState().catch(() => ({}) as State);
   const next = mergeState(prev, { theme: { variant: parsed.data } });
+  let writtenPath: string;
   try {
-    await writeState(next);
+    const res = await writeState(next);
+    writtenPath = res.path;
   } catch (e) {
     if (e instanceof Error && e.message.includes("EACCES")) {
-      err(rt, "cannot write /etc/marchyo/cli-state.json");
+      err(rt, `cannot write state file (permission denied)`);
       return 1;
     }
     throw e;
   }
 
-  ok(rt, `theme.variant set to '${parsed.data}'`);
-  data(rt, { theme: { variant: parsed.data } }, () => parsed.data);
+  ok(rt, `theme.variant set to '${parsed.data}' (${writtenPath})`);
+  data(rt, { theme: { variant: parsed.data }, path: writtenPath }, () => parsed.data);
 
   if (!opts.rebuild) {
     info(rt, "run 'marchyo rebuild' to apply.");
@@ -68,5 +70,13 @@ export async function runThemeSet(
     );
   }
   info(rt, `rebuilding from ${flake.path} ...`);
-  return await nixosRebuild({ flakePath: flake.path });
+  const result = await nixosRebuild({
+    flakePath: flake.path,
+    noInput: rt.noInput,
+  });
+  if (result.kind === "needs-sudo") {
+    err(rt, result.message);
+    return 2;
+  }
+  return result.code;
 }

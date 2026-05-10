@@ -1,6 +1,7 @@
 import {
   detectFlake,
   nixosRebuild,
+  err,
   info,
   usageError,
   type Runtime,
@@ -27,8 +28,14 @@ export async function runRebuild(
       opts.dryRun ? "dry-activate" : "switch"
     }) ...`,
   );
-  return await nixosRebuild({
+  const result = await nixosRebuild({
     flakePath: flake.path,
     dryActivate: opts.dryRun,
+    noInput: rt.noInput,
   });
+  if (result.kind === "needs-sudo") {
+    err(rt, result.message);
+    return 2;
+  }
+  return result.code;
 }
