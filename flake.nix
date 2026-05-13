@@ -43,16 +43,9 @@
     inputs@{ nixpkgs, ... }:
     let
       marchyo = import ./outputs.nix { inherit inputs; };
-      linuxSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      allSystems = linuxSystems ++ [
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
-      forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
-      forAllSystems = nixpkgs.lib.genAttrs allSystems;
+      systems = import ./lib/systems.nix;
+      forLinuxSystems = nixpkgs.lib.genAttrs systems.linux;
+      forAllSystems = nixpkgs.lib.genAttrs systems.all;
     in
     {
       inherit (marchyo)
@@ -68,7 +61,7 @@
       legacyPackages = forAllSystems marchyo.legacyPackages;
       packages = forAllSystems (
         system:
-        (nixpkgs.lib.optionalAttrs (builtins.elem system linuxSystems) (
+        (nixpkgs.lib.optionalAttrs (builtins.elem system systems.linux) (
           marchyo.mkPackages { inherit system; }
         ))
         // marchyo.mkDocs { inherit system; }
