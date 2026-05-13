@@ -24,9 +24,11 @@ in
 
     # Vector (started by services.vector in aggregation.nix) needs read
     # access to the laurel JSON output. The laurel config sets mode=0640
-    # with group=_laurel; adding vector to _laurel lets the shipper tail
-    # /var/log/laurel/audit.log without elevating its own privileges.
-    users.users.vector.extraGroups = [ "_laurel" ];
+    # with group=_laurel, so vector must be in _laurel. Vector runs under
+    # systemd's DynamicUser, so we extend its SupplementaryGroups rather
+    # than touching users.users.vector. journaldAccess is enabled on the
+    # aggregation side, so re-include systemd-journal explicitly here.
+    systemd.services.vector.serviceConfig.SupplementaryGroups = lib.mkForce "systemd-journal _laurel";
 
     systemd.tmpfiles.rules = [
       "d /var/log/laurel 0750 _laurel _laurel -"

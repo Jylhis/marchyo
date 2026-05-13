@@ -36,7 +36,8 @@ let
 
   vectorSources = {
     activity_logs = activityLogsSource;
-  } // lib.optionalAttrs laurelEnabled { audit_logs = auditLogsSource; };
+  }
+  // lib.optionalAttrs laurelEnabled { audit_logs = auditLogsSource; };
 
   lokiSink = {
     type = "loki";
