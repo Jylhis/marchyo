@@ -16,11 +16,7 @@ let
   # so existing configs that only set the legacy option keep working even when
   # the default first layout now ships with its own variant (e.g. altgr-intl).
   variants = lib.imap0 (
-    i: l:
-    if i == 0 && cfg.variant != "" then
-      cfg.variant
-    else
-      l.variant
+    i: l: if i == 0 && cfg.variant != "" then cfg.variant else l.variant
   ) normalizedLayouts;
 in
 {
