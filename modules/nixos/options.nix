@@ -484,7 +484,10 @@ in
           )
         );
         default = [
-          "us"
+          {
+            layout = "us";
+            variant = "altgr-intl";
+          }
           "fi"
         ];
         example = lib.literalExpression ''
@@ -558,16 +561,22 @@ in
 
       composeKey = mkOption {
         type = types.nullOr types.nonEmptyStr;
-        default = "ralt";
+        default = "menu";
         example = "rwin";
         description = ''
           Sets the XKB Compose key for typing special characters.
           Common values:
-          - ralt: Right Alt key (default)
+          - menu: Menu key (default)
+          - ralt: Right Alt key
           - rwin: Right Super/Windows key
           - caps: Caps Lock key
-          - menu: Menu key
           - null: Disable compose key
+
+          Note: `ralt` is intentionally not the default because the default
+          layout `us(altgr-intl)` needs Right Alt as AltGr (ISO_Level3_Shift)
+          for AltGr-based typography (e.g., AltGr+- → en dash, AltGr+Shift+- →
+          em dash). If you change layouts to a plain `us` you can set this
+          back to `"ralt"`.
 
           Set to null to disable the compose key entirely.
         '';
