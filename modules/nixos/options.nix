@@ -622,13 +622,20 @@ in
           Enable the local-first self-tracking stack.
 
           When true, enables the full local-first self-tracking stack:
-          shell history (atuin), desktop focus (ActivityWatch), editor heartbeats
-          (wakapi), git activity, system file-watch, log aggregation (Vector), and
-          weekly LLM analysis. All collectors default to enabled; set any
-          sub-option to false to opt out.
+          shell history (atuin), desktop focus (ActivityWatch), editor
+          heartbeats (wakapi), git activity, system file-watch,
+          **kernel auditd (execve + per-user ~/.config write watch)**, log
+          aggregation (Vector), and weekly LLM analysis. All collectors
+          default to enabled via `lib.mkDefault`; set any sub-option to
+          false to opt out.
 
           Screenshot capture (`marchyo.tracking.desktop.screenshots.enable`)
           defaults to false and must be enabled explicitly.
+
+          Auditd is intentionally part of the cascade — disable it with
+          `marchyo.tracking.system.auditd = false` if you don't want
+          /var/log/audit growing in the background. See `marchyo.tracking.system.auditd*`
+          options for tuning (backlog, rotation, ruleset lock, early-boot).
 
           All data stays on disk under the user's home directory or
           /var/lib. No network egress unless the aggregation sink is
@@ -735,6 +742,72 @@ in
           description = ''
             Enable auditd with execve and config-change rules for process
             execution tracking. Writes to /var/log/audit.
+
+            When `marchyo.tracking.aggregation.enable = true` is also set,
+            laurel is wired in as an audisp plugin to convert audit records
+            to JSON Lines under /var/log/laurel/ for the Vector pipeline.
+          '';
+        };
+
+        auditdBacklogLimit = mkOption {
+          type = types.ints.positive;
+          default = 65536;
+          description = ''
+            Kernel audit ringbuffer size (`security.audit.backlogLimit`).
+            Default 65536 (kernel default is 8192). Raise if `auditctl -s`
+            reports lost > 0 under burst.
+          '';
+        };
+
+        auditdFailureMode = mkOption {
+          type = types.enum [
+            "silent"
+            "printk"
+            "panic"
+          ];
+          default = "printk";
+          description = ''
+            Action when the audit ringbuffer overflows. Maps to
+            `security.audit.failureMode`.
+          '';
+        };
+
+        auditdLockRules = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Append `-e 2` to lock the loaded ruleset and make loginuid
+            immutable. Requires a reboot to change rules afterwards, so
+            opt-in only.
+          '';
+        };
+
+        auditdMaxLogFileMB = mkOption {
+          type = types.ints.positive;
+          default = 128;
+          description = ''
+            Maximum size of a single audit log file in MB before rotation.
+            Maps to auditd.conf `max_log_file`.
+          '';
+        };
+
+        auditdNumLogs = mkOption {
+          type = types.ints.positive;
+          default = 16;
+          description = ''
+            Number of rotated audit log files to keep. Maps to auditd.conf
+            `num_logs`. Combined with `auditdMaxLogFileMB`, this caps disk
+            usage at roughly maxLogFileMB * (numLogs + 1).
+          '';
+        };
+
+        auditdEarlyBoot = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Add `audit=1 audit_backlog_limit=<auditdBacklogLimit>` to the
+            kernel cmdline so events from before auditd loads its rules
+            are captured. Opt-in: a reboot is required to take effect.
           '';
         };
 
@@ -744,6 +817,12 @@ in
           description = ''
             Enable a per-user inotify-based file change watcher covering
             ~/Developer and ~/.config, writing JSONL to the data dir.
+
+            Note: the ~/.config watch overlaps with the auditd
+            `config_changes` rule when `system.auditd = true`. The two
+            observers see different things (kernel audit captures
+            attributable syscalls; inotify catches in-kernel fs events the
+            audit subsystem may filter), so both are kept by default.
           '';
         };
       };
