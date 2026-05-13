@@ -154,6 +154,12 @@ in
     };
   });
 
+  # Test 6e: Deprecated marchyo.keyboard.variant still wins on the first layout
+  # even when the default first layout ships with its own variant.
+  eval-keyboard-legacy-variant = testNixOS "keyboard-legacy-variant" (withTestUser {
+    marchyo.keyboard.variant = "intl";
+  });
+
   # Test 7: Intel GPU configuration
   eval-graphics-intel = testNixOS "graphics-intel" (
     lib.recursiveUpdate minimalConfig {
