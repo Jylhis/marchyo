@@ -36,11 +36,37 @@ in
         security.auditd.enable = true;
         security.audit = {
           enable = true;
-          rules = [
-            "-a always,exit -F arch=b64 -S execve -k exec_log"
-          ]
-          ++ map (u: "-w ${config.users.users.${u}.home}/.config -p wa -k config_changes") mUsers;
+          backlogLimit = sysCfg.auditdBacklogLimit;
+          failureMode = sysCfg.auditdFailureMode;
+          rules =
+            [
+              "-a always,exit -F arch=b64 -S execve -k exec_log"
+              "-a always,exit -F arch=b32 -S execve -k exec_log"
+            ]
+            ++ map (
+              u: "-w ${config.users.users.${u}.home}/.config -p wa -k config_changes"
+            ) mUsers
+            ++ lib.optional sysCfg.auditdLockRules "-e 2";
         };
+
+        security.auditd.settings = {
+          max_log_file = sysCfg.auditdMaxLogFileMB;
+          num_logs = sysCfg.auditdNumLogs;
+          max_log_file_action = "ROTATE";
+          space_left = 256;
+          space_left_action = "SYSLOG";
+          admin_space_left = 64;
+          admin_space_left_action = "SUSPEND";
+          disk_full_action = "SUSPEND";
+          disk_error_action = "SUSPEND";
+          flush = "INCREMENTAL_ASYNC";
+          freq = 50;
+        };
+
+        boot.kernelParams = lib.mkIf sysCfg.auditdEarlyBoot [
+          "audit=1"
+          "audit_backlog_limit=${toString sysCfg.auditdBacklogLimit}"
+        ];
       })
 
       (lib.mkIf sysCfg.fileWatch {
