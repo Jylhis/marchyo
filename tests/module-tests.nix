@@ -329,6 +329,29 @@ in
     }
   );
 
+  # Tracking: editor plugins auto-detect from defaults
+  eval-tracking-editor-plugins = testNixOS "tracking-editor-plugins" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      editor.enable = true;
+    };
+    marchyo.desktop.enable = true;
+    marchyo.defaults.browser = "firefox";
+    marchyo.defaults.editor = "vscode";
+    marchyo.defaults.terminalEditor = "neovim";
+  });
+
+  # Tracking: editor plugins with explicit overrides
+  eval-tracking-editor-plugins-override = testNixOS "tracking-editor-plugins-override" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      editor = {
+        enable = true;
+        plugins.chrome.enable = true;
+        plugins.emacs.enable = true;
+      };
+    };
+  });
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
