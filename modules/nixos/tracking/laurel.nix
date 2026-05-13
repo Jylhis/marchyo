@@ -22,6 +22,12 @@ in
     };
     users.groups._laurel = { };
 
+    # Vector (started by services.vector in aggregation.nix) needs read
+    # access to the laurel JSON output. The laurel config sets mode=0640
+    # with group=_laurel; adding vector to _laurel lets the shipper tail
+    # /var/log/laurel/audit.log without elevating its own privileges.
+    users.users.vector.extraGroups = [ "_laurel" ];
+
     systemd.tmpfiles.rules = [
       "d /var/log/laurel 0750 _laurel _laurel -"
     ];
@@ -39,8 +45,16 @@ in
 
     environment.etc."laurel/config.toml".text = ''
       [auditlog]
-      file = "audit.log"
+      file = "/var/log/laurel/audit.log"
       read-users = []
+      group = "_laurel"
+      mode = "0640"
+      size = 134217728
+      generations = 16
+
+      [privileges]
+      user = "_laurel"
+      group = "_laurel"
 
       [enrich]
       execve-env = ["LD_PRELOAD", "LD_LIBRARY_PATH"]

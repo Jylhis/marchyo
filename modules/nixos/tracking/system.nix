@@ -38,15 +38,12 @@ in
           enable = true;
           backlogLimit = sysCfg.auditdBacklogLimit;
           failureMode = sysCfg.auditdFailureMode;
-          rules =
-            [
-              "-a always,exit -F arch=b64 -S execve -k exec_log"
-              "-a always,exit -F arch=b32 -S execve -k exec_log"
-            ]
-            ++ map (
-              u: "-w ${config.users.users.${u}.home}/.config -p wa -k config_changes"
-            ) mUsers
-            ++ lib.optional sysCfg.auditdLockRules "-e 2";
+          rules = [
+            "-a always,exit -F arch=b64 -S execve -k exec_log"
+            "-a always,exit -F arch=b32 -S execve -k exec_log"
+          ]
+          ++ map (u: "-w ${config.users.users.${u}.home}/.config -p wa -k config_changes") mUsers
+          ++ lib.optional sysCfg.auditdLockRules "-e 2";
         };
 
         security.auditd.settings = {
