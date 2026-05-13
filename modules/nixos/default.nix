@@ -12,43 +12,14 @@ let
   };
 in
 {
-  imports = [
-    ./nix-settings.nix
-    ./printing.nix
-    ./_1password.nix
+  imports = (import ../../lib/discover-modules.nix { inherit lib; }) ./. ++ [
     ../generic/shell.nix
     ../generic/packages.nix
     ../generic/git.nix
     ../generic/fontconfig.nix
     ../generic/theme.nix
-    ./boot.nix
-    ./console.nix
-    ./options.nix
-    ./input-migration.nix
-    ./packages.nix
-    ./containers.nix
-    ./defaults.nix
-    ./desktop-config.nix
-    ./development-config.nix
-    ./fcitx5.nix
-    ./keyboard.nix
-    ./fonts.nix
-    ./graphics.nix
-    ./hardware.nix
-    ./help.nix
-    ./hyprland.nix
-    ./hyprlock.nix
-    ./locale.nix
-    ./media.nix
-    ./network.nix
-    ./performance.nix
-    ./plymouth.nix
-    ./security.nix
-    ./system.nix
-    ./tracking
-    ./wayland.nix
-    ./update-diff.nix
   ];
+
   config = {
     stylix = {
       enable = true;
