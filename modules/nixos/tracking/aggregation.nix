@@ -22,6 +22,22 @@ let
   laurelEnabled = cfg.system.auditd;
   parseInputs = [ "activity_logs" ] ++ lib.optional laurelEnabled "audit_logs";
 
+  activityLogsSource = {
+    type = "file";
+    include = jsonlPaths;
+    read_from = "beginning";
+  };
+
+  auditLogsSource = {
+    type = "file";
+    include = [ "/var/log/laurel/audit.log" ];
+    read_from = "beginning";
+  };
+
+  vectorSources = {
+    activity_logs = activityLogsSource;
+  } // lib.optionalAttrs laurelEnabled { audit_logs = auditLogsSource; };
+
   lokiSink = {
     type = "loki";
     inputs = [ "parse" ];
@@ -48,20 +64,7 @@ in
       enable = true;
       journaldAccess = true;
       settings = {
-        sources = {
-          activity_logs = {
-            type = "file";
-            include = jsonlPaths;
-            read_from = "beginning";
-          };
-        }
-        // lib.optionalAttrs laurelEnabled {
-          audit_logs = {
-            type = "file";
-            include = [ "/var/log/laurel/audit.log" ];
-            read_from = "beginning";
-          };
-        };
+        sources = vectorSources;
         transforms.parse = {
           type = "remap";
           inputs = parseInputs;
