@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["bun"],
+    "lib": ["ESNext"],
+    "baseUrl": ".",
+    "paths": {
+      "@marchyo/core": ["packages/core/src/index.ts"],
+      "@marchyo/core/*": ["packages/core/src/*"]
+    }
+  },
+  "include": ["packages/*/src/**/*", "packages/*/tests/**/*"]
+}

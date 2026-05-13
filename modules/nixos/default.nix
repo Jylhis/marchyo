@@ -25,6 +25,8 @@ in
     ./console.nix
     ./options.nix
     ./input-migration.nix
+    ./cli.nix
+    ./cli-state.nix
     ./packages.nix
     ./containers.nix
     ./defaults.nix

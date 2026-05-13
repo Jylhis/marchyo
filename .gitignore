@@ -10,3 +10,7 @@ result
 .devenv/
 .devenv.flake.nix
 devenv.local.nix
+
+# bun / TypeScript build artifacts
+node_modules/
+dist/
