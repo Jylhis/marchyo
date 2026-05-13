@@ -9,6 +9,7 @@ in
     ./editor.nix
     ./git.nix
     ./system.nix
+    ./laurel.nix
     ./aggregation.nix
     ./analysis.nix
   ];

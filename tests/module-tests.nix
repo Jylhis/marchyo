@@ -287,6 +287,29 @@ in
     };
   });
 
+  # Tracking: auditd path with a configured user (exercises execve rules,
+  # the per-user config_changes watch, the new tuning options, and the
+  # laurel + Vector pipeline since aggregation cascades on too).
+  eval-tracking-auditd = testNixOS "tracking-auditd" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      system.auditd = true;
+    };
+  });
+
+  # Tracking: auditd path with empty marchyo.users — guards against the
+  # silent degradation where the per-user config_changes rule list
+  # collapses to []. minimalConfig is used directly (no withTestUser) so
+  # marchyo.users stays empty.
+  eval-tracking-auditd-no-users = testNixOS "tracking-auditd-no-users" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.tracking = {
+        enable = true;
+        system.auditd = true;
+      };
+    }
+  );
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
