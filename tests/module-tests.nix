@@ -141,6 +141,25 @@ in
     marchyo.keyboard.composeKey = null;
   });
 
+  # Test 6c: Default keyboard (us(altgr-intl) + fi, compose on Menu)
+  # Pins the new defaults so a regression that re-introduces ralt-as-compose
+  # while keeping the altgr-intl variant would be caught.
+  eval-keyboard-default-altgr-intl = testNixOS "keyboard-default-altgr-intl" (withTestUser { });
+
+  # Test 6d: Opt back into plain us with Right Alt as compose
+  eval-keyboard-plain-us-ralt = testNixOS "keyboard-plain-us-ralt" (withTestUser {
+    marchyo.keyboard = {
+      layouts = [ "us" ];
+      composeKey = "ralt";
+    };
+  });
+
+  # Test 6e: Deprecated marchyo.keyboard.variant still wins on the first layout
+  # even when the default first layout ships with its own variant.
+  eval-keyboard-legacy-variant = testNixOS "keyboard-legacy-variant" (withTestUser {
+    marchyo.keyboard.variant = "intl";
+  });
+
   # Test 7: Intel GPU configuration
   eval-graphics-intel = testNixOS "graphics-intel" (
     lib.recursiveUpdate minimalConfig {

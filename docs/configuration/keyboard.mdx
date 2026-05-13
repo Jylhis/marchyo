@@ -5,6 +5,42 @@ description: Configure keyboard layouts, variants, IMEs, and XKB options
 
 Marchyo provides a unified way to configure keyboard layouts, variants, input methods (IMEs), and XKB options across the system (TTY/console) and the desktop environment (Hyprland + fcitx5).
 
+## Defaults
+
+Out of the box:
+
+- `layouts = [ { layout = "us"; variant = "altgr-intl"; } "fi" ]`
+- `options = [ "grp:win_space_toggle" ]` (Super+Space switches layout/IME)
+- `composeKey = "menu"`
+
+The `altgr-intl` variant ("English (US, intl., AltGr dead keys)") behaves like a plain US layout for the unmodified keys — `'`, `"`, `` ` ``, `~`, `^` produce their normal characters, **not** dead keys. The international characters live behind the AltGr modifier (Right Alt).
+
+### Typography on AltGr
+
+| Sequence | Result |
+|---------|--------|
+| `AltGr` + `-` | `–` (en dash) |
+| `AltGr` + `Shift` + `-` | `—` (em dash) |
+| `AltGr` + `9` / `AltGr` + `0` | `‘` / `’` (curly single quotes) |
+| `AltGr` + `Shift` + `9` / `AltGr` + `Shift` + `0` | `“` / `”` (curly double quotes) |
+| `AltGr` + `[` / `AltGr` + `]` | `«` / `»` (guillemets) |
+| `AltGr` + `5` | `€` |
+| `AltGr` + `4` | `¤` (currency) |
+
+The Menu key acts as Compose for everything else (`Menu` then `'` then `e` → `é`, `Menu` then `-` `-` `-` → `—`, etc.).
+
+If you want the stronger dead-key behavior of plain `us(intl)` (where `'`, `"`, `` ` ``, `~`, `^` wait for a follow-up letter):
+
+```nix
+marchyo.keyboard.layouts = [ { layout = "us"; variant = "intl"; } "fi" ];
+```
+
+If you have no Menu key, point Compose elsewhere (or disable it):
+
+```nix
+marchyo.keyboard.composeKey = "caps";   # or "rwin", "rctrl", or null
+```
+
 ## Layouts
 
 The `marchyo.keyboard.layouts` option accepts a list of layouts. Each can be a simple string or an attribute set for advanced configuration.
@@ -83,15 +119,15 @@ marchyo.keyboard.options = [
 The compose key lets you type special characters via key sequences (e.g., Compose + `'` + `e` = `é`).
 
 ```nix
-marchyo.keyboard.composeKey = "ralt";  # Default: Right Alt
+marchyo.keyboard.composeKey = "menu";  # Default: Menu key
 ```
 
 | Value | Key |
 |-------|-----|
-| `"ralt"` | Right Alt (default) |
+| `"menu"` | Menu key (default) |
+| `"ralt"` | Right Alt — avoid when using `us(altgr-intl)` or `us(intl)` (it needs Right Alt as AltGr) |
 | `"rwin"` | Right Super/Windows |
 | `"caps"` | Caps Lock |
-| `"menu"` | Menu key |
 | `null` | Disable compose key |
 
 ## IME behavior
@@ -117,14 +153,14 @@ marchyo.keyboard.imeTriggerKey = [ "Super+I" ];   # Default
 ```nix
 marchyo.keyboard = {
   layouts = [
-    "us"
+    { layout = "us"; variant = "altgr-intl"; }
     { layout = "fi"; }
     { layout = "us"; variant = "intl"; }
     { layout = "cn"; ime = "pinyin"; }
     { layout = "jp"; ime = "mozc"; }
   ];
   options = [ "grp:win_space_toggle" ];
-  composeKey = "ralt";
+  composeKey = "menu";
   autoActivateIME = true;
   imeTriggerKey = [ "Super+I" ];
 };
@@ -140,8 +176,8 @@ marchyo.keyboard = {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `marchyo.keyboard.layouts` | list of strings or attrsets | `["us" "fi"]` | Keyboard layouts and input methods |
+| `marchyo.keyboard.layouts` | list of strings or attrsets | `[{ layout = "us"; variant = "altgr-intl"; } "fi"]` | Keyboard layouts and input methods |
 | `marchyo.keyboard.options` | list of strings | `["grp:win_space_toggle"]` | XKB keyboard options |
-| `marchyo.keyboard.composeKey` | string or null | `"ralt"` | Compose key |
+| `marchyo.keyboard.composeKey` | string or null | `"menu"` | Compose key |
 | `marchyo.keyboard.autoActivateIME` | bool | `true` | Auto-activate IME on layout switch |
 | `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Manual IME toggle keys |
