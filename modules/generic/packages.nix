@@ -10,10 +10,18 @@ in
     (
       if hasProgram "zoxide" then
         {
-          zoxide = {
-            enable = true;
-            options = [ "--cmd cd" ];
-          };
+          zoxide =
+            {
+              enable = true;
+            }
+            // (
+              if options.programs.zoxide ? options then
+                {
+                  options = [ "--cmd cd" ];
+                }
+              else
+                { }
+            );
         }
       else
         { }
