@@ -11,6 +11,19 @@ in
   programs = lib.mkIf userConfig.enable {
     git = {
       enable = true;
+      delta = {
+        enable = true;
+        options = {
+          navigate = true;
+          line-numbers = true;
+          side-by-side = lib.mkDefault false;
+          syntax-theme =
+            if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
+              "jylhis-roast"
+            else
+              "jylhis-paper";
+        };
+      };
       settings = {
         user = {
           name = userConfig.fullname;
