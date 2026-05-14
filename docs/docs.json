@@ -1,19 +1,11 @@
 {
-  "$schema": "https://mintlify.com/schema.json",
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
   "name": "Marchyo",
-  "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
-  },
-  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#5E81AC",
     "light": "#88C0D0",
-    "dark": "#2E3440",
-    "anchors": {
-      "from": "#5E81AC",
-      "to": "#88C0D0"
-    }
+    "dark": "#2E3440"
   },
   "navigation": [
     {
@@ -53,7 +45,9 @@
       ]
     }
   ],
-  "footerSocials": {
-    "github": "https://github.com/Jylhis/marchyo"
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Jylhis/marchyo"
+    }
   }
 }
