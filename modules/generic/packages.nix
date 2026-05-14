@@ -7,7 +7,17 @@ let
 in
 {
   programs =
-    (if hasProgram "zoxide" then { zoxide.enable = true; } else { })
+    (
+      if hasProgram "zoxide" then
+        {
+          zoxide = {
+            enable = true;
+            options = [ "--cmd cd" ];
+          };
+        }
+      else
+        { }
+    )
     // (if hasProgram "nh" then { nh.enable = true; } else { })
     // (if hasProgram "trippy" then { trippy.enable = true; } else { });
 }
