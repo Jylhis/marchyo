@@ -12,7 +12,7 @@ in
     git = {
       enable = true;
       delta = {
-        enable = true;
+        enable = lib.mkDefault true;
         options = {
           navigate = true;
           line-numbers = true;
