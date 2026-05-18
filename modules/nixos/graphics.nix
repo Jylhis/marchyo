@@ -135,7 +135,7 @@ in
 
     # Assertions and warnings
     {
-      warnings = lib.optionals (cfg.vendors == [ ] && isX86) [
+      warnings = lib.optionals (cfg.vendors == [ ] && isX86 && config.marchyo.desktop.enable) [
         "marchyo.graphics.vendors is empty on x86_64. This defaults to Intel behavior. Set vendors explicitly (e.g. [\"nvidia\"] or [\"amd\"])."
       ];
 
