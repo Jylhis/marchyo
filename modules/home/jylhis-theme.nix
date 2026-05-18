@@ -23,9 +23,11 @@ let
   makoConfig = if variant == "roast" then "config" else "config-paper";
 in
 {
-  imports = [ inputs.jylhis-design.homeManagerModules.default ];
+  imports = lib.optionals pkgs.stdenv.isLinux [
+    inputs.jylhis-design.homeManagerModules.default
+  ];
 
-  config = lib.mkMerge [
+  config = lib.mkIf pkgs.stdenv.isLinux (lib.mkMerge [
     {
       jylhis.theme = {
         inherit (cfg) enable;
@@ -54,5 +56,5 @@ in
 
       programs.starship.enable = lib.mkDefault true;
     })
-  ];
+  ]);
 }
