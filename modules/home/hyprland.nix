@@ -73,6 +73,9 @@ in
     wayland.windowManager.hyprland = {
       enable = true;
       systemd.enable = false; # UWSM manages systemd integration
+      # Pin to the legacy renderer; the `settings` attrset below is
+      # written for hyprlang. Migrating to "lua" is a separate change.
+      configType = "hyprlang";
       settings = {
 
         # Default apps
@@ -211,7 +214,6 @@ in
         };
 
         dwindle = {
-          pseudotile = true;
           preserve_split = true;
           force_split = 2;
         };
@@ -291,7 +293,7 @@ in
           "SUPER, slash, Password manager, exec, $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
           "SUPER, W, Close active window, killactive,"
-          "SUPER, J, Toggle split, togglesplit,"
+          "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
           "SUPER, V, Toggle floating, togglefloating,"
           "SUPER, left, Move focus left, movefocus, l"
