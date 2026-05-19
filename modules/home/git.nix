@@ -9,6 +9,20 @@ let
 in
 {
   programs = lib.mkIf userConfig.enable {
+    delta = {
+      enable = lib.mkDefault true;
+      enableGitIntegration = lib.mkDefault true;
+      options = {
+        navigate = true;
+        line-numbers = true;
+        side-by-side = lib.mkDefault false;
+        syntax-theme =
+          if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
+            "jylhis-roast"
+          else
+            "jylhis-paper";
+      };
+    };
     git = {
       enable = true;
       settings = {
