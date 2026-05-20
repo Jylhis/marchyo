@@ -1,18 +1,28 @@
-{ lib, osConfig, ... }:
+{
+  lib,
+  osConfig ? { },
+  ...
+}:
+let
+  hasMarchyo = osConfig ? marchyo;
+  locale = if hasMarchyo then osConfig.marchyo.defaultLocale else "en_US.UTF-8";
+in
 {
   # Home Manager language configuration - use osConfig to get marchyo settings
-  home.language = lib.mkDefault {
-    base = osConfig.marchyo.defaultLocale;
-    address = osConfig.marchyo.defaultLocale;
-    collate = osConfig.marchyo.defaultLocale;
-    ctype = osConfig.marchyo.defaultLocale;
-    measurement = osConfig.marchyo.defaultLocale;
-    messages = osConfig.marchyo.defaultLocale;
-    monetary = osConfig.marchyo.defaultLocale;
-    name = osConfig.marchyo.defaultLocale;
-    numeric = osConfig.marchyo.defaultLocale;
-    paper = osConfig.marchyo.defaultLocale;
-    telephone = osConfig.marchyo.defaultLocale;
-    time = osConfig.marchyo.defaultLocale;
+  config = lib.mkIf hasMarchyo {
+    home.language = lib.mkDefault {
+      base = locale;
+      address = locale;
+      collate = locale;
+      ctype = locale;
+      measurement = locale;
+      messages = locale;
+      monetary = locale;
+      name = locale;
+      numeric = locale;
+      paper = locale;
+      telephone = locale;
+      time = locale;
+    };
   };
 }

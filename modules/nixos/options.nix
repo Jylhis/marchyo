@@ -910,10 +910,95 @@ in
           default = null;
           example = "http://loki.internal:3100";
           description = ''
-            URL of an existing Loki ingest endpoint. When null, Vector is
-            configured with a blackhole sink (no egress) so local JSONL
-            sources still validate and can be swapped later.
+            URL of an existing self-hosted Loki ingest endpoint. When null,
+            Vector is configured with a blackhole sink (no egress) so local
+            JSONL sources still validate and can be swapped later. Mutually
+            exclusive with `aggregation.grafanaCloud.enable`.
           '';
+        };
+
+        grafanaCloud = {
+          enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = ''
+              Ship Marchyo tracking data to Grafana Cloud. When true, Vector
+              forwards parsed JSONL events to Grafana Cloud Loki using basic
+              auth, and can optionally scrape the local node_exporter and push
+              host metrics to Grafana Cloud Mimir via Prometheus remote_write.
+              Credentials are read from `environmentFile` so tokens never enter
+              the Nix store.
+            '';
+          };
+
+          loki = {
+            endpoint = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              example = "https://logs-prod-eu-west-0.grafana.net";
+              description = ''
+                Grafana Cloud Loki base URL, without the `/loki/api/v1/push`
+                suffix; Vector appends it.
+              '';
+            };
+
+            userId = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              example = "1234567";
+              description = ''
+                Grafana Cloud Loki instance/user ID, shown as "User" on the
+                "Send Logs" details page.
+              '';
+            };
+          };
+
+          prometheus = {
+            enable = mkOption {
+              type = types.bool;
+              default = false;
+              description = ''
+                Also ship host metrics to Grafana Cloud Mimir via Prometheus
+                remote_write. Enables `services.prometheus.exporters.node` on
+                127.0.0.1:9100 and wires Vector to scrape it.
+              '';
+            };
+
+            endpoint = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              example = "https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push";
+              description = ''
+                Grafana Cloud Mimir remote_write URL, including
+                `/api/prom/push`.
+              '';
+            };
+
+            userId = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              example = "1234567";
+              description = ''
+                Grafana Cloud Mimir instance/user ID, shown as "User" on the
+                "Send Metrics" details page.
+              '';
+            };
+          };
+
+          environmentFile = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            example = "/var/lib/marchyo/grafana-cloud.env";
+            description = ''
+              Path to a systemd `EnvironmentFile` loaded by the Vector service.
+              Must define `GRAFANA_CLOUD_LOKI_TOKEN`, and when
+              `prometheus.enable = true`, `GRAFANA_CLOUD_PROM_TOKEN`.
+
+              The same Cloud Access Policy token can be used for both if it has
+              the `logs:write` and `metrics:write` scopes. The file is read at
+              service start and never enters the Nix store.
+            '';
+          };
         };
       };
 
@@ -989,6 +1074,67 @@ in
             Hardware acceleration backend for llama-server. When null the CPU
             build is used. Set to "cuda" or "rocm" for GPU inference.
           '';
+        };
+      };
+
+      claudeCode = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Configure Claude Code to emit OpenTelemetry metrics and logs to an
+            OTLP endpoint, such as Grafana Cloud's OTLP gateway. For every
+            Marchyo user, writes ~/.claude/settings.json with an `env` block
+            and exports the same variables via Home Manager session variables
+            plus interactive shell init. Requires `authHeaderFile` when enabled.
+          '';
+        };
+
+        otlpEndpoint = mkOption {
+          type = types.str;
+          default = "https://otlp-gateway-prod-eu-west-0.grafana.net/otlp";
+          example = "https://otlp-gateway-prod-us-east-0.grafana.net/otlp";
+          description = ''
+            OTLP gateway URL. For Grafana Cloud, choose the region-specific
+            gateway nearest to the stack.
+          '';
+        };
+
+        protocol = mkOption {
+          type = types.enum [
+            "http/protobuf"
+            "grpc"
+          ];
+          default = "http/protobuf";
+          description = "OTLP transport protocol used by Claude Code.";
+        };
+
+        authHeaderFile = mkOption {
+          type = types.nullOr types.path;
+          default = null;
+          example = "/var/lib/marchyo/claude-code-otlp-auth";
+          description = ''
+            Path to a file whose contents are the value of
+            `OTEL_EXPORTER_OTLP_HEADERS`, for example:
+
+                Authorization=Basic <base64(instanceId:token)>
+
+            The file is read at Home Manager activation and by interactive
+            shell init; its contents never enter the Nix store. Keep it readable
+            only by the owning user.
+          '';
+        };
+
+        metricExportIntervalMs = mkOption {
+          type = types.ints.positive;
+          default = 10000;
+          description = "Value for OTEL_METRIC_EXPORT_INTERVAL.";
+        };
+
+        logExportIntervalMs = mkOption {
+          type = types.ints.positive;
+          default = 5000;
+          description = "Value for OTEL_LOGS_EXPORT_INTERVAL.";
         };
       };
     };

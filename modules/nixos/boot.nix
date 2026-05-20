@@ -1,4 +1,12 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.marchyo;
+in
 {
   boot.loader.systemd-boot = {
     enable = true;
@@ -8,7 +16,7 @@
   # Login. The tuigreet --theme uses ANSI color names that are resolved by the
   # kernel's console palette (set in modules/nixos/console.nix from the Jylhis
   # tokens.json). Slot 11 (bright-yellow) is brand copper.
-  services.greetd =
+  services.greetd = lib.mkIf cfg.desktop.enable (
     let
       tuigreetTheme = lib.concatStringsSep ";" [
         "border=brightblack"
@@ -36,5 +44,6 @@
           window-padding = 4;
           theme = tuigreetTheme;
         });
-    };
+    }
+  );
 }
