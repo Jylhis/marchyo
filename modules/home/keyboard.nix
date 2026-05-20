@@ -1,10 +1,15 @@
 {
   lib,
-  osConfig,
+  osConfig ? { },
   ...
 }:
 let
-  cfg = osConfig.marchyo.keyboard;
+  cfg =
+    (osConfig.marchyo or { }).keyboard or {
+      layouts = [ ];
+      options = [ ];
+      composeKey = null;
+    };
   keyboardLib = import ../generic/keyboard-lib.nix;
   normalizedLayouts = map keyboardLib.normalizeLayout cfg.layouts;
 

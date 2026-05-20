@@ -12,6 +12,7 @@ in
     ./laurel.nix
     ./aggregation.nix
     ./analysis.nix
+    ./claude-code.nix
   ];
 
   # When tracking is enabled, auto-enable all collectors except screenshots.

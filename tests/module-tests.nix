@@ -32,6 +32,28 @@ let
     );
 
   # Test helper: verify NixOS config triggers a specific assertion failure
+  testNixOSFails =
+    name: expectedMsg: config:
+    pkgs.writeText "eval-fail-${name}" (
+      let
+        eval = lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            config
+          ];
+        };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
+        hasExpectedFailure = lib.any (msg: lib.hasInfix expectedMsg msg) failedMessages;
+      in
+      if failedAssertions == [ ] then
+        throw "FAIL: ${name}: expected assertion failure containing '${expectedMsg}' but all assertions passed"
+      else if !hasExpectedFailure then
+        throw "FAIL: ${name}: assertion(s) failed but none matched '${expectedMsg}'. Got: ${builtins.concatStringsSep "; " failedMessages}"
+      else
+        "pass: assertion correctly triggered"
+    );
 
   # Minimal NixOS configuration required for testing
   minimalConfig = {
@@ -366,6 +388,79 @@ in
   eval-tracking-no-auto-analysis = testNixOS "tracking-no-auto-analysis" (withTestUser {
     marchyo.tracking.enable = true;
   });
+
+  # Tracking: Grafana Cloud aggregation (Loki + Prometheus remote_write)
+  eval-tracking-grafana-cloud = testNixOS "tracking-grafana-cloud" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      aggregation = {
+        enable = true;
+        grafanaCloud = {
+          enable = true;
+          environmentFile = "/var/lib/marchyo/grafana-cloud.env";
+          loki = {
+            endpoint = "https://logs-prod-eu-west-0.grafana.net";
+            userId = "1234567";
+          };
+          prometheus = {
+            enable = true;
+            endpoint = "https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push";
+            userId = "1234567";
+          };
+        };
+      };
+    };
+  });
+
+  # Tracking: Claude Code OTLP telemetry
+  eval-tracking-claude-code = testNixOS "tracking-claude-code" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      claudeCode = {
+        enable = true;
+        authHeaderFile = "/var/lib/marchyo/claude-code-otlp-auth";
+      };
+    };
+  });
+
+  # Negative test: Grafana Cloud and self-hosted Loki are mutually exclusive.
+  eval-tracking-grafana-cloud-loki-conflict =
+    testNixOSFails "tracking-grafana-cloud-loki-conflict" "cannot enable both"
+      (withTestUser {
+        marchyo.tracking = {
+          enable = true;
+          aggregation = {
+            enable = true;
+            lokiEndpoint = "http://loki.internal:3100";
+            grafanaCloud = {
+              enable = true;
+              environmentFile = "/var/lib/marchyo/grafana-cloud.env";
+              loki = {
+                endpoint = "https://logs-prod-eu-west-0.grafana.net";
+                userId = "1234567";
+              };
+            };
+          };
+        };
+      });
+
+  # Negative test: Claude Code telemetry requires a secret header file.
+  eval-tracking-claude-code-missing-auth =
+    testNixOSFails "tracking-claude-code-missing-auth" "authHeaderFile"
+      (withTestUser {
+        marchyo.tracking = {
+          enable = true;
+          claudeCode.enable = true;
+        };
+      });
+
+  # Test: development without desktop stays headless.
+  eval-development-no-desktop = testNixOS "development-no-desktop" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.development.enable = true;
+    }
+  );
+
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
