@@ -2,6 +2,7 @@
 final: prev:
 {
   jylhis-design-src = inputs.jylhis-design;
+  marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
 }
 // prev.lib.optionalAttrs prev.stdenv.isLinux (
   (inputs.jylhis-design.overlays.default final prev)
