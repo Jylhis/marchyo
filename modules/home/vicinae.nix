@@ -1,32 +1,18 @@
-{
-  lib,
-  osConfig,
-  ...
-}:
-let
-  inherit (lib) mkIf mkMerge;
-  useWofi = if osConfig ? marchyo then osConfig.marchyo.desktop.useWofi or false else false;
-in
-{
-  # Enable vicinae when wofi is not explicitly requested
-  config = mkIf (!useWofi) {
+_: {
+  config = {
     services.vicinae = {
       enable = true;
-      settings = mkMerge [
-        {
-          # Configure window appearance
-          window = {
-            opacity = 0.95;
-            rounding = 0;
-          };
+      settings = {
+        # Jylhis Design System — no transparency, paper metaphor
+        window = {
+          opacity = 1.0;
+          rounding = 4;
+        };
 
-          # Font configuration
-          font = {
-            size = 18;
-          };
-        }
-
-      ];
+        font = {
+          size = 14;
+        };
+      };
     };
   };
 }

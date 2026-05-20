@@ -20,14 +20,16 @@ in
           package = pkgs.adwaita-icon-theme;
           name = "Adwaita";
         };
-        gtk3.bookmarks = [
-          "file://${config.xdg.userDirs.documents}"
-          "file://${config.xdg.userDirs.download}"
-          "file://${config.xdg.userDirs.music}"
-          "file://${config.xdg.userDirs.pictures}"
-          "file://${config.xdg.userDirs.videos}"
-          "file://${home}/Developer"
-        ];
+        gtk3 = {
+          bookmarks = [
+            "file://${config.xdg.userDirs.documents}"
+            "file://${config.xdg.userDirs.download}"
+            "file://${config.xdg.userDirs.music}"
+            "file://${config.xdg.userDirs.pictures}"
+            "file://${config.xdg.userDirs.videos}"
+            "file://${home}/Developer"
+          ];
+        };
       };
     })
   ];

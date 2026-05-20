@@ -90,8 +90,20 @@ in
       enable = true;
       # Test dark variant (default)
       variant = "dark";
-      # Test custom scheme
-      scheme = "modus-vivendi-tinted";
+      # Test custom scheme override (must exist in pkgs.base16-schemes)
+      scheme = "nord";
+    };
+  });
+
+  # Test 5b: Paper (light) variant with desktop — catches dark-only regressions
+  # in waybar / hyprland / mako / hyprlock / fzf / starship / etc.
+  eval-themes-paper = testNixOS "themes-paper" (withTestUser {
+    marchyo = {
+      desktop.enable = true;
+      theme = {
+        enable = true;
+        variant = "light";
+      };
     };
   });
 
@@ -127,6 +139,25 @@ in
   # Test 6b: Keyboard with compose key disabled
   eval-keyboard-no-compose = testNixOS "keyboard-no-compose" (withTestUser {
     marchyo.keyboard.composeKey = null;
+  });
+
+  # Test 6c: Default keyboard (us(altgr-intl) + fi, compose on Menu)
+  # Pins the new defaults so a regression that re-introduces ralt-as-compose
+  # while keeping the altgr-intl variant would be caught.
+  eval-keyboard-default-altgr-intl = testNixOS "keyboard-default-altgr-intl" (withTestUser { });
+
+  # Test 6d: Opt back into plain us with Right Alt as compose
+  eval-keyboard-plain-us-ralt = testNixOS "keyboard-plain-us-ralt" (withTestUser {
+    marchyo.keyboard = {
+      layouts = [ "us" ];
+      composeKey = "ralt";
+    };
+  });
+
+  # Test 6e: Deprecated marchyo.keyboard.variant still wins on the first layout
+  # even when the default first layout ships with its own variant.
+  eval-keyboard-legacy-variant = testNixOS "keyboard-legacy-variant" (withTestUser {
+    marchyo.keyboard.variant = "intl";
   });
 
   # Test 7: Intel GPU configuration
@@ -267,7 +298,7 @@ in
     marchyo.users.testuser.wakatimeApiKey = "waka_test_00000000-0000-0000-0000-000000000000";
   });
 
-  # Tracking: analysis module (exercises inline PrefixSpan + Ollama wiring)
+  # Tracking: analysis module — stats-only (no model)
   eval-tracking-analysis = testNixOS "tracking-analysis" (withTestUser {
     marchyo.tracking = {
       enable = true;
@@ -275,6 +306,66 @@ in
     };
   });
 
+  # Tracking: auditd path with a configured user (exercises execve rules,
+  # the per-user config_changes watch, the new tuning options, and the
+  # laurel + Vector pipeline since aggregation cascades on too).
+  eval-tracking-auditd = testNixOS "tracking-auditd" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      system.auditd = true;
+    };
+  });
+
+  # Tracking: auditd path with empty marchyo.users — guards against the
+  # silent degradation where the per-user config_changes rule list
+  # collapses to []. minimalConfig is used directly (no withTestUser) so
+  # marchyo.users stays empty.
+  eval-tracking-auditd-no-users = testNixOS "tracking-auditd-no-users" (
+    lib.recursiveUpdate minimalConfig {
+      marchyo.tracking = {
+        enable = true;
+        system.auditd = true;
+      };
+    }
+  );
+
+  # Tracking: editor plugins auto-detect from defaults
+  eval-tracking-editor-plugins = testNixOS "tracking-editor-plugins" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      editor.enable = true;
+    };
+    marchyo.desktop.enable = true;
+    marchyo.defaults.browser = "firefox";
+    marchyo.defaults.editor = "vscode";
+    marchyo.defaults.terminalEditor = "neovim";
+  });
+
+  # Tracking: editor plugins with explicit overrides
+  eval-tracking-editor-plugins-override = testNixOS "tracking-editor-plugins-override" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      editor = {
+        enable = true;
+        plugins.chrome.enable = true;
+        plugins.emacs.enable = true;
+      };
+    };
+  });
+
+  # Tracking: analysis module — with LLM model configured
+  eval-tracking-analysis-with-model = testNixOS "tracking-analysis-model" (withTestUser {
+    marchyo.tracking = {
+      enable = true;
+      analysis.enable = true;
+      analysis.model = "/data/models/test.gguf";
+    };
+  });
+
+  # Tracking: full cascade does NOT auto-enable analysis
+  eval-tracking-no-auto-analysis = testNixOS "tracking-no-auto-analysis" (withTestUser {
+    marchyo.tracking.enable = true;
+  });
   # Test 19: Jotain as externally-managed editor (no package installed by marchyo)
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
@@ -310,7 +401,26 @@ in
       }
       ''
         export XDG_RUNTIME_DIR="$(mktemp -d)"
-        ${hyprland}/bin/hyprland --verify-config --config ${hyprlandConfig}
+        log=$(mktemp)
+        ${hyprland}/bin/hyprland --verify-config --config ${hyprlandConfig} 2>&1 | tee "$log"
+
+        # `--verify-config` exits 0 even when it would otherwise print
+        # config errors, so also grep for any error markers it emits.
+        # NOTE: In current Hyprland (0.55.x) `--verify-config` does NOT
+        # report unknown dispatchers (e.g. `togglesplit`) or unknown
+        # options (e.g. `dwindle:pseudotile`) — those only surface via
+        # `hyprctl configerrors` on a live compositor. This grep is
+        # defense-in-depth for anything that *is* printed (parser errors
+        # in newer versions, malformed bind syntax, etc.).
+        if grep -E -i \
+             -e 'invalid dispatcher' \
+             -e 'config option <[^>]+> does not exist' \
+             -e '^\s*error' \
+             -e 'parse error' \
+             "$log"; then
+          echo "FAIL: hyprland --verify-config reported config errors (see above)" >&2
+          exit 1
+        fi
 
         echo "DONE"
         touch $out

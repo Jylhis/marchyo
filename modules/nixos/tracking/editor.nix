@@ -12,6 +12,7 @@
 let
   cfg = config.marchyo.tracking;
   editorCfg = cfg.editor;
+  d = config.marchyo.defaults;
 in
 {
   config = lib.mkIf (cfg.enable && editorCfg.enable) {
@@ -29,6 +30,29 @@ in
         };
         db.dialect = "sqlite3";
       };
+    };
+
+    marchyo.tracking.editor.plugins = {
+      brave.enable = lib.mkDefault (d.browser == "brave");
+      chrome.enable = lib.mkDefault (d.browser == "google-chrome");
+      chromium.enable = lib.mkDefault (
+        d.browser == "chromium" || config.programs.chromium.enable or false
+      );
+      firefox.enable = lib.mkDefault (d.browser == "firefox" || config.programs.firefox.enable or false);
+      emacs.enable = lib.mkDefault (
+        d.editor == "emacs"
+        || d.terminalEditor == "emacs"
+        || config.services.emacs.enable or false
+        || config.programs.emacs.enable or false
+      );
+      vscode.enable = lib.mkDefault (d.editor == "vscode");
+      vscodium.enable = lib.mkDefault (d.editor == "vscodium");
+      neovim.enable = lib.mkDefault (
+        d.terminalEditor == "neovim" || config.programs.neovim.enable or false
+      );
+      vim.enable = lib.mkDefault (config.programs.vim.enable or false);
+      helix.enable = lib.mkDefault (d.terminalEditor == "helix" || config.programs.helix.enable or false);
+      zed.enable = lib.mkDefault (d.editor == "zed");
     };
   };
 }

@@ -12,13 +12,11 @@ let
   simpleLayouts = map (l: l.layout) normalizedLayouts;
 
   # Extract variants for XKB configuration
-  # Apply legacy variant option to first layout if no variant specified
+  # The deprecated cfg.variant, when set, takes precedence on the first layout
+  # so existing configs that only set the legacy option keep working even when
+  # the default first layout now ships with its own variant (e.g. altgr-intl).
   variants = lib.imap0 (
-    i: l:
-    if i == 0 && l.variant == "" && cfg.variant != "" then
-      cfg.variant # Apply legacy variant option to first layout
-    else
-      l.variant
+    i: l: if i == 0 && cfg.variant != "" then cfg.variant else l.variant
   ) normalizedLayouts;
 in
 {

@@ -1,4 +1,4 @@
-# Waybar configuration with systemd service override
+# Waybar configuration with systemd service override.
 #
 # IMPORTANT: Waybar has a known bug with SIGUSR2 signal handling that causes
 # multiple instances to spawn after sleep/wake cycles. The signal handler
@@ -8,13 +8,53 @@
 # References:
 # - https://github.com/Alexays/Waybar/issues/3344 (Multiple instances after DPMS resume)
 # - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
+#
+# Theming: composes the upstream Jylhis design CSS (Roast or Paper) with a small
+# marchyo overlay covering selectors not present upstream (wireplumber, bluetooth,
+# power-profiles-daemon, hyprland/language, the tray expander). The upstream HM
+# module's waybar target is disabled in modules/home/jylhis-theme.nix so we own
+# the file.
 {
   lib,
   pkgs,
+  osConfig ? { },
   ...
 }:
 let
-  waybarStyle = builtins.readFile ../../assets/applications/waybar.css;
+  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  isDark = themeVariant == "dark";
+
+  palette = import ../generic/jylhis-palette.nix {
+    inherit pkgs lib;
+    variant = themeVariant;
+  };
+
+  upstreamFile = if isDark then "style.css" else "style-paper.css";
+  upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
+
+  # marchyo additions — selectors and tweaks not in upstream design
+  marchyoCss = ''
+
+    /* marchyo additions — selectors not in upstream Jylhis design */
+    #wireplumber,
+    #bluetooth,
+    #power-profiles-daemon,
+    #hyprland-language,
+    #custom-expand-icon {
+      padding: 0 10px;
+    }
+
+    #wireplumber.muted,
+    #network.disconnected {
+      color: ${palette.hex."text-faint"};
+    }
+
+    #tray > .needs-attention {
+      color: ${palette.hex.accent};
+      -gtk-icon-effect: highlight;
+    }
+  '';
+
   terminal = "${pkgs.ghostty}/bin/ghostty";
 in
 {
@@ -22,20 +62,16 @@ in
     programs.waybar = {
       enable = true;
       systemd.enable = true;
-      style = waybarStyle;
+      style = upstreamCss + marchyoCss;
       settings = [
         {
           "reload_style_on_change" = true;
           layer = "top";
           position = "top";
           spacing = 0;
-          height = 26;
-          modules-left = [
-            "hyprland/workspaces"
-          ];
-          modules-center = [
-            "clock"
-          ];
+          height = 28;
+          modules-left = [ "hyprland/workspaces" ];
+          modules-center = [ "clock" ];
           modules-right = [
             "group/tray-expander"
             "hyprland/language"
@@ -48,20 +84,8 @@ in
           ];
           "hyprland/workspaces" = {
             on-click = "activate";
-            format = "{icon}";
-            format-icons = {
-              default = "";
-              "1" = "1";
-              "2" = "2";
-              "3" = "3";
-              "4" = "4";
-              "5" = "5";
-              "6" = "6";
-              "7" = "7";
-              "8" = "8";
-              "9" = "9";
-              active = "󱓻";
-            };
+            format = "{name}";
+            disable-scroll = true;
             persistent-workspaces = {
               "1" = [ ];
               "2" = [ ];
@@ -76,66 +100,28 @@ in
           };
           cpu = {
             interval = 5;
-            format = "󰍛";
+            format = "cpu {usage}%";
             on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
           };
           clock = {
-            format = "{:L%A %H:%M}";
-            format-alt = "{:L%d %B W%V %Y}";
+            format = "{:%a %d %b · %H:%M}";
+            format-alt = "{:%d %B W%V %Y}";
             tooltip = false;
           };
           network = {
-            format-icons = [
-              "󰤯"
-              "󰤟"
-              "󰤢"
-              "󰤥"
-              "󰤨"
-            ];
-            format = "{icon}";
-            format-wifi = "{icon}";
-            format-ethernet = "󰀂";
-            format-disconnected = "󰖪";
-            tooltip-format-wifi = "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-disconnected = "Disconnected";
+            format-wifi = "{essid} {signalStrength}%";
+            format-ethernet = "eth";
+            format-disconnected = "offline";
+            tooltip-format = "{ipaddr}  {ifname}";
             interval = 3;
-            nospacing = 1;
             on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
           };
           battery = {
             interval = 5;
-            format = "{capacity}% {icon}";
-            format-discharging = "{icon}";
-            format-charging = "{icon}";
-            format-plugged = "";
-            format-icons = {
-              charging = [
-                "󰢜"
-                "󰂆"
-                "󰂇"
-                "󰂈"
-                "󰢝"
-                "󰂉"
-                "󰢞"
-                "󰂊"
-                "󰂋"
-                "󰂅"
-              ];
-              default = [
-                "󰁺"
-                "󰁻"
-                "󰁼"
-                "󰁽"
-                "󰁾"
-                "󰁿"
-                "󰂀"
-                "󰂁"
-                "󰂂"
-                "󰁹"
-              ];
-            };
-            format-full = "󰂅";
+            format = "bat {capacity}%";
+            format-charging = "chg {capacity}%";
+            format-plugged = "pwr";
+            format-full = "bat full";
             on-click = "vicinae toggle";
             tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
             tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
@@ -145,22 +131,15 @@ in
             };
           };
           bluetooth = {
-            format = "󰂯";
-            format-disabled = "󰂲";
-            format-connected = "";
+            format = "bt";
+            format-disabled = "bt off";
+            format-connected = "bt {num_connections}";
             tooltip-format = "Devices connected: {num_connections}";
             on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
           };
           wireplumber = {
-            format = "{icon}";
-            format-icons = {
-              default = [
-                ""
-                ""
-                ""
-              ];
-            };
-            format-muted = "";
+            format = "vol {volume}%";
+            format-muted = "vol mute";
             scroll-step = 5;
             on-click = "pavucontrol";
             tooltip-format = "Playing at {volume}%";
@@ -168,7 +147,7 @@ in
             max-volume = 150;
           };
           tray = {
-            spacing = 13;
+            spacing = 10;
             icon-size = 12;
           };
           "group/tray-expander" = {
@@ -183,7 +162,7 @@ in
             ];
           };
           "custom/expand-icon" = {
-            "format" = " ";
+            "format" = "·";
             "tooltip" = false;
           };
           power-profiles-daemon = {
@@ -191,9 +170,9 @@ in
             tooltip-format = "Power profile: {profile}";
             tooltip = true;
             format-icons = {
-              power-saver = "󰡳";
-              balanced = "󰊚";
-              performance = "󰡴";
+              power-saver = "eco";
+              balanced = "bal";
+              performance = "perf";
             };
           };
         }
@@ -204,7 +183,6 @@ in
     # This prevents the bug where SIGUSR2 causes multiple waybar instances
     systemd.user.services.waybar = {
       Service = {
-        # Override ExecReload to use full restart instead of SIGUSR2
         ExecReload = lib.mkForce [
           ""
           "${pkgs.systemd}/bin/systemctl --user restart waybar.service"

@@ -59,8 +59,7 @@
     # vscode  # Commented out due to large size (~300MB)
 
     # Terminal Emulators
-    kitty
-    alacritty
+    ghostty
 
     # File Managers
     pcmanfm

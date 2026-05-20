@@ -231,12 +231,6 @@ in
         default = false;
         description = "Enable desktop environment (Hyprland, Wayland, fonts, etc.)";
       };
-
-      useWofi = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Use wofi instead of vicinae as the application launcher";
-      };
     };
 
     development = {
@@ -490,7 +484,10 @@ in
           )
         );
         default = [
-          "us"
+          {
+            layout = "us";
+            variant = "altgr-intl";
+          }
           "fi"
         ];
         example = lib.literalExpression ''
@@ -564,16 +561,22 @@ in
 
       composeKey = mkOption {
         type = types.nullOr types.nonEmptyStr;
-        default = "ralt";
+        default = "menu";
         example = "rwin";
         description = ''
           Sets the XKB Compose key for typing special characters.
           Common values:
-          - ralt: Right Alt key (default)
+          - menu: Menu key (default)
+          - ralt: Right Alt key
           - rwin: Right Super/Windows key
           - caps: Caps Lock key
-          - menu: Menu key
           - null: Disable compose key
+
+          Note: `ralt` is intentionally not the default because the default
+          layout `us(altgr-intl)` needs Right Alt as AltGr (ISO_Level3_Shift)
+          for AltGr-based typography (e.g., AltGr+- → en dash, AltGr+Shift+- →
+          em dash). If you change layouts to a plain `us` you can set this
+          back to `"ralt"`.
 
           Set to null to disable the compose key entirely.
         '';
@@ -619,13 +622,20 @@ in
           Enable the local-first self-tracking stack.
 
           When true, enables the full local-first self-tracking stack:
-          shell history (atuin), desktop focus (ActivityWatch), editor heartbeats
-          (wakapi), git activity, system file-watch, log aggregation (Vector), and
-          weekly LLM analysis. All collectors default to enabled; set any
-          sub-option to false to opt out.
+          shell history (atuin), desktop focus (ActivityWatch), editor
+          heartbeats (wakapi), git activity, system file-watch,
+          **kernel auditd (execve + per-user ~/.config write watch)**, log
+          aggregation (Vector), and weekly LLM analysis. All collectors
+          default to enabled via `lib.mkDefault`; set any sub-option to
+          false to opt out.
 
           Screenshot capture (`marchyo.tracking.desktop.screenshots.enable`)
           defaults to false and must be enabled explicitly.
+
+          Auditd is intentionally part of the cascade — disable it with
+          `marchyo.tracking.system.auditd = false` if you don't want
+          /var/log/audit growing in the background. See `marchyo.tracking.system.auditd*`
+          options for tuning (backlog, rotation, ruleset lock, early-boot).
 
           All data stays on disk under the user's home directory or
           /var/lib. No network egress unless the aggregation sink is
@@ -706,6 +716,74 @@ in
           default = 3000;
           description = "Port for the local wakapi service.";
         };
+
+        plugins = {
+          brave.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Brave browser.";
+          };
+
+          chrome.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Google Chrome.";
+          };
+
+          chromium.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Chromium.";
+          };
+
+          firefox.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Firefox.";
+          };
+
+          emacs.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Emacs via wakatime-mode.";
+          };
+
+          vscode.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for VS Code.";
+          };
+
+          vscodium.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for VS Codium.";
+          };
+
+          neovim.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Neovim via vim-wakatime.";
+          };
+
+          vim.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Vim via vim-wakatime.";
+          };
+
+          helix.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Helix.";
+          };
+
+          zed.enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable WakaTime tracking for Zed.";
+          };
+        };
       };
 
       git = {
@@ -732,6 +810,72 @@ in
           description = ''
             Enable auditd with execve and config-change rules for process
             execution tracking. Writes to /var/log/audit.
+
+            When `marchyo.tracking.aggregation.enable = true` is also set,
+            laurel is wired in as an audisp plugin to convert audit records
+            to JSON Lines under /var/log/laurel/ for the Vector pipeline.
+          '';
+        };
+
+        auditdBacklogLimit = mkOption {
+          type = types.ints.positive;
+          default = 65536;
+          description = ''
+            Kernel audit ringbuffer size (`security.audit.backlogLimit`).
+            Default 65536 (kernel default is 8192). Raise if `auditctl -s`
+            reports lost > 0 under burst.
+          '';
+        };
+
+        auditdFailureMode = mkOption {
+          type = types.enum [
+            "silent"
+            "printk"
+            "panic"
+          ];
+          default = "printk";
+          description = ''
+            Action when the audit ringbuffer overflows. Maps to
+            `security.audit.failureMode`.
+          '';
+        };
+
+        auditdLockRules = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Append `-e 2` to lock the loaded ruleset and make loginuid
+            immutable. Requires a reboot to change rules afterwards, so
+            opt-in only.
+          '';
+        };
+
+        auditdMaxLogFileMB = mkOption {
+          type = types.ints.positive;
+          default = 128;
+          description = ''
+            Maximum size of a single audit log file in MB before rotation.
+            Maps to auditd.conf `max_log_file`.
+          '';
+        };
+
+        auditdNumLogs = mkOption {
+          type = types.ints.positive;
+          default = 16;
+          description = ''
+            Number of rotated audit log files to keep. Maps to auditd.conf
+            `num_logs`. Combined with `auditdMaxLogFileMB`, this caps disk
+            usage at roughly maxLogFileMB * (numLogs + 1).
+          '';
+        };
+
+        auditdEarlyBoot = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Add `audit=1 audit_backlog_limit=<auditdBacklogLimit>` to the
+            kernel cmdline so events from before auditd loads its rules
+            are captured. Opt-in: a reboot is required to take effect.
           '';
         };
 
@@ -741,6 +885,12 @@ in
           description = ''
             Enable a per-user inotify-based file change watcher covering
             ~/Developer and ~/.config, writing JSONL to the data dir.
+
+            Note: the ~/.config watch overlaps with the auditd
+            `config_changes` rule when `system.auditd = true`. The two
+            observers see different things (kernel audit captures
+            attributable syscalls; inotify catches in-kernel fs events the
+            audit subsystem may filter), so both are kept by default.
           '';
         };
       };
@@ -772,16 +922,58 @@ in
           type = types.bool;
           default = false;
           description = ''
-            Enable local LLM-powered weekly activity analysis via llama-server
-            (llama.cpp) plus a pre-mining stage (PrefixSpan). Requires a GGUF
-            model file; expect multi-GB VRAM requirements for larger models.
+            Enable weekly aggregated activity analysis across all tracking
+            sources (shell, git, desktop, editor, file changes).
+
+            When marchyo.tracking.analysis.model is null (default), a
+            stats-only org-mode report is generated. When a GGUF model path
+            is provided, llama-server is started and the report includes an
+            AI-generated insights section.
+
+            This module is NOT auto-enabled by marchyo.tracking.enable and
+            must be opted into explicitly.
           '';
         };
 
         model = mkOption {
-          type = types.path;
+          type = types.nullOr types.path;
+          default = null;
           example = "/data/models/qwen2.5-14b-q4_k_m.gguf";
-          description = "Filesystem path to a GGUF model file for llama-server.";
+          description = ''
+            Filesystem path to a GGUF model file for llama-server.
+            When null, analysis produces a stats-only report without LLM insights.
+
+            The model must be in GGUF format (used by llama.cpp). Choose a
+            model based on your available hardware:
+
+            CPU-only (8 GB+ RAM):
+              - Qwen2.5-3B-Instruct (Q4_K_M, ~2 GB)
+              - Phi-3-mini-4k-instruct (Q4_K_M, ~2.3 GB)
+
+            GPU with 8 GB VRAM:
+              - Qwen2.5-7B-Instruct (Q4_K_M, ~4.7 GB)
+              - Mistral-7B-Instruct (Q4_K_M, ~4.4 GB)
+
+            GPU with 16 GB+ VRAM:
+              - Qwen2.5-14B-Instruct (Q4_K_M, ~8.9 GB)
+
+            Download from https://huggingface.co — search for the model name
+            with "GGUF" and pick the Q4_K_M quantisation (good balance of
+            quality and size). Example using curl:
+
+              curl -L -o ~/models/qwen2.5-7b-q4_k_m.gguf \
+                "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m.gguf"
+
+            Then set:
+              marchyo.tracking.analysis.model = "/home/you/models/qwen2.5-7b-q4_k_m.gguf";
+              marchyo.tracking.analysis.acceleration = "cuda"; # if using GPU
+          '';
+        };
+
+        port = mkOption {
+          type = types.port;
+          default = 8012;
+          description = "Port for the local llama-server used by analysis.";
         };
 
         acceleration = mkOption {
