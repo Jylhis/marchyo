@@ -72,13 +72,16 @@ marchyo.users.myuser = {
 
 ### Theming
 
-Customize the look and feel of your system:
+Customize the theme variant:
 
 ```nix
-marchyo.theme.scheme = "dracula";  # or "gruvbox-dark-medium", "catppuccin-mocha", etc.
+marchyo.theme = {
+  enable = true;
+  variant = "dark";  # or "light"
+};
 ```
 
-Custom schemes `modus-vivendi-tinted` (dark) and `modus-operandi-tinted` (light) are also available.
+The dark variant uses the `nord` base16 scheme; the light variant uses `nord-light`.
 
 **For complete documentation of all available options, see the [Marchyo documentation](docs/).**
 
