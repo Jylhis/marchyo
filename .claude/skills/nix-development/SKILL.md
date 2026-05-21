@@ -21,9 +21,8 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List tests
 
 ## Adding a New NixOS Module
 
-1. Create `modules/nixos/<name>.nix`
-2. Add the import to `modules/nixos/default.nix`
-3. If the module needs new options, add them to `modules/nixos/options.nix` under `marchyo.*`
+1. Create `modules/nixos/<name>.nix` — auto-discovered by `lib/discover-modules.nix`, no import edit needed
+2. If the module needs new options, add them to a file under `modules/nixos/options/` (or create a new namespace file)
 
 ```nix
 # modules/nixos/example.nix
@@ -40,8 +39,7 @@ in
 
 ## Adding a New Home Manager Module
 
-1. Create `modules/home/<name>.nix`
-2. Add the import to `modules/home/default.nix`
+1. Create `modules/home/<name>.nix` — auto-discovered, no import edit needed
 
 ```nix
 # modules/home/example.nix
@@ -56,34 +54,52 @@ in
 }
 ```
 
+## Adding a New nix-darwin Module
+
+`modules/darwin/` is a curated subset, **not** auto-discovered:
+1. Create `modules/darwin/<name>.nix`
+2. Add an import line to `modules/darwin/default.nix` manually
+
 ## Defining New Options
 
-All options go in `modules/nixos/options.nix` under `marchyo.*`:
+Options live under `modules/nixos/options/` — pick the matching namespace file or create a new one. Each file declares `options.marchyo.<namespace>` and is auto-imported by `modules/nixos/options/default.nix`.
 
 ```nix
-marchyo = {
-  myFeature = {
+# modules/nixos/options/my-feature.nix
+{ lib, ... }:
+let
+  inherit (lib) mkOption types;
+in
+{
+  options.marchyo.myFeature = {
     enable = lib.mkEnableOption "my feature";
-    setting = lib.mkOption {
-      type = lib.types.str;
+    setting = mkOption {
+      type = types.str;
       default = "default-value";
       description = "Description of the setting.";
     };
   };
-};
+}
 ```
 
 ## Writing Tests
 
-Add evaluation tests to `tests/module-tests.nix`:
+Drop tests into the matching `tests/eval/<feature>.nix` (or create a new file there). Each file is a function returning an attrset of named tests:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+# tests/eval/my-feature.nix
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
 
-The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config.
+The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config. Files in `tests/eval/` are auto-discovered.
 
 ## Key Patterns
 
@@ -96,7 +112,6 @@ The `testNixOS` helper evaluates the NixOS config without building derivations. 
 ## Common Pitfalls
 
 - Always run `nix fmt` before committing — CI will fail without it
-- Never define options outside `modules/nixos/options.nix`
-- When using `lib.mkDefault`, consumers can still override; use regular assignment if you want a hard default
-- Importing a module in `default.nix` is required — creating the file alone is not enough
-- Tests are evaluation-only (no builds) — use the `testNixOS` and `withTestUser` helpers in `tests/module-tests.nix`
+- Never define options outside `modules/nixos/options/`
+- Auto-discovery imports every `.nix` file under `modules/{nixos,home}/` — leftover scratch files become dead modules
+- Tests are evaluation-only (no builds) — use the `testNixOS` and `withTestUser` helpers from `tests/lib.nix`
