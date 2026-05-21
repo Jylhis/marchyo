@@ -14,46 +14,55 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames
 
 ## Test Structure
 
-- `default.nix` - Entry point combining all tests
-- `module-tests.nix` - Module evaluation tests
-- `lib-tests.nix` - Library function unit tests
+- `default.nix` — Entry point. Auto-discovers every file in `eval/` and merges the attrsets they return; appends `lib-tests.nix`.
+- `lib.nix` — Shared test helpers (`testNixOS`, `withTestUser`, `minimalConfig`).
+- `eval/` — Per-feature evaluation tests, each returning an attrset of named tests.
+- `lib-tests.nix` — Library function unit tests.
 
 ### Module Tests
 
 Verify NixOS modules evaluate without errors:
 
-| Test | Description |
-|------|-------------|
-| `eval-minimal` | Minimal NixOS modules import |
-| `eval-desktop` | Desktop feature flag |
-| `eval-development` | Development feature flag |
-| `eval-all-features` | All features together |
-| `eval-themes` | Theme configurations |
-| `eval-keyboard` | Keyboard layouts and IME |
-| `eval-graphics-*` | GPU configurations (Intel, AMD, NVIDIA, PRIME) |
+| File | Tests |
+|------|-------|
+| `eval/feature-flags.nix` | `eval-minimal`, `eval-desktop`, `eval-development`, `eval-all-features` |
+| `eval/themes.nix` | `eval-themes`, `eval-themes-light`, `eval-themes-paper` |
+| `eval/keyboard.nix` | `eval-keyboard`, `eval-keyboard-no-compose` |
+| `eval/graphics.nix` | `eval-graphics-{intel,amd,nvidia,prime-offload,prime-sync,legacy}` |
+| `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,jotain}` |
+| `eval/tracking.nix` | `eval-tracking-{minimal,shell,git,editor-wakatime,analysis}` |
+| `eval/hyprland.nix` | `check-home-hyprland-config` (verifies generated `hyprland.conf` parses) |
 
 ### Library Tests
+
+`lib-tests.nix` uses `assertTest` for fast unit tests of helper functions.
 
 ## Adding Tests
 
 ### Module Evaluation Test
 
-Add to `module-tests.nix`:
+Drop into the matching `eval/<feature>.nix`, or create a new file there. Each file is a function:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
+
+The file is auto-discovered — no edit to `default.nix` needed.
 
 ### Library Test
 
 Add to `lib-tests.nix`:
 
 ```nix
-test-my-function = pkgs.runCommand "test-my-function" { } ''
-  result=$(nix eval --raw --expr '(import ../lib { inherit (pkgs) lib; }).myFunction "input"')
-  [[ "$result" == "expected" ]] || exit 1
-  touch $out
-'';
+test-my-function = assertTest "my-function" (
+  myFunction "input" == "expected"
+) "Expected myFunction to return 'expected'";
 ```
