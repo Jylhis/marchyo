@@ -98,6 +98,12 @@ let
       { "x-scheme-handler/mailto" = browserDesktop; }
     else
       { };
+
+  emacsCfg = (osConfig.marchyo or { }).emacs or { };
+  orgProtocolEnabled = (emacsCfg.enable or false) && (emacsCfg.orgProtocol.enable or true);
+  orgProtocolMimeTypes = lib.optionalAttrs orgProtocolEnabled {
+    "x-scheme-handler/org-protocol" = [ "emacsclient.desktop" ];
+  };
 in
 {
   config = {
@@ -141,7 +147,8 @@ in
       // audioMimeTypes
       // browserMimeTypes
       // editorMimeTypes
-      // emailMimeTypes;
+      // emailMimeTypes
+      // orgProtocolMimeTypes;
     };
   };
 }
