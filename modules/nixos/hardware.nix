@@ -1,8 +1,19 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 {
   hardware = {
     # Use lib.mkDefault so tests can override this
     enableRedistributableFirmware = lib.mkDefault true;
+
+    # Logitech wireless devices (Solaar GUI + udev rules), opt-in.
+    logitech.wireless = lib.mkIf config.marchyo.hardware.logitech.enable {
+      enable = true;
+      enableGraphical = true;
+    };
   };
 
   # Thunderbolt
