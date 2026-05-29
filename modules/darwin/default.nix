@@ -10,5 +10,8 @@
     ../generic/git.nix
     ../generic/shell.nix
     ../generic/packages.nix
+    ./users.nix
+    ./system-defaults.nix
+    ./homebrew.nix
   ];
 }

@@ -1,0 +1,27 @@
+---
+title: Hardware
+description: Opt-in peripheral and device support
+---
+
+Marchyo enables common hardware support (Bluetooth, Thunderbolt, power
+management) by default. Some peripheral-specific support is opt-in.
+
+## Available options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.hardware.logitech.enable` | `false` | Logitech wireless device support (Solaar GUI + udev rules) |
+
+## Logitech wireless
+
+Enable support for Logitech Unifying / Bolt receivers and the Solaar
+management GUI:
+
+```nix
+{
+  marchyo.hardware.logitech.enable = true;
+}
+```
+
+This turns on `hardware.logitech.wireless` with the graphical Solaar tool, so
+you can pair devices and tune per-device settings.
