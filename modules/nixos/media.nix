@@ -1,23 +1,10 @@
+{ pkgs, ... }:
 {
-  pkgs,
-  lib,
-  config,
-  ...
-}:
-{
-  environment.systemPackages =
-    with pkgs;
-    [
-      # File format support
-      libheif
+  environment.systemPackages = with pkgs; [
+    # File format support
+    libheif
 
-      # Players
-      mpv
-    ]
-    ++ (lib.optionals config.nixpkgs.config.allowUnfree (
-      lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
-        pkgs.spotify
-      ]
-    ));
-
+    # Players (music streaming handled by marchyo.defaults.musicPlayer)
+    mpv
+  ];
 }

@@ -27,26 +27,25 @@ let
     lnav
     tailspin
     nix-output-monitor
+    ouch # archive compression/extraction (replaces file-roller)
   ];
 
   tuiTools = with pkgs; [
-    btop # beautiful resource manager
+    btop # beautiful resource manager (replaces gnome-system-monitor)
     fastfetch # shows system information
     bluetui # bluetooth
     sysz # systemctl tui
     lazyjournal # journald and logs
     impala # TUI for managing your Wi-Fi connection
+    libqalculate # qalc — calculator REPL (replaces gnome-calculator)
   ];
 
   # Desktop GUI tools
   desktopTools = with pkgs; [
     signal-desktop # E2E messaging
     localsend # send files to other devices on the same network
-    file-roller # Archive manager
     loupe # Modern GNOME image viewer
     gnome-disk-utility # Disk management
-    gnome-calculator # Calculator
-    gnome-system-monitor # System monitoring
     sushi # Quick file previews in Nautilus
     dconf-editor # For debugging dconf/GTK settings
   ];

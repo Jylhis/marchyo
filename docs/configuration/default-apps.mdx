@@ -13,12 +13,12 @@ When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control w
 | `marchyo.defaults.editor` | `"jotain"` | `"emacs"`, `"jotain"`, `"vscode"`, `"vscodium"`, `"zed"` |
 | `marchyo.defaults.terminalEditor` | `"jotain"` | `"emacs"`, `"jotain"`, `"neovim"`, `"helix"`, `"nano"` |
 | `marchyo.defaults.videoPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"celluloid"` |
-| `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"amberol"` |
-| `marchyo.defaults.musicPlayer` | `"spotify"` | `"spotify"` |
+| `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"cmus"`, `"vlc"`, `"amberol"` |
+| `marchyo.defaults.musicPlayer` | `"spotify-player"` | `"spotify-player"`, `"ncspot"`, `"spotify"` |
 | `marchyo.defaults.fileManager` | `"nautilus"` | `"nautilus"`, `"thunar"` |
 | `marchyo.defaults.terminalFileManager` | `"yazi"` | `"yazi"`, `"ranger"`, `"lf"` |
 | `marchyo.defaults.imageEditor` | `"pinta"` | `"pinta"`, `"gimp"`, `"krita"` |
-| `marchyo.defaults.email` | `"gmail"` | `"gmail"`, `"thunderbird"`, `"outlook"` |
+| `marchyo.defaults.email` | `"aerc"` | `"aerc"`, `"neomutt"`, `"gmail"`, `"thunderbird"`, `"outlook"` |
 
 ## Example
 
@@ -28,12 +28,12 @@ marchyo.defaults = {
   editor = "vscode";
   terminalEditor = "neovim";
   videoPlayer = "mpv";
-  audioPlayer = "mpv";
-  musicPlayer = "spotify";
+  audioPlayer = "mpv";        # or "cmus" for a TUI library player
+  musicPlayer = "spotify-player";  # TUI Spotify client (floating terminal)
   fileManager = "nautilus";
   terminalFileManager = "yazi";
   imageEditor = "gimp";
-  email = "thunderbird";
+  email = "aerc";             # TUI mail client; requires account config
 };
 ```
 
@@ -54,6 +54,10 @@ Some choices are "externally managed" — Marchyo does not install a package for
 
 - **`"jotain"`** (editor/terminalEditor) — Package installation and `$EDITOR`/`$VISUAL` are handled by `programs.jotain` outside of Marchyo.
 - **`"gmail"`** and **`"outlook"`** (email) — Web applications opened in the default browser. No package is installed.
+
+<Note>
+  The TUI music (`spotify-player`, `ncspot`) and mail (`aerc`, `neomutt`) clients are installed but require account configuration before use. The music clients launch in a floating terminal under Hyprland (Super+M).
+</Note>
 
 ## How defaults work
 

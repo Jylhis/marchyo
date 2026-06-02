@@ -44,6 +44,16 @@ in
     };
   });
 
+  # TUI-flipped defaults: spotify-player (music), cmus (audio), aerc (email).
+  eval-defaults-tui = testNixOS "defaults-tui" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults = {
+      musicPlayer = "spotify-player";
+      audioPlayer = "cmus";
+      email = "aerc";
+    };
+  });
+
   # Jotain is externally managed (no package installed by marchyo).
   eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
     marchyo.desktop.enable = true;
