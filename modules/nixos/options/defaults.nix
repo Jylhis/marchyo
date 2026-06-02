@@ -84,26 +84,39 @@ in
       type = types.nullOr (
         types.enum [
           "mpv"
+          "cmus"
           "vlc"
           "amberol"
         ]
       );
       default = "mpv";
-      example = "vlc";
+      example = "cmus";
       description = ''
         Default audio player for local files. Installed automatically when
         desktop is enabled and registered as the system default for audio
-        MIME types. Set to null to skip audio player management.
+        MIME types. "mpv" plays files headlessly in a terminal and remains
+        the file-open default; "cmus" is a TUI library player launched
+        manually (no single-file MIME handler). Set to null to skip audio
+        player management.
       '';
     };
 
     musicPlayer = mkOption {
-      type = types.nullOr (types.enum [ "spotify" ]);
-      default = "spotify";
-      example = "spotify";
+      type = types.nullOr (
+        types.enum [
+          "spotify-player"
+          "ncspot"
+          "spotify"
+        ]
+      );
+      default = "spotify-player";
+      example = "ncspot";
       description = ''
-        Default music streaming player. Installed automatically when desktop
-        is enabled. Set to null to skip music player management.
+        Default music streaming player. Defaults to "spotify-player", a TUI
+        Spotify client launched in a floating terminal. "ncspot" is an
+        alternative TUI client; "spotify" installs the GUI app (x86_64-only).
+        Installed automatically when desktop is enabled. Set to null to skip
+        music player management.
       '';
     };
 
@@ -158,17 +171,22 @@ in
     email = mkOption {
       type = types.nullOr (
         types.enum [
+          "aerc"
+          "neomutt"
           "gmail"
           "thunderbird"
           "outlook"
         ]
       );
-      default = "gmail";
+      default = "aerc";
       example = "thunderbird";
       description = ''
-        Default email client. "gmail" and "outlook" are web apps opened in
-        the browser (no package installed). "thunderbird" installs the native
-        client. Set to null to skip email management.
+        Default email client. Defaults to "aerc", a TUI mail client (mailto
+        links open it in a terminal). "neomutt" is an alternative TUI client.
+        Both require account configuration before use. "gmail" and "outlook"
+        are web apps opened in the browser (no package installed).
+        "thunderbird" installs the native GUI client. Set to null to skip
+        email management.
       '';
     };
   };
