@@ -247,16 +247,16 @@ marchyo.defaults = {
   editor = "jotain";              # emacs, jotain, vscode, vscodium, zed
   terminalEditor = "jotain";      # emacs, jotain, neovim, helix, nano
   videoPlayer = "mpv";            # mpv, vlc, celluloid
-  audioPlayer = "mpv";            # mpv, vlc, amberol
-  musicPlayer = "spotify";        # spotify
+  audioPlayer = "mpv";            # mpv, cmus, vlc, amberol
+  musicPlayer = "spotify-player"; # spotify-player, ncspot, spotify
   fileManager = "nautilus";       # nautilus, thunar
   terminalFileManager = "yazi";   # yazi, ranger, lf
   imageEditor = "pinta";         # pinta, gimp, krita
-  email = "gmail";               # gmail, thunderbird, outlook
+  email = "aerc";                # aerc, neomutt, gmail, thunderbird, outlook
 };
 ```
 
-`"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`.
+`"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`. The default music (`spotify-player`) and mail (`aerc`) clients are TUIs; the music client launches in a floating terminal under Hyprland.
 
 ### Keyboard & Input Methods
 

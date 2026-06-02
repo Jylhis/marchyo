@@ -62,11 +62,14 @@ let
 
   audioPlayerPackages = {
     inherit (pkgs) mpv; # shared with video when same; NixOS deduplicates
+    inherit (pkgs) cmus;
     inherit (pkgs) vlc;
     inherit (pkgs) amberol;
   };
 
   musicPlayerPackages = {
+    inherit (pkgs) spotify-player;
+    inherit (pkgs) ncspot;
     inherit (pkgs) spotify;
   };
 
@@ -91,6 +94,8 @@ let
   # gmail → https://mail.google.com (TODO: register as PWA)
   # outlook → https://outlook.com (TODO: register as PWA)
   emailPackages = {
+    inherit (pkgs) aerc;
+    inherit (pkgs) neomutt;
     inherit (pkgs) thunderbird;
   };
 
@@ -115,10 +120,11 @@ in
 {
   config = lib.mkIf cfg.desktop.enable (
     lib.mkMerge [
-      # google-chrome and spotify are x86_64-only on Linux
+      # google-chrome is x86_64-only on Linux; the default TUI music player
+      # (spotify-player) builds on aarch64, so only the browser needs a fallback.
+      # Selecting the GUI "spotify" on aarch64 remains unsupported.
       (lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64) {
         marchyo.defaults.browser = lib.mkDefault "chromium";
-        marchyo.defaults.musicPlayer = lib.mkDefault null;
       })
       {
         environment.systemPackages = defaultPackages;
