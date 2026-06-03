@@ -40,9 +40,11 @@ let
     thunar = "thunar.desktop";
   };
 
-  # TUI mail clients ship a Terminal=true desktop file; web/null get none.
+  # TUI mail clients ship a Terminal=true desktop file with a mailto handler;
+  # web/null clients get none and fall back to the browser.
   emailDesktopFiles = {
     aerc = "aerc.desktop";
+    neomutt = "neomutt.desktop";
     thunderbird = "thunderbird.desktop";
   };
 
