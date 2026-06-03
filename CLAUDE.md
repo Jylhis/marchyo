@@ -293,6 +293,26 @@ marchyo.graphics = {
 
 To find GPU bus IDs: `lspci | grep -E 'VGA|3D'`
 
+### Performance Tuning
+
+`marchyo.performance.disableMitigations` (default `true`) disables CPU vulnerability mitigations.
+
+`marchyo.performance.tuning.*` is opt-in kernel/sysctl/IO tuning, off by default. Enabling the master switch turns on the broadly-safe sub-toggles (`network`, `nvme`, `memory`); the aggressive ones (`hugePages`, `compute`) stay off unless set explicitly.
+
+```nix
+# Safe defaults (network + nvme + memory tuning):
+marchyo.performance.tuning.enable = true;
+
+# Compute/CUDA workstation — also opt into the aggressive toggles:
+marchyo.performance.tuning = {
+  enable = true;
+  hugePages.enable = true;   # 2MiB THP — can hurt interactive/desktop latency
+  compute.enable = true;     # relaxed PAM limits (memlock/rtprio) — trusted hosts only
+};
+```
+
+The implementation is in `modules/nixos/performance-tuning.nix`. The CFS scheduler sysctls from older compute-tuning sets are deliberately omitted — they were removed in the CFS→EEVDF switch (kernel 6.6+) and only produce `systemd-sysctl` warnings on current kernels.
+
 ## Breaking Changes
 
 ### `marchyo.inputMethod.*` is REMOVED
