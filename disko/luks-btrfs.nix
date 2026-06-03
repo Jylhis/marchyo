@@ -48,7 +48,7 @@
               size = "100%";
               content = {
                 type = "luks";
-                name = "crypted";
+                name = "encrypted";
                 # Disable settings.keyFile if you want to use interactive password entry
                 passwordFile = "/tmp/secret.key"; # Change this to your key file location
                 settings = {

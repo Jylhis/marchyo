@@ -183,7 +183,7 @@ in
                 "TrayFont" = "Sans Bold 10";
                 "PreferTextIcon" = false;
                 "ShowLayoutNameInIcon" = true;
-                "UseInputMethodLangaugeToDisplayText" = true;
+                "UseInputMethodLanguageToDisplayText" = true;
                 "Theme" = "default";
                 "ForceWaylandDPI" = 0;
               };
