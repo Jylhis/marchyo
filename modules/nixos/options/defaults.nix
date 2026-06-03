@@ -93,10 +93,11 @@ in
       example = "cmus";
       description = ''
         Default audio player for local files. Installed automatically when
-        desktop is enabled and registered as the system default for audio
-        MIME types. "mpv" plays files headlessly in a terminal and remains
-        the file-open default; "cmus" is a TUI library player launched
-        manually (no single-file MIME handler). Set to null to skip audio
+        desktop is enabled. "mpv" (the default) opens audio files headlessly
+        and is registered as the system default for audio MIME types.
+        "cmus" is a TUI library player with no single-file MIME handler:
+        selecting it installs cmus but leaves audio files without a
+        registered opener (launch it manually). Set to null to skip audio
         player management.
       '';
     };
