@@ -67,7 +67,7 @@ let
   grafanaCloudLokiSink = {
     type = "loki";
     inputs = [ "parse" ];
-    endpoint = gcCfg.loki.endpoint;
+    inherit (gcCfg.loki) endpoint;
     encoding.codec = "json";
     auth = {
       strategy = "basic";
@@ -90,7 +90,7 @@ let
   promRemoteWriteSink = {
     type = "prometheus_remote_write";
     inputs = [ "prom_scrape" ];
-    endpoint = gcCfg.prometheus.endpoint;
+    inherit (gcCfg.prometheus) endpoint;
     auth = {
       strategy = "basic";
       user = gcCfg.prometheus.userId;
