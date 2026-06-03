@@ -22,3 +22,47 @@ To keep mitigations enabled:
 ```nix
 marchyo.performance.disableMitigations = false;
 ```
+
+## Kernel & I/O tuning
+
+Opt-in kernel/sysctl/IO tuning for throughput-oriented workloads. Disabled by
+default. Enabling `marchyo.performance.tuning.enable` turns on the broadly-safe
+sub-toggles (`network`, `nvme`, `memory`); the aggressive toggles (`hugePages`,
+`compute`) stay off and must be opted into explicitly.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.performance.tuning.enable` | `bool` | `false` | Master switch; enables the safe sub-toggles below |
+| `marchyo.performance.tuning.network.enable` | `bool` | follows `enable` | BBR congestion control, TCP Fast Open, MTU probing, larger socket buffers |
+| `marchyo.performance.tuning.nvme.enable` | `bool` | follows `enable` | NVMe udev tuning: no-op scheduler, larger read-ahead and max request size |
+| `marchyo.performance.tuning.memory.enable` | `bool` | follows `enable` | Lower swappiness, keep FS metadata cached, byte-based dirty-page thresholds |
+| `marchyo.performance.tuning.memory.dirtyBytes` | `int` | `268435456` | `vm.dirty_bytes` (256 MiB) — synchronous writeback threshold |
+| `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `int` | `67108864` | `vm.dirty_background_bytes` (64 MiB) — background writeback threshold |
+| `marchyo.performance.tuning.hugePages.enable` | `bool` | `false` | 2 MiB transparent huge pages always |
+| `marchyo.performance.tuning.compute.enable` | `bool` | `false` | Relaxed PAM limits (memlock/rtprio/nofile/nproc) for trusted compute hosts |
+
+```nix
+# Safe defaults (network + nvme + memory):
+marchyo.performance.tuning.enable = true;
+
+# Compute/CUDA workstation — opt into the aggressive toggles too:
+marchyo.performance.tuning = {
+  enable = true;
+  hugePages.enable = true;
+  compute.enable = true;
+};
+```
+
+<Warning>
+`hugePages` can hurt latency-sensitive and interactive desktop workloads.
+`compute` relaxes resource limits system-wide (unlimited `memlock`, real-time
+priority for all users) — only enable it on trusted single-user machines where
+you control every process.
+</Warning>
+
+<Note>
+The CFS scheduler sysctls from older compute-tuning sets
+(`kernel.sched_min_granularity_ns`, `sched_latency_ns`, etc.) are intentionally
+**not** included: they were removed when the kernel switched CFS → EEVDF (6.6+)
+and setting them on a current kernel only produces `systemd-sysctl` warnings.
+</Note>
