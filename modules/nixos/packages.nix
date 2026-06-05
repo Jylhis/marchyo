@@ -37,7 +37,8 @@ let
     sysz # systemctl tui
     lazyjournal # journald and logs
     impala # TUI for managing your Wi-Fi connection
-    libqalculate # qalc — calculator REPL (replaces gnome-calculator)
+    # qalc (calculator REPL, replaces gnome-calculator) installs via the
+    # programs.qalculate Home-Manager module (modules/home/qalculate.nix).
   ];
 
   # Desktop GUI tools

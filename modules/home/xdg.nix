@@ -45,7 +45,6 @@ let
   emailDesktopFiles = {
     aerc = "aerc.desktop";
     neomutt = "neomutt.desktop";
-    thunderbird = "thunderbird.desktop";
   };
 
   browser = defaults.browser or null;
@@ -102,7 +101,7 @@ let
     "inode/directory" = fileManagerDesktop;
   };
 
-  # mailto: aerc/thunderbird get their own desktop file; gmail/outlook (and any
+  # mailto: aerc/neomutt get their own desktop file; gmail/outlook (and any
   # client without a desktop file) fall back to opening in the browser.
   emailMimeTypes =
     if email == null then
