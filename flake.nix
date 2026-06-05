@@ -67,9 +67,7 @@
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
       packages = forAllSystems (
-        system:
-        marchyo.mkPackages { inherit system; }
-        // marchyo.mkDocs { inherit system; }
+        system: marchyo.mkPackages { inherit system; } // marchyo.mkDocs { inherit system; }
       );
       checks = forLinuxSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });
