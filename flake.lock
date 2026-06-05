@@ -333,7 +333,8 @@
         "noctalia": "noctalia",
         "stylix": "stylix",
         "treefmt-nix": "treefmt-nix_2",
-        "vicinae": "vicinae"
+        "vicinae": "vicinae",
+        "wallpapper-src": "wallpapper-src"
       }
     },
     "stylix": {
@@ -539,6 +540,23 @@
       "original": {
         "owner": "vicinaehq",
         "repo": "vicinae",
+        "type": "github"
+      }
+    },
+    "wallpapper-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1676526615,
+        "narHash": "sha256-xf2iFZ9KUzxljaOuUDRIpSWS7vDuwASFYMewCqP2X0c=",
+        "owner": "mczachurski",
+        "repo": "wallpapper",
+        "rev": "baa5fa0ab5564fe3cc657aef8eabe61a205468ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mczachurski",
+        "ref": "1.7.4",
+        "repo": "wallpapper",
         "type": "github"
       }
     }

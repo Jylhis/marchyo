@@ -13,5 +13,6 @@
     ./users.nix
     ./system-defaults.nix
     ./homebrew.nix
+    ./wallpaper.nix
   ];
 }
