@@ -2,6 +2,12 @@
 final: prev:
 {
   jylhis-design-src = inputs.jylhis-design;
+  marchyo-wallpapers = final.callPackage ./packages/marchyo-wallpapers/package.nix { };
+}
+// prev.lib.optionalAttrs prev.stdenv.isDarwin {
+  wallpapper = final.callPackage ./packages/wallpapper/package.nix {
+    src = inputs.wallpapper-src;
+  };
 }
 // prev.lib.optionalAttrs prev.stdenv.isLinux (
   (inputs.jylhis-design.overlays.default final prev)
