@@ -22,6 +22,23 @@ let
     variant = themeVariant;
   };
 
+  wallpaperCfg = ((osConfig.marchyo or { }).theme or { }).wallpaper or { };
+  wallpaperEnabled = wallpaperCfg.enable or true;
+  wallpaperPackage = wallpaperCfg.package or pkgs.marchyo-wallpapers;
+  wallpaperFile = "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${
+    if isDark then "dark" else "light"
+  }.png";
+
+  setWallpaper = pkgs.writeShellScript "marchyo-set-wallpaper" ''
+    for _ in 1 2 3 4 5; do
+      if ${pkgs.awww}/bin/awww img "${wallpaperFile}" --transition-type none; then
+        exit 0
+      fi
+      sleep 0.2
+    done
+    exit 0
+  '';
+
   # Convert "#RRGGBB" → "rgb(RRGGBB)" / "rgba(RRGGBBAA)" for Hyprland color syntax
   rgb = h: "rgb(${lib.removePrefix "#" h})";
   rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
@@ -432,52 +449,62 @@ in
           "wl-paste --type image --watch cliphist store"
 
           "1password --silent"
+        ]
+        ++ lib.optionals wallpaperEnabled [
+          "${pkgs.awww}/bin/awww-daemon --format xrgb"
+          "${setWallpaper}"
         ];
       };
     };
 
     # Additional packages for Hyprland
-    home.packages = with pkgs; [
-      # Core Wayland tools
-      wl-clipboard
-      wl-clip-persist
-      cliphist
+    home.packages =
+      with pkgs;
+      [
+        # Core Wayland tools
+        wl-clipboard
+        wl-clip-persist
+        cliphist
 
-      nwg-look
+        nwg-look
 
-      # Screen recording
-      wf-recorder
+        # Screen recording
+        wf-recorder
 
-      slurp
-      # System monitoring and control
-      brightnessctl
-      playerctl
-      pavucontrol
-      pwvucontrol
+        slurp
+        # System monitoring and control
+        brightnessctl
+        playerctl
+        pavucontrol
+        pwvucontrol
 
-      # File management
-      xdg-utils
-      mimeo
+        # File management
+        xdg-utils
+        mimeo
 
-      # Fonts
-      nerd-fonts.jetbrains-mono
-      nerd-fonts.caskaydia-cove
+        # Fonts
+        nerd-fonts.jetbrains-mono
+        nerd-fonts.caskaydia-cove
 
-      # Utilities
-      killall
-      pciutils
-      usbutils
+        # Utilities
+        killall
+        pciutils
+        usbutils
 
-      # System integration
-      libnotify
-      kanshi
+        # System integration
+        libnotify
+        kanshi
 
-      # Audio
-      wireplumber
+        # Audio
+        wireplumber
 
-      # Power management
-      power-profiles-daemon
-    ];
+        # Power management
+        power-profiles-daemon
+      ]
+      ++ lib.optionals wallpaperEnabled [
+        awww
+        wallpaperPackage
+      ];
 
     services.hyprpolkitagent.enable = true;
     services.hyprsunset.enable = true;

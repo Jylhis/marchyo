@@ -58,4 +58,54 @@ in
         echo "DONE"
         touch $out
       '';
+
+  eval-hyprland-wallpaper-enabled =
+    let
+      eval = lib.nixosSystem {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        modules = [
+          nixosModules
+          (withTestUser {
+            marchyo.desktop.enable = true;
+            home-manager.users.testuser = {
+              imports = [ homeManagerModules ];
+            };
+          })
+        ];
+      };
+      execOnce =
+        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once;
+      hasAwww = lib.any (cmd: lib.hasInfix "awww-daemon --format xrgb" cmd) execOnce;
+    in
+    pkgs.writeText "eval-hyprland-wallpaper-enabled" (
+      if hasAwww then "pass" else throw "FAIL: Hyprland wallpaper startup did not include awww-daemon"
+    );
+
+  eval-hyprland-wallpaper-disabled =
+    let
+      eval = lib.nixosSystem {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        modules = [
+          nixosModules
+          (withTestUser {
+            marchyo = {
+              desktop.enable = true;
+              theme.wallpaper.enable = false;
+            };
+            home-manager.users.testuser = {
+              imports = [ homeManagerModules ];
+            };
+          })
+        ];
+      };
+      execOnce =
+        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once;
+      hasAwww = lib.any (cmd: lib.hasInfix "awww-daemon" cmd) execOnce;
+    in
+    pkgs.writeText "eval-hyprland-wallpaper-disabled" (
+      if hasAwww then
+        throw "FAIL: Hyprland wallpaper startup included awww-daemon when disabled"
+      else
+        "pass"
+    );
 }

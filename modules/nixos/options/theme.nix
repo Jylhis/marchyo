@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 let
   inherit (lib) mkOption types;
 in
@@ -35,6 +35,21 @@ in
         the `base16-schemes` package (e.g. "nord", "nord-light",
         "gruvbox-dark-medium"). When null, the Jylhis palette is used.
       '';
+    };
+
+    wallpaper = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable the generated Marchyo grid wallpaper where supported.";
+      };
+
+      package = mkOption {
+        type = types.package;
+        default = pkgs.marchyo-wallpapers;
+        defaultText = "pkgs.marchyo-wallpapers";
+        description = "Package providing generated Marchyo wallpaper assets.";
+      };
     };
   };
 }
