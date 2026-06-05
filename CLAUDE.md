@@ -252,11 +252,13 @@ marchyo.defaults = {
   fileManager = "nautilus";       # nautilus, thunar
   terminalFileManager = "yazi";   # yazi, ranger, lf
   imageEditor = "pinta";         # pinta, gimp, krita
-  email = "aerc";                # aerc, neomutt, gmail, thunderbird, outlook
+  email = "aerc";                # aerc, neomutt, gmail, outlook
 };
 ```
 
 `"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`. The default music (`spotify-player`) and mail (`aerc`) clients are TUIs; the music client launches in a floating terminal under Hyprland.
+
+The TUI clients install via their Home-Manager `programs.*` modules (one file each under `modules/home/`: `spotify-player`, `ncspot`, `cmus`, `aerc`, `neomutt`), each gated on the matching `marchyo.defaults.*` selection — `defaults.nix` no longer adds them to `environment.systemPackages`. The Spotify GUI is always installed on x86_64 via `modules/nixos/media.nix`. `qalc` installs via `programs.qalculate` (`modules/home/qalculate.nix`).
 
 ### Keyboard & Input Methods
 
@@ -330,6 +332,13 @@ marchyo.keyboard.layouts = [
   { layout = "cn"; ime = "pinyin"; }
 ];
 ```
+
+### `marchyo.defaults.email = "thunderbird"` is REMOVED
+
+`thunderbird` is no longer a valid `marchyo.defaults.email` value (the enum will
+reject it at evaluation). Switch to a TUI client (`"aerc"`, `"neomutt"`) or a web
+client (`"gmail"`, `"outlook"`). There is no in-place migration — Thunderbird's
+native GUI is no longer managed by marchyo.
 
 ### Deprecated Options
 
