@@ -20,7 +20,6 @@ let
       variant = "dark";
     };
   variant = if cfg.variant == "dark" then "roast" else "paper";
-  makoConfig = if variant == "roast" then "config" else "config-paper";
 in
 {
   imports = [ inputs.jylhis-design.homeManagerModules.default ];
@@ -43,8 +42,9 @@ in
       }
 
       (lib.mkIf cfg.enable {
+        # mako is themed by modules/home/mako.nix (TUI override); starship comes
+        # from the upstream Jylhis design assets.
         xdg.configFile = {
-          "mako/config".source = "${pkgs.jylhis-design-src}/platforms/mako/${makoConfig}";
           "starship.toml".source = "${pkgs.jylhis-design-src}/platforms/shell/starship.toml";
         };
 

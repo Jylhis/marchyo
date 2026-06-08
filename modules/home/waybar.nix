@@ -53,6 +53,43 @@ let
       color: ${palette.hex.accent};
       -gtk-icon-effect: highlight;
     }
+
+    /* tmux-style TUI statusline — square segments, monospace, inverse active */
+    * {
+      border-radius: 0;
+      font-family: "JetBrainsMono Nerd Font", monospace;
+    }
+
+    /* tmux session label */
+    #custom-session {
+      background: ${palette.hex.accent};
+      color: ${palette.hex.bg};
+      padding: 0 10px;
+      font-weight: bold;
+    }
+
+    #workspaces button {
+      border-radius: 0;
+      padding: 0 8px;
+      color: ${palette.hex."text-muted"};
+    }
+
+    /* inverse-video selected pane, like a highlighted tmux window */
+    #workspaces button.active {
+      background: ${palette.hex.accent};
+      color: ${palette.hex.bg};
+    }
+
+    /* │ separators between right-hand status segments */
+    #hyprland-language,
+    #bluetooth,
+    #network,
+    #wireplumber,
+    #cpu,
+    #power-profiles-daemon,
+    #battery {
+      border-left: 1px solid ${palette.hex."border-strong"};
+    }
   '';
 
   terminal = "${pkgs.ghostty}/bin/ghostty";
@@ -70,7 +107,10 @@ in
           position = "top";
           spacing = 0;
           height = 28;
-          modules-left = [ "hyprland/workspaces" ];
+          modules-left = [
+            "custom/session"
+            "hyprland/workspaces"
+          ];
           modules-center = [ "clock" ];
           modules-right = [
             "group/tray-expander"
@@ -82,6 +122,10 @@ in
             "power-profiles-daemon"
             "battery"
           ];
+          "custom/session" = {
+            format = "marchyo";
+            tooltip = false;
+          };
           "hyprland/workspaces" = {
             on-click = "activate";
             format = "{name}";
