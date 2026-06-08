@@ -15,7 +15,6 @@ let
 
   # Theme variant for color selection
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
-  isDark = themeVariant == "dark";
 
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;
@@ -164,15 +163,16 @@ in
           focus_on_activate = true;
           background_color = lib.mkForce (rgb palette.hex.bg);
         };
-        # Layout — Jylhis Design System (tokens.json spacing)
+        # Layout — tmux-style TUI grid: zero gaps, single-line pane borders
         general = {
-          gaps_in = 6;
-          gaps_out = 12;
+          gaps_in = 0;
+          gaps_out = 0;
           border_size = 2;
 
-          "col.active_border" =
-            lib.mkForce "${rgba palette.hex.accent "ff"} ${rgba palette.hex.brand "ff"} 45deg";
-          "col.inactive_border" = lib.mkForce (rgba palette.hex."border-strong" "aa");
+          # Solid accent border on the active pane, dim border on the rest —
+          # mirrors a tmux active/inactive pane divider (no gradient).
+          "col.active_border" = lib.mkForce (rgba palette.hex.accent "ff");
+          "col.inactive_border" = lib.mkForce (rgba palette.hex."text-faint" "ff");
 
           resize_on_border = true;
           hover_icon_on_border = true;
@@ -189,21 +189,16 @@ in
           no_hardware_cursors = true;
         };
 
-        # Decoration — flat paper aesthetic, no blur, minimal shadow
+        # Decoration — flat TUI panes: sharp corners, no rounding/shadow/blur
         decoration = {
-          rounding = 4;
+          rounding = 0;
 
-          # Dim inactive instead of opacity — paper metaphor
-          dim_inactive = true;
-          dim_strength = 0.08;
+          # No dimming — every pane stays fully readable like a terminal grid;
+          # the active pane is identified by its bright accent border instead.
+          dim_inactive = false;
 
           shadow = {
-            enabled = true;
-            range = 8;
-            render_power = 2;
-            offset = "0 2";
-            color = lib.mkForce (if isDark then "rgba(00000066)" else "rgba(2c2825aa)");
-            color_inactive = lib.mkForce (if isDark then "rgba(00000022)" else "rgba(2c282544)");
+            enabled = false;
           };
 
           blur = {
@@ -211,26 +206,9 @@ in
           };
         };
 
-        # Motion — Jylhis Design System tokens (tokens.json motion)
+        # Motion — disabled for instant, terminal-multiplexer-style snapping
         animations = {
-          enabled = true;
-
-          bezier = [
-            "fast, 0.25, 0.1, 0.25, 1.0"
-            "base, 0.2, 0.6, 0.2, 1.0"
-            "slow, 0.16, 1.0, 0.3, 1.0"
-            "spring, 0.34, 1.25, 0.64, 1.0"
-          ];
-
-          animation = [
-            "windows, 1, 2.5, base, popin 90%"
-            "windowsOut, 1, 1.5, fast, popin 98%"
-            "border, 1, 2.0, base"
-            "borderangle, 0"
-            "fade, 1, 1.5, fast"
-            "workspaces, 1, 2.5, slow, slidefade 12%"
-            "specialWorkspace, 1, 3.0, spring, slidefadevert -20%"
-          ];
+          enabled = false;
         };
 
         dwindle = {
@@ -256,9 +234,9 @@ in
           # Force chromium-based browsers into a tile to deal with --app bug
           "tile on, match:tag chromium-based-browser"
 
-          # Only a subtle opacity change, but not for video sites
-          "opacity 1.0 0.97, match:tag chromium-based-browser"
-          "opacity 1.0 0.97, match:tag firefox-based-browser"
+          # Solid panes — opaque like real terminal windows
+          "opacity 1.0 1.0, match:tag chromium-based-browser"
+          "opacity 1.0 1.0, match:tag firefox-based-browser"
 
           # Video apps: remove chromium browser tag so they don't get opacity applied
           "tag -chromium-based-browser, match:class (chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default)"
@@ -287,7 +265,7 @@ in
           "no_screen_share on, match:class ^(1[p|P]assword)$"
           "tag +floating-window, match:class ^(1[p|P]assword)$"
 
-          "opacity 0.97 0.9, match:class .*"
+          "opacity 1.0 1.0, match:class .*"
 
           # Picture-in-picture overlays
           "tag +pip, match:title (Picture.?in.?[Pp]icture)"

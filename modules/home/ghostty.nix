@@ -98,8 +98,8 @@ in
     settings = {
       theme = ghosttyTheme;
       font-family = "JetBrainsMono Nerd Font";
-      window-padding-x = 14;
-      window-padding-y = 14;
+      window-padding-x = 8;
+      window-padding-y = 8;
       cursor-style = "block";
       cursor-style-blink = false;
       confirm-close-surface = false;

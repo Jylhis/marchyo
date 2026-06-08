@@ -66,7 +66,7 @@ in
           halign = "center";
           valign = "center";
 
-          outline_thickness = 4;
+          outline_thickness = 2;
           outer_color = rgba palette.hex."border-strong" "ff";
           inner_color = rgba palette.hex.surface "ff";
           font_color = rgba palette.hex.text "ff";
@@ -79,7 +79,7 @@ in
           placeholder_text = "  Enter Password";
           fail_text = "<i>$PAMFAIL ($ATTEMPTS)</i>";
 
-          rounding = 4;
+          rounding = 0;
           shadow_passes = 0;
           fade_on_empty = false;
         };

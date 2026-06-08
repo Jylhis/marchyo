@@ -3,10 +3,10 @@ _: {
     services.vicinae = {
       enable = true;
       settings = {
-        # Jylhis Design System — no transparency, paper metaphor
+        # TUI aesthetic — opaque, sharp corners
         window = {
           opacity = 1.0;
-          rounding = 4;
+          rounding = 0;
         };
 
         font = {
