@@ -40,7 +40,29 @@ in
       fileManager = "thunar";
       terminalFileManager = "ranger";
       imageEditor = "gimp";
-      email = "thunderbird";
+      email = "gmail";
+    };
+  });
+
+  # TUI-flipped defaults: spotify-player (music), cmus (audio), aerc (email).
+  eval-defaults-tui = testNixOS "defaults-tui" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults = {
+      musicPlayer = "spotify-player";
+      audioPlayer = "cmus";
+      email = "aerc";
+    };
+  });
+
+  # The other module-backed selections: ncspot (music), cmus (audio), neomutt
+  # (email). Exercises the defaults.nix hasAttr guards (these install via their
+  # Home-Manager modules, not environment.systemPackages).
+  eval-defaults-tui-alt = testNixOS "defaults-tui-alt" (withTestUser {
+    marchyo.desktop.enable = true;
+    marchyo.defaults = {
+      musicPlayer = "ncspot";
+      audioPlayer = "cmus";
+      email = "neomutt";
     };
   });
 

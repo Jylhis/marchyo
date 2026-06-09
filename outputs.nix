@@ -68,6 +68,10 @@ let
       nixpkgs.config.allowUnfree = true;
       system.stateVersion = 6;
 
+      environment.systemPackages = [
+        pkgs.ghostty-bin.terminfo
+      ];
+
       stylix = {
         autoEnable = true;
         base16Scheme =
@@ -140,6 +144,7 @@ let
       theme = {
         enable = false;
         variant = "dark";
+        wallpaper.enable = true;
       };
     };
   };
@@ -315,7 +320,13 @@ in
       };
     in
     {
+      inherit (pkgs) marchyo-wallpapers;
+    }
+    // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
       inherit (pkgs) hyprmon plymouth-marchyo-theme;
+    }
+    // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+      inherit (pkgs) wallpapper;
     };
 
   mkDocs =

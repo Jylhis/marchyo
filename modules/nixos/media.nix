@@ -11,13 +11,15 @@
       # File format support
       libheif
 
-      # Players
+      # Players (local files; TUI music client comes from marchyo.defaults.musicPlayer)
       mpv
     ]
-    ++ (lib.optionals config.nixpkgs.config.allowUnfree (
-      lib.optionals (pkgs.stdenv.hostPlatform.system == "x86_64-linux") [
-        pkgs.spotify
-      ]
-    ));
-
+    # Spotify GUI desktop app: always installed where it is available
+    # (unfree, x86_64-linux only), alongside the TUI music default.
+    ++
+      lib.optionals
+        (config.nixpkgs.config.allowUnfree && pkgs.stdenv.hostPlatform.system == "x86_64-linux")
+        [
+          spotify
+        ];
 }

@@ -3,7 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-hardware = {
+      url = "github:NixOS/nixos-hardware/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
@@ -21,7 +24,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     stylix = {
-      url = "github:nix-community/stylix";
+      url = "github:nix-community/stylix/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     vicinae = {
@@ -35,6 +38,10 @@
     jylhis-design = {
       url = "github:Jylhis/design";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    wallpapper-src = {
+      url = "github:mczachurski/wallpapper/1.7.4";
+      flake = false;
     };
 
   };
@@ -60,11 +67,7 @@
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
       packages = forAllSystems (
-        system:
-        (nixpkgs.lib.optionalAttrs (builtins.elem system systems.linux) (
-          marchyo.mkPackages { inherit system; }
-        ))
-        // marchyo.mkDocs { inherit system; }
+        system: marchyo.mkPackages { inherit system; } // marchyo.mkDocs { inherit system; }
       );
       checks = forLinuxSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });

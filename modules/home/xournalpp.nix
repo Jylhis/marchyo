@@ -16,7 +16,7 @@
     xdg.configFile."xournalpp/settings.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
       <settings dark="forceDark" iconTheme="iconsColor">
-        <property name="presureSensitivity" value="true"/>
+        <property name="pressureSensitivity" value="true"/>
         <property name="minimumPressure" value="0.05"/>
         <property name="zoomGesturesEnabled" value="true"/>
         <property name="selectedToolbar" value="Portrait"/>

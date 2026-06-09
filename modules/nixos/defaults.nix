@@ -66,9 +66,10 @@ let
     inherit (pkgs) amberol;
   };
 
-  musicPlayerPackages = {
-    inherit (pkgs) spotify;
-  };
+  # musicPlayer install paths live outside this map: the TUI clients
+  # (spotify-player, ncspot) install via their Home-Manager modules
+  # (modules/home/{spotify-player,ncspot}.nix), and the Spotify GUI installs
+  # unconditionally via modules/nixos/media.nix (x86_64-only).
 
   fileManagerPackages = {
     inherit (pkgs) nautilus;
@@ -87,12 +88,11 @@ let
     inherit (pkgs) krita;
   };
 
-  # email: URL-only apps (gmail, outlook) install no package
+  # email install paths live outside this map: aerc/neomutt install via their
+  # Home-Manager modules (modules/home/{aerc,neomutt}.nix); gmail/outlook are
+  # web apps opened in the browser (no package).
   # gmail → https://mail.google.com (TODO: register as PWA)
   # outlook → https://outlook.com (TODO: register as PWA)
-  emailPackages = {
-    inherit (pkgs) thunderbird;
-  };
 
   defaultPackages =
     lib.optional (d.browser != null) browserPackages.${d.browser}
@@ -103,22 +103,22 @@ let
       d.terminalEditor != null && builtins.hasAttr d.terminalEditor terminalEditorPackages
     ) terminalEditorPackages.${d.terminalEditor}
     ++ lib.optional (d.videoPlayer != null) videoPlayerPackages.${d.videoPlayer}
-    ++ lib.optional (d.audioPlayer != null) audioPlayerPackages.${d.audioPlayer}
-    ++ lib.optional (d.musicPlayer != null) musicPlayerPackages.${d.musicPlayer}
+    ++ lib.optional (
+      d.audioPlayer != null && builtins.hasAttr d.audioPlayer audioPlayerPackages
+    ) audioPlayerPackages.${d.audioPlayer}
     ++ lib.optional (d.fileManager != null) fileManagerPackages.${d.fileManager}
     ++ lib.optional (d.terminalFileManager != null) terminalFileManagerPackages.${d.terminalFileManager}
-    ++ lib.optional (d.imageEditor != null) imageEditorPackages.${d.imageEditor}
-    ++ lib.optional (
-      d.email != null && builtins.hasAttr d.email emailPackages
-    ) emailPackages.${d.email};
+    ++ lib.optional (d.imageEditor != null) imageEditorPackages.${d.imageEditor};
 in
 {
   config = lib.mkIf cfg.desktop.enable (
     lib.mkMerge [
-      # google-chrome and spotify are x86_64-only on Linux
+      # google-chrome is x86_64-only on Linux, so non-x86_64 needs a browser
+      # fallback. Music players install elsewhere (TUI clients via their
+      # Home-Manager modules; the Spotify GUI via modules/nixos/media.nix,
+      # x86_64-only), so only the browser needs a default here.
       (lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64) {
         marchyo.defaults.browser = lib.mkDefault "chromium";
-        marchyo.defaults.musicPlayer = lib.mkDefault null;
       })
       {
         environment.systemPackages = defaultPackages;

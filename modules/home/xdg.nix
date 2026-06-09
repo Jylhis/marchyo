@@ -40,6 +40,13 @@ let
     thunar = "thunar.desktop";
   };
 
+  # TUI mail clients ship a Terminal=true desktop file with a mailto handler;
+  # web/null clients get none and fall back to the browser.
+  emailDesktopFiles = {
+    aerc = "aerc.desktop";
+    neomutt = "neomutt.desktop";
+  };
+
   browser = defaults.browser or null;
   editor = defaults.editor or null;
   videoPlayer = defaults.videoPlayer or null;
@@ -51,8 +58,14 @@ let
   editorDesktop = lib.optional (
     editor != null && builtins.hasAttr editor editorDesktopFiles
   ) editorDesktopFiles.${editor};
-  videoDesktop = lib.optional (videoPlayer != null) videoPlayerDesktopFiles.${videoPlayer};
-  audioDesktop = lib.optional (audioPlayer != null) audioPlayerDesktopFiles.${audioPlayer};
+  # TUI players (e.g. cmus) have no single-file MIME handler; hasAttr-guard so
+  # selecting one simply registers no association instead of failing eval.
+  videoDesktop = lib.optional (
+    videoPlayer != null && builtins.hasAttr videoPlayer videoPlayerDesktopFiles
+  ) videoPlayerDesktopFiles.${videoPlayer};
+  audioDesktop = lib.optional (
+    audioPlayer != null && builtins.hasAttr audioPlayer audioPlayerDesktopFiles
+  ) audioPlayerDesktopFiles.${audioPlayer};
   fileManagerDesktop = lib.optional (fileManager != null) fileManagerDesktopFiles.${fileManager};
 
   browserMimeTypes = lib.optionalAttrs (browserDesktop != [ ]) {
@@ -88,12 +101,13 @@ let
     "inode/directory" = fileManagerDesktop;
   };
 
-  # mailto: thunderbird gets its own desktop file; gmail/outlook open in browser
+  # mailto: aerc/neomutt get their own desktop file; gmail/outlook (and any
+  # client without a desktop file) fall back to opening in the browser.
   emailMimeTypes =
     if email == null then
       { }
-    else if email == "thunderbird" then
-      { "x-scheme-handler/mailto" = [ "thunderbird.desktop" ]; }
+    else if builtins.hasAttr email emailDesktopFiles then
+      { "x-scheme-handler/mailto" = [ emailDesktopFiles.${email} ]; }
     else if browserDesktop != [ ] then
       { "x-scheme-handler/mailto" = browserDesktop; }
     else
@@ -125,16 +139,7 @@ in
         # Documents
         "application/pdf" = [ "org.gnome.Papers.desktop" ];
 
-        # Archives
-        "application/zip" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-tar" = [ "org.gnome.FileRoller.desktop" ];
-        "application/gzip" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-compressed-tar" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-bzip-compressed-tar" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-xz-compressed-tar" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
-        "application/x-rar" = [ "org.gnome.FileRoller.desktop" ];
-        "application/vnd.rar" = [ "org.gnome.FileRoller.desktop" ];
+        # Archives are handled from the terminal (ouch / yazi); no GUI handler.
       }
       // fileManagerMimeTypes
       // videoMimeTypes

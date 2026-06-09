@@ -247,16 +247,18 @@ marchyo.defaults = {
   editor = "jotain";              # emacs, jotain, vscode, vscodium, zed
   terminalEditor = "jotain";      # emacs, jotain, neovim, helix, nano
   videoPlayer = "mpv";            # mpv, vlc, celluloid
-  audioPlayer = "mpv";            # mpv, vlc, amberol
-  musicPlayer = "spotify";        # spotify
+  audioPlayer = "mpv";            # mpv, cmus, vlc, amberol
+  musicPlayer = "spotify-player"; # spotify-player, ncspot, spotify
   fileManager = "nautilus";       # nautilus, thunar
   terminalFileManager = "yazi";   # yazi, ranger, lf
   imageEditor = "pinta";         # pinta, gimp, krita
-  email = "gmail";               # gmail, thunderbird, outlook
+  email = "aerc";                # aerc, neomutt, gmail, outlook
 };
 ```
 
-`"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`.
+`"jotain"` and web-based email (`"gmail"`, `"outlook"`) are externally managed — no package is installed by marchyo. The implementation is in `modules/nixos/defaults.nix`. The default music (`spotify-player`) and mail (`aerc`) clients are TUIs; the music client launches in a floating terminal under Hyprland.
+
+The TUI clients install via their Home-Manager `programs.*` modules (one file each under `modules/home/`: `spotify-player`, `ncspot`, `cmus`, `aerc`, `neomutt`), each gated on the matching `marchyo.defaults.*` selection — `defaults.nix` no longer adds them to `environment.systemPackages`. The Spotify GUI is always installed on x86_64 via `modules/nixos/media.nix`. `qalc` installs via `programs.qalculate` (`modules/home/qalculate.nix`).
 
 ### Keyboard & Input Methods
 
@@ -293,6 +295,26 @@ marchyo.graphics = {
 
 To find GPU bus IDs: `lspci | grep -E 'VGA|3D'`
 
+### Performance Tuning
+
+`marchyo.performance.disableMitigations` (default `true`) disables CPU vulnerability mitigations.
+
+`marchyo.performance.tuning.*` is opt-in kernel/sysctl/IO tuning, off by default. Enabling the master switch turns on the broadly-safe sub-toggles (`network`, `nvme`, `memory`); the aggressive ones (`hugePages`, `compute`) stay off unless set explicitly.
+
+```nix
+# Safe defaults (network + nvme + memory tuning):
+marchyo.performance.tuning.enable = true;
+
+# Compute/CUDA workstation — also opt into the aggressive toggles:
+marchyo.performance.tuning = {
+  enable = true;
+  hugePages.enable = true;   # 2MiB THP — can hurt interactive/desktop latency
+  compute.enable = true;     # relaxed PAM limits (memlock/rtprio) — trusted hosts only
+};
+```
+
+The implementation is in `modules/nixos/performance-tuning.nix`. The CFS scheduler sysctls from older compute-tuning sets are deliberately omitted — they were removed in the CFS→EEVDF switch (kernel 6.6+) and only produce `systemd-sysctl` warnings on current kernels.
+
 ## Breaking Changes
 
 ### `marchyo.inputMethod.*` is REMOVED
@@ -310,6 +332,13 @@ marchyo.keyboard.layouts = [
   { layout = "cn"; ime = "pinyin"; }
 ];
 ```
+
+### `marchyo.defaults.email = "thunderbird"` is REMOVED
+
+`thunderbird` is no longer a valid `marchyo.defaults.email` value (the enum will
+reject it at evaluation). Switch to a TUI client (`"aerc"`, `"neomutt"`) or a web
+client (`"gmail"`, `"outlook"`). There is no in-place migration — Thunderbird's
+native GUI is no longer managed by marchyo.
 
 ### Deprecated Options
 
