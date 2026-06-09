@@ -37,7 +37,7 @@ in
       [urgency=low]
       border-color=${palette.hex."text-faint"}
 
-      [urgency=high]
+      [urgency=critical]
       border-color=${palette.hex."status-err"}
       default-timeout=0
     '';

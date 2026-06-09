@@ -234,10 +234,6 @@ in
           # Force chromium-based browsers into a tile to deal with --app bug
           "tile on, match:tag chromium-based-browser"
 
-          # Solid panes — opaque like real terminal windows
-          "opacity 1.0 1.0, match:tag chromium-based-browser"
-          "opacity 1.0 1.0, match:tag firefox-based-browser"
-
           # Video apps: remove chromium browser tag so they don't get opacity applied
           "tag -chromium-based-browser, match:class (chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default)"
           "tag -default-opacity, match:class (chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default)"
