@@ -39,7 +39,7 @@ let
     #wireplumber,
     #bluetooth,
     #power-profiles-daemon,
-    #hyprland-language,
+    #language,
     #custom-expand-icon {
       padding: 0 10px;
     }
@@ -81,7 +81,7 @@ let
     }
 
     /* │ separators between right-hand status segments */
-    #hyprland-language,
+    #language,
     #bluetooth,
     #network,
     #wireplumber,
