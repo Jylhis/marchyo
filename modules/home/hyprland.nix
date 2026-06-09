@@ -15,6 +15,7 @@ let
 
   # Theme variant for color selection
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  isDark = themeVariant == "dark";
 
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;
