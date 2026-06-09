@@ -1,6 +1,6 @@
 { lib, ... }:
 {
   config = {
-    programs.noctalia-shell.enable = lib.mkDefault true;
+    programs.noctalia.enable = lib.mkDefault true;
   };
 }
