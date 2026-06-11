@@ -31,6 +31,9 @@ check:
 fmt:
     nix fmt
 
+# Build the reference NixOS configuration (alias for build-nixos)
+alias build := build-nixos
+
 # Build NixOS configuration (config: x86_64, aarch64)
 build-nixos config="x86_64":
     nix build .#nixosConfigurations.{{config}}.config.system.build.toplevel
@@ -39,7 +42,7 @@ build-nixos config="x86_64":
 build-darwin config="aarch64":
     nix build .#darwinConfigurations.{{config}}.config.system.build.toplevel
 
-# Build Home Manager configuration (config: x86_64-linux, aarch64-linux, aarch64-darwin, x86_64-darwin)
+# Build Home Manager configuration (config: x86_64-linux, aarch64-linux)
 build-home config="x86_64-linux":
     nix build .#homeConfigurations.{{config}}.activationPackage
 

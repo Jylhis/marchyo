@@ -28,6 +28,35 @@ rec {
         builtins.seq eval.config.system.stateVersion "pass"
     );
 
+  # Like testNixOS, but also runs `check eval.config` and fails unless it
+  # returns true. Use when a test must inspect *or force* a specific option
+  # value — testNixOS only forces `assertions` + `stateVersion`, so lazily
+  # evaluated values (boot.kernelParams, security.audit.rules, package lists,
+  # generated config text) are otherwise never exercised. The predicate is
+  # deep-forced, so referencing a value that throws makes the test fail.
+  testNixOSCheck =
+    name: check: config:
+    pkgs.writeText "eval-${name}" (
+      let
+        eval = lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            config
+          ];
+        };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
+        result = check eval.config;
+      in
+      if failedAssertions != [ ] then
+        throw "FAIL: ${name}: unexpected assertion failure(s): ${builtins.concatStringsSep "; " failedMessages}"
+      else if !(builtins.deepSeq result result) then
+        throw "FAIL: ${name}: predicate returned false"
+      else
+        "pass"
+    );
+
   # Verifies a NixOS config triggers an assertion whose message contains
   # `expectedMsg`. Use for negative tests (mutually-exclusive options,
   # required fields, etc.).

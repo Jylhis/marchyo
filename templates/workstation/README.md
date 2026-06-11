@@ -21,12 +21,8 @@ This is a full-featured developer workstation configuration with desktop environ
    - Adjust timezone and locale settings
    - Review and modify development tools
 
-4. **RUN VM**
+4. **Run a VM (optional)**
 ```shell
-# With disko
-nix run -L '.#nixosConfigurations.workstation.config.system.build.vmWithDisko'
-
-# Without
 nixos-rebuild build-vm --flake .#workstation
 ./result/bin/run-workstation-vm
 ```
@@ -46,30 +42,27 @@ nixos-rebuild build-vm --flake .#workstation
 
 ### Development Tools
 
+Provided by `marchyo.development.enable`:
+
 #### Editors
-- Vim/Neovim
-- VS Code
+- `jotain` is the default editor (externally managed; no editor package is installed by the template)
 
 #### Version Control
 - Git with Git LFS
 - GitHub CLI (gh)
 
+#### Build Tools
+- gcc, cmake, gnumake, pkg-config
+
 #### Containers
 - Docker with docker-compose
-- Kubernetes (kubectl)
-- Virtualization (QEMU/KVM via libvirtd)
+- buildah, skopeo, lazydocker
+- Virtualization (QEMU/KVM via libvirtd, virt-manager, virt-viewer)
 
-#### DevOps
-- Terraform
-- Ansible
-- Kubernetes CLI
-
-### Terminal Enhancement
-- Starship prompt
-- Zoxide (smart cd)
-- fzf (fuzzy finder)
-- ripgrep (fast grep)
-- fd (fast find)
+#### Other Utilities
+- Database client: sqlite
+- Network debugging: curl, wget, netcat, nmap, tcpdump
+- jq, yq, tree, ripgrep, fd, eza
 
 ## Customization
 
@@ -282,5 +275,6 @@ htop  # Classic resource monitor
 # Run VM
 
 ```shell
-nix run -L '.#nixosConfigurations.default.config.system.build.vmWithDisko'
+nixos-rebuild build-vm --flake .#workstation
+./result/bin/run-workstation-vm
 ```

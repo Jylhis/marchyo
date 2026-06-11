@@ -1,6 +1,6 @@
 { helpers, ... }:
 let
-  inherit (helpers) testNixOS withTestUser;
+  inherit (helpers) testNixOS testNixOSCheck withTestUser;
 in
 {
   eval-tracking-minimal = testNixOS "tracking-minimal" (withTestUser {
@@ -46,10 +46,13 @@ in
     };
   });
 
-  # Full cascade does NOT auto-enable analysis.
-  eval-tracking-no-auto-analysis = testNixOS "tracking-no-auto-analysis" (withTestUser {
-    marchyo.tracking.enable = true;
-  });
+  # Full cascade does NOT auto-enable analysis — assert the value, don't just
+  # evaluate an identical-to-minimal config.
+  eval-tracking-no-auto-analysis =
+    testNixOSCheck "tracking-no-auto-analysis" (c: c.marchyo.tracking.analysis.enable == false)
+      (withTestUser {
+        marchyo.tracking.enable = true;
+      });
 
   # Editor plugins auto-detect from defaults.
   eval-tracking-editor-plugins = testNixOS "tracking-editor-plugins" (withTestUser {

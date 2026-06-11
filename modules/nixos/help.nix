@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   documentation = {
     enable = lib.mkDefault true;
@@ -17,11 +22,13 @@
       ];
     };
   };
-  environment.systemPackages = with pkgs; [
-    man-pages
-    man-pages-posix
-    clang-manpages
-    zeal
-    stdmanpages
-  ];
+  environment.systemPackages =
+    (with pkgs; [
+      man-pages
+      man-pages-posix
+      clang-manpages
+      stdmanpages
+    ])
+    # zeal is an offline-docs GUI browser — desktop-only.
+    ++ lib.optional config.marchyo.desktop.enable pkgs.zeal;
 }

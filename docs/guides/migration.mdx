@@ -29,6 +29,28 @@ marchyo.keyboard.layouts = [
 ];
 ```
 
+## Removed: `marchyo.defaults.email = "thunderbird"`
+
+`thunderbird` is no longer a valid value for `marchyo.defaults.email`. The option's enum rejects it at evaluation time, so a configuration that still sets it will fail to build. Thunderbird's native GUI is no longer managed by Marchyo, and there is no in-place migration.
+
+### Before (will fail)
+
+```nix
+marchyo.defaults.email = "thunderbird";
+```
+
+### After
+
+Switch to a TUI client or a web client:
+
+```nix
+# TUI clients:
+marchyo.defaults.email = "aerc";      # or "neomutt"
+
+# Web clients (externally managed, no package installed):
+marchyo.defaults.email = "gmail";     # or "outlook"
+```
+
 ## Deprecated: `marchyo.keyboard.variant`
 
 The top-level `variant` option is deprecated. Use the attribute set form in `layouts` instead.

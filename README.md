@@ -81,7 +81,7 @@ marchyo.theme = {
 };
 ```
 
-The dark variant uses the `nord` base16 scheme; the light variant uses `nord-light`.
+By default the theme uses the Jylhis design palette (computed from the upstream design tokens), rendered dark or light according to `variant`. Set `marchyo.theme.scheme` to a [`base16-schemes`](https://github.com/tinted-theming/base16-schemes) name (e.g. `"nord"` or `"nord-light"`) to override it.
 
 **For complete documentation of all available options, see the [Marchyo documentation](docs/).**
 
@@ -92,7 +92,7 @@ Essential commands for development and testing:
 ```bash
 nix flake check  # Validate configuration and run all tests
 nix fmt          # Format all Nix code in the repository
-nix develop      # Enter a development shell with necessary tools
+devenv shell     # Enter a development shell with necessary tools (or `direnv allow`)
 ```
 
 ## Contributing
@@ -104,7 +104,7 @@ Contributions are highly welcome! To ensure a smooth process, please make sure t
 
 ## License
 
-This project is not yet licensed. Please choose a license that suits your needs. The MIT license is a good default choice for open-source projects.
+Licensing for this project is not yet finalized; no LICENSE file is currently included.
 
 ## Acknowledgments
 

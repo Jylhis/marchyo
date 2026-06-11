@@ -4,12 +4,12 @@
 # user services are declared in modules/nixos/tracking/desktop.nix; this
 # module only handles the config-file side.
 {
-  osConfig,
+  osConfig ? { },
   lib,
   ...
 }:
 let
-  trackingCfg = osConfig.marchyo.tracking or { };
+  trackingCfg = (osConfig.marchyo or { }).tracking or { };
   enabled = (trackingCfg.enable or false) && (trackingCfg.desktop.enable or false);
 in
 {

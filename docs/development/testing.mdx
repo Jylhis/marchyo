@@ -21,8 +21,9 @@ There is no way to run a single test in isolation — `nix flake check` runs the
 
 ```
 tests/
-  default.nix        # Entry point combining all tests
-  module-tests.nix   # Module evaluation tests
+  default.nix        # Entry point; auto-discovers tests/eval/*.nix and appends lib-tests.nix
+  lib.nix            # Shared helpers (testNixOS, testNixOSCheck, withTestUser)
+  eval/*.nix         # Per-feature module evaluation tests (auto-discovered)
   lib-tests.nix      # Library function unit tests
 ```
 
@@ -48,15 +49,21 @@ Unit tests for lib functions using the `assertTest` helper.
 
 ### Module evaluation test
 
-Add to `tests/module-tests.nix`:
+Drop a new file (or extend an existing one) under `tests/eval/`. Each file receives the shared `helpers` and returns an attrset of named tests:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
 
-The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion).
+Tests are auto-discovered from `tests/eval/`, so no entry-point edit is needed. The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion).
 
 ### Library test
 

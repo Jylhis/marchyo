@@ -1,16 +1,13 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
-  programs = {
-    # Enable 1Password CLI for shell plugins and op command
-    _1password.enable = true;
+  # 1Password CLI is useful headless (shell plugins, `op`); keep it unconditional.
+  programs._1password.enable = true;
 
-    _1password-gui = {
-      enable = true;
-      polkitPolicyOwners =
-        let
-          mUsers = builtins.attrNames config.marchyo.users;
-        in
-        mUsers;
-    };
+  # The 1Password GUI is a desktop app — only install it with the desktop stack.
+  programs._1password-gui = lib.mkIf config.marchyo.desktop.enable {
+    enable = true;
+    polkitPolicyOwners = lib.attrNames (
+      lib.filterAttrs (_name: user: user.enable) config.marchyo.users
+    );
   };
 }

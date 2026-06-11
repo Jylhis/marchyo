@@ -51,9 +51,6 @@ let
     dconf-editor # For debugging dconf/GTK settings
   ];
 
-  # Media applications (browser/editor/video/audio/fileManager managed by defaults.nix)
-  mediaTools = with pkgs; [ ];
-
   # Office applications
   officeTools = with pkgs; [
     # libreoffice # Standard office suite
@@ -89,7 +86,6 @@ in
       shellTools
       ++ tuiTools
       ++ (lib.optionals cfg.desktop.enable desktopTools)
-      ++ (lib.optionals cfg.media.enable mediaTools)
       ++ (lib.optionals cfg.office.enable officeTools)
       ++ (lib.optionals cfg.development.enable devTools);
   };

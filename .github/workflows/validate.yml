@@ -65,6 +65,22 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix flake check --accept-flake-config
+  # aarch64-darwin eval coverage (darwinConfigurations, overlay, formatter).
+  # Main-only on an Apple-Silicon runner — keeps the darwin modules from
+  # silently breaking, since the rest of CI is Linux-only.
+  check-darwin:
+    name: Check (aarch64-darwin)
+    if: github.event_name != 'pull_request'
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v17
+        with:
+          name: jylhis
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix flake check --accept-flake-config
   # Full NixOS toplevel build. Main-only — up to 60 minutes per run.
   build:
     name: Build toplevel

@@ -18,7 +18,7 @@ let
   cfg = config.marchyo.tracking;
   aggCfg = cfg.aggregation;
   gcCfg = aggCfg.grafanaCloud;
-  mUsers = builtins.attrNames config.marchyo.users;
+  mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 
   jsonlPaths = map (u: "${config.users.users.${u}.home}/${cfg.dataDir}/*.jsonl") mUsers;
 

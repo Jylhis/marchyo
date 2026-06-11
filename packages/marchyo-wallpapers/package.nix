@@ -48,7 +48,7 @@ let
     vignetteOpacity = "0.09";
   };
 in
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "marchyo-wallpapers";
   version = "0.1.0";
 
@@ -71,9 +71,12 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
+  # Reference the package's own realised output so these resolve to real store
+  # paths at eval time. `placeholder "out"` only resolves inside this
+  # derivation's own build env, so reading it from Nix yields a dangling path.
   passthru = {
-    light = "${placeholder "out"}/share/marchyo/wallpapers/jylhis-grid-light.png";
-    dark = "${placeholder "out"}/share/marchyo/wallpapers/jylhis-grid-dark.png";
+    light = "${finalAttrs.finalPackage}/share/marchyo/wallpapers/jylhis-grid-light.png";
+    dark = "${finalAttrs.finalPackage}/share/marchyo/wallpapers/jylhis-grid-dark.png";
   };
 
   meta = {
@@ -82,4 +85,4 @@ stdenvNoCC.mkDerivation {
     license = lib.licenses.mit;
     platforms = resvg.meta.platforms;
   };
-}
+})

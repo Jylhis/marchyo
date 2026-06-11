@@ -1,6 +1,11 @@
 { helpers, ... }:
 let
-  inherit (helpers) testNixOS withTestUser minimalConfig;
+  inherit (helpers)
+    testNixOS
+    testNixOSCheck
+    withTestUser
+    minimalConfig
+    ;
 in
 {
   eval-minimal = testNixOS "minimal" minimalConfig;
@@ -16,13 +21,13 @@ in
     }
   );
 
-  # Development without desktop stays headless.
-  eval-development-no-desktop = testNixOS "development-no-desktop" (
-    minimalConfig
-    // {
-      marchyo.development.enable = true;
-    }
-  );
+  # Development without desktop stays headless: docker comes on, but no Hyprland.
+  eval-development-no-desktop =
+    testNixOSCheck "development-no-desktop"
+      (c: c.virtualisation.docker.enable == true && c.programs.hyprland.enable == false)
+      (withTestUser {
+        marchyo.development.enable = true;
+      });
 
   eval-all-features = testNixOS "all-features" (withTestUser {
     marchyo = {

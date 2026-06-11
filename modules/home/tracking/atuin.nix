@@ -4,13 +4,13 @@
 # shell integration. Complementary to modules/nixos/tracking/shell.nix
 # which installs the system package and writes a reference /etc config.
 {
-  osConfig,
+  osConfig ? { },
   config,
   lib,
   ...
 }:
 let
-  trackingCfg = osConfig.marchyo.tracking or { };
+  trackingCfg = (osConfig.marchyo or { }).tracking or { };
   enabled = (trackingCfg.enable or false) && (trackingCfg.shell.enable or false);
 in
 {

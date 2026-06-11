@@ -35,7 +35,9 @@ jobs:
       - run: nix build --accept-flake-config .#nixosConfigurations.aarch64.config.system.build.toplevel
   build-darwin:
     name: Build Darwin (aarch64-darwin)
-    runs-on: macos-15-intel
+    # macos-15 is an Apple-Silicon (aarch64) runner; the previous macos-15-intel
+    # is x86_64 and cannot build the aarch64-darwin toplevel below.
+    runs-on: macos-15
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6

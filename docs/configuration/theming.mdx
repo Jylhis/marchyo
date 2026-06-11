@@ -11,7 +11,7 @@ Marchyo uses [Stylix](https://github.com/danth/stylix) for consistent theming ac
 |--------|------|---------|-------------|
 | `marchyo.theme.enable` | `bool` | `true` | Enable the Stylix theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
-| `marchyo.theme.scheme` | `string`, `attrs`, or `null` | `null` | **(Not yet implemented)** Color scheme to use |
+| `marchyo.theme.scheme` | `string`, `attrs`, or `null` | `null` | Override the base16 color scheme |
 
 ## Basic usage
 
@@ -22,19 +22,20 @@ marchyo.theme = {
 };
 ```
 
-<Warning>
-The `marchyo.theme.scheme` option is defined but not yet implemented. Setting it will have no effect.
-The theme is currently determined solely by the `variant` option.
-</Warning>
-
 ## Color schemes
 
-The theme is determined by `marchyo.theme.variant`:
+By default Marchyo themes the system with the Jylhis design palette, computed from the upstream design tokens and selected by `marchyo.theme.variant` (a dark or light rendering of the same palette).
 
-| Variant | Scheme used |
-|---------|-------------|
-| `"dark"` | `nord` |
-| `"light"` | `nord-light` |
+To use a different base16 scheme, set `marchyo.theme.scheme` to the name of a scheme shipped by [`base16-schemes`](https://github.com/tinted-theming/base16-schemes):
+
+```nix
+marchyo.theme = {
+  variant = "dark";
+  scheme = "nord";
+};
+```
+
+When `scheme` is set, Marchyo loads `${pkgs.base16-schemes}/share/themes/<scheme>.yaml` instead of the Jylhis palette.
 
 ## Light mode
 

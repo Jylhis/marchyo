@@ -5,7 +5,7 @@
 }:
 stdenvNoCC.mkDerivation {
   pname = "plymouth-marchyo-theme";
-  version = "v3.0.0";
+  version = "3.0.0";
   src = ./.;
 
   dontBuild = true;
@@ -14,7 +14,10 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p $out/share/plymouth/themes/marchyo
-    cp * $out/share/plymouth/themes/marchyo
+    # Copy the theme assets only — not this package.nix, which lives alongside
+    # them in the source directory.
+    find . -maxdepth 1 -type f ! -name package.nix \
+      -exec cp {} $out/share/plymouth/themes/marchyo \;
     find $out/share/plymouth/themes/ -name \*.plymouth -exec sed -i "s@\/usr\/@$out\/@" {} \;
     runHook postInstall
   '';

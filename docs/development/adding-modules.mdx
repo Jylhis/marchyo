@@ -32,42 +32,39 @@ in
 }
 ```
 
-### 3. Register the import
+For `modules/nixos/` and `modules/home/`, that's it — both directories are auto-discovered (via `lib/discover-modules.nix`), so there is no import list to edit. Module merging is order-independent; reach for `lib.mkBefore`/`lib.mkAfter` or priorities only if a specific merge order matters. The one exception is `modules/darwin/`, whose `default.nix` is a hand-curated import list you must edit manually.
 
-Add the file to the corresponding `default.nix`:
+### 3. Define options
+
+Add any new options under `modules/nixos/options/` — a directory of files split by namespace, each declaring `options.marchyo.<namespace>`. The directory is auto-discovered, so add to an existing namespace file or create a new one (e.g. `myfeature.nix`):
 
 ```nix
-# modules/nixos/default.nix
+{ lib, ... }:
 {
-  imports = [
-    ./my-feature.nix
-    # ... other imports
-  ];
+  options.marchyo.myFeature = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable my feature";
+    };
+  };
 }
 ```
 
-### 4. Define options
+### 4. Add a test
 
-Add any new options to `modules/nixos/options.nix` under the `marchyo.*` namespace:
-
-```nix
-myFeature = {
-  enable = mkOption {
-    type = types.bool;
-    default = false;
-    description = "Enable my feature";
-  };
-};
-```
-
-### 5. Add a test
-
-Add an evaluation test in `tests/module-tests.nix`:
+Drop or extend a file under `tests/eval/`:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
 
 ## Home Manager modules
@@ -91,5 +88,5 @@ in
 - **Use `lib.mkIf`** for feature-gated configuration blocks
 - **Use `lib.mkDefault`** for values consumers should be able to override
 - **Use `lib.mkMerge`** when a module has multiple conditional branches
-- **Define all options in `options.nix`** — never define `marchyo.*` options in individual modules
+- **Define all options under `modules/nixos/options/`** — never define `marchyo.*` options in individual modules
 - **Add a test** for every new feature flag

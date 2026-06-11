@@ -62,8 +62,10 @@ let
   );
 in
 {
-  config = lib.mkIf (kbdCfg.layouts != [ ]) {
-    # Always enable fcitx5 when layouts are configured
+  # fcitx5 is the graphical IME daemon — desktop-only. TTY/XKB layouts are
+  # handled separately in keyboard.nix, which stays unconditional.
+  config = lib.mkIf (config.marchyo.desktop.enable && kbdCfg.layouts != [ ]) {
+    # Enable fcitx5 when the desktop is on and layouts are configured.
     # This provides unified input management for both simple layouts and IME
     i18n.inputMethod = {
       enable = true;

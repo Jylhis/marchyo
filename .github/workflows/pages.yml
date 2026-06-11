@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - docs/**
+      # The published options reference is generated from the module tree, so
+      # option/overlay changes must also redeploy the site.
+      - modules/**
+      - overlay.nix
       - flake.lock
       - flake.nix
       - outputs.nix

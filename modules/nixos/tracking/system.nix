@@ -8,7 +8,7 @@
 let
   cfg = config.marchyo.tracking;
   sysCfg = cfg.system;
-  mUsers = builtins.attrNames config.marchyo.users;
+  mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 
   fileWatchScript = pkgs.writeShellScript "marchyo-tracking-file-watch" ''
     set -eu
@@ -23,12 +23,24 @@ let
       [ -d "$HOME/Developer" ] && WATCH_DIRS+=("$HOME/Developer")
       [ -d "$HOME/.config" ]   && WATCH_DIRS+=("$HOME/.config")
     done
+    # Emit tab-separated raw fields and JSON-encode them with `jq --arg` rather
+    # than interpolating straight into a JSON template. A path containing a `"`
+    # or `\` (trivially introduced by cloning a third-party repo) would otherwise
+    # break the line or inject arbitrary fields into the event stream — which
+    # Vector's parse_json! happily accepts and can surface as Loki labels.
+    # (A literal newline in a filename still splits the record; that is a rare
+    # robustness edge, not the injection vector being closed here.)
     exec ${pkgs.inotify-tools}/bin/inotifywait -m -r \
       --exclude '(\.git|node_modules|target|__pycache__|\.cache|result|\.direnv)' \
       -e close_write,create,delete,moved_to \
-      --format '{"type":"file","ts":"%T","path":"%w%f","event":"%e"}' \
+      --format '%T	%e	%w%f' \
       --timefmt '%Y-%m-%dT%H:%M:%S' \
       "''${WATCH_DIRS[@]}" \
+    | while IFS=$'\t' read -r ts event path; do
+        ${pkgs.jq}/bin/jq -cn \
+          --arg ts "$ts" --arg event "$event" --arg path "$path" \
+          '{type:"file",ts:$ts,event:$event,path:$path}'
+      done \
       >> "$OUT/file-changes.jsonl"
   '';
 in

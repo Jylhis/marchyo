@@ -17,7 +17,7 @@ Before submitting changes, ensure:
 |---------|-------------|
 | `nix flake check` | Validate configuration and run all tests |
 | `nix fmt` | Format all code (nixfmt, deadnix, statix, shellcheck, yamlfmt) |
-| `nix develop` | Enter development shell with necessary tools |
+| `devenv shell` | Enter development shell with necessary tools (or `direnv allow`) |
 | `nix flake show` | Display all flake outputs |
 | `nix run` | Run a QEMU VM with all features enabled (x86_64-linux) |
 
@@ -35,11 +35,10 @@ All must pass. CI enforces formatting with `nix fmt -- --ci`.
 
 ## Adding features
 
-1. Create the module file in the appropriate `modules/` subdirectory
-2. Add the import to the corresponding `default.nix`
-3. Define new options in `modules/nixos/options.nix` under `marchyo.*`
-4. Add an evaluation test in `tests/module-tests.nix`
-5. Run `nix fmt` and `nix flake check`
+1. Create the module file in the appropriate `modules/` subdirectory (`modules/nixos/` and `modules/home/` are auto-discovered; only `modules/darwin/` needs a manual import)
+2. Define new options in a file under `modules/nixos/options/` (the directory is auto-discovered)
+3. Add an evaluation test under `tests/eval/`
+4. Run `nix fmt` and `nix flake check`
 
 See [Adding Modules](/development/adding-modules) for detailed instructions.
 

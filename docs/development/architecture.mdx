@@ -7,12 +7,14 @@ description: How Marchyo is organized and how modules interact
 
 ```
 modules/
-  nixos/          # NixOS system-level modules (~29 modules)
-  home/           # Home Manager user-level modules (~31 modules)
+  nixos/          # NixOS system-level modules (auto-discovered)
+    options/      # marchyo.* option declarations, split by namespace
+  home/           # Home Manager user-level modules (auto-discovered)
   generic/        # Shared modules imported by both nixos and home
+  darwin/         # nix-darwin modules (hand-curated import list)
 packages/         # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
-overlays/         # Nixpkgs overlays (vicinae, noctalia)
-tests/            # Evaluation-based test suite
+overlay.nix       # Single-file Nixpkgs overlay (vicinae, noctalia, etc.)
+tests/            # Evaluation-based test suite (eval/*.nix auto-discovered)
 templates/        # Flake templates (workstation)
 ```
 
@@ -20,11 +22,11 @@ templates/        # Flake templates (workstation)
 
 ### NixOS modules (`modules/nixos/`)
 
-System-level modules that configure services, packages, and system settings. All custom options are defined in `modules/nixos/options.nix` — this is the single source of truth for the `marchyo.*` namespace.
+System-level modules that configure services, packages, and system settings. All custom options are defined under `modules/nixos/options/` — a directory of files split by namespace, the single source of truth for the `marchyo.*` namespace.
 
 Key files:
-- `options.nix` — All `marchyo.*` option definitions
-- `default.nix` — Import list for all NixOS modules (order matters for some)
+- `options/` — All `marchyo.*` option definitions, one file per namespace (auto-discovered)
+- `default.nix` — Auto-discovers every NixOS module (no import list; merging is order-independent)
 - `desktop-config.nix` — Feature flag cascading (desktop enables media, office, etc.)
 - `defaults.nix` — Default application management
 - `keyboard.nix` — Layout normalization and XKB configuration
@@ -86,7 +88,7 @@ config = lib.mkIf cfg.desktop.enable {
 
 The keyboard/IME system is the most complex cross-module pattern:
 
-1. **`options.nix`** — Defines `marchyo.keyboard.layouts` accepting strings or attrsets
+1. **`options/keyboard.nix`** — Defines `marchyo.keyboard.layouts` accepting strings or attrsets
 2. **`keyboard.nix`** — Normalizes layouts (string `"us"` → `{ layout = "us"; variant = ""; ime = null; }`) and sets XKB config
 3. **`fcitx5.nix`** — Reads normalized layouts, detects IME addons needed, generates fcitx5 config
 4. **`modules/home/keyboard.nix`** — Extracts layout data into `home.keyboard` for Hyprland
@@ -96,7 +98,7 @@ The keyboard/IME system is the most complex cross-module pattern:
 
 | Input | Purpose |
 |-------|---------|
-| `nixpkgs` | NixOS unstable channel |
+| `nixpkgs` | NixOS 26.05 channel |
 | `nixos-hardware` | Hardware-specific modules |
 | `home-manager` | User environment management |
 | `stylix` | System-wide theming |

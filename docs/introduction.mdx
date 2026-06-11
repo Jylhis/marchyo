@@ -32,14 +32,14 @@ Marchyo is distributed as a Nix flake. You add it as an input to your own NixOS 
 }
 ```
 
-The `nixosModules.default` output includes both NixOS system modules and Home Manager integration. If you only need Home Manager, use `homeModules.default` instead.
+The `nixosModules.default` output includes both NixOS system modules and Home Manager integration. If you only need Home Manager, use `homeManagerModules.default` instead.
 
 ## Flake outputs
 
 | Output | Description |
 |--------|-------------|
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
-| `homeModules.default` | Home Manager module only |
+| `homeManagerModules.default` | Home Manager module only |
 | `overlays.default` | Nixpkgs overlay |
 | `templates.workstation` | Starter workstation template |
 | `apps.{system}.default` | QEMU VM runner (x86_64-linux) |
@@ -47,4 +47,4 @@ The `nixosModules.default` output includes both NixOS system modules and Home Ma
 
 ## All options live under `marchyo.*`
 
-Every custom option is defined in a single file (`modules/nixos/options.nix`) under the `marchyo.*` namespace. Browse the [Configuration](/configuration/feature-flags) section for the full reference.
+Every custom option is defined under `modules/nixos/options/` — a directory of files split by namespace and auto-discovered — all under the `marchyo.*` namespace. Browse the [Configuration](/configuration/feature-flags) section for the full reference.

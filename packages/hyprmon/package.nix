@@ -25,7 +25,7 @@ buildGoModule rec {
     description = "TUI monitor configuration tool for Hyprland with visual layout, drag-and-drop, and profile management";
     homepage = "https://github.com/erans/hyprmon";
     license = lib.licenses.asl20;
-    maintainers = [ ];
+    platforms = lib.platforms.linux;
     mainProgram = "hyprmon";
   };
 }

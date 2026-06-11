@@ -2,7 +2,10 @@
 {
   nix = {
     settings = {
-      trusted-users = [ "@wheel" ] ++ (builtins.attrNames config.marchyo.users);
+      trusted-users = [
+        "@wheel"
+      ]
+      ++ lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
       tarball-ttl = lib.mkDefault 604800;
       download-buffer-size = lib.mkDefault "256M";
       builders-use-substitutes = true;

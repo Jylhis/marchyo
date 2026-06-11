@@ -20,7 +20,7 @@ Marchyo is a modular NixOS configuration flake providing curated system, Home Ma
 ```bash
 # Justfile recipes (preferred workflow)
 just check               # Lint + eval checks (nix flake check, statix, deadnix)
-just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
+just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt, typos, actionlint)
 just build               # Build reference NixOS configuration
 just update              # Update all inputs: flake.lock -> devenv.lock
 just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
@@ -45,7 +45,7 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 - Follow conventional commit message format (e.g. `feat:`, `fix:`, `chore:`)
 - Use `lib.mkIf cfg.someFlag` for conditional configuration
 - Use `lib.mkDefault` for options that consumers should be able to override
-- All custom options must be defined under `modules/nixos/options/` in the `marchyo.*` namespace (one file per logical namespace; auto-discovered)
+- All custom options must be defined under `modules/nixos/options/` in the `marchyo.*` namespace (one file per logical namespace; auto-discovered). Two deliberate exceptions: Home-Manager-scope options that have no NixOS surface (`marchyo.screenshot` in `modules/home/screenshot.nix`, `marchyo.xournalpp` in `modules/home/xournalpp.nix`) are declared in their HM module, and the self-contained `programs.slack` program module (`modules/nixos/slack.nix`) declares its own option block alongside its config.
 
 ## Architecture
 
@@ -87,6 +87,9 @@ templates/workstation/  # Developer workstation template
 - `overlays.default` — Nixpkgs overlay (darwin-safe: Linux packages wrapped in `optionalAttrs`)
 - `packages.{linux}.hyprmon` — Hyprland monitor management tool
 - `packages.{linux}.plymouth-marchyo-theme` — Plymouth boot splash theme
+- `packages.{system}.marchyo-wallpapers` — token-derived grid wallpapers (cross-platform)
+- `packages.{darwin}.wallpapper` — darwin dynamic-wallpaper builder
+- `docs`, `docs-options`, `docs-lib` — generated documentation outputs (via `mkDocs` in `outputs.nix`)
 - `legacyPackages.{system}` — Full nixpkgs with overlay applied
 - `templates.workstation` — Starter workstation template (uses nixpkgs passthrough)
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
@@ -104,7 +107,7 @@ Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, stylix, etc.). `devenv.lock` syncs to this via `just update`.
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
 - `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
-- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. All packages are Linux-only (wrapped in `lib.optionalAttrs stdenv.isLinux`).
+- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. The Linux-only packages (vicinae, noctalia, hyprmon, plymouth-marchyo-theme, jylhis-design) are wrapped in `lib.optionalAttrs stdenv.isLinux`; `jylhis-design-src` and `marchyo-wallpapers` are cross-platform, and `wallpapper` is darwin-only.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `{ linux, darwin, all }` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.
 - `modules/nixos/options/` — `marchyo.*` option declarations split by namespace (users, defaults, feature-flags, performance, graphics, localization, theme, keyboard, tracking, deprecated). The directory's `default.nix` auto-imports every file.
@@ -355,14 +358,17 @@ native GUI is no longer managed by marchyo.
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
-1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
-2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is the last release to support it and `aarch64-darwin` covers evaluation equivalently.
-3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
+`.github/workflows/validate.yml` runs these jobs (separate jobs, not a matrix):
+1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent). Runs on every push and PR.
+2. **check** (`x86_64-linux`) — `nix flake check --accept-flake-config`. Runs on every push and PR (the fast PR gate).
+3. **check-arm** (`aarch64-linux`) and **check-darwin** (`aarch64-darwin`, on a `macos-15` Apple-Silicon runner) — same `nix flake check`, but **main-only** (`if: github.event_name != 'pull_request'`) to avoid burning runners on every PR push. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is its last supported release and `aarch64-darwin` covers evaluation equivalently.
+4. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest`, **main-only**, runs after `lint` and `check` succeed).
+
+`.github/workflows/release.yml` builds the reference NixOS (x86_64-linux, aarch64-linux) and nix-darwin (aarch64-darwin on `macos-15`) toplevels on `v*` tags and `workflow_dispatch`.
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
-`.github/workflows/pages.yml` builds and deploys docs to GitHub Pages. It only fires when `docs/**`, flake sources, or the workflow itself change.
+`.github/workflows/pages.yml` builds and deploys docs to GitHub Pages. It fires when `docs/**`, `modules/**`, `overlay.nix`, flake sources, or the workflow itself change (the published options reference is generated from the module tree).
 
 Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Dependabot groups all `nix` and `github-actions` bumps into single weekly PRs.
 
@@ -375,7 +381,7 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 - **Stylix target disablement**: marchyo overrides Stylix for surfaces it themes directly: `plymouth, hyprland, waybar, mako, ghostty, gtk, fzf, bat, hyprlock, console, starship`. See `modules/generic/theme.nix`. The remaining Stylix targets (qt, vicinae, kde, gnome, fontconfig, …) still receive base16-derived theming.
 - **`disko/` and `installer/` are starter snippets**: They are not wired into flake outputs. Copy the file you need into a downstream host configuration; they're versioned here as templates, not as a stable API.
 - **`allowUnfree = true`**: Set globally in `legacyPackages` (via `outputs.nix`) and in test configs.
-- **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.
+- **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, yamlfmt, typos, and actionlint via treefmt-nix (`treefmt.nix`). All must pass.
 - **Nixpkgs pin sync**: `flake.lock` is the single source of truth for the nixpkgs revision and all other flake inputs. Run `just update` to bump all inputs and sync `devenv.lock` to the same nixpkgs rev (`nix flake update` → extract rev → update `devenv.yaml` → `devenv update`). Run `just verify` to check they're aligned. Renovate updates `flake.lock` independently via `lockFileMaintenance` but does not update `devenv.lock` — CI's `verify` job catches this drift so the PR will fail until `just update` is run to re-sync.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeManagerModules` in isolation.
 - **Shared treefmt config**: `treefmt.nix` is the single source of truth for formatting. Both the flake formatter (`nix fmt`) and the devenv shell (`treefmt`) use it. devenv.yaml includes `treefmt-nix` as an input for this purpose.

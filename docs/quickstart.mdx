@@ -60,7 +60,7 @@ If you only want the Home Manager modules without the NixOS system modules:
     homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
       modules = [
-        marchyo.homeModules.default
+        marchyo.homeManagerModules.default
       ];
     };
   };

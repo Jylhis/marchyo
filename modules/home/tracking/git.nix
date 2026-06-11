@@ -7,13 +7,13 @@
 #   programs.git.extraConfig.core.hooksPath = "~/.config/marchyo/git-hooks";
 # or symlink into individual repos.
 {
-  osConfig,
+  osConfig ? { },
   lib,
   pkgs,
   ...
 }:
 let
-  trackingCfg = osConfig.marchyo.tracking or { };
+  trackingCfg = (osConfig.marchyo or { }).tracking or { };
   enabled = (trackingCfg.enable or false) && (trackingCfg.git.enable or false);
   dataDir = trackingCfg.dataDir or ".local/share/personal-data";
 in
