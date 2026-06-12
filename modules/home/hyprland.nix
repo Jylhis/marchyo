@@ -285,7 +285,7 @@ in
           "SUPER, O, Obsidian, exec, $notes"
           "SUPER, D, Lazy Docker, exec, $terminal -e lazydocker"
           "SUPER, G, Messenger, exec, $messenger"
-          "SUPER, slash, Password manager, exec, $passwordManager"
+          "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1password)$ || $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
@@ -416,7 +416,7 @@ in
         exec-once = [
           # Essential services
           "kanshi"
-          "vicinae server"
+          # vicinae runs as a user service (services.vicinae.systemd.enable)
           "fcitx5 -d --replace"
 
           # Clipboard
