@@ -177,11 +177,14 @@ runtime ergonomics *without* abandoning the declarative source of truth.
 
 ### F1.10 — AI tooling ✓ implemented (OpenRouter BYOK)
 - **Status:** Done. `marchyo.ai.*` namespace (`modules/nixos/options/ai.nix`),
-  guardrails (`modules/nixos/ai.nix`), client install + key export + aichat config
-  (`modules/home/ai-tooling.nix`), Emacs/gptel (`modules/home/emacs.nix`), and a
-  `Super+A` aichat keybind. Secrets via **sops-nix** (new flake input; wired in
-  `outputs.nix`). claude-code is installed but stays on the Anthropic API (not
-  wired to OpenRouter). Tests in `tests/eval/ai.nix`; docs in
+  guardrails (`modules/nixos/ai.nix`), client install + key export + per-tool
+  routing (`modules/home/ai-tooling.nix`: aichat + pi + claude-code), OpenViking
+  context (`modules/home/ai-context.nix`), Agent Skills
+  (`modules/home/ai-skills.nix`), MCP tools (`modules/home/ai-mcp.nix`), and a
+  `Super+A` aichat keybind. Packages: `packages/openviking`, `packages/pi`.
+  Secrets via **sops-nix** (flake input; wired in `outputs.nix`). claude-code
+  stays on the Anthropic API (not wired to OpenRouter). aider/opencode and the
+  Emacs/gptel integration were dropped. Tests in `tests/eval/ai.nix`; docs in
   `docs/configuration/ai.mdx`.
 - **Goal:** `marchyo.ai.tooling.enable` installs agent CLIs (claude-code,
   opencode, aider, codex, gemini-cli as available in nixpkgs) for the user.

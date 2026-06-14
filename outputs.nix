@@ -327,7 +327,12 @@ in
       inherit (pkgs) marchyo-wallpapers;
     }
     // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
-      inherit (pkgs) hyprmon plymouth-marchyo-theme;
+      inherit (pkgs)
+        hyprmon
+        plymouth-marchyo-theme
+        openviking
+        pi
+        ;
     }
     // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
       inherit (pkgs) wallpapper;

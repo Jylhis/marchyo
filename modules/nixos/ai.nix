@@ -1,8 +1,9 @@
 # marchyo.ai — BYOK AI integration (NixOS layer).
 #
 # The user-facing wiring (client install, key export, editor integration) lives
-# in the Home Manager modules (modules/home/ai-tooling.nix, modules/home/emacs.nix),
-# which can read osConfig.marchyo.ai. This module only carries the system-level
+# in the Home Manager modules (modules/home/ai-tooling.nix, ai-context.nix,
+# ai-skills.nix, ai-mcp.nix), which read osConfig.marchyo.ai. This module only
+# carries the system-level
 # guardrails: it validates configuration and refuses the not-yet-implemented
 # local-inference path.
 { config, lib, ... }:

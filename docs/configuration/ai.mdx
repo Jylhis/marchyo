@@ -1,88 +1,122 @@
 ---
 title: AI (BYOK)
-description: Bring-your-own-key AI tooling wired to OpenRouter
+description: Bring-your-own-key AI tooling, task routing, local context, and skills
 ---
 
-Marchyo ships a bring-your-own-key (BYOK) AI desktop experience. Enabling
-`marchyo.ai` installs a set of AI clients and wires them to a provider. The
-initial provider is **OpenRouter**, an OpenAI-compatible API aggregator.
+Marchyo ships a bring-your-own-key (BYOK) AI desktop. Enabling `marchyo.ai`
+installs per-user AI clients wired to **OpenRouter** (an OpenAI-compatible
+aggregator), adds task-based **model routing**, a local **OpenViking** context
+layer, **MCP tools**, and a set of **Agent Skills** surfaced to every client.
 
 Your API key never enters the Nix store: it is supplied through a
 [sops-nix](https://github.com/Mic92/sops-nix) secret (or any runtime file) and
 read at startup.
 
+## Quick start
+
+```nix
+{
+  sops.secrets."openrouter-api-key" = { };
+
+  marchyo.ai = {
+    enable = true;
+    openrouter.apiKeyFile = config.sops.secrets."openrouter-api-key".path;
+  };
+}
+```
+
+## Clients
+
+- **aichat** — terminal chat client, also bound to `Super+A` (floating terminal).
+- **pi** — Armin Ronacher's minimal coding agent, wired to OpenRouter via a
+  registered provider (`~/.pi/agent/settings.json` + an extension).
+- **claude-code** — installed for convenience, but it speaks the **Anthropic**
+  API and is **not** wired to OpenRouter; authenticate it separately.
+
 ## Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.ai.enable` | `false` | Enable BYOK AI tooling and desktop integration |
-| `marchyo.ai.provider` | `"openrouter"` | AI service provider (only OpenRouter for now) |
-| `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the OpenRouter API key (required) |
-| `marchyo.ai.openrouter.baseUrl` | `"https://openrouter.ai/api/v1"` | OpenAI-compatible base URL |
-| `marchyo.ai.openrouter.defaultModel` | `"anthropic/claude-sonnet-4"` | Default model slug |
-| `marchyo.ai.tooling.enable` | `true` | Install the client CLIs (aichat, aider, opencode) |
-| `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
+| `marchyo.ai.enable` | `false` | Enable BYOK AI tooling |
+| `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required) |
+| `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
+| `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Model used when routing is off |
+| `marchyo.ai.tooling.enable` | `true` | Install aichat / pi / claude-code |
+| `marchyo.ai.routing.enable` | `true` | Task→model routing (see below) |
+| `marchyo.ai.context.enable` | `false` | OpenViking local context layer |
+| `marchyo.ai.skills.enable` | `true` | Install Agent Skills to all clients |
+| `marchyo.ai.mcp.enable` | `true` | Wire MCP tools (mcp-nixos) into clients |
+| `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** |
 
-## What you get
+## Model routing
 
-- **aichat** — terminal chat client, also bound to `Super+A` (floating terminal)
-  under Hyprland.
-- **aider** — AI pair-programming CLI (`AIDER_MODEL` preset to your default model).
-- **opencode** — terminal coding agent.
-- **Emacs / gptel** — when `marchyo.defaults.editor` (or `terminalEditor`) is
-  `"emacs"`, gptel is installed and configured against OpenRouter (`M-x gptel`).
+`marchyo.ai.routing` maps task buckets to a primary OpenRouter model plus a
+fallback chain (consumed as OpenRouter's native `models` array, which auto-fails
+over on errors/rate-limits). Defaults pin the frontier/reasoning buckets and lean
+on `openrouter/auto` and the `:nitro`/`:floor` variant suffixes elsewhere so
+quarterly model churn is absorbed. **Slugs are starting points — verify them
+against OpenRouter's live model list and adjust.** Every default is overridable:
 
-All of these read the key from `apiKeyFile` (exported as `OPENROUTER_API_KEY`
-for the CLIs; read directly from the file by gptel).
+```nix
+marchyo.ai.routing.tasks.frontier.model = "openai/gpt-5.5";
+marchyo.ai.routing.tools.aichat = "frontier";   # which bucket aichat uses
+```
 
-<Note>
-`claude-code` is also installed, but it speaks the **Anthropic** API — not
-OpenAI/OpenRouter — so it is **not** wired to OpenRouter. Authenticate it
-separately with an Anthropic key.
-</Note>
+Buckets: `frontier`, `everydayCoding`, `fast`, `reasoning`, `summarize`,
+`longContext`, `budget`, `local` (placeholder). The resolved policy is exported to
+`~/.config/marchyo/ai-routing.json`, and each bucket is available as an aichat
+role (`aichat -r frontier`).
+
+## Context / memory (OpenViking)
+
+`marchyo.ai.context.enable` installs the [OpenViking](https://openviking.ai) `ov`
+CLI — a local context database for AI agents. Data stays under
+`~/.openviking/workspace` (configurable via `context.workspacePath`); embeddings
+are pointed at OpenRouter. The key is injected into `~/.openviking/ov.conf` at
+activation (never in the store). Index your skills with
+`ov add-resource ~/.claude/skills`.
+
+> Only the `ov` CLI is packaged (not the separate `openviking-server`), so
+> `context.service.enable` is not wired yet.
+
+## Skills
+
+`marchyo.ai.skills` installs Marchyo Agent Skills (`SKILL.md`) — `marchyo-config`
+and `nix-build-debug` — to every client in `skills.clients`. claude-code
+(`~/.claude/skills`) and pi (`~/.pi/agent/skills`) consume the Agent Skills
+standard natively; aichat gets each skill as a role. Add more skills by dropping
+`<name>/SKILL.md` dirs under `modules/home/ai-skills/skills/`.
+
+## MCP tools
+
+`marchyo.ai.mcp` wires [`mcp-nixos`](https://github.com/utensils/mcp-nixos) into
+claude-code (merged into `~/.claude.json`), giving grounded NixOS package/option
+lookups (no hallucinated attr names). It runs via `uvx` (`uv` is installed).
 
 ## Supplying the key with sops-nix
 
-1. Generate an age key and record its public key:
+1. `age-keygen -o ~/.config/sops/age/keys.txt` and record the public key.
+2. Add a `.sops.yaml`, then `sops secrets/ai.yaml` containing
+   `openrouter-api-key: sk-or-v1-...`.
+3. Declare the secret and point Marchyo at its path:
 
-   ```bash
-   mkdir -p ~/.config/sops/age
-   age-keygen -o ~/.config/sops/age/keys.txt
-   ```
+```nix
+{
+  sops.defaultSopsFile = ./secrets/ai.yaml;
+  sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+  sops.secrets."openrouter-api-key" = { };
 
-2. Add a `.sops.yaml` to your config repo pointing at that public key, then
-   create an encrypted secrets file (e.g. `secrets/ai.yaml`) containing:
+  marchyo.ai = {
+    enable = true;
+    openrouter.apiKeyFile = config.sops.secrets."openrouter-api-key".path;
+  };
+}
+```
 
-   ```yaml
-   openrouter-api-key: sk-or-v1-...
-   ```
-
-   ```bash
-   sops secrets/ai.yaml
-   ```
-
-3. Declare the secret and point Marchyo at its runtime path:
-
-   ```nix
-   {
-     sops.defaultSopsFile = ./secrets/ai.yaml;
-     sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-     sops.secrets."openrouter-api-key" = { };
-
-     marchyo.ai = {
-       enable = true;
-       openrouter = {
-         apiKeyFile = config.sops.secrets."openrouter-api-key".path;
-         defaultModel = "anthropic/claude-sonnet-4";
-       };
-     };
-   }
-   ```
-
-The `sops` NixOS and Home Manager modules are already wired into Marchyo's
-default modules — you only need to declare the secret and provide your age key.
+The `sops` NixOS and Home Manager modules are wired into Marchyo's defaults — you
+only declare the secret and provide your age key.
 
 ## Local inference
 
-`marchyo.ai.local.enable` is declared but not yet implemented; enabling it fails
-an assertion. Use OpenRouter for now.
+`marchyo.ai.local.enable` is declared but not implemented; enabling it fails an
+assertion. Use OpenRouter for now.

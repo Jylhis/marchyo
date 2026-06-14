@@ -1,0 +1,70 @@
+# Per-user OpenViking context/memory layer.
+#
+# Enabled when marchyo.ai.enable && marchyo.ai.context.enable. Installs the `ov`
+# CLI and writes ~/.openviking/ov.conf pointing embeddings at OpenRouter. The API
+# key is injected into ov.conf at activation from marchyo.ai.openrouter.apiKeyFile
+# (never in the Nix store). All context data stays under the local workspace dir.
+#
+# Only the `ov` CLI is packaged (not the separate openviking-server crate), so
+# context.service.enable is not wired yet (warned below).
+{
+  config,
+  osConfig ? { },
+  lib,
+  pkgs,
+  ...
+}:
+let
+  aiCfg = (osConfig.marchyo or { }).ai or { };
+  orCfg = aiCfg.openrouter or { };
+  ctx = aiCfg.context or { };
+  enabled = (aiCfg.enable or false) && (ctx.enable or false);
+
+  keyFile = if (orCfg.apiKeyFile or null) == null then "" else toString orCfg.apiKeyFile;
+  baseUrl = orCfg.baseUrl or "https://openrouter.ai/api/v1";
+  workspace = "${config.home.homeDirectory}/${ctx.workspacePath or ".openviking/workspace"}";
+  embeddingModel = ctx.embeddingModel or "openai/text-embedding-3-small";
+
+  # ov.conf template with a placeholder for the key, filled at activation.
+  ovConfTemplate = pkgs.writeText "ov.conf.template" (
+    builtins.toJSON {
+      storage.workspace = workspace;
+      log = {
+        level = "INFO";
+        output = "stdout";
+      };
+      embedding.dense = [
+        {
+          provider = "openai";
+          api_base = baseUrl;
+          api_key = "@OPENROUTER_API_KEY@";
+          model = embeddingModel;
+          dimension = 1536;
+        }
+      ];
+    }
+  );
+in
+{
+  config = lib.mkIf enabled {
+    home.packages = [ pkgs.openviking ];
+
+    warnings = lib.optional (ctx.service.enable or false) ''
+      marchyo.ai.context.service.enable is set, but only the `ov` CLI is packaged
+      (not openviking-server). The HTTP service is not started. Run `ov` against an
+      externally started server, or wait for the server package.
+    '';
+
+    home.activation.marchyoOpenVikingConf = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run mkdir -p "${workspace}"
+      run mkdir -p "$HOME/.openviking"
+      key=""
+      if [ -r "${keyFile}" ]; then
+        key=$(cat "${keyFile}")
+      fi
+      conf="$HOME/.openviking/ov.conf"
+      ${pkgs.gnused}/bin/sed "s|@OPENROUTER_API_KEY@|$key|g" ${ovConfTemplate} > "$conf"
+      run chmod 600 "$conf"
+    '';
+  };
+}

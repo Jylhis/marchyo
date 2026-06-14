@@ -317,29 +317,33 @@ The implementation is in `modules/nixos/performance-tuning.nix`. The CFS schedul
 
 ### AI (BYOK)
 
-Marchyo ships a bring-your-own-key AI desktop. `marchyo.ai.enable` installs AI clients and wires them to **OpenRouter** (the only provider for now). The API key is supplied via a sops-nix secret (or any runtime file) and never enters the Nix store.
+Marchyo ships a bring-your-own-key AI desktop. `marchyo.ai.enable` installs per-user AI clients wired to **OpenRouter**, plus task-based model routing, a local OpenViking context layer, MCP tools, and Agent Skills. The API key is supplied via a sops-nix secret (or any runtime file) and never enters the Nix store.
 
 ```nix
 marchyo.ai = {
   enable = true;
-  openrouter = {
-    apiKeyFile = config.sops.secrets."openrouter-api-key".path; # required
-    defaultModel = "anthropic/claude-sonnet-4";
-  };
+  openrouter.apiKeyFile = config.sops.secrets."openrouter-api-key".path; # required
 };
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.ai.enable` | `false` | Enable BYOK AI tooling |
-| `marchyo.ai.provider` | `"openrouter"` | Provider (OpenRouter only for now) |
 | `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required when enabled) |
 | `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
-| `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Default model slug |
-| `marchyo.ai.tooling.enable` | `true` | Install aichat/aider/opencode |
+| `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Model used when routing is off |
+| `marchyo.ai.tooling.enable` | `true` | Install aichat / pi / claude-code |
+| `marchyo.ai.routing.enable` | `true` | Task→model routing (`routing.tasks.<bucket>`, `routing.tools`) |
+| `marchyo.ai.context.enable` | `false` | OpenViking (`ov`) local context layer |
+| `marchyo.ai.skills.enable` | `true` | Install Agent Skills to all clients |
+| `marchyo.ai.mcp.enable` | `true` | Wire MCP tools (mcp-nixos via uvx) |
 | `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
 
-Implementation: `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions/guardrails), `modules/home/ai-tooling.nix` (CLIs + key export + aichat config), `modules/home/emacs.nix` (gptel). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors the `tracking/claude-code.nix` pattern); gptel reads the file directly so it works for Hyprland-launched Emacs too. `aichat` is bound to `Super+A` (floating terminal). `claude-code` is installed but speaks the Anthropic API — it is **not** wired to OpenRouter. sops-nix is a flake input wired in `outputs.nix` (NixOS module + Home Manager sharedModule). Local inference (ollama) is deferred (plan F1.11 / decision D1).
+**Clients:** `aichat` (bound to `Super+A`), `pi` (Armin Ronacher's minimal coding agent, wired to OpenRouter via `~/.pi/agent/settings.json` + a provider extension), and `claude-code` (Anthropic-native — **not** wired to OpenRouter). `aider`/`opencode` and the Emacs/gptel integration were removed.
+
+**Routing:** `routing.tasks.<bucket> = { model; fallbacks; }` (buckets: frontier, everydayCoding, fast, reasoning, summarize, longContext, budget, local). Defaults are churn-resistant (`lib.mkDefault`; pin frontier/reasoning, lean on `openrouter/auto` + `:nitro`/`:floor`); slugs are starting points to verify against OpenRouter. The resolved policy is exported to `~/.config/marchyo/ai-routing.json`; each bucket is an aichat role.
+
+**Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + aichat/pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors `tracking/claude-code.nix`). sops-nix is a flake input wired in `outputs.nix`. Local inference (ollama) and the execution gateway are deferred.
 
 ## Breaking Changes
 

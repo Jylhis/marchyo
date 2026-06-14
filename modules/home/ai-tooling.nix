@@ -1,11 +1,13 @@
 # Per-user BYOK AI client tooling.
 #
 # Enabled when marchyo.ai.enable && marchyo.ai.tooling.enable. Installs the AI
-# client CLIs and wires them to OpenRouter. The API key is read from
-# marchyo.ai.openrouter.apiKeyFile at interactive-shell startup and exported as
-# OPENROUTER_API_KEY, so it never enters the Nix store (mirrors the pattern in
-# modules/home/tracking/claude-code.nix). aichat, aider and opencode all consume
-# that single env var.
+# client CLIs and wires the OpenRouter-backed ones (aichat, pi) to the routing
+# table. The API key is read from marchyo.ai.openrouter.apiKeyFile at
+# interactive-shell startup and exported as OPENROUTER_API_KEY, so it never
+# enters the Nix store (mirrors modules/home/tracking/claude-code.nix).
+#
+# claude-code speaks the Anthropic API (not OpenAI/OpenRouter) and is installed
+# but NOT wired to OpenRouter — authenticate it separately with an Anthropic key.
 {
   osConfig ? { },
   lib,
@@ -15,10 +17,29 @@
 let
   aiCfg = (osConfig.marchyo or { }).ai or { };
   orCfg = aiCfg.openrouter or { };
+  routing = aiCfg.routing or { };
+  tasks = routing.tasks or { };
+  toolBuckets = routing.tools or { };
   enabled = (aiCfg.enable or false) && (aiCfg.tooling.enable or true);
 
-  defaultModel = orCfg.defaultModel or "anthropic/claude-sonnet-4";
+  fallbackModel = orCfg.defaultModel or "anthropic/claude-sonnet-4";
+
+  # Resolve a tool's model from its routing bucket, else the global default.
+  modelFor =
+    tool:
+    let
+      bucket = toolBuckets.${tool} or null;
+    in
+    if (routing.enable or true) && bucket != null && tasks ? ${bucket} then
+      tasks.${bucket}.model
+    else
+      fallbackModel;
+
+  aichatModel = modelFor "aichat";
+  piModel = modelFor "pi";
+
   keyFile = if (orCfg.apiKeyFile or null) == null then "" else toString orCfg.apiKeyFile;
+  baseUrl = orCfg.baseUrl or "https://openrouter.ai/api/v1";
 
   shellInit = ''
     if [ -r "${keyFile}" ]; then
@@ -31,16 +52,63 @@ let
         set -gx OPENROUTER_API_KEY (cat "${keyFile}")
     end
   '';
+
+  # Machine-readable routing policy for the future gateway / marchyo CLI.
+  routingJson = builtins.toJSON {
+    inherit (routing) enable;
+    tools = toolBuckets;
+    tasks = lib.mapAttrs (_: t: {
+      inherit (t) model fallbacks;
+    }) tasks;
+  };
+
+  # An aichat role per task bucket: `aichat -r frontier "..."`.
+  bucketRoleFiles = lib.mapAttrs' (
+    bucket: t:
+    lib.nameValuePair "aichat/roles/${bucket}.md" {
+      text = ''
+        ---
+        model: openrouter:${t.model}
+        ---
+        You are an assistant configured for the "${bucket}" task profile.
+      '';
+    }
+  ) tasks;
+
+  # pi extension registering OpenRouter as an OpenAI-compatible provider.
+  # Mirrors the documented pi.registerProvider() API (best-effort; pi config is
+  # JSON at ~/.pi/agent/settings.json, providers via a TS extension).
+  piModelEntries = lib.concatStringsSep ",\n" (
+    lib.mapAttrsToList (
+      _: t:
+      ''{ id: ${builtins.toJSON t.model}, name: ${builtins.toJSON t.model}, reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 }''
+    ) tasks
+    ++ [
+      ''{ id: "openrouter/auto", name: "OpenRouter Auto", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 }''
+    ]
+  );
+
+  piProviderExtension = ''
+    // Marchyo: register OpenRouter as an OpenAI-compatible provider for pi.
+    export default function (pi) {
+      pi.registerProvider("openrouter", {
+        name: "OpenRouter",
+        baseUrl: ${builtins.toJSON baseUrl},
+        apiKey: "$OPENROUTER_API_KEY",
+        api: "openai-completions",
+        models: [
+    ${piModelEntries}
+        ],
+      });
+    }
+  '';
 in
 {
   config = lib.mkIf enabled {
     home.packages = [
       pkgs.aichat
-      pkgs.aider-chat
-      pkgs.opencode
-      # claude-code speaks the Anthropic API, not OpenAI/OpenRouter — it is
-      # installed for convenience but NOT wired to OpenRouter. Authenticate it
-      # separately with an Anthropic key.
+      pkgs.pi
+      # Anthropic-native; not wired to OpenRouter.
       pkgs.claude-code
     ];
 
@@ -49,16 +117,27 @@ in
     programs.zsh.initExtra = shellInit;
     programs.fish.interactiveShellInit = fishInit;
 
-    # Non-secret env: model selection for the clients that read it.
-    home.sessionVariables = {
-      AIDER_MODEL = "openrouter/${defaultModel}";
-    };
+    xdg.configFile = {
+      # aichat: built-in OpenRouter client, reads OPENROUTER_API_KEY.
+      "aichat/config.yaml".text = ''
+        model: openrouter:${aichatModel}
+        save: true
+        keybindings: emacs
+      '';
 
-    # aichat uses its built-in OpenRouter client, which reads OPENROUTER_API_KEY.
-    xdg.configFile."aichat/config.yaml".text = ''
-      model: openrouter:${defaultModel}
-      save: true
-      keybindings: emacs
-    '';
+      # Routing policy export.
+      "marchyo/ai-routing.json".text = routingJson;
+    }
+    // bucketRoleFiles;
+
+    # pi: JSON settings + OpenRouter provider extension.
+    home.file = {
+      ".pi/agent/settings.json".text = builtins.toJSON {
+        defaultProvider = "openrouter";
+        defaultModel = "openrouter/${piModel}";
+        defaultThinkingLevel = "medium";
+      };
+      ".pi/agent/extensions/marchyo-openrouter.ts".text = piProviderExtension;
+    };
   };
 }
