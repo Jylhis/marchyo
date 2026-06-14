@@ -38,8 +38,28 @@ let
   aichatModel = modelFor "aichat";
   piModel = modelFor "pi";
 
+  # All routed models (+ the aichat default), for the aichat client model list.
+  aichatModels = lib.unique ([ aichatModel ] ++ lib.mapAttrsToList (_: t: t.model) tasks);
+  # Double-quoted (not '''') so leading indentation is preserved verbatim.
+  aichatModelsYaml = lib.concatMapStringsSep "\n" (m: "          - name: \"${m}\"") aichatModels;
+
   keyFile = if (orCfg.apiKeyFile or null) == null then "" else toString orCfg.apiKeyFile;
   baseUrl = orCfg.baseUrl or "https://openrouter.ai/api/v1";
+
+  # Wrapper that loads the OpenRouter key from the file before exec'ing aichat.
+  # Needed for non-shell launchers (e.g. the Hyprland Super+A bind runs the
+  # command directly via Ghostty `-e`, bypassing interactive shell init).
+  marchyoAichat = pkgs.writeShellApplication {
+    name = "marchyo-aichat";
+    runtimeInputs = [ pkgs.aichat ];
+    text = ''
+      if [ -r "${keyFile}" ]; then
+        OPENROUTER_API_KEY="$(cat "${keyFile}")"
+        export OPENROUTER_API_KEY
+      fi
+      exec aichat "$@"
+    '';
+  };
 
   shellInit = ''
     if [ -r "${keyFile}" ]; then
@@ -107,9 +127,11 @@ in
   config = lib.mkIf enabled {
     home.packages = [
       pkgs.aichat
+      marchyoAichat
       pkgs.pi
-      # Anthropic-native; not wired to OpenRouter.
-      pkgs.claude-code
+      # Anthropic-native; not wired to OpenRouter. Sourced from llm-agents.nix
+      # (daily-updated, Numtide-cached) rather than nixpkgs.
+      pkgs.llm-agents.claude-code
     ];
 
     # OpenRouter key (secret) — exported from a file at runtime, never in store.
@@ -118,11 +140,18 @@ in
     programs.fish.interactiveShellInit = fishInit;
 
     xdg.configFile = {
-      # aichat: built-in OpenRouter client, reads OPENROUTER_API_KEY.
+      # aichat: OpenRouter via an openai-compatible client honoring baseUrl.
+      # The client is named "openrouter", so aichat reads OPENROUTER_API_KEY.
       "aichat/config.yaml".text = ''
         model: openrouter:${aichatModel}
         save: true
         keybindings: emacs
+        clients:
+          - type: openai-compatible
+            name: openrouter
+            api_base: ${baseUrl}
+            models:
+        ${aichatModelsYaml}
       '';
 
       # Routing policy export.

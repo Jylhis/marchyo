@@ -12,6 +12,15 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
+    # AI agents (claude-code, …) come from llm-agents.nix's pinned set; pull
+    # prebuilt binaries from the Numtide cache instead of rebuilding.
+    nix.settings = {
+      extra-substituters = [ "https://cache.numtide.com" ];
+      extra-trusted-public-keys = [
+        "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+      ];
+    };
+
     assertions = [
       {
         assertion = !cfg.local.enable;

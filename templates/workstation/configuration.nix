@@ -30,7 +30,9 @@
   # `config.sops.secrets`. See docs/configuration/ai.mdx for the full workflow.
   # sops.defaultSopsFile = ./secrets/ai.yaml;
   # sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-  # sops.secrets."openrouter-api-key" = { };
+  # The default secret is root-owned 0400 under /run/secrets — set owner so the
+  # desktop user's AI clients (aichat/pi) can read it.
+  # sops.secrets."openrouter-api-key".owner = "developer";
   # marchyo.ai = {
   #   enable = true;
   #   openrouter = {

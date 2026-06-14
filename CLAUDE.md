@@ -320,6 +320,8 @@ The implementation is in `modules/nixos/performance-tuning.nix`. The CFS schedul
 Marchyo ships a bring-your-own-key AI desktop. `marchyo.ai.enable` installs per-user AI clients wired to **OpenRouter**, plus task-based model routing, a local OpenViking context layer, MCP tools, and Agent Skills. The API key is supplied via a sops-nix secret (or any runtime file) and never enters the Nix store.
 
 ```nix
+# Set owner: the sops-nix default secret is root-only 0400, unreadable by the user.
+sops.secrets."openrouter-api-key".owner = "your-username";
 marchyo.ai = {
   enable = true;
   openrouter.apiKeyFile = config.sops.secrets."openrouter-api-key".path; # required
@@ -339,11 +341,11 @@ marchyo.ai = {
 | `marchyo.ai.mcp.enable` | `true` | Wire MCP tools (mcp-nixos via uvx) |
 | `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
 
-**Clients:** `aichat` (bound to `Super+A`), `pi` (Armin Ronacher's minimal coding agent, wired to OpenRouter via `~/.pi/agent/settings.json` + a provider extension), and `claude-code` (Anthropic-native — **not** wired to OpenRouter). `aider`/`opencode` and the Emacs/gptel integration were removed.
+**Clients:** `aichat` (bound to `Super+A`), `pi` (Armin Ronacher's minimal coding agent, wired to OpenRouter via `~/.pi/agent/settings.json` + a provider extension), and `claude-code` (Anthropic-native — **not** wired to OpenRouter; sourced from `llm-agents.nix` with the Numtide binary cache). `aider`/`opencode` and the Emacs/gptel integration were removed.
 
 **Routing:** `routing.tasks.<bucket> = { model; fallbacks; }` (buckets: frontier, everydayCoding, fast, reasoning, summarize, longContext, budget, local). Defaults are churn-resistant (`lib.mkDefault`; pin frontier/reasoning, lean on `openrouter/auto` + `:nitro`/`:floor`); slugs are starting points to verify against OpenRouter. The resolved policy is exported to `~/.config/marchyo/ai-routing.json`; each bucket is an aichat role.
 
-**Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + aichat/pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors `tracking/claude-code.nix`). sops-nix is a flake input wired in `outputs.nix`. Local inference (ollama) and the execution gateway are deferred.
+**Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + aichat/pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors `tracking/claude-code.nix`). sops-nix and llm-agents.nix (claude-code + Numtide cache, applied via `overlayList` in `outputs.nix`) are flake inputs. Local inference (ollama) and the execution gateway are deferred.
 
 ## Breaking Changes
 

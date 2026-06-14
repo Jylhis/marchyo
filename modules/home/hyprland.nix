@@ -328,7 +328,7 @@ in
           "SUPER, mouse_up, Scroll active workspace backward, workspace, e-1"
         ]
         ++ lib.optionals aiToolingEnabled [
-          "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e aichat"
+          "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e marchyo-aichat"
         ];
         bind = [
           "SUPER, R, exec, vicinae toggle"

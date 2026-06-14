@@ -78,7 +78,8 @@ in
         Install the AI client CLIs (aichat, pi, claude-code) for the user and
         wire the OpenRouter-backed ones to the provider. On by default when
         marchyo.ai is enabled. (claude-code speaks the Anthropic API and is not
-        wired to OpenRouter.)
+        wired to OpenRouter; it comes from llm-agents.nix, which also packages
+        codex/gemini-cli/goose/crush/… via the overlay for future opt-in.)
       '';
     };
 

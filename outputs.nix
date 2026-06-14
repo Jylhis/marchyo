@@ -8,16 +8,24 @@ let
     noctalia
     stylix
     sops-nix
+    llm-agents
     treefmt-nix
     ;
 
   overlay = import ./overlay.nix { inherit inputs; };
 
+  # marchyo's overlay plus llm-agents.nix (exposes pkgs.llm-agents.<agent>,
+  # e.g. claude-code, from its Numtide-cached pinned set).
+  overlayList = [
+    overlay
+    llm-agents.overlays.default
+  ];
+
   # Shared config used by both nixosConfigurations and mkApps VM.
   sharedNixosConfig =
     { lib, ... }:
     {
-      nixpkgs.overlays = [ overlay ];
+      nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
       boot.loader.systemd-boot.enable = lib.mkForce false;
@@ -159,7 +167,7 @@ let
     home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ overlay ];
+        overlays = overlayList;
         config.allowUnfree = true;
       };
       extraSpecialArgs = {
@@ -211,7 +219,7 @@ let
         hmSharedConfig
         stylix.nixosModules.stylix
         sops-nix.nixosModules.sops
-        { nixpkgs.overlays = [ overlay ]; }
+        { nixpkgs.overlays = overlayList; }
 
         ./modules/nixos/default.nix
       ];
@@ -224,7 +232,7 @@ let
       imports = [
         home-manager.darwinModules.home-manager
         hmSharedConfig
-        { nixpkgs.overlays = [ overlay ]; }
+        { nixpkgs.overlays = overlayList; }
 
         ./modules/darwin/default.nix
       ];
@@ -311,7 +319,7 @@ in
     system:
     import nixpkgs {
       inherit system;
-      overlays = [ overlay ];
+      overlays = overlayList;
       config.allowUnfree = true;
     };
 
@@ -320,7 +328,7 @@ in
     let
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ overlay ];
+        overlays = overlayList;
       };
     in
     {

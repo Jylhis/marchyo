@@ -16,7 +16,9 @@ read at startup.
 
 ```nix
 {
-  sops.secrets."openrouter-api-key" = { };
+  # owner is required: the sops-nix default is a root-only 0400 file under
+  # /run/secrets, which the desktop user's AI clients cannot read.
+  sops.secrets."openrouter-api-key".owner = "your-username";
 
   marchyo.ai = {
     enable = true;
@@ -104,7 +106,8 @@ lookups (no hallucinated attr names). It runs via `uvx` (`uv` is installed).
 {
   sops.defaultSopsFile = ./secrets/ai.yaml;
   sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-  sops.secrets."openrouter-api-key" = { };
+  # owner so the desktop user can read it (default is root-only 0400).
+  sops.secrets."openrouter-api-key".owner = "your-username";
 
   marchyo.ai = {
     enable = true;
