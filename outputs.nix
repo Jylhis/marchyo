@@ -7,6 +7,7 @@ let
     vicinae
     noctalia
     stylix
+    sops-nix
     treefmt-nix
     ;
 
@@ -174,6 +175,7 @@ let
         homeManagerModules.default
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
+        sops-nix.homeManagerModules.sops
         {
           home.username = "developer";
           home.homeDirectory = homeDirectory;
@@ -189,6 +191,7 @@ let
       sharedModules = [
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
+        sops-nix.homeManagerModules.sops
       ];
       extraSpecialArgs = {
         inherit
@@ -207,6 +210,7 @@ let
         home-manager.nixosModules.home-manager
         hmSharedConfig
         stylix.nixosModules.stylix
+        sops-nix.nixosModules.sops
         { nixpkgs.overlays = [ overlay ]; }
 
         ./modules/nixos/default.nix

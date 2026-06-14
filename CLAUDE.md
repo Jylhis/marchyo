@@ -315,6 +315,32 @@ marchyo.performance.tuning = {
 
 The implementation is in `modules/nixos/performance-tuning.nix`. The CFS scheduler sysctls from older compute-tuning sets are deliberately omitted — they were removed in the CFS→EEVDF switch (kernel 6.6+) and only produce `systemd-sysctl` warnings on current kernels.
 
+### AI (BYOK)
+
+Marchyo ships a bring-your-own-key AI desktop. `marchyo.ai.enable` installs AI clients and wires them to **OpenRouter** (the only provider for now). The API key is supplied via a sops-nix secret (or any runtime file) and never enters the Nix store.
+
+```nix
+marchyo.ai = {
+  enable = true;
+  openrouter = {
+    apiKeyFile = config.sops.secrets."openrouter-api-key".path; # required
+    defaultModel = "anthropic/claude-sonnet-4";
+  };
+};
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.ai.enable` | `false` | Enable BYOK AI tooling |
+| `marchyo.ai.provider` | `"openrouter"` | Provider (OpenRouter only for now) |
+| `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required when enabled) |
+| `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
+| `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Default model slug |
+| `marchyo.ai.tooling.enable` | `true` | Install aichat/aider/opencode |
+| `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
+
+Implementation: `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions/guardrails), `modules/home/ai-tooling.nix` (CLIs + key export + aichat config), `modules/home/emacs.nix` (gptel). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors the `tracking/claude-code.nix` pattern); gptel reads the file directly so it works for Hyprland-launched Emacs too. `aichat` is bound to `Super+A` (floating terminal). `claude-code` is installed but speaks the Anthropic API — it is **not** wired to OpenRouter. sops-nix is a flake input wired in `outputs.nix` (NixOS module + Home Manager sharedModule). Local inference (ollama) is deferred (plan F1.11 / decision D1).
+
 ## Breaking Changes
 
 ### `marchyo.inputMethod.*` is REMOVED

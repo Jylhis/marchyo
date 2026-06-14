@@ -1,0 +1,88 @@
+---
+title: AI (BYOK)
+description: Bring-your-own-key AI tooling wired to OpenRouter
+---
+
+Marchyo ships a bring-your-own-key (BYOK) AI desktop experience. Enabling
+`marchyo.ai` installs a set of AI clients and wires them to a provider. The
+initial provider is **OpenRouter**, an OpenAI-compatible API aggregator.
+
+Your API key never enters the Nix store: it is supplied through a
+[sops-nix](https://github.com/Mic92/sops-nix) secret (or any runtime file) and
+read at startup.
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.ai.enable` | `false` | Enable BYOK AI tooling and desktop integration |
+| `marchyo.ai.provider` | `"openrouter"` | AI service provider (only OpenRouter for now) |
+| `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the OpenRouter API key (required) |
+| `marchyo.ai.openrouter.baseUrl` | `"https://openrouter.ai/api/v1"` | OpenAI-compatible base URL |
+| `marchyo.ai.openrouter.defaultModel` | `"anthropic/claude-sonnet-4"` | Default model slug |
+| `marchyo.ai.tooling.enable` | `true` | Install the client CLIs (aichat, aider, opencode) |
+| `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
+
+## What you get
+
+- **aichat** — terminal chat client, also bound to `Super+A` (floating terminal)
+  under Hyprland.
+- **aider** — AI pair-programming CLI (`AIDER_MODEL` preset to your default model).
+- **opencode** — terminal coding agent.
+- **Emacs / gptel** — when `marchyo.defaults.editor` (or `terminalEditor`) is
+  `"emacs"`, gptel is installed and configured against OpenRouter (`M-x gptel`).
+
+All of these read the key from `apiKeyFile` (exported as `OPENROUTER_API_KEY`
+for the CLIs; read directly from the file by gptel).
+
+<Note>
+`claude-code` is also installed, but it speaks the **Anthropic** API — not
+OpenAI/OpenRouter — so it is **not** wired to OpenRouter. Authenticate it
+separately with an Anthropic key.
+</Note>
+
+## Supplying the key with sops-nix
+
+1. Generate an age key and record its public key:
+
+   ```bash
+   mkdir -p ~/.config/sops/age
+   age-keygen -o ~/.config/sops/age/keys.txt
+   ```
+
+2. Add a `.sops.yaml` to your config repo pointing at that public key, then
+   create an encrypted secrets file (e.g. `secrets/ai.yaml`) containing:
+
+   ```yaml
+   openrouter-api-key: sk-or-v1-...
+   ```
+
+   ```bash
+   sops secrets/ai.yaml
+   ```
+
+3. Declare the secret and point Marchyo at its runtime path:
+
+   ```nix
+   {
+     sops.defaultSopsFile = ./secrets/ai.yaml;
+     sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+     sops.secrets."openrouter-api-key" = { };
+
+     marchyo.ai = {
+       enable = true;
+       openrouter = {
+         apiKeyFile = config.sops.secrets."openrouter-api-key".path;
+         defaultModel = "anthropic/claude-sonnet-4";
+       };
+     };
+   }
+   ```
+
+The `sops` NixOS and Home Manager modules are already wired into Marchyo's
+default modules — you only need to declare the secret and provide your age key.
+
+## Local inference
+
+`marchyo.ai.local.enable` is declared but not yet implemented; enabling it fails
+an assertion. Use OpenRouter for now.

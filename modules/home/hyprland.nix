@@ -45,6 +45,9 @@ let
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
+  aiCfg = (osConfig.marchyo or { }).ai or { };
+  aiToolingEnabled = (aiCfg.enable or false) && (aiCfg.tooling.enable or true);
+
   browserHyprlandCommands = {
     brave = "brave --new-window";
     google-chrome = "google-chrome --new-window";
@@ -244,7 +247,7 @@ in
           "center on, match:tag floating-window"
           "size 875 600, match:tag floating-window"
 
-          "tag +floating-window, match:class (org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)"
+          "tag +floating-window, match:class (org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.aichat|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)"
           "tag +floating-window, match:class (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), match:title ^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)"
 
           # Fullscreen screensaver
@@ -323,6 +326,9 @@ in
           # Scroll through existing workspaces with SUPER + scroll
           "SUPER, mouse_down, Scroll active workspace forward, workspace, e+1"
           "SUPER, mouse_up, Scroll active workspace backward, workspace, e-1"
+        ]
+        ++ lib.optionals aiToolingEnabled [
+          "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e aichat"
         ];
         bind = [
           "SUPER, R, exec, vicinae toggle"
