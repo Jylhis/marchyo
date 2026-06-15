@@ -25,6 +25,7 @@
         "configuration/keyboard",
         "configuration/graphics",
         "configuration/default-apps",
+        "configuration/ai",
         "configuration/hardware",
         "configuration/performance"
       ]

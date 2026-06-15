@@ -69,7 +69,8 @@ runtime ergonomics *without* abandoning the declarative source of truth.
 - **Files (new under `modules/nixos/options/`):** `security.nix`
   (firewall, fido2, fingerprint), `services.nix` (tailscale, localsend,
   sunshine…), `power.nix` (hibernation, kernel), `storage.nix` (btrfs/snapshots),
-  `ai.nix` (tooling, local), `webapps.nix`, `brand.nix` (theme/plymouth/assets).
+  `ai.nix` (tooling, local) **✓ implemented**, `webapps.nix`,
+  `brand.nix` (theme/plymouth/assets).
   None of these exist yet — all genuinely new. A new `options/security.nix` is a
   *declarations* file and won't collide with the existing config module
   `modules/nixos/security.nix` (polkit-only).
@@ -174,7 +175,17 @@ runtime ergonomics *without* abandoning the declarative source of truth.
 - **Effort:** M. **Notes:** the declarative path is the Nix-idiomatic win over
   omarchy's imperative `omarchy-webapp-install`.
 
-### F1.10 — AI tooling ⚠ corrected
+### F1.10 — AI tooling ✓ implemented (OpenRouter BYOK)
+- **Status:** Done. `marchyo.ai.*` namespace (`modules/nixos/options/ai.nix`),
+  guardrails (`modules/nixos/ai.nix`), client install + key export + per-tool
+  routing (`modules/home/ai-tooling.nix`: aichat + pi + claude-code), OpenViking
+  context (`modules/home/ai-context.nix`), Agent Skills
+  (`modules/home/ai-skills.nix`), MCP tools (`modules/home/ai-mcp.nix`), and a
+  `Super+A` aichat keybind. Packages: `packages/openviking`, `packages/pi`.
+  Secrets via **sops-nix** (flake input; wired in `outputs.nix`). claude-code
+  stays on the Anthropic API (not wired to OpenRouter). aider/opencode and the
+  Emacs/gptel integration were dropped. Tests in `tests/eval/ai.nix`; docs in
+  `docs/configuration/ai.mdx`.
 - **Goal:** `marchyo.ai.tooling.enable` installs agent CLIs (claude-code,
   opencode, aider, codex, gemini-cli as available in nixpkgs) for the user.
 - **Files:** new `modules/home/ai-tooling.nix`; option in `ai.nix`.
@@ -184,7 +195,10 @@ runtime ergonomics *without* abandoning the declarative source of truth.
 - **Effort:** S–M. **Notes:** pin to nixpkgs packages; skip npx lazy-stubs
   (that's omarchy working around Arch — Nix pins versions instead).
 
-### F1.11 — Local AI integration ⚠ corrected
+### F1.11 — Local AI integration ⚠ corrected (deferred)
+- **Status:** `marchyo.ai.local.enable` is **declared but unimplemented** —
+  enabling it currently fails an assertion (use OpenRouter instead). The ollama
+  service + D1 convergence are still open; OpenRouter BYOK shipped first (F1.10).
 - **Goal:** `marchyo.ai.local.enable` → `services.ollama` (with
   `acceleration = "cuda"|"rocm"` driven by `marchyo.graphics.vendors`),
   optional model pre-pull; expose endpoint to shell/editor/tracking.
