@@ -61,7 +61,10 @@ in
         key=$(cat "${keyFile}")
       fi
       conf="$HOME/.openviking/ov.conf"
-      ${pkgs.gnused}/bin/sed "s|@OPENROUTER_API_KEY@|$key|g" ${ovConfTemplate} > "$conf"
+      # Write with a restrictive umask (no world-readable window before chmod)
+      # and fail loudly rather than leaving a truncated conf if sed errors.
+      ( umask 077; ${pkgs.gnused}/bin/sed "s|@OPENROUTER_API_KEY@|$key|g" ${ovConfTemplate} > "$conf" ) \
+        || { run rm -f "$conf"; exit 1; }
       run chmod 600 "$conf"
     '';
   };

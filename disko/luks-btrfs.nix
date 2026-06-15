@@ -49,8 +49,12 @@
               content = {
                 type = "luks";
                 name = "encrypted";
-                # Disable settings.keyFile if you want to use interactive password entry
-                passwordFile = "/tmp/secret.key"; # Change this to your key file location
+                # Recommended: remove passwordFile entirely for interactive
+                # passphrase entry at partition time. If you must use a key file,
+                # keep it out of world-readable /tmp — write it to a root-only
+                # path (`umask 077; printf %s "$pass" > /root/secret.key`) and
+                # delete it after install.
+                passwordFile = "/root/secret.key"; # change to your key file location
                 settings = {
                   allowDiscards = true;
                   bypassWorkqueues = true;
