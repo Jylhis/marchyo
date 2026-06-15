@@ -60,19 +60,10 @@ let
     };
 
   # Shared config for darwinConfigurations.
+  # Stylix base16 scheme + fonts come from modules/generic/stylix.nix (imported
+  # via darwinModules.default), shared with the NixOS configurations.
   sharedDarwinConfig =
-    {
-      pkgs,
-      config,
-      lib,
-      ...
-    }:
-    let
-      palette = import ./modules/generic/jylhis-palette.nix {
-        inherit pkgs lib;
-        inherit (config.marchyo.theme) variant;
-      };
-    in
+    { pkgs, ... }:
     {
       nixpkgs.config.allowUnfree = true;
       system.stateVersion = 6;
@@ -80,29 +71,6 @@ let
       environment.systemPackages = [
         pkgs.ghostty-bin.terminfo
       ];
-
-      stylix = {
-        autoEnable = true;
-        base16Scheme =
-          if config.marchyo.theme.scheme != null then
-            "${pkgs.base16-schemes}/share/themes/${config.marchyo.theme.scheme}.yaml"
-          else
-            palette.base16;
-        fonts = {
-          serif = {
-            package = pkgs.literata;
-            name = "Literata";
-          };
-          sansSerif = {
-            package = pkgs.liberation_ttf;
-            name = "Liberation Sans";
-          };
-          monospace = {
-            package = pkgs.nerd-fonts.jetbrains-mono;
-            name = "JetBrainsMono Nerd Font";
-          };
-        };
-      };
 
       marchyo = {
         development.enable = true;

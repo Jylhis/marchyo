@@ -4,8 +4,10 @@
 #   1. Set both disks:
 #        export DISK_A=/dev/disk/by-id/nvme-...   # alphabetically first
 #        export DISK_B=/dev/disk/by-id/nvme-...
-#   2. Put your LUKS passphrase in /tmp/secret.key (or change passwordFile below
-#      to use interactive entry).
+#   2. Recommended: omit passwordFile below for interactive passphrase entry.
+#      If you must use a key file, keep it out of world-readable /tmp — write it
+#      to a root-only path (`umask 077; printf %s "$pass" > /root/secret.key`)
+#      and delete it after install.
 #   3. Partition:
 #        sudo nix run github:nix-community/disko -- --mode disko disko/luks-btrfs-raid1.nix \
 #          --arg deviceA '"'$DISK_A'"' --arg deviceB '"'$DISK_B'"'
@@ -108,8 +110,9 @@ in
               content = {
                 type = "luks";
                 name = "cryptmainA";
-                # Change to interactive entry by removing passwordFile.
-                passwordFile = "/tmp/secret.key";
+                # Remove passwordFile for interactive entry. If kept, use a
+                # root-only path, never world-readable /tmp (see header).
+                passwordFile = "/root/secret.key";
                 extraFormatArgs = luksFormatArgs;
                 settings = luksSettings;
                 # No content — empty member; the btrfs FS lives on mainB.
@@ -146,7 +149,7 @@ in
               content = {
                 type = "luks";
                 name = "cryptmainB";
-                passwordFile = "/tmp/secret.key";
+                passwordFile = "/root/secret.key";
                 extraFormatArgs = luksFormatArgs;
                 settings = luksSettings;
                 content = {
