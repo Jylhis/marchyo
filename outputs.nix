@@ -7,16 +7,25 @@ let
     vicinae
     noctalia
     stylix
+    sops-nix
+    llm-agents
     treefmt-nix
     ;
 
   overlay = import ./overlay.nix { inherit inputs; };
 
+  # marchyo's overlay plus llm-agents.nix (exposes pkgs.llm-agents.<agent>,
+  # e.g. claude-code, from its Numtide-cached pinned set).
+  overlayList = [
+    overlay
+    llm-agents.overlays.default
+  ];
+
   # Shared config used by both nixosConfigurations and mkApps VM.
   sharedNixosConfig =
     { lib, ... }:
     {
-      nixpkgs.overlays = [ overlay ];
+      nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
       boot.loader.systemd-boot.enable = lib.mkForce false;
@@ -158,7 +167,7 @@ let
     home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ overlay ];
+        overlays = overlayList;
         config.allowUnfree = true;
       };
       extraSpecialArgs = {
@@ -174,6 +183,7 @@ let
         homeManagerModules.default
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
+        sops-nix.homeManagerModules.sops
         {
           home.username = "developer";
           home.homeDirectory = homeDirectory;
@@ -189,6 +199,7 @@ let
       sharedModules = [
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
+        sops-nix.homeManagerModules.sops
       ];
       extraSpecialArgs = {
         inherit
@@ -207,7 +218,8 @@ let
         home-manager.nixosModules.home-manager
         hmSharedConfig
         stylix.nixosModules.stylix
-        { nixpkgs.overlays = [ overlay ]; }
+        sops-nix.nixosModules.sops
+        { nixpkgs.overlays = overlayList; }
 
         ./modules/nixos/default.nix
       ];
@@ -220,7 +232,7 @@ let
       imports = [
         home-manager.darwinModules.home-manager
         hmSharedConfig
-        { nixpkgs.overlays = [ overlay ]; }
+        { nixpkgs.overlays = overlayList; }
 
         ./modules/darwin/default.nix
       ];
@@ -307,7 +319,7 @@ in
     system:
     import nixpkgs {
       inherit system;
-      overlays = [ overlay ];
+      overlays = overlayList;
       config.allowUnfree = true;
     };
 
@@ -316,14 +328,19 @@ in
     let
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ overlay ];
+        overlays = overlayList;
       };
     in
     {
       inherit (pkgs) marchyo-wallpapers;
     }
     // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
-      inherit (pkgs) hyprmon plymouth-marchyo-theme;
+      inherit (pkgs)
+        hyprmon
+        plymouth-marchyo-theme
+        openviking
+        pi
+        ;
     }
     // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
       inherit (pkgs) wallpapper;
