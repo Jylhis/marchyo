@@ -3,6 +3,8 @@
   pkgs,
   lib,
   nixosModules,
+  nix-on-droid,
+  home-manager-droid,
   ...
 }:
 rec {
@@ -52,6 +54,35 @@ rec {
         throw "FAIL: ${name}: assertion(s) failed but none matched '${expectedMsg}'. Got: ${builtins.concatStringsSep "; " failedMessages}"
       else
         "pass: assertion correctly triggered"
+    );
+
+  # Verifies the droid Home-Manager module (modules/nix-on-droid/home.nix)
+  # resolves cleanly against nix-on-droid's bundled Home Manager (HM 24.05).
+  # This is the real regression risk — the surrounding nix-on-droid system
+  # builds via builtins.storePath and so cannot be evaluated in pure mode
+  # (nix flake check); the full activation is built impurely via
+  # `just build-nix-on-droid`. Forcing hm.config (not activationPackage)
+  # resolves every option definition without touching the impure activation.
+  testDroidHome =
+    name: extraModules:
+    pkgs.writeText "eval-droid-${name}" (
+      let
+        hm = home-manager-droid.lib.homeManagerConfiguration {
+          pkgs = import nix-on-droid.inputs.nixpkgs {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
+          modules = [
+            ../modules/nix-on-droid/home.nix
+            {
+              home.username = "nix-on-droid";
+              home.homeDirectory = "/data/data/com.termux.nix/files/home";
+            }
+          ]
+          ++ extraModules;
+        };
+      in
+      builtins.seq hm.config.home.stateVersion "pass"
     );
 
   # Minimal NixOS configuration required for a config to evaluate.

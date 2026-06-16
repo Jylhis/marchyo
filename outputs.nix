@@ -2,8 +2,11 @@
 let
   inherit (inputs)
     nixpkgs
+    nixpkgs-stable
     home-manager
+    home-manager-droid
     nix-darwin
+    nix-on-droid
     vicinae
     noctalia
     stylix
@@ -126,6 +129,16 @@ let
     };
   };
 
+  # Shared config for nixOnDroidConfigurations (nix-on-droid's own module
+  # vocabulary — NOT NixOS options).
+  sharedNixOnDroidConfig =
+    { pkgs, ... }:
+    {
+      time.timeZone = "UTC";
+      system.stateVersion = "24.05";
+      user.shell = "${pkgs.zsh}/bin/zsh";
+    };
+
   # Helper to build standalone Home Manager configurations.
   mkHomeConfiguration =
     {
@@ -211,9 +224,20 @@ let
     default = ./modules/home/default.nix;
     _1password = ./modules/home/_1password.nix;
   };
+
+  # nix-on-droid module. Droid-native and minimal — no marchyo overlay, no NixOS
+  # modules, and NOT the marchyo HM modules (nix-on-droid ships HM 24.05).
+  nixOnDroidModules = {
+    default = ./modules/nix-on-droid/default.nix;
+  };
 in
 {
-  inherit nixosModules darwinModules homeManagerModules;
+  inherit
+    nixosModules
+    darwinModules
+    homeManagerModules
+    nixOnDroidModules
+    ;
 
   overlays.default = overlay;
 
@@ -264,7 +288,24 @@ in
         darwinModules.default
         stylix.darwinModules.stylix
         sharedDarwinConfig
-        { networking.hostName = "marchyo-x86-64"; }
+        (
+          { lib, ... }:
+          {
+            networking.hostName = "marchyo-x86-64";
+            # This config alone pins its package set to stable nixos-26.05
+            # (everything else in the flake rides unstable nixpkgs). Because we
+            # provide an externally-built pkgs, nixpkgs.config/overlays set by
+            # the shared modules must be cleared — config + overlays are baked
+            # into the instance below instead.
+            nixpkgs.pkgs = import nixpkgs-stable {
+              system = "x86_64-darwin";
+              overlays = overlayList;
+              config.allowUnfree = true;
+            };
+            nixpkgs.config = lib.mkForce { };
+            nixpkgs.overlays = lib.mkForce [ ];
+          }
+        )
       ];
     };
   };
@@ -280,6 +321,24 @@ in
     "aarch64-linux" = mkHomeConfiguration {
       system = "aarch64-linux";
       homeDirectory = "/home/developer";
+    };
+  };
+
+  # nix-on-droid (Android terminal). Build with:
+  #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
+  # Kept internally consistent on nix-on-droid's own (2024) nixpkgs + HM 24.05;
+  # the marchyo overlay is intentionally NOT applied (built against unstable).
+  nixOnDroidConfigurations = {
+    aarch64 = nix-on-droid.lib.nixOnDroidConfiguration {
+      pkgs = import nix-on-droid.inputs.nixpkgs {
+        system = "aarch64-linux";
+        config.allowUnfree = true;
+      };
+      modules = [
+        nixOnDroidModules.default
+        sharedNixOnDroidConfig
+      ];
+      home-manager-path = home-manager-droid.outPath;
     };
   };
 
@@ -345,7 +404,12 @@ in
     import ./tests {
       inherit system;
       inherit (nixpkgs) lib;
-      inherit nixpkgs home-manager;
+      inherit
+        nixpkgs
+        home-manager
+        nix-on-droid
+        home-manager-droid
+        ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
     };

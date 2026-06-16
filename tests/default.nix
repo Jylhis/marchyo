@@ -8,6 +8,8 @@
   lib,
   nixpkgs,
   home-manager,
+  home-manager-droid,
+  nix-on-droid,
   nixosModules,
   homeManagerModules,
 }:
@@ -19,7 +21,12 @@ let
 
   helpers = import ./lib.nix {
     pkgs = testPkgs;
-    inherit lib nixosModules;
+    inherit
+      lib
+      nixosModules
+      nix-on-droid
+      home-manager-droid
+      ;
   };
 
   evalFiles = (import ../lib/discover-modules.nix { inherit lib; }) ./eval;
