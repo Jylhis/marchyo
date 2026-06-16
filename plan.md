@@ -186,8 +186,9 @@ runtime ergonomics *without* abandoning the declarative source of truth.
   stays on the Anthropic API (not wired to OpenRouter). aider/opencode and the
   Emacs/gptel integration were dropped. Tests in `tests/eval/ai.nix`; docs in
   `docs/configuration/ai.mdx`.
-- **Goal:** `marchyo.ai.tooling.enable` installs agent CLIs (claude-code,
-  opencode, aider, codex, gemini-cli as available in nixpkgs) for the user.
+- **Goal:** `marchyo.ai.tooling.enable` installs the AI client CLIs (aichat +
+  pi wired to OpenRouter, plus Anthropic-native claude-code from llm-agents.nix)
+  for the user. (opencode/aider were dropped — see note above.)
 - **Files:** new `modules/home/ai-tooling.nix`; option in `ai.nix`.
 - **⚠ Reuse:** `modules/home/claude-code.nix` only installs a `SKILL.md` doc
   (gated on `development.enable`) — it installs **no CLI packages**. So this is
