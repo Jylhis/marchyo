@@ -43,6 +43,11 @@ build-darwin config="aarch64":
 build-home config="x86_64-linux":
     nix build .#homeConfigurations.{{config}}.activationPackage
 
+# Build nix-on-droid configuration (config: aarch64). --impure is required:
+# nix-on-droid uses builtins.storePath, disallowed in pure flake eval.
+build-nix-on-droid config="aarch64":
+    nix build --impure .#nixOnDroidConfigurations.{{config}}.activationPackage
+
 # Update all inputs: flake.lock -> devenv.yaml + devenv.lock
 update:
     #!/usr/bin/env bash

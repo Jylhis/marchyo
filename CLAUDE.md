@@ -4,15 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, and nix-darwin configurations with sensible defaults. It is distributed as a Nix flake meant to be used as the sole input in downstream NixOS or nix-darwin configurations (nixpkgs passes through via `marchyo.inputs.nixpkgs`).
+Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin, and nix-on-droid configurations with sensible defaults. It is distributed as a Nix flake meant to be used as the sole input in downstream configurations (nixpkgs passes through via `marchyo.inputs.nixpkgs`).
 
 **Key features:**
 - Modular architecture: configurations broken into small, manageable modules
 - Feature flags: `marchyo.desktop.enable`, `marchyo.development.enable`, etc. enable entire stacks
 - Home Manager integration for user-specific configurations and dotfiles
 - nix-darwin support for macOS system configuration
+- nix-on-droid support for an Android terminal environment (minimal, CLI-only)
 - Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
 - All custom options live under the `marchyo.*` namespace
+- Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; a separate `nixpkgs-stable` (nixos-26.05) backs `darwinConfigurations.x86_64` only. `home-manager`/`nix-darwin`/`stylix` track `master` to pair with unstable. nix-on-droid is pinned independently (its own 2024-era nixpkgs + `home-manager-droid`).
 - Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`
 
 ## Commands
@@ -21,7 +23,9 @@ Marchyo is a modular NixOS configuration flake providing curated system, Home Ma
 # Justfile recipes (preferred workflow)
 just check               # Lint + eval checks (nix flake check, statix, deadnix)
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
-just build               # Build reference NixOS configuration
+just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
+just build-darwin        # Build reference nix-darwin configuration
+just build-nix-on-droid  # Build reference Android config (uses --impure; nix-on-droid needs builtins.storePath)
 just update              # Update all inputs: flake.lock -> devenv.lock
 just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
 just run                 # Run default configuration VM (x86_64-linux only)
@@ -51,7 +55,7 @@ There is no way to run a single test in isolation; `nix flake check` runs them a
 
 ### Hybrid Non-Flake + Flake Architecture
 
-All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. `default.nix` is a flake-compat shim for non-flake consumers (devenv, `nix-build`). Development uses `devenv.sh` (no experimental features required). `flake.lock` is the single source of truth for the nixpkgs revision, synchronized to `devenv.lock` via `just update`.
+All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. `default.nix` is a flake-compat shim for non-flake consumers (devenv, `nix-build`). Development uses `devenv.sh` (no experimental features required). `flake.lock` is the source of truth for input revisions; the devenv dev shell tracks the primary (unstable) `nixpkgs`, synchronized to `devenv.lock` via `just update`.
 
 ### Module Organization
 
@@ -68,6 +72,7 @@ Justfile            # Task runner (check, fmt, build, update, verify)
 statix.toml         # Statix linter configuration
 modules/nixos/      # NixOS system-level modules (~31 modules)
 modules/darwin/     # nix-darwin modules (imports shared options + generic modules)
+modules/nix-on-droid/  # nix-on-droid (Android terminal): droid-native, minimal, droid-only HM (HM 24.05)
 modules/home/       # Home Manager user-level modules (~30 modules)
 modules/generic/    # Shared modules imported by nixos, darwin, and home default.nix
 packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
@@ -92,9 +97,11 @@ templates/workstation/  # Developer workstation template
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{linux}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
-- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux); `x86_64` is built by CI and backs the VM runner
-- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs
+- `nixosModules` / `darwinModules` / `homeManagerModules` / `nixOnDroidModules` — per-platform module sets
+- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable); `x86_64` is built by CI and backs the VM runner
+- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs. `aarch64` rides unstable; `x86_64` alone pins its package set to stable nixos-26.05 (via `nixpkgs.pkgs` + `mkForce`-cleared `nixpkgs.config`/`overlays`)
 - `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
+- `nixOnDroidConfigurations.aarch64` — Reference Android terminal config. Built impurely (`nix build --impure …activationPackage`): nix-on-droid uses `builtins.storePath`, so it cannot be evaluated in pure `nix flake check`. Coverage instead comes from `tests/eval/nix-on-droid.nix`, a pure check of the droid Home-Manager module against HM 24.05
 
 Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate nixpkgs input needed.
 
@@ -408,11 +415,12 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 - **`disko/` and `installer/` are starter snippets**: They are not wired into flake outputs. Copy the file you need into a downstream host configuration; they're versioned here as templates, not as a stable API.
 - **`allowUnfree = true`**: Set globally in `legacyPackages` (via `outputs.nix`) and in test configs.
 - **Formatter runs multiple tools**: `nix fmt` runs nixfmt, deadnix (unused vars), statix (linting), shellcheck, and yamlfmt via treefmt-nix (`treefmt.nix`). All must pass.
-- **Nixpkgs pin sync**: `flake.lock` is the single source of truth for the nixpkgs revision and all other flake inputs. Run `just update` to bump all inputs and sync `devenv.lock` to the same nixpkgs rev (`nix flake update` → extract rev → update `devenv.yaml` → `devenv update`). Run `just verify` to check they're aligned. Renovate updates `flake.lock` independently via `lockFileMaintenance` but does not update `devenv.lock` — CI's `verify` job catches this drift so the PR will fail until `just update` is run to re-sync.
+- **Nixpkgs pin sync**: `flake.lock` is the source of truth for all flake inputs. The devenv dev shell mirrors only the primary (unstable) `nixpkgs` and `treefmt-nix`; `nixpkgs-stable`, `nix-on-droid`, and `home-manager-droid` are flake-only and not mirrored into devenv. Run `just update` to bump inputs and sync `devenv.lock` to the same `nixpkgs` rev (`nix flake update` → extract rev → update `devenv.yaml` → `devenv update`). Run `just verify` to check the mirrored inputs are aligned. Renovate updates `flake.lock` independently via `lockFileMaintenance` but does not update `devenv.lock` — CI's `verify` job catches this drift so the PR will fail until `just update` is run to re-sync.
 - **No standalone Home Manager tests**: The test suite only evaluates full NixOS configs (which include Home Manager). There are no tests that evaluate `homeManagerModules` in isolation.
 - **Shared treefmt config**: `treefmt.nix` is the single source of truth for formatting. Both the flake formatter (`nix fmt`) and the devenv shell (`treefmt`) use it. devenv.yaml includes `treefmt-nix` as an input for this purpose.
 - **Darwin module is intentionally minimal**: `darwinModules.default` imports the shared option namespace (`modules/nixos/options/`), nix-settings, and generic modules. Desktop/Wayland/systemd modules are NixOS-only. Unlike the auto-discovered NixOS/home lists, `modules/darwin/default.nix` is a hand-curated subset — keep it that way. The overlay is embedded but all packages are Linux-only (`optionalAttrs`).
-- **Nixpkgs passthrough**: All flake inputs use `follows = "nixpkgs"`. Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate nixpkgs input needed. The workstation template demonstrates this pattern.
+- **nix-on-droid is droid-native, NOT marchyo's HM modules**: nix-on-droid ships a 2024-era Home Manager (HM 24.05) that cannot evaluate the marchyo `modules/home/*` modules (they need HM 25.05+, e.g. `programs.git.settings`). So `modules/nix-on-droid/` is a small standalone tree: `default.nix` (droid system: `environment.packages`, `home-manager.config`) + `home.nix` (HM-24.05-syntax git/zsh/CLI). Do **not** import the marchyo HM modules, `../nixos/options`, or the marchyo overlay here. The full config is impure (`builtins.storePath`) — build with `just build-nix-on-droid` (`--impure`), never via pure `nix flake check`. The pure check `tests/eval/nix-on-droid.nix` only exercises `home.nix` against HM 24.05 via `home-manager-droid`.
+- **Nixpkgs passthrough**: Most flake inputs use `follows = "nixpkgs"` (the unstable primary). Exceptions: `nixpkgs-stable` (nixos-26.05, used only by `darwinConfigurations.x86_64`), and the nix-on-droid stack (`nix-on-droid` + `home-manager-droid`) which is pinned to its own 2024-era nixpkgs for internal consistency. Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` (unstable) — no separate nixpkgs input needed. The workstation template demonstrates this pattern.
 - **`docs/`**: Contains Mintlify documentation. The `README.md` links to it. Option documentation in `docs/configuration/` should be kept in sync with the option declarations under `modules/nixos/options/`.
 - **Tracking cascade auto-enables auditd**: `marchyo.tracking.enable = true` flips every sub-collector on via `lib.mkDefault`, including `system.auditd` (kernel audit subsystem with execve + per-user `~/.config` watch rules). To opt out without disabling the whole stack: `marchyo.tracking.system.auditd = false`. Tuning knobs live under `marchyo.tracking.system.auditd*` (backlog limit, failure mode, log rotation, ruleset lock, early-boot kernel cmdline) — see `modules/nixos/options/tracking.nix` and `modules/nixos/tracking/system.nix`.
 - **Laurel audisp plugin**: `modules/nixos/tracking/laurel.nix` is enabled when `system.auditd && aggregation.enable` are both on. It runs as the `_laurel` system user, writes JSONL to `/var/log/laurel/audit.log`, and that file is added to the Vector source list in `modules/nixos/tracking/aggregation.nix`. Laurel is the only path by which kernel audit events reach the Loki sink — the raw `/var/log/audit/audit.log` is never read by Vector directly.
