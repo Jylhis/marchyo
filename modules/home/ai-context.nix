@@ -25,8 +25,9 @@ let
   workspace = "${config.home.homeDirectory}/${ctx.workspacePath or ".openviking/workspace"}";
   embeddingModel = ctx.embeddingModel or "openai/text-embedding-3-small";
 
-  # ov.conf template with a placeholder for the key, filled at activation.
-  ovConfTemplate = pkgs.writeText "ov.conf.template" (
+  # ov.conf base (without the key); the key is merged in at activation via jq
+  # so a key containing shell/sed metacharacters can never corrupt the file.
+  ovConfBase = pkgs.writeText "ov.conf.base" (
     builtins.toJSON {
       storage.workspace = workspace;
       log = {
@@ -37,7 +38,7 @@ let
         {
           provider = "openai";
           api_base = baseUrl;
-          api_key = "@OPENROUTER_API_KEY@";
+          api_key = "";
           model = embeddingModel;
           dimension = 1536;
         }
@@ -63,7 +64,11 @@ in
         key=$(cat "${keyFile}")
       fi
       conf="$HOME/.openviking/ov.conf"
-      ${pkgs.gnused}/bin/sed "s|@OPENROUTER_API_KEY@|$key|g" ${ovConfTemplate} > "$conf"
+      # Inject the key via jq --arg (metacharacter-safe) and write under a
+      # tight umask so the file is never briefly world/group-readable.
+      ( umask 077
+        ${pkgs.jq}/bin/jq --arg key "$key" \
+          '.embedding.dense[0].api_key = $key' ${ovConfBase} > "$conf" )
       run chmod 600 "$conf"
     '';
   };

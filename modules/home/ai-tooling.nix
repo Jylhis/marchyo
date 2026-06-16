@@ -163,7 +163,10 @@ in
     home.file = {
       ".pi/agent/settings.json".text = builtins.toJSON {
         defaultProvider = "openrouter";
-        defaultModel = "openrouter/${piModel}";
+        # pi uses a bare model id here (provider comes from defaultProvider) —
+        # it must match a registered model id, which are bare slugs (no
+        # "openrouter/" prefix). See pi docs/settings.md.
+        defaultModel = piModel;
         defaultThinkingLevel = "medium";
       };
       ".pi/agent/extensions/marchyo-openrouter.ts".text = piProviderExtension;
