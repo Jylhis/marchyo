@@ -27,6 +27,42 @@ let
     llm-agents.overlays.default
   ];
 
+  # Single source of truth for the per-system input set. x86_64-darwin is the
+  # last nixpkgs release supporting Intel macOS (26.11 drops it), so it rides
+  # the stable nixos-26.05 set together with the matching release-branch
+  # home-manager / nix-darwin / stylix; every other system rides unstable.
+  # This is the ONLY place the x86_64-darwin special-case is decided — both the
+  # consumer-facing builders below and `legacyPackages` flow through it.
+  inputsFor =
+    system:
+    if system == "x86_64-darwin" then
+      {
+        nixpkgs = nixpkgs-stable;
+        home-manager = home-manager-stable;
+        nix-darwin = nix-darwin-stable;
+        stylix = stylix-stable;
+      }
+    else
+      {
+        inherit
+          nixpkgs
+          home-manager
+          nix-darwin
+          stylix
+          ;
+      };
+
+  # Instantiate the correct nixpkgs for a system, with marchyo's overlay applied
+  # and unfree allowed. Drives `legacyPackages`, the x86_64-darwin pkgs override
+  # in `mkDarwinSystem`, and standalone Home Manager configs.
+  mkPkgs =
+    system:
+    import (inputsFor system).nixpkgs {
+      inherit system;
+      overlays = overlayList;
+      config.allowUnfree = true;
+    };
+
   # Shared config used by both nixosConfigurations and mkApps VM.
   sharedNixosConfig =
     { lib, ... }:
@@ -149,11 +185,7 @@ let
       homeDirectory,
     }:
     home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = overlayList;
-        config.allowUnfree = true;
-      };
+      pkgs = mkPkgs system;
       extraSpecialArgs = {
         osConfig = mockOsConfig;
         inherit
@@ -240,6 +272,98 @@ let
   nixOnDroidModules = {
     default = ./modules/nix-on-droid/default.nix;
   };
+
+  # Batteries-included system builders. A downstream consumer that adds only
+  # `marchyo` as an input can build any system with these — the correct nixpkgs
+  # (unstable, or stable 26.05 for x86_64-darwin), home-manager, nix-darwin,
+  # stylix, overlay and marchyo modules are all selected automatically via
+  # `inputsFor`. The consumer supplies only their own config modules.
+
+  # All NixOS targets are Linux, so they always ride unstable. `nixosModules.default`
+  # already bakes in home-manager + stylix + sops + the overlay (overlayList).
+  # `overlays`/`config` let a consumer add their own on top; allowUnfree defaults
+  # on (set plainly — nixpkgs.config is a freeform attrset, so a priority wrapper
+  # like mkDefault would leak through to nixpkgs unresolved).
+  mkNixosSystem =
+    {
+      system,
+      modules ? [ ],
+      specialArgs ? { },
+      overlays ? [ ],
+      config ? { },
+    }:
+    (inputsFor system).nixpkgs.lib.nixosSystem {
+      inherit system specialArgs;
+      modules = [
+        nixosModules.default
+        {
+          nixpkgs.overlays = overlays;
+          nixpkgs.config = {
+            allowUnfree = true;
+          }
+          // config;
+        }
+      ]
+      ++ modules;
+    };
+
+  # Darwin builder. Selects the nix-darwin builder, home-manager darwin module
+  # and stylix module matching the system's nixpkgs (release branches assume
+  # their matching nixpkgs). `overlays`/`config` are the consumer's additions on
+  # top of marchyo's overlayList / allowUnfree.
+  #
+  # For x86_64-darwin nix-darwin is handed an externally-built stable pkgs and
+  # the config/overlays the shared modules set are mkForce-cleared (nix-darwin
+  # rejects nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and
+  # config therefore must be baked INTO that instantiation here — setting them
+  # via a module would be silently cleared.
+  mkDarwinSystem =
+    {
+      system,
+      modules ? [ ],
+      specialArgs ? { },
+      overlays ? [ ],
+      config ? { },
+    }:
+    let
+      sel = inputsFor system;
+      cfg = {
+        allowUnfree = true;
+      }
+      // config;
+    in
+    sel.nix-darwin.lib.darwinSystem {
+      inherit system specialArgs;
+      modules = [
+        (mkDarwinModules sel.home-manager.darwinModules.home-manager)
+        sel.stylix.darwinModules.stylix
+      ]
+      ++ (
+        if system == "x86_64-darwin" then
+          [
+            (
+              { lib, ... }:
+              {
+                nixpkgs.pkgs = import sel.nixpkgs {
+                  inherit system;
+                  overlays = overlayList ++ overlays;
+                  config = cfg;
+                };
+                nixpkgs.config = lib.mkForce { };
+                nixpkgs.overlays = lib.mkForce [ ];
+              }
+            )
+          ]
+        else
+          [
+            {
+              nixpkgs.overlays = overlays;
+              nixpkgs.config = cfg;
+            }
+          ]
+      )
+      ++ modules;
+    };
 in
 {
   inherit
@@ -248,6 +372,18 @@ in
     homeManagerModules
     nixOnDroidModules
     ;
+
+  # Batteries-included builders for downstream consumers. System-parameterized,
+  # so this is a plain top-level output (not wrapped in forAllSystems).
+  lib = {
+    inherit
+      mkNixosSystem
+      mkDarwinSystem
+      mkHomeConfiguration
+      inputsFor
+      mkPkgs
+      ;
+  };
 
   overlays.default = overlay;
 
@@ -259,19 +395,19 @@ in
     };
   };
 
+  # Reference configs built through the same exported builders consumers use,
+  # so they exercise the system-aware input selection end to end.
   nixosConfigurations = {
-    x86_64 = nixpkgs.lib.nixosSystem {
+    x86_64 = mkNixosSystem {
       system = "x86_64-linux";
       modules = [
-        nixosModules.default
         sharedNixosConfig
         { networking.hostName = "marchyo-x86-64"; }
       ];
     };
-    aarch64 = nixpkgs.lib.nixosSystem {
+    aarch64 = mkNixosSystem {
       system = "aarch64-linux";
       modules = [
-        nixosModules.default
         sharedNixosConfig
         {
           networking.hostName = "marchyo-aarch64";
@@ -282,45 +418,21 @@ in
     };
   };
 
+  # aarch64 rides unstable; x86_64 is transparently pinned to stable nixos-26.05
+  # (with matching nix-darwin-26.05 + stable HM/stylix) by `mkDarwinSystem`.
   darwinConfigurations = {
-    aarch64 = nix-darwin.lib.darwinSystem {
+    aarch64 = mkDarwinSystem {
       system = "aarch64-darwin";
       modules = [
-        darwinModules.default
-        stylix.darwinModules.stylix
         sharedDarwinConfig
         { networking.hostName = "marchyo-aarch64"; }
       ];
     };
-    # Built with the nix-darwin-26.05 release branch (and stable HM) to match
-    # the pinned nixos-26.05 package set below — nix-darwin hard-fails on a
-    # nix-darwin/nixpkgs release mismatch.
-    x86_64 = nix-darwin-stable.lib.darwinSystem {
+    x86_64 = mkDarwinSystem {
       system = "x86_64-darwin";
       modules = [
-        # Stable HM (release-26.05) to match the pinned stable package set below.
-        (mkDarwinModules home-manager-stable.darwinModules.home-manager)
-        # Stable stylix (release-26.05) — stylix release-checks against nix-darwin.
-        stylix-stable.darwinModules.stylix
         sharedDarwinConfig
-        (
-          { lib, ... }:
-          {
-            networking.hostName = "marchyo-x86-64";
-            # This config alone pins its package set to stable nixos-26.05
-            # (everything else in the flake rides unstable nixpkgs). Because we
-            # provide an externally-built pkgs, nixpkgs.config/overlays set by
-            # the shared modules must be cleared — config + overlays are baked
-            # into the instance below instead.
-            nixpkgs.pkgs = import nixpkgs-stable {
-              system = "x86_64-darwin";
-              overlays = overlayList;
-              config.allowUnfree = true;
-            };
-            nixpkgs.config = lib.mkForce { };
-            nixpkgs.overlays = lib.mkForce [ ];
-          }
-        )
+        { networking.hostName = "marchyo-x86-64"; }
       ];
     };
   };
@@ -357,13 +469,9 @@ in
     };
   };
 
-  legacyPackages =
-    system:
-    import nixpkgs {
-      inherit system;
-      overlays = overlayList;
-      config.allowUnfree = true;
-    };
+  # System-aware: x86_64-darwin → stable nixos-26.05, every other system →
+  # unstable. Always with marchyo's overlay applied and unfree allowed.
+  legacyPackages = mkPkgs;
 
   mkPackages =
     { system }:

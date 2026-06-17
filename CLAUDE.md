@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin, and nix-on-droid configurations with sensible defaults. It is distributed as a Nix flake meant to be used as the sole input in downstream configurations (nixpkgs passes through via `marchyo.inputs.nixpkgs`).
+Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin, and nix-on-droid configurations with sensible defaults. It is distributed as a batteries-included Nix flake meant to be used as the sole input in downstream configurations: consumers build with the `marchyo.lib.mkNixosSystem` / `mkDarwinSystem` builders, which select the system-correct nixpkgs + home-manager + stylix automatically (x86_64-darwin → stable 26.05, everything else → unstable).
 
 **Key features:**
 - Modular architecture: configurations broken into small, manageable modules
@@ -15,7 +15,7 @@ Marchyo is a modular NixOS configuration flake providing curated system, Home Ma
 - Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
 - All custom options live under the `marchyo.*` namespace
 - Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; a separate `nixpkgs-stable` (nixos-26.05) backs `darwinConfigurations.x86_64` only. `home-manager`/`nix-darwin`/`stylix` track `master` to pair with unstable. A matching trio of release-26.05 inputs — `home-manager-stable`, `nix-darwin-stable`, `stylix-stable`, all following `nixpkgs-stable` — pairs with the stable set so `darwinConfigurations.x86_64` runs releases matching its nixpkgs (nix-darwin hard-fails the build on a release mismatch; home-manager and stylix warn). nix-on-droid is pinned independently (its own 2024-era nixpkgs + `home-manager-droid`).
-- Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`
+- Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`; `marchyo.lib.*` builders and `legacyPackages.<system>` give a system-correct nixpkgs (x86_64-darwin → stable 26.05)
 
 ## Commands
 
@@ -84,6 +84,7 @@ templates/workstation/  # Developer workstation template
 
 ### Flake Outputs
 
+- `lib.mkNixosSystem` / `lib.mkDarwinSystem` — **Batteries-included system builders** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, nix-darwin, stylix, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix` (x86_64-darwin → stable 26.05 trio; everything else → unstable). The reference `nixosConfigurations`/`darwinConfigurations` are built through these same builders. Also exported: `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, Stylix, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
 - `darwinModules.default` — nix-darwin module (includes Home Manager, overlay)
@@ -92,24 +93,24 @@ templates/workstation/  # Developer workstation template
 - `overlays.default` — Nixpkgs overlay (darwin-safe: Linux packages wrapped in `optionalAttrs`)
 - `packages.{linux}.hyprmon` — Hyprland monitor management tool
 - `packages.{linux}.plymouth-marchyo-theme` — Plymouth boot splash theme
-- `legacyPackages.{system}` — Full nixpkgs with overlay applied
+- `legacyPackages.{system}` — Full nixpkgs with overlay applied, **system-aware** (x86_64-darwin → stable nixos-26.05, every other system → unstable; via `inputsFor`/`mkPkgs`)
 - `templates.workstation` — Starter workstation template (uses nixpkgs passthrough)
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{linux}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
 - `nixosModules` / `darwinModules` / `homeManagerModules` / `nixOnDroidModules` — per-platform module sets
-- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable); `x86_64` is built by CI and backs the VM runner
-- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs. `aarch64` rides unstable (built via `nix-darwin.lib.darwinSystem`, with `home-manager`/`stylix` master); `x86_64` alone pins its package set to stable nixos-26.05 (via `nixpkgs.pkgs` + `mkForce`-cleared `nixpkgs.config`/`overlays`), is built via `nix-darwin-stable.lib.darwinSystem` (nix-darwin-26.05), and uses `home-manager-stable` + `stylix-stable` (both release-26.05) to match — all three perform a nixpkgs-release check (nix-darwin hard-fails, the others warn). The home-manager darwin module is selected by the `mkDarwinModules <hmModule>` helper in `outputs.nix` so each config bakes in the HM matching its nixpkgs
+- `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
+- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs, built through `lib.mkDarwinSystem`. `aarch64` rides unstable (`nix-darwin.lib.darwinSystem`, `home-manager`/`stylix` master); `x86_64` is pinned by the builder to stable nixos-26.05 (the builder injects `nixpkgs.pkgs = mkPkgs "x86_64-darwin"` + `mkForce`-cleared `nixpkgs.config`/`overlays`), uses `nix-darwin-stable.lib.darwinSystem` (nix-darwin-26.05) plus `home-manager-stable` + `stylix-stable` (both release-26.05) — all three perform a nixpkgs-release check (nix-darwin hard-fails, the others warn). `mkDarwinSystem` selects the matching nix-darwin/HM/stylix per system via the `inputsFor` selector and the `mkDarwinModules <hmModule>` helper, so each config bakes in the HM matching its nixpkgs
 - `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
 - `nixOnDroidConfigurations.aarch64` — Reference Android terminal config. Built impurely (`nix build --impure …activationPackage`): nix-on-droid uses `builtins.storePath`, so it cannot be evaluated in pure `nix flake check`. Coverage instead comes from `tests/eval/nix-on-droid.nix`, a pure check of the droid Home-Manager module against HM 24.05
 
-Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` — no separate nixpkgs input needed.
+Downstream consumers build with `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, which select the system-correct nixpkgs automatically — no separate nixpkgs input needed. The raw `marchyo.inputs.nixpkgs` passthrough remains available but is always **unstable**; for a system-correct, overlay-applied package set use `marchyo.legacyPackages.<system>`.
 
 ### Key Files
 
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`. Includes `flake-compat` as a non-flake input.
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, stylix, etc.). `devenv.lock` syncs to this via `just update`.
-- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
+- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`/`mkDarwinSystem` via the `inputsFor` per-system selector + `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
 - `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. All packages are Linux-only (wrapped in `lib.optionalAttrs stdenv.isLinux`).
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `{ linux, darwin, all }` from here; adding/removing a system is a one-file change.
@@ -420,7 +421,7 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 - **Shared treefmt config**: `treefmt.nix` is the single source of truth for formatting. Both the flake formatter (`nix fmt`) and the devenv shell (`treefmt`) use it. devenv.yaml includes `treefmt-nix` as an input for this purpose.
 - **Darwin module is intentionally minimal**: `darwinModules.default` imports the shared option namespace (`modules/nixos/options/`), nix-settings, and generic modules. Desktop/Wayland/systemd modules are NixOS-only. Unlike the auto-discovered NixOS/home lists, `modules/darwin/default.nix` is a hand-curated subset — keep it that way. The overlay is embedded but all packages are Linux-only (`optionalAttrs`).
 - **nix-on-droid is droid-native, NOT marchyo's HM modules**: nix-on-droid ships a 2024-era Home Manager (HM 24.05) that cannot evaluate the marchyo `modules/home/*` modules (they need HM 25.05+, e.g. `programs.git.settings`). So `modules/nix-on-droid/` is a small standalone tree: `default.nix` (droid system: `environment.packages`, `home-manager.config`) + `home.nix` (HM-24.05-syntax git/zsh/CLI). Do **not** import the marchyo HM modules, `../nixos/options`, or the marchyo overlay here. The full config is impure (`builtins.storePath`) — build with `just build-nix-on-droid` (`--impure`), never via pure `nix flake check`. The pure check `tests/eval/nix-on-droid.nix` only exercises `home.nix` against HM 24.05 via `home-manager-droid`.
-- **Nixpkgs passthrough**: Most flake inputs use `follows = "nixpkgs"` (the unstable primary). Exceptions: `nixpkgs-stable` (nixos-26.05) and its matching release-26.05 trio `home-manager-stable`/`nix-darwin-stable`/`stylix-stable` (all follow `nixpkgs-stable`, used only by `darwinConfigurations.x86_64`), and the nix-on-droid stack (`nix-on-droid` + `home-manager-droid`) which is pinned to its own 2024-era nixpkgs for internal consistency. Downstream consumers access nixpkgs via `marchyo.inputs.nixpkgs` (unstable) — no separate nixpkgs input needed. The workstation template demonstrates this pattern.
+- **Nixpkgs passthrough**: Most flake inputs use `follows = "nixpkgs"` (the unstable primary). Exceptions: `nixpkgs-stable` (nixos-26.05) and its matching release-26.05 trio `home-manager-stable`/`nix-darwin-stable`/`stylix-stable` (all follow `nixpkgs-stable`, used only by `darwinConfigurations.x86_64`), and the nix-on-droid stack (`nix-on-droid` + `home-manager-droid`) which is pinned to its own 2024-era nixpkgs for internal consistency. Consumers should build via `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, which pick the system-correct nixpkgs through the `inputsFor` selector in `outputs.nix` (the single source of truth for the x86_64-darwin→stable decision). The raw `marchyo.inputs.nixpkgs` passthrough is always unstable; `marchyo.legacyPackages.<system>` is the system-aware, overlay-applied alternative. The workstation template demonstrates the builder pattern.
 - **`docs/`**: Contains Mintlify documentation. The `README.md` links to it. Option documentation in `docs/configuration/` should be kept in sync with the option declarations under `modules/nixos/options/`.
 - **Tracking cascade auto-enables auditd**: `marchyo.tracking.enable = true` flips every sub-collector on via `lib.mkDefault`, including `system.auditd` (kernel audit subsystem with execve + per-user `~/.config` watch rules). To opt out without disabling the whole stack: `marchyo.tracking.system.auditd = false`. Tuning knobs live under `marchyo.tracking.system.auditd*` (backlog limit, failure mode, log rotation, ruleset lock, early-boot kernel cmdline) — see `modules/nixos/options/tracking.nix` and `modules/nixos/tracking/system.nix`.
 - **Laurel audisp plugin**: `modules/nixos/tracking/laurel.nix` is enabled when `system.auditd && aggregation.enable` are both on. It runs as the `_laurel` system user, writes JSONL to `/var/log/laurel/audit.log`, and that file is added to the Vector source list in `modules/nixos/tracking/aggregation.nix`. Laurel is the only path by which kernel audit events reach the Loki sink — the raw `/var/log/audit/audit.log` is never read by Vector directly.
