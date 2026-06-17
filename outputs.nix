@@ -4,12 +4,15 @@ let
     nixpkgs
     nixpkgs-stable
     home-manager
+    home-manager-stable
     home-manager-droid
     nix-darwin
+    nix-darwin-stable
     nix-on-droid
     vicinae
     noctalia
     stylix
+    stylix-stable
     sops-nix
     llm-agents
     treefmt-nix
@@ -208,16 +211,23 @@ let
     inherit (home-manager.nixosModules) home-manager;
   };
 
-  darwinModules = {
-    default = {
-      imports = [
-        home-manager.darwinModules.home-manager
-        hmSharedConfig
-        { nixpkgs.overlays = overlayList; }
+  # Darwin module set, parameterized by which home-manager darwin module to
+  # bake in so each darwinConfiguration pairs its nixpkgs with the matching HM
+  # (release branches assume their matching nixpkgs):
+  #   aarch64 → unstable nixpkgs  + home-manager (master)
+  #   x86_64  → nixos-26.05 stable + home-manager-stable (release-26.05)
+  mkDarwinModules = hmDarwinModule: {
+    imports = [
+      hmDarwinModule
+      hmSharedConfig
+      { nixpkgs.overlays = overlayList; }
 
-        ./modules/darwin/default.nix
-      ];
-    };
+      ./modules/darwin/default.nix
+    ];
+  };
+
+  darwinModules = {
+    default = mkDarwinModules home-manager.darwinModules.home-manager;
   };
 
   homeManagerModules = {
@@ -282,11 +292,16 @@ in
         { networking.hostName = "marchyo-aarch64"; }
       ];
     };
-    x86_64 = nix-darwin.lib.darwinSystem {
+    # Built with the nix-darwin-26.05 release branch (and stable HM) to match
+    # the pinned nixos-26.05 package set below — nix-darwin hard-fails on a
+    # nix-darwin/nixpkgs release mismatch.
+    x86_64 = nix-darwin-stable.lib.darwinSystem {
       system = "x86_64-darwin";
       modules = [
-        darwinModules.default
-        stylix.darwinModules.stylix
+        # Stable HM (release-26.05) to match the pinned stable package set below.
+        (mkDarwinModules home-manager-stable.darwinModules.home-manager)
+        # Stable stylix (release-26.05) — stylix release-checks against nix-darwin.
+        stylix-stable.darwinModules.stylix
         sharedDarwinConfig
         (
           { lib, ... }:
