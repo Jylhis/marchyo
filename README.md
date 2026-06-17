@@ -12,20 +12,19 @@ A modular NixOS configuration flake providing a curated set of system and home-m
 
 ## Quick Start
 
-Add Marchyo to your flake and import the NixOS module:
+Marchyo is batteries-included: add it as your **only** input and let
+`marchyo.lib.mkNixosSystem` / `mkDarwinSystem` select the correct nixpkgs,
+home-manager, stylix, overlay and marchyo modules for your system. No separate
+`nixpkgs` input is needed.
 
 ```nix
 {
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    marchyo.url = "github:Jylhis/marchyo";
-  };
+  inputs.marchyo.url = "github:Jylhis/marchyo";
 
-  outputs = { nixpkgs, marchyo, ... }: {
-    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+  outputs = { marchyo, ... }: {
+    nixosConfigurations.myhost = marchyo.lib.mkNixosSystem {
       system = "x86_64-linux";
       modules = [
-        marchyo.nixosModules.default
         ./hardware-configuration.nix
         {
           marchyo.desktop.enable = true;
@@ -37,9 +36,23 @@ Add Marchyo to your flake and import the NixOS module:
         }
       ];
     };
+
+    # macOS works the same way. On x86_64-darwin marchyo transparently pins the
+    # stable nixos-26.05 set (the last release supporting Intel macOS); other
+    # systems ride unstable.
+    # darwinConfigurations.mymac = marchyo.lib.mkDarwinSystem {
+    #   system = "x86_64-darwin";
+    #   modules = [ ./darwin.nix ];
+    # };
   };
 }
 ```
+
+You can still wire the modules manually (`marchyo.nixosModules.default` with
+your own `nixpkgs.lib.nixosSystem`) if you prefer — but then you are responsible
+for picking the right nixpkgs per system. The raw passthrough
+`marchyo.inputs.nixpkgs` is always **unstable**; for a system-correct,
+overlay-applied package set use `marchyo.legacyPackages.<system>`.
 
 Alternatively, use the provided template to bootstrap a new configuration:
 ```bash

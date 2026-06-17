@@ -126,6 +126,7 @@
         nixOnDroidConfigurations
         overlays
         templates
+        lib
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
       packages = forAllSystems (
