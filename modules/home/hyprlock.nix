@@ -6,6 +6,7 @@
 }:
 let
   inherit (lib) mkIf;
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   hasOsConfig = osConfig != { } && osConfig ? marchyo;
   cfg = if hasOsConfig then osConfig.marchyo.theme else null;
 
@@ -19,7 +20,7 @@ let
   rgba = h: a: "rgba(${hexNoHash h}${a})";
 in
 {
-  config = {
+  config = mkIf desktopEnabled {
     programs.hyprlock = {
       enable = true;
       settings = mkIf (cfg != null && cfg.enable) {

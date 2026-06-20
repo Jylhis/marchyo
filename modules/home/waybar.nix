@@ -21,6 +21,7 @@
   ...
 }:
 let
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
 
@@ -95,7 +96,7 @@ let
   terminal = "${pkgs.ghostty}/bin/ghostty";
 in
 {
-  config = {
+  config = lib.mkIf desktopEnabled {
     programs.waybar = {
       enable = true;
       systemd.enable = true;

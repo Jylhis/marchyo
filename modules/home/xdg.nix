@@ -2,10 +2,12 @@
 {
   config,
   lib,
+  pkgs,
   osConfig ? { },
   ...
 }:
 let
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   defaults = (osConfig.marchyo or { }).defaults or { };
 
   browserDesktopFiles = {
@@ -114,7 +116,7 @@ let
       { };
 in
 {
-  config = {
+  config = lib.mkIf desktopEnabled {
     xdg.userDirs = {
       enable = true;
       createDirectories = true;

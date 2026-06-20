@@ -7,6 +7,11 @@
 }:
 let
 
+  # Desktop shell modules only apply on Linux with the marchyo desktop enabled.
+  # On darwin (isLinux false) and on headless Linux hosts (desktop disabled) this
+  # whole module is inert, so consumers no longer need to `disabledModules` it.
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+
   # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
   isPrimeOffload =
@@ -86,7 +91,7 @@ let
 
 in
 {
-  config = {
+  config = lib.mkIf desktopEnabled {
 
     gtk = {
       enable = true;
