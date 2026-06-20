@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  osConfig ? { },
   ...
 }:
 let
@@ -12,6 +13,7 @@ let
     types
     ;
   cfg = config.marchyo.screenshot;
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
 in
 {
@@ -33,7 +35,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf (desktopEnabled && cfg.enable) {
     # Install screenshot tools
     home.packages =
       with pkgs;
