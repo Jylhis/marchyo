@@ -114,6 +114,36 @@ rec {
       builtins.seq hm.config.home.stateVersion "pass"
     );
 
+  # Like testDroidHome, but also deep-forces a predicate over the resolved HM
+  # config. Use to prove a specific option value (e.g. that a shared generic
+  # module activated). The predicate is deep-seq'd, so a value that throws makes
+  # the test fail.
+  testDroidHomeCheck =
+    name: check: extraModules:
+    pkgs.writeText "eval-droid-${name}" (
+      let
+        hm = home-manager-droid.lib.homeManagerConfiguration {
+          pkgs = import nix-on-droid.inputs.nixpkgs {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
+          modules = [
+            ../modules/nix-on-droid/home.nix
+            {
+              home.username = "nix-on-droid";
+              home.homeDirectory = "/data/data/com.termux.nix/files/home";
+            }
+          ]
+          ++ extraModules;
+        };
+        result = check hm.config;
+      in
+      if !(builtins.deepSeq result result) then
+        throw "FAIL: ${name}: predicate returned false"
+      else
+        "pass"
+    );
+
   # Minimal NixOS configuration required for a config to evaluate.
   minimalConfig = {
     boot.loader.grub.enable = false;
