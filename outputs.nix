@@ -63,6 +63,16 @@ let
       config.allowUnfree = true;
     };
 
+  # Droid input stack — the nix-on-droid analog of `inputsFor`. Pinned
+  # independently of the unstable/stable selector: nix-on-droid's own
+  # (2024-era) nixpkgs paired with the HM-24.05 `home-manager-droid`. This is
+  # the single place the droid stack is chosen; `mkNixOnDroidConfiguration`
+  # flows through it.
+  droidInputs = {
+    nixpkgs = nix-on-droid.inputs.nixpkgs;
+    home-manager = home-manager-droid;
+  };
+
   # Shared config used by both nixosConfigurations and mkApps VM.
   sharedNixosConfig =
     { lib, ... }:
@@ -364,6 +374,41 @@ let
       )
       ++ modules;
     };
+
+  # nix-on-droid builder. The droid analog of mkNixosSystem/mkDarwinSystem,
+  # fixed to aarch64-linux (the only Android target). Inputs flow through
+  # `droidInputs`; `nixOnDroidModules.default` + `sharedNixOnDroidConfig` are
+  # baked in, exactly as the NixOS/darwin builders bake in their module sets.
+  #
+  # The marchyo overlay is NOT forced on (it is Linux-desktop-shaped); overlays
+  # default to [] and a consumer can opt in. The droid stack stays on HM 24.05,
+  # so the marchyo HM modules (modules/home/*) and the marchyo.* options
+  # namespace remain out of scope — the droid modules reuse only the
+  # HM-version-agnostic generic modules.
+  mkNixOnDroidConfiguration =
+    {
+      modules ? [ ],
+      extraSpecialArgs ? { },
+      overlays ? [ ],
+      config ? { },
+    }:
+    nix-on-droid.lib.nixOnDroidConfiguration {
+      pkgs = import droidInputs.nixpkgs {
+        system = "aarch64-linux";
+        inherit overlays;
+        config = {
+          allowUnfree = true;
+        }
+        // config;
+      };
+      inherit extraSpecialArgs;
+      modules = [
+        nixOnDroidModules.default
+        sharedNixOnDroidConfig
+      ]
+      ++ modules;
+      home-manager-path = droidInputs.home-manager.outPath;
+    };
 in
 {
   inherit
@@ -379,6 +424,7 @@ in
     inherit
       mkNixosSystem
       mkDarwinSystem
+      mkNixOnDroidConfiguration
       mkHomeConfiguration
       inputsFor
       mkPkgs
@@ -451,22 +497,13 @@ in
     };
   };
 
-  # nix-on-droid (Android terminal). Build with:
+  # nix-on-droid (Android terminal), built through the same exported builder
+  # consumers use. Build with:
   #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
   # Kept internally consistent on nix-on-droid's own (2024) nixpkgs + HM 24.05;
-  # the marchyo overlay is intentionally NOT applied (built against unstable).
+  # the marchyo overlay is intentionally NOT applied (overlays default to []).
   nixOnDroidConfigurations = {
-    aarch64 = nix-on-droid.lib.nixOnDroidConfiguration {
-      pkgs = import nix-on-droid.inputs.nixpkgs {
-        system = "aarch64-linux";
-        config.allowUnfree = true;
-      };
-      modules = [
-        nixOnDroidModules.default
-        sharedNixOnDroidConfig
-      ];
-      home-manager-path = home-manager-droid.outPath;
-    };
+    aarch64 = mkNixOnDroidConfiguration { };
   };
 
   # System-aware: x86_64-darwin → stable nixos-26.05, every other system →

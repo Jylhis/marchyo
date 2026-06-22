@@ -28,5 +28,14 @@
       #   modules = [ ./darwin.nix ];
       #   specialArgs = { inherit marchyo; };
       # };
+
+      # nix-on-droid (Android terminal, aarch64). mkNixOnDroidConfiguration
+      # bakes in the droid stack (nix-on-droid's nixpkgs + HM 24.05); you supply
+      # only your own droid module. Build with:
+      #   nix build --impure .#nixOnDroidConfigurations.phone.activationPackage
+      #
+      # nixOnDroidConfigurations.phone = marchyo.lib.mkNixOnDroidConfiguration {
+      #   modules = [ ./droid.nix ];
+      # };
     };
 }
