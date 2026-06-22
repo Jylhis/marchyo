@@ -7,7 +7,7 @@
 let
   cfg = config.marchyo;
   backend = "docker"; # podman, containerd
-  mUsers = builtins.attrNames config.marchyo.users;
+  mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 in
 {
   config = lib.mkIf cfg.development.enable {
