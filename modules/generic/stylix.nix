@@ -28,6 +28,14 @@ in
       else
         palette.base16;
 
+    # Themed cursor out of the box (stylix doesn't set one itself). mkDefault so
+    # a consumer can swap the theme/package/size.
+    cursor = {
+      name = lib.mkDefault "Adwaita";
+      package = lib.mkDefault pkgs.adwaita-icon-theme;
+      size = lib.mkDefault 24;
+    };
+
     fonts = {
       serif = {
         package = pkgs.literata;

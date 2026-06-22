@@ -32,9 +32,26 @@ in
       ui = {
         default-command = lib.mkDefault "log";
         diff-formatter = lib.mkDefault ":git";
+        conflict-marker-style = lib.mkDefault "diff";
       };
       git = {
         auto-local-bookmark = lib.mkDefault true;
+      };
+      aliases = lib.mkDefault {
+        l = [ "log" ];
+        # Advance the closest bookmark to the parent of the working copy —
+        # the standard jj "push my branch forward" idiom.
+        tug = [
+          "bookmark"
+          "move"
+          "--from"
+          "closest_bookmark(@-)"
+          "--to"
+          "@-"
+        ];
+      };
+      revset-aliases = lib.mkDefault {
+        "closest_bookmark(to)" = "heads(::to & bookmarks())";
       };
     };
   };

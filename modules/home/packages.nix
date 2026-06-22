@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
   programs = {
     bash.enable = true;
@@ -21,4 +21,9 @@
     };
 
   };
+
+  # Recoverable deletes via the FreeDesktop trash (`trash`, `trash-put`,
+  # `trash-list`, `trash-restore`). Intentionally does NOT alias `rm` — silently
+  # changing rm semantics in a shared flake surprises consumers.
+  home.packages = [ pkgs.trash-cli ];
 }
