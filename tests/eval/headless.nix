@@ -33,7 +33,7 @@ in
         ++ lib.optional hm.programs.waybar.enable "waybar"
         ++ lib.optional hm.programs.hyprlock.enable "hyprlock"
         ++ lib.optional hm.services.hypridle.enable "hypridle"
-        ++ lib.optional hm.services.vicinae.enable "vicinae"
+        ++ lib.optional hm.programs.vicinae.enable "vicinae"
         ++ lib.optional hm.programs.noctalia.enable "noctalia";
     in
     pkgs.writeText "eval-headless-no-wayland" (
