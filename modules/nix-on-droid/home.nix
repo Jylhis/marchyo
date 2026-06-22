@@ -6,10 +6,10 @@
 # by nix-on-droid's HM integration, so they are intentionally omitted here.
 #
 # Reuses the HM-version-agnostic marchyo generic modules — generic/git.nix
-# (enable + gitFull + lfs, guarded by an option check) and generic/shell.nix
+# (enable + lfs + git package, guarded by an option check) and generic/shell.nix
 # (shared bash/zsh aliases). The full modules/home/* tree needs HM 25.05+ and is
 # still NOT imported here.
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   imports = [
     ../generic/git.nix
@@ -20,6 +20,11 @@
 
   programs = {
     git = {
+      # generic/git.nix defaults to gitFull; on an Android CLI its GUI/Perl
+      # extras are dead weight, so override to the lightweight git. Plain
+      # assignment (not mkDefault) — a second mkDefault would conflict with
+      # generic/git.nix's own mkDefault at equal priority.
+      package = pkgs.git;
       userName = lib.mkDefault "Marchyo Developer";
       userEmail = lib.mkDefault "dev@example.org";
       extraConfig = {
