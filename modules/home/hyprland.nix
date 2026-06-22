@@ -426,7 +426,7 @@ in
         exec-once = [
           # Essential services
           "kanshi"
-          # vicinae runs as a user service (services.vicinae.systemd.enable)
+          # vicinae runs as a user service (programs.vicinae.systemd.enable)
           "fcitx5 -d --replace"
 
           # Clipboard
