@@ -14,7 +14,7 @@
 let
   cfg = config.marchyo.tracking;
   desktopCfg = cfg.desktop;
-  mUsers = builtins.attrNames config.marchyo.users;
+  mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 
   screenshotScript = pkgs.writeShellScript "marchyo-tracking-screenshot" ''
     set -eu
@@ -23,8 +23,12 @@ let
       exit 0
     fi
     WIN=$(hyprctl activewindow -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.class // ""')
+    # Lowercase the window class before matching: real classes are e.g.
+    # "1Password", "Bitwarden", "KeePassXC", so a case-sensitive glob would
+    # silently fail open and screenshot password managers anyway.
+    WIN=$(printf '%s' "$WIN" | ${pkgs.coreutils}/bin/tr '[:upper:]' '[:lower:]')
     case "$WIN" in
-      *bitwarden*|*keepass*|*1password*|*bitwarden-desktop*)
+      *bitwarden*|*keepass*|*1password*|*proton*pass*)
         exit 0
         ;;
     esac

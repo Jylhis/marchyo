@@ -17,7 +17,12 @@
       };
       loader.timeout = lib.mkDefault 5;
       consoleLogLevel = lib.mkDefault 0;
-      kernelParams = lib.mkDefault [
+      # NOTE: plain (priority-100) list, NOT mkDefault. kernelParams is a list
+      # option, and a mkDefault list is dropped wholesale the moment any other
+      # module defines kernelParams at normal priority (e.g. performance.nix's
+      # `mitigations=off`, which is on by default). A plain list merges instead.
+      # Downstreams that need to drop these can still use mkForce.
+      kernelParams = [
         "quiet"
         "splash"
         "loglevel=3"
