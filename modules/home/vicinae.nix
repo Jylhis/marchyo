@@ -9,7 +9,7 @@ let
 in
 {
   config = lib.mkIf desktopEnabled {
-    services.vicinae = {
+    programs.vicinae = {
       enable = true;
       systemd.enable = true; # run the daemon as a user service (Restart=always, WantedBy=graphical-session.target)
       settings = {
