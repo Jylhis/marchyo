@@ -91,9 +91,14 @@
     # homeManagerModules.default is self-contained (extends pkgs with its own
     # overlay internally), so only nixpkgs needs to follow. Wired in as the
     # `marchyo.defaults.editor`/`terminalEditor = "jotain"` implementation.
+    # The nested jylhis-emacs.nixpkgs follows ours too: otherwise that pinned
+    # (non-following) nixpkgs lands an extra rev in the closure and gets the
+    # bare `nixpkgs` lock-node name, diverging the flake.lock/devenv.lock
+    # nixpkgs-rev parity check (CI `verify`).
     jotain = {
       url = "github:Jylhis/jotain";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.jylhis-emacs.inputs.nixpkgs.follows = "nixpkgs";
     };
     # AI coding agents (claude-code, codex, gemini-cli, goose, …), daily-updated
     # with the Numtide binary cache. Intentionally NOT following nixpkgs: its
