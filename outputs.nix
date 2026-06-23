@@ -15,6 +15,7 @@ let
     stylix-stable
     sops-nix
     llm-agents
+    jotain
     treefmt-nix
     ;
 
@@ -210,6 +211,7 @@ let
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
         sops-nix.homeManagerModules.sops
+        jotain.homeManagerModules.default
         {
           home.username = "developer";
           home.homeDirectory = homeDirectory;
@@ -226,6 +228,7 @@ let
         noctalia.homeModules.default
         vicinae.homeManagerModules.default
         sops-nix.homeManagerModules.sops
+        jotain.homeManagerModules.default
       ];
       extraSpecialArgs = {
         inherit

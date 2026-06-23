@@ -1,6 +1,6 @@
 { helpers, ... }:
 let
-  inherit (helpers) testNixOS withTestUser;
+  inherit (helpers) testNixOS testNixOSCheck withTestUser;
 in
 {
   eval-defaults-browser = testNixOS "defaults-browser" (withTestUser {
@@ -66,12 +66,37 @@ in
     };
   });
 
-  # Jotain is externally managed (no package installed by marchyo).
-  eval-defaults-jotain = testNixOS "defaults-jotain" (withTestUser {
-    marchyo.desktop.enable = true;
-    marchyo.defaults = {
-      editor = "jotain";
-      terminalEditor = "jotain";
-    };
-  });
+  # Jotain (Jylhis's Emacs config) is the default editor: marchyo installs no
+  # package directly (its services.jotain Home-Manager module does), but owns
+  # $EDITOR/$VISUAL, pointing them at jotain's on-PATH wrapper scripts.
+  eval-defaults-jotain =
+    testNixOSCheck "defaults-jotain"
+      (
+        config:
+        config.environment.sessionVariables.EDITOR == "jotain-editor"
+        && config.environment.sessionVariables.VISUAL == "jotain-visual"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.defaults = {
+          editor = "jotain";
+          terminalEditor = "jotain";
+        };
+      });
+
+  # Mixed case: jotain GUI editor + neovim terminal editor resolve independently.
+  eval-defaults-jotain-mixed =
+    testNixOSCheck "defaults-jotain-mixed"
+      (
+        config:
+        config.environment.sessionVariables.VISUAL == "jotain-visual"
+        && config.environment.sessionVariables.EDITOR == "nvim"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.defaults = {
+          editor = "jotain";
+          terminalEditor = "neovim";
+        };
+      });
 }

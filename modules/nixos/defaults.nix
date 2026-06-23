@@ -31,9 +31,13 @@ let
     zed = pkgs.zed-editor;
   };
 
-  # $VISUAL command for graphical editors
+  # $VISUAL command for graphical editors.
+  # jotain installs no package here (its Home-Manager module does, gated on the
+  # marchyo.defaults selection — see modules/home/jotain.nix), but it ships a
+  # `jotain-visual` wrapper on PATH that marchyo sets as $VISUAL.
   editorVisualCommands = {
     emacs = "emacsclient -c -a emacs";
+    jotain = "jotain-visual";
     vscode = "code";
     vscodium = "codium";
     zed = "zed";
@@ -46,9 +50,12 @@ let
     inherit (pkgs) nano;
   };
 
-  # $EDITOR command for terminal editors
+  # $EDITOR command for terminal editors.
+  # jotain ships a `jotain-editor` wrapper on PATH (installed by its
+  # Home-Manager module, modules/home/jotain.nix) that marchyo sets as $EDITOR.
   terminalEditorCommands = {
     emacs = "emacsclient -t -a 'emacs -nw'";
+    jotain = "jotain-editor";
     neovim = "nvim";
     helix = "hx";
     nano = "nano";
