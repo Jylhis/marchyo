@@ -10,6 +10,7 @@
   pkgs,
   config,
   lib,
+  options,
   ...
 }:
 let
@@ -20,35 +21,43 @@ let
   };
 in
 {
-  stylix = {
-    autoEnable = true;
-    base16Scheme =
-      if cfg.scheme != null then
-        "${pkgs.base16-schemes}/share/themes/${cfg.scheme}.yaml"
-      else
-        palette.base16;
+  stylix = lib.mkMerge [
+    {
+      autoEnable = true;
+      base16Scheme =
+        if cfg.scheme != null then
+          "${pkgs.base16-schemes}/share/themes/${cfg.scheme}.yaml"
+        else
+          palette.base16;
+
+      fonts = {
+        serif = {
+          package = pkgs.literata;
+          name = "Literata";
+        };
+        sansSerif = {
+          package = pkgs.liberation_ttf;
+          name = "Liberation Sans";
+        };
+        monospace = {
+          package = pkgs.nerd-fonts.jetbrains-mono;
+          name = "JetBrainsMono Nerd Font";
+        };
+      };
+    }
 
     # Themed cursor out of the box (stylix doesn't set one itself). mkDefault so
-    # a consumer can swap the theme/package/size.
-    cursor = {
-      name = lib.mkDefault "Adwaita";
-      package = lib.mkDefault pkgs.adwaita-icon-theme;
-      size = lib.mkDefault 24;
-    };
-
-    fonts = {
-      serif = {
-        package = pkgs.literata;
-        name = "Literata";
+    # a consumer can swap the theme/package/size. stylix declares the cursor
+    # option only where its module includes cursor.nix — its NixOS module does,
+    # but the darwin module (release-26.05 / stylix-stable, used by
+    # darwinConfigurations.x86_64) does not. Guard on existence so the stable
+    # Darwin path evaluates; mirrors the hasStylix* guards in theme.nix.
+    (lib.optionalAttrs (options.stylix ? cursor) {
+      cursor = {
+        name = lib.mkDefault "Adwaita";
+        package = lib.mkDefault pkgs.adwaita-icon-theme;
+        size = lib.mkDefault 24;
       };
-      sansSerif = {
-        package = pkgs.liberation_ttf;
-        name = "Liberation Sans";
-      };
-      monospace = {
-        package = pkgs.nerd-fonts.jetbrains-mono;
-        name = "JetBrainsMono Nerd Font";
-      };
-    };
-  };
+    })
+  ];
 }
