@@ -10,6 +10,14 @@ let
   cfg = config.marchyo;
   d = cfg.defaults;
 
+  # jotain is itself a full Emacs distribution (it installs its own emacs +
+  # emacsclient, plus a hiPrio `emacs` wrapper, into the user profile). It
+  # therefore cannot share a home profile with another Emacs — neither the
+  # marchyo.emacs daemon (same default socket) nor a plain "emacs" editor
+  # selection (jotain's binaries shadow pkgs.emacs on PATH).
+  jotainSelected = d.editor == "jotain" || d.terminalEditor == "jotain";
+  emacsSelected = d.editor == "emacs" || d.terminalEditor == "emacs";
+
   browserPackages = {
     inherit (pkgs) brave;
     inherit (pkgs) google-chrome;
@@ -128,6 +136,31 @@ in
         marchyo.defaults.browser = lib.mkDefault "chromium";
       })
       {
+        assertions = [
+          # jotain runs an Emacs daemon on $XDG_RUNTIME_DIR/emacs/server, the
+          # same default socket as the marchyo.emacs daemon — enabling both
+          # races two daemons for one socket.
+          {
+            assertion = !(cfg.emacs.enable && jotainSelected);
+            message = ''
+              marchyo.emacs.enable conflicts with marchyo.defaults.editor/terminalEditor = "jotain":
+              both run an Emacs daemon on $XDG_RUNTIME_DIR/emacs/server. Pick one — either disable
+              marchyo.emacs.enable, or set the jotain selectors to a non-Emacs editor.
+            '';
+          }
+          # jotain's emacs/emacsclient (hiPrio) shadow pkgs.emacs in the user
+          # profile, so a mixed "jotain"+"emacs" selection would silently run
+          # jotain on the "emacs" side.
+          {
+            assertion = !(jotainSelected && emacsSelected);
+            message = ''
+              marchyo.defaults cannot mix "jotain" and "emacs": jotain installs its own emacs/
+              emacsclient (hiPrio) into the user profile, which shadows pkgs.emacs on PATH, so the
+              "emacs" side would silently run jotain. Use "jotain" for both, or "emacs" for both.
+            '';
+          }
+        ];
+
         environment.systemPackages = defaultPackages;
 
         environment.sessionVariables =

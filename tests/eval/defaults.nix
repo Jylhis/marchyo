@@ -1,6 +1,11 @@
 { helpers, ... }:
 let
-  inherit (helpers) testNixOS testNixOSCheck withTestUser;
+  inherit (helpers)
+    testNixOS
+    testNixOSCheck
+    testNixOSFails
+    withTestUser
+    ;
 in
 {
   eval-defaults-browser = testNixOS "defaults-browser" (withTestUser {
@@ -97,6 +102,28 @@ in
         marchyo.defaults = {
           editor = "jotain";
           terminalEditor = "neovim";
+        };
+      });
+
+  # jotain + the marchyo.emacs daemon both bind the default Emacs socket — the
+  # default editors leave jotain selected, so enabling marchyo.emacs must fail.
+  eval-defaults-jotain-emacs-daemon-conflict =
+    testNixOSFails "defaults-jotain-emacs-daemon-conflict" "marchyo.emacs.enable conflicts"
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.emacs.enable = true;
+        # editor/terminalEditor left at their "jotain" defaults.
+      });
+
+  # jotain's emacs/emacsclient shadow pkgs.emacs on PATH, so mixing the two
+  # editor selections must fail rather than silently run jotain on both.
+  eval-defaults-jotain-emacs-mix =
+    testNixOSFails "defaults-jotain-emacs-mix" "cannot mix"
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.defaults = {
+          editor = "emacs";
+          terminalEditor = "jotain";
         };
       });
 }
