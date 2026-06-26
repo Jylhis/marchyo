@@ -92,18 +92,15 @@ in
         modules = [
           nixosModules
           (withTestUser {
-            marchyo = {
-              desktop.enable = true;
-              keybindingsHelp.enable = false;
-            };
+            marchyo.desktop.enable = true;
             home-manager.users.testuser = {
               imports = [ homeManagerModules ];
+              marchyo.keybindingsHelp.enable = false;
             };
           })
         ];
       };
-      bindd =
-        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bindd;
+      bindd = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bindd;
       hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
