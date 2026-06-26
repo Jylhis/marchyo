@@ -28,22 +28,24 @@ let
       binds=$(
         hyprctl binds -j | jq -r '
           def bit($b): (. / $b | floor) % 2 == 1;
-          .[]
-          | select(.description != "")
-          | (.modmask) as $m
-          | ([ (if ($m | bit(64)) then "SUPER" else empty end),
-               (if ($m | bit(4))  then "CTRL"  else empty end),
-               (if ($m | bit(8))  then "ALT"   else empty end),
-               (if ($m | bit(1))  then "SHIFT" else empty end) ]
-             | join("+")) as $mods
-          | (if .key != "" then .key
-             elif (.keycode >= 10 and .keycode <= 18) then ((.keycode - 9) | tostring)
-             elif .keycode == 19 then "0"
-             elif .keycode != 0 then "code:\(.keycode)"
-             else "mouse" end) as $key
-          | (if $mods == "" then $key else "\($mods)+\($key)" end) as $combo
-          | "\($combo)\t\(.description)"
-        ' | sort -u
+          [
+            .[]
+            | select(.description and .description != "")
+            | (.modmask) as $m
+            | ([ (if ($m | bit(64)) then "SUPER" else empty end),
+                 (if ($m | bit(4))  then "CTRL"  else empty end),
+                 (if ($m | bit(8))  then "ALT"   else empty end),
+                 (if ($m | bit(1))  then "SHIFT" else empty end) ]
+               | join("+")) as $mods
+            | (if .key and .key != "" then .key
+               elif (.keycode >= 10 and .keycode <= 18) then ((.keycode - 9) | tostring)
+               elif .keycode == 19 then "0"
+               elif .keycode != 0 then "code:\(.keycode)"
+               else "mouse" end) as $key
+            | (if $mods == "" then $key else "\($mods)+\($key)" end) as $combo
+            | "\($combo)\t\(.description)"
+          ] | unique[]
+        '
       )
 
       if [ -z "$binds" ]; then
