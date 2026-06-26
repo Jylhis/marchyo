@@ -13,6 +13,8 @@ in
     marchyo.defaults.browser = "google-chrome";
   });
 
+  # Both selectors must agree on the Emacs flavour: "emacs" alone would leave
+  # terminalEditor at its "jotain" default, which the mix assertion rejects.
   eval-defaults-editor = testNixOS "defaults-editor" (withTestUser {
     marchyo.desktop.enable = true;
     # terminalEditor defaults to "jotain"; "emacs" + "jotain" trips the
