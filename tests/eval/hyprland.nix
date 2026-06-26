@@ -107,10 +107,7 @@ in
       hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
-      if hasBind then
-        throw "FAIL: keybindings cheat sheet bind present when disabled"
-      else
-        "pass"
+      if hasBind then throw "FAIL: keybindings cheat sheet bind present when disabled" else "pass"
     );
 
   eval-hyprland-wallpaper-enabled =
