@@ -59,6 +59,60 @@ in
         touch $out
       '';
 
+  eval-hyprland-keybindings-cheatsheet =
+    let
+      eval = lib.nixosSystem {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        modules = [
+          nixosModules
+          (withTestUser {
+            marchyo.desktop.enable = true;
+            home-manager.users.testuser = {
+              imports = [ homeManagerModules ];
+            };
+          })
+        ];
+      };
+      hm = eval.config.home-manager.users.testuser;
+      bindd = hm.wayland.windowManager.hyprland.settings.bindd;
+      hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
+      hasPkg = lib.any (p: lib.hasInfix "marchyo-keybindings" (p.name or "")) hm.home.packages;
+    in
+    pkgs.writeText "eval-hyprland-keybindings-cheatsheet" (
+      if hasBind && hasPkg then
+        "pass"
+      else
+        throw "FAIL: keybindings cheat sheet bind or package missing when desktop enabled"
+    );
+
+  eval-hyprland-keybindings-cheatsheet-disabled =
+    let
+      eval = lib.nixosSystem {
+        inherit (pkgs.stdenv.hostPlatform) system;
+        modules = [
+          nixosModules
+          (withTestUser {
+            marchyo = {
+              desktop.enable = true;
+              keybindingsHelp.enable = false;
+            };
+            home-manager.users.testuser = {
+              imports = [ homeManagerModules ];
+            };
+          })
+        ];
+      };
+      bindd =
+        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bindd;
+      hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
+    in
+    pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
+      if hasBind then
+        throw "FAIL: keybindings cheat sheet bind present when disabled"
+      else
+        "pass"
+    );
+
   eval-hyprland-wallpaper-enabled =
     let
       eval = lib.nixosSystem {
