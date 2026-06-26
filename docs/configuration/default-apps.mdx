@@ -52,8 +52,15 @@ marchyo.defaults = {
 
 Some choices are "externally managed" — Marchyo does not install a package for them:
 
-- **`"jotain"`** (editor/terminalEditor) — Package installation and `$EDITOR`/`$VISUAL` are handled by `programs.jotain` outside of Marchyo.
 - **`"gmail"`** and **`"outlook"`** (email) — Web applications opened in the default browser. No package is installed.
+
+## Jotain editor
+
+`"jotain"` is the default `editor` and `terminalEditor` — [Jylhis's Emacs config](https://github.com/Jylhis/jotain), distributed as a flake. When selected, Marchyo enables its `services.jotain` Home-Manager module (installing the Emacs build, the `jotain-editor`/`jotain-visual` wrappers, and `jotain-client.desktop`) and sets `$EDITOR`/`$VISUAL` to those wrappers. Switch `editor` to `"emacs"`/`"vscode"`/… or `terminalEditor` to `"emacs"`/`"neovim"`/… to use a standard editor instead. The two selectors resolve independently, so you can mix (e.g. `editor = "jotain"` with `terminalEditor = "neovim"`).
+
+<Warning>
+  jotain is itself a full Emacs distribution, so it cannot share a home profile with another Emacs. Marchyo rejects (at evaluation) mixing `"jotain"` with `"emacs"` across the two selectors, and rejects `marchyo.emacs.enable = true` while either selector is `"jotain"` (both would run an Emacs daemon on the same socket). Use `"jotain"` for both selectors, or `"emacs"` for both — not one of each.
+</Warning>
 
 <Note>
   The TUI music (`spotify-player`, `ncspot`) and mail (`aerc`, `neomutt`) clients are installed but require account configuration before use. The music clients launch in a floating terminal under Hyprland (Super+M).
