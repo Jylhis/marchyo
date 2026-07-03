@@ -7,6 +7,7 @@
 }:
 let
   inherit (lib)
+    mkAfter
     mkDefault
     mkIf
     optionalAttrs
@@ -74,6 +75,32 @@ let
 
     "f11=toggle_fullscreen"
   ];
+
+  # Set the tab/window title to the last two path segments (e.g.
+  # "jylhis/marchyo") when idle, and "<short-path>: <command>" while a command
+  # runs. Ghostty's own "title" shell-integration feature is disabled below
+  # (it hardcodes the full `\w` path); this replaces it. Registered via the
+  # precmd/preexec arrays that ghostty's bundled bash-preexec exposes in bash
+  # and that zsh provides natively, so it coexists with starship's hooks.
+  titleHooks = ''
+    __marchyo_short_pwd() {
+      local p=''${PWD/#$HOME/\~}
+      local base=''${p##*/}
+      local parent=''${p%/*}
+      if [ "$p" = "$base" ] || [ -z "$parent" ] || [ "$parent" = "$p" ]; then
+        printf '%s' "$p"
+      else
+        printf '%s/%s' "''${parent##*/}" "$base"
+      fi
+    }
+    __marchyo_title_precmd() { printf '\033]2;%s\007' "$(__marchyo_short_pwd)"; }
+    __marchyo_title_preexec() {
+      local cmd=''${1//[[:cntrl:]]/}
+      printf '\033]2;%s: %s\007' "$(__marchyo_short_pwd)" "$cmd"
+    }
+    precmd_functions+=(__marchyo_title_precmd)
+    preexec_functions+=(__marchyo_title_preexec)
+  '';
 in
 {
   # Install marchyo-derived Ghostty themes (both variants, active one set
@@ -103,6 +130,10 @@ in
       cursor-style = "block";
       cursor-style-blink = false;
       confirm-close-surface = false;
+      # Disable ghostty's built-in full-path title feature; titleHooks below
+      # sets a shorter last-two-segments title instead. Other integration
+      # features (cursor, sudo, ssh-*) stay enabled.
+      shell-integration-features = "no-title";
       unfocused-split-opacity = mkDefault 0.7;
       keybind = if isDarwin then darwinKeybinds else linuxKeybinds;
     }
@@ -117,4 +148,9 @@ in
       window-save-state = "never";
     };
   };
+
+  # Register the short-path title hook in each active shell. mkAfter places it
+  # after ghostty's own integration snippet so the precmd/preexec arrays exist.
+  programs.bash.initExtra = mkIf config.programs.bash.enable (mkAfter titleHooks);
+  programs.zsh.initContent = mkIf config.programs.zsh.enable (mkAfter titleHooks);
 }
