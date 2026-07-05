@@ -3,6 +3,7 @@ final: prev:
 {
   jylhis-design-src = inputs.jylhis-design;
   marchyo-wallpapers = final.callPackage ./packages/marchyo-wallpapers/package.nix { };
+  marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
 }
 // prev.lib.optionalAttrs prev.stdenv.isDarwin {
   wallpapper = final.callPackage ./packages/wallpapper/package.nix {
