@@ -522,7 +522,7 @@ in
       };
     in
     {
-      inherit (pkgs) marchyo-wallpapers;
+      inherit (pkgs) marchyo-wallpapers marchyo-cli;
     }
     // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
       inherit (pkgs)
