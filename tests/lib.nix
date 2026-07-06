@@ -5,6 +5,7 @@
   nixosModules,
   nix-on-droid,
   home-manager-droid,
+  mkDarwinSystem,
   ...
 }:
 rec {
@@ -143,6 +144,48 @@ rec {
       else
         "pass"
     );
+
+  # Evaluates a nix-darwin config through the same `lib.mkDarwinSystem`
+  # builder consumers use (nix-darwin evaluates fine on Linux, so this runs in
+  # the regular Linux checks) and deep-forces `check eval.config`, mirroring
+  # testNixOSCheck. This is the only automated darwin coverage — keep at least
+  # one test exercising the curated HM wiring in modules/darwin/home.nix.
+  # testDarwinCheckFor takes the darwin system explicitly so both the unstable
+  # (aarch64) and stable-26.05 (x86_64) input trios can be exercised.
+  testDarwinCheckFor =
+    system: name: check: config:
+    pkgs.writeText "eval-darwin-${name}" (
+      let
+        eval = mkDarwinSystem {
+          inherit system;
+          modules = [ config ];
+        };
+        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
+        failedMessages = map (x: x.message) failedAssertions;
+        result = check eval.config;
+      in
+      if failedAssertions != [ ] then
+        throw "FAIL: ${name}: unexpected assertion failure(s): ${builtins.concatStringsSep "; " failedMessages}"
+      else if !(builtins.deepSeq result result) then
+        throw "FAIL: ${name}: predicate returned false"
+      else
+        "pass"
+    );
+
+  testDarwinCheck = testDarwinCheckFor "aarch64-darwin";
+
+  # Minimal nix-darwin configuration with a marchyo test user (the darwin
+  # analog of withTestUser; darwin needs no bootloader/filesystem stanzas).
+  withDarwinTestUser =
+    extraConfig:
+    lib.recursiveUpdate {
+      system.stateVersion = 6;
+      marchyo.users.testuser = {
+        enable = true;
+        fullname = "Test User";
+        email = "test@example.com";
+      };
+    } extraConfig;
 
   # Minimal NixOS configuration required for a config to evaluate.
   minimalConfig = {

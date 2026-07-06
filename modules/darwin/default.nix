@@ -12,6 +12,8 @@
     ../generic/shell.nix
     ../generic/packages.nix
     ./users.nix
+    ./shell.nix
+    ./home.nix
     ./system-defaults.nix
     ./homebrew.nix
     ./wallpaper.nix

@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   programs = {
     bash.enable = true;
@@ -24,6 +29,7 @@
 
   # Recoverable deletes via the FreeDesktop trash (`trash`, `trash-put`,
   # `trash-list`, `trash-restore`). Intentionally does NOT alias `rm` — silently
-  # changing rm semantics in a shared flake surprises consumers.
-  home.packages = [ pkgs.trash-cli ];
+  # changing rm semantics in a shared flake surprises consumers. Linux-only:
+  # trash-cli implements the FreeDesktop spec, not the macOS Trash.
+  home.packages = lib.optionals (!pkgs.stdenv.isDarwin) [ pkgs.trash-cli ];
 }

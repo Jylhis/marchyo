@@ -186,7 +186,9 @@ let
     {
       time.timeZone = "UTC";
       system.stateVersion = "24.05";
-      user.shell = "${pkgs.zsh}/bin/zsh";
+      # Bash is the marchyo default login shell on every platform (zsh stays
+      # installed and configured as an alternative — see modules/nix-on-droid).
+      user.shell = "${pkgs.bashInteractive}/bin/bash";
     };
 
   # Helper to build standalone Home Manager configurations.
@@ -572,6 +574,10 @@ in
         home-manager
         nix-on-droid
         home-manager-droid
+        # nix-darwin evaluates fine on Linux, so the checks exercise the darwin
+        # module set (incl. the curated HM wiring) through the same builder
+        # consumers use.
+        mkDarwinSystem
         ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;

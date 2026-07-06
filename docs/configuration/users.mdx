@@ -23,6 +23,34 @@ This creates a user account named `myuser` with the provided name and email conf
 | `marchyo.users.<name>.enable` | `bool` | `true` | Whether to apply Marchyo configuration to this user |
 | `marchyo.users.<name>.fullname` | `string` | — | Full name (used in git config and applications) |
 | `marchyo.users.<name>.email` | `string` | — | Email address (used in git config and applications) |
+| `marchyo.users.<name>.uid` | `int` or `null` | `null` | Numeric user id. On NixOS sets `users.users.<name>.uid`; on macOS opts the user into declarative login-shell management (see below) |
+
+## Login shell
+
+Bash (5.x, `bashInteractive`) is the Marchyo default login shell on every platform.
+
+On **NixOS** this is set via `users.defaultUserShell` (overridable with your own value).
+
+On **macOS** (nix-darwin), changing an account's shell requires the user to be
+listed in `users.knownUsers` with the account's exact `uid` — a mismatch aborts
+activation, so Marchyo does not guess. Provide the uid to opt in (the first
+macOS user is `501`):
+
+```nix
+marchyo.users.myuser = {
+  fullname = "Your Name";
+  email = "your@email.com";
+  uid = 501; # check with: id -u
+};
+```
+
+With the uid set, nix-darwin switches the login shell to bash declaratively.
+Without it, bash is still registered in `/etc/shells`, so you can switch once
+manually:
+
+```bash
+chsh -s /run/current-system/sw/bin/bash
+```
 
 ## Multiple users
 
