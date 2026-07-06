@@ -22,7 +22,11 @@ in
   eval-shell-ghostty-ssh-features = testNixOSCheck "shell-ghostty-ssh-features" (
     cfg:
     let
-      features = cfg.home-manager.users.testuser.programs.ghostty.settings.shell-integration-features;
+      # The HM ghostty settings type merges values into a list (duplicate-key
+      # semantics); normalize before matching.
+      features = lib.concatStringsSep "," (
+        lib.toList cfg.home-manager.users.testuser.programs.ghostty.settings.shell-integration-features
+      );
     in
     lib.hasInfix "ssh-env" features && lib.hasInfix "ssh-terminfo" features
   ) (withTestUser { });
@@ -65,7 +69,9 @@ in
     && hm.programs.bash.enable
     && (hm.programs.bash.shellAliases ? g)
     && hm.programs.starship.enable
-    && lib.hasInfix "ssh-terminfo" hm.programs.ghostty.settings.shell-integration-features
+    && lib.hasInfix "ssh-terminfo" (
+      lib.concatStringsSep "," (lib.toList hm.programs.ghostty.settings.shell-integration-features)
+    )
   ) (withDarwinTestUser { });
 
   # x86_64-darwin rides the stable trio (nixpkgs 26.05 + home-manager
