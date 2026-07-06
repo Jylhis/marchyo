@@ -131,9 +131,12 @@ in
       cursor-style-blink = false;
       confirm-close-surface = false;
       # Disable ghostty's built-in full-path title feature; titleHooks below
-      # sets a shorter last-two-segments title instead. Other integration
-      # features (cursor, sudo, ssh-*) stay enabled.
-      shell-integration-features = "no-title";
+      # sets a shorter last-two-segments title instead. ssh-env and
+      # ssh-terminfo are OPT-IN upstream (disabled by default): ssh-terminfo
+      # installs xterm-ghostty on the remote host via infocmp/tic on first
+      # connect, and ssh-env falls back to TERM=xterm-256color when that isn't
+      # possible — without them, remote TUI apps break on unknown terminfo.
+      shell-integration-features = "no-title,ssh-env,ssh-terminfo";
       unfocused-split-opacity = mkDefault 0.7;
       keybind = if isDarwin then darwinKeybinds else linuxKeybinds;
     }
