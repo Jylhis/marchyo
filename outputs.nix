@@ -87,6 +87,8 @@ let
   sharedNixosConfig =
     { lib, ... }:
     {
+      imports = [ ./configurations/people ];
+
       nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
@@ -110,14 +112,9 @@ let
         };
       };
 
-      users.users.developer = {
-        isNormalUser = true;
-        password = "password";
-        extraGroups = [
-          "wheel"
-          "networkmanager"
-        ];
-      };
+      # Identity (groups, home, GECOS, …) comes from configurations/people;
+      # only the demo login password is host-specific.
+      users.users.developer.password = "password";
       services.getty.autologinUser = "developer";
     };
 
@@ -127,6 +124,8 @@ let
   sharedDarwinConfig =
     { pkgs, ... }:
     {
+      imports = [ ./configurations/people ];
+
       nixpkgs.config.allowUnfree = true;
       system.stateVersion = 6;
 
@@ -142,9 +141,8 @@ let
         };
       };
 
-      users.users.developer = {
-        home = "/Users/developer";
-      };
+      # users.users.developer.home = "/Users/developer" now comes from
+      # configurations/people via the identity module (darwin renderer).
     };
 
   # Mock osConfig for standalone Home Manager configurations.
