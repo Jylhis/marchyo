@@ -32,8 +32,9 @@ in
   ) (withTestUser { });
 
   # The xterm-ghostty terminfo is available system-wide for inbound SSH.
+  # Matches by prefix: the terminfo derivation may be named ghostty-terminfo.
   eval-shell-ghostty-terminfo = testNixOSCheck "shell-ghostty-terminfo" (
-    cfg: builtins.any (p: lib.getName p == "ghostty") cfg.environment.systemPackages
+    cfg: builtins.any (p: lib.hasPrefix "ghostty" (lib.getName p)) cfg.environment.systemPackages
   ) (withTestUser { });
 
   # Marchyo users get the modern interactive bash stack: bash enabled with the
