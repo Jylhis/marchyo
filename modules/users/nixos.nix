@@ -41,7 +41,8 @@ let
     if u.shell == null then
       null
     else if lib.isString u.shell then
-      pkgs.${u.shell}
+      # Absolute paths pass through verbatim; other strings name a package.
+      if lib.hasPrefix "/" u.shell then u.shell else pkgs.${u.shell}
     else
       u.shell;
 
@@ -51,7 +52,10 @@ let
     name: u:
     let
       adminHere = u.sudo || lib.elem hostName u.adminOnHosts;
-      fromGroupSpec = lib.attrNames (lib.filterAttrs (_: g: lib.elem name g.members) cfg.groups);
+      # Group members may reference the identity by attribute name or login name.
+      fromGroupSpec = lib.attrNames (
+        lib.filterAttrs (_: g: lib.elem name g.members || lib.elem u.username g.members) cfg.groups
+      );
     in
     lib.unique (u.groups ++ fromGroupSpec ++ lib.optional adminHere "wheel");
 

@@ -72,8 +72,10 @@ let
           type = types.nullOr (types.either types.str types.package);
           default = null;
           description = ''
-            Login shell. A string is resolved via `pkgs.<shell>`; a package
-            is used as-is. `null` leaves the platform default untouched.
+            Login shell. A package is used as-is; a string is resolved via
+            `pkgs.<shell>` unless it is an absolute path (starts with `/`),
+            which is passed through verbatim. `null` leaves the platform
+            default untouched.
           '';
         };
 
@@ -202,13 +204,17 @@ let
       _name: u: u.enable && lib.elem platform u.platforms && (source == null || u.source == source)
     ) cfg.users;
 
-  # All members of a group: explicit `groups.<name>.members` merged with
-  # every enabled user listing the group in its per-user `groups`.
+  # All members of a group, as login names: explicit `groups.<name>.members`
+  # merged with every enabled user listing the group in its per-user
+  # `groups`. Member entries may be identity attribute names (translated to
+  # the identity's `username`) or literal login names of users not managed
+  # by this module (kept as-is).
   groupMembersOf =
     cfg: groupName:
     let
-      fromGroup = (cfg.groups.${groupName} or { members = [ ]; }).members;
-      fromUsers = lib.attrNames (
+      toUsername = m: (cfg.users.${m} or { username = m; }).username;
+      fromGroup = map toUsername (cfg.groups.${groupName} or { members = [ ]; }).members;
+      fromUsers = lib.mapAttrsToList (_name: u: u.username) (
         lib.filterAttrs (_name: u: u.enable && lib.elem groupName u.groups) cfg.users
       );
     in
@@ -233,6 +239,10 @@ let
         '';
       }
     ]
+    ++ lib.mapAttrsToList (name: _: {
+      assertion = false;
+      message = "marchyo.identity.users.${name}: homeManager.enable = true requires homeManager.import to be set — an empty Home Manager binding would fail evaluation (no home.stateVersion). Set homeManager.import, or disable the binding and manage home-manager.users.${name} directly.";
+    }) (lib.filterAttrs (_name: u: u.homeManager.enable && u.homeManager.import == null) enabledUsers)
     ++ lib.optionals (root != null) [
       {
         assertion = !root.isSystem;

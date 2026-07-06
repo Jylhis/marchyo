@@ -69,9 +69,13 @@ in
         cfg:
         lib.elem "alice" cfg.users.groups.media.members
         && lib.elem "bob" cfg.users.groups.media.members
+        # members are rendered as login names, not attribute names
+        && lib.elem "svc-worker" cfg.users.groups.media.members
+        && !(lib.elem "worker" cfg.users.groups.media.members)
         && cfg.users.groups.media.gid == 2500
         && lib.elem "media" cfg.users.users.alice.extraGroups
         && lib.elem "media" cfg.users.users.bob.extraGroups
+        && lib.elem "media" cfg.users.users.worker.extraGroups
       )
       (
         minimalConfig
@@ -80,10 +84,14 @@ in
             users = {
               alice = { };
               bob.groups = [ "media" ];
+              worker.username = "svc-worker";
             };
             groups.media = {
               gid = 2500;
-              members = [ "alice" ];
+              members = [
+                "alice"
+                "worker"
+              ];
             };
           };
         }
@@ -125,17 +133,25 @@ in
         }
       );
 
-  # Shell strings resolve via pkgs.<shell>; username decouples the login
-  # name from the attribute name.
+  # Shell strings resolve via pkgs.<shell> (absolute paths pass through);
+  # username decouples the login name from the attribute name.
   eval-identity-shell-username =
     testNixOSCheck "identity-shell-username"
-      (cfg: cfg.users.users.worker.name == "svc-worker" && cfg.users.users.worker.shell.pname == "fish")
+      (
+        cfg:
+        cfg.users.users.worker.name == "svc-worker"
+        && cfg.users.users.worker.shell.pname == "fish"
+        && cfg.users.users.pathshell.shell == "/run/current-system/sw/bin/bash"
+      )
       (
         minimalConfig
         // {
-          marchyo.identity.users.worker = {
-            username = "svc-worker";
-            shell = "fish";
+          marchyo.identity.users = {
+            worker = {
+              username = "svc-worker";
+              shell = "fish";
+            };
+            pathshell.shell = "/run/current-system/sw/bin/bash";
           };
           programs.fish.enable = true;
         }
@@ -176,6 +192,16 @@ in
         minimalConfig
         // {
           marchyo.identity.users.corp.source = "ldap";
+        }
+      );
+
+  # An HM binding without an import path must fail loudly, not be skipped.
+  fail-identity-hm-import-missing =
+    testNixOSFails "identity-hm-import-missing" "requires homeManager.import to be set"
+      (
+        minimalConfig
+        // {
+          marchyo.identity.users.hmuser.homeManager.enable = true;
         }
       );
 

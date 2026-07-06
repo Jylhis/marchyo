@@ -38,7 +38,8 @@ let
     if u.shell == null then
       null
     else if lib.isString u.shell then
-      pkgs.${u.shell}
+      # Absolute paths pass through verbatim; other strings name a package.
+      if lib.hasPrefix "/" u.shell then u.shell else pkgs.${u.shell}
     else
       u.shell;
 
