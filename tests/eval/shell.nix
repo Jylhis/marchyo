@@ -66,7 +66,9 @@ in
     let
       hm = cfg.home-manager.users.testuser;
     in
-    builtins.any (s: lib.hasInfix "bash-interactive" (toString s)) cfg.environment.shells
+    # environment.shells entries are rewritten to /run/current-system/sw paths,
+    # so match the shellPath suffix rather than the store-path name.
+    builtins.any (s: lib.hasSuffix "/bin/bash" (toString s)) cfg.environment.shells
     && hm.programs.bash.enable
     && (hm.programs.bash.shellAliases ? g)
     && hm.programs.starship.enable
