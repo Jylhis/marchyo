@@ -42,18 +42,12 @@ in
       }
 
       (lib.mkIf cfg.enable {
-        # mako is themed by modules/home/mako.nix (TUI override); starship comes
-        # from the upstream Jylhis design assets.
-        xdg.configFile = {
-          "starship.toml".source = "${pkgs.jylhis-design-src}/platforms/shell/starship.toml";
-        };
-
+        # mako is themed by modules/home/mako.nix (TUI override); starship is
+        # configured cross-platform in modules/home/starship.nix.
         gtk = {
           gtk3.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
           gtk4.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
         };
-
-        programs.starship.enable = lib.mkDefault true;
       })
     ]
   );
