@@ -80,8 +80,9 @@ let
   # "jylhis/marchyo") when idle, and "<short-path>: <command>" while a command
   # runs. Ghostty's own "title" shell-integration feature is disabled below
   # (it hardcodes the full `\w` path); this replaces it. Registered via the
-  # precmd/preexec arrays that ghostty's bundled bash-preexec exposes in bash
-  # and that zsh provides natively, so it coexists with starship's hooks.
+  # precmd/preexec arrays: zsh provides them natively; bash needs bash-preexec,
+  # loaded explicitly for bash below (see bashTitleHooks). Sharing these arrays
+  # is what lets the title hooks coexist with starship's own precmd hook.
   titleHooks = ''
     __marchyo_short_pwd() {
       local p=''${PWD/#$HOME/\~}
@@ -101,6 +102,18 @@ let
     precmd_functions+=(__marchyo_title_precmd)
     preexec_functions+=(__marchyo_title_preexec)
   '';
+
+  # Bash-only prelude. Modern Ghostty (bash >= 4.4) drives its shell integration
+  # through PS0 and does NOT source bash-preexec, so precmd_functions/preexec_functions
+  # would never be iterated. Their mere presence also makes starship register
+  # starship_precmd into precmd_functions instead of PROMPT_COMMAND, so the starship
+  # prompt silently stops rendering. Load bash-preexec first so both fire.
+  bashTitleHooks = ''
+    if [ -z "''${bash_preexec_imported:-}''${__bp_imported:-}" ]; then
+      source ${pkgs.bash-preexec}/share/bash/bash-preexec.sh
+    fi
+  ''
+  + titleHooks;
 in
 {
   # Install marchyo-derived Ghostty themes (both variants, active one set
@@ -150,7 +163,8 @@ in
   };
 
   # Register the short-path title hook in each active shell. mkAfter places it
-  # after ghostty's own integration snippet so the precmd/preexec arrays exist.
-  programs.bash.initExtra = mkIf config.programs.bash.enable (mkAfter titleHooks);
+  # after ghostty's own integration snippet. bash additionally loads bash-preexec
+  # (see bashTitleHooks); zsh drives the precmd/preexec arrays natively.
+  programs.bash.initExtra = mkIf config.programs.bash.enable (mkAfter bashTitleHooks);
   programs.zsh.initContent = mkIf config.programs.zsh.enable (mkAfter titleHooks);
 }
