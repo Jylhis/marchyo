@@ -5,6 +5,7 @@
   imports = [
     ../nixos/options
     ../nixos/nix-settings.nix
+    ../users/darwin.nix
     ../generic/theme.nix
     ../generic/stylix.nix
     ../generic/fontconfig.nix

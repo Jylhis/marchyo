@@ -275,6 +275,9 @@ let
     # pinned by tests/eval/hardware.nix. Full list:
     # https://github.com/NixOS/nixos-hardware
     hardware = nixos-hardware.nixosModules;
+    # Standalone export of the unified identity module (also part of
+    # `default` via modules/nixos/default.nix; path-based imports dedupe).
+    user-management = ./modules/users/nixos.nix;
   };
 
   # Darwin module set, parameterized by which home-manager darwin module to
@@ -294,6 +297,9 @@ let
 
   darwinModules = {
     default = mkDarwinModules home-manager.darwinModules.home-manager;
+    # Standalone export of the unified identity module (also part of
+    # `default` via modules/darwin/default.nix; path-based imports dedupe).
+    user-management = ./modules/users/darwin.nix;
   };
 
   homeManagerModules = {
