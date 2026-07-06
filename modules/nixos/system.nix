@@ -54,9 +54,10 @@ in
         "networkmanager"
       ];
 
-    }
-    // lib.optionalAttrs (mUsers.${name}.uid != null) {
-      inherit (mUsers.${name}) uid;
+      # Value-level mkIf (not optionalAttrs): the submodule's attribute shape
+      # must not depend on `name`, which resolves through _module.args and
+      # would recurse into the config fixpoint.
+      uid = lib.mkIf (mUsers.${name}.uid != null) mUsers.${name}.uid;
     }
   );
 }
