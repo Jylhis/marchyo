@@ -52,6 +52,8 @@ let
 
   aiToolingEnabled = (import ../../lib/ai.nix osConfig).featureEnabled "tooling" true;
 
+  dictationEnabled = ((osConfig.marchyo or { }).dictation or { }).enable or false;
+
   browserHyprlandCommands = {
     brave = "brave --new-window";
     google-chrome = "google-chrome --new-window";
@@ -333,6 +335,9 @@ in
         ]
         ++ lib.optionals aiToolingEnabled [
           "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e marchyo-aichat"
+        ]
+        ++ lib.optionals dictationEnabled [
+          "SUPER, H, Dictation toggle, exec, voxtype record toggle"
         ];
         bind = [
           "SUPER, R, exec, vicinae toggle"
