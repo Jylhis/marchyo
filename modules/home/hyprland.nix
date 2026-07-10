@@ -53,6 +53,8 @@ let
   aiToolingEnabled = (import ../../lib/ai.nix osConfig).featureEnabled "tooling" true;
 
   dictationEnabled = ((osConfig.marchyo or { }).dictation or { }).enable or false;
+  dictationStatusWindow =
+    dictationEnabled && (((osConfig.marchyo or { }).dictation or { }).statusWindow or true);
 
   browserHyprlandCommands = {
     brave = "brave --new-window";
@@ -253,7 +255,7 @@ in
           "center on, match:tag floating-window"
           "size 875 600, match:tag floating-window"
 
-          "tag +floating-window, match:class (org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.aichat|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)"
+          "tag +floating-window, match:class (org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.aichat|org.omarchy.voxtype|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)"
           "tag +floating-window, match:class (xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus), match:title ^(Open.*Files?|Open [F|f]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[C|c]hoose.*)"
 
           # Fullscreen screensaver
@@ -338,6 +340,9 @@ in
         ]
         ++ lib.optionals dictationEnabled [
           "SUPER, H, Dictation toggle, exec, voxtype record toggle"
+        ]
+        ++ lib.optionals dictationStatusWindow [
+          "SUPER SHIFT, H, Dictation status, exec, $terminal --class=org.omarchy.voxtype -e voxtype status --follow"
         ];
         bind = [
           "SUPER, R, exec, vicinae toggle"

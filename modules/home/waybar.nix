@@ -22,6 +22,8 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  dictation = (osConfig.marchyo or { }).dictation or { };
+  voxtypeIndicator = (dictation.enable or false) && (dictation.indicator or true);
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
 
@@ -82,6 +84,7 @@ let
     }
 
     /* │ separators between right-hand status segments */
+    #custom-voxtype,
     #language,
     #bluetooth,
     #network,
@@ -90,6 +93,18 @@ let
     #power-profiles-daemon,
     #battery {
       border-left: 1px solid ${palette.hex."border-strong"};
+    }
+
+    /* dictation indicator: muted when idle, alert while live/transcribing */
+    #custom-voxtype {
+      padding: 0 10px;
+      color: ${palette.hex."text-muted"};
+    }
+    #custom-voxtype.recording {
+      color: ${palette.hex."status-err"};
+    }
+    #custom-voxtype.transcribing {
+      color: ${palette.hex.accent};
     }
   '';
 
@@ -102,125 +117,141 @@ in
       systemd.enable = true;
       style = upstreamCss + marchyoCss;
       settings = [
-        {
-          "reload_style_on_change" = true;
-          layer = "top";
-          position = "top";
-          spacing = 0;
-          height = 28;
-          modules-left = [
-            "custom/session"
-            "hyprland/workspaces"
-          ];
-          modules-center = [ "clock" ];
-          modules-right = [
-            "group/tray-expander"
-            "hyprland/language"
-            "bluetooth"
-            "network"
-            "wireplumber"
-            "cpu"
-            "power-profiles-daemon"
-            "battery"
-          ];
-          "custom/session" = {
-            format = "marchyo";
-            tooltip = false;
-          };
-          "hyprland/workspaces" = {
-            on-click = "activate";
-            format = "{name}";
-            disable-scroll = true;
-            persistent-workspaces = {
-              "1" = [ ];
-              "2" = [ ];
-              "3" = [ ];
-              "4" = [ ];
-              "5" = [ ];
-            };
-          };
-          "hyprland/language" = {
-            format = "{short}";
-            tooltip-format = "{long}";
-          };
-          cpu = {
-            interval = 5;
-            format = "cpu {usage}%";
-            on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
-          };
-          clock = {
-            format = "{:%a %d %b · %H:%M}";
-            format-alt = "{:%d %B W%V %Y}";
-            tooltip = false;
-          };
-          network = {
-            format-wifi = "{essid} {signalStrength}%";
-            format-ethernet = "eth";
-            format-disconnected = "offline";
-            tooltip-format = "{ipaddr}  {ifname}";
-            interval = 3;
-            on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
-          };
-          battery = {
-            interval = 5;
-            format = "bat {capacity}%";
-            format-charging = "chg {capacity}%";
-            format-plugged = "pwr";
-            format-full = "bat full";
-            on-click = "vicinae toggle";
-            tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
-            tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
-            states = {
-              warning = 20;
-              critical = 10;
-            };
-          };
-          bluetooth = {
-            format = "bt";
-            format-disabled = "bt off";
-            format-connected = "bt {num_connections}";
-            tooltip-format = "Devices connected: {num_connections}";
-            on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
-          };
-          wireplumber = {
-            format = "vol {volume}%";
-            format-muted = "vol mute";
-            scroll-step = 5;
-            on-click = "pavucontrol";
-            tooltip-format = "Playing at {volume}%";
-            on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-            max-volume = 150;
-          };
-          tray = {
-            spacing = 10;
-            icon-size = 12;
-          };
-          "group/tray-expander" = {
-            "orientation" = "inherit";
-            "drawer" = {
-              "transition-duration" = 600;
-              "children-class" = "tray-group-item";
-            };
-            "modules" = [
-              "custom/expand-icon"
-              "tray"
+        (
+          {
+            "reload_style_on_change" = true;
+            layer = "top";
+            position = "top";
+            spacing = 0;
+            height = 28;
+            modules-left = [
+              "custom/session"
+              "hyprland/workspaces"
             ];
-          };
-          "custom/expand-icon" = {
-            "format" = "·";
-            "tooltip" = false;
-          };
-          power-profiles-daemon = {
-            format = "{icon}";
-            tooltip-format = "Power profile: {profile}";
-            tooltip = true;
-            format-icons = {
-              power-saver = "eco";
-              balanced = "bal";
-              performance = "perf";
+            modules-center = [ "clock" ];
+            modules-right = [
+              "group/tray-expander"
+            ]
+            ++ lib.optional voxtypeIndicator "custom/voxtype"
+            ++ [
+              "hyprland/language"
+              "bluetooth"
+              "network"
+              "wireplumber"
+              "cpu"
+              "power-profiles-daemon"
+              "battery"
+            ];
+            "custom/session" = {
+              format = "marchyo";
+              tooltip = false;
             };
-          };
-        }
+            "hyprland/workspaces" = {
+              on-click = "activate";
+              format = "{name}";
+              disable-scroll = true;
+              persistent-workspaces = {
+                "1" = [ ];
+                "2" = [ ];
+                "3" = [ ];
+                "4" = [ ];
+                "5" = [ ];
+              };
+            };
+            "hyprland/language" = {
+              format = "{short}";
+              tooltip-format = "{long}";
+            };
+            cpu = {
+              interval = 5;
+              format = "cpu {usage}%";
+              on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
+            };
+            clock = {
+              format = "{:%a %d %b · %H:%M}";
+              format-alt = "{:%d %B W%V %Y}";
+              tooltip = false;
+            };
+            network = {
+              format-wifi = "{essid} {signalStrength}%";
+              format-ethernet = "eth";
+              format-disconnected = "offline";
+              tooltip-format = "{ipaddr}  {ifname}";
+              interval = 3;
+              on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
+            };
+            battery = {
+              interval = 5;
+              format = "bat {capacity}%";
+              format-charging = "chg {capacity}%";
+              format-plugged = "pwr";
+              format-full = "bat full";
+              on-click = "vicinae toggle";
+              tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
+              tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
+              states = {
+                warning = 20;
+                critical = 10;
+              };
+            };
+            bluetooth = {
+              format = "bt";
+              format-disabled = "bt off";
+              format-connected = "bt {num_connections}";
+              tooltip-format = "Devices connected: {num_connections}";
+              on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
+            };
+            wireplumber = {
+              format = "vol {volume}%";
+              format-muted = "vol mute";
+              scroll-step = 5;
+              on-click = "pavucontrol";
+              tooltip-format = "Playing at {volume}%";
+              on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+              max-volume = 150;
+            };
+            tray = {
+              spacing = 10;
+              icon-size = 12;
+            };
+            "group/tray-expander" = {
+              "orientation" = "inherit";
+              "drawer" = {
+                "transition-duration" = 600;
+                "children-class" = "tray-group-item";
+              };
+              "modules" = [
+                "custom/expand-icon"
+                "tray"
+              ];
+            };
+            "custom/expand-icon" = {
+              "format" = "·";
+              "tooltip" = false;
+            };
+            power-profiles-daemon = {
+              format = "{icon}";
+              tooltip-format = "Power profile: {profile}";
+              tooltip = true;
+              format-icons = {
+                power-saver = "eco";
+                balanced = "bal";
+                performance = "perf";
+              };
+            };
+          }
+          // lib.optionalAttrs voxtypeIndicator {
+            # Defined (and the voxtype store path referenced) only when the
+            # indicator is enabled. --follow streams state changes as JSON objects
+            # that Waybar reads directly via return-type = "json"; the JSON's
+            # class field (idle/recording/transcribing) drives the CSS above.
+            "custom/voxtype" = {
+              exec = "${pkgs.voxtype}/bin/voxtype status --format json --follow --icon-theme nerd-font";
+              return-type = "json";
+              tooltip = true;
+            };
+          }
+        )
       ];
     };
 

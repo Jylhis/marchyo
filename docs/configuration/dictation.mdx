@@ -4,11 +4,14 @@ description: Push-to-talk voice-to-text for the Wayland desktop
 ---
 
 Marchyo can add push-to-talk voice dictation to the Hyprland desktop using
-[voxtype](https://github.com/jyryk/voxtype) with OpenAI Whisper. Press
-`Super+H` to start recording, press it again to stop; the transcribed text is
-typed at the cursor (with a clipboard fallback).
+[voxtype](https://voxtype.io) with OpenAI Whisper. Press `Super+H` to start
+recording, press it again to stop; the transcribed text is typed at the cursor
+(with a clipboard fallback).
 
 It is **off by default** — it needs a microphone and downloads a Whisper model.
+When enabled, the full desktop UI comes with it: a Waybar recording indicator,
+desktop notifications, start/stop sound cues, and a `Super+Shift+H` floating
+status window. Each surface is on by default and individually opt-out.
 
 ## Options
 
@@ -18,6 +21,10 @@ It is **off by default** — it needs a microphone and downloads a Whisper model
 | `marchyo.dictation.model` | `str` | `"large-v3-turbo"` | Whisper model voxtype loads |
 | `marchyo.dictation.language` | `str` | `"auto"` | Spoken language (`"auto"` detects per utterance; pin with an ISO code like `"en"`) |
 | `marchyo.dictation.preloadModel` | `bool` | `false` | Pre-download the model at activation instead of on first recording |
+| `marchyo.dictation.indicator` | `bool` | `true` | Show a recording-state segment on Waybar (driven by `voxtype status --follow`) |
+| `marchyo.dictation.notify` | `bool` | `true` | Desktop notifications on record start/stop and transcription |
+| `marchyo.dictation.audioFeedback` | `bool` | `true` | Start/stop sound cues |
+| `marchyo.dictation.statusWindow` | `bool` | `true` | Bind `Super+Shift+H` to a floating status window |
 
 ```nix
 marchyo.dictation = {
@@ -25,6 +32,10 @@ marchyo.dictation = {
   # model = "large-v3-turbo";  # multilingual + fast (default)
   # language = "auto";         # detect per utterance
   # preloadModel = true;       # fetch the model at activation time
+  # indicator = false;         # drop the Waybar segment
+  # notify = false;            # silence desktop notifications
+  # audioFeedback = false;     # silence start/stop cues
+  # statusWindow = false;      # drop the Super+Shift+H window
 };
 ```
 
@@ -40,8 +51,14 @@ service instead (that step needs network access when it runs).
 Enabling the option wires the upstream Home Manager `services.voxtype` module:
 
 - Writes `~/.config/voxtype/config.toml` and runs the `voxtype` user service.
+  `wayland.display` is set so the daemon gets `WAYLAND_DISPLAY` plus
+  `wtype`/`wl-clipboard` on its PATH for typing into Wayland windows.
 - Binds `Super+H` under Hyprland to `voxtype record toggle`. The daemon's own
   evdev hotkey stays disabled — recording is driven from the compositor.
 - Output mode is `type` (types at the cursor) with clipboard fallback.
+- The Waybar indicator streams `voxtype status --follow` (JSON) and recolors by
+  state; notifications and sound cues use voxtype's built-in
+  `[output.notification]` / `[audio.feedback]`; `Super+Shift+H` opens a floating
+  terminal running `voxtype status --follow`.
 
 Check the daemon with `systemctl --user status voxtype`.
