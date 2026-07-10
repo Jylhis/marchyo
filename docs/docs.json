@@ -26,6 +26,7 @@
         "configuration/graphics",
         "configuration/default-apps",
         "configuration/ai",
+        "configuration/dictation",
         "configuration/hardware",
         "configuration/performance"
       ]

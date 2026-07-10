@@ -1,0 +1,47 @@
+---
+title: Dictation
+description: Push-to-talk voice-to-text for the Wayland desktop
+---
+
+Marchyo can add push-to-talk voice dictation to the Hyprland desktop using
+[voxtype](https://github.com/jyryk/voxtype) with OpenAI Whisper. Press
+`Super+H` to start recording, press it again to stop; the transcribed text is
+typed at the cursor (with a clipboard fallback).
+
+It is **off by default** — it needs a microphone and downloads a Whisper model.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.dictation.enable` | `bool` | `false` | Enable voxtype dictation and the Hyprland `Super+H` toggle bind |
+| `marchyo.dictation.model` | `str` | `"large-v3-turbo"` | Whisper model voxtype loads |
+| `marchyo.dictation.language` | `str` | `"auto"` | Spoken language (`"auto"` detects per utterance; pin with an ISO code like `"en"`) |
+| `marchyo.dictation.preloadModel` | `bool` | `false` | Pre-download the model at activation instead of on first recording |
+
+```nix
+marchyo.dictation = {
+  enable = true;
+  # model = "large-v3-turbo";  # multilingual + fast (default)
+  # language = "auto";         # detect per utterance
+  # preloadModel = true;       # fetch the model at activation time
+};
+```
+
+<Note>
+With `preloadModel = false` (the default) the ~1.5 GB Whisper model downloads on
+the first recording, so a `nixos-rebuild` never blocks on the network. Set
+`preloadModel = true` to fetch it at activation time via voxtype's model-loader
+service instead (that step needs network access when it runs).
+</Note>
+
+## How it works
+
+Enabling the option wires the upstream Home Manager `services.voxtype` module:
+
+- Writes `~/.config/voxtype/config.toml` and runs the `voxtype` user service.
+- Binds `Super+H` under Hyprland to `voxtype record toggle`. The daemon's own
+  evdev hotkey stays disabled — recording is driven from the compositor.
+- Output mode is `type` (types at the cursor) with clipboard fallback.
+
+Check the daemon with `systemctl --user status voxtype`.
