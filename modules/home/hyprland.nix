@@ -298,6 +298,7 @@ in
           "SUPER, G, Messenger, exec, $messenger"
           "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1password)$ || $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
+          "SUPER SHIFT, C, Pick color (hex to clipboard), exec, hyprpicker -a"
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
@@ -485,6 +486,9 @@ in
         killall
         pciutils
         usbutils
+        hyprpicker # Wayland color picker (see color-pick bind below)
+        imv # lightweight Wayland image viewer
+        gpu-screen-recorder # low-overhead GPU screen recorder (replay buffer)
 
         # System integration
         libnotify

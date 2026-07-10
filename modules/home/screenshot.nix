@@ -33,6 +33,12 @@ in
       default = true;
       description = "Enable satty for screenshot annotation";
     };
+
+    enableOcr = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Enable tesseract OCR (select a region, extract text to clipboard)";
+    };
   };
 
   config = mkIf (desktopEnabled && cfg.enable) {
@@ -45,6 +51,11 @@ in
       ]
       ++ lib.optionals cfg.enableAnnotation [
         satty # Screenshot annotation tool
+      ]
+      ++ lib.optionals cfg.enableOcr [
+        tesseract # OCR engine (screenshot-to-text)
+        slurp # region selection for the OCR bind
+        wl-clipboard # wl-copy for the OCR bind
       ];
 
     # Create screenshot directory
@@ -68,6 +79,10 @@ in
       ++ lib.optionals cfg.enableAnnotation [
         # Screenshot with annotation
         "SUPER SHIFT, Print, Screenshot with annotation, exec, grimblast --freeze save area - | satty --filename - --output-filename ${cfg.directory}/$(date '+%Y-%m-%d_%H-%M-%S')_annotated.png"
+      ]
+      ++ lib.optionals cfg.enableOcr [
+        # OCR: select a region, extract text to clipboard
+        "SUPER SHIFT, O, OCR region to clipboard, exec, grimblast --freeze save area - | tesseract - - | wl-copy"
       ];
 
       # Environment variable for grimblast to use the correct directory
