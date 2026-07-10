@@ -45,10 +45,28 @@ in
         && hasVoxtypeModule hm
         && s.output.notification.on_recording_start
         && s.audio.feedback.enabled
+        && hm.services.voxtype.package.drvPath == pkgs.voxtype-vulkan.drvPath
       then
         "pass"
       else
-        throw "FAIL: dictation enabled but a UI surface (bind, waybar module, notification or audio) is missing"
+        throw "FAIL: dictation enabled but a UI surface (bind, waybar module, notification or audio) is missing, or the GPU (Vulkan) voxtype build is not selected"
+    );
+
+  # GPU escape hatch: marchyo.dictation.gpu = false falls back to the CPU-only
+  # voxtype build.
+  eval-dictation-gpu-off =
+    let
+      hm =
+        (evalWith {
+          marchyo.dictation.enable = true;
+          marchyo.dictation.gpu = false;
+        }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-dictation-gpu-off" (
+      if hm.services.voxtype.package.drvPath == pkgs.voxtype.drvPath then
+        "pass"
+      else
+        throw "FAIL: dictation.gpu = false but the CPU-only voxtype build is not selected"
     );
 
   # Dictation off (default) on a desktop: no voxtype service, no dictation bind,

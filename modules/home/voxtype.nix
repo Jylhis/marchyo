@@ -19,6 +19,13 @@ in
     services.voxtype = {
       enable = true;
 
+      # GPU-accelerated (Vulkan) Whisper backend by default: the stock
+      # pkgs.voxtype is a source build with no GPU engine compiled in, so it
+      # runs large-v3-turbo on CPU (slow). pkgs.voxtype-vulkan enables the
+      # gpu-vulkan Cargo feature; Vulkan covers NVIDIA/AMD/Intel and falls back
+      # to CPU when no device is present. Escape hatch: marchyo.dictation.gpu.
+      package = if (cfg.gpu or true) then pkgs.voxtype-vulkan else pkgs.voxtype;
+
       # Give the daemon unit WAYLAND_DISPLAY plus wtype/wl-clipboard on PATH so
       # output.mode = "type" can type into Wayland windows (the module gates both
       # on this option). wayland-1 is Hyprland's primary socket.
