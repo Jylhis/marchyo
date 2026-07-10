@@ -335,6 +335,68 @@ in
           # Scroll through existing workspaces with SUPER + scroll
           "SUPER, mouse_down, Scroll active workspace forward, workspace, e+1"
           "SUPER, mouse_up, Scroll active workspace backward, workspace, e-1"
+
+          # --- Window grouping (tabbed/stacked windows) ---
+          "SUPER ALT, G, Toggle window grouping, togglegroup"
+          "SUPER ALT SHIFT, G, Move window out of group, moveoutofgroup"
+          "SUPER ALT, left, Move window into group on left, moveintogroup, l"
+          "SUPER ALT, right, Move window into group on right, moveintogroup, r"
+          "SUPER ALT, up, Move window into group above, moveintogroup, u"
+          "SUPER ALT, down, Move window into group below, moveintogroup, d"
+          "SUPER ALT, TAB, Next window in group, changegroupactive, f"
+          "SUPER ALT SHIFT, TAB, Previous window in group, changegroupactive, b"
+
+          # --- Keyboard resize (base resize is via border-drag / SUPER+RMB) ---
+          "SUPER, minus, Expand window left, resizeactive, -100 0"
+          "SUPER, equal, Shrink window left, resizeactive, 100 0"
+          "SUPER SHIFT, minus, Shrink window up, resizeactive, 0 -100"
+          "SUPER SHIFT, equal, Expand window down, resizeactive, 0 100"
+
+          # --- Extra fullscreen modes (base full screen is SUPER+Page_Up) ---
+          "SUPER CTRL, F, Tiled full screen, fullscreenstate, 0 2"
+          "SUPER ALT, F, Full width, fullscreen, 1"
+
+          # --- Move active window silently to a workspace (does not follow) ---
+          "SUPER SHIFT ALT, code:10, Move window silently to workspace 1, movetoworkspacesilent, 1"
+          "SUPER SHIFT ALT, code:11, Move window silently to workspace 2, movetoworkspacesilent, 2"
+          "SUPER SHIFT ALT, code:12, Move window silently to workspace 3, movetoworkspacesilent, 3"
+          "SUPER SHIFT ALT, code:13, Move window silently to workspace 4, movetoworkspacesilent, 4"
+          "SUPER SHIFT ALT, code:14, Move window silently to workspace 5, movetoworkspacesilent, 5"
+          "SUPER SHIFT ALT, code:15, Move window silently to workspace 6, movetoworkspacesilent, 6"
+          "SUPER SHIFT ALT, code:16, Move window silently to workspace 7, movetoworkspacesilent, 7"
+          "SUPER SHIFT ALT, code:17, Move window silently to workspace 8, movetoworkspacesilent, 8"
+          "SUPER SHIFT ALT, code:18, Move window silently to workspace 9, movetoworkspacesilent, 9"
+          "SUPER SHIFT ALT, code:19, Move window silently to workspace 10, movetoworkspacesilent, 10"
+
+          # --- Move whole workspace to an adjacent monitor ---
+          # (single-window monitor move stays on SUPER+SHIFT+comma/period below)
+          "SUPER SHIFT ALT, left, Move workspace to left monitor, movecurrentworkspacetomonitor, l"
+          "SUPER SHIFT ALT, right, Move workspace to right monitor, movecurrentworkspacetomonitor, r"
+          "SUPER SHIFT ALT, up, Move workspace to monitor above, movecurrentworkspacetomonitor, u"
+          "SUPER SHIFT ALT, down, Move workspace to monitor below, movecurrentworkspacetomonitor, d"
+
+          # --- Monitor focus (relocated here from SUPER+comma/period) ---
+          "CTRL ALT, TAB, Focus next monitor, focusmonitor, +1"
+          "CTRL ALT SHIFT, TAB, Focus previous monitor, focusmonitor, -1"
+
+          # --- Clipboard history / emoji picker (both via vicinae) ---
+          "SUPER CTRL, V, Clipboard history, exec, vicinae vicinae://launch/clipboard/history?toggle=true"
+          "SUPER, period, Emoji picker, exec, vicinae open --query emoji"
+
+          # --- Notifications (mako) ---
+          "SUPER, comma, Dismiss last notification, exec, makoctl dismiss"
+          "SUPER CTRL, comma, Dismiss all notifications, exec, makoctl dismiss --all"
+
+          # --- Cursor zoom (screen magnifier) ---
+          "SUPER CTRL, Z, Zoom in, exec, marchyo-zoom in"
+          "SUPER CTRL SHIFT, Z, Zoom out, exec, marchyo-zoom out"
+          "SUPER CTRL ALT, Z, Reset zoom, exec, marchyo-zoom reset"
+
+          # --- System toggles (backed by modules/home/window-toggles.nix) ---
+          "SUPER SHIFT, SPACE, Toggle top bar, exec, systemctl --user kill -s SIGUSR1 waybar.service"
+          "SUPER CTRL, N, Toggle nightlight, exec, marchyo-nightlight-toggle"
+          "SUPER CTRL, I, Toggle idle lock, exec, marchyo-idle-toggle"
+          "SUPER ALT, Print, Toggle screen recording, exec, marchyo-screenrecord-toggle"
         ]
         ++ lib.optionals aiToolingEnabled [
           "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e marchyo-aichat"
@@ -365,9 +427,9 @@ in
           "SUPER, L, exec, hyprlock"
           "CTRL ALT, Delete, exec, systemctl poweroff"
 
-          # Monitor focus
-          "SUPER, comma, focusmonitor, -1"
-          "SUPER, period, focusmonitor, +1"
+          # Move active window to an adjacent monitor (single window).
+          # Monitor *focus* is on CTRL+ALT+Tab (see bindd); comma/period now
+          # drive notifications (comma) and the emoji picker (period).
           "SUPER SHIFT, comma, movewindow, mon:-1"
           "SUPER SHIFT, period, movewindow, mon:+1"
 
