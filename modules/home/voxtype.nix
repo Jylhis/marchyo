@@ -19,6 +19,11 @@ in
     services.voxtype = {
       enable = true;
 
+      # Give the daemon unit WAYLAND_DISPLAY plus wtype/wl-clipboard on PATH so
+      # output.mode = "type" can type into Wayland windows (the module gates both
+      # on this option). wayland-1 is Hyprland's primary socket.
+      wayland.display = "wayland-1";
+
       # Pre-fetch the model at activation only when asked; otherwise voxtype
       # downloads it on first recording.
       loadModels = lib.optional (cfg.preloadModel or false) cfg.model;
@@ -33,6 +38,11 @@ in
           device = "default";
           sample_rate = 16000; # Whisper expects 16 kHz
           max_duration_secs = 60;
+          # Sound cues on record start/stop (built-in), gated on the UI toggle.
+          feedback = {
+            enabled = cfg.audioFeedback or true;
+            theme = "subtle";
+          };
         };
         whisper = {
           inherit (cfg) model language;
@@ -41,6 +51,13 @@ in
         output = {
           mode = "type";
           fallback_to_clipboard = true;
+          # Desktop notifications (mako) on start/stop/transcription, gated on
+          # the UI toggle.
+          notification = {
+            on_recording_start = cfg.notify or true;
+            on_recording_stop = cfg.notify or true;
+            on_transcription = cfg.notify or true;
+          };
         };
       };
     };

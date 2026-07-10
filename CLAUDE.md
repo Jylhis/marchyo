@@ -357,7 +357,7 @@ marchyo.ai = {
 
 ### Dictation (voice-to-text)
 
-`marchyo.dictation.enable` adds push-to-talk voice dictation to the Wayland desktop via [voxtype](https://github.com/jyryk/voxtype) + Whisper. Off by default (it needs a microphone and downloads a Whisper model).
+`marchyo.dictation.enable` adds push-to-talk voice dictation to the Wayland desktop via [voxtype](https://voxtype.io) (nixpkgs `voxtype`, 0.6.x) + Whisper. Off by default (it needs a microphone and downloads a Whisper model).
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -365,8 +365,14 @@ marchyo.ai = {
 | `marchyo.dictation.model` | `"large-v3-turbo"` | Whisper model voxtype loads |
 | `marchyo.dictation.language` | `"auto"` | Spoken language (`"auto"` detects per utterance; e.g. `"en"` to pin) |
 | `marchyo.dictation.preloadModel` | `false` | Pre-download the model at activation instead of on first recording |
+| `marchyo.dictation.indicator` | `true` | Waybar recording-state segment (streams `voxtype status --follow`) |
+| `marchyo.dictation.notify` | `true` | Desktop notifications on record start/stop/transcription |
+| `marchyo.dictation.audioFeedback` | `true` | Start/stop sound cues |
+| `marchyo.dictation.statusWindow` | `true` | Super+Shift+H floating status window + its Hyprland rule |
 
 When enabled, `modules/home/voxtype.nix` configures the **upstream** home-manager `services.voxtype` module (config at `~/.config/voxtype/config.toml`, a `voxtype` user service) and `modules/home/hyprland.nix` binds `Super+H` → `voxtype record toggle` (typed at the cursor, clipboard fallback). The daemon's evdev hotkey is left off — recording is driven from Hyprland. Options live in `modules/nixos/options/dictation.nix`. With `preloadModel = false`, the ~1.5 GB Whisper model downloads on first recording (a pure rebuild never blocks on the network); set it `true` to fetch it at activation via voxtype's model-loader service.
+
+The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The Waybar `custom/voxtype` module (`modules/home/waybar.nix`) is the repo's **first streaming `exec` custom module**: `voxtype status --format json --follow` emits one JSON object per state change, read via `return-type = "json"`; its `class` field (idle/recording/transcribing) recolors the `#custom-voxtype` selector, and both the module definition and the `pkgs.voxtype` store-path reference are guarded by `lib.optionalAttrs` so a desktop without dictation never pulls voxtype into its closure. The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
 
 ## Breaking Changes
 

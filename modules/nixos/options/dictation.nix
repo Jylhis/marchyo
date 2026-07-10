@@ -40,5 +40,42 @@ in
         `nixos-rebuild` never blocks on the network).
       '';
     };
+
+    # UI surfaces — on by default when dictation is enabled, each opt-out.
+    indicator = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Show a recording-state segment on Waybar, driven by
+        `voxtype status --follow`. Set false to keep dictation but drop the bar
+        indicator.
+      '';
+    };
+
+    notify = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Emit desktop notifications (mako) on recording start/stop and on
+        transcription, via voxtype's built-in `[output.notification]`.
+      '';
+    };
+
+    audioFeedback = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Play start/stop sound cues via voxtype's built-in `[audio.feedback]`.
+      '';
+    };
+
+    statusWindow = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Bind Super+Shift+H under Hyprland to open a floating terminal streaming
+        `voxtype status --follow`, and register its window rule.
+      '';
+    };
   };
 }
