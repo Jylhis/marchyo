@@ -28,6 +28,9 @@ let
     tailspin
     nix-output-monitor
     ouch # archive compression/extraction (replaces file-roller)
+    gum # shell-script UI toolkit (prompts, spinners, styled output)
+    imagemagick # image conversion/resize/manipulation CLI
+    inxi # full-featured system information tool (hardware/driver report)
   ];
 
   tuiTools = with pkgs; [
@@ -37,6 +40,9 @@ let
     sysz # systemctl tui
     lazyjournal # journald and logs
     impala # TUI for managing your Wi-Fi connection
+    dua # interactive disk-usage analyzer TUI
+    wiremix # PipeWire mixer TUI
+    cliamp # retro terminal music player (Winamp-style)
     # qalc (calculator REPL, replaces gnome-calculator) installs via the
     # programs.qalculate Home-Manager module (modules/home/qalculate.nix).
   ];
@@ -49,6 +55,7 @@ let
     gnome-disk-utility # Disk management
     sushi # Quick file previews in Nautilus
     dconf-editor # For debugging dconf/GTK settings
+    quickshell # QtQuick toolkit for building custom Wayland shells/bars
   ];
 
   # Media applications (browser/editor/video/audio/fileManager managed by defaults.nix)
