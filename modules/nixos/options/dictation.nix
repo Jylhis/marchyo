@@ -30,6 +30,18 @@ in
       '';
     };
 
+    gpu = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Use the GPU-accelerated (Vulkan) voxtype build (`pkgs.voxtype-vulkan`)
+        for Whisper inference. Vulkan covers NVIDIA, AMD and Intel in one binary
+        and falls back to CPU when no Vulkan device is present, so it is safe to
+        leave on. Set false to use the CPU-only build (`pkgs.voxtype`) - e.g. to
+        avoid the heavier source build on a host with no usable GPU.
+      '';
+    };
+
     preloadModel = mkOption {
       type = types.bool;
       default = false;
