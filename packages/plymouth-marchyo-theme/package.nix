@@ -34,8 +34,7 @@ let
     f = 15;
   };
   hexPairToInt =
-    pair:
-    16 * hexDigits.${builtins.substring 0 1 pair} + hexDigits.${builtins.substring 1 1 pair};
+    pair: 16 * hexDigits.${builtins.substring 0 1 pair} + hexDigits.${builtins.substring 1 1 pair};
 
   channel = offset: hexPairToInt (builtins.substring offset 2 bgHex);
   channelFloat = offset: toString (channel offset / 255.0);
