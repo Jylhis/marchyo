@@ -94,7 +94,7 @@ marchyo.theme = {
 };
 ```
 
-The dark variant uses the `nord` base16 scheme; the light variant uses `nord-light`.
+The dark variant uses the Jylhis Roast palette; the light variant uses Jylhis Paper (both derived from the [Jylhis Design System](https://github.com/jylhis/design) `tokens.json`). Set `marchyo.theme.scheme = "<name>"` to use a `base16-schemes` scheme instead.
 
 **For complete documentation of all available options, see the [Marchyo documentation](docs/).**
 

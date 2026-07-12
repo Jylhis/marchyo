@@ -15,19 +15,21 @@ in
 
   # Login. The tuigreet --theme uses ANSI color names that are resolved by the
   # kernel's console palette (set in modules/nixos/console.nix from the Jylhis
-  # tokens.json). Slot 11 (bright-yellow) is brand copper.
+  # tokens.json). Slot 11 (bright-yellow) is brand copper. Slot mapping follows
+  # the greeter table in the design system's docs/INTEGRATION.md
+  # (time=cyan/syn-type, button=magenta, prompt/action=brand copper).
   services.greetd = lib.mkIf cfg.desktop.enable (
     let
       tuigreetTheme = lib.concatStringsSep ";" [
         "border=brightblack"
         "text=white"
         "prompt=brightyellow"
-        "time=brightblack"
+        "time=cyan"
         "container=black"
         "greet=brightwhite"
         "input=white"
         "action=brightyellow"
-        "button=brightyellow"
+        "button=magenta"
       ];
     in
     {

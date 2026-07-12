@@ -34,10 +34,14 @@ in
           bat.enable = false;
           mako.enable = false;
           gtk.enable = false;
-          # marchyo writes ghostty themes from mkPalette directly so the paper
-          # ANSI 7/15 readability override (see jylhis-palette.nix) is honored.
+          # ghostty themes are installed cross-platform (darwin included) by
+          # modules/home/ghostty.nix from the same upstream theme files.
           ghostty.enable = false;
           starship.enable = false;
+          # fzf colors are set cross-platform via programs.fzf.colors in
+          # modules/home/fzf.nix (the upstream target mkForce-overwrites
+          # FZF_DEFAULT_OPTS, which would drop marchyo's layout options).
+          fzf.enable = false;
         };
       }
 

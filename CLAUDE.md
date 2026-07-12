@@ -243,7 +243,7 @@ marchyo.theme = {
 };
 ```
 
-Stylix `base16Scheme` is hardcoded in `modules/nixos/default.nix`: `nord` for dark, `nord-light` for light. To customize the scheme, override `stylix.base16Scheme` directly in your config.
+Stylix `base16Scheme` is derived from the Jylhis Design System `tokens.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Roast` for dark, `Jylhis Paper` for light), wired up in `modules/generic/stylix.nix`. To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a `base16-schemes` YAML) or override `stylix.base16Scheme` directly.
 
 ### Default Applications
 

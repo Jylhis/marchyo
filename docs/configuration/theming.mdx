@@ -11,7 +11,7 @@ Marchyo uses [Stylix](https://github.com/danth/stylix) for consistent theming ac
 |--------|------|---------|-------------|
 | `marchyo.theme.enable` | `bool` | `true` | Enable the Stylix theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
-| `marchyo.theme.scheme` | `string`, `attrs`, or `null` | `null` | **(Not yet implemented)** Color scheme to use |
+| `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a `base16-schemes` name) |
 
 ## Basic usage
 
@@ -22,19 +22,23 @@ marchyo.theme = {
 };
 ```
 
-<Warning>
-The `marchyo.theme.scheme` option is defined but not yet implemented. Setting it will have no effect.
-The theme is currently determined solely by the `variant` option.
-</Warning>
-
 ## Color schemes
 
-The theme is determined by `marchyo.theme.variant`:
+By default the theme is the [Jylhis Design System](https://github.com/jylhis/design) palette, derived from its `tokens.json`:
 
-| Variant | Scheme used |
-|---------|-------------|
-| `"dark"` | `nord` |
-| `"light"` | `nord-light` |
+| Variant | Palette |
+|---------|---------|
+| `"dark"` | Jylhis Roast |
+| `"light"` | Jylhis Paper |
+
+To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file shipped by the `base16-schemes` package:
+
+```nix
+marchyo.theme = {
+  variant = "dark";
+  scheme = "gruvbox-dark-medium"; # any base16-schemes name, e.g. "nord"
+};
+```
 
 ## Light mode
 
