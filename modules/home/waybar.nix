@@ -47,6 +47,12 @@ let
       padding: 0 10px;
     }
 
+    /* The upstream CSS styles #hyprland-language, but waybar's hyprland/language
+       module renders as #language — apply the intended text-muted here. */
+    #language {
+      color: ${palette.hex."text-muted"};
+    }
+
     #wireplumber.muted,
     #network.disconnected {
       color: ${palette.hex."text-faint"};
