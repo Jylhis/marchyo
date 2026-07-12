@@ -10,10 +10,11 @@ let
   # is always the Roast (dark) bg: the theme's PNG assets (logo, entry, lock)
   # are drawn for a dark backdrop, so a Paper variant needs new assets first.
   tokens = lib.importJSON "${jylhis-design-src}/tokens.json";
+  # tokens.json emits lowercase hex (e.g. "#1a1714").
   bgHex = lib.removePrefix "#" tokens.palette.bg.dark;
 
-  # Pure hex-string → int (e.g. "1a" → 26). Avoids depending on any specific
-  # nixpkgs hex helper; built only from stringToCharacters/foldl'.
+  # Pure hex → int for one color channel. Nixpkgs ships no standard hex parser,
+  # so map each nibble through a lookup and combine the two digits of the pair.
   hexDigits = {
     "0" = 0;
     "1" = 1;
@@ -32,13 +33,11 @@ let
     e = 14;
     f = 15;
   };
-  hexToInt =
-    s:
-    lib.foldl' (acc: ch: acc * 16 + hexDigits.${ch}) 0 (
-      lib.stringToCharacters (lib.toLower s)
-    );
+  hexPairToInt =
+    pair:
+    16 * hexDigits.${builtins.substring 0 1 pair} + hexDigits.${builtins.substring 1 1 pair};
 
-  channel = offset: hexToInt (builtins.substring offset 2 bgHex);
+  channel = offset: hexPairToInt (builtins.substring offset 2 bgHex);
   channelFloat = offset: toString (channel offset / 255.0);
 in
 stdenvNoCC.mkDerivation {
