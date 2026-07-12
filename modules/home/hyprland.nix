@@ -182,9 +182,12 @@ in
           border_size = 2;
 
           # Solid accent border on the active pane, dim border on the rest —
-          # mirrors a tmux active/inactive pane divider (no gradient).
+          # mirrors a tmux active/inactive pane divider (no gradient). The
+          # inactive border uses the border-strong token, matching the design
+          # system's Hyprland variant files (text-faint is an ink token and
+          # reads brighter than a border should on Roast).
           "col.active_border" = lib.mkForce (rgba palette.hex.accent "ff");
-          "col.inactive_border" = lib.mkForce (rgba palette.hex."text-faint" "ff");
+          "col.inactive_border" = lib.mkForce (rgba palette.hex."border-strong" "ff");
 
           resize_on_border = true;
           hover_icon_on_border = true;

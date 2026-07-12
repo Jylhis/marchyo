@@ -39,7 +39,9 @@ in
         background-color = palette.hex.bg;
         text-color = palette.hex.text;
         border-color = palette.hex.accent;
-        progress-color = "over ${palette.hex.surface}";
+        # Accent progress, as in the upstream mako config — surface-on-bg was
+        # too low-contrast to read as a progress bar.
+        progress-color = "over ${palette.hex.accent}";
 
         "urgency=low".border-color = palette.hex."text-faint";
 

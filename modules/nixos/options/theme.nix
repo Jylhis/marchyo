@@ -19,9 +19,10 @@ in
       example = "light";
       description = ''
         Theme variant preference (light or dark).
-        Used to select default color scheme:
-        - "dark" defaults to nord
-        - "light" defaults to nord-light
+        Selects the Jylhis Design System palette derived from tokens.json:
+        - "dark" uses Jylhis Roast
+        - "light" uses Jylhis Paper
+        Override with `marchyo.theme.scheme` to use a base16-schemes YAML instead.
       '';
     };
 
