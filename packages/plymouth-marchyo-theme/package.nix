@@ -11,7 +11,34 @@ let
   # are drawn for a dark backdrop, so a Paper variant needs new assets first.
   tokens = lib.importJSON "${jylhis-design-src}/tokens.json";
   bgHex = lib.removePrefix "#" tokens.palette.bg.dark;
-  channel = offset: lib.fromHexString (builtins.substring offset 2 bgHex);
+
+  # Pure hex-string → int (e.g. "1a" → 26). Avoids depending on any specific
+  # nixpkgs hex helper; built only from stringToCharacters/foldl'.
+  hexDigits = {
+    "0" = 0;
+    "1" = 1;
+    "2" = 2;
+    "3" = 3;
+    "4" = 4;
+    "5" = 5;
+    "6" = 6;
+    "7" = 7;
+    "8" = 8;
+    "9" = 9;
+    a = 10;
+    b = 11;
+    c = 12;
+    d = 13;
+    e = 14;
+    f = 15;
+  };
+  hexToInt =
+    s:
+    lib.foldl' (acc: ch: acc * 16 + hexDigits.${ch}) 0 (
+      lib.stringToCharacters (lib.toLower s)
+    );
+
+  channel = offset: hexToInt (builtins.substring offset 2 bgHex);
   channelFloat = offset: toString (channel offset / 255.0);
 in
 stdenvNoCC.mkDerivation {
