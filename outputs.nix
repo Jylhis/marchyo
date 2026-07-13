@@ -526,7 +526,10 @@ in
   mkPackages =
     { system }:
     let
-      pkgs = import nixpkgs {
+      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it) — same
+      # per-system selector as legacyPackages/the builders.
+      selectedNixpkgs = (inputsFor system).nixpkgs;
+      pkgs = import selectedNixpkgs {
         inherit system;
         overlays = overlayList;
       };
@@ -534,7 +537,7 @@ in
     {
       inherit (pkgs) marchyo-wallpapers marchyo-cli;
     }
-    // nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
       inherit (pkgs)
         hyprmon
         plymouth-marchyo-theme
@@ -542,14 +545,16 @@ in
         pi
         ;
     }
-    // nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
       inherit (pkgs) wallpapper;
     };
 
   mkDocs =
     { system }:
     let
-      pkgs = nixpkgs.legacyPackages.${system};
+      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it).
+      selectedNixpkgs = (inputsFor system).nixpkgs;
+      pkgs = selectedNixpkgs.legacyPackages.${system};
       # NixOS module eval is always x86_64-linux regardless of build host.
       nixosConfig = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
@@ -594,7 +599,8 @@ in
   mkFormatter =
     { system }:
     let
-      pkgs = nixpkgs.legacyPackages.${system};
+      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it).
+      pkgs = (inputsFor system).nixpkgs.legacyPackages.${system};
     in
     treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
 
