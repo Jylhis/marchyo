@@ -68,7 +68,7 @@ in
         ", Print, Screenshot area/window, exec, grimblast --notify --freeze copysave area"
 
         # Screenshot active window
-        "SHIFT, Print, Screenshot active window, exec, grimblast --notify --cursor copysave active"
+        "SHIFT, Print, Screenshot active window, exec, grimblast --notify copysave active"
 
         # Screenshot current output (fullscreen)
         "CTRL, Print, Screenshot current screen, exec, grimblast --notify copysave output"
