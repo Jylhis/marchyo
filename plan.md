@@ -291,41 +291,78 @@ runtime ergonomics *without* abandoning the declarative source of truth.
 
 ## Phase 3 — CLI & runtime UX layer (architectural)
 
+> **Scope decided 2026-07-17** (omarchy-CLI gap analysis + user scope choices):
+> match omarchy's *ergonomics* across all runtime-toggle groups and all UX
+> helper groups, ship full runtime theme switching, and give install/toggle a
+> unified runtime-first model. **Language correction:** the real
+> `packages/marchyo-cli/` is a **Bun + TypeScript + Ink** monorepo (`core/`,
+> `user-cli/`, `dev-cli/`), NOT the Go binary earlier drafts assumed. It is
+> already fully wired (overlay, `outputs.nix` `mkPackages`, real `outputHash`,
+> `marchyo.cli.enable` default `true`, `cli-state.json`/`marchyoCliState`).
+
+### F3.0 — Unified runtime-first change model (design foundation)
+Every *mutating* command follows one three-mode contract (generalizing the
+existing `theme set --rebuild`):
+- **default = runtime:** apply live (`hyprctl`/`systemctl --user`/`hyprsunset`/
+  `makoctl`/symlink swap) + persist an ephemeral override under
+  `~/.local/state/marchyo/runtime.json` so it survives `hyprctl reload`. Instant,
+  no rebuild.
+- **`--apply` (persist):** additionally write the key into the declarative
+  drop-in `/etc/marchyo/cli-state.json` (existing `marchyoCliState` → `marchyo.*`
+  at `mkDefault`) and run `nixos-rebuild`. Survives reboot; flake config wins.
+- **`--revert` (reverse):** undo — drop the runtime override (reload declarative
+  value) and/or delete the persisted key + rebuild. Symmetric with `--apply`.
+- **New core helpers:** `core/src/runtime-state.ts`, `core/src/apply.ts`,
+  `core/src/hypr.ts`; reuse existing `state.ts`/`flake.ts`/`nix.ts`/`output.ts`.
+
 ### F3.1 — Unified `marchyo` CLI + system management
 - **Goal:** One entrypoint (`marchyo`) for system mgmt + UX, replacing the
   scattered `just` recipes for end users.
-- **Subcommands:**
-  - **System:** `rebuild`, `upgrade` (update inputs + rebuild), `update`,
-    `rollback`, `gc`, `diff` (wraps `nixos-rebuild`, flake ops, generations,
-    and the existing `modules/nixos/update-diff.nix`).
-  - **UX:** `theme set|list` (F3.3), `toggle <name>` (F3.2), `menu` (launcher
-    tree), `cheatsheet` (F2.4), `webapp add|rm` (F1.9), `ocr`, `record`.
-- **Mechanism:** Go binary in `packages/marchyo-cli/` (script-lang pref #1),
-  exposed via overlay + installed when `marchyo.cli.enable`.
-- **⚠ Reality:** `packages/marchyo-cli/` already exists but holds only `.devenv/`
-  bootstrap — no `package.nix`/derivation. **Flesh out the stub**, don't create.
-- **Files:** flesh out `packages/marchyo-cli/`; overlay entry in `overlay.nix`;
-  option in a new `cli.nix`; package wired in `outputs.nix` `mkPackages`.
+- **Implemented today:** `status`, `theme get`, `theme set <dark|light>
+  [--rebuild]`, `rebuild [-n]`; global flags `-F/--format`, `--json`, `--color`,
+  `--no-color`, `--plain`, `--no-animation`, `--no-input`, `-q`, `-v`.
+- **System subcommands (declarative wrappers):** `rebuild` ✓, `upgrade` (update
+  inputs + rebuild), `update`, `rollback`, `gc`, `diff` (reuse
+  `modules/nixos/update-diff.nix`), `status` ✓, `debug` (diagnostics bundle ←
+  omarchy debug/upload-log).
+- **UX subcommands:** `theme` (F3.3), `toggle` (F3.2), `capture`, `menu`/
+  `keybindings`/`launch`/`focus-or-launch`, `power`/`session`, `font`, `media`
+  (see F3.2 for the full surface).
+- **Mechanism:** Bun/TS/Ink monorepo (already wired). Fix the hardcoded
+  `nixosConfigurations.x86_64` in `options-eval.ts:24`.
 - **Effort:** L. **Notes:** for declarative subcommands (`upgrade`,`rollback`)
-  this is a thin, safe wrapper. See F3.2 for the install/toggle tension.
+  this is a thin, safe wrapper.
 
-### F3.2 — CLI feature toggle + package install + runtime toggles
-- **Two distinct mechanisms — keep them separate:**
-  1. **Runtime toggles** (no rebuild): gaps, transparency, idle, nightlight,
-     touchpad, waybar, screensaver — pure `hyprctl`/`systemctl`/`hyprsunset`
-     calls with persisted state under `~/.local/state/marchyo/` so they survive
-     `hyprctl reload` (mirrors omarchy's persistent-toggle system).
-  2. **Declarative feature toggle / package install** (needs rebuild):
-     `marchyo toggle gaming on` / `marchyo install <pkg>` **edits a
-     user-owned drop-in** (`~/.config/marchyo/local.nix`, imported by the user's
-     flake) then runs `nixos-rebuild`. The flake/config remains the source of
-     truth; the CLI just edits + rebuilds.
-- **Files:** part of `packages/marchyo-cli/`; document the `local.nix` drop-in
-  convention in `AGENTS.md` + `templates/workstation/`.
-- **Effort:** M (runtime) + M (declarative editing).
-- **Notes / decision:** the declarative-edit approach is the honest way to give
-  omarchy-like `install`/`toggle` ergonomics without a mutable system. Flag
-  clearly that `install`/`toggle` reconfigure + rebuild (not instant).
+### F3.2 — Full command surface: runtime toggles, helpers, declarative ergonomics
+Scope = match omarchy across all groups the user selected.
+
+- **Runtime toggles** (F3.0 contract, `toggle <name> [on|off] [--apply] [--revert]`):
+  - Display/visual: `gaps`, `transparency`, `nightlight`, `waybar`
+  - Input: `touchpad`, `touchscreen`
+  - Session/idle: `idle`, `screensaver`, `notifications` (mako silence), `suspend`
+  - `hybrid-gpu` (hardware-specific; runtime where safe, else `--apply`-only)
+- **Capture** (CLI wraps plan F2.1 OCR + F2.3 record/picker): `capture
+  screenshot|record [--audio none|desktop|mic]|ocr|color`.
+- **Menu + launchers:** `menu` (root launcher tree via fuzzel/vicinae),
+  `keybindings` (cheatsheet generated from `hyprland.nix` `bindd`, F2.4),
+  `launch <app>` / `focus-or-launch <app>` (single-instance ← omarchy launch-or-focus).
+- **Power/session:** `lock`, `logout`, `reboot`, `shutdown`, `suspend`,
+  `powerprofile get|list|set` (power-profiles-daemon).
+- **Media + font:** `transcode <file> [--ascii]` (ffmpeg), `font list|current|set`
+  (runtime font switch through themed surfaces, `--apply` persists).
+- **Declarative ergonomics (`--apply`-only — no runtime path):** `install
+  <feature>` / `remove <feature>` and `toggle <feature>` for coarse flags
+  (gaming, tailscale, localsend…) edit `cli-state.json` then rebuild; `webapp add
+  <url>` / `webapp rm` (F1.9); `security enroll fido2|fingerprint` (F1.6).
+- **Out of scope (Nix subsumes):** omarchy `update`-engine internals, `reinstall`,
+  `migrate`, `channel`/`branch`, `refresh-*` config regen, `hw-*` device fixes
+  (→ nixos-hardware, F0.2), `drive`, `tz-select`, `version-pkgs`.
+- **Files:** command modules under `packages/marchyo-cli/packages/user-cli/src/
+  commands/`; supporting modules reuse F2.1 (`ocr.nix`), F2.3 (capture), F2.4
+  (`cheatsheet.nix`), F1.9 (`webapps.nix`); feature flags surfaced via
+  `cli-state.json`.
+- **Effort:** L. **Notes:** `install`/`toggle <feature>` reconfigure + rebuild
+  (not instant); runtime toggles are instant.
 
 ### F3.3 — Runtime theme switching
 - **Goal:** Switch among multiple themes at runtime without a full rebuild
