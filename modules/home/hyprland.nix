@@ -53,6 +53,7 @@ let
   aiToolingEnabled = (import ../../lib/ai.nix osConfig).featureEnabled "tooling" true;
 
   dictationEnabled = ((osConfig.marchyo or { }).dictation or { }).enable or false;
+  dictationToggleKey = ((osConfig.marchyo or { }).dictation or { }).toggleKey or "SUPER CTRL, X";
   dictationStatusWindow =
     dictationEnabled && (((osConfig.marchyo or { }).dictation or { }).statusWindow or true);
 
@@ -403,8 +404,8 @@ in
         ++ lib.optionals aiToolingEnabled [
           "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e marchyo-aichat"
         ]
-        ++ lib.optionals dictationEnabled [
-          "SUPER, H, Dictation toggle, exec, voxtype record toggle"
+        ++ lib.optionals (dictationEnabled && dictationToggleKey != null) [
+          "${dictationToggleKey}, Dictation toggle, exec, voxtype record toggle"
         ]
         ++ lib.optionals dictationStatusWindow [
           "SUPER SHIFT, H, Dictation status, exec, $terminal --class=org.omarchy.voxtype -e voxtype status --follow"

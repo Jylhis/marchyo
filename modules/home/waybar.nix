@@ -255,6 +255,14 @@ in
               exec = "${pkgs.voxtype}/bin/voxtype status --format json --follow --icon-theme nerd-font";
               return-type = "json";
               tooltip = true;
+              # omarchy binds left/right-click to a model picker and a config
+              # editor; both are meaningless here (the model comes from
+              # marchyo.dictation.model and the config is a read-only /nix/store
+              # symlink), so we map the clicks to the useful equivalents: toggle
+              # recording, and open the floating status window (same command and
+              # --class as the Super+Shift+H bind).
+              on-click = "${pkgs.voxtype}/bin/voxtype record toggle";
+              on-click-right = "${terminal} --class=org.omarchy.voxtype -e ${pkgs.voxtype}/bin/voxtype status --follow";
             };
           }
         )
