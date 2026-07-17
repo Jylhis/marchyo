@@ -33,21 +33,32 @@ let
 
   slug = name: lib.toLower (builtins.replaceStrings [ " " "/" ] [ "-" "-" ] name);
 
+  appExec = app: "${browserCmd} --app=${app.url}";
+
   mkEntry = app: {
     name = "marchyo-webapp-${slug app.name}";
     value = {
       inherit (app) name;
       genericName = "Web App";
-      exec = "${browserCmd} --app=${app.url}";
+      exec = appExec app;
       icon = if app.icon != null then app.icon else "applications-internet";
       terminal = false;
       categories = [ "Network" ];
     };
   };
+
+  # Hyprland launch binds for apps that declare a key (omarchy-style). Reuses
+  # the same resolved browser command as the .desktop entries.
+  keyedApps = builtins.filter (app: (app.key or null) != null) apps;
+  mkBind = app: "${app.modifiers}, ${app.key}, ${app.name}, exec, ${appExec app}";
 in
 {
   config = lib.mkIf enabled {
     xdg.desktopEntries = builtins.listToAttrs (map mkEntry apps);
     home.packages = lib.optional needsChromium pkgs.chromium;
+
+    # Merges with the bindd lists from hyprland.nix / screenshot.nix (home-manager
+    # concatenates the list); order is irrelevant to Hyprland.
+    wayland.windowManager.hyprland.settings.bindd = map mkBind keyedApps;
   };
 }
