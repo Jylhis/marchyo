@@ -169,11 +169,12 @@ exits." Two specific surfaces are uncovered:
   pointing at the canonical mapping would be welcome.
 
 - **Plymouth theme** — there's no `platforms/plymouth/...` directory.
-  Marchyo ships a hand-made theme (`packages/plymouth-marchyo-theme/`)
-  with PNG assets baked at the marchyo level. A reference plymouth
-  theme — even just colored text + spinner — generated from `tokens.json`
-  would let downstream consumers cover the entire boot path with one
-  cohesive look.
+  Marchyo ships a theme (`packages/plymouth-marchyo-theme/`) whose logo,
+  password-dialog chrome, progress bar and background are all generated or
+  recolored from `tokens.json` at build time (per `variant`), but this is
+  hand-wired at the marchyo level. A reference plymouth theme — even just
+  colored text + spinner — generated from `tokens.json` would let downstream
+  consumers cover the entire boot path with one cohesive look.
 
 ### 7. Tuigreet / regreet (greeter) reference snippet
 

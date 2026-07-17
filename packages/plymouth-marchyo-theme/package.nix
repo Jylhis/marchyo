@@ -2,18 +2,33 @@
   stdenvNoCC,
   lib,
   jylhis-design-src,
-  ...
+  resvg,
+  imagemagick,
+  # Theme variant to bake into the splash. Plymouth runs at boot before any
+  # runtime theme switch, so the assets are rendered once for whichever variant
+  # the system is configured with (marchyo.theme.variant, wired in
+  # modules/nixos/plymouth.nix). "dark" = Jylhis Roast, "light" = Jylhis Paper.
+  variant ? "dark",
 }:
 let
-  # Splash background comes from the Jylhis Design System bg token (tokens.json
-  # is the source of truth — see modules/generic/jylhis-palette.nix). The splash
-  # is always the Roast (dark) bg: the theme's PNG assets (logo, entry, lock)
-  # are drawn for a dark backdrop, so a Paper variant needs new assets first.
-  tokens = lib.importJSON "${jylhis-design-src}/tokens.json";
-  # tokens.json emits lowercase hex (e.g. "#1a1714").
-  bgHex = lib.removePrefix "#" tokens.palette.bg.dark;
+  # All colors come from the Jylhis Design System tokens.json (the same source
+  # of truth as modules/generic/jylhis-palette.nix). Every asset is generated
+  # or recolored at build time, so a variant flip retints the whole splash.
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens.json");
+  key = if variant == "light" then "light" else "dark";
+  color = name: tokens.palette.${name}.${key};
 
-  # Pure hex → int for one color channel. Nixpkgs ships no standard hex parser,
+  # Semantic role -> token mapping for the splash surfaces.
+  logoColor = color "brand"; # copper wordmark (large brand mark)
+  entryColor = color "border-strong"; # password field outline
+  lockColor = color "text-muted"; # padlock glyph
+  bulletColor = color "text"; # password bullets
+  trackColor = color "surface"; # progress-bar track
+  barColor = color "accent"; # progress-bar fill
+
+  bgHex = lib.removePrefix "#" (color "bg");
+
+  # Pure hex -> int for one color channel. Nixpkgs ships no standard hex parser,
   # so map each nibble through a lookup and combine the two digits of the pair.
   hexDigits = {
     "0" = 0;
@@ -41,27 +56,64 @@ let
 in
 stdenvNoCC.mkDerivation {
   pname = "plymouth-marchyo-theme";
-  version = "v3.0.0";
+  version = "v4.0.0";
   src = ./.;
 
-  dontBuild = true;
+  nativeBuildInputs = [
+    resvg
+    imagemagick
+  ];
+
   dontConfigure = true;
+
+  buildPhase = ''
+    runHook preBuild
+
+    theme=share/plymouth/themes/marchyo
+    mkdir -p "$theme"
+
+    # Logo: rasterize the reordered "marchyo" wordmark (logo.svg) in brand
+    # copper at the same 800x188 the old static PNG shipped at.
+    sed 's/@fill@/${logoColor}/' logo.svg > marchyo-logo.svg
+    resvg --width 800 marchyo-logo.svg "$theme/logo.png"
+
+    # Password-dialog chrome: keep the omarchy glyph shapes but flatten their
+    # RGB to a palette color, preserving the original alpha (anti-aliasing).
+    magick entry.png  -channel RGB -fill "${entryColor}"  -colorize 100 "$theme/entry.png"
+    magick lock.png   -channel RGB -fill "${lockColor}"   -colorize 100 "$theme/lock.png"
+    magick bullet.png -channel RGB -fill "${bulletColor}" -colorize 100 "$theme/bullet.png"
+
+    # Progress bar: solid palette fills at the original 300x10 geometry.
+    magick -size 300x10 xc:"${trackColor}" "$theme/progress_box.png"
+    magick -size 300x10 xc:"${barColor}"   "$theme/progress_bar.png"
+
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
-    mkdir -p $out/share/plymouth/themes/marchyo
-    cp * $out/share/plymouth/themes/marchyo
-    find $out/share/plymouth/themes/ -name \*.plymouth -exec sed -i "s@\/usr\/@$out\/@" {} \;
-    substituteInPlace $out/share/plymouth/themes/marchyo/marchyo.script \
+
+    theme=$out/share/plymouth/themes/marchyo
+    mkdir -p "$theme"
+    cp -r share/plymouth/themes/marchyo/* "$theme"/
+
+    cp marchyo.plymouth marchyo.script "$theme"/
+    substituteInPlace "$theme/marchyo.plymouth" \
+      --replace-fail "@bgHex@" "${bgHex}"
+    substituteInPlace "$theme/marchyo.script" \
       --replace-fail "@bgR@" "${channelFloat 0}" \
       --replace-fail "@bgG@" "${channelFloat 2}" \
       --replace-fail "@bgB@" "${channelFloat 4}"
-    substituteInPlace $out/share/plymouth/themes/marchyo/marchyo.plymouth \
-      --replace-fail "@bgHex@" "${bgHex}"
+    find "$out/share/plymouth/themes/" -name \*.plymouth -exec sed -i "s@\/usr\/@$out\/@" {} \;
+
     runHook postInstall
   '';
+
   meta = {
-    description = "Marchyo splash screen. Forked from https://github.com/basecamp/marchyo/tree/2df8c5f7e0a2aafb8c9aacb322408d2ed7682ea5";
+    # Logo generated from the omarchy wordmark (basecamp/omarchy) with the
+    # leading "o" moved to the end; every surface is themed from the Jylhis
+    # Design System tokens.json at build time (per variant). See the header.
+    description = "Marchyo Plymouth boot splash, generated and themed from Jylhis Design System tokens";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
