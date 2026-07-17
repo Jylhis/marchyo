@@ -15,6 +15,10 @@ let
   cfg = config.marchyo.screenshot;
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
+
+  # Shared exec strings, bound on both the Print key and Super+S (see below).
+  sattyCmd = "grimblast --freeze save area - | satty --filename - --output-filename ${cfg.directory}/$(date '+%Y-%m-%d_%H-%M-%S')_annotated.png";
+  ocrCmd = "grimblast --freeze save area - | tesseract - - | wl-copy";
 in
 {
   options.marchyo.screenshot = {
@@ -66,23 +70,29 @@ in
       bindd = [
         # Screenshot area/window selection (interactive)
         ", Print, Screenshot area/window, exec, grimblast --notify --freeze copysave area"
+        "SUPER, S, Screenshot area/window, exec, grimblast --notify --freeze copysave area"
 
         # Screenshot active window
         "SHIFT, Print, Screenshot active window, exec, grimblast --notify copysave active"
+        "SUPER CTRL, S, Screenshot active window, exec, grimblast --notify copysave active"
 
         # Screenshot current output (fullscreen)
         "CTRL, Print, Screenshot current screen, exec, grimblast --notify copysave output"
+        "SUPER ALT, S, Screenshot current screen, exec, grimblast --notify copysave output"
 
         # Screenshot all screens
         "ALT, Print, Screenshot all screens, exec, grimblast --notify copysave screen"
+        "SUPER CTRL ALT, S, Screenshot all screens, exec, grimblast --notify copysave screen"
       ]
       ++ lib.optionals cfg.enableAnnotation [
         # Screenshot with annotation
-        "SUPER SHIFT, Print, Screenshot with annotation, exec, grimblast --freeze save area - | satty --filename - --output-filename ${cfg.directory}/$(date '+%Y-%m-%d_%H-%M-%S')_annotated.png"
+        "SUPER SHIFT, Print, Screenshot with annotation, exec, ${sattyCmd}"
+        "SUPER SHIFT, S, Screenshot with annotation, exec, ${sattyCmd}"
       ]
       ++ lib.optionals cfg.enableOcr [
         # OCR: select a region, extract text to clipboard
-        "SUPER SHIFT, O, OCR region to clipboard, exec, grimblast --freeze save area - | tesseract - - | wl-copy"
+        "SUPER SHIFT, O, OCR region to clipboard, exec, ${ocrCmd}"
+        "SUPER CTRL SHIFT, S, OCR region to clipboard, exec, ${ocrCmd}"
       ];
 
       # Environment variable for grimblast to use the correct directory
