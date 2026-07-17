@@ -1,9 +1,12 @@
 # Push-to-talk dictation via voxtype (Whisper). Wraps the upstream
 # home-manager `services.voxtype` module: it writes ~/.config/voxtype/config.toml
-# and runs the `voxtype` user service. Recording is driven from Hyprland
-# (Super+H -> `voxtype record toggle`, wired in modules/home/hyprland.nix), so
-# the daemon's built-in evdev hotkey stays disabled. Gated on
-# marchyo.dictation.enable; Linux-only (Wayland dictation).
+# and runs the `voxtype` user service. Recording is driven two ways (omarchy
+# parity): the daemon's evdev push-to-talk hotkey (hold F9 by default; see
+# marchyo.dictation.pushToTalk) and a Hyprland `voxtype record toggle` bind
+# (Super+Ctrl+X by default; see marchyo.dictation.toggleKey, wired in
+# modules/home/hyprland.nix). The evdev hotkey needs the user in the `input`
+# group, added by modules/nixos/dictation.nix. Gated on marchyo.dictation.enable;
+# Linux-only (Wayland dictation).
 {
   lib,
   pkgs,
@@ -39,8 +42,19 @@ in
         # Required for `record toggle` / `status` to share daemon state.
         state_file = "auto";
         engine = "whisper";
-        # Driven by the Hyprland Super+H bind, not the daemon's evdev hotkey.
-        hotkey.enabled = false;
+        # Daemon evdev push-to-talk hotkey (hold F9 by default). Disabling it via
+        # marchyo.dictation.pushToTalk.enable = false leaves only the Hyprland
+        # toggle bind (`voxtype record toggle`), which needs no /dev/input access.
+        hotkey =
+          if (cfg.pushToTalk.enable or true) then
+            {
+              enabled = true;
+              inherit (cfg.pushToTalk) key mode;
+            }
+          else
+            {
+              enabled = false;
+            };
         audio = {
           device = "default";
           sample_rate = 16000; # Whisper expects 16 kHz

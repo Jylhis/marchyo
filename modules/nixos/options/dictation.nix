@@ -6,10 +6,63 @@ in
   options.marchyo.dictation = {
     enable = lib.mkEnableOption ''
       push-to-talk voice dictation (voxtype + Whisper) for the Wayland desktop.
-      Runs the voxtype daemon as a user service and binds Super+H under Hyprland
-      to toggle recording; transcribed text is typed at the cursor. Requires a
-      microphone. The first recording downloads the Whisper model (~1.5 GB)
-      unless preloadModel pulls it at activation time'';
+      Runs the voxtype daemon as a user service. By default recording is driven
+      by holding F9 (the daemon's evdev push-to-talk hotkey, see pushToTalk) and
+      can also be toggled with Super+Ctrl+X under Hyprland (see toggleKey);
+      transcribed text is typed at the cursor. Requires a microphone. The
+      push-to-talk hotkey adds dictation users to the `input` group so the daemon
+      can read /dev/input (see modules/nixos/dictation.nix). The first recording
+      downloads the Whisper model (~1.5 GB) unless preloadModel pulls it at
+      activation time'';
+
+    pushToTalk = {
+      enable = lib.mkEnableOption "the daemon's evdev push-to-talk hotkey" // {
+        default = true;
+        description = ''
+          Enable voxtype's built-in evdev hotkey (hold `pushToTalk.key` to record,
+          release to transcribe). This is the omarchy-style "hold F9 to dictate"
+          interaction. Enabling it adds dictation users to the `input` group so the
+          daemon can read /dev/input globally - a real privilege (any process the
+          user runs can then observe keystrokes). Set false to rely only on the
+          Hyprland `toggleKey` bind (`voxtype record toggle`), which needs no group
+          membership.
+        '';
+      };
+
+      key = mkOption {
+        type = types.str;
+        default = "F9";
+        description = ''
+          evdev key name held to record when `pushToTalk.enable` is set. Must be a
+          valid Linux evdev key (e.g. "F9", "SCROLLLOCK", "PAUSE", "RIGHTALT",
+          "F13"-"F24"), or a numeric keycode with a source prefix (e.g. "WEV_234").
+        '';
+      };
+
+      mode = mkOption {
+        type = types.enum [
+          "push_to_talk"
+          "toggle"
+        ];
+        default = "push_to_talk";
+        description = ''
+          Behavior of the daemon hotkey. "push_to_talk" records while `key` is held
+          and transcribes on release; "toggle" starts on the first press and stops
+          on the next.
+        '';
+      };
+    };
+
+    toggleKey = mkOption {
+      type = types.nullOr types.str;
+      default = "SUPER CTRL, X";
+      example = "SUPER, H";
+      description = ''
+        Hyprland bind spec ("MODS, key") wired to `voxtype record toggle`, matching
+        omarchy's Super+Ctrl+X toggle. Drives the same daemon state as the
+        push-to-talk hotkey. Set to null to bind no compositor toggle.
+      '';
+    };
 
     model = mkOption {
       type = types.str;
