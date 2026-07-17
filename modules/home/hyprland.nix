@@ -76,6 +76,17 @@ let
     spotify = "spotify";
   };
 
+  # GUI editor launch commands, keyed by marchyo.defaults.editor. jotain uses its
+  # own `jotain-visual` wrapper (emacsclient --create-frame with a fresh-Emacs
+  # --alternate-editor fallback) — the same command marchyo sets as $VISUAL.
+  editorHyprlandCommands = {
+    jotain = "jotain-visual";
+    emacs = "emacsclient -c -a emacs";
+    vscode = "code";
+    vscodium = "codium";
+    zed = "zed";
+  };
+
   browserCmd =
     let
       b = marchyoDefaults.browser or "google-chrome";
@@ -93,6 +104,12 @@ let
       m = marchyoDefaults.musicPlayer or "spotify-player";
     in
     if m == null then "xdg-open" else musicHyprlandCommands.${m};
+
+  editorCmd =
+    let
+      e = marchyoDefaults.editor or "jotain";
+    in
+    if e == null then "xdg-open" else editorHyprlandCommands.${e};
 
 in
 {
@@ -117,6 +134,7 @@ in
         "$fileManager" = lib.mkDefault fileManagerCmd;
         "$messenger" = lib.mkDefault "signal-desktop";
         "$music" = lib.mkDefault musicCmd;
+        "$editor" = lib.mkDefault editorCmd;
         "$passwordManager" = lib.mkDefault "1password";
         "$webapp" = lib.mkDefault "$browser --app";
         "$terminal" = lib.mkDefault "ghostty";
@@ -296,7 +314,7 @@ in
           "SUPER, F, File manager, exec, $fileManager"
           "SUPER, B, Web browser, exec, $browser"
           "SUPER, M, Music player, exec, $music"
-          "SUPER, E, Emacs, exec, emacsclient -c -a emacs"
+          "SUPER, E, Editor, exec, $editor"
           "SUPER, O, Obsidian, exec, $notes"
           "SUPER, G, Messenger, exec, $messenger"
           "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1password)$ || $passwordManager"
