@@ -32,6 +32,14 @@
       ]
     },
     {
+      "group": "Using Marchyo",
+      "pages": [
+        "usage/hotkeys",
+        "usage/updating",
+        "usage/troubleshooting"
+      ]
+    },
+    {
       "group": "Guides",
       "pages": [
         "guides/workstation-template",

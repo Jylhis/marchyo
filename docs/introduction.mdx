@@ -52,4 +52,4 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 
 ## All options live under `marchyo.*`
 
-Every custom option is defined in a single file (`modules/nixos/options.nix`) under the `marchyo.*` namespace. Browse the [Configuration](/configuration/feature-flags) section for the full reference.
+Every custom option lives under the `marchyo.*` namespace, declared across the auto-discovered files in `modules/nixos/options/` (one file per logical namespace). Browse the [Configuration](/configuration/feature-flags) section for the full reference.
