@@ -37,7 +37,27 @@ remains pure. End-user flakes opt in by reading the JSON sidecar themselves:
 Then rebuild with `nixos-rebuild switch --impure --flake ...`. The
 `marchyo rebuild` CLI command passes `--impure` automatically.
 
-## First-cut commands
+## Change model: runtime-first with `--apply` / `--revert`
+
+Every *mutating* command follows one three-mode contract (generalizing the
+current `theme set --rebuild`):
+
+- **default = runtime** — apply live (`hyprctl`, `systemctl --user`,
+  `hyprsunset`, `makoctl`, symlink swap) and persist an ephemeral override under
+  `~/.local/state/marchyo/runtime.json` so it survives `hyprctl reload`. Instant,
+  no rebuild.
+- **`--apply`** — additionally write the key into `/etc/marchyo/cli-state.json`
+  (the `marchyoCliState` → `marchyo.*` path, merged at `mkDefault`) and run
+  `nixos-rebuild`. Survives reboot; hand-written flake config still wins.
+- **`--revert`** — undo: drop the runtime override (reload the declarative
+  value) and/or delete the persisted key + rebuild.
+
+Declarative-only commands (`install`/`webapp`/`security`) have no runtime path —
+they always take the `--apply` route (edit `cli-state.json`, then rebuild).
+
+## Commands
+
+### Implemented today
 
 | Binary       | Command                                  | Purpose                                    |
 |--------------|------------------------------------------|--------------------------------------------|
@@ -47,6 +67,19 @@ Then rebuild with `nixos-rebuild switch --impure --flake ...`. The
 | `marchyo`    | `rebuild [-n,--dry-run]`                 | `nixos-rebuild switch --impure --flake`    |
 | `marchyoctl` | `scaffold module <name>`                 | New module + import + stub eval test       |
 | `marchyoctl` | `options search <q>`                     | Fuzzy-search `marchyo.*` option tree (TUI) |
+
+### Planned (omarchy-parity roadmap — see repo `plan.md` Phase 3)
+
+| Group        | Commands                                                                 |
+|--------------|--------------------------------------------------------------------------|
+| System       | `upgrade`, `update`, `rollback`, `gc`, `diff`, `debug`                    |
+| Theme        | `list`, `set <name> [--apply]`, `next`, `bg set\|next` (full runtime switch) |
+| Toggle       | `gaps`/`transparency`/`nightlight`/`waybar`/`touchpad`/`touchscreen`/`idle`/`screensaver`/`notifications`/`suspend`/`hybrid-gpu` `[on\|off] [--apply] [--revert]` |
+| Capture      | `screenshot`, `record [--audio none\|desktop\|mic]`, `ocr`, `color`      |
+| Menu         | `menu`, `keybindings`, `launch <app>`, `focus-or-launch <app>`           |
+| Power        | `lock`, `logout`, `reboot`, `shutdown`, `suspend`, `powerprofile get\|list\|set` |
+| Media/font   | `transcode <file> [--ascii]`, `font list\|current\|set`                  |
+| Declarative  | `install\|remove <feature>`, `toggle <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
 
 ## Standard flags (both binaries)
 
@@ -73,17 +106,19 @@ bun packages/user-cli/src/cli.tsx --help
 bun packages/dev-cli/src/cli.tsx --help
 ```
 
-## Nix packaging — known follow-up
+## Nix packaging
 
-`packages/marchyo-cli/package.nix` builds both binaries via `bun build --compile`.
-It uses a fixed-output derivation to vendor `node_modules` from `bun.lock`, with
-the hash currently set to `lib.fakeHash`. To finish wiring the package into CI:
+`packages/marchyo-cli/package.nix` builds both binaries via `bun build --compile`,
+vendoring `node_modules` from `bun.lock` through a fixed-output derivation (the
+`outputHash` is pinned to a real value). The package is wired end to end:
 
-1. Run `nix build .#legacyPackages.x86_64-linux.marchyo-cli` locally
-2. Replace `outputHash = lib.fakeHash;` in `package.nix` with the suggested hash
-3. Re-add `marchyo-cli` to `mkPackages` in `outputs.nix`
-4. Flip `marchyo.cli.enable = true` in the reference VM (`sharedNixosConfig`)
+- built in `overlay.nix` (`marchyo-cli = final.callPackage ...`);
+- exported from `outputs.nix` `mkPackages` (`packages.<system>.marchyo-cli`);
+- installed by `modules/nixos/cli.nix` when `marchyo.cli.enable` (**default
+  `true`**); options declared in `modules/nixos/options/cli.nix`; CLI-written
+  state merged back via `modules/nixos/cli-state.nix`;
+- available to developers through the devenv shell (`devenv.nix`).
 
-Until then, `marchyo.cli.enable` defaults to `true` for downstream consumers
-but is explicitly disabled in the marchyo flake's own reference configuration
-so CI's toplevel build doesn't try to materialize the placeholder hash.
+After changing dependencies, re-pin the hash: `nix build
+.#legacyPackages.x86_64-linux.marchyo-cli`, then update `outputHash` in
+`package.nix` with the suggested value.
