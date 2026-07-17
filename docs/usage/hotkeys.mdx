@@ -1,0 +1,123 @@
+---
+title: Keybindings & Navigation
+description: The Hyprland hotkeys shipped with the Marchyo desktop
+---
+
+The Marchyo desktop is keyboard-driven. Enabling `marchyo.desktop.enable` ships
+Hyprland with the keybindings below, plus the mako notification daemon, the
+vicinae launcher, cliphist clipboard history, and grimblast/satty/tesseract
+screenshots. `Super` is the primary modifier (the Windows/Command key).
+
+<Note>
+These binds are declared in `modules/home/hyprland.nix` (and screenshots in
+`modules/home/screenshot.nix`) — they are the source of truth. To change one,
+override the Home Manager `wayland.windowManager.hyprland.settings` in your own
+config rather than editing a dotfile at runtime.
+</Note>
+
+## Launching apps
+
+| Keys | Action |
+|------|--------|
+| `Super + Return` | Terminal (Ghostty) |
+| `Super + B` | Web browser |
+| `Super + F` | File manager |
+| `Super + R` | App launcher (vicinae) |
+| `Super + M` | Music player |
+| `Super + E` | Editor |
+| `Super + O` | Obsidian |
+| `Super + G` | Messenger |
+| `Super + /` | Password manager (focuses 1Password if open) |
+| `Super + A` | AI chat (only when `marchyo.ai.tooling` is enabled) |
+| `Super + .` | Emoji picker (vicinae) |
+| `Super + Shift + I` | Input-method config (fcitx5) |
+
+## Window management
+
+| Keys | Action |
+|------|--------|
+| `Super + W` | Close active window |
+| `Super + J` | Toggle split direction |
+| `Super + V` | Toggle floating |
+| `Super + P` | Toggle pseudo-tile |
+| `Super + ←/→/↑/↓` | Move focus |
+| `Super + Shift + ←/→/↑/↓` | Swap window in a direction |
+| `Alt + Tab` | Cycle windows on the workspace |
+| `Super + minus` / `Super + equal` | Resize active window horizontally |
+| `Super + Shift + minus` / `Super + Shift + equal` | Resize active window vertically |
+| `Super + Page_Up` | Full screen |
+| `Super + Ctrl + F` | Tiled full screen |
+| `Super + Alt + F` | Full width |
+| `Super + Left-drag` | Move window (mouse) |
+| `Super + Right-drag` | Resize window (mouse) |
+
+### Window grouping (tabbed/stacked)
+
+| Keys | Action |
+|------|--------|
+| `Super + Alt + G` | Toggle window grouping |
+| `Super + Alt + Shift + G` | Move window out of the group |
+| `Super + Alt + ←/→/↑/↓` | Move window into a group in that direction |
+| `Super + Alt + Tab` / `Super + Alt + Shift + Tab` | Next / previous window in group |
+
+## Workspaces & scratchpad
+
+| Keys | Action |
+|------|--------|
+| `Super + 1…5` | Switch to workspace (on the current monitor) |
+| `Super + Shift + 1…0` | Move active window to workspace 1–10 |
+| `Super + Shift + Alt + 1…0` | Move window there silently (don't follow) |
+| `Super + Tab` / `Super + Shift + Tab` | Next / previous workspace |
+| `Super + Ctrl + Tab` | Former workspace |
+| `Super + scroll` | Scroll through workspaces |
+| `Super + D` | Toggle the Drawer (scratchpad workspace) |
+| `Super + Shift + D` | Send active window to the Drawer |
+
+## Multi-monitor
+
+| Keys | Action |
+|------|--------|
+| `Ctrl + Alt + Tab` / `Ctrl + Alt + Shift + Tab` | Focus next / previous monitor |
+| `Super + Shift + ,` / `Super + Shift + .` | Move active window to the adjacent monitor |
+| `Super + Shift + Alt + ←/→/↑/↓` | Move the whole workspace to an adjacent monitor |
+
+## Screenshots, clipboard & OCR
+
+| Keys | Action |
+|------|--------|
+| `Super + S` (or `Print`) | Screenshot a region/window (copy + save) |
+| `Super + Shift + S` (or `Super + Shift + Print`) | Screenshot a region and annotate (satty) |
+| `Super + Ctrl + S` (or `Shift + Print`) | Screenshot the active window |
+| `Super + Alt + S` (or `Ctrl + Print`) | Screenshot the current screen |
+| `Super + Ctrl + Alt + S` (or `Alt + Print`) | Screenshot all screens |
+| `Super + Shift + O` (or `Super + Ctrl + Shift + S`) | OCR a region → text to clipboard (tesseract) |
+| `Super + Ctrl + V` | Clipboard history (vicinae/cliphist) |
+| `Super + Shift + C` | Pick a color (hex to clipboard) |
+
+Screenshots land in `~/Pictures/Screenshots`. Annotation and OCR can be turned
+off with `marchyo.screenshot.enableAnnotation` / `enableOcr`.
+
+## Dictation
+
+Requires `marchyo.dictation.enable`. See the [Dictation](/configuration/dictation)
+page for setup.
+
+| Keys | Action |
+|------|--------|
+| `F9` (hold) | Push-to-talk dictation |
+| `Super + Ctrl + X` | Toggle recording on/off |
+| `Super + Shift + H` | Floating dictation status window |
+
+## System & session
+
+| Keys | Action |
+|------|--------|
+| `Super + L` | Lock the screen (hyprlock) |
+| `Ctrl + Alt + Delete` | Power off |
+| `Super + Shift + Space` | Toggle the top bar (Waybar) |
+| `Super + ,` / `Super + Ctrl + ,` | Dismiss last / all notifications |
+| `Super + Ctrl + I` | Toggle idle lock (keep-awake) |
+| `Super + Ctrl + N` | Toggle night light |
+| `Super + Alt + Print` | Toggle screen recording |
+| `Super + Ctrl + Z` / `Super + Ctrl + Shift + Z` / `Super + Ctrl + Alt + Z` | Zoom in / out / reset (magnifier) |
+| Volume / brightness / media keys | `XF86` laptop keys (volume, mic mute, brightness, play/pause/next/prev) |

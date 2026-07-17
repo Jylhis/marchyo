@@ -71,7 +71,7 @@ If you only want the Home Manager modules without the NixOS system modules:
     homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
       modules = [
-        marchyo.homeModules.default
+        marchyo.homeManagerModules.default
       ];
     };
   };
@@ -107,3 +107,4 @@ Enabling `marchyo.desktop.enable` automatically enables media and office applica
 - [User Configuration](/configuration/users) — Configure user accounts
 - [Theming](/configuration/theming) — Customize the look and feel
 - [Keyboard](/configuration/keyboard) — Set up keyboard layouts and input methods
+- [Keybindings & Navigation](/usage/hotkeys) — The desktop hotkeys you'll use every day
