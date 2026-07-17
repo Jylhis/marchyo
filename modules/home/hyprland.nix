@@ -297,7 +297,6 @@ in
           "SUPER, M, Music player, exec, $music"
           "SUPER, E, Emacs, exec, emacsclient -c -a emacs"
           "SUPER, O, Obsidian, exec, $notes"
-          "SUPER, D, Lazy Docker, exec, $terminal -e lazydocker"
           "SUPER, G, Messenger, exec, $messenger"
           "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1password)$ || $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
@@ -422,9 +421,9 @@ in
           "SUPER, 4, focusworkspaceoncurrentmonitor, 4"
           "SUPER, 5, focusworkspaceoncurrentmonitor, 5"
 
-          # Special workspace (scratchpad)
-          "SUPER, S, togglespecialworkspace, magic"
-          "SUPER SHIFT, S, movetoworkspace, special:magic"
+          # Drawer (special workspace / scratchpad)
+          "SUPER, D, togglespecialworkspace, magic"
+          "SUPER SHIFT, D, movetoworkspace, special:magic"
 
           # Session management
           "SUPER, L, exec, hyprlock"
