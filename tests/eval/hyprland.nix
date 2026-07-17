@@ -173,6 +173,49 @@ in
         "pass"
     );
 
+  # The Super+E editor bind resolves through the $editor variable, which is
+  # derived from marchyo.defaults.editor (jotain -> jotain-visual by default,
+  # and e.g. vscode -> code when reselected).
+  eval-hyprland-editor-bind =
+    let
+      mkEval =
+        extra:
+        lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            (withTestUser (
+              lib.recursiveUpdate {
+                marchyo.desktop.enable = true;
+                home-manager.users.testuser = {
+                  imports = [ homeManagerModules ];
+                };
+              } extra
+            ))
+          ];
+        };
+      settingsOf = eval: eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+
+      defaultSettings = settingsOf (mkEval { });
+      vscodeSettings = settingsOf (mkEval {
+        marchyo.defaults.editor = "vscode";
+      });
+
+      hasEditorBind = lib.any (b: lib.hasInfix "SUPER, E, Editor, exec, $editor" b) defaultSettings.bindd;
+      defaultEditorVar = defaultSettings."$editor";
+      vscodeEditorVar = vscodeSettings."$editor";
+    in
+    pkgs.writeText "eval-hyprland-editor-bind" (
+      if !hasEditorBind then
+        throw "FAIL: Super+E bind should exec $editor"
+      else if defaultEditorVar != "jotain-visual" then
+        throw "FAIL: default $editor should be jotain-visual, got ${toString defaultEditorVar}"
+      else if vscodeEditorVar != "code" then
+        throw "FAIL: $editor for vscode should be code, got ${toString vscodeEditorVar}"
+      else
+        "pass"
+    );
+
   eval-hyprland-wallpaper-enabled =
     let
       eval = lib.nixosSystem {
