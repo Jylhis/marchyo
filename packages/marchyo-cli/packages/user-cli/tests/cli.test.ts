@@ -170,6 +170,25 @@ test("rollback --dry-run --json emits the command", async () => {
   expect(parsed.command).toContain("nixos-rebuild switch --rollback");
 });
 
+test("gc --dry-run prints the default 14d command", async () => {
+  const r = await run(["gc", "-n"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nix-collect-garbage --delete-older-than 14d");
+});
+
+test("gc --dry-run honors --delete-older-than", async () => {
+  const r = await run(["gc", "-n", "--delete-older-than", "30d"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("--delete-older-than 30d");
+});
+
+test("gc rejects a malformed period with exit 2 and a Try line", async () => {
+  const r = await run(["gc", "-n", "--delete-older-than", "2weeks"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid period");
+  expect(r.stderr).toContain("Try: marchyo gc");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",

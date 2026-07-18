@@ -14,6 +14,7 @@ import { runRebuild } from "./commands/rebuild.ts";
 import { runUpdate } from "./commands/update.ts";
 import { runUpgrade } from "./commands/upgrade.ts";
 import { runRollback } from "./commands/rollback.ts";
+import { runGc } from "./commands/gc.ts";
 
 const program = new Command();
 
@@ -191,6 +192,33 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runRollback(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("gc")
+  .description("Collect Nix garbage (old generations and unreferenced paths)")
+  .option(
+    "--delete-older-than <period>",
+    "delete generations older than <days>d",
+    "14d",
+  )
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo gc
+  $ marchyo gc --delete-older-than 30d
+  $ marchyo gc --dry-run
+`,
+  )
+  .action(async (opts: { deleteOlderThan: string; dryRun?: boolean }) => {
+    process.exit(
+      await runGc(rt(), {
+        olderThan: opts.deleteOlderThan,
+        dryRun: opts.dryRun ?? false,
+      }),
+    );
   });
 
 await program.parseAsync(process.argv);
