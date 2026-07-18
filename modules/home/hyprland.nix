@@ -323,7 +323,7 @@ in
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
-          "SUPER, V, Toggle floating, togglefloating,"
+          "SUPER, T, Toggle floating, togglefloating,"
           "SUPER, left, Move focus left, movefocus, l"
           "SUPER, right, Move focus right, movefocus, r"
           "SUPER, up, Move focus up, movefocus, u"
