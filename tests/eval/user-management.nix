@@ -1,18 +1,45 @@
-# Tests for the unified identity module (modules/users/nixos.nix).
-# The module is part of nixosModules.default, so the helpers exercise it
-# directly; scenarios cover rendering, group merging, admin sugar, root
-# special-casing, platform/source filtering, HM bindings and coexistence
-# with the higher-level marchyo.users module.
+# Tests for the unified identity module (modules/users/{nixos,darwin}.nix).
+# The module is part of the default NixOS and darwin module sets, so the
+# helpers exercise it directly; scenarios cover rendering, group merging,
+# admin sugar, root special-casing, platform/source filtering, HM bindings
+# and coexistence with the higher-level marchyo.users module.
 { helpers, lib, ... }:
 let
   inherit (helpers)
     testNixOSCheck
     testNixOSFails
+    testDarwinCheck
+    withDarwinTestUser
     minimalConfig
     withTestUser
     ;
 in
 {
+  # darwin renderer: home/description render, sudo maps to the admin group,
+  # group members render as login names, nixos-only users are filtered out.
+  eval-identity-darwin =
+    testDarwinCheck "identity-darwin"
+      (
+        cfg:
+        cfg.users.users.alice.home == "/Users/alice"
+        && cfg.users.users.alice.description == "Alice Example"
+        && lib.elem "alice" cfg.users.groups.admin.members
+        && lib.elem "alice" cfg.users.groups.media.members
+        && !(cfg.users.users ? linuxonly)
+      )
+      (withDarwinTestUser {
+        marchyo.identity = {
+          users = {
+            alice = {
+              fullName = "Alice Example";
+              sudo = true;
+            };
+            linuxonly.platforms = [ "nixos" ];
+          };
+          groups.media.members = [ "alice" ];
+        };
+      });
+
   # Scalar fields render with mkDefault semantics; lists are additive.
   eval-identity-basic =
     testNixOSCheck "identity-basic"
