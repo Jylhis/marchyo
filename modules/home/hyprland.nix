@@ -324,6 +324,11 @@ in
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
           "SUPER, T, Toggle floating, togglefloating,"
+          # Universal clipboard (omarchy parity): send CTRL+Insert / SHIFT+Insert
+          # so copy/paste also work in terminals (where CTRL+C is SIGINT)
+          "SUPER, C, Copy, sendshortcut, CTRL, Insert,"
+          "SUPER, V, Paste, sendshortcut, SHIFT, Insert,"
+          "SUPER, X, Cut, sendshortcut, CTRL, X,"
           "SUPER, left, Move focus left, movefocus, l"
           "SUPER, right, Move focus right, movefocus, r"
           "SUPER, up, Move focus up, movefocus, u"
