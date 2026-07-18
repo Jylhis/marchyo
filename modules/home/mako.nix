@@ -49,6 +49,13 @@ in
           border-color = palette.hex."status-err";
           default-timeout = 0;
         };
+
+        # Do-not-disturb: while this mode is active every notification is
+        # hidden (they still queue and reappear when the mode is left).
+        # Toggled by `marchyo-dnd-toggle` (modules/home/window-toggles.nix)
+        # via `makoctl mode -t do-not-disturb`; indicated by the waybar
+        # custom/dnd segment (modules/home/waybar.nix).
+        "mode=do-not-disturb".invisible = 1;
       };
     };
   };
