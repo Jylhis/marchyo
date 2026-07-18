@@ -34,6 +34,12 @@ let
 
   findToggle = hm: lib.findFirst (p: (p.name or "") == "marchyo-theme-toggle") null hm.home.packages;
 
+  # HM's ghostty module types `settings` with formats.keyValue
+  # (listsAsDuplicateKeys), whose coercedTo type wraps scalar values into
+  # singleton lists on read-back — normalize to a list of strings before
+  # matching (a bare hasSuffix on the raw value is a list-coercion eval error).
+  ghosttyIncludes = hm: map toString (lib.toList (hm.programs.ghostty.settings.config-file or [ ]));
+
   # One check per build-time variant: the toggle is installed (and instantiates,
   # i.e. both variants' assets evaluate), the current-theme pointer targets the
   # build variant's assets, and ghostty reads the runtime include through it.
@@ -50,9 +56,7 @@ let
       else if pointer == null || !(lib.hasInfix "marchyo-theme-${variant}" (toString pointer.source)) then
         throw "FAIL: theme-runtime (${variant}): pointer missing or not targeting ${variant} assets"
       else if
-        !(lib.hasSuffix "marchyo/current-theme/ghostty.conf" (
-          hm.programs.ghostty.settings.config-file or ""
-        ))
+        !(lib.any (s: lib.hasSuffix "marchyo/current-theme/ghostty.conf" s) (ghosttyIncludes hm))
       then
         throw "FAIL: theme-runtime (${variant}): ghostty include not wired through current-theme"
       else
