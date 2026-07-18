@@ -17,6 +17,9 @@ let
 
   # Backward compatibility: if vendors empty on x86, default to Intel behavior
   legacyIntel = cfg.vendors == [ ] && isX86;
+
+  # Any GPU vendor configured (or the legacy x86 Intel fallback active).
+  hasAnyGpu = hasIntel || hasAmd || hasNvidia || legacyIntel;
 in
 {
   config = lib.mkMerge [
@@ -32,7 +35,7 @@ in
     # diagnostic tools (vulkaninfo, vkcube). The ICDs come from Mesa
     # (Intel ANV / AMD RADV) or the NVIDIA driver; 32-bit driver support is
     # already handled by hardware.graphics.enable32Bit above.
-    (lib.mkIf (hasIntel || hasAmd || hasNvidia || legacyIntel) {
+    (lib.mkIf hasAnyGpu {
       environment.systemPackages = with pkgs; [
         vulkan-loader
         vulkan-tools

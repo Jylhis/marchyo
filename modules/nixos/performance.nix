@@ -7,8 +7,8 @@
 let
   cfg = config.marchyo.performance;
 
-  # marchyo.performance.kernel enum -> kernel package set. Evaluated lazily,
-  # so only the selected variant is ever forced.
+  # marchyo.performance.kernel enum -> kernel package set ("default" leaves
+  # boot.kernelPackages unmanaged; see the option description).
   kernelPackages = {
     latest = pkgs.linuxPackages_latest;
     zen = pkgs.linuxPackages_zen;
@@ -21,8 +21,6 @@ in
     "mitigations=off"
   ];
 
-  # "default" leaves boot.kernelPackages unmanaged; any other variant is set
-  # with mkDefault so hosts can still override boot.kernelPackages directly.
   boot.kernelPackages = lib.mkIf (cfg.kernel != "default") (
     lib.mkDefault kernelPackages.${cfg.kernel}
   );
