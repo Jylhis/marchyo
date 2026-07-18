@@ -1,0 +1,107 @@
+/*
+ * starlight-theme.css — maps Starlight's design tokens onto the Jylhis
+ * Design System (paper/roast, single copper accent, monospace headings over
+ * Literata body) so the docs match the landing + search pages. Self-hosted
+ * variable fonts are imported here so the docs pages carry them too.
+ */
+
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* ── Dark theme (Jylhis Roast) — Starlight's default ─────── */
+:root {
+  --sl-font: 'Literata Variable', Charter, Georgia, 'Noto Serif', serif;
+  --sl-font-mono: 'JetBrains Mono Variable', 'IBM Plex Mono', 'Cascadia Code', monospace;
+
+  --sl-color-accent-low: #3a2617;
+  --sl-color-accent: #b5703c;
+  --sl-color-accent-high: #e89b5e;
+
+  --sl-color-white: #f0eae0;
+  --sl-color-gray-1: #e8e0d4;
+  --sl-color-gray-2: #b0a496;
+  --sl-color-gray-3: #8a7f72;
+  --sl-color-gray-4: #5a5248;
+  --sl-color-gray-5: #3d3830;
+  --sl-color-gray-6: #242019;
+  --sl-color-black: #1a1714;
+
+  --sl-color-bg: #1a1714;
+  --sl-color-bg-nav: #1a1714;
+  --sl-color-bg-sidebar: #171411;
+  --sl-color-bg-inline-code: #242019;
+  --sl-color-hairline: #2a2520;
+  --sl-color-hairline-light: #3d3830;
+  --sl-color-text-accent: #e89b5e;
+}
+
+/* ── Light theme (Jylhis Paper) ──────────────────────────── */
+:root[data-theme='light'] {
+  --sl-color-accent-low: #f0e2d4;
+  --sl-color-accent: #b5703c;
+  --sl-color-accent-high: #9a5a2a;
+
+  --sl-color-white: #1e1b18;
+  --sl-color-gray-1: #2c2825;
+  --sl-color-gray-2: #6b5f54;
+  --sl-color-gray-3: #8a7f72;
+  --sl-color-gray-4: #b0a898;
+  --sl-color-gray-5: #d5cec4;
+  --sl-color-gray-6: #f0ebe3;
+  --sl-color-gray-7: #f6f2ec;
+  --sl-color-black: #faf7f2;
+
+  --sl-color-bg: #faf7f2;
+  --sl-color-bg-nav: #faf7f2;
+  --sl-color-bg-sidebar: #f4efe8;
+  --sl-color-bg-inline-code: #f0ebe3;
+  --sl-color-hairline: #e4ddd2;
+  --sl-color-hairline-light: #d5cec4;
+  --sl-color-text-accent: #9a5a2a;
+}
+
+/* ── Monospace headings — the design's signature ─────────── */
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+.sl-markdown-content h5,
+.sl-markdown-content h6,
+h1.astro-hero-title,
+.content-panel h1,
+.site-title,
+.sidebar-content a,
+.right-sidebar a {
+  font-family: var(--sl-font-mono);
+  letter-spacing: 0.01em;
+}
+
+/* Site title (wordmark) sits tight and heading-coloured */
+.site-title {
+  font-weight: 600;
+  color: var(--sl-color-white);
+}
+
+/* Sidebar + table-of-contents links: mono, muted, copper on hover —
+   the "file tree" feel from the docs comp. */
+.sidebar-content a,
+.right-sidebar a {
+  font-size: 0.85rem;
+}
+.sidebar-content .large {
+  font-family: var(--sl-font-mono);
+  color: var(--sl-color-gray-3);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+}
+
+/* Links inside prose get the accessible copper, matching the rest of the site. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-text-accent);
+}
+
+/* Warm the code-block frame to sit on the paper/roast surface. */
+.sl-markdown-content :not(pre) > code {
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 3px;
+}
