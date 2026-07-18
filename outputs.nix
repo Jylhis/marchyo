@@ -560,34 +560,6 @@ in
       inherit (pkgs) wallpapper;
     };
 
-  mkDocs =
-    { system }:
-    let
-      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it).
-      selectedNixpkgs = (inputsFor system).nixpkgs;
-      pkgs = selectedNixpkgs.legacyPackages.${system};
-      # NixOS module eval is always x86_64-linux regardless of build host.
-      nixosConfig = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          nixosModules.default
-          sharedNixosConfig
-          { networking.hostName = "marchyo-docs"; }
-        ];
-      };
-      docs = import ./docs {
-        inherit pkgs;
-        inherit (nixpkgs) lib;
-        inherit nixosConfig;
-        sourceRoot = ./.;
-      };
-    in
-    {
-      docs = docs.site;
-      docs-options = docs.optionsReference;
-      docs-lib = docs.libReference;
-    };
-
   mkChecks =
     { system }:
     import ./tests {
