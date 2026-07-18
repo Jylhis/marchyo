@@ -25,6 +25,7 @@
       "**/*.png"
       "flake.lock"
       "devenv.lock"
+      "site/bun.lock"
     ];
   };
 }
