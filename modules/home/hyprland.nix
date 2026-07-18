@@ -455,15 +455,32 @@ in
           "SUPER SHIFT, period, movewindow, mon:+1"
 
         ];
-        bindel = [
-          # Laptop multimedia keys for volume and LCD brightness
-          ",XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
-          ",XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-          ",XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-          ",XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-          ",XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 5%+"
-          ",XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 5%-"
-        ];
+        bindel =
+          # Laptop multimedia keys for volume and LCD brightness. With the OSD
+          # enabled (default) they route through swayosd-client so an overlay
+          # shows the change; otherwise they fall back to silent wpctl /
+          # brightnessctl.
+          let
+            osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
+          in
+          if osdEnabled then
+            [
+              ",XF86AudioRaiseVolume, exec, swayosd-client --output-volume raise"
+              ",XF86AudioLowerVolume, exec, swayosd-client --output-volume lower"
+              ",XF86AudioMute, exec, swayosd-client --output-volume mute-toggle"
+              ",XF86AudioMicMute, exec, swayosd-client --input-volume mute-toggle"
+              ",XF86MonBrightnessUp, exec, swayosd-client --brightness raise"
+              ",XF86MonBrightnessDown, exec, swayosd-client --brightness lower"
+            ]
+          else
+            [
+              ",XF86AudioRaiseVolume, exec, wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"
+              ",XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+              ",XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+              ",XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+              ",XF86MonBrightnessUp, exec, brightnessctl -e4 -n2 set 5%+"
+              ",XF86MonBrightnessDown, exec, brightnessctl -e4 -n2 set 5%-"
+            ];
         bindl = [
           # Requires playerctl
           ", XF86AudioNext, exec, playerctl next"
