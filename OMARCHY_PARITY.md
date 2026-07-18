@@ -73,97 +73,33 @@ Not gaps — replaced by the declarative model: `omarchy-install-*`, `-remove-*`
 
 ---
 
-# PART B — Implementation plan (selected scope)
+# PART B — Implementation status
 
-## Selected scope
+**All selected Part B scope shipped 2026-07-18** (batch PRs #107–#120).
+**Weather** and the **runtime font picker** were explicitly dropped from scope.
 
-From Part A, the following were selected for porting. **Weather** and the **runtime font picker** were explicitly dropped.
-
-- **Quick wins:** power/session menu, SwayOSD overlay, DND toggle + indicator, universal clipboard.
-- **Big features:** central system menu, web-app parity, runtime light/dark switch, screensaver.
-- **Utilities:** reminders, quick-info notify, transcode + share.
-- **Small binds:** monitor controls, app-launch binds, connectivity keybinds.
-
-## Conventions
-
-Built the marchyo way: `writeShellApplication` helpers (the `modules/home/window-toggles.nix` pattern), Hyprland binds in `modules/home/hyprland.nix`, waybar segments following the streaming `custom/voxtype` pattern in `modules/home/waybar.nix`, options under `modules/nixos/options/`, and an eval test per feature under `tests/eval/`. Menus use `gum`/`fzf` in a floating ghostty (`--class=org.omarchy.terminal`, already covered by the `floating-window` rule) — matching the existing `marchyo-keybindings` cheatsheet, not a new GUI toolkit. The TUI aesthetic is preserved; omarchy's transparency/gap toggles are intentionally excluded. New gating options default **on** when `marchyo.desktop.enable` (each opt-out), matching the dictation UI-suboption convention.
-
-Verified facts: `swayosd` is a **package only** (no NixOS/HM module → wire the server as a Home Manager `systemd.user.services` unit + call `swayosd-client` from binds); `terminaltexteffects` (the `tte` binary) is packaged.
-
-**Nix module conventions to follow** (from the `jylhis-nix` skill):
-- **Options (RFC 72):** `description` is plain-string Markdown — no `lib.mdDoc`. Use `lib.mkEnableOption` for truly opt-in switches; for the desktop-cascade opt-outs mirror the dictation pattern (`mkOption { type = types.bool; default = true; }` + `lib.mkIf (desktopEnabled && cfg.enable)`). Expose overridable packages with `lib.mkPackageOption pkgs "swayosd" { }` / `"terminaltexteffects"` and the webapp browser, so consumers can swap them.
-- **Settings (RFC 42):** any generated config file (mako mode block, swayosd flags, webapp desktop entries) goes through typed attrsets / the module's `settings`, not stringly-typed blobs where a structured option already exists.
-- **Home Manager service (SwayOSD):** declare `systemd.user.services.swayosd` with `Unit.Description`, `Service.ExecStart = "${cfg.package}/bin/swayosd-server"`, `Service.Restart = "on-failure"`, and `Install.WantedBy = [ "graphical-session.target" ]` (plus `Unit.PartOf = [ "graphical-session.target" ]`) rather than a bare `exec-once`, so it restarts with the session. (No `swayosd` HM/NixOS module exists — this is hand-rolled.)
-- **Priorities:** keep `lib.mkDefault` on consumer-overridable values (e.g. the new keybinds and `webapps.enable`), reserve `lib.mkForce` for the deliberate `SUPER, V` → `SUPER, T` remap if it must override an existing bind.
-- Darwin note: option *declarations* under `modules/nixos/options/` are imported by the curated darwin set too, so declaring these Linux-desktop options there is fine as long as all *config* stays in the desktop-gated NixOS/home modules (which darwin never imports) — same as dictation today.
-
-## Keybind map (conflict-resolved)
-
-| Bind | Action | Note |
+| Feature | Where it lives | PR |
 |---|---|---|
-| `SUPER, Escape` | Power/session menu | free |
-| `SUPER ALT, Space` | Central system menu | free |
-| `SUPER, T` | **Toggle floating** (moved from `SUPER, V`) | frees V; omarchy parity |
-| `SUPER, C` / `SUPER, V` / `SUPER, X` | Universal copy/paste/cut | via `sendshortcut`; V freed above |
-| `SUPER CTRL, comma` | DND toggle | was "dismiss all" |
-| `SUPER CTRL SHIFT, comma` | Dismiss all notifications | moved off `SUPER CTRL, comma` |
-| `SUPER CTRL, R` / `+ALT, R` / `+SHIFT, R` | Reminder set / show / clear | free |
-| `SUPER CTRL ALT, T` / `+B` | Notify datetime / battery | free |
-| `SUPER CTRL, period` | Transcode menu | free |
-| `SUPER, backslash` | Monitor scaling cycle | Super+/ kept for password manager |
-| `SUPER CTRL, Delete` | Toggle laptop display | Ctrl+Alt+Del stays poweroff |
-| `SUPER ALT, Return` | tmux "Work" session | omarchy parity |
-| `SUPER ALT, D` | lazydocker | Super+Shift+D stays "Drawer" |
-| `SUPER ALT SHIFT, F` | Nautilus at terminal cwd | omarchy parity |
-| `SUPER CTRL, A` / `+B` / `+W` | Audio / Bluetooth / Wifi TUI | reuse waybar-click commands |
+| Power/session menu (`SUPER, Escape`) | `modules/home/menus.nix` → `marchyo-power-menu` | [#113](https://github.com/Jylhis/marchyo/pull/113) |
+| Central system menu (`SUPER ALT, Space`) | `modules/home/menus.nix` → `marchyo-menu`; `marchyo.menus.enable` | [#113](https://github.com/Jylhis/marchyo/pull/113) |
+| SwayOSD volume/brightness overlay | `modules/home/swayosd.nix` + `modules/nixos/osd.nix` (udev + video group); `marchyo.osd.enable` | [#107](https://github.com/Jylhis/marchyo/pull/107) |
+| DND toggle + waybar indicator (`SUPER CTRL, comma`; dismiss-all moved to `SUPER CTRL SHIFT, comma`) | `modules/home/{mako,window-toggles,waybar}.nix` → `marchyo-dnd-toggle` | [#110](https://github.com/Jylhis/marchyo/pull/110) |
+| Universal clipboard `SUPER+C/V/X` (sends CTRL+Insert / SHIFT+Insert / CTRL+X; toggle-floating remapped `SUPER,V` → `SUPER,T`) | `modules/home/hyprland.nix` | [#111](https://github.com/Jylhis/marchyo/pull/111) |
+| Monitor controls (`SUPER, backslash` scale cycle; `SUPER CTRL, Delete` laptop display), connectivity TUIs (`SUPER CTRL, A/B/W`), app launches (`SUPER ALT, Return` tmux Work; `SUPER ALT, D` lazydocker; `SUPER ALT SHIFT, F` file manager at cwd) | `modules/home/omarchy-binds.nix` | [#120](https://github.com/Jylhis/marchyo/pull/120) |
+| Reminders (`SUPER CTRL[+ALT/+SHIFT], R`), quick-info notify (`SUPER CTRL ALT, T/B`), transcode (`SUPER CTRL, period`), share (menu-only) | `modules/home/utilities.nix`; `marchyo.{reminders,utilities}.enable` | [#115](https://github.com/Jylhis/marchyo/pull/115) |
+| Web-app parity (default-on with desktop; + X, Google Photos, Google Calendar, Gmail; HEY → Google equivalents) | `modules/{nixos/options,home}/webapps.nix`, `desktop-config.nix` | [#116](https://github.com/Jylhis/marchyo/pull/116) |
+| Screensaver (tte on 120s idle, keypress/mouse dismiss) | `modules/home/screensaver.nix`; `marchyo.screensaver.enable` | [#119](https://github.com/Jylhis/marchyo/pull/119) |
+| Runtime light/dark switch (no rebuild; ephemeral overlay, resets on activation) | `modules/home/theme-runtime.nix` → `marchyo-theme-toggle` | [#118](https://github.com/Jylhis/marchyo/pull/118) |
 
-Share and screensaver get **no dedicated bind** (reached via the central menu / idle) to avoid the crowded `S` cluster in `screenshot.nix`. The `SUPER, V` → `SUPER, T` remap is a user-facing behavior change worth a CHANGELOG/CLAUDE.md note.
+## Remaining follow-ups
 
-## Phase 1 — Quick wins
-
-- **Power/session menu** — new `modules/home/menus.nix` shipping `marchyo-power-menu` (`gum choose` in floating ghostty): Lock (`hyprlock`), Suspend (`systemctl suspend`), Hibernate (`systemctl hibernate`), Logout (`uwsm stop` / `loginctl terminate-user`), Reboot, Shutdown. Bind `SUPER, Escape`.
-- **SwayOSD** — new `modules/home/swayosd.nix`: install `cfg.package` (`mkPackageOption pkgs "swayosd"`), run `swayosd-server` as a Home Manager `systemd.user.services.swayosd` unit (`WantedBy`/`PartOf` = `graphical-session.target`, `Restart = "on-failure"`), rewrite the `bindel`/media binds in `hyprland.nix` to call `swayosd-client --output-volume raise|lower|mute-toggle`, `--input-volume mute-toggle`, `--brightness raise|lower`. Gate `marchyo.osd.enable` (default-on when desktop).
-- **DND toggle + indicator** — extend `modules/home/mako.nix` with `[mode=do-not-disturb] invisible=1`; add `marchyo-dnd-toggle` (`makoctl mode -t do-not-disturb`) to `window-toggles.nix`; add a `custom/dnd` waybar segment (signal-refreshed, styled like `custom/voxtype`). Binds per table.
-- **Universal clipboard** — in `hyprland.nix` add `bind = SUPER, C, sendshortcut, CTRL, C,` (+ SHIFT+Insert paste, CTRL+X cut); remap toggle-floating `SUPER, V` → `SUPER, T` first.
-
-## Phase 2 — Menus & launches
-
-- **Central system menu** — `marchyo-menu` in `modules/home/menus.nix`: hierarchical `gum`/`fzf` menu bound `SUPER ALT, Space`. **Trigger** (screenshot, screenrecord toggle, color pick, transcode, share), **Setup** (audio→wiremix/pavucontrol, wifi→impala, bluetooth→bluetui, monitors→hyprmon, power-profile→`powerprofilesctl`), **Style** (light/dark toggle → Phase 6), **System** (→ power menu), **Learn** (→ `marchyo-keybindings`, doc URLs). Gate `marchyo.menus.enable`.
-- **Connectivity keybinds** — `hyprland.nix` binds `SUPER CTRL, A/B/W` launching the existing floating TUIs (reuse waybar `on-click` commands).
-- **App-launch binds** — `SUPER ALT, Return` (tmux `new -A -s Work`), `SUPER ALT, D` (lazydocker; add to dev tooling), `SUPER ALT SHIFT, F` (nautilus at cwd).
-- **Monitor controls** — `marchyo-monitor-scale-cycle` and `marchyo-laptop-display-toggle` in `window-toggles.nix`; binds `SUPER, backslash` and `SUPER CTRL, Delete`.
-
-## Phase 3 — Utilities
-
-- **Reminders** — `marchyo-reminder` (gum prompt → `systemd-run --user --on-active … notify-send`; list in `$XDG_STATE_HOME/marchyo/reminders`). Binds `SUPER CTRL, R`/`+ALT`/`+SHIFT`. Gate `marchyo.reminders.enable`.
-- **Quick-info notify** — `marchyo-notify-datetime`, `marchyo-notify-battery` (notify-send wrappers). Binds `SUPER CTRL ALT, T`/`B`.
-- **Transcode + share** — `marchyo-transcode` (ffmpeg + gum format menu, ascii variant via `tte`) bound `SUPER CTRL, period`; `marchyo-share` (clipboard/file/folder → copy path; upload target = follow-up decision) reached from the central menu.
-
-## Phase 4 — Web-app parity
-
-Extend `modules/home/webapps.nix` + `modules/nixos/options/webapps.nix`: more apps (ChatGPT, HEY Calendar/Email, YouTube, WhatsApp, Photos, X, GitHub, Discord, Zoom), ship/generate icons, default `marchyo.webapps.enable = mkDefault true` when desktop is on, and have `webapps.nix` inject `wayland.windowManager.hyprland.settings.bind` entries (`SUPER SHIFT, A/C/E/Y`, `SUPER SHIFT ALT, G`, …). List-valued Hyprland settings merge across HM modules, so no edit to `hyprland.nix` is needed.
-
-## Phase 5 — Screensaver
-
-`marchyo-screensaver` runs `tte` (`pkgs.terminaltexteffects`) in a floating ghostty `--class=org.omarchy.screensaver` (existing `Screensaver` fullscreen rule matches). Add a `hypridle` listener (~150s) that launches it when hyprlock isn't running, plus a central-menu Trigger entry. Gate `marchyo.screensaver.enable`.
-
-## Phase 6 — Runtime light/dark switch (largest lift)
-
-Marchyo's variant is build-time (Stylix). True runtime switch without a rebuild:
-1. Generate **both** palette/asset sets at build time (extend `modules/generic/jylhis-palette.nix` / `theme.nix` to emit dark **and** light variants + both wallpapers from `packages/marchyo-wallpapers/`).
-2. `marchyo-theme-toggle` swaps an active symlink (`~/.config/marchyo/current-theme`), sets the awww wallpaper, reloads live surfaces: waybar (restart unit), mako (`makoctl reload`), ghostty (config reload), Hyprland colors (`hyprctl reload`/`keyword`), hyprlock colors; persists the choice.
-3. Wire into the central-menu **Style** branch and an optional bind.
-
-Aligns with the recorded near-future dynamic-theme goal (keep awww, not swaybg). Biggest, least-mechanical item — build Phases 1–5 first and give Phase 6 its own design/review pass (it touches the theming source-of-truth in CLAUDE.md).
-
-## Testing / verification
-
-- **Eval tests:** add `tests/eval/omarchy-extras.nix` (or per-feature files) asserting configs with each new `marchyo.{osd,menus,reminders,screensaver,webapps}.enable` evaluate cleanly; extend a webapps/theme test for bind injection and dual-variant assets. Auto-discovered from `tests/eval/`.
-- **Gates:** `just check` (nix flake check + statix + deadnix) and `just fmt` must pass — CI-enforced.
-- **End-to-end (VM via `just run`):** verify each new keybind fires, SwayOSD shows on volume/brightness, DND silences + indicator flips, power menu actions work, central menu navigates, web-app binds open PWAs, screensaver triggers on idle, and (Phase 6) the theme toggle flips light/dark live without a rebuild.
-- Follow the `nix-development` skill's module conventions; document new options in `CLAUDE.md` and `docs/configuration/`.
-
-## Key files
-
-- **New:** `modules/home/menus.nix`, `modules/home/swayosd.nix`, options `modules/nixos/options/{osd,menus,reminders,screensaver}.nix` (or one shared file), `tests/eval/omarchy-extras.nix`.
-- **Modified:** `modules/home/hyprland.nix` (binds + Super+V→T remap + swayosd media binds), `modules/home/window-toggles.nix` (new helper scripts), `modules/home/waybar.nix` (`custom/dnd`), `modules/home/mako.nix` (dnd mode), `modules/home/webapps.nix` + `modules/nixos/options/webapps.nix`, `modules/generic/{jylhis-palette,theme}.nix` (Phase 6 dual variants), `CLAUDE.md` + `docs/`.
+- **Share upload target** — `marchyo-share` stages clipboard/file/folder paths;
+  an actual upload backend was deferred (decision pending).
+- **hyprlock live theme swap** — rebuild-only for now; a `source =` include
+  would make it runtime-swappable (#118 follow-up).
+- **Multi-theme** — the dark↔light toggle's store-dir + pointer layout is
+  forward-compatible with N base16 variants (plan.md F3.3).
+- **CLI wrappers** — the `marchyo-*` scripts are keybind/menu-driven; plan.md
+  F3.2 wraps them in `marchyo` CLI subcommands.
+- **Docs sync** — the new binds and options need `docs/usage/hotkeys.mdx` +
+  `docs/configuration/` entries (tracked in the batch-coordinator PR).
