@@ -202,6 +202,30 @@ test("diff --dry-run prints a dix command or fails gracefully off-NixOS", async 
   }
 });
 
+test("debug --json emits a parseable diagnostics bundle", async () => {
+  const r = await run(["debug", "--json"]);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.cliVersion).toBe("0.1.0");
+  // Best-effort fields exist even when the probe failed (null, not absent).
+  for (const key of [
+    "nixosVersion",
+    "generation",
+    "generationDate",
+    "flake",
+    "journalErrors",
+  ]) {
+    expect(parsed).toHaveProperty(key);
+  }
+});
+
+test("debug text output survives missing system tools", async () => {
+  const r = await run(["debug"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("Marchyo debug bundle");
+  expect(r.stdout).toContain("CLI version:     0.1.0");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
