@@ -13,6 +13,7 @@ import { runThemeGet, runThemeSet } from "./commands/theme.ts";
 import { runRebuild } from "./commands/rebuild.ts";
 import { runUpdate } from "./commands/update.ts";
 import { runUpgrade } from "./commands/upgrade.ts";
+import { runRollback } from "./commands/rollback.ts";
 
 const program = new Command();
 
@@ -174,6 +175,22 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runUpgrade(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("rollback")
+  .description("Switch back to the previous system generation")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo rollback
+  $ marchyo rollback --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runRollback(rt(), { dryRun: opts.dryRun ?? false }));
   });
 
 await program.parseAsync(process.argv);

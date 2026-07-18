@@ -157,6 +157,19 @@ test("upgrade --dry-run --json emits a commands array", async () => {
   expect(parsed.commands[1]).toContain("nixos-rebuild switch");
 });
 
+test("rollback --dry-run prints the nixos-rebuild rollback command", async () => {
+  const r = await run(["rollback", "-n"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nixos-rebuild switch --rollback");
+});
+
+test("rollback --dry-run --json emits the command", async () => {
+  const r = await run(["rollback", "-n", "--json"]);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.command).toContain("nixos-rebuild switch --rollback");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
