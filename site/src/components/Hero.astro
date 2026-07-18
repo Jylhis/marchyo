@@ -1,0 +1,73 @@
+---
+// Placeholder hero — the landing design will replace this component.
+import Logo from '../assets/logo.svg';
+---
+
+<main>
+  <h1>
+    <Logo aria-hidden="true" />
+    <span class="sr-only">Marchyo</span>
+  </h1>
+  <p class="tagline">A modular NixOS configuration flake with sensible defaults.</p>
+  <pre><code>nix flake init -t github:Jylhis/marchyo#workstation</code></pre>
+  <nav>
+    <a class="primary" href="/docs/introduction/">Documentation</a>
+    <a href="https://github.com/Jylhis/marchyo">GitHub</a>
+  </nav>
+</main>
+
+<style>
+  main {
+    max-width: 40rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 auto 1.5rem;
+    color: var(--accent);
+  }
+
+  h1 :global(svg) {
+    width: min(100%, 24rem);
+    height: auto;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tagline {
+    margin: 0 0 2rem;
+    font-size: 1.125rem;
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent);
+    border-radius: 0.375rem;
+    padding: 0.875rem 1.25rem;
+    overflow-x: auto;
+  }
+
+  nav {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  a {
+    color: var(--fg);
+    text-underline-offset: 0.25em;
+  }
+
+  a.primary {
+    color: var(--accent);
+    font-weight: 700;
+  }
+</style>
