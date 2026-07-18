@@ -13,10 +13,15 @@ in
   });
 
   # Kernel selection maps the enum onto boot.kernelPackages (testNixOS never
-  # forces that option, so assert on the resolved kernel name).
-  eval-performance-kernel-zen = testNixOSCheck "performance-kernel-zen" (
-    c: lib.hasInfix "zen" c.boot.kernelPackages.kernel.name
-  ) (withTestUser { marchyo.performance.kernel = "zen"; });
+  # forces that option). modDirVersion carries the zen localversion suffix
+  # (e.g. "6.x.y-zen1"), which is more stable across nixpkgs revs than the
+  # derivation name.
+  eval-performance-kernel-zen =
+    testNixOSCheck "performance-kernel-zen"
+      (c: lib.hasInfix "zen" c.boot.kernelPackages.kernel.modDirVersion)
+      (withTestUser {
+        marchyo.performance.kernel = "zen";
+      });
 
   # All toggles, including the aggressive hugePages + compute opt-ins.
   eval-performance-tuning-all = testNixOS "performance-tuning-all" (withTestUser {
