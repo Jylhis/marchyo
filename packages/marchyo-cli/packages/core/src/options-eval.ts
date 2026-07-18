@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { nixEvalJson } from "./nix.ts";
 
 export type OptionInfo = {
@@ -29,25 +30,44 @@ export function hostConfigKey(
   return null;
 }
 
+// Characters safe to splice into the Nix expression below: an absolute
+// path literal (no whitespace/quotes) and a bare attribute name. Anything
+// else risks Nix-syntax injection or a confusing parse error.
+const SAFE_NIX_PATH = /^\/[A-Za-z0-9._+/-]+$/;
+const SAFE_ATTR_NAME = /^[A-Za-z_][A-Za-z0-9_'-]*$/;
+
 // Build the eval expression. The configuration is chosen Nix-side: the
 // explicit/detected name when the flake has it, otherwise the first
-// available nixosConfiguration (so the eval works on any host arch and on
-// flakes that name their configurations differently).
+// available nixosConfiguration (with a builtins.trace warning on stderr,
+// so a silent wrong-config eval is detectable).
 export function optionsExpr(
   flakePath: string,
   configName: string | null = hostConfigKey(),
 ): string {
+  if (!SAFE_NIX_PATH.test(flakePath)) {
+    throw new Error(
+      `flake path is not a plain absolute path, refusing to eval: "${flakePath}"`,
+    );
+  }
   const preferred = configName ?? "";
+  if (preferred !== "" && !SAFE_ATTR_NAME.test(preferred)) {
+    throw new Error(`invalid nixosConfiguration name: "${preferred}"`);
+  }
   return `
   let
     flake = builtins.getFlake (toString ${flakePath});
     configs = flake.nixosConfigurations;
     names = builtins.attrNames configs;
     preferred = "${preferred}";
+    fallback =
+      if names == [] then throw "flake has no nixosConfigurations"
+      else builtins.head names;
     name =
-      if preferred != "" && builtins.hasAttr preferred configs then preferred
-      else if names != [] then builtins.head names
-      else throw "flake at ${flakePath} has no nixosConfigurations";
+      if preferred == "" then fallback
+      else if builtins.hasAttr preferred configs then preferred
+      else builtins.trace
+        "marchyo: nixosConfigurations.\${preferred} not found; using \${fallback}"
+        fallback;
     sys = configs.\${name};
     walk = path: opt:
       if opt._type or "" == "option" then
@@ -73,7 +93,9 @@ export async function listOptions(
   flakePath: string,
   configName?: string,
 ): Promise<OptionInfo[]> {
-  const expr = `(${optionsExpr(flakePath, configName ?? hostConfigKey())})`;
+  // Normalize before the safety check so relative paths ("." from the
+  // dev CLI's --repo flag) still work.
+  const expr = `(${optionsExpr(resolve(flakePath), configName ?? hostConfigKey())})`;
   const raw = await nixEvalJson<RawOption[]>(expr);
   return raw.map((o) => {
     const r = o as RawOption & { path: string };

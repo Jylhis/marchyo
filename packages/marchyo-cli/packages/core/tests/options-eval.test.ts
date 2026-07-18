@@ -42,6 +42,26 @@ test("optionsExpr never hardcodes a configuration lookup", () => {
   expect(expr).not.toContain("nixosConfigurations.x86_64");
 });
 
+test("optionsExpr warns via builtins.trace when preferred config is absent", () => {
+  const expr = optionsExpr("/etc/nixos", "aarch64");
+  expect(expr).toContain("builtins.trace");
+  expect(expr).toContain("not found");
+});
+
+test("optionsExpr rejects flake paths unsafe to splice into Nix", () => {
+  expect(() => optionsExpr("/path/with space", null)).toThrow(
+    "not a plain absolute path",
+  );
+  expect(() => optionsExpr('relative/path', null)).toThrow();
+  expect(() => optionsExpr('/tmp/"; import <nixpkgs>', null)).toThrow();
+});
+
+test("optionsExpr rejects malformed configuration names", () => {
+  expect(() => optionsExpr("/etc/nixos", 'x"; evil')).toThrow(
+    "invalid nixosConfiguration name",
+  );
+});
+
 const OPTS: OptionInfo[] = [
   { path: "marchyo.theme.variant", description: "Theme variant" },
   { path: "marchyo.desktop.enable", description: "Enable the desktop stack" },
