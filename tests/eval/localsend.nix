@@ -9,10 +9,12 @@
 let
   inherit (helpers) testNixOSCheck withTestUser;
 
-  hasLocalsend =
-    cfg: builtins.any (p: (p.pname or "") == "localsend") cfg.environment.systemPackages;
+  hasLocalsend = cfg: builtins.any (p: lib.getName p == "localsend") cfg.environment.systemPackages;
   tcpOpen = cfg: builtins.elem 53317 cfg.networking.firewall.allowedTCPPorts;
   udpOpen = cfg: builtins.elem 53317 cfg.networking.firewall.allowedUDPPorts;
+
+  dconfPath = "com/github/stunkymonkey/nautilus-open-any-terminal";
+  scriptPath = ".local/share/nautilus/scripts/Send with LocalSend";
 
   # Full desktop eval with the Home-Manager modules wired, for inspecting the
   # per-user nautilus integration (same pattern as tests/eval/webapps.nix).
@@ -60,14 +62,13 @@ in
   eval-nautilus-integration =
     let
       hm = evalHome { };
-      terminal =
-        (hm.dconf.settings."com/github/stunkymonkey/nautilus-open-any-terminal" or { }).terminal or null;
+      terminal = (hm.dconf.settings.${dconfPath} or { }).terminal or null;
       # The dconf module's gvariant type may keep plain strings or wrap them;
       # require the key to be set, and when it is a bare string, be "ghostty".
       terminalOk = terminal != null && (!lib.isString terminal || terminal == "ghostty");
     in
     pkgs.writeText "eval-nautilus-integration" (
-      if terminalOk && hm.home.file ? ".local/share/nautilus/scripts/Send with LocalSend" then
+      if terminalOk && hm.home.file ? ${scriptPath} then
         "pass"
       else
         throw "FAIL: nautilus integration missing the ghostty dconf key or the LocalSend script"
@@ -79,10 +80,7 @@ in
       hm = evalHome { marchyo.defaults.fileManager = "thunar"; };
     in
     pkgs.writeText "eval-nautilus-disabled" (
-      if
-        !(hm.dconf.settings ? "com/github/stunkymonkey/nautilus-open-any-terminal")
-        && !(hm.home.file ? ".local/share/nautilus/scripts/Send with LocalSend")
-      then
+      if !(hm.dconf.settings ? ${dconfPath}) && !(hm.home.file ? ${scriptPath}) then
         "pass"
       else
         throw "FAIL: nautilus integration leaked into a thunar desktop"
