@@ -25,6 +25,35 @@ in
       '';
     };
 
+    kernel = mkOption {
+      type = types.enum [
+        "default"
+        "latest"
+        "zen"
+        "xanmod"
+        "lts"
+      ];
+      default = "default";
+      example = "zen";
+      description = ''
+        Kernel variant to boot.
+
+        - `"default"` — leave `boot.kernelPackages` unmanaged (the nixpkgs
+          default kernel, or whatever the host sets).
+        - `"latest"` — newest mainline kernel (`linuxPackages_latest`); best
+          hardware support, shortest support window.
+        - `"zen"` — ZEN kernel (`linuxPackages_zen`); tuned for desktop
+          interactivity and low latency.
+        - `"xanmod"` — XanMod kernel (`linuxPackages_xanmod_latest`); mainline
+          with performance-oriented patches (gaming/workstation).
+        - `"lts"` — long-term-support kernel (`linuxPackages`); most
+          conservative choice for servers and stable hosts.
+
+        The mapping is applied with `lib.mkDefault`, so a host can still set
+        `boot.kernelPackages` directly to override it.
+      '';
+    };
+
     tuning = {
       enable = mkOption {
         type = types.bool;
