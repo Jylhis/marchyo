@@ -1,6 +1,9 @@
 // Assets-only Worker: static site, no server-side code (no `main`).
-// The custom-domain routes create DNS records + certificates on first deploy;
-// they fail if conflicting A/CNAME records already exist on the hostnames.
+// Deployed by the Cloudflare Workers Builds git integration on push to main
+// (root directory: site). The dashboard Worker name must match `name` below
+// or builds fail. The custom-domain routes create DNS records + certificates
+// on first deploy; they fail if conflicting A/CNAME records already exist on
+// the hostnames.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "marchyo-site",
