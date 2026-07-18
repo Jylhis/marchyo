@@ -1,5 +1,4 @@
 name: Site
-
 on:
   push:
     branches: [main]
@@ -11,14 +10,11 @@ on:
       - site/**
       - .github/workflows/site.yml
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: site-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   build:
     name: Build site
