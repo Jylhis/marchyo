@@ -7,6 +7,14 @@
   imports = [
     # Include your hardware configuration
     ./hardware-configuration.nix
+
+    # Per-machine hardware fixes via nixos-hardware, re-exported by marchyo as
+    # marchyo.nixosModules.hardware.<profile>. Pick the profile matching your
+    # machine (full list: https://github.com/NixOS/nixos-hardware), e.g.:
+    # marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen
+    # marchyo.nixosModules.hardware.framework-13-7040-amd
+    # marchyo.nixosModules.hardware.dell-xps-13-9310
+    # marchyo.nixosModules.hardware.common-pc-ssd
   ];
 
   # Marchyo user configuration
