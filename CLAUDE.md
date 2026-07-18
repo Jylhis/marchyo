@@ -438,7 +438,7 @@ native GUI is no longer managed by marchyo.
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
-`.github/workflows/site.yml` builds the Astro website (`site/`, landing page + Starlight docs) and deploys it to Cloudflare Workers (static assets) at https://marchyo.org via wrangler. PRs touching `site/**` run a credential-free build gate (`bun run check` + `bun run build`); pushes to `main` additionally deploy using the `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` repo secrets.
+`.github/workflows/site.yml` is a credential-free build gate for the Astro website (`site/`, landing page + Starlight docs): PRs and main pushes touching `site/**` run `bun run check` + `bun run build`. Deployment is handled outside GitHub Actions by the Cloudflare Workers Builds git integration (Worker `marchyo-site`, root directory `site`), which builds and deploys to https://marchyo.org on push to `main` — no repo secrets involved.
 
 Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Dependabot groups all `nix` and `github-actions` bumps into single weekly PRs.
 
