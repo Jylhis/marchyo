@@ -32,9 +32,9 @@ Marchyo is distributed as a batteries-included Nix flake. Add it as your only in
 
 The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). On x86_64-darwin, `marchyo.lib.mkDarwinSystem` transparently pins the stable nixos-26.05 package set (the last release supporting Intel macOS); every other system rides unstable. If you only need Home Manager, use `homeManagerModules.default`.
 
-<Note>
+:::note
 The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` (x86_64-darwin → stable 26.05, others → unstable) or the `marchyo.lib.*` builders.
-</Note>
+:::
 
 ## Flake outputs
 
@@ -52,4 +52,4 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 
 ## All options live under `marchyo.*`
 
-Every custom option lives under the `marchyo.*` namespace, declared across the auto-discovered files in `modules/nixos/options/` (one file per logical namespace). Browse the [Configuration](/configuration/feature-flags) section for the full reference.
+Every custom option lives under the `marchyo.*` namespace, declared across the auto-discovered files in `modules/nixos/options/` (one file per logical namespace). Browse the [Configuration](/docs/configuration/feature-flags/) section for the full reference.

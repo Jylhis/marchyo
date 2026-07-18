@@ -11,7 +11,7 @@ The fastest way to get started is with the built-in template:
 nix flake init -t github:Jylhis/marchyo#workstation
 ```
 
-This creates a complete configuration with desktop environment, development tools, and sensible defaults. See the [Workstation Template guide](/guides/workstation-template) for details.
+This creates a complete configuration with desktop environment, development tools, and sensible defaults. See the [Workstation Template guide](/docs/guides/workstation-template/) for details.
 
 ## Option 2: Add to an existing flake
 
@@ -47,13 +47,13 @@ only your own config modules.
 }
 ```
 
-<Note>
+:::note
 You can still import `marchyo.nixosModules.default` into your own
 `nixpkgs.lib.nixosSystem` call, but then you must pick the right nixpkgs per
 system yourself. The raw `marchyo.inputs.nixpkgs` passthrough is always
 **unstable**; for a system-correct, overlay-applied package set use
 `marchyo.legacyPackages.<system>`.
-</Note>
+:::
 
 ## Option 3: Home Manager only
 
@@ -103,8 +103,8 @@ Enabling `marchyo.desktop.enable` automatically enables media and office applica
 
 ## Next steps
 
-- [Feature Flags](/configuration/feature-flags) — Learn about the available feature groups
-- [User Configuration](/configuration/users) — Configure user accounts
-- [Theming](/configuration/theming) — Customize the look and feel
-- [Keyboard](/configuration/keyboard) — Set up keyboard layouts and input methods
-- [Keybindings & Navigation](/usage/hotkeys) — The desktop hotkeys you'll use every day
+- [Feature Flags](/docs/configuration/feature-flags/) — Learn about the available feature groups
+- [User Configuration](/docs/configuration/users/) — Configure user accounts
+- [Theming](/docs/configuration/theming/) — Customize the look and feel
+- [Keyboard](/docs/configuration/keyboard/) — Set up keyboard layouts and input methods
+- [Keybindings & Navigation](/docs/usage/hotkeys/) — The desktop hotkeys you'll use every day
