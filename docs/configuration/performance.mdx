@@ -23,6 +23,19 @@ To keep mitigations enabled:
 marchyo.performance.disableMitigations = false;
 ```
 
+## Kernel selection
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.performance.kernel` | `enum` | `"default"` | Kernel variant: `default` (nixpkgs LTS default), `latest`, `zen`, `xanmod`, `lts` |
+
+```nix
+marchyo.performance.kernel = "zen";
+```
+
+Set via `lib.mkDefault`, so hosts can still override `boot.kernelPackages`
+directly. `"default"` leaves the option unmanaged.
+
 ## Kernel & I/O tuning
 
 Opt-in kernel/sysctl/IO tuning for throughput-oriented workloads. Disabled by
