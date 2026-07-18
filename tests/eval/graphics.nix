@@ -1,4 +1,9 @@
-{ helpers, lib, ... }:
+{
+  helpers,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (helpers)
     testNixOS
@@ -64,6 +69,16 @@ in
     }
   );
 
+  # Empty vendors falls back to Intel on x86_64 for backward compatibility.
+  eval-graphics-legacy = testNixOS "graphics-legacy" (
+    minimalConfig
+    // {
+      marchyo.graphics.vendors = [ ];
+    }
+  );
+}
+# Forcing package names touches ROCm attrs; keep this off the non-x86 CI legs.
+// lib.optionalAttrs pkgs.stdenv.hostPlatform.isx86_64 {
   # Vulkan userspace (loader + tools) ships for any configured vendor; AMD
   # additionally gets rocminfo. testNixOS never forces systemPackages, so
   # assert on the resolved package names.
@@ -74,12 +89,4 @@ in
     in
     lib.elem "vulkan-loader" names && lib.elem "vulkan-tools" names && lib.elem "rocminfo" names
   ) (minimalConfig // { marchyo.graphics.vendors = [ "amd" ]; });
-
-  # Empty vendors falls back to Intel on x86_64 for backward compatibility.
-  eval-graphics-legacy = testNixOS "graphics-legacy" (
-    minimalConfig
-    // {
-      marchyo.graphics.vendors = [ ];
-    }
-  );
 }
