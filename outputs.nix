@@ -433,107 +433,6 @@ let
       ++ modules;
       home-manager-path = droidInputs.home-manager.outPath;
     };
-in
-{
-  inherit
-    nixosModules
-    darwinModules
-    homeManagerModules
-    nixOnDroidModules
-    ;
-
-  # Batteries-included builders for downstream consumers. System-parameterized,
-  # so this is a plain top-level output (not wrapped in forAllSystems).
-  lib = {
-    inherit
-      mkNixosSystem
-      mkDarwinSystem
-      mkNixOnDroidConfiguration
-      mkHomeConfiguration
-      inputsFor
-      mkPkgs
-      ;
-  };
-
-  overlays.default = overlay;
-
-  templates = rec {
-    default = workstation;
-    workstation = {
-      path = ./templates/workstation;
-      description = "Full developer workstation with desktop and development tools";
-    };
-  };
-
-  # Reference configs built through the same exported builders consumers use,
-  # so they exercise the system-aware input selection end to end.
-  nixosConfigurations = {
-    x86_64 = mkNixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        sharedNixosConfig
-        { networking.hostName = "marchyo-x86-64"; }
-      ];
-    };
-    aarch64 = mkNixosSystem {
-      system = "aarch64-linux";
-      modules = [
-        sharedNixosConfig
-        {
-          networking.hostName = "marchyo-aarch64";
-          # Intel GPU drivers are x86-only; clear for aarch64
-          marchyo.graphics.vendors = nixpkgs.lib.mkForce [ ];
-        }
-      ];
-    };
-  };
-
-  # aarch64 rides unstable; x86_64 is transparently pinned to stable nixos-26.05
-  # (with matching nix-darwin-26.05 + stable HM/stylix) by `mkDarwinSystem`.
-  darwinConfigurations = {
-    aarch64 = mkDarwinSystem {
-      system = "aarch64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-aarch64"; }
-      ];
-    };
-    x86_64 = mkDarwinSystem {
-      system = "x86_64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-x86-64"; }
-      ];
-    };
-  };
-
-  # Standalone Home Manager configurations (Linux only — many HM modules
-  # depend on Wayland/Hyprland and are not darwin-compatible).
-  # Darwin home-manager is tested through darwinConfigurations instead.
-  homeConfigurations = {
-    "x86_64-linux" = mkHomeConfiguration {
-      system = "x86_64-linux";
-      homeDirectory = "/home/developer";
-    };
-    "aarch64-linux" = mkHomeConfiguration {
-      system = "aarch64-linux";
-      homeDirectory = "/home/developer";
-    };
-  };
-
-  # nix-on-droid (Android terminal), built through the same exported builder
-  # consumers use. Build with:
-  #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
-  # Kept internally consistent on nix-on-droid's own (2024) nixpkgs + HM 24.05;
-  # the marchyo overlay is intentionally NOT applied (overlays default to []).
-  nixOnDroidConfigurations = {
-    aarch64 = mkNixOnDroidConfiguration { };
-  };
-
-  # System-aware: x86_64-darwin → stable nixos-26.05, every other system →
-  # unstable. Always with marchyo's overlay applied and unfree allowed.
-  legacyPackages = mkPkgs;
-
   # Build-time data generator for the website's package/option search
   # (site/src/pages/search.astro). Produces a directory with two JSON files:
   #
@@ -671,6 +570,106 @@ in
           > "$out/options.json"
         jq -S '.' "$pkgsJsonPath" > "$out/marchyo-packages.json"
       '';
+in
+{
+  inherit
+    nixosModules
+    darwinModules
+    homeManagerModules
+    nixOnDroidModules
+    ;
+
+  # Batteries-included builders for downstream consumers. System-parameterized,
+  # so this is a plain top-level output (not wrapped in forAllSystems).
+  lib = {
+    inherit
+      mkNixosSystem
+      mkDarwinSystem
+      mkNixOnDroidConfiguration
+      mkHomeConfiguration
+      inputsFor
+      mkPkgs
+      ;
+  };
+
+  overlays.default = overlay;
+
+  templates = rec {
+    default = workstation;
+    workstation = {
+      path = ./templates/workstation;
+      description = "Full developer workstation with desktop and development tools";
+    };
+  };
+
+  # Reference configs built through the same exported builders consumers use,
+  # so they exercise the system-aware input selection end to end.
+  nixosConfigurations = {
+    x86_64 = mkNixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        sharedNixosConfig
+        { networking.hostName = "marchyo-x86-64"; }
+      ];
+    };
+    aarch64 = mkNixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        sharedNixosConfig
+        {
+          networking.hostName = "marchyo-aarch64";
+          # Intel GPU drivers are x86-only; clear for aarch64
+          marchyo.graphics.vendors = nixpkgs.lib.mkForce [ ];
+        }
+      ];
+    };
+  };
+
+  # aarch64 rides unstable; x86_64 is transparently pinned to stable nixos-26.05
+  # (with matching nix-darwin-26.05 + stable HM/stylix) by `mkDarwinSystem`.
+  darwinConfigurations = {
+    aarch64 = mkDarwinSystem {
+      system = "aarch64-darwin";
+      modules = [
+        sharedDarwinConfig
+        { networking.hostName = "marchyo-aarch64"; }
+      ];
+    };
+    x86_64 = mkDarwinSystem {
+      system = "x86_64-darwin";
+      modules = [
+        sharedDarwinConfig
+        { networking.hostName = "marchyo-x86-64"; }
+      ];
+    };
+  };
+
+  # Standalone Home Manager configurations (Linux only — many HM modules
+  # depend on Wayland/Hyprland and are not darwin-compatible).
+  # Darwin home-manager is tested through darwinConfigurations instead.
+  homeConfigurations = {
+    "x86_64-linux" = mkHomeConfiguration {
+      system = "x86_64-linux";
+      homeDirectory = "/home/developer";
+    };
+    "aarch64-linux" = mkHomeConfiguration {
+      system = "aarch64-linux";
+      homeDirectory = "/home/developer";
+    };
+  };
+
+  # nix-on-droid (Android terminal), built through the same exported builder
+  # consumers use. Build with:
+  #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
+  # Kept internally consistent on nix-on-droid's own (2024) nixpkgs + HM 24.05;
+  # the marchyo overlay is intentionally NOT applied (overlays default to []).
+  nixOnDroidConfigurations = {
+    aarch64 = mkNixOnDroidConfiguration { };
+  };
+
+  # System-aware: x86_64-darwin → stable nixos-26.05, every other system →
+  # unstable. Always with marchyo's overlay applied and unfree allowed.
+  legacyPackages = mkPkgs;
 
   mkPackages =
     { system }:
