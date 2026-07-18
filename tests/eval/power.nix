@@ -23,5 +23,7 @@ in
   # Enabling hibernation without a resume device trips the assertion.
   eval-hibernation-missing-resume-device =
     testNixOSFails "hibernation-missing-resume-device" "marchyo.power.hibernation.resumeDevice"
-      (withTestUser { marchyo.power.hibernation.enable = true; });
+      (withTestUser {
+        marchyo.power.hibernation.enable = true;
+      });
 }
