@@ -88,10 +88,6 @@ in
       fzf.fuzzyCompletion = true;
     };
 
-    services = {
-      tailscale.enable = true;
-    };
-
     environment.systemPackages =
       shellTools
       ++ tuiTools
