@@ -16,8 +16,10 @@ const CLI = join(REPO, "packages", "user-cli", "src", "cli.tsx");
 async function run(
   args: string[],
   env: Record<string, string> = {},
+  cwd?: string,
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   const proc = Bun.spawn(["bun", CLI, ...args], {
+    cwd,
     stdout: "pipe",
     stderr: "pipe",
     env: {
@@ -107,6 +109,32 @@ test("status piped to a non-TTY produces no ANSI escapes", async () => {
   const r = await run(["status"]);
   expect(r.code).toBe(0);
   expect(r.stdout).not.toMatch(/\x1b\[/);
+});
+
+// A throwaway flake dir + fresh XDG home so detectFlake resolves via cwd
+// (no cached _flake state, no /etc/nixos in the sandbox).
+function flakeFixture(): { dir: string; env: Record<string, string> } {
+  const dir = `/tmp/marchyo-cli-test-flake-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  Bun.spawnSync(["mkdir", "-p", dir]);
+  Bun.write(`${dir}/flake.nix`, "{ outputs = _: { }; }\n");
+  return { dir, env: { XDG_CONFIG_HOME: `${dir}/xdg` } };
+}
+
+test("update --dry-run prints the nix flake update command", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["update", "--dry-run"], env, dir);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nix flake update --flake");
+  expect(r.stdout).toContain(dir);
+});
+
+test("update --dry-run --json emits the command and flake location", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["update", "-n", "--json"], env, dir);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.command).toContain("nix flake update --flake");
+  expect(parsed.flake.path).toBe(dir);
 });
 
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
