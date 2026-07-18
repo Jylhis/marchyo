@@ -96,3 +96,11 @@ run:
 
 # Alias for run
 vm: run
+
+# Run the website dev server (landing + docs)
+site-dev:
+    cd site && bun install && bun run dev
+
+# Build the website (landing + docs)
+site-build:
+    cd site && bun install --frozen-lockfile && bun run check && bun run build
