@@ -15,6 +15,7 @@ import { runUpdate } from "./commands/update.ts";
 import { runUpgrade } from "./commands/upgrade.ts";
 import { runRollback } from "./commands/rollback.ts";
 import { runGc } from "./commands/gc.ts";
+import { runDiff } from "./commands/diff.ts";
 
 const program = new Command();
 
@@ -219,6 +220,25 @@ Examples:
         dryRun: opts.dryRun ?? false,
       }),
     );
+  });
+
+program
+  .command("diff")
+  .description("Show what changed between system generations (via dix)")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Compares /run/current-system against a newer pending generation when one
+exists, otherwise the last two system generations.
+
+Examples:
+  $ marchyo diff
+  $ marchyo diff --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runDiff(rt(), { dryRun: opts.dryRun ?? false }));
   });
 
 await program.parseAsync(process.argv);

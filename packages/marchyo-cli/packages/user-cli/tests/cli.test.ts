@@ -189,6 +189,19 @@ test("gc rejects a malformed period with exit 2 and a Try line", async () => {
   expect(r.stderr).toContain("Try: marchyo gc");
 });
 
+test("diff --dry-run prints a dix command or fails gracefully off-NixOS", async () => {
+  const r = await run(["diff", "-n"]);
+  if (r.code === 0) {
+    // On a NixOS host: either a dix command or the single-generation notice.
+    expect(r.stdout + r.stderr).toMatch(/dix |nothing to diff/);
+  } else {
+    // Sandbox without /nix: graceful error, no stack trace.
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("no system generations found");
+    expect(r.stderr).not.toContain("throw");
+  }
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
