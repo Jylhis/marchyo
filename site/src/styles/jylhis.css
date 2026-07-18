@@ -1,0 +1,412 @@
+/*
+ * jylhis.css — Jylhis Design System, vendored for the Marchyo site.
+ *
+ * Combines the design system's tokens, typography, motion signature and
+ * component styles into one entry point for the landing + search pages.
+ * Colour/spacing tokens are the source-of-truth values from tokens.json;
+ * only the font-family stacks are adapted to the self-hosted @fontsource
+ * variable families ("Literata Variable" / "JetBrains Mono Variable"),
+ * which each page imports before this file.
+ */
+
+/* ── Tokens (generated from tokens.json) ─────────────────── */
+
+/* Light theme (Jylhis Paper) — default */
+:root {
+  /* Background */
+  --color-bg: #faf7f2;
+  --color-bg-subtle: #f0ebe3;
+  /* Surface */
+  --color-surface: #e8e1d6;
+  --color-surface-raised: #fefdfb;
+  /* Text */
+  --color-text: #2c2825;
+  --color-text-muted: #6b5f54;
+  --color-text-heading: #1e1b18;
+  --color-text-faint: #8a7f72;
+  /* Accent */
+  --color-accent: #9a5a2a;
+  --color-accent-hover: #7a4622;
+  --color-brand: #b5703c;
+  /* Borders */
+  --color-border: #d5cec4;
+  --color-border-strong: #b0a898;
+  --color-decorator: #c4baa8;
+  /* Code */
+  --color-code-bg: #f0ebe3;
+  --color-code-text: #2c2825;
+  --color-code-border: #d5cec4;
+  /* Syntax */
+  --color-syntax-keyword: #4a2d80;
+  --color-syntax-string: #3d5a1f;
+  --color-syntax-number: #1f4d8a;
+  --color-syntax-function: #8a2348;
+  --color-syntax-builtin: #6f1f6a;
+  --color-syntax-type: #134a4a;
+  --color-syntax-variable: #2a4a6a;
+  --color-syntax-comment: #7e6c4d;
+  --color-syntax-docstring: #2a5a3a;
+  --color-syntax-tag: #134a4a;
+  /* Status */
+  --color-status-err: #a60000;
+  --color-status-warn: #6f5500;
+  --color-status-ok: #006800;
+  --color-status-info: #0031a9;
+  --color-accent-subtle: rgba(154, 90, 42, 0.12);
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  /* Layout */
+  --layout-content-max: 72ch;
+  --layout-margin-width: 16rem;
+  --layout-gap: 2.5rem;
+  --layout-padding-mobile: 1.25rem;
+  /* Radii */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-pill: 999px;
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-base: 250ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-spring: 420ms cubic-bezier(0.34, 1.25, 0.64, 1);
+
+  /* Font stacks — self-hosted variable fonts via @fontsource */
+  --font-body: "Literata Variable", Charter, "Bitstream Charter", Georgia, "Noto Serif", serif;
+  --font-mono: "JetBrains Mono Variable", "IBM Plex Mono", "Cascadia Code", "Fira Code", "Source Code Pro", "Courier New", monospace;
+  --font-heading: var(--font-mono); /* headings are MONOSPACE — important */
+  --font-size-base: 1.125rem;
+}
+
+/* Dark theme (Jylhis Roast) */
+:root[data-theme="dark"] {
+  /* Background */
+  --color-bg: #1a1714;
+  --color-bg-subtle: #242019;
+  /* Surface */
+  --color-surface: #2a2520;
+  --color-surface-raised: #363230;
+  /* Text */
+  --color-text: #e8e0d4;
+  --color-text-muted: #b0a496;
+  --color-text-heading: #f0eae0;
+  --color-text-faint: #8a7f72;
+  /* Accent */
+  --color-accent: #e89b5e;
+  --color-accent-hover: #f5b07a;
+  --color-brand: #d4884a;
+  /* Borders */
+  --color-border: #3d3830;
+  --color-border-strong: #5a5248;
+  --color-decorator: #4a4338;
+  /* Code */
+  --color-code-bg: #242019;
+  --color-code-text: #c8bca8;
+  --color-code-border: #3d3830;
+  /* Syntax */
+  --color-syntax-keyword: #c8a5ff;
+  --color-syntax-string: #b3c785;
+  --color-syntax-number: #a8b4dc;
+  --color-syntax-function: #f0a8c3;
+  --color-syntax-builtin: #e3a0d8;
+  --color-syntax-type: #80c8b3;
+  --color-syntax-variable: #95b3cc;
+  --color-syntax-comment: #9c8c6e;
+  --color-syntax-docstring: #9bbf9b;
+  --color-syntax-tag: #80c8b3;
+  /* Status */
+  --color-status-err: #ff5f59;
+  --color-status-warn: #d0bc00;
+  --color-status-ok: #44bc44;
+  --color-status-info: #2fafff;
+  --color-accent-subtle: rgba(232, 155, 94, 0.15);
+}
+
+/* ── Base + typography ──────────────────────────────────── */
+* { box-sizing: border-box; }
+
+html { background: var(--color-bg); }
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.65;
+  font-variant-numeric: oldstyle-nums;
+  text-wrap: pretty;
+  transition: background-color 0.3s ease-out, color 0.3s ease-out;
+}
+@media (max-width: 860px) {
+  body { font-size: 1rem; }
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--color-text-heading);
+  text-wrap: balance;
+}
+
+/* Mono chrome keeps lining figures */
+h1, h2, h3, h4,
+code, pre, kbd, samp { font-variant-numeric: lining-nums; }
+
+/* Links — copper, the single interactive colour, with the drawn underline */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0% 1px;
+  transition: color 0.25s ease-out, background-size 0.25s ease-out;
+}
+a:hover { color: var(--color-accent-hover); background-size: 100% 1px; }
+a:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: var(--radius-xs); }
+
+/* Inline code */
+:not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background-color: var(--color-code-bg);
+  color: var(--color-code-text);
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.3em;
+}
+
+details > summary { cursor: pointer; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+
+/* ── Motion — the "ink draws on" signature ──────────────── */
+@keyframes ds-rule-in { to { transform: scaleX(1); } }
+@keyframes ds-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+.ds-rule-draw {
+  height: 1px;
+  background: var(--color-border);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.ds-rule-draw.is-drawn { animation: ds-rule-in var(--transition-slow) forwards; }
+
+.ds-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.1em;
+  background: var(--color-accent);
+  vertical-align: text-bottom;
+  margin-left: 0.15em;
+  animation: ds-caret-blink 1.1s steps(1) infinite;
+}
+
+/* ── Mark — personal brand mark ─────────────────────────── */
+.ds-mark {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  font-size: 1.15rem;
+}
+.ds-mark__chevron { color: var(--color-accent); }
+
+/* ── StatusBadge ────────────────────────────────────────── */
+.ds-status {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.1em 0.5em;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.ds-status--active {
+  color: var(--color-status-ok);
+  background: color-mix(in srgb, var(--color-status-ok) 12%, transparent);
+  border: 1px solid var(--color-status-ok);
+}
+.ds-status--experimental {
+  color: var(--color-syntax-keyword);
+  background: color-mix(in srgb, var(--color-syntax-keyword) 12%, transparent);
+  border: 1px solid var(--color-syntax-keyword);
+}
+
+/* ── Kbd ────────────────────────────────────────────────── */
+.ds-kbd {
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.ds-kbd-chord { display: inline-flex; gap: 0.25em; align-items: baseline; }
+
+/* ── Callout (the "// currently" pattern) ───────────────── */
+.ds-callout {
+  background: var(--color-bg-subtle);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 18px 22px;
+  font-family: var(--font-body);
+}
+.ds-callout__label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: lowercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+  font-weight: 400;
+}
+.ds-callout__label::before { content: "// "; }
+.ds-callout ul { list-style: none; padding: 0; margin: 0; }
+.ds-callout li { position: relative; padding: 0.3rem 0 0.3rem 1.5em; font-size: 0.95rem; }
+.ds-callout li::before {
+  content: "›";
+  position: absolute;
+  left: 0;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+/* ── Terminal ───────────────────────────────────────────── */
+.ds-term {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+.ds-term__title {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0.9rem;
+  border-bottom: 1px dashed var(--color-border);
+}
+.ds-term__body {
+  padding: 0.75rem 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.ds-term__entry + .ds-term__entry { margin-top: 0.35rem; }
+.ds-term__line { display: flex; align-items: baseline; white-space: pre-wrap; gap: 0.5ch; }
+.ds-term__chev { color: var(--color-accent); font-weight: 700; }
+.ds-term__cmd { color: var(--color-text); font-weight: 500; }
+.ds-term__out {
+  margin: 0.1rem 0 0;
+  padding: 0;
+  font: inherit;
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+}
+
+/* ── CodeBlock ──────────────────────────────────────────── */
+.ds-codeblock { font-family: var(--font-mono); }
+.ds-codeblock__filename {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-code-border);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 0.4rem 1rem;
+  display: inline-block;
+  margin-bottom: -1px;
+  letter-spacing: 0.02em;
+}
+.ds-codeblock pre {
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-code-border);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: 14px 16px;
+  margin: 0;
+  overflow-x: auto;
+  line-height: 1.6;
+  font-size: 0.8rem;
+  color: var(--color-code-text);
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────── */
+.ds-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+}
+.ds-breadcrumb__sep { color: var(--color-text-faint); user-select: none; }
+.ds-breadcrumb__current { color: var(--color-text); }
+
+/* ── Divider with a label ───────────────────────────────── */
+.ds-divider-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.ds-divider-label::before,
+.ds-divider-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ── Theme toggle button + copy chips ───────────────────── */
+.theme-toggle {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.25s ease-out, border-color 0.25s ease-out;
+}
+.theme-toggle:hover { color: var(--color-accent); border-color: var(--color-accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.copy-chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.25s ease-out, border-color 0.25s ease-out;
+}
+.copy-chip:hover { color: var(--color-accent); border-color: var(--color-accent); }
+.copy-chip:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* ── Reduced-motion universal guard ─────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

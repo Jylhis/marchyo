@@ -1,0 +1,440 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="marchyo search — packages & options, one index"
+  description="Search every option and package Marchyo ships, from one index. Each result copies as context-ready markdown for your model."
+>
+  <header class="site-header">
+    <div class="brand">
+      <span class="ds-mark">marchyo<span class="ds-mark__chevron"> ❯</span></span>
+      <span class="brand__tag">search</span>
+    </div>
+    <nav class="site-nav">
+      <a href="/">home</a>
+      <a href="/docs/introduction/">docs</a>
+      <a href="https://github.com/Jylhis/marchyo">github ⑂</a>
+      <button class="theme-toggle" data-theme-toggle aria-label="toggle theme">☾</button>
+    </nav>
+  </header>
+
+  <main class="search" data-screen-label="Search">
+    <div class="search__top">
+      <label for="q" class="search__hint">$ marchyo search — packages &amp; options, one index</label>
+      <div class="search__box">
+        <span class="search__chev">❯</span>
+        <input id="q" type="text" placeholder="try hyprland, desktop.enable, git…" autocomplete="off" spellcheck="false" />
+        <span class="ds-kbd">/</span>
+      </div>
+      <div class="search__meta">
+        <div class="tabs">
+          <button class="tab is-active" data-tab="options">options <span class="tab__count" data-count="options">(0)</span></button>
+          <button class="tab" data-tab="packages">packages <span class="tab__count" data-count="packages">(0)</span></button>
+        </div>
+        <div class="search__stats" id="stats"></div>
+      </div>
+    </div>
+
+    <div class="search__grid">
+      <aside class="search__aside">
+        <div class="ns">
+          <div class="ns__label">// namespace</div>
+          <div class="ns__tree">
+            <span>├── marchyo.desktop</span>
+            <span>├── marchyo.development</span>
+            <span>├── marchyo.theme</span>
+            <span>├── marchyo.users</span>
+            <span>└── marchyo.defaults</span>
+          </div>
+        </div>
+        <div class="ai-note">
+          <div class="ai-note__label">// ai</div>
+          <p>Every result copies as context-ready markdown — paste it straight into your model.</p>
+          <button class="copy-chip" id="copy-all">» copy results for ai</button>
+        </div>
+      </aside>
+
+      <section class="results" id="results"></section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="colophon"><a href="/">marchyo(7)</a> · everything marchyo ships, one index · a reimagined <a href="https://search.nixos.org">search.nixos.org</a></div>
+  </footer>
+</Base>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 24px 20px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand__tag { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-faint); }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .search {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .search__top { display: flex; flex-direction: column; gap: 16px; }
+  .search__hint { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-faint); }
+  .search__box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg-subtle);
+    padding: 14px 18px;
+    transition: border-color 0.2s ease-out;
+  }
+  .search__box:focus-within { border-color: var(--color-accent); }
+  .search__chev { font-family: var(--font-mono); font-size: 1.2rem; color: var(--color-brand); }
+  .search__box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    outline: none;
+    padding: 0;
+  }
+  .search__box input::placeholder { color: var(--color-text-muted); }
+
+  .search__meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    text-align: left;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-muted);
+    padding: 5px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    transition: color 0.15s ease-out, border-color 0.15s ease-out, background-color 0.15s ease-out;
+  }
+  .tab:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .tab.is-active {
+    border-color: var(--color-accent);
+    background: var(--color-accent-subtle);
+    color: var(--color-accent);
+  }
+  .tab:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .tab__count { opacity: 0.6; }
+  .search__stats { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-faint); }
+
+  .search__grid {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  .search__aside { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 24px; }
+  .ns { display: flex; flex-direction: column; gap: 6px; }
+  .ns__label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-faint); }
+  .ns__tree {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 2;
+    color: var(--color-text-muted);
+  }
+  .ai-note {
+    border-left: 3px solid var(--color-brand);
+    background: var(--color-bg-subtle);
+    border-radius: 0 4px 4px 0;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ai-note__label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-brand); }
+  .ai-note p { margin: 0; font-family: var(--font-body); font-size: 0.9rem; line-height: 1.5; color: var(--color-text-muted); }
+  .ai-note .copy-chip { align-self: flex-start; }
+
+  .results { display: flex; flex-direction: column; }
+
+  @media (max-width: 780px) {
+    .search__grid { grid-template-columns: 1fr; }
+    .search__aside { position: static; }
+  }
+</style>
+
+<style is:global>
+  .result {
+    border-top: 1px solid var(--color-border);
+    padding: 18px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .result__head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .result__name { font-family: var(--font-mono); font-size: 1rem; font-weight: 600; }
+  .result__type { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-faint); }
+  .result__version { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-syntax-string); }
+  .result__license { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-faint); }
+  .result__actions { margin-left: auto; display: flex; gap: 8px; }
+  .result__desc { margin: 0; font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--color-text-muted); }
+  .result__foot { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-faint); display: flex; gap: 24px; flex-wrap: wrap; }
+  .result__foot .k { color: var(--color-syntax-keyword); }
+  .result-copy {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease-out, border-color 0.15s ease-out;
+  }
+  .result-copy:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .result-empty {
+    border-top: 1px solid var(--color-border);
+    padding: 48px 0;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+  }
+  .result-empty button {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  interface OptionRow {
+    name: string;
+    type: string;
+    default: string;
+    declared: string;
+    description: string;
+  }
+  interface PackageRow {
+    name: string;
+    version: string;
+    license: string;
+    flag: string;
+    description: string;
+  }
+
+  const OPTIONS: OptionRow[] = [
+    { name: 'marchyo.desktop.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/desktop.nix', description: 'Full desktop environment: Hyprland, Wayland, PipeWire audio, bluetooth, curated fonts. Cascades media and office on.' },
+    { name: 'marchyo.development.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/development.nix', description: 'Development stack: git with LFS, Docker, QEMU/KVM virtualization, buildah, kubectl, starship, zoxide, fzf.' },
+    { name: 'marchyo.media.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/media.nix', description: 'Media applications — Spotify, MPV. Auto-enabled with desktop via lib.mkDefault; override freely.' },
+    { name: 'marchyo.office.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/office.nix', description: 'Office applications — LibreOffice, Papers. Auto-enabled with desktop via lib.mkDefault.' },
+    { name: 'marchyo.theme.variant', type: '"light" | "dark"', default: '"dark"', declared: 'modules/nixos/options/theme.nix', description: 'Jylhis Paper or Roast palette, applied across GTK, Qt and terminals via stylix. Set theme.scheme for any base16 scheme instead.' },
+    { name: 'marchyo.users.<name>.fullname', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Full name used for the account, git identity, and application metadata.' },
+    { name: 'marchyo.users.<name>.email', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Email wired into git config and user-facing applications.' },
+    { name: 'marchyo.defaults.browser', type: 'string', default: '"firefox"', declared: 'modules/nixos/options/default-apps.nix', description: 'Default browser registered for xdg-open and desktop portals.' },
+    { name: 'marchyo.keybindingsHelp.enable', type: 'boolean', default: 'true', declared: 'modules/nixos/options/keyboard.nix', description: 'SUPER+K searchable on-screen cheat sheet of all active Hyprland keybindings.' },
+  ];
+
+  const PACKAGES: PackageRow[] = [
+    { name: 'hyprland', version: '0.49.1', license: 'bsd3', flag: 'marchyo.desktop.enable', description: 'Dynamic tiling Wayland compositor — the marchyo desktop.' },
+    { name: 'kitty', version: '0.42.0', license: 'gpl3', flag: 'marchyo.desktop.enable', description: 'GPU-accelerated terminal emulator, themed by stylix.' },
+    { name: 'alacritty', version: '0.15.1', license: 'asl20', flag: 'marchyo.desktop.enable', description: 'Cross-platform OpenGL terminal emulator.' },
+    { name: 'starship', version: '1.23.0', license: 'isc', flag: 'marchyo.development.enable', description: 'Minimal, fast shell prompt.' },
+    { name: 'zoxide', version: '0.9.8', license: 'mit', flag: 'marchyo.development.enable', description: 'Smarter cd that learns your habits.' },
+    { name: 'ripgrep', version: '14.1.1', license: 'unlicense', flag: 'marchyo.development.enable', description: 'Recursively search directories with a regex, fast.' },
+    { name: 'docker', version: '28.3.1', license: 'asl20', flag: 'marchyo.development.enable', description: 'Container runtime with docker-compose.' },
+    { name: 'mpv', version: '0.40.0', license: 'gpl2Plus', flag: 'marchyo.media.enable', description: 'Command-line media player.' },
+    { name: 'spotify', version: '1.2.62', license: 'unfree', flag: 'marchyo.media.enable', description: 'Music streaming client.' },
+    { name: 'libreoffice', version: '25.2.4', license: 'mpl20', flag: 'marchyo.office.enable', description: 'Office suite.' },
+  ];
+
+  let q = '';
+  let tab: 'options' | 'packages' = 'options';
+
+  const input = document.getElementById('q') as HTMLInputElement;
+  const results = document.getElementById('results')!;
+  const stats = document.getElementById('stats')!;
+  const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
+  const countEls = {
+    options: document.querySelector('[data-count="options"]')!,
+    packages: document.querySelector('[data-count="packages"]')!,
+  };
+
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const matches = (s: string) => s.toLowerCase().includes(q.trim().toLowerCase());
+
+  function filteredOptions() {
+    return OPTIONS.filter((o) => !q.trim() || matches(o.name) || matches(o.description));
+  }
+  function filteredPackages() {
+    return PACKAGES.filter((p) => !q.trim() || matches(p.name) || matches(p.description) || matches(p.flag));
+  }
+
+  function copyText(btn: HTMLButtonElement, text: string, done = '✓ copied') {
+    navigator.clipboard.writeText(text);
+    const original = btn.dataset.label || btn.textContent || '';
+    btn.dataset.label = original;
+    btn.textContent = done;
+    setTimeout(() => (btn.textContent = original), 1600);
+  }
+
+  function render() {
+    const opts = filteredOptions();
+    const pkgs = filteredPackages();
+    countEls.options.textContent = `(${opts.length})`;
+    countEls.packages.textContent = `(${pkgs.length})`;
+
+    const list = tab === 'options' ? opts : pkgs;
+    stats.textContent = `${list.length} results · 0.03s`;
+
+    tabButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tab));
+
+    results.replaceChildren();
+
+    if (list.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'result-empty';
+      empty.innerHTML = `<span style="color:var(--color-status-err)">✗</span> no matches for “${esc(q)}” — try <button data-try="desktop">desktop</button> or <button data-try="hyprland" data-try-tab="packages">hyprland</button>`;
+      empty.querySelectorAll<HTMLButtonElement>('button[data-try]').forEach((b) => {
+        b.addEventListener('click', () => {
+          q = b.dataset.try!;
+          input.value = q;
+          if (b.dataset.tryTab) tab = b.dataset.tryTab as 'packages';
+          render();
+        });
+      });
+      results.appendChild(empty);
+      return;
+    }
+
+    if (tab === 'options') {
+      (list as OptionRow[]).forEach((r) => results.appendChild(renderOption(r)));
+    } else {
+      (list as PackageRow[]).forEach((r) => results.appendChild(renderPackage(r)));
+    }
+  }
+
+  function renderOption(r: OptionRow) {
+    const el = document.createElement('article');
+    el.className = 'result';
+    el.innerHTML = `
+      <div class="result__head">
+        <a href="#" class="result__name">${esc(r.name)}</a>
+        <span class="result__type">${esc(r.type)}</span>
+        <span class="result__actions">
+          <button class="result-copy" data-role="plain">⧉ copy</button>
+          <button class="result-copy" data-role="ai">» ai</button>
+        </span>
+      </div>
+      <p class="result__desc">${esc(r.description)}</p>
+      <div class="result__foot">
+        <span>default: <span class="k">${esc(r.default)}</span></span>
+        <span>declared in ${esc(r.declared)}</span>
+      </div>`;
+    const plain = `${r.name} = ${r.default};`;
+    const ai = `NixOS option (marchyo flake):\n\n${r.name}\n  type: ${r.type}\n  default: ${r.default}\n  ${r.description}\n  declared in: ${r.declared}`;
+    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, plain, '✓'));
+    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, ai));
+    return el;
+  }
+
+  function renderPackage(r: PackageRow) {
+    const el = document.createElement('article');
+    el.className = 'result';
+    el.innerHTML = `
+      <div class="result__head">
+        <a href="#" class="result__name">${esc(r.name)}</a>
+        <span class="result__version">${esc(r.version)}</span>
+        <span class="result__license">${esc(r.license)}</span>
+        <span class="result__actions">
+          <button class="result-copy" data-role="plain">⧉ copy</button>
+          <button class="result-copy" data-role="ai">» ai</button>
+        </span>
+      </div>
+      <p class="result__desc">${esc(r.description)}</p>
+      <div class="result__foot">└── nixpkgs.${esc(r.name)} · pulled in by ${esc(r.flag)}</div>`;
+    const plain = `environment.systemPackages = [ pkgs.${r.name} ];`;
+    const ai = `Nix package:\n\n${r.name} ${r.version} (${r.license})\n  ${r.description}\n  pulled in by: ${r.flag}`;
+    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, plain, '✓'));
+    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, ai));
+    return el;
+  }
+
+  input.addEventListener('input', () => {
+    q = input.value;
+    render();
+  });
+  tabButtons.forEach((b) => {
+    b.addEventListener('click', () => {
+      tab = b.dataset.tab as 'options' | 'packages';
+      render();
+    });
+  });
+
+  document.getElementById('copy-all')!.addEventListener('click', (e) => {
+    const list = tab === 'options' ? filteredOptions() : filteredPackages();
+    const text =
+      `Marchyo ${tab} search results for "${q || '*'}":\n\n` +
+      list.map((r) => `- ${r.name} — ${r.description}`).join('\n');
+    copyText(e.currentTarget as HTMLButtonElement, text);
+  });
+
+  // "/" focuses the search box (unless already typing in a field)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '/' && (document.activeElement as HTMLElement)?.tagName !== 'INPUT') {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+
+  // Theme toggle (shared behaviour)
+  function currentTheme() {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : '';
+  }
+  function applyTheme(t: string) {
+    if (t) document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
+      .forEach((b) => (b.textContent = t === 'dark' ? '☀' : '☾'));
+  }
+  applyTheme(currentTheme());
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const t = currentTheme() === 'dark' ? '' : 'dark';
+      try {
+        localStorage.setItem('marchyo-theme', t);
+      } catch (err) {}
+      applyTheme(t);
+    });
+  });
+
+  render();
+</script>
