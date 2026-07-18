@@ -44,12 +44,12 @@ marchyo.dictation = {
 };
 ```
 
-<Note>
+:::note
 With `preloadModel = false` (the default) the ~1.5 GB Whisper model downloads on
 the first recording, so a `nixos-rebuild` never blocks on the network. Set
 `preloadModel = true` to fetch it at activation time via voxtype's model-loader
 service instead (that step needs network access when it runs).
-</Note>
+:::
 
 ## How it works
 

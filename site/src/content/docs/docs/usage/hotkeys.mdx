@@ -8,12 +8,12 @@ Hyprland with the keybindings below, plus the mako notification daemon, the
 vicinae launcher, cliphist clipboard history, and grimblast/satty/tesseract
 screenshots. `Super` is the primary modifier (the Windows/Command key).
 
-<Note>
+:::note
 These binds are declared in `modules/home/hyprland.nix` (and screenshots in
 `modules/home/screenshot.nix`) — they are the source of truth. To change one,
 override the Home Manager `wayland.windowManager.hyprland.settings` in your own
 config rather than editing a dotfile at runtime.
-</Note>
+:::
 
 ## Launching apps
 
@@ -130,7 +130,7 @@ off with `marchyo.screenshot.enableAnnotation` / `enableOcr`.
 
 ## Dictation
 
-Requires `marchyo.dictation.enable`. See the [Dictation](/configuration/dictation)
+Requires `marchyo.dictation.enable`. See the [Dictation](/docs/configuration/dictation/)
 page for setup.
 
 | Keys | Action |

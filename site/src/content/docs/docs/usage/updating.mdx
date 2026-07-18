@@ -23,16 +23,16 @@ sudo nixos-rebuild switch --flake .#yourhost
 
 On macOS use `darwin-rebuild switch --flake .#yourhost` instead.
 
-<Note>
+:::note
 `nix flake update` rewrites `flake.lock`. Commit the updated lock file so the
 change is reproducible and reviewable — the lock is the single source of truth
 for what your system is built from.
-</Note>
+:::
 
 ## What "update" actually moves
 
 Marchyo's builders pick the package set for you, so an update tracks different
-channels depending on the system (see the [Introduction](/introduction)):
+channels depending on the system (see the [Introduction](/docs/introduction/)):
 
 - **Linux and `aarch64-darwin`** ride **nixpkgs unstable**.
 - **`x86_64-darwin`** is pinned to **stable nixos-26.05** (the last release
@@ -57,11 +57,11 @@ sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 sudo nix-collect-garbage -d      # remove old generations + free the store
 ```
 
-<Note>
+:::note
 Unlike Btrfs snapshot systems, NixOS generations capture the **system closure**,
 not your home files. `~` is untouched by a rollback. Roll back to undo a broken
 system change; use your own backups for personal data.
-</Note>
+:::
 
 ## Developing on the Marchyo repo itself
 
