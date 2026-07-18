@@ -1,18 +1,13 @@
 # Library function unit tests
 # Lightweight tests using writeText instead of runCommand
 {
-  pkgs,
+  helpers,
   lib,
   ...
 }:
 let
-  # Import library functions to test
-
-  # Test helper: create a trivial derivation that fails at eval time if assertion fails
-  # Uses writeText (no sandbox spawn) instead of runCommand
-  assertTest =
-    name: assertion: message:
-    pkgs.writeText "test-${name}" (if assertion then "pass" else throw "FAIL: ${name}: ${message}");
+  # Shared eval-time assertion helper from tests/lib.nix
+  inherit (helpers) assertTest;
 in
 {
 
