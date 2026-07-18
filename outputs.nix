@@ -9,6 +9,7 @@ let
     nix-darwin
     nix-darwin-stable
     nix-on-droid
+    nixos-hardware
     vicinae
     noctalia
     stylix
@@ -264,6 +265,16 @@ let
       ];
     };
     inherit (home-manager.nixosModules) home-manager;
+    # Per-machine hardware fixes: the complete nixos-hardware profile set,
+    # re-exported wholesale as a thin passthrough (profiles are lazy — unused
+    # ones cost nothing). A host imports its profile directly, e.g.:
+    #
+    #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
+    #
+    # Curated examples live in templates/workstation and docs/introduction.mdx,
+    # pinned by tests/eval/hardware.nix. Full list:
+    # https://github.com/NixOS/nixos-hardware
+    hardware = nixos-hardware.nixosModules;
   };
 
   # Darwin module set, parameterized by which home-manager darwin module to
@@ -594,6 +605,7 @@ in
         ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
+      nixosHardwareModules = nixosModules.hardware;
     };
 
   mkFormatter =
