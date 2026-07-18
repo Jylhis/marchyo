@@ -16,13 +16,15 @@ import { runUpgrade } from "./commands/upgrade.ts";
 import { runRollback } from "./commands/rollback.ts";
 import { runGc } from "./commands/gc.ts";
 import { runDiff } from "./commands/diff.ts";
+import { runDebug } from "./commands/debug.ts";
+import { VERSION } from "./version.ts";
 
 const program = new Command();
 
 program
   .name("marchyo")
   .description("Marchyo user CLI — inspect and manage your Marchyo install")
-  .version("0.1.0")
+  .version(VERSION)
   // --format accepts the canonical jylhis vocabulary; only text|json are
   // implemented today. Any other value rejects with a usage error naming
   // the supported subset (validated in core/runtime.ts:parseFormat).
@@ -239,6 +241,23 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runDiff(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("debug")
+  .description("Print a diagnostics bundle (versions, generation, journal errors)")
+  .addHelpText(
+    "after",
+    `
+All probes are best-effort; unavailable data is reported as unknown/null.
+
+Examples:
+  $ marchyo debug
+  $ marchyo debug --json
+`,
+  )
+  .action(async () => {
+    process.exit(await runDebug(rt()));
   });
 
 await program.parseAsync(process.argv);
