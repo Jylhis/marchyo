@@ -11,6 +11,7 @@ import {
 import { runStatus } from "./commands/status.tsx";
 import { runThemeGet, runThemeSet } from "./commands/theme.ts";
 import { runRebuild } from "./commands/rebuild.ts";
+import { runUpdate } from "./commands/update.ts";
 
 const program = new Command();
 
@@ -140,6 +141,22 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runRebuild(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("update")
+  .description("Update flake inputs (nix flake update) in the detected flake")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo update
+  $ marchyo update --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runUpdate(rt(), { dryRun: opts.dryRun ?? false }));
   });
 
 await program.parseAsync(process.argv);
