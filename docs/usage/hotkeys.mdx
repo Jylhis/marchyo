@@ -38,7 +38,7 @@ config rather than editing a dotfile at runtime.
 |------|--------|
 | `Super + W` | Close active window |
 | `Super + J` | Toggle split direction |
-| `Super + V` | Toggle floating |
+| `Super + T` | Toggle floating |
 | `Super + P` | Toggle pseudo-tile |
 | `Super + ←/→/↑/↓` | Move focus |
 | `Super + Shift + ←/→/↑/↓` | Swap window in a direction |
@@ -50,6 +50,37 @@ config rather than editing a dotfile at runtime.
 | `Super + Alt + F` | Full width |
 | `Super + Left-drag` | Move window (mouse) |
 | `Super + Right-drag` | Resize window (mouse) |
+
+### Universal clipboard
+
+| Keys | Action |
+|------|--------|
+| `Super + C` | Copy (sends `Ctrl + Insert` to the active window — terminal-safe) |
+| `Super + V` | Paste (sends `Shift + Insert`) |
+| `Super + X` | Cut (sends `Ctrl + X`) |
+
+### Menus & utilities
+
+| Keys | Action |
+|------|--------|
+| `Super + Escape` | Power/session menu (lock, suspend, hibernate, relaunch, reboot, shutdown) |
+| `Super + Alt + Space` | Central system menu (Trigger / Setup / Style / System / Learn) |
+| `Super + Ctrl + comma` | Toggle notification do-not-disturb (was: dismiss all) |
+| `Super + Ctrl + Shift + comma` | Dismiss all notifications |
+| `Super + Ctrl + R` | Set a reminder |
+| `Super + Ctrl + Alt + R` | Show pending reminders |
+| `Super + Ctrl + Shift + R` | Clear reminders |
+| `Super + Ctrl + Alt + T` | Notify date/time |
+| `Super + Ctrl + Alt + B` | Notify battery status |
+| `Super + Ctrl + period` | Transcode media file |
+| `Super + backslash` | Cycle focused monitor scale |
+| `Super + Ctrl + Delete` | Toggle laptop display |
+| `Super + Ctrl + A` | Audio mixer (wiremix) |
+| `Super + Ctrl + B` | Bluetooth (bluetui) |
+| `Super + Ctrl + W` | Wi-Fi (impala) |
+| `Super + Alt + Return` | tmux "Work" session |
+| `Super + Alt + D` | lazydocker (needs `marchyo.development.enable`) |
+| `Super + Alt + Shift + F` | File manager at the focused terminal's cwd |
 
 ### Window grouping (tabbed/stacked)
 
