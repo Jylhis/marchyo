@@ -18,7 +18,8 @@ export async function runRollback(
   const { argv, needsSudo } = rollbackArgv({ noInput: rt.noInput });
 
   if (opts.dryRun) {
-    data(rt, { command: formatArgv(argv) }, () => formatArgv(argv));
+    const command = formatArgv(argv);
+    data(rt, { command }, () => command);
     return 0;
   }
 
@@ -27,7 +28,11 @@ export async function runRollback(
       rt,
       "rollback requires root; install sudo or re-run as root (e.g. `sudo marchyo rollback`)",
     );
-    return 2;
+    return 1;
+  }
+  if (!needsSudo && !commandAvailable("nixos-rebuild")) {
+    err(rt, "nixos-rebuild not found in PATH");
+    return 1;
   }
 
   info(rt, "rolling back to the previous system generation ...");
