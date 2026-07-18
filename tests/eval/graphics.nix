@@ -1,6 +1,10 @@
-{ helpers, ... }:
+{ helpers, lib, ... }:
 let
-  inherit (helpers) testNixOS minimalConfig;
+  inherit (helpers)
+    testNixOS
+    testNixOSCheck
+    minimalConfig
+    ;
 in
 {
   eval-graphics-intel = testNixOS "graphics-intel" (
@@ -59,6 +63,17 @@ in
       };
     }
   );
+
+  # Vulkan userspace (loader + tools) ships for any configured vendor; AMD
+  # additionally gets rocminfo. testNixOS never forces systemPackages, so
+  # assert on the resolved package names.
+  eval-graphics-amd-tooling = testNixOSCheck "graphics-amd-tooling" (
+    c:
+    let
+      names = map lib.getName c.environment.systemPackages;
+    in
+    lib.elem "vulkan-loader" names && lib.elem "vulkan-tools" names && lib.elem "rocminfo" names
+  ) (minimalConfig // { marchyo.graphics.vendors = [ "amd" ]; });
 
   # Empty vendors falls back to Intel on x86_64 for backward compatibility.
   eval-graphics-legacy = testNixOS "graphics-legacy" (
