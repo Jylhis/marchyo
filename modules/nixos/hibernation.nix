@@ -27,7 +27,7 @@ in
 
       (lib.mkIf cfg.suspendThenHibernate {
         # Suspend first, hibernate after 45 minutes asleep.
-        systemd.sleep.settings.Sleep.HibernateDelaySec = "45min";
+        systemd.sleep.settings.Sleep.HibernateDelaySec = lib.mkDefault "45min";
         services.logind.settings.Login.HandleLidSwitch = lib.mkDefault "suspend-then-hibernate";
       })
     ]
