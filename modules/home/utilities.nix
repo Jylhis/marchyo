@@ -1,7 +1,7 @@
 # Omarchy-style "Trigger" utilities (OMARCHY_PARITY.md Phase 3): gum-driven
-# reminders backed by transient systemd user timers, plus quick-info
-# notifications (date/time, battery). Scripts follow the
-# window-toggles.nix wrapper pattern; the binds merge into
+# reminders backed by transient systemd user timers, quick-info
+# notifications (date/time, battery), and a media transcode + share pair.
+# Scripts follow the window-toggles.nix wrapper pattern; the binds merge into
 # wayland.windowManager.hyprland.settings the same way webapps.nix contributes
 # its launch binds (list-valued Hyprland settings concatenate across Home
 # Manager modules, so hyprland.nix stays untouched).
@@ -129,6 +129,99 @@ let
     '';
   };
 
+  # Optional ascii mode: pkgs.terminaltexteffects (the `tte` binary) is in
+  # current nixpkgs (verified in OMARCHY_PARITY.md); the `?` guard keeps
+  # evaluation safe if it is ever dropped or renamed.
+  hasTte = pkgs ? terminaltexteffects;
+
+  marchyo-transcode = pkgs.writeShellApplication {
+    name = "marchyo-transcode";
+    runtimeInputs = [
+      pkgs.gum
+      pkgs.ffmpeg
+      pkgs.libnotify
+      pkgs.coreutils
+    ]
+    ++ lib.optional hasTte pkgs.terminaltexteffects;
+    text = ''
+      src="''${1:-}"
+      if [ -z "$src" ]; then
+        src=$(gum file "$HOME") || exit 0
+      fi
+      if [ ! -f "$src" ]; then
+        echo "marchyo-transcode: not a file: $src" >&2
+        exit 1
+      fi
+
+      choices=(mp4 webm gif)
+      ${lib.optionalString hasTte ''choices+=("ascii (tte)")''}
+      target=$(gum choose --header "Transcode to" "''${choices[@]}") || exit 0
+
+      dir=$(dirname "$src")
+      stem=$(basename "$src")
+      stem="''${stem%.*}"
+      # Transcode lands next to the source; dodge in-place overwrites when the
+      # source already has the target extension.
+      out="$dir/$stem.$target"
+      if [ "$out" = "$src" ]; then
+        out="$dir/$stem.transcoded.$target"
+      fi
+
+      case "$target" in
+        mp4)
+          ffmpeg -y -i "$src" -c:v libx264 -preset fast -crf 23 -c:a aac "$out"
+          ;;
+        webm)
+          ffmpeg -y -i "$src" -c:v libvpx-vp9 -crf 32 -b:v 0 -c:a libopus "$out"
+          ;;
+        gif)
+          ffmpeg -y -i "$src" -vf "fps=12,scale=640:-1:flags=lanczos" "$out"
+          ;;
+        "ascii (tte)")
+          # Text-mode "transcode": animate the file's text in the terminal
+          # with terminaltexteffects. No output file is produced.
+          tte beams < "$src"
+          exit 0
+          ;;
+      esac
+      notify-send -u low -a marchyo "Transcode" "Saved $(basename "$out")"
+    '';
+  };
+
+  # Copies the chosen content/path to the clipboard; an actual upload target
+  # is deferred (follow-up decision per OMARCHY_PARITY.md). No keybinding -
+  # reached from the central menu.
+  marchyo-share = pkgs.writeShellApplication {
+    name = "marchyo-share";
+    runtimeInputs = [
+      pkgs.gum
+      pkgs.wl-clipboard
+      pkgs.libnotify
+      pkgs.coreutils
+    ];
+    text = ''
+      choice=$(gum choose --header "Share" Clipboard File Folder) || exit 0
+      case "$choice" in
+        Clipboard)
+          # The clipboard already holds the content; nothing more to stage
+          # until an upload target lands.
+          notify-send -u low -a marchyo "Share" "Clipboard content ready to paste"
+          ;;
+        File)
+          file=$(gum file "$HOME") || exit 0
+          wl-copy < "$file"
+          notify-send -u low -a marchyo "Share" "Copied contents of $(basename "$file")"
+          ;;
+        Folder)
+          # --directory lets gum's picker select directories too.
+          folder=$(gum file --directory "$HOME") || exit 0
+          printf '%s' "$folder" | wl-copy
+          notify-send -u low -a marchyo "Share" "Copied path $folder"
+          ;;
+      esac
+    '';
+  };
+
   # Interactive scripts run in the floating terminal (the keybindings-cheatsheet
   # pattern: org.omarchy.terminal picks up the centered floating-window rule);
   # the notify wrappers run directly.
@@ -140,6 +233,7 @@ let
   utilityBinds = [
     "SUPER CTRL ALT, T, Show date and time, exec, marchyo-notify-datetime"
     "SUPER CTRL ALT, B, Show battery status, exec, marchyo-notify-battery"
+    "SUPER CTRL, period, Transcode media, exec, $terminal --class=org.omarchy.terminal -e marchyo-transcode"
   ];
 in
 {
@@ -156,6 +250,8 @@ in
       home.packages = [
         marchyo-notify-datetime
         marchyo-notify-battery
+        marchyo-transcode
+        marchyo-share
       ];
       wayland.windowManager.hyprland.settings.bindd = utilityBinds;
     })
