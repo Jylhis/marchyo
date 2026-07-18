@@ -13,7 +13,8 @@ in
     && cfg.zramSwap.algorithm == "zstd"
   ) minimalConfig;
 
-  # LocalSend's port opens on the desktop.
+  # LocalSend's port opens on the desktop (via modules/nixos/localsend.nix;
+  # the sub-toggle is exercised in tests/eval/localsend.nix).
   eval-omarchy-firewall-desktop =
     testNixOSCheck "omarchy-firewall-desktop"
       (cfg: builtins.elem 53317 cfg.networking.firewall.allowedTCPPorts)
