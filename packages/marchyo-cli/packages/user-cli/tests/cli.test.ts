@@ -16,8 +16,10 @@ const CLI = join(REPO, "packages", "user-cli", "src", "cli.tsx");
 async function run(
   args: string[],
   env: Record<string, string> = {},
+  cwd?: string,
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   const proc = Bun.spawn(["bun", CLI, ...args], {
+    cwd,
     stdout: "pipe",
     stderr: "pipe",
     env: {
@@ -107,6 +109,121 @@ test("status piped to a non-TTY produces no ANSI escapes", async () => {
   const r = await run(["status"]);
   expect(r.code).toBe(0);
   expect(r.stdout).not.toMatch(/\x1b\[/);
+});
+
+// A throwaway flake dir + fresh XDG home so detectFlake resolves via cwd
+// (no cached _flake state, no /etc/nixos in the sandbox).
+function flakeFixture(): { dir: string; env: Record<string, string> } {
+  const dir = `/tmp/marchyo-cli-test-flake-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  Bun.spawnSync(["mkdir", "-p", dir]);
+  Bun.write(`${dir}/flake.nix`, "{ outputs = _: { }; }\n");
+  return { dir, env: { XDG_CONFIG_HOME: `${dir}/xdg` } };
+}
+
+test("update --dry-run prints the nix flake update command", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["update", "--dry-run"], env, dir);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nix flake update --flake");
+  expect(r.stdout).toContain(dir);
+});
+
+test("update --dry-run --json emits the command and flake location", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["update", "-n", "--json"], env, dir);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.command).toContain("nix flake update --flake");
+  expect(parsed.flake.path).toBe(dir);
+});
+
+test("upgrade --dry-run prints update then rebuild commands", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["upgrade", "-n"], env, dir);
+  expect(r.code).toBe(0);
+  const [first, second] = r.stdout.trim().split("\n");
+  expect(first).toContain("nix flake update --flake");
+  expect(second).toContain("nixos-rebuild switch");
+  expect(second).toContain(dir);
+});
+
+test("upgrade --dry-run --json emits a commands array", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["upgrade", "-n", "--json"], env, dir);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.commands).toHaveLength(2);
+  expect(parsed.commands[0]).toContain("nix flake update");
+  expect(parsed.commands[1]).toContain("nixos-rebuild switch");
+});
+
+test("rollback --dry-run prints the nixos-rebuild rollback command", async () => {
+  const r = await run(["rollback", "-n"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nixos-rebuild switch --rollback");
+});
+
+test("rollback --dry-run --json emits the command", async () => {
+  const r = await run(["rollback", "-n", "--json"]);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.command).toContain("nixos-rebuild switch --rollback");
+});
+
+test("gc --dry-run prints the default 14d command", async () => {
+  const r = await run(["gc", "-n"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("nix-collect-garbage --delete-older-than 14d");
+});
+
+test("gc --dry-run honors --delete-older-than", async () => {
+  const r = await run(["gc", "-n", "--delete-older-than", "30d"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("--delete-older-than 30d");
+});
+
+test("gc rejects a malformed period with exit 2 and a Try line", async () => {
+  const r = await run(["gc", "-n", "--delete-older-than", "2weeks"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid period");
+  expect(r.stderr).toContain("Try: marchyo gc");
+});
+
+test("diff --dry-run prints a dix command or fails gracefully off-NixOS", async () => {
+  const r = await run(["diff", "-n"]);
+  if (r.code === 0) {
+    // On a NixOS host: either a dix command or the single-generation notice.
+    expect(r.stdout + r.stderr).toMatch(/dix |nothing to diff/);
+  } else {
+    // Sandbox without /nix: graceful error, no stack trace.
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("no system generations found");
+    expect(r.stderr).not.toContain("throw");
+  }
+});
+
+test("debug --json emits a parseable diagnostics bundle", async () => {
+  const r = await run(["debug", "--json"]);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.cliVersion).toBe("0.1.0");
+  // Best-effort fields exist even when the probe failed (null, not absent).
+  for (const key of [
+    "nixosVersion",
+    "generation",
+    "generationDate",
+    "flake",
+    "journalErrors",
+  ]) {
+    expect(parsed).toHaveProperty(key);
+  }
+});
+
+test("debug text output survives missing system tools", async () => {
+  const r = await run(["debug"]);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("Marchyo debug bundle");
+  expect(r.stdout).toContain("CLI version:     0.1.0");
 });
 
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {

@@ -16,7 +16,14 @@ let
       icon = mkOption {
         type = types.nullOr types.str;
         default = null;
-        description = "Icon name (freedesktop theme) or absolute path. Defaults to a generic web icon.";
+        description = ''
+          Icon name (freedesktop theme) or absolute path. Defaults to the
+          generic `applications-internet` web icon. Marchyo never fetches
+          favicons at build time, so set this per app for a branded icon —
+          either a theme icon name already shipped by an installed icon theme,
+          or a path to an icon file from your own configuration (e.g.
+          `icon = "''${./icons/myapp.png}";`).
+        '';
       };
       key = mkOption {
         type = types.nullOr types.str;
@@ -25,7 +32,8 @@ let
         description = ''
           Hyprland key (the part after the modifiers) that launches this app.
           `null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT
-          binds (C, D, H, I, O, S are taken, plus workspace digits/arrows/Tab).
+          binds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)
+          and of the keys used by the default app set (A, G, P, W, X, Y, Z).
         '';
       };
       modifiers = mkOption {
@@ -44,8 +52,10 @@ in
       entries that launch a chromium-family browser with `--app=<url>`, so a
       site opens as its own window (no tabs/chrome), plus a Hyprland keybinding
       for every app that declares a `key` (omarchy-style, default SUPER+SHIFT).
-      Requires the desktop feature. If the selected `marchyo.defaults.browser`
-      is not chromium-based (e.g. firefox), chromium is pulled in for app mode'';
+      Requires the desktop feature and is auto-enabled (`lib.mkDefault`) when
+      `marchyo.desktop.enable` is on — set to `false` to opt out. If the
+      selected `marchyo.defaults.browser` is not chromium-based (e.g. firefox),
+      chromium is pulled in for app mode'';
 
     browser = mkOption {
       type = types.nullOr (
@@ -95,6 +105,26 @@ in
           name = "Zoom";
           url = "https://app.zoom.us/wc/home";
           key = "Z";
+        }
+        {
+          name = "X";
+          url = "https://x.com/";
+          key = "X";
+        }
+        {
+          name = "Google Photos";
+          url = "https://photos.google.com/";
+          key = "P";
+        }
+        {
+          # No default key: launch from the app launcher.
+          name = "Google Calendar";
+          url = "https://calendar.google.com/";
+        }
+        {
+          # No default key: launch from the app launcher.
+          name = "Gmail";
+          url = "https://mail.google.com/";
         }
       ];
       description = ''

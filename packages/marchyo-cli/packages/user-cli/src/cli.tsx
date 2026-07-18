@@ -11,13 +11,20 @@ import {
 import { runStatus } from "./commands/status.tsx";
 import { runThemeGet, runThemeSet } from "./commands/theme.ts";
 import { runRebuild } from "./commands/rebuild.ts";
+import { runUpdate } from "./commands/update.ts";
+import { runUpgrade } from "./commands/upgrade.ts";
+import { runRollback } from "./commands/rollback.ts";
+import { runGc } from "./commands/gc.ts";
+import { runDiff } from "./commands/diff.ts";
+import { runDebug } from "./commands/debug.ts";
+import { VERSION } from "./version.ts";
 
 const program = new Command();
 
 program
   .name("marchyo")
   .description("Marchyo user CLI — inspect and manage your Marchyo install")
-  .version("0.1.0")
+  .version(VERSION)
   // --format accepts the canonical jylhis vocabulary; only text|json are
   // implemented today. Any other value rejects with a usage error naming
   // the supported subset (validated in core/runtime.ts:parseFormat).
@@ -140,6 +147,117 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runRebuild(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("update")
+  .description("Update flake inputs (nix flake update) in the detected flake")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo update
+  $ marchyo update --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runUpdate(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("upgrade")
+  .description("Update flake inputs, then nixos-rebuild switch")
+  .option("-n, --dry-run", "Print the commands instead of running them")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo upgrade
+  $ marchyo upgrade --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runUpgrade(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("rollback")
+  .description("Switch back to the previous system generation")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo rollback
+  $ marchyo rollback --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runRollback(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("gc")
+  .description("Collect Nix garbage (old generations and unreferenced paths)")
+  .option(
+    "--delete-older-than <period>",
+    "delete generations older than <days>d",
+    "14d",
+  )
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo gc
+  $ marchyo gc --delete-older-than 30d
+  $ marchyo gc --dry-run
+`,
+  )
+  .action(async (opts: { deleteOlderThan: string; dryRun?: boolean }) => {
+    process.exit(
+      await runGc(rt(), {
+        olderThan: opts.deleteOlderThan,
+        dryRun: opts.dryRun ?? false,
+      }),
+    );
+  });
+
+program
+  .command("diff")
+  .description("Show what changed between system generations (via dix)")
+  .option("-n, --dry-run", "Print the command instead of running it")
+  .addHelpText(
+    "after",
+    `
+Compares /run/current-system against a newer pending generation when one
+exists, otherwise the last two system generations.
+
+Examples:
+  $ marchyo diff
+  $ marchyo diff --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runDiff(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("debug")
+  .description("Print a diagnostics bundle (versions, generation, journal errors)")
+  .addHelpText(
+    "after",
+    `
+All probes are best-effort; unavailable data is reported as unknown/null.
+
+Examples:
+  $ marchyo debug
+  $ marchyo debug --json
+`,
+  )
+  .action(async () => {
+    process.exit(await runDebug(rt()));
   });
 
 await program.parseAsync(process.argv);

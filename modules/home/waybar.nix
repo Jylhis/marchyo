@@ -32,6 +32,26 @@ let
     variant = themeVariant;
   };
 
+  # Notification DND state for the custom/dnd module: one JSON object per
+  # invocation (interval = "once"), re-run on SIGRTMIN+9 — sent by
+  # marchyo-dnd-toggle (modules/home/window-toggles.nix) right after it flips
+  # mako's do-not-disturb mode. Nerd-font bell glyphs match the voxtype
+  # indicator's icon style.
+  dndStatus = pkgs.writeShellApplication {
+    name = "marchyo-dnd-status";
+    runtimeInputs = [
+      pkgs.mako
+      pkgs.gnugrep
+    ];
+    text = ''
+      if makoctl mode | grep -q do-not-disturb; then
+        printf '{"text":"󰂛","class":"dnd","tooltip":"Do not disturb — notifications hidden"}\n'
+      else
+        printf '{"text":"󰂚","class":"idle","tooltip":"Notifications on"}\n'
+      fi
+    '';
+  };
+
   upstreamFile = if isDark then "style.css" else "style-paper.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
@@ -91,6 +111,7 @@ let
 
     /* │ separators between right-hand status segments */
     #custom-voxtype,
+    #custom-dnd,
     #language,
     #bluetooth,
     #network,
@@ -111,6 +132,15 @@ let
     }
     #custom-voxtype.transcribing {
       color: ${palette.hex.accent};
+    }
+
+    /* notification DND indicator: muted bell when idle, alert when silenced */
+    #custom-dnd {
+      padding: 0 10px;
+      color: ${palette.hex."text-muted"};
+    }
+    #custom-dnd.dnd {
+      color: ${palette.hex."status-err"};
     }
   '';
 
@@ -140,6 +170,7 @@ in
             ]
             ++ lib.optional voxtypeIndicator "custom/voxtype"
             ++ [
+              "custom/dnd"
               "hyprland/language"
               "bluetooth"
               "network"
@@ -234,6 +265,17 @@ in
             "custom/expand-icon" = {
               "format" = "·";
               "tooltip" = false;
+            };
+            # Notification do-not-disturb indicator. interval = "once" +
+            # signal = 9: the script runs at startup and again on each
+            # SIGRTMIN+9 (sent by marchyo-dnd-toggle), so state changes show
+            # immediately without polling.
+            "custom/dnd" = {
+              exec = lib.getExe dndStatus;
+              return-type = "json";
+              interval = "once";
+              signal = 9;
+              on-click = "marchyo-dnd-toggle";
             };
             power-profiles-daemon = {
               format = "{icon}";

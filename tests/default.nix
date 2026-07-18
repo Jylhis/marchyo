@@ -13,6 +13,7 @@
   mkDarwinSystem,
   nixosModules,
   homeManagerModules,
+  nixosHardwareModules,
 }:
 let
   testPkgs = import nixpkgs {
@@ -43,14 +44,14 @@ let
         home-manager
         nixosModules
         homeManagerModules
+        nixosHardwareModules
         ;
       pkgs = testPkgs;
     })
   ) { } evalFiles;
 
   libTests = import ./lib-tests.nix {
-    pkgs = testPkgs;
-    inherit lib;
+    inherit lib helpers;
   };
 in
 evalTests // libTests

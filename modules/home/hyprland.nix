@@ -323,7 +323,12 @@ in
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
-          "SUPER, V, Toggle floating, togglefloating,"
+          "SUPER, T, Toggle floating, togglefloating,"
+          # Universal clipboard (omarchy parity): send CTRL+Insert / SHIFT+Insert
+          # so copy/paste also work in terminals (where CTRL+C is SIGINT)
+          "SUPER, C, Copy, sendshortcut, CTRL, Insert,"
+          "SUPER, V, Paste, sendshortcut, SHIFT, Insert,"
+          "SUPER, X, Cut, sendshortcut, CTRL, X,"
           "SUPER, left, Move focus left, movefocus, l"
           "SUPER, right, Move focus right, movefocus, r"
           "SUPER, up, Move focus up, movefocus, u"
@@ -406,7 +411,6 @@ in
 
           # --- Notifications (mako) ---
           "SUPER, comma, Dismiss last notification, exec, makoctl dismiss"
-          "SUPER CTRL, comma, Dismiss all notifications, exec, makoctl dismiss --all"
 
           # --- Cursor zoom (screen magnifier) ---
           "SUPER CTRL, Z, Zoom in, exec, marchyo-zoom in"
