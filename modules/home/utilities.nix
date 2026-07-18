@@ -1,5 +1,6 @@
 # Omarchy-style "Trigger" utilities (OMARCHY_PARITY.md Phase 3): gum-driven
-# reminders backed by transient systemd user timers. Scripts follow the
+# reminders backed by transient systemd user timers, plus quick-info
+# notifications (date/time, battery). Scripts follow the
 # window-toggles.nix wrapper pattern; the binds merge into
 # wayland.windowManager.hyprland.settings the same way webapps.nix contributes
 # its launch binds (list-valued Hyprland settings concatenate across Home
@@ -15,6 +16,7 @@ let
   desktopEnabled = pkgs.stdenv.isLinux && (marchyoCfg.desktop.enable or false);
   # `or true` mirrors the option defaults (desktop-cascade opt-outs).
   remindersEnabled = desktopEnabled && ((marchyoCfg.reminders or { }).enable or true);
+  utilitiesEnabled = desktopEnabled && ((marchyoCfg.utilities or { }).enable or true);
 
   # Interactive reminder entry: message + delay via gum, scheduled as a
   # transient one-shot systemd user timer that fires a critical notification.
@@ -89,21 +91,73 @@ let
     '';
   };
 
+  marchyo-notify-datetime = pkgs.writeShellApplication {
+    name = "marchyo-notify-datetime";
+    runtimeInputs = [
+      pkgs.libnotify
+      pkgs.coreutils
+    ];
+    text = ''
+      notify-send -u low -a marchyo "$(date '+%A %-d %B')" "$(date '+%H:%M')"
+    '';
+  };
+
+  marchyo-notify-battery = pkgs.writeShellApplication {
+    name = "marchyo-notify-battery";
+    runtimeInputs = [
+      pkgs.libnotify
+      pkgs.coreutils
+    ];
+    text = ''
+      found=0
+      for bat in /sys/class/power_supply/BAT*; do
+        if [ ! -r "$bat/capacity" ]; then
+          continue
+        fi
+        found=1
+        capacity=$(cat "$bat/capacity")
+        status=$(cat "$bat/status")
+        urgency=low
+        if [ "$status" = "Discharging" ] && [ "$capacity" -le 20 ]; then
+          urgency=critical
+        fi
+        notify-send -u "$urgency" -a marchyo "Battery $capacity%" "$(basename "$bat"): $status"
+      done
+      if [ "$found" -eq 0 ]; then
+        notify-send -u low -a marchyo "Battery" "No battery detected"
+      fi
+    '';
+  };
+
   # Interactive scripts run in the floating terminal (the keybindings-cheatsheet
-  # pattern: org.omarchy.terminal picks up the centered floating-window rule).
+  # pattern: org.omarchy.terminal picks up the centered floating-window rule);
+  # the notify wrappers run directly.
   reminderBinds = [
     "SUPER CTRL, R, Set reminder, exec, $terminal --class=org.omarchy.terminal -e marchyo-reminder-set"
     "SUPER CTRL ALT, R, Show reminders, exec, $terminal --class=org.omarchy.terminal -e marchyo-reminder-show"
     "SUPER CTRL SHIFT, R, Clear reminders, exec, marchyo-reminder-clear"
   ];
+  utilityBinds = [
+    "SUPER CTRL ALT, T, Show date and time, exec, marchyo-notify-datetime"
+    "SUPER CTRL ALT, B, Show battery status, exec, marchyo-notify-battery"
+  ];
 in
 {
-  config = lib.mkIf remindersEnabled {
-    home.packages = [
-      marchyo-reminder-set
-      marchyo-reminder-show
-      marchyo-reminder-clear
-    ];
-    wayland.windowManager.hyprland.settings.bindd = reminderBinds;
-  };
+  config = lib.mkMerge [
+    (lib.mkIf remindersEnabled {
+      home.packages = [
+        marchyo-reminder-set
+        marchyo-reminder-show
+        marchyo-reminder-clear
+      ];
+      wayland.windowManager.hyprland.settings.bindd = reminderBinds;
+    })
+    (lib.mkIf utilitiesEnabled {
+      home.packages = [
+        marchyo-notify-datetime
+        marchyo-notify-battery
+      ];
+      wayland.windowManager.hyprland.settings.bindd = utilityBinds;
+    })
+  ];
 }
