@@ -357,6 +357,26 @@ marchyo.ai = {
 
 **Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + aichat/pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors `tracking/claude-code.nix`). sops-nix and llm-agents.nix (claude-code + Numtide cache, applied via `overlayList` in `outputs.nix`) are flake inputs. Local inference (ollama) and the execution gateway are deferred.
 
+### Omarchy-parity desktop extras (2026-07 batch)
+
+Desktop-cascade features, each on by default with `marchyo.desktop.enable` and individually opt-out:
+
+| Option | Default | Feature |
+|--------|---------|---------|
+| `marchyo.osd.enable` | `true` | SwayOSD volume/brightness overlay (`modules/home/swayosd.nix` + `modules/nixos/osd.nix` — udev rules + `video` group for backlight) |
+| `marchyo.menus.enable` | `true` | `marchyo-power-menu` (`Super+Escape`) + `marchyo-menu` central menu (`Super+Alt+Space`), gum TUIs in floating ghostty (`modules/home/menus.nix`) |
+| `marchyo.reminders.enable` | `true` | `marchyo-reminder-*` via transient systemd timers (`modules/home/utilities.nix`) |
+| `marchyo.utilities.enable` | `true` | Quick-info notify, `marchyo-transcode`, `marchyo-share` (`modules/home/utilities.nix`) |
+| `marchyo.screensaver.enable` | `true` | tte screensaver on 120s idle; keypress/mouse dismiss (`modules/home/screensaver.nix`) |
+| `marchyo.security.firewall.enable` | `true` | `networking.firewall.enable` follows it at `mkDefault` (`modules/nixos/firewall.nix`) |
+| `marchyo.security.fingerprint.enable` | `false` | `services.fprintd` (hyprlock follows automatically) |
+| `marchyo.security.fido2.enable` | `false` | `security.pam.u2f` + libfido2; enroll with `pamu2fcfg` (`modules/nixos/security-auth.nix`) |
+| `marchyo.services.tailscale.enable` | `true` | tailscale + trusted `tailscale0`, loose RP filter (`modules/nixos/tailscale.nix`) |
+| `marchyo.services.localsend.enable` | `true` | LocalSend + firewall ports, Nautilus send action (`modules/nixos/localsend.nix`, `modules/home/nautilus.nix`) |
+| `marchyo.power.hibernation.enable` | `false` | suspend-then-hibernate + hypridle idle-sleep; requires `resumeDevice` (`modules/nixos/hibernation.nix`) |
+
+Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-floating moved `Super+V`→`Super+T`, `modules/home/hyprland.nix`); DND toggle `Super+Ctrl+comma` + waybar `custom/dnd` indicator (dismiss-all moved to `Super+Ctrl+Shift+comma`); monitor/connectivity/app-launch binds in `modules/home/omarchy-binds.nix`; runtime dark↔light switch `marchyo-theme-toggle` (`modules/home/theme-runtime.nix` — ephemeral overlay, resets on activation); `nixosModules.hardware.<profile>` re-exports nixos-hardware; `marchyo` CLI gained `update upgrade rollback gc diff debug`. See `docs/usage/hotkeys.mdx` for the full bind list.
+
 ### Dictation (voice-to-text)
 
 `marchyo.dictation.enable` adds push-to-talk voice dictation to the Wayland desktop via [voxtype](https://voxtype.io) (nixpkgs `voxtype`, 0.6.x) + Whisper. Off by default (it needs a microphone and downloads a Whisper model).
@@ -383,15 +403,15 @@ The four UI sub-options are on by default when dictation is enabled (each opt-ou
 
 ### Web apps (PWA windows + launch binds)
 
-`marchyo.webapps.enable` (off by default; needs `marchyo.desktop.enable`) registers a list of sites as standalone browser "app" windows. Each entry in `marchyo.webapps.apps` becomes a freedesktop `.desktop` launcher (browser `--app=<url>`, no tabs/chrome) and, when it declares a `key`, an omarchy-style Hyprland keybinding.
+`marchyo.webapps.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`; opt out with `marchyo.webapps.enable = false`) registers a list of sites as standalone browser "app" windows. Each entry in `marchyo.webapps.apps` becomes a freedesktop `.desktop` launcher (browser `--app=<url>`, no tabs/chrome) and, when it declares a `key`, an omarchy-style Hyprland keybinding.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.webapps.enable` | `false` | Register web apps as `.desktop` entries + launch binds |
+| `marchyo.webapps.enable` | `true` with desktop (mkDefault) | Register web apps as `.desktop` entries + launch binds |
 | `marchyo.webapps.browser` | `null` | Chromium-family browser for `--app` mode; `null` follows `marchyo.defaults.browser`, else chromium |
-| `marchyo.webapps.apps` | (ChatGPT, GitHub, YouTube, WhatsApp, Discord, Zoom) | List of `{ name; url; icon?; key?; modifiers?; }` |
+| `marchyo.webapps.apps` | (ChatGPT, GitHub, YouTube, WhatsApp, Discord, Zoom, X, Google Photos, Google Calendar, Gmail) | List of `{ name; url; icon?; key?; modifiers?; }` |
 
-Each app's submodule: `name` (label + slugified `.desktop` id), `url`, `icon` (default generic web icon), `key` (Hyprland key, `null` = no bind), `modifiers` (default `"SUPER SHIFT"`). The default set binds ChatGPT→`A`, GitHub→`G`, YouTube→`Y`, WhatsApp→`W`, Zoom→`Z`; **Discord has no default key** because `SUPER+SHIFT+D` is the scratchpad-move bind. Other taken `SUPER+SHIFT` letters to avoid: `C` (hyprpicker), `H` (dictation status), `I` (fcitx5), `O` (OCR), `S` (satty). Options in `modules/nixos/options/webapps.nix`; implementation in `modules/home/webapps.nix`. The browser is resolved once: explicit `webapps.browser` → chromium-based `marchyo.defaults.browser` → chromium (pulled into the profile via `home.packages` when the default browser isn't chromium-family, e.g. firefox). `modules/home/webapps.nix` contributes its launch binds by merging a `bindd` list into `wayland.windowManager.hyprland.settings` (the same list-merge pattern `modules/home/screenshot.nix` uses), reusing that resolved browser command. Note `modules/home/hyprland.nix` already carries window rules keyed on Chrome's generated app classes (e.g. `chrome-youtube.com__-Default`) for opacity/tag handling.
+Each app's submodule: `name` (label + slugified `.desktop` id), `url`, `icon` (default generic web icon), `key` (Hyprland key, `null` = no bind), `modifiers` (default `"SUPER SHIFT"`). The default set binds ChatGPT→`A`, GitHub→`G`, YouTube→`Y`, WhatsApp→`W`, Zoom→`Z`, X→`X`, Google Photos→`P`; **Discord, Google Calendar and Gmail have no default key** (`SUPER+SHIFT+D` is the scratchpad-move bind). Other taken `SUPER+SHIFT` letters to avoid: `C` (hyprpicker), `H` (dictation status), `I` (fcitx5), `O` (OCR), `S` (satty). Options in `modules/nixos/options/webapps.nix`; implementation in `modules/home/webapps.nix`. The browser is resolved once: explicit `webapps.browser` → chromium-based `marchyo.defaults.browser` → chromium (pulled into the profile via `home.packages` when the default browser isn't chromium-family, e.g. firefox). `modules/home/webapps.nix` contributes its launch binds by merging a `bindd` list into `wayland.windowManager.hyprland.settings` (the same list-merge pattern `modules/home/screenshot.nix` uses), reusing that resolved browser command. Note `modules/home/hyprland.nix` already carries window rules keyed on Chrome's generated app classes (e.g. `chrome-youtube.com__-Default`) for opacity/tag handling.
 
 ## Breaking Changes
 
