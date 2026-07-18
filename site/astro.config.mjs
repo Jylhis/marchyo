@@ -6,13 +6,24 @@ export default defineConfig({
   site: 'https://marchyo.org',
   integrations: [
     starlight({
-      title: 'Marchyo',
+      title: 'marchyo',
       description: 'A modular NixOS configuration flake with sensible defaults',
+      customCss: ['./src/styles/starlight-theme.css'],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/Jylhis/marchyo' },
       ],
       editLink: {
         baseUrl: 'https://github.com/Jylhis/marchyo/edit/main/site/',
+      },
+      expressiveCode: {
+        // Keep readable syntax themes but warm the frame to sit on the
+        // paper/roast surface, matching the Jylhis design system.
+        themes: ['github-dark', 'github-light'],
+        styleOverrides: {
+          codeBackground: 'var(--sl-color-bg-inline-code)',
+          borderColor: 'var(--sl-color-hairline-light)',
+          borderRadius: '4px',
+        },
       },
       sidebar: [
         {

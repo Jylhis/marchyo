@@ -1,11 +1,399 @@
 ---
-import Landing from '../layouts/Landing.astro';
-import Hero from '../components/Hero.astro';
+import Base from '../layouts/Base.astro';
 ---
 
-<Landing
-  title="Marchyo — a modular NixOS configuration flake"
-  description="Marchyo is a modular NixOS configuration flake providing curated system and Home Manager configurations with sensible defaults."
+<Base
+  title="marchyo(7) — a modular NixOS configuration flake"
+  description="Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin and nix-on-droid configurations with sensible defaults."
 >
-  <Hero />
-</Landing>
+  <header class="site-header">
+    <div class="brand">
+      <span class="ds-mark">marchyo<span class="ds-mark__chevron"> ❯</span></span>
+      <span class="ds-status ds-status--experimental">experimental</span>
+    </div>
+    <nav class="site-nav">
+      <a href="/docs/introduction/">docs</a>
+      <a href="/search/">search</a>
+      <a href="https://github.com/Jylhis/marchyo">github ⑂</a>
+      <button class="theme-toggle" data-theme-toggle aria-label="toggle theme">☾</button>
+    </nav>
+  </header>
+
+  <main class="man" data-screen-label="Landing">
+    <div class="man__strip">
+      <span>marchyo(7)</span>
+      <span>Jylhis Manual</span>
+      <span>marchyo(7)</span>
+    </div>
+
+    <section class="man__section">
+      <h2 class="man__h">NAME</h2>
+      <p class="man__name"><strong>marchyo</strong> — a modular NixOS configuration flake with sensible defaults</p>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">SYNOPSIS</h2>
+      <div class="man__body">
+        <div class="chip-row">
+          <button class="copy-chip" data-copy="synopsis-block">⧉ copy</button>
+          <button
+            class="copy-chip"
+            data-copy="synopsis-block"
+            data-copy-ai="Bootstrap commands for Marchyo (NixOS flake):"
+            data-copy-lang="bash">» copy for ai</button>
+        </div>
+        <div class="ds-term">
+          <div class="ds-term__title">you@myhost — zsh</div>
+          <div class="ds-term__body" id="synopsis-block">
+            <div class="ds-term__entry">
+              <div class="ds-term__line"><span class="ds-term__chev">❯</span><span class="ds-term__cmd">nix flake init -t github:Jylhis/marchyo#workstation</span></div>
+              <p class="ds-term__out"><span style="color:var(--color-status-ok)">✓</span> wrote flake.nix — desktop, development, users pre-wired</p>
+            </div>
+            <div class="ds-term__entry">
+              <div class="ds-term__line"><span class="ds-term__chev">❯</span><span class="ds-term__cmd">sudo nixos-rebuild switch --flake .#myhost</span><span class="ds-caret" aria-hidden="true"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">DESCRIPTION</h2>
+      <div class="man__prose">
+        <p>My personal spin of <a href="https://omarchy.org">Omarchy</a>, rebuilt on NixOS. One flake input gives you a full Hyprland desktop, a development toolchain, and a themed user environment — declaratively, reproducibly, and without collecting nixpkgs pins.</p>
+        <p class="muted">Marchyo is batteries-included: <code>mkNixosSystem</code> selects the correct nixpkgs, Home Manager, stylix, overlay and marchyo modules for your system. You write the config; it picks the rest. I built it for my own machines — it might work for yours.</p>
+        <div class="ds-callout">
+          <p class="ds-callout__label">currently</p>
+          <ul class="callout-list">
+            <li>tracking nixpkgs unstable (stable 26.05 on Intel macOS)</li>
+            <li>daily-driven on a ThinkPad and a Framework 13</li>
+            <li>omarchy parity: most of the way there</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">OPTIONS</h2>
+      <p class="man__lead">Feature flags enable whole stacks. Everything lives under <code>marchyo.*</code>.</p>
+      <div class="ls">
+        <div class="ls__prompt">$ ls -la marchyo/</div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">desktop.enable</a>      hyprland · pipewire · fonts</div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">development.enable</a>  git · docker · qemu/kvm</div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">media.enable</a>        spotify · mpv         <span class="ls__perm">auto</span></div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">office.enable</a>       libreoffice · papers  <span class="ls__perm">auto</span></div>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">EXAMPLES</h2>
+      <p class="man__lead">The whole configuration. No separate nixpkgs input needed.</p>
+      <div class="man__body">
+        <div class="chip-row">
+          <button class="copy-chip" data-copy="example-block">⧉ copy</button>
+          <button
+            class="copy-chip"
+            data-copy="example-block"
+            data-copy-ai="Example flake.nix using marchyo.lib.mkNixosSystem:"
+            data-copy-lang="nix">» copy for ai</button>
+        </div>
+        <div class="ds-codeblock">
+          <span class="ds-codeblock__filename">flake.nix</span>
+          <pre id="example-block"><code><span style="color:var(--color-syntax-comment)"># marchyo is the only input</span>
+inputs.marchyo.url = <span style="color:var(--color-syntax-string)">"github:Jylhis/marchyo"</span>;
+
+outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
+  nixosConfigurations.myhost = marchyo.lib.<span style="color:var(--color-syntax-function)">mkNixosSystem</span> &lbrace;
+    system = <span style="color:var(--color-syntax-string)">"x86_64-linux"</span>;
+    modules = [
+      ./hardware-configuration.nix
+      &lbrace;
+        marchyo.desktop.enable = <span style="color:var(--color-syntax-keyword)">true</span>;
+        marchyo.development.enable = <span style="color:var(--color-syntax-keyword)">true</span>;
+        marchyo.users.myuser = &lbrace;
+          fullname = <span style="color:var(--color-syntax-string)">"Your Name"</span>;
+          email = <span style="color:var(--color-syntax-string)">"you@example.com"</span>;
+        &rbrace;;
+      &rbrace;
+    ];
+  &rbrace;;
+&rbrace;;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">THEMING</h2>
+      <p class="man__lead">Paper and Roast, straight from the <a href="https://github.com/jylhis/design">Jylhis design tokens</a>. The ☾ in the header flips this page the same way <code>marchyo.theme.variant</code> flips your desktop.</p>
+      <div class="swatches">
+        <div class="swatch swatch--paper">
+          <div class="swatch__name">☀ paper</div>
+          <div class="swatch__code">variant = <span style="color:#3d5a1f">"light"</span>;</div>
+          <div class="swatch__chips">
+            <span style="background:#faf7f2;border:1px solid #d5cec4"></span>
+            <span style="background:#2c2825"></span>
+            <span style="background:#b5703c"></span>
+            <span style="background:#d5cec4"></span>
+          </div>
+        </div>
+        <div class="swatch swatch--roast">
+          <div class="swatch__name">☾ roast</div>
+          <div class="swatch__code">variant = <span style="color:#b3c785">"dark"</span>;</div>
+          <div class="swatch__chips">
+            <span style="background:#1a1714;border:1px solid #3d3830"></span>
+            <span style="background:#ece7df"></span>
+            <span style="background:#e89b5e"></span>
+            <span style="background:#3d3830"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">FAQ</h2>
+      <div class="faq">
+        <details>
+          <summary><span class="faq__chev">›</span> Why not just use Omarchy?</summary>
+          <p>Omarchy is Arch. I wanted the same opinionated desktop with NixOS guarantees — rollbacks, one config for every machine, and no drift. Parity status is tracked in the repo.</p>
+        </details>
+        <details>
+          <summary><span class="faq__chev">›</span> Do I need my own nixpkgs input?</summary>
+          <p>No. Marchyo is the only input; <code>mkNixosSystem</code> picks the right nixpkgs per system. If you wire modules manually, that responsibility is yours again.</p>
+        </details>
+        <details>
+          <summary><span class="faq__chev">›</span> Does it work on macOS?</summary>
+          <p>Yes — <code>mkDarwinSystem</code> works the same way. Intel macs get pinned to stable nixos-26.05 (the last release supporting them); everything else rides unstable.</p>
+        </details>
+        <details>
+          <summary><span class="faq__chev">›</span> Home Manager only?</summary>
+          <p>Use <code>homeManagerModules.default</code> in your own home-manager configuration — no NixOS system modules required.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="man__section">
+      <h2 class="man__h">SEE ALSO</h2>
+      <p class="see-also"><a href="/docs/introduction/">docs(7)</a>, <a href="/docs/quickstart/">quickstart(1)</a>, <a href="https://github.com/Jylhis/marchyo">github(1)</a>, <a href="https://omarchy.org">omarchy(7)</a></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="rule">────────────────────────</div>
+    <div class="colophon">set in literata &amp; jetbrains mono · a personal project by <a href="https://jylhis.com">jylhis</a> · zürich, ch</div>
+  </footer>
+</Base>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 78ch;
+    margin: 0 auto;
+    padding: 32px 24px 0;
+  }
+  .brand { display: flex; align-items: baseline; gap: 16px; }
+  .site-nav {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .man {
+    max-width: 78ch;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+  .man__strip {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+  .man__section { display: flex; flex-direction: column; gap: 12px; }
+  .man__h {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+  .man__name {
+    margin: 0;
+    padding-left: 2ch;
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+  .man__lead {
+    margin: 0;
+    padding-left: 2ch;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--color-text-muted);
+  }
+  .man__body { padding-left: 2ch; display: flex; flex-direction: column; gap: 8px; }
+  .man__prose {
+    padding-left: 2ch;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.65;
+  }
+  .man__prose p { margin: 0; }
+  .man__prose .muted { color: var(--color-text-muted); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .chip-row { display: flex; justify-content: flex-end; gap: 8px; }
+
+  .callout-list {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 2;
+  }
+  .ds-callout__label { padding: 0; }
+
+  .ls {
+    margin-left: 2ch;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .ls__prompt { color: var(--color-text-faint); }
+  .ls__perm { color: var(--color-text-faint); }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-left: 2ch;
+  }
+  .swatch {
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: var(--font-mono);
+  }
+  .swatch--paper { border: 1px solid #d5cec4; background: #faf7f2; }
+  .swatch--roast { border: 1px solid #3d3830; background: #1a1714; }
+  .swatch--paper .swatch__name { color: #6b6157; }
+  .swatch--paper .swatch__code { color: #1e1b18; }
+  .swatch--roast .swatch__name { color: #9c8f80; }
+  .swatch--roast .swatch__code { color: #ece7df; }
+  .swatch__name { font-size: 0.8rem; }
+  .swatch__code { font-size: 0.95rem; }
+  .swatch__chips { display: flex; gap: 6px; }
+  .swatch__chips span { width: 22px; height: 22px; border-radius: 2px; }
+
+  .faq { padding-left: 2ch; display: flex; flex-direction: column; }
+  .faq details {
+    border-top: 1px solid var(--color-border);
+    padding: 14px 0;
+  }
+  .faq details:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq summary { font-family: var(--font-mono); font-size: 0.95rem; }
+  .faq__chev { color: var(--color-brand); }
+  .faq p {
+    margin: 10px 0 0 2ch;
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .see-also {
+    margin: 0;
+    padding-left: 2ch;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 2;
+  }
+
+  .site-footer {
+    text-align: center;
+    padding: 64px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .rule {
+    font-family: var(--font-mono);
+    color: var(--color-text-faint);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .colophon {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 620px) {
+    .swatches { grid-template-columns: 1fr; }
+    .site-header { flex-direction: column; gap: 12px; }
+  }
+</style>
+
+<script>
+  // Theme toggle (shared behaviour with the search page)
+  function currentTheme() {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : '';
+  }
+  function applyTheme(t: string) {
+    if (t) document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
+      .forEach((b) => (b.textContent = t === 'dark' ? '☀' : '☾'));
+  }
+  applyTheme(currentTheme());
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const t = currentTheme() === 'dark' ? '' : 'dark';
+      try {
+        localStorage.setItem('marchyo-theme', t);
+      } catch (e) {}
+      applyTheme(t);
+    });
+  });
+
+  // Copy / copy-for-AI chips
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(btn.dataset.copy!);
+      if (!el) return;
+      let text = (el as HTMLElement).innerText;
+      const ai = btn.dataset.copyAi;
+      if (ai) {
+        const lang = btn.dataset.copyLang || '';
+        text =
+          ai +
+          '\n\n```' +
+          lang +
+          '\n' +
+          text.trim() +
+          '\n```\n\nSource: marchyo.org — a modular NixOS configuration flake.';
+      }
+      navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = '✓ copied';
+      setTimeout(() => (btn.textContent = original), 1600);
+    });
+  });
+</script>

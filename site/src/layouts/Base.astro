@@ -1,0 +1,47 @@
+---
+// Base shell for the standalone (non-docs) pages — landing + search.
+// Loads the self-hosted variable fonts and the vendored Jylhis design system,
+// and applies the persisted paper/roast theme before first paint (no FOUC).
+import '@fontsource-variable/literata';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/jylhis.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#faf7f2" />
+    {/* Apply the stored theme before paint to avoid a flash. */}
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('marchyo-theme') || '';
+          if (
+            !t &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+          ) {
+            t = 'dark';
+          }
+          if (t) document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
