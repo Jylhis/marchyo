@@ -87,6 +87,8 @@ let
   sharedNixosConfig =
     { lib, ... }:
     {
+      imports = [ ./configurations/people ];
+
       nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
@@ -110,14 +112,9 @@ let
         };
       };
 
-      users.users.developer = {
-        isNormalUser = true;
-        password = "password";
-        extraGroups = [
-          "wheel"
-          "networkmanager"
-        ];
-      };
+      # Identity (groups, home, GECOS, …) comes from configurations/people;
+      # only the demo login password is host-specific.
+      users.users.developer.password = "password";
       services.getty.autologinUser = "developer";
     };
 
@@ -127,6 +124,8 @@ let
   sharedDarwinConfig =
     { pkgs, ... }:
     {
+      imports = [ ./configurations/people ];
+
       nixpkgs.config.allowUnfree = true;
       system.stateVersion = 6;
 
@@ -142,9 +141,8 @@ let
         };
       };
 
-      users.users.developer = {
-        home = "/Users/developer";
-      };
+      # users.users.developer.home = "/Users/developer" now comes from
+      # configurations/people via the identity module (darwin renderer).
     };
 
   # Mock osConfig for standalone Home Manager configurations.
@@ -275,6 +273,9 @@ let
     # pinned by tests/eval/hardware.nix. Full list:
     # https://github.com/NixOS/nixos-hardware
     hardware = nixos-hardware.nixosModules;
+    # Standalone export of the unified identity module (also part of
+    # `default` via modules/nixos/default.nix; path-based imports dedupe).
+    user-management = ./modules/users/nixos.nix;
   };
 
   # Darwin module set, parameterized by which home-manager darwin module to
@@ -294,6 +295,9 @@ let
 
   darwinModules = {
     default = mkDarwinModules home-manager.darwinModules.home-manager;
+    # Standalone export of the unified identity module (also part of
+    # `default` via modules/darwin/default.nix; path-based imports dedupe).
+    user-management = ./modules/users/darwin.nix;
   };
 
   homeManagerModules = {

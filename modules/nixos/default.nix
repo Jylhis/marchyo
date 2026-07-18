@@ -1,6 +1,7 @@
 { lib, ... }:
 {
   imports = (import ../../lib/discover-modules.nix { inherit lib; }) ./. ++ [
+    ../users/nixos.nix
     ../generic/shell.nix
     ../generic/packages.nix
     ../generic/git.nix

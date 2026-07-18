@@ -80,3 +80,72 @@ marchyo.users.myuser = {
   email = "your@email.com";
 };
 ```
+
+## Unified identity management (`marchyo.identity`)
+
+Alongside `marchyo.users` (which drives Marchyo's feature stack for a user),
+the self-contained identity module `modules/users/` provides a single
+declarative source of truth for user *identity data* — SSH keys, groups,
+sudo, shell, home directory, password file — rendered consistently to NixOS
+`users.users`/`users.groups`, nix-darwin `users.users`, and (optionally)
+`home-manager.users`. It is part of the default module sets and also
+exported standalone as `nixosModules.user-management` /
+`darwinModules.user-management` for use outside Marchyo.
+
+Both namespaces coexist: declare the same username in both, and
+`marchyo.users` wins on any conflicting attribute (the identity module
+renders everything at `lib.mkDefault` priority, lists merge additively).
+
+```nix
+marchyo.identity = {
+  users.alice = {
+    fullName = "Alice Example";
+    email = "alice@example.com";
+    sudo = true;                      # wheel on NixOS, admin group on darwin
+    groups = [ "video" ];
+    sshAuthorizedKeys = [ "ssh-ed25519 AAAA…" ];
+    homeManager = {
+      enable = true;
+      import = ./home/alice.nix;
+    };
+  };
+  # Host-specific system account: hosts opt in with
+  # `marchyo.identity.users.build-bot.enable = true;`
+  users.build-bot = {
+    enable = false;
+    isSystem = true;
+    platforms = [ "nixos" ];
+  };
+  groups.media.members = [ "alice" ];
+};
+```
+
+### Identity options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.identity.users.<name>.enable` | `bool` | `true` | Render this identity on this host |
+| `marchyo.identity.users.<name>.username` | `string` | `<name>` | Login name |
+| `marchyo.identity.users.<name>.fullName` | `string` | `""` | GECOS description |
+| `marchyo.identity.users.<name>.email` | `null or string` | `null` | For other modules to read |
+| `marchyo.identity.users.<name>.uid` | `null or int` | `null` | Stable UID when set |
+| `marchyo.identity.users.<name>.source` | enum | `"local"` | `ldap`/`kanidm`/`entra` are reserved (Phase 2) and currently fail an assertion |
+| `marchyo.identity.users.<name>.isSystem` | `bool` | `false` | `isSystemUser` instead of `isNormalUser` |
+| `marchyo.identity.users.<name>.shell` | `null or string or package` | `null` | Strings resolve via `pkgs.<shell>`; absolute paths (`/…`) pass through |
+| `marchyo.identity.users.<name>.home` | `null or string` | `null` | Auto: `/home/<name>` (NixOS), `/Users/<name>` (darwin) |
+| `marchyo.identity.users.<name>.homeManager.enable` | `bool` | `false` | Render a `home-manager.users.<name>` binding |
+| `marchyo.identity.users.<name>.homeManager.import` | `null or path` | `null` | Home Manager module to import (required when the binding is enabled) |
+| `marchyo.identity.users.<name>.sshAuthorizedKeys` | `list of string` | `[]` | Inline SSH public keys (NixOS only today) |
+| `marchyo.identity.users.<name>.sshAuthorizedKeyFiles` | `list of path` | `[]` | Key files (NixOS only; darwin asserts) |
+| `marchyo.identity.users.<name>.hashedPasswordFile` | `null or path` | `null` | NixOS only; darwin asserts |
+| `marchyo.identity.users.<name>.groups` | `list of string` | `[]` | Additive with `groups.<g>.members` |
+| `marchyo.identity.users.<name>.sudo` | `bool` | `false` | Admin everywhere |
+| `marchyo.identity.users.<name>.adminOnHosts` | `list of string` | `[]` | Admin only on listed hostnames |
+| `marchyo.identity.users.<name>.platforms` | list of enum | `[ "nixos" "darwin" ]` | Restrict to one OS |
+| `marchyo.identity.groups.<name>.gid` | `null or int` | `null` | Stable GID when set |
+| `marchyo.identity.groups.<name>.members` | `list of string` | `[]` | Additive with per-user `groups`; entries are identity attribute names (or literal login names for unmanaged users), rendered as login names |
+
+Root is special-cased: only SSH keys, `hashedPasswordFile` and `groups` are
+passed through — never `isNormalUser`/`home`/`createHome`. System users that
+need a primary group still set `users.users.<name>.group` and
+`users.groups.<name>` in the host config.

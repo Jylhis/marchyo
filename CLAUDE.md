@@ -77,6 +77,8 @@ modules/darwin/     # nix-darwin modules (imports shared options + generic modul
 modules/nix-on-droid/  # nix-on-droid (Android terminal): built via lib.mkNixOnDroidConfiguration; reuses generic git/shell modules; HM 24.05
 modules/home/       # Home Manager user-level modules (~30 modules)
 modules/generic/    # Shared modules imported by nixos, darwin, and home default.nix
+modules/users/      # Unified identity module (marchyo.identity.*): lib.nix contract + nixos/darwin renderers; self-contained/relocatable, options deliberately NOT under modules/nixos/options/
+configurations/people/  # One identity declaration per person/account; imported by the reference configs in outputs.nix
 packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
 tests/              # Evaluation-based test suite (no builds required)
 disko/              # Disk partitioning configurations (not wired into flake outputs)
@@ -89,6 +91,7 @@ templates/workstation/  # Developer workstation template
 - `lib.mkNixosSystem` / `lib.mkDarwinSystem` — **Batteries-included system builders** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, nix-darwin, stylix, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix` (x86_64-darwin → stable 26.05 trio; everything else → unstable). The reference `nixosConfigurations`/`darwinConfigurations` are built through these same builders. Also exported: `lib.mkNixOnDroidConfiguration` (batteries-included nix-on-droid builder, fixed to aarch64-linux; flows through the `droidInputs` grouping the way the others flow through `inputsFor`), `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, Stylix, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
+- `nixosModules.user-management` / `darwinModules.user-management` — Standalone export of the unified identity module (`marchyo.identity.users`/`.groups` → `users.users`/`users.groups`/optional `home-manager.users`; also baked into the `default` module sets, path-dedup makes double import safe). Coexists with `marchyo.users`: the renderers emit everything at `mkDefault`/`mkBefore`, so higher-level modules win on conflicts. See `docs/configuration/users.mdx`.
 - `darwinModules.default` — nix-darwin module (includes Home Manager, overlay)
 - `homeManagerModules.default` — Home Manager module only
 - `homeManagerModules._1password` — 1Password Home Manager module
