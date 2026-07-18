@@ -5,7 +5,9 @@
   ...
 }:
 let
-  desktopEnabled = (osConfig.marchyo or { }).desktop.enable or false;
+  # Linux-only, like every other desktop-gated home module: inert on darwin and
+  # on headless hosts, so consumers never need to disabledModules it.
+  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
 in
 {
