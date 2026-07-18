@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import {
   formatArgv,
   flakeUpdateArgv,
+  sudoWrap,
   rollbackArgv,
   parseGcPeriod,
   gcArgv,
@@ -13,6 +14,23 @@ import {
   type Generation,
 } from "../src/system.ts";
 import { rebuildArgv } from "../src/flake.ts";
+
+// --- sudoWrap -------------------------------------------------------------
+
+test("sudoWrap as root leaves the argv bare", () => {
+  const { argv, needsSudo } = sudoWrap(["true"], {}, true);
+  expect(argv).toEqual(["true"]);
+  expect(needsSudo).toBe(false);
+});
+
+test("sudoWrap as user prefixes sudo (sudo -n under noInput)", () => {
+  expect(sudoWrap(["true"], {}, false).argv).toEqual(["sudo", "true"]);
+  expect(sudoWrap(["true"], { noInput: true }, false).argv).toEqual([
+    "sudo",
+    "-n",
+    "true",
+  ]);
+});
 
 // --- formatArgv -----------------------------------------------------------
 

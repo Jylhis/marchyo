@@ -20,16 +20,25 @@ export function flakeUpdateArgv(flakePath: string): string[] {
   return ["nix", "flake", "update", "--flake", flakePath];
 }
 
-// `nixos-rebuild switch --rollback`, sudo-wrapped exactly like
-// flake.ts:rebuildArgv (root -> bare, --no-input -> sudo -n, else sudo).
+// Wrap an argv for root execution: as root run it bare, otherwise prefix
+// sudo (sudo -n under --no-input / CI, per jylhis/design §2.5.1 — never
+// prompt non-interactively). Shared by rebuild, rollback, and gc.
+export function sudoWrap(
+  inner: string[],
+  opts: { noInput?: boolean } = {},
+  isRoot: boolean = userInfo().uid === 0,
+): { argv: string[]; needsSudo: boolean } {
+  if (isRoot) return { argv: inner, needsSudo: false };
+  if (opts.noInput) return { argv: ["sudo", "-n", ...inner], needsSudo: true };
+  return { argv: ["sudo", ...inner], needsSudo: true };
+}
+
+// `nixos-rebuild switch --rollback`, sudo-wrapped like flake.ts:rebuildArgv.
 export function rollbackArgv(
   opts: { noInput?: boolean } = {},
   isRoot: boolean = userInfo().uid === 0,
 ): { argv: string[]; needsSudo: boolean } {
-  const inner = ["nixos-rebuild", "switch", "--rollback"];
-  if (isRoot) return { argv: inner, needsSudo: false };
-  if (opts.noInput) return { argv: ["sudo", "-n", ...inner], needsSudo: true };
-  return { argv: ["sudo", ...inner], needsSudo: true };
+  return sudoWrap(["nixos-rebuild", "switch", "--rollback"], opts, isRoot);
 }
 
 // Validate a nix-collect-garbage --delete-older-than period ("14d", "30d").
@@ -46,10 +55,11 @@ export function gcArgv(
   opts: { noInput?: boolean } = {},
   isRoot: boolean = userInfo().uid === 0,
 ): { argv: string[]; needsSudo: boolean } {
-  const inner = ["nix-collect-garbage", "--delete-older-than", olderThan];
-  if (isRoot) return { argv: inner, needsSudo: false };
-  if (opts.noInput) return { argv: ["sudo", "-n", ...inner], needsSudo: true };
-  return { argv: ["sudo", ...inner], needsSudo: true };
+  return sudoWrap(
+    ["nix-collect-garbage", "--delete-older-than", olderThan],
+    opts,
+    isRoot,
+  );
 }
 
 export const SYSTEM_PROFILES_DIR = "/nix/var/nix/profiles";
