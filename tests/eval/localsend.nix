@@ -43,8 +43,7 @@ in
 
   # Opting out keeps the desktop but drops the package and the open port.
   eval-localsend-disabled =
-    testNixOSCheck "localsend-disabled"
-      (cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg))
+    testNixOSCheck "localsend-disabled" (cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg))
       (withTestUser {
         marchyo.desktop.enable = true;
         marchyo.services.localsend.enable = false;
@@ -52,10 +51,9 @@ in
 
   # Headless host: the sub-toggle defaults to true, but without the desktop
   # nothing installs and no port opens.
-  eval-localsend-headless =
-    testNixOSCheck "localsend-headless"
-      (cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg))
-      (withTestUser { });
+  eval-localsend-headless = testNixOSCheck "localsend-headless" (
+    cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg)
+  ) (withTestUser { });
 
   # Nautilus (the default file manager) gets the ghostty open-terminal dconf
   # key and the "Send with LocalSend" script.
