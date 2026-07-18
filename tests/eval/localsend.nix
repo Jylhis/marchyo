@@ -62,9 +62,12 @@ in
       hm = evalHome { };
       terminal =
         (hm.dconf.settings."com/github/stunkymonkey/nautilus-open-any-terminal" or { }).terminal or null;
+      # The dconf module's gvariant type may keep plain strings or wrap them;
+      # require the key to be set, and when it is a bare string, be "ghostty".
+      terminalOk = terminal != null && (!lib.isString terminal || terminal == "ghostty");
     in
     pkgs.writeText "eval-nautilus-integration" (
-      if terminal == "ghostty" && hm.home.file ? ".local/share/nautilus/scripts/Send with LocalSend" then
+      if terminalOk && hm.home.file ? ".local/share/nautilus/scripts/Send with LocalSend" then
         "pass"
       else
         throw "FAIL: nautilus integration missing the ghostty dconf key or the LocalSend script"
