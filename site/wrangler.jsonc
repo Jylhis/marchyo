@@ -20,19 +20,24 @@
     // assets directly (unchanged static-site behavior).
     "run_worker_first": ["/api/*"]
   },
-  // nixpkgs package search index (SQLite FTS5). Rebuilt and loaded by
-  // .github/workflows/nixpkgs-index.yml. Create once with
-  //   wrangler d1 create marchyo-nixpkgs
-  // then paste the returned database_id below. Until it is provisioned the
-  // Worker's /api/packages route responds with an empty result + error, so the
-  // rest of the site still deploys and works.
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "marchyo-nixpkgs",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
-    }
-  ],
+  // nixpkgs package search index (SQLite FTS5), backing /api/packages.
+  // DISABLED until the database is provisioned — a placeholder database_id
+  // fails `wrangler deploy`, which would break the whole site deploy. The
+  // Worker treats env.DB as optional, so with this commented out the site
+  // deploys normally and the nixpkgs tab shows a graceful "unavailable" notice.
+  //
+  // To enable: create the DB once and uncomment with the real id —
+  //   cd site && bunx wrangler d1 create marchyo-nixpkgs
+  // paste the returned database_id, then let .github/workflows/nixpkgs-index.yml
+  // load it. For local dev (`just site-serve`) uncomment with any id.
+  //
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "marchyo-nixpkgs",
+  //     "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+  //   }
+  // ],
   "routes": [
     { "pattern": "marchyo.org", "custom_domain": true },
     { "pattern": "www.marchyo.org", "custom_domain": true }
