@@ -12,6 +12,7 @@ import { runStatus } from "./commands/status.tsx";
 import { runThemeGet, runThemeSet } from "./commands/theme.ts";
 import { runRebuild } from "./commands/rebuild.ts";
 import { runUpdate } from "./commands/update.ts";
+import { runUpgrade } from "./commands/upgrade.ts";
 
 const program = new Command();
 
@@ -157,6 +158,22 @@ Examples:
   )
   .action(async (opts: { dryRun?: boolean }) => {
     process.exit(await runUpdate(rt(), { dryRun: opts.dryRun ?? false }));
+  });
+
+program
+  .command("upgrade")
+  .description("Update flake inputs, then nixos-rebuild switch")
+  .option("-n, --dry-run", "Print the commands instead of running them")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo upgrade
+  $ marchyo upgrade --dry-run
+`,
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exit(await runUpgrade(rt(), { dryRun: opts.dryRun ?? false }));
   });
 
 await program.parseAsync(process.argv);
