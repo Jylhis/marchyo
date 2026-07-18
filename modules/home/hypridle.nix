@@ -6,6 +6,13 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  hibernation = (osConfig.marchyo or { }).power.hibernation or { };
+  hibernationEnabled = hibernation.enable or false;
+  idleSleepCmd =
+    if hibernation.suspendThenHibernate or true then
+      "systemctl suspend-then-hibernate"
+    else
+      "systemctl suspend";
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -34,10 +41,15 @@ in
             on-timeout = "hyprctl dispatch dpms off";
             on-resume = "hyprctl dispatch dpms on";
           }
-          # {
-          #   timeout = 1800;
-          #   on-timeout = "systemctl suspend";
-          # }
+        ]
+        # Sleep on long idle only when the host opted into hibernation —
+        # suspend-then-hibernate (or plain suspend when suspendThenHibernate
+        # is off) after 30 minutes.
+        ++ lib.optionals hibernationEnabled [
+          {
+            timeout = 1800;
+            on-timeout = idleSleepCmd;
+          }
         ];
       };
     };
