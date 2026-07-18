@@ -28,6 +28,17 @@ in
       };
     }
 
+    # Vulkan userspace for any configured GPU vendor: the loader plus
+    # diagnostic tools (vulkaninfo, vkcube). The ICDs come from Mesa
+    # (Intel ANV / AMD RADV) or the NVIDIA driver; 32-bit driver support is
+    # already handled by hardware.graphics.enable32Bit above.
+    (lib.mkIf (hasIntel || hasAmd || hasNvidia || legacyIntel) {
+      environment.systemPackages = with pkgs; [
+        vulkan-loader
+        vulkan-tools
+      ];
+    })
+
     # Intel GPU configuration
     (lib.mkIf (hasIntel || legacyIntel) {
       hardware.graphics.extraPackages = with pkgs; [
@@ -51,6 +62,11 @@ in
       # ROCm for OpenCL compute (Mesa handles VA-API/Vulkan natively)
       hardware.graphics.extraPackages = with pkgs; [
         rocmPackages.clr.icd
+      ];
+
+      # ROCm device diagnostics (rocminfo)
+      environment.systemPackages = with pkgs; [
+        rocmPackages.rocminfo
       ];
 
       environment.sessionVariables = {
