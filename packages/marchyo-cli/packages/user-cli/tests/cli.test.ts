@@ -137,6 +137,26 @@ test("update --dry-run --json emits the command and flake location", async () =>
   expect(parsed.flake.path).toBe(dir);
 });
 
+test("upgrade --dry-run prints update then rebuild commands", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["upgrade", "-n"], env, dir);
+  expect(r.code).toBe(0);
+  const [first, second] = r.stdout.trim().split("\n");
+  expect(first).toContain("nix flake update --flake");
+  expect(second).toContain("nixos-rebuild switch");
+  expect(second).toContain(dir);
+});
+
+test("upgrade --dry-run --json emits a commands array", async () => {
+  const { dir, env } = flakeFixture();
+  const r = await run(["upgrade", "-n", "--json"], env, dir);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.commands).toHaveLength(2);
+  expect(parsed.commands[0]).toContain("nix flake update");
+  expect(parsed.commands[1]).toContain("nixos-rebuild switch");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
