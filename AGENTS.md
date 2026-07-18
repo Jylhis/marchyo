@@ -130,5 +130,5 @@ tests — HM modules are exercised through the NixOS configs.
 - Use conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 - All changes must pass `just check` before a session is complete, and work is
   not done until it is committed.
-- Keep `docs/configuration/` in sync when changing options under
-  `modules/nixos/options/`.
+- Keep the website docs (`site/src/content/docs/docs/configuration/`) in sync
+  when changing options under `modules/nixos/options/`.
