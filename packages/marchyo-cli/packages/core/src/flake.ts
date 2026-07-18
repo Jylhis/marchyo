@@ -53,7 +53,7 @@ export type RebuildResult =
 // on the current uid and the noInput flag (jylhis/design §2.5.1: never
 // prompt under --no-input / CI=1). Returns the argv plus a sentinel if a
 // non-interactive sudo escalation cannot proceed.
-function rebuildArgv(opts: RebuildOptions): {
+export function rebuildArgv(opts: RebuildOptions): {
   argv: string[];
   needsSudo: boolean;
 } {
@@ -90,7 +90,7 @@ export async function nixosRebuild(opts: RebuildOptions): Promise<RebuildResult>
   return { kind: "ok", code: await proc.exited };
 }
 
-function commandAvailable(name: string): boolean {
+export function commandAvailable(name: string): boolean {
   const PATH = process.env.PATH ?? "";
   for (const dir of PATH.split(":")) {
     if (dir === "") continue;
