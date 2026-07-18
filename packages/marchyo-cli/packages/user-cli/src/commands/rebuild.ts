@@ -1,11 +1,5 @@
-import {
-  detectFlake,
-  nixosRebuild,
-  err,
-  info,
-  usageError,
-  type Runtime,
-} from "@marchyo/core";
+import { nixosRebuild, err, info, type Runtime } from "@marchyo/core";
+import { requireFlake } from "./require-flake.ts";
 
 export type RebuildOpts = { dryRun: boolean };
 
@@ -13,14 +7,8 @@ export async function runRebuild(
   rt: Runtime,
   opts: RebuildOpts,
 ): Promise<number> {
-  const flake = await detectFlake();
-  if (!flake) {
-    return usageError(
-      rt,
-      "could not detect flake",
-      "place a flake at /etc/nixos/flake.nix or run from a flake directory",
-    );
-  }
+  const flake = await requireFlake(rt);
+  if (!flake) return 2;
 
   info(
     rt,
@@ -33,9 +21,9 @@ export async function runRebuild(
     dryActivate: opts.dryRun,
     noInput: rt.noInput,
   });
-  if (result.kind === "needs-sudo") {
+  if (result.kind === "unavailable") {
     err(rt, result.message);
-    return 2;
+    return 1;
   }
   return result.code;
 }

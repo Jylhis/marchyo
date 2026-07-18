@@ -43,7 +43,8 @@ export async function runDiff(rt: Runtime, opts: DiffOpts): Promise<number> {
 
   const argv = ["dix", targets.left, targets.right];
   if (opts.dryRun) {
-    data(rt, { command: formatArgv(argv), ...targets }, () => formatArgv(argv));
+    const command = formatArgv(argv);
+    data(rt, { command, ...targets }, () => command);
     return 0;
   }
 

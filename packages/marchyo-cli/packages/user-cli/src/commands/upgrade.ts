@@ -1,15 +1,15 @@
 import {
-  detectFlake,
   flakeUpdateArgv,
   rebuildArgv,
   formatArgv,
   runArgv,
+  commandAvailable,
   err,
   info,
   data,
-  usageError,
   type Runtime,
 } from "@marchyo/core";
+import { requireFlake } from "./require-flake.ts";
 import { runRebuild } from "./rebuild.ts";
 
 export type UpgradeOpts = { dryRun: boolean };
@@ -21,14 +21,8 @@ export async function runUpgrade(
   rt: Runtime,
   opts: UpgradeOpts,
 ): Promise<number> {
-  const flake = await detectFlake();
-  if (!flake) {
-    return usageError(
-      rt,
-      "could not detect flake",
-      "place a flake at /etc/nixos/flake.nix or run from a flake directory",
-    );
-  }
+  const flake = await requireFlake(rt);
+  if (!flake) return 2;
 
   const updateArgv = flakeUpdateArgv(flake.path);
   if (opts.dryRun) {
@@ -40,6 +34,11 @@ export async function runUpgrade(
       () => commands.join("\n"),
     );
     return 0;
+  }
+
+  if (!commandAvailable("nix")) {
+    err(rt, "nix not found in PATH");
+    return 1;
   }
 
   info(rt, `updating flake inputs in ${flake.path} (${flake.source}) ...`);

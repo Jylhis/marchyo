@@ -3,7 +3,6 @@ import {
   readState,
   writeState,
   mergeState,
-  detectFlake,
   nixosRebuild,
   ok,
   err,
@@ -13,6 +12,7 @@ import {
   type Runtime,
   type State,
 } from "@marchyo/core";
+import { requireFlake } from "./require-flake.ts";
 
 export async function runThemeGet(rt: Runtime): Promise<number> {
   const state = await readState().catch(() => ({}) as State);
@@ -61,22 +61,17 @@ export async function runThemeSet(
     return 0;
   }
 
-  const flake = await detectFlake();
-  if (!flake) {
-    return usageError(
-      rt,
-      "could not detect flake",
-      "place a flake at /etc/nixos/flake.nix or run from a flake directory",
-    );
-  }
+  const flake = await requireFlake(rt);
+  if (!flake) return 2;
+
   info(rt, `rebuilding from ${flake.path} ...`);
   const result = await nixosRebuild({
     flakePath: flake.path,
     noInput: rt.noInput,
   });
-  if (result.kind === "needs-sudo") {
+  if (result.kind === "unavailable") {
     err(rt, result.message);
-    return 2;
+    return 1;
   }
   return result.code;
 }

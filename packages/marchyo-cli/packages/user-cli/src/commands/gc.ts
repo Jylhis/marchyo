@@ -27,9 +27,8 @@ export async function runGc(rt: Runtime, opts: GcOpts): Promise<number> {
   const { argv, needsSudo } = gcArgv(period, { noInput: rt.noInput });
 
   if (opts.dryRun) {
-    data(rt, { command: formatArgv(argv), olderThan: period }, () =>
-      formatArgv(argv),
-    );
+    const command = formatArgv(argv);
+    data(rt, { command, olderThan: period }, () => command);
     return 0;
   }
 
@@ -38,7 +37,11 @@ export async function runGc(rt: Runtime, opts: GcOpts): Promise<number> {
       rt,
       "collecting system generations requires root; install sudo or re-run as root (e.g. `sudo marchyo gc`)",
     );
-    return 2;
+    return 1;
+  }
+  if (!needsSudo && !commandAvailable("nix-collect-garbage")) {
+    err(rt, "nix-collect-garbage not found in PATH");
+    return 1;
   }
 
   info(rt, `collecting garbage older than ${period} ...`);

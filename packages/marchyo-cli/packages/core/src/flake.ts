@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { userInfo } from "node:os";
 import { readState, writeState, mergeState } from "./state.ts";
+import { sudoWrap } from "./system.ts";
 
 const FLAKE_CANDIDATES = ["/etc/nixos/flake.nix", "/etc/nixos"];
 
@@ -47,12 +47,11 @@ export type RebuildOptions = {
 
 export type RebuildResult =
   | { kind: "ok"; code: number }
-  | { kind: "needs-sudo"; message: string };
+  | { kind: "unavailable"; message: string };
 
-// Build the argv for nixos-rebuild, choosing whether to wrap in sudo based
-// on the current uid and the noInput flag (jylhis/design §2.5.1: never
-// prompt under --no-input / CI=1). Returns the argv plus a sentinel if a
-// non-interactive sudo escalation cannot proceed.
+// Build the argv for nixos-rebuild, sudo-wrapped via system.ts:sudoWrap
+// based on the current uid and the noInput flag (jylhis/design §2.5.1:
+// never prompt under --no-input / CI=1).
 export function rebuildArgv(opts: RebuildOptions): {
   argv: string[];
   needsSudo: boolean;
@@ -64,11 +63,7 @@ export function rebuildArgv(opts: RebuildOptions): {
   // --impure is required so end-user flakes can read their own
   // /etc/marchyo/cli-state.json overlay (see options.nix persistedState).
   const inner = ["nixos-rebuild", subcommand, "--impure", "--flake", flakeRef];
-
-  const isRoot = userInfo().uid === 0;
-  if (isRoot) return { argv: inner, needsSudo: false };
-  if (opts.noInput) return { argv: ["sudo", "-n", ...inner], needsSudo: true };
-  return { argv: ["sudo", ...inner], needsSudo: true };
+  return sudoWrap(inner, { noInput: opts.noInput });
 }
 
 export async function nixosRebuild(opts: RebuildOptions): Promise<RebuildResult> {
@@ -76,10 +71,15 @@ export async function nixosRebuild(opts: RebuildOptions): Promise<RebuildResult>
 
   if (needsSudo && !commandAvailable("sudo")) {
     return {
-      kind: "needs-sudo",
+      kind: "unavailable",
       message:
         "rebuild requires root; install sudo or re-run as root (e.g. `sudo marchyo rebuild`)",
     };
+  }
+  const program = argv[0] ?? "";
+  if (!commandAvailable(program)) {
+    // Guard the spawn: Bun.spawn throws ENOENT on a missing executable.
+    return { kind: "unavailable", message: `${program} not found in PATH` };
   }
 
   const proc = Bun.spawn(argv, {
