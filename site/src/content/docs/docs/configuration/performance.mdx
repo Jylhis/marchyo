@@ -13,9 +13,9 @@ description: Performance tuning options
 marchyo.performance.disableMitigations = true;
 ```
 
-<Warning>
+:::caution
 Disabling CPU mitigations (Spectre, Meltdown, etc.) reduces security. Only enable on trusted single-user workstations where maximum performance is required (e.g., gaming, benchmarking). Do **not** enable if running untrusted code or containers.
-</Warning>
+:::
 
 To keep mitigations enabled:
 
@@ -66,16 +66,16 @@ marchyo.performance.tuning = {
 };
 ```
 
-<Warning>
+:::caution
 `hugePages` can hurt latency-sensitive and interactive desktop workloads.
 `compute` relaxes resource limits system-wide (unlimited `memlock`, real-time
 priority for all users) — only enable it on trusted single-user machines where
 you control every process.
-</Warning>
+:::
 
-<Note>
+:::note
 The CFS scheduler sysctls from older compute-tuning sets
 (`kernel.sched_min_granularity_ns`, `sched_latency_ns`, etc.) are intentionally
 **not** included: they were removed when the kernel switched CFS → EEVDF (6.6+)
 and setting them on a current kernel only produces `systemd-sysctl` warnings.
-</Note>
+:::

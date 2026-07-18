@@ -19,9 +19,9 @@ For hybrid graphics laptops with two GPUs:
 marchyo.graphics.vendors = [ "intel" "nvidia" ];
 ```
 
-<Info>
+:::note
 Find your GPU with: `lspci | grep -E 'VGA|3D'`
-</Info>
+:::
 
 | Vendor | Description |
 |--------|-------------|
@@ -45,9 +45,9 @@ marchyo.graphics.nvidia = {
 };
 ```
 
-<Warning>
+:::caution
 Set `nvidia.open = false` for older GPUs (Maxwell, Pascal, Volta). The open-source modules only support Turing (RTX 20xx) and newer.
-</Warning>
+:::
 
 ## NVIDIA PRIME (hybrid graphics)
 
