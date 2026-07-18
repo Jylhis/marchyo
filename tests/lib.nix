@@ -9,6 +9,13 @@
   ...
 }:
 rec {
+  # Evaluation-time assertion on a plain value (no NixOS eval). Creates a
+  # trivial derivation that fails at eval time if the assertion fails.
+  # Uses writeText (no sandbox spawn) instead of runCommand.
+  assertTest =
+    name: assertion: message:
+    pkgs.writeText "test-${name}" (if assertion then "pass" else throw "FAIL: ${name}: ${message}");
+
   # Verifies a NixOS config evaluates without errors.
   # Forces assertion evaluation (not just stateVersion) to catch real failures.
   testNixOS =
