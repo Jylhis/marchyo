@@ -1,0 +1,62 @@
+[
+  {
+    "attr": "hyprmon",
+    "description": "TUI monitor configuration tool for Hyprland with visual layout, drag-and-drop, and profile management",
+    "homepage": "https://github.com/erans/hyprmon",
+    "license": "Apache-2.0",
+    "mainProgram": "hyprmon",
+    "name": "hyprmon",
+    "source": "marchyo",
+    "version": "0.0.11"
+  },
+  {
+    "attr": "marchyo-cli",
+    "description": "Marchyo CLI utilities — `marchyo` (user) and `marchyoctl` (developer)",
+    "homepage": "https://github.com/jylhis/marchyo",
+    "license": "MIT",
+    "mainProgram": "marchyo",
+    "name": "marchyo-cli",
+    "source": "marchyo",
+    "version": "0.1.0"
+  },
+  {
+    "attr": "marchyo-wallpapers",
+    "description": "Jylhis token-derived grid wallpapers for Marchyo",
+    "homepage": "https://github.com/jylhis/marchyo",
+    "license": "MIT",
+    "mainProgram": "",
+    "name": "marchyo-wallpapers",
+    "source": "marchyo",
+    "version": "0.1.0"
+  },
+  {
+    "attr": "openviking",
+    "description": "Command-line client for OpenViking, a context filesystem for AI agents",
+    "homepage": "https://openviking.ai",
+    "license": "AGPL-3.0-only",
+    "mainProgram": "ov",
+    "name": "openviking",
+    "source": "marchyo",
+    "version": "0.3.24"
+  },
+  {
+    "attr": "pi",
+    "description": "Minimal terminal coding agent",
+    "homepage": "https://pi.dev",
+    "license": "MIT",
+    "mainProgram": "pi",
+    "name": "pi",
+    "source": "marchyo",
+    "version": "0.79.3"
+  },
+  {
+    "attr": "plymouth-marchyo-theme",
+    "description": "Marchyo Plymouth boot splash, generated and themed from Jylhis Design System tokens",
+    "homepage": "",
+    "license": "MIT",
+    "mainProgram": "",
+    "name": "plymouth-marchyo-theme",
+    "source": "marchyo",
+    "version": "v4.0.0"
+  }
+]

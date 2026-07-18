@@ -65,6 +65,34 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix flake check --accept-flake-config
+  # Staleness gate for the website's committed search data
+  # (site/src/data/*.json). The Cloudflare deploy runs bun only (no Nix), so the
+  # JSON is committed; this regenerates it from the option/package source and
+  # fails if the working tree drifts — mirroring the lock-file rev-sync gate.
+  search-data:
+    name: Site search data
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v17
+        with:
+          name: jylhis
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Regenerate committed search data
+        run: |
+          set -euo pipefail
+          out=$(nix build --no-link --print-out-paths --accept-flake-config .#site-search-data)
+          cp "$out/options.json" site/src/data/options.json
+          cp "$out/marchyo-packages.json" site/src/data/marchyo-packages.json
+      - name: Fail if committed data is stale
+        run: |
+          set -euo pipefail
+          if ! git diff --exit-code -- site/src/data; then
+            echo "::error::site/src/data is out of date — run 'just site-data' and commit the result."
+            exit 1
+          fi
   # Full NixOS toplevel build. Main-only — up to 60 minutes per run.
   build:
     name: Build toplevel

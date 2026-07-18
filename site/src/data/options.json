@@ -1,0 +1,686 @@
+[
+  {
+    "name": "marchyo.ai.context.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "OpenViking (`ov`) local context layer for AI clients.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "BYOK AI tooling and desktop integration. Installs per-user AI clients wired to OpenRouter, task-based model routing, a local context layer, MCP tools and Agent Skills.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.mcp.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Wire MCP tools (mcp-nixos via uvx) into the AI clients.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.openrouter.apiKeyFile",
+    "type": "null or path",
+    "default": "null",
+    "example": "config.sops.secrets.\"openrouter-api-key\".path",
+    "description": "Runtime path to the OpenRouter API key (required when marchyo.ai is enabled). The key is read at runtime and never enters the Nix store.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.openrouter.baseUrl",
+    "type": "string",
+    "default": "https://openrouter.ai/api/v1",
+    "example": "",
+    "description": "OpenAI-compatible base URL used by the AI clients.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.openrouter.defaultModel",
+    "type": "string",
+    "default": "anthropic/claude-sonnet-4",
+    "example": "",
+    "description": "Model used when task-based routing is disabled.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.routing.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Task→model routing (routing.tasks.<bucket>, routing.tools). The resolved policy is exported to ~/.config/marchyo/ai-routing.json.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.skills.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Install Agent Skills to all AI clients.",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.ai.tooling.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Install the AI CLIs (aichat / pi / claude-code).",
+    "declared": "modules/nixos/options/ai.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
+  },
+  {
+    "name": "marchyo.autoTimezone.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Automatic timezone updates from your location (services.automatic-timezoned via geoclue2). Overrides the static marchyo.timezone when enabled.",
+    "declared": "modules/nixos/options/localization.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/localization.nix"
+  },
+  {
+    "name": "marchyo.cli.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "Install the `marchyo` user CLI system-wide. Lets end users inspect their configuration, toggle settings, and wrap nixos-rebuild.",
+    "declared": "modules/nixos/options/cli.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/cli.nix"
+  },
+  {
+    "name": "marchyo.defaultLocale",
+    "type": "string",
+    "default": "en_US.UTF-8",
+    "example": "de_DE.UTF-8",
+    "description": "System default locale.",
+    "declared": "modules/nixos/options/localization.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/localization.nix"
+  },
+  {
+    "name": "marchyo.defaults.audioPlayer",
+    "type": "null or one of \"mpv\", \"cmus\", \"vlc\", \"amberol\"",
+    "default": "mpv",
+    "example": "cmus",
+    "description": "Default audio player for local files. Registered as the system default for audio MIME types (except cmus, a TUI with no single-file handler). Set to null to skip.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.browser",
+    "type": "null or one of \"brave\", \"google-chrome\", \"firefox\", \"chromium\"",
+    "default": "google-chrome",
+    "example": "firefox",
+    "description": "Default web browser. Installed automatically when desktop is enabled and registered as the system default for HTTP/HTTPS links. Set to null to skip.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.editor",
+    "type": "null or one of \"emacs\", \"jotain\", \"vscode\", \"vscodium\", \"zed\"",
+    "default": "jotain",
+    "example": "vscode",
+    "description": "Default graphical text editor ($VISUAL). \"jotain\" (Jylhis's Emacs config) is the default. Set to null to skip editor management.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.email",
+    "type": "null or one of \"aerc\", \"neomutt\", \"gmail\", \"outlook\"",
+    "default": "aerc",
+    "example": "neomutt",
+    "description": "Default email client. \"aerc\"/\"neomutt\" are TUI clients; \"gmail\"/\"outlook\" are externally-managed web apps.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.fileManager",
+    "type": "null or one of \"nautilus\", \"thunar\"",
+    "default": "nautilus",
+    "example": "thunar",
+    "description": "Default graphical file manager.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.imageEditor",
+    "type": "null or one of \"pinta\", \"gimp\", \"krita\"",
+    "default": "pinta",
+    "example": "gimp",
+    "description": "Default image editor.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.musicPlayer",
+    "type": "null or one of \"spotify-player\", \"ncspot\", \"spotify\"",
+    "default": "spotify-player",
+    "example": "ncspot",
+    "description": "Default music client bound to the Hyprland Super+M keybind. Defaults to spotify-player, a TUI client launched in a floating terminal.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.terminalEditor",
+    "type": "null or one of \"emacs\", \"jotain\", \"neovim\", \"helix\", \"nano\"",
+    "default": "jotain",
+    "example": "neovim",
+    "description": "Default terminal text editor ($EDITOR). \"jotain\" (Jylhis's Emacs config) is the default. Set to null to skip.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.terminalFileManager",
+    "type": "null or one of \"yazi\", \"ranger\", \"lf\"",
+    "default": "yazi",
+    "example": "ranger",
+    "description": "Default terminal file manager.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.defaults.videoPlayer",
+    "type": "null or one of \"mpv\", \"vlc\", \"celluloid\"",
+    "default": "mpv",
+    "example": "vlc",
+    "description": "Default video player, registered as the system default for video MIME types.",
+    "declared": "modules/nixos/options/defaults.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/defaults.nix"
+  },
+  {
+    "name": "marchyo.desktop.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable desktop environment (Hyprland, Wayland, fonts, etc.). Cascades media and office on via lib.mkDefault.",
+    "declared": "modules/nixos/options/feature-flags.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/feature-flags.nix"
+  },
+  {
+    "name": "marchyo.development.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable development tools (Docker, buildah, gh, etc.).",
+    "declared": "modules/nixos/options/feature-flags.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/feature-flags.nix"
+  },
+  {
+    "name": "marchyo.dictation.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Push-to-talk voice dictation on the Wayland desktop via voxtype + Whisper. Off by default (needs a microphone and downloads a Whisper model).",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.dictation.gpu",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Use the Vulkan GPU build (pkgs.voxtype-vulkan); set false for the CPU-only pkgs.voxtype.",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.dictation.language",
+    "type": "string",
+    "default": "auto",
+    "example": "en",
+    "description": "Spoken language (\"auto\" detects per utterance; e.g. \"en\" to pin).",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.dictation.model",
+    "type": "string",
+    "default": "large-v3-turbo",
+    "example": "",
+    "description": "Whisper model voxtype loads.",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.dictation.pushToTalk.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Daemon evdev hold hotkey; adds dictation users to the `input` group. Set false to rely only on the compositor toggle.",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.dictation.pushToTalk.key",
+    "type": "string",
+    "default": "F9",
+    "example": "SCROLLLOCK",
+    "description": "evdev key held to record (e.g. \"SCROLLLOCK\", \"PAUSE\", \"F13\").",
+    "declared": "modules/nixos/options/dictation.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/dictation.nix"
+  },
+  {
+    "name": "marchyo.emacs.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Marchyo Emacs daemon and Hyprland integration.",
+    "declared": "modules/nixos/options/emacs.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/emacs.nix"
+  },
+  {
+    "name": "marchyo.graphics.nvidia.open",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Use NVIDIA's open-source kernel modules. Recommended for Turing (RTX 20xx) and newer; required for RTX 50xx. Set false for older GPUs.",
+    "declared": "modules/nixos/options/graphics.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/graphics.nix"
+  },
+  {
+    "name": "marchyo.graphics.prime.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable NVIDIA PRIME for hybrid graphics laptops. Requires both an integrated GPU and nvidia in vendors.",
+    "declared": "modules/nixos/options/graphics.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/graphics.nix"
+  },
+  {
+    "name": "marchyo.graphics.prime.mode",
+    "type": "one of \"offload\", \"sync\", \"reverse-sync\"",
+    "default": "offload",
+    "example": "",
+    "description": "PRIME render mode: offload (on-demand, power efficient), sync (always dGPU), reverse-sync (iGPU display, dGPU compute).",
+    "declared": "modules/nixos/options/graphics.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/graphics.nix"
+  },
+  {
+    "name": "marchyo.graphics.vendors",
+    "type": "list of one of \"intel\", \"amd\", \"nvidia\"",
+    "default": "[ ]",
+    "example": "[ \"intel\" \"nvidia\" ]",
+    "description": "GPU vendors present in the system. For hybrid laptops specify both (e.g. [\"intel\" \"nvidia\"]). Find your GPU with: lspci | grep -E 'VGA|3D'.",
+    "declared": "modules/nixos/options/graphics.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/graphics.nix"
+  },
+  {
+    "name": "marchyo.hardware.logitech.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable Logitech wireless device support (Solaar GUI + udev rules).",
+    "declared": "modules/nixos/options/hardware.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/hardware.nix"
+  },
+  {
+    "name": "marchyo.keyboard.autoActivateIME",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Automatically activate the input method for layouts that declare an IME.",
+    "declared": "modules/nixos/options/keyboard.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/keyboard.nix"
+  },
+  {
+    "name": "marchyo.keyboard.composeKey",
+    "type": "null or string",
+    "default": "null",
+    "example": "ralt",
+    "description": "Compose key for typing accented/special characters (e.g. em dash).",
+    "declared": "modules/nixos/options/keyboard.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/keyboard.nix"
+  },
+  {
+    "name": "marchyo.keyboard.imeTriggerKey",
+    "type": "list of string",
+    "default": "[ ]",
+    "example": "[ \"Super+I\" ]",
+    "description": "Hyprland bind(s) that toggle the input method.",
+    "declared": "modules/nixos/options/keyboard.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/keyboard.nix"
+  },
+  {
+    "name": "marchyo.keyboard.layouts",
+    "type": "list of (string or (submodule))",
+    "default": "[ \"us\" ]",
+    "example": "[ \"us\" { layout = \"fi\"; } { layout = \"cn\"; ime = \"pinyin\"; } ]",
+    "description": "List of keyboard layouts and input methods. Each entry is a layout string or an attrset { layout; variant?; ime?; label?; }.",
+    "declared": "modules/nixos/options/keyboard.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/keyboard.nix"
+  },
+  {
+    "name": "marchyo.keyboard.options",
+    "type": "list of string",
+    "default": "[ ]",
+    "example": "[ \"grp:win_space_toggle\" ]",
+    "description": "XKB keyboard options for fcitx5 keyboard layouts.",
+    "declared": "modules/nixos/options/keyboard.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/keyboard.nix"
+  },
+  {
+    "name": "marchyo.media.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable media applications (Spotify, MPV, etc.). Auto-enabled with desktop via lib.mkDefault.",
+    "declared": "modules/nixos/options/feature-flags.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/feature-flags.nix"
+  },
+  {
+    "name": "marchyo.menus.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "Power/session and central system menus (auto-enabled with desktop).",
+    "declared": "modules/nixos/options/menus.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/menus.nix"
+  },
+  {
+    "name": "marchyo.office.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable office applications (LibreOffice, Papers, etc.). Auto-enabled with desktop via lib.mkDefault.",
+    "declared": "modules/nixos/options/feature-flags.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/feature-flags.nix"
+  },
+  {
+    "name": "marchyo.osd.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "On-screen display for volume/brightness via SwayOSD (auto-enabled with desktop).",
+    "declared": "modules/nixos/options/osd.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/osd.nix"
+  },
+  {
+    "name": "marchyo.performance.disableMitigations",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) for maximum performance. Reduces security — only for trusted single-user workstations.",
+    "declared": "modules/nixos/options/performance.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/performance.nix"
+  },
+  {
+    "name": "marchyo.performance.kernel",
+    "type": "one of \"default\", \"latest\", \"zen\", \"xanmod\", \"lts\"",
+    "default": "default",
+    "example": "zen",
+    "description": "Kernel variant to boot. Applied with lib.mkDefault so a host can still set boot.kernelPackages directly.",
+    "declared": "modules/nixos/options/performance.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/performance.nix"
+  },
+  {
+    "name": "marchyo.performance.tuning.compute.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Relax resource limits for trusted single-user compute/CUDA hosts (PAM memlock/rtprio, sched_rt_runtime_us=-1). Security/stability sensitive — off by default.",
+    "declared": "modules/nixos/options/performance.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/performance.nix"
+  },
+  {
+    "name": "marchyo.performance.tuning.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable kernel/sysctl/IO performance tuning. Turns on the broadly-safe sub-toggles (network, nvme, memory); the aggressive ones (hugePages, compute) stay off.",
+    "declared": "modules/nixos/options/performance.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/performance.nix"
+  },
+  {
+    "name": "marchyo.performance.tuning.hugePages.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable 2 MiB transparent huge pages always. Improves TLB performance for large allocations but can hurt interactive/desktop latency.",
+    "declared": "modules/nixos/options/performance.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/performance.nix"
+  },
+  {
+    "name": "marchyo.power.hibernation.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Hibernation (suspend-to-disk) support. Requires resumeDevice.",
+    "declared": "modules/nixos/options/power.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/power.nix"
+  },
+  {
+    "name": "marchyo.power.hibernation.resumeDevice",
+    "type": "null or string",
+    "default": "null",
+    "example": "/dev/disk/by-label/swap",
+    "description": "Swap device the kernel resumes from. Required for hibernate; needs swap >= RAM to hold the hibernation image.",
+    "declared": "modules/nixos/options/power.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/power.nix"
+  },
+  {
+    "name": "marchyo.power.hibernation.suspendThenHibernate",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Use suspend-then-hibernate for lid close and idle (suspend first, hibernate after a delay).",
+    "declared": "modules/nixos/options/power.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/power.nix"
+  },
+  {
+    "name": "marchyo.reminders.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "Gum-driven desktop reminders (marchyo-reminder-set/-show/-clear via Super+Ctrl+R chords). Part of the desktop cascade.",
+    "declared": "modules/nixos/options/utilities.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/utilities.nix"
+  },
+  {
+    "name": "marchyo.screensaver.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "tte-based (terminaltexteffects) terminal screensaver launched on idle. Auto-enabled with marchyo.desktop.enable.",
+    "declared": "modules/nixos/options/screensaver.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/screensaver.nix"
+  },
+  {
+    "name": "marchyo.security.fido2.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "FIDO2/U2F hardware security key authentication via pam_u2f.",
+    "declared": "modules/nixos/options/security.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/security.nix"
+  },
+  {
+    "name": "marchyo.security.fingerprint.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Fingerprint authentication via fprintd (PAM integration is automatic). hyprlock follows this setting.",
+    "declared": "modules/nixos/options/security.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/security.nix"
+  },
+  {
+    "name": "marchyo.security.firewall.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Whether the firewall is on by default. networking.firewall.enable follows this value via mkDefault, so false is a real off-switch.",
+    "declared": "modules/nixos/options/security.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/security.nix"
+  },
+  {
+    "name": "marchyo.services.localsend.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Enable LocalSend file sharing (auto-enabled with the desktop). Opens TCP/UDP port 53317 on the LAN.",
+    "declared": "modules/nixos/options/services.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/services.nix"
+  },
+  {
+    "name": "marchyo.services.tailscale.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Enable the Tailscale mesh VPN daemon and open the firewall for its traffic.",
+    "declared": "modules/nixos/options/tailscale.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/tailscale.nix"
+  },
+  {
+    "name": "marchyo.snapshots.btrfs",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Whether the root filesystem is btrfs. Set false on ext4/zfs hosts to skip all btrfs-specific config.",
+    "declared": "modules/nixos/options/snapshots.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "name": "marchyo.snapshots.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Automatic filesystem snapshots via snapper (timeline + cleanup). Assumes a btrfs root by default.",
+    "declared": "modules/nixos/options/snapshots.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "name": "marchyo.snapshots.subvolume",
+    "type": "string",
+    "default": "/",
+    "example": "",
+    "description": "Subvolume snapper takes timeline snapshots of.",
+    "declared": "modules/nixos/options/snapshots.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "name": "marchyo.theme.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Enable Stylix theming system.",
+    "declared": "modules/nixos/options/theme.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/theme.nix"
+  },
+  {
+    "name": "marchyo.theme.scheme",
+    "type": "null or string",
+    "default": "null",
+    "example": "nord",
+    "description": "Override the base16 color scheme (a base16-schemes YAML name, e.g. \"nord\"). When null, the Jylhis palette derived from variant is used.",
+    "declared": "modules/nixos/options/theme.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/theme.nix"
+  },
+  {
+    "name": "marchyo.theme.variant",
+    "type": "one of \"light\", \"dark\"",
+    "default": "dark",
+    "example": "light",
+    "description": "Theme variant preference. \"dark\" uses Jylhis Roast, \"light\" uses Jylhis Paper. Override with marchyo.theme.scheme for a base16-schemes YAML instead.",
+    "declared": "modules/nixos/options/theme.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/theme.nix"
+  },
+  {
+    "name": "marchyo.theme.wallpaper.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "",
+    "description": "Enable the generated Marchyo grid wallpaper where supported.",
+    "declared": "modules/nixos/options/theme.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/theme.nix"
+  },
+  {
+    "name": "marchyo.timezone",
+    "type": "string",
+    "default": "Europe/Zurich",
+    "example": "America/New_York",
+    "description": "System timezone.",
+    "declared": "modules/nixos/options/localization.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/localization.nix"
+  },
+  {
+    "name": "marchyo.tracking.enable",
+    "type": "boolean",
+    "default": "false",
+    "example": "",
+    "description": "Enable the full local-first self-tracking stack. Sub-collectors default on via lib.mkDefault; screenshot capture defaults off and must be enabled explicitly.",
+    "declared": "modules/nixos/options/tracking.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/tracking.nix"
+  },
+  {
+    "name": "marchyo.users.<name>.email",
+    "type": "string",
+    "default": "",
+    "example": "",
+    "description": "Your email address. Wired into git config and user-facing applications.",
+    "declared": "modules/nixos/options/users.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/users.nix"
+  },
+  {
+    "name": "marchyo.users.<name>.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "If set to false, the user account will not have any Marchyo stuff.",
+    "declared": "modules/nixos/options/users.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/users.nix"
+  },
+  {
+    "name": "marchyo.users.<name>.fullname",
+    "type": "string",
+    "default": "",
+    "example": "",
+    "description": "Your full name, used for the account, git identity and application metadata.",
+    "declared": "modules/nixos/options/users.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/users.nix"
+  },
+  {
+    "name": "marchyo.users.<name>.uid",
+    "type": "null or signed integer",
+    "default": "null",
+    "example": "501",
+    "description": "Numeric user id. On NixOS sets users.users.<name>.uid; on nix-darwin opts the user into users.knownUsers for declarative login-shell management.",
+    "declared": "modules/nixos/options/users.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/users.nix"
+  },
+  {
+    "name": "marchyo.utilities.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "Quick-info and media utilities: date/time and battery notifications, marchyo-transcode, and the marchyo-share clipboard helper. Part of the desktop cascade.",
+    "declared": "modules/nixos/options/utilities.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/utilities.nix"
+  },
+  {
+    "name": "marchyo.webapps.browser",
+    "type": "null or string",
+    "default": "null",
+    "example": "chromium",
+    "description": "Chromium-family browser used to launch web apps in --app mode. null follows marchyo.defaults.browser when chromium-based, otherwise falls back to chromium.",
+    "declared": "modules/nixos/options/webapps.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/webapps.nix"
+  },
+  {
+    "name": "marchyo.webapps.enable",
+    "type": "boolean",
+    "default": "true",
+    "example": "false",
+    "description": "Register web apps as standalone browser app windows (.desktop entries + Hyprland launch binds). Auto-enabled with marchyo.desktop.enable via lib.mkDefault.",
+    "declared": "modules/nixos/options/webapps.nix",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/webapps.nix"
+  }
+]

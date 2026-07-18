@@ -1,4 +1,7 @@
-// Assets-only Worker: static site, no server-side code (no `main`).
+// Assets + script Worker: static site served from ./dist, plus a small Worker
+// script (worker/index.ts) that handles the `/api/*` routes. Everything except
+// the `run_worker_first` patterns is served directly from assets.
+//
 // Deployed by the Cloudflare Workers Builds git integration on push to main
 // (root directory: site). The dashboard Worker name must match `name` below
 // or builds fail. The custom-domain routes create DNS records + certificates
@@ -7,11 +10,29 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "marchyo-site",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-07-18",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // Only /api/* invokes the Worker script; all other paths serve static
+    // assets directly (unchanged static-site behavior).
+    "run_worker_first": ["/api/*"]
   },
+  // nixpkgs package search index (SQLite FTS5). Rebuilt and loaded by
+  // .github/workflows/nixpkgs-index.yml. Create once with
+  //   wrangler d1 create marchyo-nixpkgs
+  // then paste the returned database_id below. Until it is provisioned the
+  // Worker's /api/packages route responds with an empty result + error, so the
+  // rest of the site still deploys and works.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "marchyo-nixpkgs",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
   "routes": [
     { "pattern": "marchyo.org", "custom_domain": true },
     { "pattern": "www.marchyo.org", "custom_domain": true }
