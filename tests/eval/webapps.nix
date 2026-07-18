@@ -29,12 +29,12 @@ let
   hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
 in
 {
-  # Webapps on: a .desktop entry is generated per app, launching the browser in
-  # --app mode, and apps with a `key` also get a Hyprland bind (default set:
-  # ChatGPT on SUPER+SHIFT+A).
+  # Webapps ride the desktop cascade (default-on): a plain desktop config gets a
+  # .desktop entry per app, launching the browser in --app mode, and apps with a
+  # `key` also get a Hyprland bind (default set: ChatGPT on SUPER+SHIFT+A).
   eval-webapps-enabled =
     let
-      hm = (evalWith { marchyo.webapps.enable = true; }).config.home-manager.users.testuser;
+      hm = (evalWith { }).config.home-manager.users.testuser;
       chatgpt = (entries hm)."marchyo-webapp-chatgpt" or null;
     in
     pkgs.writeText "eval-webapps-enabled" (
@@ -46,16 +46,26 @@ in
         # Discord declares no key -> .desktop entry present but no bind.
         && (entries hm) ? "marchyo-webapp-discord"
         && !(hasBind hm "Discord")
+        # Parity round-out: X and Google Photos ship with binds...
+        && (entries hm) ? "marchyo-webapp-x"
+        && hasBind hm "SUPER SHIFT, X, X, exec, google-chrome --app=https://x.com/"
+        && hasBind hm "SUPER SHIFT, P, Google Photos, exec, google-chrome --app=https://photos.google.com/"
+        # ...Google Calendar and Gmail are entries only (no key).
+        && (entries hm) ? "marchyo-webapp-google-calendar"
+        && (entries hm) ? "marchyo-webapp-gmail"
+        && !(hasBind hm "Gmail")
+        && !(hasBind hm "Google Calendar")
       then
         "pass"
       else
-        throw "FAIL: webapps enabled but the ChatGPT desktop entry/bind is missing/malformed, or Discord (no key) leaked a bind"
+        throw "FAIL: desktop default webapps set is missing an entry/bind, or a keyless app leaked a bind"
     );
 
-  # Webapps off (default) on a desktop: no webapp desktop entries and no binds.
+  # Explicit opt-out overrides the desktop cascade: no webapp desktop entries
+  # and no launch binds.
   eval-webapps-disabled =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith { marchyo.webapps.enable = false; }).config.home-manager.users.testuser;
       keys = builtins.attrNames (entries hm);
     in
     pkgs.writeText "eval-webapps-disabled" (
