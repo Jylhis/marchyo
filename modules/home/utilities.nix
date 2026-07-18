@@ -18,6 +18,9 @@ let
   remindersEnabled = desktopEnabled && ((marchyoCfg.reminders or { }).enable or true);
   utilitiesEnabled = desktopEnabled && ((marchyoCfg.utilities or { }).enable or true);
 
+  # Bash snippet shared by the reminder scripts (expanded at runtime).
+  stateDirSnippet = ''statedir="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo"'';
+
   # Interactive reminder entry: message + delay via gum, scheduled as a
   # transient one-shot systemd user timer that fires a critical notification.
   marchyo-reminder-set = pkgs.writeShellApplication {
@@ -36,13 +39,17 @@ let
 
       # The transient unit fires outside this script's PATH, so notify-send is
       # referenced by store path. %N keeps same-second reminders from
-      # colliding on the unit name.
-      systemd-run --user --on-active="$delay" \
+      # colliding on the unit name. systemd-run rejects malformed time spans,
+      # so surface that instead of dying silently.
+      if ! systemd-run --user --on-active="$delay" \
         --unit="marchyo-reminder-$(date +%s%N)" \
         --description="marchyo reminder: $msg" \
-        ${lib.getExe' pkgs.libnotify "notify-send"} -u critical "Reminder" "$msg"
+        ${lib.getExe' pkgs.libnotify "notify-send"} -u critical "Reminder" "$msg"; then
+        notify-send -u critical -a marchyo "Reminder" "Could not schedule reminder - is \"$delay\" a valid delay?"
+        exit 1
+      fi
 
-      statedir="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo"
+      ${stateDirSnippet}
       mkdir -p "$statedir"
       printf '%s | %s | %s\n' "$(date '+%Y-%m-%d %H:%M')" "$delay" "$msg" >> "$statedir/reminders"
       notify-send -u low -a marchyo "Reminder set" "In $delay: $msg"
@@ -58,7 +65,8 @@ let
       pkgs.coreutils
     ];
     text = ''
-      statefile="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo/reminders"
+      ${stateDirSnippet}
+      statefile="$statedir/reminders"
       {
         echo "Pending reminders:"
         systemctl --user list-timers --all 'marchyo-reminder-*' --no-pager || true
@@ -84,7 +92,7 @@ let
       # The wildcard covers both the transient .timer units and any .service
       # units already spawned by an elapsed timer.
       systemctl --user stop 'marchyo-reminder-*' || true
-      statedir="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo"
+      ${stateDirSnippet}
       mkdir -p "$statedir"
       : > "$statedir/reminders"
       notify-send -u low -a marchyo "Reminders" "Cleared pending reminders"
@@ -111,7 +119,9 @@ let
     text = ''
       found=0
       for bat in /sys/class/power_supply/BAT*; do
-        if [ ! -r "$bat/capacity" ]; then
+        # Both reads are guarded: an unreadable sysfs node under `set -e`
+        # would otherwise abort the script before the fallback below.
+        if [ ! -r "$bat/capacity" ] || [ ! -r "$bat/status" ]; then
           continue
         fi
         found=1
@@ -169,13 +179,13 @@ let
 
       case "$target" in
         mp4)
-          ffmpeg -y -i "$src" -c:v libx264 -preset fast -crf 23 -c:a aac "$out"
+          args=(-c:v libx264 -preset fast -crf 23 -c:a aac)
           ;;
         webm)
-          ffmpeg -y -i "$src" -c:v libvpx-vp9 -crf 32 -b:v 0 -c:a libopus "$out"
+          args=(-c:v libvpx-vp9 -crf 32 -b:v 0 -c:a libopus)
           ;;
         gif)
-          ffmpeg -y -i "$src" -vf "fps=12,scale=640:-1:flags=lanczos" "$out"
+          args=(-vf "fps=12,scale=640:-1:flags=lanczos")
           ;;
         "ascii (tte)")
           # Text-mode "transcode": animate the file's text in the terminal
@@ -184,6 +194,10 @@ let
           exit 0
           ;;
       esac
+      if ! ffmpeg -y -i "$src" "''${args[@]}" "$out"; then
+        notify-send -u critical -a marchyo "Transcode" "ffmpeg failed transcoding $(basename "$src")"
+        exit 1
+      fi
       notify-send -u low -a marchyo "Transcode" "Saved $(basename "$out")"
     '';
   };
