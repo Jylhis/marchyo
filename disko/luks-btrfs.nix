@@ -16,10 +16,20 @@
 #       - @persist   -> /persist    (for impermanence setups)
 #       - @log       -> /var/log    (logs)
 #       - @snapshots -> /.snapshots (snapshot storage)
-#   - Swap: 8GB (encrypted)
+#   - Swap: 32GB (randomEncryption — NO hibernation/resume support, see below)
 #
 # Good for: laptops, desktops, privacy-focused setups
 # Benefits: Full disk encryption, snapshot support, compression
+#
+# Hibernation: this variant does NOT support resume-from-disk as shipped. The
+# swap partition sits OUTSIDE the LUKS container and uses randomEncryption,
+# which re-keys swap with a fresh random key on every boot — the hibernation
+# image can never be read back. Hibernation also needs swap >= RAM (the 32G
+# sizing below covers that once the encryption question is solved). To get
+# working hibernation, either put swap inside the encryption (LVM-on-LUKS or a
+# btrfs swapfile in the LUKS container) or accept plaintext swap by setting
+# randomEncryption = false — then point marchyo.power.hibernation.resumeDevice
+# at the swap device.
 
 {
   device ? "/dev/sda",
@@ -110,9 +120,18 @@
               };
             };
             swap = {
-              size = "8G";
+              # Sized >= typical RAM so the layout is hibernation-ready once
+              # the encryption caveat is addressed (hibernation needs
+              # swap >= RAM to hold the resume image).
+              size = "32G";
               content = {
                 type = "swap";
+                # Kept true: this partition is outside the LUKS container, so
+                # turning randomEncryption off would leave swap PLAINTEXT next
+                # to an otherwise encrypted disk. The trade-off: a fresh random
+                # key per boot means resume-from-disk (hibernation) cannot
+                # work with this layout — see the header comment for
+                # hibernation-capable alternatives.
                 randomEncryption = true;
               };
             };
