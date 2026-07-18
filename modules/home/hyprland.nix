@@ -411,7 +411,6 @@ in
 
           # --- Notifications (mako) ---
           "SUPER, comma, Dismiss last notification, exec, makoctl dismiss"
-          "SUPER CTRL, comma, Dismiss all notifications, exec, makoctl dismiss --all"
 
           # --- Cursor zoom (screen magnifier) ---
           "SUPER CTRL, Z, Zoom in, exec, marchyo-zoom in"

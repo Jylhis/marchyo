@@ -77,6 +77,22 @@ let
     '';
   };
 
+  # Notification do-not-disturb: flip mako's do-not-disturb mode (declared in
+  # modules/home/mako.nix as `[mode=do-not-disturb] invisible=1`), then poke
+  # the waybar custom/dnd indicator (signal = 9 in modules/home/waybar.nix)
+  # so it refreshes immediately.
+  marchyo-dnd-toggle = pkgs.writeShellApplication {
+    name = "marchyo-dnd-toggle";
+    runtimeInputs = [
+      pkgs.mako
+      pkgs.procps
+    ];
+    text = ''
+      makoctl mode -t do-not-disturb
+      pkill -SIGRTMIN+9 waybar || true
+    '';
+  };
+
   # Screen recording: toggle gpu-screen-recorder on a slurp-selected region.
   # SIGINT finalizes the mp4. Files land in ~/Videos/Recordings.
   marchyo-screenrecord-toggle = pkgs.writeShellApplication {
@@ -111,7 +127,17 @@ in
       marchyo-zoom
       marchyo-nightlight-toggle
       marchyo-idle-toggle
+      marchyo-dnd-toggle
       marchyo-screenrecord-toggle
+    ];
+
+    # Merges with the bindd lists from hyprland.nix / screenshot.nix /
+    # webapps.nix (home-manager concatenates the lists; order is irrelevant
+    # to Hyprland). Dismiss-all moved here from SUPER CTRL, comma in
+    # hyprland.nix, which now belongs to the DND toggle (omarchy parity).
+    wayland.windowManager.hyprland.settings.bindd = [
+      "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo-dnd-toggle"
+      "SUPER CTRL SHIFT, comma, Dismiss all notifications, exec, makoctl dismiss --all"
     ];
   };
 }
