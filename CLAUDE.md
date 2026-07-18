@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+@AGENTS.md
+
+[AGENTS.md](AGENTS.md) holds the distilled tool-agnostic agent guidance (imported above); this file is the full detailed reference for Claude Code (claude.ai/code).
 
 ## Project Overview
 
