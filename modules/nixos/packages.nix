@@ -50,7 +50,7 @@ let
   # Desktop GUI tools
   desktopTools = with pkgs; [
     signal-desktop # E2E messaging
-    localsend # send files to other devices on the same network
+    # localsend installs via modules/nixos/localsend.nix (marchyo.services.localsend)
     loupe # Modern GNOME image viewer
     gnome-disk-utility # Disk management
     sushi # Quick file previews in Nautilus
