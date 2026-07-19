@@ -503,21 +503,20 @@ let
 
       # marchyo's own packages (the overlay/mkPackages set), reduced to the
       # metadata the search UI shows. Optional meta fields are guarded with `or`.
-      pkgSet =
-        {
-          inherit (pkgs) marchyo-wallpapers marchyo-cli;
-        }
-        // lib.optionalAttrs pkgs.stdenv.isLinux {
-          inherit (pkgs)
-            hyprmon
-            plymouth-marchyo-theme
-            openviking
-            pi
-            ;
-        }
-        // lib.optionalAttrs pkgs.stdenv.isDarwin {
-          inherit (pkgs) wallpapper;
-        };
+      pkgSet = {
+        inherit (pkgs) marchyo-wallpapers marchyo-cli;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        inherit (pkgs)
+          hyprmon
+          plymouth-marchyo-theme
+          openviking
+          pi
+          ;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        inherit (pkgs) wallpapper;
+      };
 
       renderLicense =
         l:

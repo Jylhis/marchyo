@@ -7,8 +7,8 @@
 --   INSERT INTO packages_fts(packages_fts) VALUES('rebuild');
 --
 -- The full data file produced by build-nixpkgs-index.sh includes this schema,
--- the INSERTs, and the rebuild, so `wrangler d1 execute --file nixpkgs.sql`
--- recreates the index from scratch each run.
+-- the INSERT statements, and the rebuild, so `wrangler d1 execute --file
+-- nixpkgs.sql` recreates the index from scratch each run.
 
 DROP TABLE IF EXISTS packages_fts;
 DROP TABLE IF EXISTS packages;
