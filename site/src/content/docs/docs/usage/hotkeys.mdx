@@ -65,6 +65,7 @@ config rather than editing a dotfile at runtime.
 |------|--------|
 | `Super + Escape` | Power/session menu (lock, suspend, hibernate, relaunch, reboot, shutdown) |
 | `Super + Alt + Space` | Central system menu (Trigger / Setup / Style / System / Learn) |
+| `Super + K` | Keybindings cheat sheet (searchable, from the live config) |
 | `Super + Ctrl + comma` | Toggle notification do-not-disturb (was: dismiss all) |
 | `Super + Ctrl + Shift + comma` | Dismiss all notifications |
 | `Super + Ctrl + R` | Set a reminder |
@@ -139,6 +140,26 @@ page for setup.
 | `Super + Ctrl + X` | Toggle recording on/off |
 | `Super + Shift + H` | Floating dictation status window |
 
+## Top bar (Waybar) mouse actions
+
+Segments that open a tool launch it as a centered floating popup — never as a
+tile in the workspace. Scrolling and right-clicks act in place.
+
+| Segment | Action |
+|---------|--------|
+| Workspace numbers | Click to switch workspace |
+| Clock | Click to toggle the date/week-number format |
+| `·` (left of the tray) | Hover to expand the system tray |
+| Bell | Click to toggle notification do-not-disturb |
+| Mic/dictation (if enabled) | Left-click toggles recording; right-click opens the floating status window |
+| Layout code (`en`, `fi`, …) | Click to cycle keyboard layouts |
+| `bt` | Click for the Bluetooth manager (bluetui, floating) |
+| Wi-Fi / `eth` | Click for the Wi-Fi manager (impala, floating) |
+| `vol` | Click for the audio mixer (wiremix, floating); right-click mutes; scroll changes volume |
+| `cpu` | Click for the system monitor (btop, floating) |
+| `eco`/`bal`/`perf` | Click to cycle the power profile (built into Waybar) |
+| `bat`/`chg`/`pwr` | Click for the power/session menu (floating) |
+
 ## System & session
 
 | Keys | Action |
@@ -146,7 +167,7 @@ page for setup.
 | `Super + L` | Lock the screen (hyprlock) |
 | `Ctrl + Alt + Delete` | Power off |
 | `Super + Shift + Space` | Toggle the top bar (Waybar) |
-| `Super + ,` / `Super + Ctrl + ,` | Dismiss last / all notifications |
+| `Super + ,` | Dismiss last notification (`Super + Ctrl + Shift + ,` dismisses all) |
 | `Super + Ctrl + I` | Toggle idle lock (keep-awake) |
 | `Super + Ctrl + N` | Toggle night light |
 | `Super + Alt + Print` | Toggle screen recording |
