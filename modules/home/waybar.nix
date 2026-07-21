@@ -22,6 +22,7 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   dictation = (osConfig.marchyo or { }).dictation or { };
   voxtypeIndicator = (dictation.enable or false) && (dictation.indicator or true);
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
@@ -198,11 +199,18 @@ in
             "hyprland/language" = {
               format = "{short}";
               tooltip-format = "{long}";
+              # No-op with a single layout; cycles every keyboard otherwise.
+              on-click = "${pkgs.hyprland}/bin/hyprctl switchxkblayout all next";
             };
+            # Click actions that open a window launch it with an
+            # org.omarchy.* --class so the floating-window tag rule in
+            # modules/home/hyprland.nix applies (centered popup, not a tile) —
+            # the same pattern as the SUPER+CTRL connectivity binds in
+            # modules/home/omarchy-binds.nix.
             cpu = {
               interval = 5;
               format = "cpu {usage}%";
-              on-click = "${terminal} -e ${pkgs.btop}/bin/btop";
+              on-click = "${terminal} --class=org.omarchy.btop -e ${pkgs.btop}/bin/btop";
             };
             clock = {
               format = "{:%a %d %b · %H:%M}";
@@ -215,7 +223,7 @@ in
               format-disconnected = "offline";
               tooltip-format = "{ipaddr}  {ifname}";
               interval = 3;
-              on-click = "${terminal} -e ${pkgs.impala}/bin/impala";
+              on-click = "${terminal} --class=org.omarchy.impala -e ${pkgs.impala}/bin/impala";
             };
             battery = {
               interval = 5;
@@ -223,7 +231,16 @@ in
               format-charging = "chg {capacity}%";
               format-plugged = "pwr";
               format-full = "bat full";
-              on-click = "vicinae toggle";
+              # Floating power/session menu (omarchy parity: battery click opens
+              # the power menu). Bare name: marchyo-power-menu is an HM-profile
+              # script from modules/home/menus.nix, resolved via the session
+              # PATH like marchyo-dnd-toggle below. Falls back to the launcher
+              # when the menus feature is disabled.
+              on-click =
+                if menusEnabled then
+                  "${terminal} --class=org.omarchy.terminal -e marchyo-power-menu"
+                else
+                  "vicinae toggle";
               tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
               tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
               states = {
@@ -236,15 +253,17 @@ in
               format-disabled = "bt off";
               format-connected = "bt {num_connections}";
               tooltip-format = "Devices connected: {num_connections}";
-              on-click = "${terminal} -e ${pkgs.bluetui}/bin/bluetui";
+              on-click = "${terminal} --class=org.omarchy.bluetui -e ${pkgs.bluetui}/bin/bluetui";
             };
             wireplumber = {
               format = "vol {volume}%";
               format-muted = "vol mute";
               scroll-step = 5;
-              on-click = "pavucontrol";
+              # wiremix (not pavucontrol): the same floating mixer TUI the
+              # SUPER+CTRL+A bind and the Setup menu open.
+              on-click = "${terminal} --class=org.omarchy.wiremix -e ${pkgs.wiremix}/bin/wiremix";
               tooltip-format = "Playing at {volume}%";
-              on-click-right = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+              on-click-right = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
               max-volume = 150;
             };
             tray = {
@@ -277,6 +296,10 @@ in
               signal = 9;
               on-click = "marchyo-dnd-toggle";
             };
+            # No on-click: the module cycles power profiles natively on left
+            # click (reverse on right click) and ignores on-click config —
+            # waybar's PowerProfilesDaemon::handleToggle never delegates to
+            # AModule.
             power-profiles-daemon = {
               format = "{icon}";
               tooltip-format = "Power profile: {profile}";
