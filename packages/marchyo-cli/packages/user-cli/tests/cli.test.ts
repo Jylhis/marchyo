@@ -536,6 +536,77 @@ test("font set without a family exits 2", async () => {
   expect(r.stderr).toContain("needs a font family");
 });
 
+test("install with an unknown feature exits 2", async () => {
+  const r = await run(["install", "jetpack"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("unknown feature");
+});
+
+test("install --dry-run prints the state patch without writing", async () => {
+  const { env } = stateFixture();
+  const r = await run(["install", "development", "--dry-run"], env);
+  expect(r.code).toBe(0);
+  expect(JSON.parse(r.stdout)).toEqual({ development: { enable: true } });
+});
+
+test("remove --dry-run prints the disable patch", async () => {
+  const { env } = stateFixture();
+  const r = await run(["remove", "media", "-n"], env);
+  expect(r.code).toBe(0);
+  expect(JSON.parse(r.stdout)).toEqual({ media: { enable: false } });
+});
+
+test("webapp add rejects a taken SUPER+SHIFT key", async () => {
+  const { env } = stateFixture();
+  const r = await run(
+    ["webapp", "add", "https://figma.com", "--key", "G", "-n"],
+    env,
+  );
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("already taken");
+});
+
+test("webapp add --dry-run derives the name and emits the entry", async () => {
+  const { env } = stateFixture();
+  const r = await run(
+    ["webapp", "add", "https://www.figma.com/", "--key", "F", "-n"],
+    env,
+  );
+  expect(r.code).toBe(0);
+  const patch = JSON.parse(r.stdout);
+  expect(patch.webapps.extraApps).toEqual([
+    { name: "Figma", url: "https://www.figma.com/", key: "F" },
+  ]);
+});
+
+test("webapp add with an invalid URL exits 2", async () => {
+  const r = await run(["webapp", "add", "not a url", "-n"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid URL");
+});
+
+test("webapp rm on a non-CLI-managed app fails with the apps hint", async () => {
+  const { env } = stateFixture();
+  const r = await run(["webapp", "rm", "YouTube", "-n"], env);
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("not CLI-managed");
+  expect(r.stderr).toContain("marchyo.webapps.apps");
+});
+
+test("security enroll with an unknown method exits 2", async () => {
+  const r = await run(["security", "enroll", "retina"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("unknown method");
+});
+
+test("security enroll fido2 without pamu2fcfg names the option", async () => {
+  const r = await run(["security", "enroll", "fido2"]);
+  if (r.code !== 0) {
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("marchyo.security.fido2.enable");
+  }
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",

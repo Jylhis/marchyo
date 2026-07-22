@@ -58,6 +58,13 @@ import {
   runTranscode,
 } from "./commands/utilities.ts";
 import { runFontCurrent, runFontList, runFontSet } from "./commands/font.ts";
+import {
+  runInstall,
+  runRemove,
+  runSecurityEnroll,
+  runWebappAdd,
+  runWebappRm,
+} from "./commands/declarative.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -662,6 +669,66 @@ font
   .option("--revert", "Back to the declarative font")
   .action(async (family: string | undefined, opts: { revert?: boolean }) => {
     process.exit(await runFontSet(rt(), family, opts));
+  });
+
+program
+  .command("install")
+  .description("Enable a marchyo feature declaratively (state + rebuild)")
+  .argument("<feature>", "desktop | development | media | office | dictation | webapps")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (feature: string, opts: { dryRun?: boolean }) => {
+    process.exit(await runInstall(rt(), feature, opts));
+  });
+
+program
+  .command("remove")
+  .description("Disable a marchyo feature declaratively (state + rebuild)")
+  .argument("<feature>", "desktop | development | media | office | dictation | webapps")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (feature: string, opts: { dryRun?: boolean }) => {
+    process.exit(await runRemove(rt(), feature, opts));
+  });
+
+const webapp = program
+  .command("webapp")
+  .description("Manage CLI-added web apps (PWA windows)");
+
+webapp
+  .command("add")
+  .description("Register a site as a standalone app window")
+  .argument("<url>", "site URL")
+  .option("--name <name>", "display name (default: derived from the host)")
+  .option("--key <key>", "SUPER+SHIFT launch key (checked against taken keys)")
+  .option("--modifiers <mods>", "modifier chord (default: SUPER SHIFT)")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(
+    async (
+      url: string,
+      opts: { name?: string; key?: string; modifiers?: string; dryRun?: boolean },
+    ) => {
+      process.exit(await runWebappAdd(rt(), url, opts));
+    },
+  );
+
+webapp
+  .command("rm")
+  .description("Remove a CLI-added web app")
+  .argument("<name>", "app name (as shown in launchers)")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (name: string, opts: { dryRun?: boolean }) => {
+    process.exit(await runWebappRm(rt(), name, opts));
+  });
+
+const security = program
+  .command("security")
+  .description("Security enrollment helpers");
+
+security
+  .command("enroll")
+  .description("Enroll a FIDO2 key or a fingerprint")
+  .argument("<method>", "fido2 | fingerprint")
+  .action(async (method: string) => {
+    process.exit(await runSecurityEnroll(rt(), method));
   });
 
 const runtime = program

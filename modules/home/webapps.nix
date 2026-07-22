@@ -9,7 +9,7 @@ let
   cfg = (osConfig.marchyo or { }).webapps or { };
   enabled = desktopEnabled && (cfg.enable or false);
 
-  apps = cfg.apps or [ ];
+  apps = (cfg.apps or [ ]) ++ (cfg.extraApps or [ ]);
 
   # Resolve the chromium-family command used for --app mode. Prefer an explicit
   # marchyo.webapps.browser, else follow marchyo.defaults.browser when it is

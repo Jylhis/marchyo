@@ -135,5 +135,22 @@ in
         when `enable = true`.
       '';
     };
+
+    extraApps = mkOption {
+      type = types.listOf appType;
+      default = [ ];
+      example = [
+        {
+          name = "Figma";
+          url = "https://figma.com/";
+        }
+      ];
+      description = ''
+        Additional web apps appended to `apps`. Kept separate so additive
+        sources (notably `marchyo webapp add`, which persists here through
+        the marchyoCliState sidecar at mkDefault priority) never replace
+        the default set the way overriding `apps` does.
+      '';
+    };
   };
 }
