@@ -483,6 +483,59 @@ test("keybindings outside Hyprland fails cleanly", async () => {
   expect(r.stderr.length).toBeGreaterThan(0);
 });
 
+test("info with an unknown topic exits 2", async () => {
+  const r = await run(["info", "weather"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("unknown info");
+});
+
+test("transcode with a missing file fails cleanly", async () => {
+  const r = await run(["transcode", "/nonexistent.mov", "--to", "mp4"]);
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("not a file");
+});
+
+test("transcode with an invalid target format exits 2", async () => {
+  const dir = `/tmp/marchyo-cli-test-transcode-${Date.now()}`;
+  Bun.spawnSync(["mkdir", "-p", dir]);
+  await Bun.write(`${dir}/clip.mov`, "x");
+  const r = await run(["transcode", `${dir}/clip.mov`, "--to", "avi"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid target format");
+});
+
+test("share with a missing file fails cleanly", async () => {
+  const r = await run(["share", "/nonexistent.txt"]);
+  expect(r.code).toBe(1);
+  expect(r.stderr.length).toBeGreaterThan(0);
+});
+
+test("font set records a runtime override and font set --revert clears it", async () => {
+  const { dir, env } = stateFixture();
+  let r = await run(["font", "set", "Test Mono"], env);
+  expect(r.code).toBe(0);
+  const override = await Bun.file(
+    `${dir}/xdg/marchyo/font-override.conf`,
+  ).text();
+  expect(override).toContain("font-family = Test Mono");
+  r = await run(["runtime", "status", "--json"], env);
+  expect(JSON.parse(r.stdout).overrides).toEqual([
+    { key: "font.family", value: "Test Mono" },
+  ]);
+  r = await run(["font", "set", "--revert"], env);
+  expect(r.code).toBe(0);
+  expect(
+    await Bun.file(`${dir}/xdg/marchyo/font-override.conf`).exists(),
+  ).toBe(false);
+});
+
+test("font set without a family exits 2", async () => {
+  const { env } = stateFixture();
+  const r = await run(["font", "set"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("needs a font family");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
