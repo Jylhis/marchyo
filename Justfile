@@ -97,6 +97,30 @@ run:
 # Alias for run
 vm: run
 
+# Typecheck and unit-test the marchyo CLI
+cli-test:
+    cd packages/marchyo-cli && bun install --frozen-lockfile && bun run typecheck && bun test
+
+# Re-pin the marchyo-cli node_modules FOD hash after bun.lock changes
+cli-repin:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pkg=packages/marchyo-cli/package.nix
+    current=$(grep -oE 'outputHash = "sha256-[^"]+"' "$pkg" | cut -d'"' -f2)
+    echo "Current hash: $current"
+    fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    sed -i "s|outputHash = \"${current}\"|outputHash = \"${fake}\"|" "$pkg"
+    got=$(nix build .#legacyPackages.x86_64-linux.marchyo-cli 2>&1 | grep -oE 'got: +sha256-[A-Za-z0-9+/=]+' | grep -oE 'sha256-[A-Za-z0-9+/=]+' | head -1) || true
+    if [ -z "${got:-}" ]; then
+        echo "No hash mismatch reported; restoring previous hash."
+        sed -i "s|outputHash = \"${fake}\"|outputHash = \"${current}\"|" "$pkg"
+        exit 0
+    fi
+    echo "Pinning new hash: $got"
+    sed -i "s|outputHash = \"${fake}\"|outputHash = \"${got}\"|" "$pkg"
+    nix build .#legacyPackages.x86_64-linux.marchyo-cli
+    echo "Done. $pkg pinned to $got"
+
 # Run the website dev server (landing + docs)
 site-dev:
     cd site && bun install && bun run dev

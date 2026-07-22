@@ -1,0 +1,31 @@
+name: CLI
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/marchyo-cli/**
+      - .github/workflows/cli.yml
+  pull_request:
+    paths:
+      - packages/marchyo-cli/**
+      - .github/workflows/cli.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cli-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  test:
+    name: Typecheck & test CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/marchyo-cli
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test
