@@ -37,7 +37,7 @@ let
   # class every window-opening click must carry -> the on-click that opens it
   floatingClicks = {
     "org.omarchy.btop" = waybar.cpu.on-click;
-    "org.omarchy.impala" = waybar.network.on-click;
+    "org.omarchy.nmtui" = waybar.network.on-click;
     "org.omarchy.bluetui" = waybar.bluetooth.on-click;
     "org.omarchy.wiremix" = waybar.wireplumber.on-click;
     "org.omarchy.terminal" = waybar.battery.on-click;
@@ -61,22 +61,23 @@ in
   );
 
   # The system services the click targets talk to are enabled on a desktop:
-  # PipeWire/WirePlumber (wiremix, wpctl), bluez (bluetui), iwd as the
-  # NetworkManager Wi-Fi backend (impala only speaks iwd), and
-  # power-profiles-daemon/upower (profile + battery segments).
+  # PipeWire/WirePlumber (wiremix, wpctl), bluez (bluetui), NetworkManager
+  # (nmtui — Wi-Fi runs on the wpa_supplicant backend, NOT iwd, which crashes
+  # while roaming; see docs/known-issues.md), and power-profiles-daemon/upower
+  # (profile + battery segments).
   eval-waybar-backing-services = pkgs.writeText "eval-waybar-backing-services" (
     if
       cfg.services.pipewire.enable
       && cfg.services.pipewire.wireplumber.enable
       && cfg.hardware.bluetooth.enable
       && cfg.networking.networkmanager.enable
-      && cfg.networking.networkmanager.wifi.backend == "iwd"
+      && cfg.networking.networkmanager.wifi.backend != "iwd"
       && cfg.services.power-profiles-daemon.enable
       && cfg.services.upower.enable
     then
       "pass"
     else
-      throw "FAIL: a NixOS service backing a waybar click target (pipewire, bluetooth, iwd wifi backend, power-profiles-daemon, upower) is not enabled"
+      throw "FAIL: a NixOS service backing a waybar click target (pipewire, bluetooth, NetworkManager without the crash-prone iwd backend, power-profiles-daemon, upower) is not enabled"
   );
 
   # With the menus feature disabled marchyo-power-menu is not installed, so the

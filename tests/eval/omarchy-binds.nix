@@ -46,7 +46,7 @@ in
         && hasBind hm "SUPER CTRL, Delete, Toggle laptop display, exec, marchyo-laptop-display-toggle"
         && hasBind hm "SUPER CTRL, A, Audio mixer, exec, $terminal --class=org.omarchy.wiremix -e wiremix"
         && hasBind hm "SUPER CTRL, B, Bluetooth manager, exec, $terminal --class=org.omarchy.bluetui -e bluetui"
-        && hasBind hm "SUPER CTRL, W, Wi-Fi manager, exec, $terminal --class=org.omarchy.impala -e impala"
+        && hasBind hm "SUPER CTRL, W, Wi-Fi manager, exec, $terminal --class=org.omarchy.nmtui -e nmtui"
         && hasBind hm "SUPER ALT, return, tmux Work session, exec, $terminal -e tmux new -A -s Work"
         && hasBind hm "SUPER ALT, D, Docker TUI, exec, $terminal --class=org.omarchy.terminal -e lazydocker"
         && hasBind hm "SUPER ALT SHIFT, F, File manager at terminal cwd, exec, marchyo-file-manager-cwd"

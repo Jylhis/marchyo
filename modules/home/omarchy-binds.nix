@@ -143,12 +143,14 @@ in
       "SUPER CTRL, Delete, Toggle laptop display, exec, marchyo-laptop-display-toggle"
 
       # --- Connectivity TUIs (floating, omarchy setup-menu parity) ---
-      # Same TUIs waybar's segments launch (wiremix/impala/bluetui, all in
-      # modules/nixos/packages.nix tuiTools); the org.omarchy.* classes are
-      # matched by the floating-window tag rule in modules/home/hyprland.nix.
+      # Same TUIs waybar's segments launch (wiremix/nmtui/bluetui); the
+      # org.omarchy.* classes are matched by the floating-window tag rule in
+      # modules/home/hyprland.nix. nmtui ships with the networkmanager package
+      # (see modules/nixos/network.nix — Wi-Fi is on the wpa_supplicant
+      # backend, not iwd; docs/known-issues.md).
       "SUPER CTRL, A, Audio mixer, exec, $terminal --class=org.omarchy.wiremix -e wiremix"
       "SUPER CTRL, B, Bluetooth manager, exec, $terminal --class=org.omarchy.bluetui -e bluetui"
-      "SUPER CTRL, W, Wi-Fi manager, exec, $terminal --class=org.omarchy.impala -e impala"
+      "SUPER CTRL, W, Wi-Fi manager, exec, $terminal --class=org.omarchy.nmtui -e nmtui"
 
       # --- App launches ---
       "SUPER ALT, return, tmux Work session, exec, $terminal -e tmux new -A -s Work"
