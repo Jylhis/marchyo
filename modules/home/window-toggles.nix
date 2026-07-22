@@ -33,65 +33,10 @@ let
     '';
   };
 
-  # Nightlight (blue-light filter): flip the running hyprsunset daemon between a
-  # warm temperature and identity via its runtime CLI/IPC override.
-  marchyo-nightlight-toggle = pkgs.writeShellApplication {
-    name = "marchyo-nightlight-toggle";
-    runtimeInputs = [
-      pkgs.hyprsunset
-      pkgs.libnotify
-    ];
-    text = ''
-      # Off = restore neutral daylight (6500K, hyprsunset's baseline). Uses only
-      # the confirmed --temperature runtime override (avoids the less-certain
-      # --identity flag and the upstream-buggy `hyprctl hyprsunset reset`).
-      state="''${XDG_RUNTIME_DIR:-/tmp}/marchyo-nightlight.on"
-      if [ -f "$state" ]; then
-        hyprsunset --temperature 6500
-        rm -f "$state"
-        notify-send -u low -a marchyo "Nightlight" "Off"
-      else
-        hyprsunset --temperature 4000
-        : > "$state"
-        notify-send -u low -a marchyo "Nightlight" "On (4000K)"
-      fi
-    '';
-  };
-
-  # Idle lock: start/stop the hypridle user service so the screen won't
-  # auto-dim/lock (e.g. during a presentation).
-  marchyo-idle-toggle = pkgs.writeShellApplication {
-    name = "marchyo-idle-toggle";
-    runtimeInputs = [
-      pkgs.systemd
-      pkgs.libnotify
-    ];
-    text = ''
-      if systemctl --user is-active --quiet hypridle.service; then
-        systemctl --user stop hypridle.service
-        notify-send -u low -a marchyo "Idle lock" "Disabled — screen will stay awake"
-      else
-        systemctl --user start hypridle.service
-        notify-send -u low -a marchyo "Idle lock" "Enabled"
-      fi
-    '';
-  };
-
-  # Notification do-not-disturb: flip mako's do-not-disturb mode (declared in
-  # modules/home/mako.nix as `[mode=do-not-disturb] invisible=1`), then poke
-  # the waybar custom/dnd indicator (signal = 9 in modules/home/waybar.nix)
-  # so it refreshes immediately.
-  marchyo-dnd-toggle = pkgs.writeShellApplication {
-    name = "marchyo-dnd-toggle";
-    runtimeInputs = [
-      pkgs.mako
-      pkgs.procps
-    ];
-    text = ''
-      makoctl mode -t do-not-disturb
-      pkill -SIGRTMIN+9 waybar || true
-    '';
-  };
+  # Nightlight, idle-lock, and notification-DND toggles were absorbed into
+  # the marchyo CLI (`marchyo toggle nightlight|idle|notifications`,
+  # packages/marchyo-cli user-cli/src/toggles.ts) — same actuation commands,
+  # state now tracked as CLI runtime overrides.
 
   # Screen recording: toggle gpu-screen-recorder on a slurp-selected region.
   # SIGINT finalizes the mp4. Files land in ~/Videos/Recordings.
@@ -125,9 +70,6 @@ in
   config = lib.mkIf desktopEnabled {
     home.packages = [
       marchyo-zoom
-      marchyo-nightlight-toggle
-      marchyo-idle-toggle
-      marchyo-dnd-toggle
       marchyo-screenrecord-toggle
     ];
 
@@ -136,7 +78,7 @@ in
     # to Hyprland). Dismiss-all moved here from SUPER CTRL, comma in
     # hyprland.nix, which now belongs to the DND toggle (omarchy parity).
     wayland.windowManager.hyprland.settings.bindd = [
-      "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo-dnd-toggle"
+      "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo toggle notifications"
       "SUPER CTRL SHIFT, comma, Dismiss all notifications, exec, makoctl dismiss --all"
     ];
   };

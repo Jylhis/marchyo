@@ -26,6 +26,15 @@ export const StateSchema = z
         scheme: z.string().optional(),
       })
       .optional(),
+    graphics: z
+      .object({
+        prime: z
+          .object({
+            enable: z.boolean().optional(),
+          })
+          .optional(),
+      })
+      .optional(),
     _flake: z
       .object({
         path: z.string().optional(),
@@ -76,6 +85,9 @@ export function mergeState(prev: State, patch: State): State {
   const merged: State = { ...prev, ...patch };
   if (prev.theme || patch.theme) {
     merged.theme = { ...prev.theme, ...patch.theme };
+  }
+  if (prev.graphics || patch.graphics) {
+    merged.graphics = { ...prev.graphics, ...patch.graphics };
   }
   if (prev._flake || patch._flake) {
     merged._flake = { ...prev._flake, ...patch._flake };

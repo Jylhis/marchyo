@@ -30,24 +30,24 @@ let
 in
 {
   # DND on a desktop config: mako hides notifications in the do-not-disturb
-  # mode, waybar carries the signal-refreshed custom/dnd segment, the toggle
-  # script is installed, and SUPER CTRL, comma now toggles DND (dismiss-all
-  # moved to SUPER CTRL SHIFT, comma).
+  # mode, waybar carries the signal-refreshed custom/dnd segment driving the
+  # CLI toggle (the marchyo-dnd-toggle script was absorbed), and
+  # SUPER CTRL, comma toggles DND (dismiss-all on SUPER CTRL SHIFT, comma).
   eval-dnd = pkgs.writeText "eval-dnd" (
     if
       hm.services.mako.settings."mode=do-not-disturb".invisible == 1
       && builtins.elem "custom/dnd" waybar.modules-right
       && waybar."custom/dnd".return-type == "json"
       && waybar."custom/dnd".signal == 9
-      && waybar."custom/dnd".on-click == "marchyo-dnd-toggle"
-      && lib.any (p: (p.name or "") == "marchyo-dnd-toggle") hm.home.packages
-      && hasBind "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo-dnd-toggle"
+      && waybar."custom/dnd".on-click == "marchyo toggle notifications"
+      && !(lib.any (p: (p.name or "") == "marchyo-dnd-toggle") hm.home.packages)
+      && hasBind "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo toggle notifications"
       && hasBind "SUPER CTRL SHIFT, comma, Dismiss all notifications, exec, makoctl dismiss --all"
       # The old dismiss-all bind must be gone from SUPER CTRL, comma.
       && !(hasBind "SUPER CTRL, comma, Dismiss all")
     then
       "pass"
     else
-      throw "FAIL: DND mako mode, waybar custom/dnd segment, toggle script, or comma keybinds missing/malformed"
+      throw "FAIL: DND mako mode, waybar custom/dnd segment, CLI on-click, or comma keybinds missing/malformed"
   );
 }

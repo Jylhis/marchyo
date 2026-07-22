@@ -25,6 +25,7 @@ import { runGc } from "./commands/gc.ts";
 import { runDiff } from "./commands/diff.ts";
 import { runDebug } from "./commands/debug.ts";
 import { runRuntimeRestore, runRuntimeStatus } from "./commands/runtime.ts";
+import { runToggle } from "./commands/toggle.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -341,6 +342,40 @@ Examples:
   .action(async () => {
     process.exit(await runDebug(rt()));
   });
+
+program
+  .command("toggle")
+  .description("Flip a desktop toggle live (gaps, nightlight, waybar, …)")
+  .argument(
+    "<name>",
+    "gaps | transparency | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | hybrid-gpu",
+  )
+  .argument("[state]", "on | off (omit to flip)")
+  .option("--apply", "Also persist declaratively and rebuild (hybrid-gpu only)")
+  .option("--revert", "Undo: back to the declarative default")
+  .option("--status", "Print the current state instead of toggling")
+  .addHelpText(
+    "after",
+    `
+Toggles are live and ephemeral (reset on activation); hybrid-gpu is
+--apply-only. --status is scriptable (used by the waybar indicator).
+
+Examples:
+  $ marchyo toggle nightlight
+  $ marchyo toggle notifications off
+  $ marchyo toggle waybar --status
+  $ marchyo toggle hybrid-gpu on --apply
+`,
+  )
+  .action(
+    async (
+      name: string,
+      state: string | undefined,
+      opts: { apply?: boolean; revert?: boolean; status?: boolean },
+    ) => {
+      process.exit(await runToggle(rt(), name, state, opts));
+    },
+  );
 
 const runtime = program
   .command("runtime")
