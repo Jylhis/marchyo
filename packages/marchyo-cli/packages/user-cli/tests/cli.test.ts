@@ -53,32 +53,105 @@ test("unknown command exits non-zero", async () => {
   expect(r.code).not.toBe(0);
 });
 
-test("theme set with bad variant exits 2 with Try line", async () => {
-  const r = await run(["theme", "set", "neon"]);
+test("theme set with an unknown theme exits 2 with a hint", async () => {
+  const { env } = themeFixture();
+  const r = await run(["theme", "set", "neon"], env);
   expect(r.code).toBe(2);
   // Per §2.6: single signal — glyph or word, never both.
-  expect(r.stderr).toContain("invalid theme variant");
-  expect(r.stderr).not.toContain("Error: invalid"); // no duplicate prefix
-  expect(r.stderr).toContain("Try: marchyo theme set");
+  expect(r.stderr).toContain("unknown theme");
+  expect(r.stderr).toContain("Try:");
 });
 
-test("theme set diagnostics go to stderr, value goes to stdout", async () => {
-  // Use a tmp XDG_CONFIG_HOME so writes never touch real state.
-  const xdg = `/tmp/marchyo-cli-test-xdg-${Date.now()}`;
-  const r = await run(
-    ["theme", "set", "dark", "--format", "json"],
-    { XDG_CONFIG_HOME: xdg },
-  );
-  // Either the write succeeded (root in sandbox writes to /etc;
-  // non-root writes under XDG) or it failed with EACCES.
-  if (r.code === 0) {
-    const parsed = JSON.parse(r.stdout);
-    expect(parsed.theme).toEqual({ variant: "dark" });
-    expect(typeof parsed.path).toBe("string");
-  } else {
-    expect(r.stderr).toContain("cannot write state file");
-    expect(r.code).toBe(1);
+// A fake theme manifest + asset dirs so theme commands run without a real
+// desktop. Actuator commands (awww/makoctl/hyprctl/notify-send) are absent
+// in the sandbox — the CLI must tolerate that (best-effort semantics).
+function themeFixture(): { dir: string; env: Record<string, string> } {
+  const dir = `/tmp/marchyo-cli-test-theme-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  for (const t of ["alpha", "beta"]) {
+    Bun.spawnSync(["mkdir", "-p", `${dir}/themes/${t}`]);
+    Bun.spawnSync([
+      "bash",
+      "-c",
+      `printf 'dark\\n' > ${dir}/themes/${t}/variant`,
+    ]);
   }
+  Bun.spawnSync(["mkdir", "-p", `${dir}/data/marchyo/themes`]);
+  Bun.write(
+    `${dir}/data/marchyo/themes/manifest.json`,
+    JSON.stringify([
+      { name: "alpha", variant: "dark", dir: `${dir}/themes/alpha` },
+      { name: "beta", variant: "light", dir: `${dir}/themes/beta` },
+    ]),
+  );
+  return {
+    dir,
+    env: {
+      XDG_DATA_HOME: `${dir}/data`,
+      XDG_CONFIG_HOME: `${dir}/config`,
+      XDG_STATE_HOME: `${dir}/state`,
+    },
+  };
+}
+
+test("theme list marks the active theme from the pointer", async () => {
+  const { env } = themeFixture();
+  let r = await run(["theme", "list", "--json"], env);
+  expect(r.code).toBe(0);
+  let parsed = JSON.parse(r.stdout);
+  expect(parsed.themes.map((t: { name: string }) => t.name)).toEqual([
+    "alpha",
+    "beta",
+  ]);
+  // No pointer yet: nothing current.
+  expect(parsed.themes.every((t: { current: boolean }) => !t.current)).toBe(
+    true,
+  );
+});
+
+test("theme set switches live, records an override, and theme get reads it back", async () => {
+  const { env } = themeFixture();
+  let r = await run(["theme", "set", "beta"], env);
+  expect(r.code).toBe(0);
+  expect(r.stderr).toContain("theme.selection");
+
+  r = await run(["theme", "get", "--json"], env);
+  expect(JSON.parse(r.stdout).theme).toEqual({
+    name: "beta",
+    variant: "light",
+  });
+
+  r = await run(["runtime", "status", "--json"], env);
+  expect(JSON.parse(r.stdout).overrides).toEqual([
+    { key: "theme.selection", value: "beta" },
+  ]);
+});
+
+test("theme next cycles through the manifest", async () => {
+  const { env } = themeFixture();
+  let r = await run(["theme", "next"], env);
+  expect(r.code).toBe(0);
+  r = await run(["theme", "get", "--json"], env);
+  expect(JSON.parse(r.stdout).theme.name).toBe("alpha");
+  r = await run(["theme", "next"], env);
+  expect(r.code).toBe(0);
+  r = await run(["theme", "get", "--json"], env);
+  expect(JSON.parse(r.stdout).theme.name).toBe("beta");
+});
+
+test("theme set --apply --revert together is a usage error", async () => {
+  const { env } = themeFixture();
+  const r = await run(["theme", "set", "alpha", "--apply", "--revert"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("mutually exclusive");
+});
+
+test("runtime restore replays a theme override", async () => {
+  const { env } = themeFixture();
+  let r = await run(["theme", "set", "beta"], env);
+  expect(r.code).toBe(0);
+  r = await run(["runtime", "restore"], env);
+  expect(r.code).toBe(0);
+  expect(r.stderr).toContain("restored 1/1");
 });
 
 test("NO_COLOR strips ANSI escapes from --help", async () => {

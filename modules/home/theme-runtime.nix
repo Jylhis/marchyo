@@ -1,12 +1,13 @@
-# Runtime light/dark theme switching (omarchy parity, Phase 6 MVP).
+# Runtime theme switching — build-time asset layer.
 #
 # The declarative build-time variant (marchyo.theme.variant) stays the source
-# of truth: this module additionally materializes BOTH variants'
-# runtime-swappable assets into the store and ships `marchyo-theme-toggle`,
-# which flips the desktop between them live — no rebuild. The switch is an
-# ephemeral overlay: the next home-manager/NixOS activation resets every
-# surface (and the ~/.config/marchyo/current-theme pointer) back to the
-# declarative default.
+# of truth: this module additionally materializes every theme listed in
+# marchyo.theme.themes as runtime-swappable asset dirs plus a manifest the
+# `marchyo theme` CLI reads (`theme list/set/next` — the switching logic
+# lives in packages/marchyo-cli, which absorbed the old
+# marchyo-theme-toggle script). The switch is an ephemeral overlay: the
+# next home-manager/NixOS activation resets every surface (and the
+# ~/.config/marchyo/current-theme pointer) back to the declarative default.
 #
 # Live-swapped surfaces: wallpaper (awww), mako, waybar, Hyprland
 # border/background colors, and ghostty (new windows / config reload only —
@@ -260,132 +261,9 @@ let
     }) resolvedThemes
   );
 
-  marchyo-theme-toggle = pkgs.writeShellApplication {
-    name = "marchyo-theme-toggle";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.systemd
-      pkgs.mako
-      pkgs.hyprland
-      pkgs.libnotify
-    ]
-    ++ lib.optional wallpaperEnabled pkgs.awww;
-    text = ''
-      dark_dir='${themeDirs.dark}'
-      light_dir='${themeDirs.light}'
-      config_home="''${XDG_CONFIG_HOME:-$HOME/.config}"
-      state_home="''${XDG_STATE_HOME:-$HOME/.local/state}"
-      link="$config_home/marchyo/current-theme"
-      state_file="$state_home/marchyo/theme"
-
-      usage() {
-        cat <<'EOF'
-      Usage: marchyo-theme-toggle [toggle|dark|light|status]
-
-      Switch the marchyo desktop between the dark (Jylhis Roast) and light
-      (Jylhis Paper) variants at runtime, without a rebuild.
-
-        toggle   flip to the other variant (default)
-        dark     switch to the dark variant
-        light    switch to the light variant
-        status   print the active variant and exit
-
-      Live-reloaded surfaces: wallpaper (awww), mako notifications, waybar,
-      Hyprland border/background colors. Ghostty picks the new theme up on
-      new windows (or via its reload_config keybind, default ctrl+shift+,).
-
-      Rebuild-only surfaces (follow marchyo.theme.variant, not this toggle):
-      GTK/Qt and all remaining Stylix targets, bat, fzf, starship, hyprlock,
-      the console/TTY palette, and the plymouth boot splash.
-
-      The switch is ephemeral: the next NixOS/home-manager activation resets
-      everything to the declarative marchyo.theme.variant default.
-      EOF
-      }
-
-      mode="''${1:-toggle}"
-      case "$mode" in
-        -h | --help)
-          usage
-          exit 0
-          ;;
-        toggle | dark | light | status) ;;
-        *)
-          usage >&2
-          exit 1
-          ;;
-      esac
-
-      # Active variant: the HM-managed current-theme symlink is the single
-      # source of truth (it always exists after activation and is repointed
-      # by this script); a missing link or unknown target falls back to the
-      # build-time default.
-      current='${buildVariant}'
-      if [ -L "$link" ]; then
-        resolved=$(readlink -f -- "$link" || true)
-        case "$resolved" in
-          "$dark_dir") current=dark ;;
-          "$light_dir") current=light ;;
-        esac
-      fi
-
-      if [ "$mode" = status ]; then
-        echo "$current"
-        exit 0
-      fi
-
-      if [ "$mode" = toggle ]; then
-        if [ "$current" = dark ]; then target=light; else target=dark; fi
-      else
-        target="$mode"
-      fi
-
-      if [ "$target" = dark ]; then dir="$dark_dir"; else dir="$light_dir"; fi
-
-      mkdir -p "$config_home/marchyo" "$state_home/marchyo"
-      ln -sfn "$dir" "$link"
-      # Write-only breadcrumb for external tooling (menus/CLI); the symlink
-      # above is what this script reads back.
-      printf '%s\n' "$target" >"$state_file"
-
-      # Wallpaper — same command modules/home/hyprland.nix runs at startup.
-      if [ -e "$dir/wallpaper.png" ] && command -v awww >/dev/null 2>&1; then
-        awww img "$dir/wallpaper.png" --transition-type none || true
-      fi
-
-      # Mako re-reads its config on makoctl reload.
-      if [ -e "$dir/mako.conf" ]; then
-        mkdir -p "$config_home/mako"
-        ln -sfn "$dir/mako.conf" "$config_home/mako/config"
-        makoctl reload >/dev/null 2>&1 || true
-      fi
-
-      # Waybar: full unit restart (SIGUSR2 reload spawns duplicate instances,
-      # see modules/home/waybar.nix). try-restart is a no-op when not running.
-      if [ -e "$dir/waybar.css" ]; then
-        mkdir -p "$config_home/waybar"
-        ln -sfn "$dir/waybar.css" "$config_home/waybar/style.css"
-        systemctl --user try-restart waybar.service 2>/dev/null || true
-      fi
-
-      # Hyprland colors via runtime keywords (`hyprctl reload` would re-read
-      # the build-time config and revert them, so keywords only).
-      if [ -e "$dir/hyprland.conf" ] && [ -n "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
-        while read -r keyword value; do
-          [ -n "$keyword" ] || continue
-          hyprctl keyword "$keyword" "$value" >/dev/null || true
-        done <"$dir/hyprland.conf"
-      fi
-
-      notify-send -u low -a marchyo "Theme" "Switched to $target" || true
-      echo "marchyo theme: $target (ghostty applies to new windows; see --help for rebuild-only surfaces)"
-    '';
-  };
 in
 {
   config = lib.mkIf (desktopEnabled && themeEnabled) {
-    home.packages = [ marchyo-theme-toggle ];
-
     # Declarative pointer to the active variant's assets. Managed by Home
     # Manager, so every activation resets it to the build-time default —
     # marchyo-theme-toggle repoints it (ln -sfn) at runtime.

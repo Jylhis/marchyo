@@ -1,9 +1,9 @@
-# Runtime light/dark switching (modules/home/theme-runtime.nix).
+# Runtime theme-asset layer (modules/home/theme-runtime.nix).
 #
-# Eval-only: forcing the toggle script's outPath instantiates the script text,
-# which interpolates BOTH variants' theme directories — so the dual-variant
-# asset derivations (incl. the hex-translated mako config and waybar CSS) are
-# fully evaluated for each build-time variant, without building anything.
+# Eval-only: forcing the manifest text instantiates every listed theme's
+# asset derivations (incl. the hex-translated mako config and waybar CSS)
+# for each build-time variant, without building anything. The switching
+# logic itself lives in the marchyo CLI (bun tests cover it).
 {
   helpers,
   lib,
@@ -32,7 +32,7 @@ let
 
   hmFor = extra: (evalWith extra).config.home-manager.users.testuser;
 
-  findToggle = hm: lib.findFirst (p: (p.name or "") == "marchyo-theme-toggle") null hm.home.packages;
+  manifestText = hm: hm.xdg.dataFile."marchyo/themes/manifest.json".text or null;
 
   # HM's ghostty module types `settings` with formats.keyValue
   # (listsAsDuplicateKeys), whose coercedTo type wraps scalar values into
@@ -40,19 +40,19 @@ let
   # matching (a bare hasSuffix on the raw value is a list-coercion eval error).
   ghosttyIncludes = hm: map toString (lib.toList (hm.programs.ghostty.settings.config-file or [ ]));
 
-  # One check per build-time variant: the toggle is installed (and instantiates,
-  # i.e. both variants' assets evaluate), the current-theme pointer targets the
+  # One check per build-time variant: the manifest instantiates (i.e. every
+  # listed theme's assets evaluate), the current-theme pointer targets the
   # build variant's assets, and ghostty reads the runtime include through it.
   checkVariant =
     variant:
     let
       hm = hmFor { marchyo.theme.variant = variant; };
-      toggle = findToggle hm;
+      manifest = manifestText hm;
       pointer = hm.xdg.configFile."marchyo/current-theme" or null;
     in
     pkgs.writeText "eval-theme-runtime-${variant}" (
-      if toggle == null then
-        throw "FAIL: theme-runtime (${variant}): marchyo-theme-toggle not in home.packages"
+      if manifest == null then
+        throw "FAIL: theme-runtime (${variant}): theme manifest not generated"
       else if pointer == null || !(lib.hasInfix "marchyo-theme-${variant}" (toString pointer.source)) then
         throw "FAIL: theme-runtime (${variant}): pointer missing or not targeting ${variant} assets"
       else if
@@ -60,14 +60,14 @@ let
       then
         throw "FAIL: theme-runtime (${variant}): ghostty include not wired through current-theme"
       else
-        builtins.seq toggle.outPath "pass"
+        builtins.seq (builtins.deepSeq manifest manifest) "pass"
     );
 in
 {
   eval-theme-runtime-dark = checkVariant "dark";
   eval-theme-runtime-light = checkVariant "light";
 
-  # Without the desktop, the module is inert: no toggle, no pointer, and no
+  # Without the desktop, the module is inert: no manifest, no pointer, and no
   # ghostty include leaks into the (still evaluated) ghostty settings.
   eval-theme-runtime-headless =
     let
@@ -75,12 +75,12 @@ in
     in
     pkgs.writeText "eval-theme-runtime-headless" (
       if
-        findToggle hm == null
+        manifestText hm == null
         && !(hm.xdg.configFile ? "marchyo/current-theme")
         && !(hm.programs.ghostty.settings ? config-file)
       then
         "pass"
       else
-        throw "FAIL: theme-runtime leaked the toggle, pointer, or ghostty include without a desktop"
+        throw "FAIL: theme-runtime leaked the manifest, pointer, or ghostty include without a desktop"
     );
 }

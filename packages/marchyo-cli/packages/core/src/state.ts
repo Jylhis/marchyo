@@ -21,6 +21,9 @@ export const StateSchema = z
     theme: z
       .object({
         variant: ThemeVariant.optional(),
+        // base16-schemes name (maps to marchyo.theme.scheme); absent when
+        // a Jylhis variant is selected.
+        scheme: z.string().optional(),
       })
       .optional(),
     _flake: z
