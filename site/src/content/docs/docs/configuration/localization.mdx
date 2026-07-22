@@ -9,6 +9,7 @@ description: Configure timezone and locale settings
 |--------|------|---------|-------------|
 | `marchyo.timezone` | `string` | `"Europe/Zurich"` | System timezone |
 | `marchyo.defaultLocale` | `string` | `"en_US.UTF-8"` | System default locale |
+| `marchyo.autoTimezone.enable` | `bool` | `false` | Update the timezone automatically from your location |
 
 ## Example
 
@@ -18,6 +19,20 @@ description: Configure timezone and locale settings
   marchyo.defaultLocale = "de_DE.UTF-8";
 }
 ```
+
+## Automatic timezone
+
+`marchyo.autoTimezone.enable` is opt-in and off by default. When enabled, it turns on `services.automatic-timezoned` (a geoclue2-based daemon) to keep the system timezone current based on your location:
+
+```nix
+{
+  marchyo.autoTimezone.enable = true;
+}
+```
+
+:::note
+  With automatic timezone enabled, the daemon wins over the static `marchyo.timezone`. If you also change `marchyo.timezone` from its default, evaluation emits a warning that the static value is ignored.
+:::
 
 ## Common timezones
 

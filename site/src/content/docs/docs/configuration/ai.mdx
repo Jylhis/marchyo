@@ -40,14 +40,21 @@ read at startup.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.ai.enable` | `false` | Enable BYOK AI tooling |
+| `marchyo.ai.provider` | `"openrouter"` | AI service provider (enum; `"openrouter"` is the only value for now — reserved for future providers) |
 | `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required) |
 | `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
 | `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Model used when routing is off |
 | `marchyo.ai.tooling.enable` | `true` | Install aichat / pi / claude-code |
 | `marchyo.ai.routing.enable` | `true` | Task→model routing (see below) |
+| `marchyo.ai.routing.tasks.<bucket>` | pinned defaults | Per-bucket `{ model; fallbacks; }` — primary OpenRouter slug plus fallback chain |
+| `marchyo.ai.routing.tools` | `{ aichat = "everydayCoding"; pi = "everydayCoding"; }` | Which task bucket each OpenRouter-backed client defaults to |
 | `marchyo.ai.context.enable` | `false` | OpenViking local context layer |
+| `marchyo.ai.context.workspacePath` | `".openviking/workspace"` | OpenViking workspace dir, relative to `$HOME` |
+| `marchyo.ai.context.service.enable` | `false` | Run the OpenViking HTTP server as a per-user systemd service |
+| `marchyo.ai.context.embeddingModel` | `openai/text-embedding-3-small` | OpenRouter embedding model slug used by OpenViking |
 | `marchyo.ai.skills.enable` | `true` | Install Agent Skills to all clients |
-| `marchyo.ai.mcp.enable` | `true` | Wire MCP tools (mcp-nixos) into clients |
+| `marchyo.ai.mcp.enable` | `true` | Wire MCP tools into MCP-capable clients |
+| `marchyo.ai.mcp.nixos.enable` | `true` | Enable the mcp-nixos server (run via uvx) |
 | `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** |
 
 ## Model routing
@@ -65,9 +72,10 @@ marchyo.ai.routing.tools.aichat = "frontier";   # which bucket aichat uses
 ```
 
 Buckets: `frontier`, `everydayCoding`, `fast`, `reasoning`, `summarize`,
-`longContext`, `budget`, `local` (placeholder). The resolved policy is exported to
-`~/.config/marchyo/ai-routing.json`, and each bucket is available as an aichat
-role (`aichat -r frontier`).
+`longContext`, `budget`, `local` (placeholder). Both aichat and pi default to the
+`everydayCoding` bucket (`marchyo.ai.routing.tools`). The resolved policy is
+exported to `~/.config/marchyo/ai-routing.json`, and each bucket is available as
+an aichat role (`aichat -r frontier`).
 
 ## Context / memory (OpenViking)
 

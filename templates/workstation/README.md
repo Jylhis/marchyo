@@ -18,15 +18,11 @@ This is a full-featured developer workstation configuration with desktop environ
 3. **Customize configuration.nix**:
    - Change `networking.hostName` to your workstation name
    - Update `marchyo.users.developer` with your details
-   - Adjust timezone and locale settings
-   - Review and modify development tools
+   - Set `marchyo.timezone` / `marchyo.defaultLocale` if the defaults (`Europe/Zurich`, `en_US.UTF-8`) don't fit
+   - Development tooling is a single switch — set `marchyo.development.enable = false` if you don't want it
 
 4. **RUN VM**
 ```shell
-# With disko
-nix run -L '.#nixosConfigurations.workstation.config.system.build.vmWithDisko'
-
-# Without
 nixos-rebuild build-vm --flake .#workstation
 ./result/bin/run-workstation-vm
 ```
@@ -42,13 +38,13 @@ nixos-rebuild build-vm --flake .#workstation
 ### Desktop Environment
 - Hyprland (Wayland compositor)
 - Complete desktop environment with all Marchyo customizations
-- Multiple terminal emulators (Kitty, Alacritty)
+- Ghostty terminal
 
 ### Development Tools
 
 #### Editors
-- Vim/Neovim
-- VS Code
+- jotain (Jylhis's Emacs config) by default
+- Switch via `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
 
 #### Version Control
 - Git with Git LFS
@@ -56,13 +52,12 @@ nixos-rebuild build-vm --flake .#workstation
 
 #### Containers
 - Docker with docker-compose
-- Kubernetes (kubectl)
+- buildah, skopeo, lazydocker
 - Virtualization (QEMU/KVM via libvirtd)
 
-#### DevOps
-- Terraform
-- Ansible
-- Kubernetes CLI
+#### Build & Debug
+- gnumake, cmake, gcc, pkg-config
+- jq, yq, nmap, tcpdump
 
 ### Terminal Enhancement
 - Starship prompt
@@ -282,5 +277,6 @@ htop  # Classic resource monitor
 # Run VM
 
 ```shell
-nix run -L '.#nixosConfigurations.default.config.system.build.vmWithDisko'
+nixos-rebuild build-vm --flake .#workstation
+./result/bin/run-workstation-vm
 ```

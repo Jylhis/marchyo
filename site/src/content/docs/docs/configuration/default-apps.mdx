@@ -20,6 +20,10 @@ When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control w
 | `marchyo.defaults.imageEditor` | `"pinta"` | `"pinta"`, `"gimp"`, `"krita"` |
 | `marchyo.defaults.email` | `"aerc"` | `"aerc"`, `"neomutt"`, `"gmail"`, `"outlook"` |
 
+:::note
+  Google Chrome is only packaged for x86_64 Linux, so on non-x86_64 hosts (e.g. aarch64) the effective browser default is `"chromium"` instead of `"google-chrome"`.
+:::
+
 ## Example
 
 ```nix
@@ -71,5 +75,5 @@ Some choices are "externally managed" — Marchyo does not install a package for
 When a default is set, Marchyo:
 
 1. **Installs the package** (unless externally managed)
-2. **Registers MIME type associations** — e.g., setting `browser = "firefox"` registers Firefox as the handler for `text/html`, `x-scheme-handler/http`, etc.
-3. **Sets environment variables** — e.g., `editor` sets `$VISUAL`, `terminalEditor` sets `$EDITOR`
+2. **Registers MIME type associations** — for `browser`, `editor`, `videoPlayer`, `audioPlayer`, `fileManager`, and `email`. E.g., setting `browser = "firefox"` registers Firefox as the handler for `text/html`, `x-scheme-handler/http`, etc. The other categories are install-only: `imageEditor` is never registered as a MIME handler (Loupe stays the default image viewer), and `terminalEditor`, `terminalFileManager`, and `musicPlayer` register no associations either.
+3. **Sets environment variables** — `browser` sets `$BROWSER`, `editor` sets `$VISUAL`, `terminalEditor` sets `$EDITOR`

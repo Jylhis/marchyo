@@ -57,26 +57,31 @@ system yourself. The raw `marchyo.inputs.nixpkgs` passthrough is always
 
 ## Option 3: Home Manager only
 
-If you only want the Home Manager modules without the NixOS system modules:
+If you only want the Home Manager modules without the NixOS system modules, use
+the exported `marchyo.lib.mkHomeConfiguration` builder. It wires up the correct
+nixpkgs, the third-party Home Manager modules marchyo depends on (noctalia,
+vicinae, sops-nix, jotain), and a mock `osConfig` — a plain
+`homeManagerConfiguration` call with just `marchyo.homeManagerModules.default`
+will not evaluate.
 
 ```nix
 {
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    marchyo.url = "github:Jylhis/marchyo";
-    home-manager.url = "github:nix-community/home-manager";
-  };
+  inputs.marchyo.url = "github:Jylhis/marchyo";
 
-  outputs = { nixpkgs, marchyo, home-manager, ... }: {
-    homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      modules = [
-        marchyo.homeManagerModules.default
-      ];
+  outputs = { marchyo, ... }: {
+    homeConfigurations.developer = marchyo.lib.mkHomeConfiguration {
+      system = "x86_64-linux";
+      homeDirectory = "/home/developer";
     };
   };
 }
 ```
+
+The builder takes only `system` and `homeDirectory`, and currently manages a
+user named `developer`. It is Linux-only — marchyo exports ready-made
+`homeConfigurations` for `x86_64-linux` and `aarch64-linux` (many Home Manager
+modules depend on Wayland/Hyprland, so there is no darwin variant; on macOS use
+`marchyo.lib.mkDarwinSystem` instead).
 
 ## Minimal example
 

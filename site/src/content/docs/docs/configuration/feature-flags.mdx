@@ -12,7 +12,7 @@ Feature flags are the primary way to configure Marchyo. Each flag enables a grou
 | `marchyo.desktop.enable` | `false` | Desktop environment (Hyprland, Wayland, audio, bluetooth, fonts) |
 | `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
 | `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
-| `marchyo.office.enable` | `false` | Office applications (LibreOffice, Papers, etc.) |
+| `marchyo.office.enable` | `false` | Office applications (Papers document viewer, Obsidian) |
 
 ## Cascading defaults
 
@@ -25,6 +25,7 @@ marchyo.desktop.enable = true;
 # ...automatically enables these (you can override them):
 # marchyo.office.enable = true;
 # marchyo.media.enable = true;
+# marchyo.webapps.enable = true;
 ```
 
 Since these use `lib.mkDefault`, you can override them:
@@ -46,15 +47,22 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Fonts** — Curated set of fonts including Nerd Fonts
 - **Theming** — Stylix-based consistent theming across GTK, Qt, and terminal apps
 - **Application launcher** — Vicinae
-- **Terminal emulators** — Kitty and Alacritty
+- **Terminal emulator** — Ghostty (the default; a curated Kitty config also ships, applied only if you opt in with `programs.kitty.enable = true`)
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/docs/configuration/default-apps/)
 
 ## Development tools
 
 When `marchyo.development.enable = true`, Marchyo configures:
 
-- **Git** with Git LFS and GitHub CLI
-- **Docker** with docker-compose
-- **Virtualization** via QEMU/KVM (libvirtd)
-- **Container tools** — Buildah, kubectl
-- **Shell enhancements** — Starship prompt, zoxide, fzf, ripgrep, fd
+- **Git** with Git LFS and GitHub CLI (`gh`)
+- **Docker** with docker-compose and lazydocker
+- **Virtualization** via QEMU/KVM (libvirtd), with virt-manager and virt-viewer
+- **Container tools** — Buildah, Skopeo
+- **Build tools** — GNU Make, CMake, GCC, pkg-config
+- **Utilities** — direnv (with nix-direnv), jq, yq, network debugging tools (nmap, tcpdump, netcat)
+
+:::note
+Shell enhancements are not gated on `development.enable`: fzf, ripgrep, fd, and
+zoxide are installed unconditionally on every Marchyo system, and the Starship
+prompt is tied to `marchyo.theme.enable` instead.
+:::

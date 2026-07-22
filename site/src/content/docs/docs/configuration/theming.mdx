@@ -3,15 +3,17 @@ title: Theming
 description: Customize system appearance with Stylix and base16 color schemes
 ---
 
-Marchyo uses [Stylix](https://github.com/danth/stylix) for consistent theming across GTK, Qt, terminal applications, and the Hyprland compositor.
+Marchyo themes the system from two coordinated sources. The core desktop surfaces — GTK, Hyprland, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, and the Plymouth boot splash — are themed directly from the [Jylhis Design System](https://github.com/jylhis/design) (their Stylix targets are explicitly disabled). [Stylix](https://github.com/danth/stylix) supplies the base16 color scheme and fonts, and themes everything else — Qt, fontconfig, vicinae, and the remaining targets.
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `marchyo.theme.enable` | `bool` | `true` | Enable the Stylix theming system |
+| `marchyo.theme.enable` | `bool` | `true` | Enable the theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a `base16-schemes` name) |
+| `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
+| `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
 
 ## Basic usage
 
@@ -37,6 +39,17 @@ To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name
 marchyo.theme = {
   variant = "dark";
   scheme = "gruvbox-dark-medium"; # any base16-schemes name, e.g. "nord"
+};
+```
+
+## Wallpaper
+
+A generated Marchyo grid wallpaper is enabled by default wherever it is supported. To disable it, or to supply your own wallpaper asset package:
+
+```nix
+marchyo.theme.wallpaper = {
+  enable = false;                    # skip the generated wallpaper
+  # package = pkgs.my-wallpapers;   # or swap in a different asset package
 };
 ```
 
