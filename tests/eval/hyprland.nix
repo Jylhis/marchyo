@@ -137,17 +137,16 @@ in
         "movecurrentworkspacetomonitor"
         "resizeactive"
         "marchyo-zoom"
-        "marchyo-nightlight-toggle"
-        "marchyo-idle-toggle"
+        "marchyo toggle nightlight"
+        "marchyo toggle idle"
         "marchyo-screenrecord-toggle"
       ];
       missingBinds = lib.filter (n: !hasBindd n) newBinds;
 
-      # Wrapper packages are installed.
+      # Wrapper packages are installed (nightlight/idle/dnd toggles were
+      # absorbed into the marchyo CLI).
       wrappers = [
         "marchyo-zoom"
-        "marchyo-nightlight-toggle"
-        "marchyo-idle-toggle"
         "marchyo-screenrecord-toggle"
       ];
       missingPkgs = lib.filter (n: !hasPkg n) wrappers;
