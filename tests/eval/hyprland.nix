@@ -139,15 +139,14 @@ in
         "marchyo-zoom"
         "marchyo toggle nightlight"
         "marchyo toggle idle"
-        "marchyo-screenrecord-toggle"
+        "marchyo capture record"
       ];
       missingBinds = lib.filter (n: !hasBindd n) newBinds;
 
-      # Wrapper packages are installed (nightlight/idle/dnd toggles were
-      # absorbed into the marchyo CLI).
+      # Wrapper packages are installed (nightlight/idle/dnd/screenrecord
+      # were absorbed into the marchyo CLI).
       wrappers = [
         "marchyo-zoom"
-        "marchyo-screenrecord-toggle"
       ];
       missingPkgs = lib.filter (n: !hasPkg n) wrappers;
 
