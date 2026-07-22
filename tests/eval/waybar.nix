@@ -1,7 +1,8 @@
 # Waybar click actions (omarchy parity): every top-bar action that opens a
 # window must launch it with an org.omarchy.* --class matched by the
 # floating-window tag rule in modules/home/hyprland.nix, so bar clicks open
-# centered popups instead of tiling into the workspace.
+# centered popups instead of tiling into the workspace — and the NixOS
+# services those tools talk to must actually be enabled.
 {
   helpers,
   lib,
@@ -13,7 +14,7 @@
 let
   inherit (helpers) withTestUser;
 
-  hmFor =
+  cfgFor =
     extra:
     (lib.nixosSystem {
       inherit (pkgs.stdenv.hostPlatform) system;
@@ -26,9 +27,10 @@ let
           } extra
         ))
       ];
-    }).config.home-manager.users.testuser;
+    }).config;
 
-  hm = hmFor { };
+  cfg = cfgFor { };
+  hm = cfg.home-manager.users.testuser;
   waybar = builtins.head hm.programs.waybar.settings;
   windowrules = lib.concatStringsSep "\n" hm.wayland.windowManager.hyprland.settings.windowrule;
 
@@ -58,11 +60,32 @@ in
       "pass"
   );
 
+  # The system services the click targets talk to are enabled on a desktop:
+  # PipeWire/WirePlumber (wiremix, wpctl), bluez (bluetui), iwd as the
+  # NetworkManager Wi-Fi backend (impala only speaks iwd), and
+  # power-profiles-daemon/upower (profile + battery segments).
+  eval-waybar-backing-services = pkgs.writeText "eval-waybar-backing-services" (
+    if
+      cfg.services.pipewire.enable
+      && cfg.services.pipewire.wireplumber.enable
+      && cfg.hardware.bluetooth.enable
+      && cfg.networking.networkmanager.enable
+      && cfg.networking.networkmanager.wifi.backend == "iwd"
+      && cfg.services.power-profiles-daemon.enable
+      && cfg.services.upower.enable
+    then
+      "pass"
+    else
+      throw "FAIL: a NixOS service backing a waybar click target (pipewire, bluetooth, iwd wifi backend, power-profiles-daemon, upower) is not enabled"
+  );
+
   # With the menus feature disabled marchyo-power-menu is not installed, so the
   # battery click falls back to the launcher instead of a dead command.
   eval-waybar-battery-menu-fallback =
     let
-      waybar' = builtins.head (hmFor { marchyo.menus.enable = false; }).programs.waybar.settings;
+      waybar' =
+        builtins.head
+          (cfgFor { marchyo.menus.enable = false; }).home-manager.users.testuser.programs.waybar.settings;
     in
     pkgs.writeText "eval-waybar-battery-menu-fallback" (
       if waybar'.battery.on-click == "vicinae toggle" then
