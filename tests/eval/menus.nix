@@ -30,22 +30,23 @@ let
   hasScript = hm: n: lib.any (lib.hasInfix n) (scriptNames hm);
 in
 {
-  # Menus default on with the desktop: both scripts are installed and the
-  # power menu (SUPER+Escape) / central menu (SUPER+ALT+Space) binds exist.
+  # Menus default on with the desktop: the binds dispatch the marchyo CLI
+  # menus and the gum tool closure is installed (the marchyo-menu /
+  # marchyo-power-menu scripts were absorbed into the CLI).
   eval-menus-enabled =
     let
       hm = (evalWith { }).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-menus-enabled" (
       if
-        hasBind hm "SUPER, Escape, Power menu, exec, "
-        && hasBind hm "SUPER ALT, Space, System menu, exec, "
-        && hasScript hm "marchyo-power-menu"
-        && hasScript hm "marchyo-menu"
+        hasBind hm "SUPER, Escape, Power menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu power"
+        && hasBind hm "SUPER ALT, Space, System menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu"
+        && hasScript hm "gum"
+        && !(hasScript hm "marchyo-power-menu")
       then
         "pass"
       else
-        throw "FAIL: desktop enabled but the menu scripts or their SUPER+Escape / SUPER+ALT+Space binds are missing"
+        throw "FAIL: desktop enabled but the CLI menu binds or the gum tool closure are missing"
     );
 
   # marchyo.menus.enable = false: config still evaluates and neither the
@@ -55,12 +56,7 @@ in
       hm = (evalWith { marchyo.menus.enable = false; }).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-menus-disabled" (
-      if
-        !(hasBind hm "Power menu")
-        && !(hasBind hm "System menu")
-        && !(hasScript hm "marchyo-power-menu")
-        && !(hasScript hm "marchyo-menu")
-      then
+      if !(hasBind hm "Power menu") && !(hasBind hm "System menu") && !(hasScript hm "gum") then
         "pass"
       else
         throw "FAIL: menus disabled but a menu bind or script is still present"

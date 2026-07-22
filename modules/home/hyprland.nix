@@ -419,9 +419,9 @@ in
           "SUPER, comma, Dismiss last notification, exec, makoctl dismiss"
 
           # --- Cursor zoom (screen magnifier) ---
-          "SUPER CTRL, Z, Zoom in, exec, marchyo-zoom in"
-          "SUPER CTRL SHIFT, Z, Zoom out, exec, marchyo-zoom out"
-          "SUPER CTRL ALT, Z, Reset zoom, exec, marchyo-zoom reset"
+          "SUPER CTRL, Z, Zoom in, exec, marchyo zoom in"
+          "SUPER CTRL SHIFT, Z, Zoom out, exec, marchyo zoom out"
+          "SUPER CTRL ALT, Z, Reset zoom, exec, marchyo zoom reset"
 
           # --- System toggles (backed by modules/home/window-toggles.nix) ---
           "SUPER SHIFT, SPACE, Toggle top bar, exec, systemctl --user kill -s SIGUSR1 waybar.service"

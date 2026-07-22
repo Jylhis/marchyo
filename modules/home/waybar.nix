@@ -238,13 +238,13 @@ in
               format-plugged = "pwr";
               format-full = "bat full";
               # Floating power/session menu (omarchy parity: battery click opens
-              # the power menu). Bare name: marchyo-power-menu is an HM-profile
+              # the power menu). Bare name: the marchyo CLI is an HM-profile
               # script from modules/home/menus.nix, resolved via the session
               # PATH like marchyo-dnd-toggle below. Falls back to the launcher
               # when the menus feature is disabled.
               on-click =
                 if menusEnabled then
-                  "${terminal} --class=org.omarchy.terminal -e marchyo-power-menu"
+                  "${terminal} --class=org.omarchy.terminal -e marchyo menu power"
                 else
                   "vicinae toggle";
               tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
