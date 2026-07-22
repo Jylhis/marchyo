@@ -361,6 +361,66 @@ test("runtime restore ignores a corrupt runtime.json with a warning", async () =
   expect(r.stderr).toContain("ignoring invalid runtime state");
 });
 
+test("toggle with an unknown name exits 2 listing the toggles", async () => {
+  const { env } = stateFixture();
+  const r = await run(["toggle", "warp-drive"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("unknown toggle");
+  expect(r.stderr).toContain("nightlight");
+});
+
+test("toggle with a bad state arg exits 2", async () => {
+  const { env } = stateFixture();
+  const r = await run(["toggle", "nightlight", "maybe"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid state");
+});
+
+test("toggle nightlight records a runtime override (actuators absent)", async () => {
+  const { env } = stateFixture();
+  let r = await run(["toggle", "nightlight", "on"], env);
+  expect(r.code).toBe(0);
+  r = await run(["runtime", "status", "--json"], env);
+  expect(JSON.parse(r.stdout).overrides).toEqual([
+    { key: "toggle.nightlight", value: true },
+  ]);
+  // Flip with no argument inverts the recorded state.
+  r = await run(["toggle", "nightlight"], env);
+  expect(r.code).toBe(0);
+  r = await run(["runtime", "status", "--json"], env);
+  expect(JSON.parse(r.stdout).overrides).toEqual([
+    { key: "toggle.nightlight", value: false },
+  ]);
+});
+
+test("toggle --status reports default state as scriptable output", async () => {
+  const { env } = stateFixture();
+  const r = await run(["toggle", "screensaver", "--status", "--json"], env);
+  expect(r.code).toBe(0);
+  expect(JSON.parse(r.stdout).toggle).toEqual({
+    name: "screensaver",
+    on: true,
+  });
+});
+
+test("toggle hybrid-gpu without --apply is a usage error", async () => {
+  const { env } = stateFixture();
+  const r = await run(["toggle", "hybrid-gpu", "on"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("no live toggle");
+  expect(r.stderr).toContain("--apply");
+});
+
+test("toggle nightlight --revert clears the override", async () => {
+  const { env } = stateFixture();
+  let r = await run(["toggle", "nightlight", "on"], env);
+  expect(r.code).toBe(0);
+  r = await run(["toggle", "nightlight", "--revert"], env);
+  expect(r.code).toBe(0);
+  r = await run(["runtime", "status", "--json"], env);
+  expect(JSON.parse(r.stdout).overrides).toEqual([]);
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",

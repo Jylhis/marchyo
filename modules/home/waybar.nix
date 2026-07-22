@@ -300,7 +300,7 @@ in
               return-type = "json";
               interval = "once";
               signal = 9;
-              on-click = "marchyo-dnd-toggle";
+              on-click = "marchyo toggle notifications";
             };
             # No on-click: the module cycles power profiles natively on left
             # click (reverse on right click) and ignores on-click config —

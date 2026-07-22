@@ -425,8 +425,8 @@ in
 
           # --- System toggles (backed by modules/home/window-toggles.nix) ---
           "SUPER SHIFT, SPACE, Toggle top bar, exec, systemctl --user kill -s SIGUSR1 waybar.service"
-          "SUPER CTRL, N, Toggle nightlight, exec, marchyo-nightlight-toggle"
-          "SUPER CTRL, I, Toggle idle lock, exec, marchyo-idle-toggle"
+          "SUPER CTRL, N, Toggle nightlight, exec, marchyo toggle nightlight"
+          "SUPER CTRL, I, Toggle idle lock, exec, marchyo toggle idle"
           "SUPER ALT, Print, Toggle screen recording, exec, marchyo-screenrecord-toggle"
         ]
         ++ lib.optionals aiToolingEnabled [
