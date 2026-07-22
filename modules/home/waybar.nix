@@ -226,9 +226,10 @@ in
               format-disconnected = "offline";
               tooltip-format = "{ipaddr}  {ifname}";
               interval = 3;
-              # Wi-Fi is managed by iwd (NetworkManager's wifi.backend in
-              # modules/nixos/network.nix) — impala is an iwd frontend.
-              on-click = "${terminal} --class=org.omarchy.impala -e ${lib.getExe pkgs.impala}";
+              # Wi-Fi runs on NetworkManager's wpa_supplicant backend (see
+              # modules/nixos/network.nix and docs/known-issues.md); nmtui
+              # drives NetworkManager directly.
+              on-click = "${terminal} --class=org.omarchy.nmtui -e ${lib.getExe' pkgs.networkmanager "nmtui"}";
             };
             battery = {
               interval = 5;

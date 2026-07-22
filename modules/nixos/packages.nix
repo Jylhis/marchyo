@@ -39,7 +39,8 @@ let
     bluetui # bluetooth
     sysz # systemctl tui
     lazyjournal # journald and logs
-    impala # TUI for managing your Wi-Fi connection
+    # Wi-Fi TUI is nmtui, shipped with the networkmanager package (Wi-Fi runs
+    # on the wpa_supplicant backend, not iwd — see docs/known-issues.md).
     dua # interactive disk-usage analyzer TUI
     wiremix # PipeWire mixer TUI
     cliamp # retro terminal music player (Winamp-style)

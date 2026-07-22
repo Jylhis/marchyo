@@ -62,7 +62,7 @@ let
   };
 
   # Central system menu: a small hierarchical gum menu. TUI tools (wiremix,
-  # impala, bluetui, hyprmon, the cheatsheet, the power menu) replace the menu
+  # nmtui, bluetui, hyprmon, the cheatsheet, the power menu) replace the menu
   # process via exec so they run in the same floating terminal; one-shot
   # desktop actions (screenshot, color pick) are detached with a short delay
   # so the floating window is gone before any region selection starts.
@@ -75,7 +75,7 @@ let
       grimblast
       hyprpicker
       wiremix
-      impala
+      networkmanager # nmtui
       bluetui
       hyprmon
       power-profiles-daemon # powerprofilesctl
@@ -123,7 +123,7 @@ let
             ) || continue
             case "$sel" in
               Audio) exec wiremix ;;
-              Wifi) exec impala ;;
+              Wifi) exec nmtui ;;
               Bluetooth) exec bluetui ;;
               Monitors) exec hyprmon ;;
               "Power profile")

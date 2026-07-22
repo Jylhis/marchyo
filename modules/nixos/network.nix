@@ -1,18 +1,16 @@
-{ lib, pkgs, ... }:
+_:
 {
   networking = {
     networkmanager = {
       enable = true;
-      # impala (the Wi-Fi TUI behind the waybar network segment, the
-      # SUPER+CTRL+W bind and the system menu) only speaks iwd. Run
-      # NetworkManager with the iwd Wi-Fi backend (this auto-enables
-      # networking.wireless.iwd) so those surfaces actually control the
-      # active stack — NetworkManager still owns ethernet/VPN.
-      wifi.backend = lib.mkDefault "iwd";
+      # Wi-Fi runs on NetworkManager's default wpa_supplicant backend.
+      # We deliberately do NOT set wifi.backend = "iwd": iwd 3.12 segfaults
+      # during roaming (network_info_get_roam_frequencies via an 802.11k
+      # neighbor report) in multi-AP environments, which repeatedly drops the
+      # connection. See docs/known-issues.md ("iwd backend Wi-Fi crashes").
+      # The Wi-Fi TUI surfaces (waybar segment, SUPER+CTRL+W, system menu) use
+      # nmtui (shipped with the networkmanager package), which drives
+      # NetworkManager directly.
     };
   };
-  environment.systemPackages = with pkgs; [
-    impala # TUI for managing your Wi-Fi connection (iwd frontend)
-    # lazyssh # not available in 25.05
-  ];
 }
