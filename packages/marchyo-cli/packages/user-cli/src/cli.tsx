@@ -32,6 +32,23 @@ import {
   runCaptureRecord,
   runCaptureScreenshot,
 } from "./commands/capture.ts";
+import { runKeybindings, runMenu } from "./commands/menu.ts";
+import {
+  runFocusOrLaunch,
+  runLaunch,
+  runMonitorLaptopToggle,
+  runMonitorScaleCycle,
+  runZoom,
+} from "./commands/launch.ts";
+import {
+  runHibernate,
+  runLock,
+  runLogout,
+  runPowerprofile,
+  runReboot,
+  runShutdown,
+  runSuspend,
+} from "./commands/power.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -436,6 +453,116 @@ capture
   .description("Pick a color from the screen (hex to clipboard)")
   .action(async () => {
     process.exit(await runCaptureColor(rt()));
+  });
+
+program
+  .command("menu")
+  .description("Open the central system menu (gum TUI)")
+  .argument("[submenu]", "power (the power/session menu)")
+  .action(async (submenu: string | undefined) => {
+    process.exit(await runMenu(rt(), submenu));
+  });
+
+program
+  .command("keybindings")
+  .description("Searchable Hyprland keybinding cheat sheet (fzf)")
+  .action(async () => {
+    process.exit(await runKeybindings(rt()));
+  });
+
+program
+  .command("launch")
+  .description("Launch an app detached (file-manager opens at the focused cwd)")
+  .argument("<app>", "command name, or 'file-manager'")
+  .argument("[args...]", "arguments passed through")
+  .action(async (app: string, args: string[]) => {
+    process.exit(await runLaunch(rt(), app, args));
+  });
+
+program
+  .command("focus-or-launch")
+  .description("Focus a window by class, or launch the command")
+  .argument("<class>", "window class to match")
+  .argument("[command...]", "command to launch when absent (default: the class name)")
+  .action(async (className: string, command: string[]) => {
+    process.exit(await runFocusOrLaunch(rt(), className, command));
+  });
+
+program
+  .command("zoom")
+  .description("Step the cursor zoom factor")
+  .argument("<direction>", "in | out | reset")
+  .action(async (direction: string) => {
+    process.exit(await runZoom(rt(), direction));
+  });
+
+const monitor = program
+  .command("monitor")
+  .description("Monitor helpers (scale cycling, laptop panel)");
+
+monitor
+  .command("scale-cycle")
+  .description("Cycle the focused monitor's scale (1 → 1.25 → … → 2 → 1)")
+  .action(async () => {
+    process.exit(await runMonitorScaleCycle(rt()));
+  });
+
+monitor
+  .command("laptop-toggle")
+  .description("Toggle the built-in laptop panel (eDP*) on/off")
+  .action(async () => {
+    process.exit(await runMonitorLaptopToggle(rt()));
+  });
+
+program
+  .command("lock")
+  .description("Lock the screen (hyprlock, detached)")
+  .action(async () => {
+    process.exit(await runLock(rt()));
+  });
+
+program
+  .command("logout")
+  .description("End the session cleanly (uwsm → hyprctl exit → loginctl)")
+  .action(async () => {
+    process.exit(await runLogout(rt()));
+  });
+
+program
+  .command("suspend")
+  .description("Suspend the system")
+  .action(async () => {
+    process.exit(await runSuspend(rt()));
+  });
+
+program
+  .command("hibernate")
+  .description("Hibernate the system")
+  .action(async () => {
+    process.exit(await runHibernate(rt()));
+  });
+
+program
+  .command("reboot")
+  .description("Reboot the system")
+  .action(async () => {
+    process.exit(await runReboot(rt()));
+  });
+
+program
+  .command("shutdown")
+  .description("Power the system off")
+  .action(async () => {
+    process.exit(await runShutdown(rt()));
+  });
+
+program
+  .command("powerprofile")
+  .description("Get, list, or set the power profile")
+  .argument("<action>", "get | list | set")
+  .argument("[profile]", "power-saver | balanced | performance (for set)")
+  .action(async (action: string, profile: string | undefined) => {
+    process.exit(await runPowerprofile(rt(), action, profile));
   });
 
 const runtime = program
