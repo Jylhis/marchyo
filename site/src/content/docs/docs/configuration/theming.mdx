@@ -12,6 +12,7 @@ Marchyo themes the system from two coordinated sources. The core desktop surface
 | `marchyo.theme.enable` | `bool` | `true` | Enable the theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a `base16-schemes` name) |
+| `marchyo.theme.themes` | `list of string` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
 
@@ -41,6 +42,21 @@ marchyo.theme = {
   scheme = "gruvbox-dark-medium"; # any base16-schemes name, e.g. "nord"
 };
 ```
+
+## Runtime theme switching
+
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any `base16-schemes` name to make it switchable:
+
+```nix
+marchyo.theme.themes = [
+  "jylhis-dark"
+  "jylhis-light"
+  "nord"
+  "gruvbox-dark-hard"
+];
+```
+
+Runtime switching covers the directly-themed surfaces; Stylix-derived targets (Qt, fontconfig, …) follow the build-time `variant`/`scheme` until a rebuild. The switch is ephemeral — the next activation resets to the declarative default.
 
 ## Wallpaper
 
