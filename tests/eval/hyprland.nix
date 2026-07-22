@@ -75,8 +75,8 @@ in
       };
       hm = eval.config.home-manager.users.testuser;
       bindd = hm.wayland.windowManager.hyprland.settings.bindd;
-      hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
-      hasPkg = lib.any (p: lib.hasInfix "marchyo-keybindings" (p.name or "")) hm.home.packages;
+      hasBind = lib.any (b: lib.hasInfix "marchyo keybindings" b) bindd;
+      hasPkg = lib.any (p: lib.hasInfix "fzf" (p.name or "")) hm.home.packages;
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet" (
       if hasBind && hasPkg then
@@ -101,7 +101,7 @@ in
         ];
       };
       bindd = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bindd;
-      hasBind = lib.any (b: lib.hasInfix "marchyo-keybindings" b) bindd;
+      hasBind = lib.any (b: lib.hasInfix "marchyo keybindings" b) bindd;
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
       if hasBind then throw "FAIL: keybindings cheat sheet bind present when disabled" else "pass"
@@ -136,17 +136,17 @@ in
         "movetoworkspacesilent"
         "movecurrentworkspacetomonitor"
         "resizeactive"
-        "marchyo-zoom"
+        "marchyo zoom in"
         "marchyo toggle nightlight"
         "marchyo toggle idle"
         "marchyo capture record"
       ];
       missingBinds = lib.filter (n: !hasBindd n) newBinds;
 
-      # Wrapper packages are installed (nightlight/idle/dnd/screenrecord
-      # were absorbed into the marchyo CLI).
+      # All former wrapper scripts are absorbed into the marchyo CLI; the
+      # recorder tool closure remains.
       wrappers = [
-        "marchyo-zoom"
+        "gpu-screen-recorder"
       ];
       missingPkgs = lib.filter (n: !hasPkg n) wrappers;
 
