@@ -134,6 +134,26 @@ export function pickDiffTargets(
   };
 }
 
+// Spawn an argv capturing stdout (stderr inherited) — for state probes
+// (makoctl mode, hyprctl getoption -j, …). Missing binaries yield code 127
+// with empty output instead of throwing, matching probe best-effort needs.
+export async function captureArgv(
+  argv: string[],
+): Promise<{ code: number; stdout: string }> {
+  try {
+    const proc = Bun.spawn(argv, {
+      stdout: "pipe",
+      stderr: "ignore",
+      stdin: "ignore",
+    });
+    const code = await proc.exited;
+    const stdout = await new Response(proc.stdout).text();
+    return { code, stdout };
+  } catch {
+    return { code: 127, stdout: "" };
+  }
+}
+
 // Spawn an argv with inherited stdio, returning its exit code. Used by the
 // system subcommands after the dry-run branch has been handled.
 export async function runArgv(

@@ -1,10 +1,11 @@
 import type { ChangeSpec } from "@marchyo/core";
 import { bgChangeBase, themeChangeBase } from "./commands/theme.ts";
+import { TOGGLES, toggleSpecFor } from "./toggles.ts";
 
 // Central ChangeSpec registry. Every mutating command group registers its
 // specs here so `marchyo runtime restore` can rehydrate overrides after a
 // session start (or a manual `hyprctl reload`) without duplicating the
-// per-command runtime logic. Toggles register in the toggles slice.
+// per-command runtime logic.
 export const changeRegistry = new Map<string, ChangeSpec>();
 
 export function registerChange(spec: ChangeSpec): void {
@@ -13,3 +14,4 @@ export function registerChange(spec: ChangeSpec): void {
 
 registerChange(themeChangeBase);
 registerChange(bgChangeBase);
+for (const def of TOGGLES) registerChange(toggleSpecFor(def));

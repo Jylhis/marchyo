@@ -74,6 +74,11 @@ let
       pkgs.ghostty
     ];
     text = ''
+      # `marchyo toggle screensaver off` drops this marker; honor it here so
+      # the idle hook stays inert while the toggle is off.
+      if [ -e "''${XDG_RUNTIME_DIR:-/tmp}/marchyo-screensaver.off" ]; then
+        exit 0
+      fi
       # Never draw over the lock screen (hyprlock renders above anyway and the
       # screensaver would keep running underneath), and never stack a second
       # instance on top of a running one.
