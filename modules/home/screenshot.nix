@@ -16,9 +16,11 @@ let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
 
-  # Shared exec strings, bound on both the Print key and Super+S (see below).
-  sattyCmd = "grimblast --freeze save area - | satty --filename - --output-filename ${cfg.directory}/$(date '+%Y-%m-%d_%H-%M-%S')_annotated.png";
-  ocrCmd = "grimblast --freeze save area - | tesseract - - | wl-copy";
+  # Shared exec strings, bound on both the Print key and Super+S (see
+  # below). The pipelines live in the marchyo CLI (capture.ts); these binds
+  # are thin dispatchers.
+  sattyCmd = "marchyo capture screenshot --edit";
+  ocrCmd = "marchyo capture ocr";
 in
 {
   options.marchyo.screenshot = {
@@ -69,20 +71,20 @@ in
     wayland.windowManager.hyprland.settings = {
       bindd = [
         # Screenshot area/window selection (interactive)
-        ", Print, Screenshot area/window, exec, grimblast --notify --freeze copysave area"
-        "SUPER, S, Screenshot area/window, exec, grimblast --notify --freeze copysave area"
+        ", Print, Screenshot area/window, exec, marchyo capture screenshot"
+        "SUPER, S, Screenshot area/window, exec, marchyo capture screenshot"
 
         # Screenshot active window
-        "SHIFT, Print, Screenshot active window, exec, grimblast --notify copysave active"
-        "SUPER CTRL, S, Screenshot active window, exec, grimblast --notify copysave active"
+        "SHIFT, Print, Screenshot active window, exec, marchyo capture screenshot --target active"
+        "SUPER CTRL, S, Screenshot active window, exec, marchyo capture screenshot --target active"
 
         # Screenshot current output (fullscreen)
-        "CTRL, Print, Screenshot current screen, exec, grimblast --notify copysave output"
-        "SUPER ALT, S, Screenshot current screen, exec, grimblast --notify copysave output"
+        "CTRL, Print, Screenshot current screen, exec, marchyo capture screenshot --target output"
+        "SUPER ALT, S, Screenshot current screen, exec, marchyo capture screenshot --target output"
 
         # Screenshot all screens
-        "ALT, Print, Screenshot all screens, exec, grimblast --notify copysave screen"
-        "SUPER CTRL ALT, S, Screenshot all screens, exec, grimblast --notify copysave screen"
+        "ALT, Print, Screenshot all screens, exec, marchyo capture screenshot --target screen"
+        "SUPER CTRL ALT, S, Screenshot all screens, exec, marchyo capture screenshot --target screen"
       ]
       ++ lib.optionals cfg.enableAnnotation [
         # Screenshot with annotation

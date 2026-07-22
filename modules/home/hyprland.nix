@@ -325,7 +325,7 @@ in
           # matching the windowrule below; a lowercase-only regex never focuses.
           "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1[pP]assword)$ || $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
-          "SUPER SHIFT, C, Pick color (hex to clipboard), exec, hyprpicker -a"
+          "SUPER SHIFT, C, Pick color (hex to clipboard), exec, marchyo capture color"
           "SUPER, W, Close active window, killactive,"
           "SUPER, J, Toggle split, layoutmsg, togglesplit"
           "SUPER, P, Pseudo window, pseudo,"
@@ -427,7 +427,7 @@ in
           "SUPER SHIFT, SPACE, Toggle top bar, exec, systemctl --user kill -s SIGUSR1 waybar.service"
           "SUPER CTRL, N, Toggle nightlight, exec, marchyo toggle nightlight"
           "SUPER CTRL, I, Toggle idle lock, exec, marchyo toggle idle"
-          "SUPER ALT, Print, Toggle screen recording, exec, marchyo-screenrecord-toggle"
+          "SUPER ALT, Print, Toggle screen recording, exec, marchyo capture record"
         ]
         ++ lib.optionals aiToolingEnabled [
           "SUPER, A, AI chat, exec, $terminal --class=org.omarchy.aichat -e marchyo-aichat"
