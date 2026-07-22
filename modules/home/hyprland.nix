@@ -317,7 +317,9 @@ in
           "SUPER, E, Editor, exec, $editor"
           "SUPER, O, Obsidian, exec, $notes"
           "SUPER, G, Messenger, exec, $messenger"
-          "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1password)$ || $passwordManager"
+          # Class must cover both spellings — the running app reports 1Password,
+          # matching the windowrule below; a lowercase-only regex never focuses.
+          "SUPER, slash, Password manager, exec, hyprctl dispatch focuswindow class:^(1[pP]assword)$ || $passwordManager"
           "SUPER SHIFT, I, Input method config, exec, fcitx5-configtool"
           "SUPER SHIFT, C, Pick color (hex to clipboard), exec, hyprpicker -a"
           "SUPER, W, Close active window, killactive,"

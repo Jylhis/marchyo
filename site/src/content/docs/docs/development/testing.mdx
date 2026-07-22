@@ -21,9 +21,10 @@ There is no way to run a single test in isolation — `nix flake check` runs the
 
 ```
 tests/
-  default.nix        # Entry point combining all tests
-  module-tests.nix   # Module evaluation tests
+  default.nix        # Entry point — auto-discovers tests/eval/ and merges the results
+  lib.nix            # Shared helpers (assertTest, testNixOS, withTestUser, …)
   lib-tests.nix      # Library function unit tests
+  eval/              # Per-feature module tests, auto-discovered (one file per feature)
 ```
 
 ### Module tests
@@ -48,36 +49,43 @@ Unit tests for lib functions using the `assertTest` helper.
 
 ### Module evaluation test
 
-Add to `tests/module-tests.nix`:
+Create (or extend) a file under `tests/eval/` — e.g. `tests/eval/my-feature.nix`. Each file is a function that receives the shared helpers and returns an attrset of named tests; it is auto-discovered, so no registration is needed:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
 
 The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion).
 
 ### Library test
 
-Add to `tests/lib-tests.nix`:
+Add to `tests/lib-tests.nix`, using the `assertTest` helper from `tests/lib.nix` (`assertTest name assertion message` — fails at evaluation time when the assertion is false):
 
 ```nix
-test-my-function = pkgs.runCommand "test-my-function" { } ''
-  result=$(nix eval --raw --expr '(import ../lib { inherit (pkgs) lib; }).myFunction "input"')
-  [[ "$result" == "expected" ]] || exit 1
-  touch $out
-'';
+test-my-function =
+  let
+    result = lib.myFunction "input";
+  in
+  assertTest "my-function" (result == "expected") "Expected myFunction to transform input";
 ```
 
 ## CI pipeline
 
-The GitHub Actions workflow (`.github/workflows/validate.yml`) runs three stages:
+The GitHub Actions workflow (`.github/workflows/validate.yml`) runs four jobs:
 
-1. **Lint** — `nix fmt -- --ci` plus a `flake.lock` / `devenv.lock` rev-parity check on a single Linux runner.
-2. **Check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`.
-3. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (runs after lint and check pass).
+1. **Lint** — `nix fmt -- --ci` plus a `flake.lock` / `devenv.lock` rev-parity check on a single Linux runner. Runs on every push and PR.
+2. **Check** — `nix flake check --accept-flake-config` on `x86_64-linux`. Runs on every push and PR.
+3. **Check (aarch64-linux)** — the same checks on an ARM runner. Runs only on pushes to `main` and manual dispatch.
+4. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel`. Runs only on pushes to `main` and manual dispatch, after lint and check succeed.
 
-Stages 1 and 2 run in parallel; stage 3 runs after both succeed. Concurrency groups cancel superseded PR runs automatically. Builds use [Cachix](https://app.cachix.org) (`jylhis` cache).
+Lint and check run in parallel. Concurrency groups cancel superseded PR runs automatically. Builds use [Cachix](https://app.cachix.org) (`jylhis` cache).
 
-A separate `.github/workflows/pages.yml` workflow deploys the docs to GitHub Pages, scoped via path filters to `docs/**` and flake sources so unrelated commits don't trigger redeploys.
+A separate `.github/workflows/site.yml` workflow is a build-only gate for the website: changes touching `site/**` run `bun run check` and `bun run build`. Deployment happens outside GitHub Actions — Cloudflare Workers Builds deploys the site to [marchyo.org](https://marchyo.org) on push to `main`.

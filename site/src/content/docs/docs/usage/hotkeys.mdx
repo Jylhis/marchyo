@@ -9,10 +9,13 @@ vicinae launcher, cliphist clipboard history, and grimblast/satty/tesseract
 screenshots. `Super` is the primary modifier (the Windows/Command key).
 
 :::note
-These binds are declared in `modules/home/hyprland.nix` (and screenshots in
-`modules/home/screenshot.nix`) — they are the source of truth. To change one,
-override the Home Manager `wayland.windowManager.hyprland.settings` in your own
-config rather than editing a dotfile at runtime.
+These binds are declared across several Home Manager modules — the bulk in
+`modules/home/hyprland.nix`, with the rest contributed by `screenshot.nix`,
+`omarchy-binds.nix`, `menus.nix`, `utilities.nix`, `window-toggles.nix`,
+`keybindings-cheatsheet.nix`, and `webapps.nix` — which together are the source
+of truth. To change one, override the Home Manager
+`wayland.windowManager.hyprland.settings` in your own config rather than
+editing a dotfile at runtime.
 :::
 
 ## Launching apps
@@ -28,9 +31,28 @@ config rather than editing a dotfile at runtime.
 | `Super + O` | Obsidian |
 | `Super + G` | Messenger |
 | `Super + /` | Password manager (focuses 1Password if open) |
-| `Super + A` | AI chat (only when `marchyo.ai.tooling` is enabled) |
+| `Super + A` | AI chat (only when `marchyo.ai.enable` is on and `marchyo.ai.tooling.enable` — the default — isn't turned off) |
 | `Super + .` | Emoji picker (vicinae) |
 | `Super + Shift + I` | Input-method config (fcitx5) |
+
+### Web apps
+
+With `marchyo.webapps.enable` (on by default with the desktop), a set of sites
+opens as standalone browser app windows on `Super + Shift` chords:
+
+| Keys | Action |
+|------|--------|
+| `Super + Shift + A` | ChatGPT |
+| `Super + Shift + G` | GitHub |
+| `Super + Shift + Y` | YouTube |
+| `Super + Shift + W` | WhatsApp |
+| `Super + Shift + Z` | Zoom |
+| `Super + Shift + X` | X |
+| `Super + Shift + P` | Google Photos |
+
+Discord, Google Calendar, and Gmail are registered as launchers but ship no
+default key — start them from the app launcher, or give them one via
+`marchyo.webapps.apps`.
 
 ## Window management
 
@@ -65,6 +87,7 @@ config rather than editing a dotfile at runtime.
 |------|--------|
 | `Super + Escape` | Power/session menu (lock, suspend, hibernate, relaunch, reboot, shutdown) |
 | `Super + Alt + Space` | Central system menu (Trigger / Setup / Style / System / Learn) |
+| `Super + K` | Keybindings cheat sheet (searchable, from the live config) |
 | `Super + Ctrl + comma` | Toggle notification do-not-disturb (was: dismiss all) |
 | `Super + Ctrl + Shift + comma` | Dismiss all notifications |
 | `Super + Ctrl + R` | Set a reminder |
@@ -139,6 +162,26 @@ page for setup.
 | `Super + Ctrl + X` | Toggle recording on/off |
 | `Super + Shift + H` | Floating dictation status window |
 
+## Top bar (Waybar) mouse actions
+
+Segments that open a tool launch it as a centered floating popup — never as a
+tile in the workspace. Scrolling and right-clicks act in place.
+
+| Segment | Action |
+|---------|--------|
+| Workspace numbers | Click to switch workspace |
+| Clock | Click to toggle the date/week-number format |
+| `·` (left of the tray) | Hover to expand the system tray |
+| Bell | Click to toggle notification do-not-disturb |
+| Mic/dictation (if enabled) | Left-click toggles recording; right-click opens the floating status window |
+| Layout code (`en`, `fi`, …) | Click to cycle keyboard layouts |
+| `bt` | Click for the Bluetooth manager (bluetui, floating) |
+| Wi-Fi / `eth` | Click for the Wi-Fi manager (impala, floating) |
+| `vol` | Click for the audio mixer (wiremix, floating); right-click mutes; scroll changes volume |
+| `cpu` | Click for the system monitor (btop, floating) |
+| `eco`/`bal`/`perf` | Click to cycle the power profile (built into Waybar) |
+| `bat`/`chg`/`pwr` | Click for the power/session menu (floating) |
+
 ## System & session
 
 | Keys | Action |
@@ -146,7 +189,7 @@ page for setup.
 | `Super + L` | Lock the screen (hyprlock) |
 | `Ctrl + Alt + Delete` | Power off |
 | `Super + Shift + Space` | Toggle the top bar (Waybar) |
-| `Super + ,` / `Super + Ctrl + ,` | Dismiss last / all notifications |
+| `Super + ,` | Dismiss last notification (`Super + Ctrl + Shift + ,` dismisses all) |
 | `Super + Ctrl + I` | Toggle idle lock (keep-awake) |
 | `Super + Ctrl + N` | Toggle night light |
 | `Super + Alt + Print` | Toggle screen recording |

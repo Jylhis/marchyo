@@ -7,24 +7,31 @@ description: How Marchyo is organized and how modules interact
 
 ```
 modules/
-  nixos/          # NixOS system-level modules (~29 modules)
-  home/           # Home Manager user-level modules (~31 modules)
-  generic/        # Shared modules imported by both nixos and home
-packages/         # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
-overlays/         # Nixpkgs overlays (vicinae, noctalia)
+  nixos/          # NixOS system-level modules (auto-discovered)
+  home/           # Home Manager user-level modules (auto-discovered)
+  darwin/         # nix-darwin modules (hand-curated import list)
+  nix-on-droid/   # nix-on-droid (Android terminal) modules
+  generic/        # Shared modules imported by nixos, home, and darwin
+lib/              # Flake helpers (system list, module auto-discovery)
+packages/         # Custom Nix packages (hyprmon, marchyo-cli, marchyo-wallpapers,
+                  # openviking, pi, plymouth-marchyo-theme, wallpapper)
+overlay.nix       # Nixpkgs overlay (single file at the repo root)
 tests/            # Evaluation-based test suite
 templates/        # Flake templates (workstation)
+site/             # Astro + Starlight website (marchyo.org)
+disko/            # Disk layout snippets (not wired into flake outputs)
+installer/        # ISO build snippets (not wired into flake outputs)
 ```
 
 ## Module organization
 
 ### NixOS modules (`modules/nixos/`)
 
-System-level modules that configure services, packages, and system settings. All custom options are defined in `modules/nixos/options.nix` — this is the single source of truth for the `marchyo.*` namespace.
+System-level modules that configure services, packages, and system settings. All custom options are declared under the `modules/nixos/options/` directory — one file per logical namespace, auto-imported by the directory's `default.nix`. This is the single source of truth for the `marchyo.*` namespace.
 
 Key files:
-- `options.nix` — All `marchyo.*` option definitions
-- `default.nix` — Import list for all NixOS modules (order matters for some)
+- `options/` — All `marchyo.*` option declarations, one file per namespace (auto-discovered)
+- `default.nix` — Auto-discovers every module via `lib/discover-modules.nix`; module merging is order-independent
 - `desktop-config.nix` — Feature flag cascading (desktop enables media, office, etc.)
 - `defaults.nix` — Default application management
 - `keyboard.nix` — Layout normalization and XKB configuration
@@ -45,7 +52,7 @@ in
 
 ### Generic modules (`modules/generic/`)
 
-Shared modules imported by both NixOS and Home Manager `default.nix` files. These contain configuration that applies at both levels (e.g., fontconfig, git).
+Shared modules imported by the NixOS, Home Manager, and nix-darwin `default.nix` files. These contain configuration that applies at multiple levels (e.g., fontconfig, git).
 
 ## Module patterns
 
@@ -86,7 +93,7 @@ config = lib.mkIf cfg.desktop.enable {
 
 The keyboard/IME system is the most complex cross-module pattern:
 
-1. **`options.nix`** — Defines `marchyo.keyboard.layouts` accepting strings or attrsets
+1. **`options/keyboard.nix`** — Defines `marchyo.keyboard.layouts` accepting strings or attrsets
 2. **`keyboard.nix`** — Normalizes layouts (string `"us"` → `{ layout = "us"; variant = ""; ime = null; }`) and sets XKB config
 3. **`fcitx5.nix`** — Reads normalized layouts, detects IME addons needed, generates fcitx5 config
 4. **`modules/home/keyboard.nix`** — Extracts layout data into `home.keyboard` for Hyprland
@@ -96,10 +103,23 @@ The keyboard/IME system is the most complex cross-module pattern:
 
 | Input | Purpose |
 |-------|---------|
-| `nixpkgs` | NixOS unstable channel |
-| `nixos-hardware` | Hardware-specific modules |
-| `home-manager` | User environment management |
-| `stylix` | System-wide theming |
+| `nixpkgs` | Primary package set — NixOS unstable channel |
+| `nixpkgs-stable` | nixos-26.05, used only by `darwinConfigurations.x86_64` |
+| `home-manager` | User environment management (master, pairs with unstable) |
+| `home-manager-stable` | release-26.05 Home Manager for the stable darwin config |
+| `home-manager-droid` | Pinned Home Manager revision (HM 24.05) for nix-on-droid |
+| `nix-darwin` | macOS system configuration (master, pairs with unstable) |
+| `nix-darwin-stable` | nix-darwin-26.05 for the stable darwin config |
+| `stylix` | System-wide theming (master, pairs with unstable) |
+| `stylix-stable` | release-26.05 stylix for the stable darwin config |
+| `nix-on-droid` | Android terminal environment (own pinned nixpkgs) |
+| `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
 | `vicinae` | Application launcher |
-| `noctalia` | Shell configuration |
+| `noctalia` | noctalia-shell, a Wayland desktop shell |
+| `sops-nix` | Secrets management (e.g. the AI API key) |
+| `jylhis-design` | Jylhis design system — theme tokens and assets |
+| `jotain` | Jylhis's Emacs config, the default editor |
+| `llm-agents` | AI coding agents (claude-code) with the Numtide binary cache |
+| `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |
+| `wallpapper-src` | Source for the wallpapper macOS dynamic-wallpaper tool (non-flake input) |

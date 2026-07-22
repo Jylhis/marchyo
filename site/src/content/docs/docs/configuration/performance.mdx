@@ -49,8 +49,8 @@ sub-toggles (`network`, `nvme`, `memory`); the aggressive toggles (`hugePages`,
 | `marchyo.performance.tuning.network.enable` | `bool` | follows `enable` | BBR congestion control, TCP Fast Open, MTU probing, larger socket buffers |
 | `marchyo.performance.tuning.nvme.enable` | `bool` | follows `enable` | NVMe udev tuning: no-op scheduler, larger read-ahead and max request size |
 | `marchyo.performance.tuning.memory.enable` | `bool` | follows `enable` | Lower swappiness, keep FS metadata cached, byte-based dirty-page thresholds |
-| `marchyo.performance.tuning.memory.dirtyBytes` | `int` | `268435456` | `vm.dirty_bytes` (256 MiB) — synchronous writeback threshold |
-| `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `int` | `67108864` | `vm.dirty_background_bytes` (64 MiB) — background writeback threshold |
+| `marchyo.performance.tuning.memory.dirtyBytes` | `positive int` | `268435456` | `vm.dirty_bytes` (256 MiB) — synchronous writeback threshold |
+| `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `positive int` | `67108864` | `vm.dirty_background_bytes` (64 MiB) — background writeback threshold |
 | `marchyo.performance.tuning.hugePages.enable` | `bool` | `false` | 2 MiB transparent huge pages always |
 | `marchyo.performance.tuning.compute.enable` | `bool` | `false` | Relaxed PAM limits (memlock/rtprio/nofile/nproc) for trusted compute hosts |
 

@@ -66,8 +66,8 @@ import Base from '../layouts/Base.astro';
           <p class="ds-callout__label">currently</p>
           <ul class="callout-list">
             <li>tracking nixpkgs unstable (stable 26.05 on Intel macOS)</li>
-            <li>daily-driven on a ThinkPad and a Framework 13</li>
-            <li>omarchy parity: most of the way there</li>
+            <li>daily-driven on real hardware</li>
+            <li>omarchy parity: tracked in <a href="https://github.com/Jylhis/marchyo/blob/main/OMARCHY_PARITY.md">OMARCHY_PARITY.md</a></li>
           </ul>
         </div>
       </div>
@@ -80,8 +80,8 @@ import Base from '../layouts/Base.astro';
         <div class="ls__prompt">$ ls -la marchyo/</div>
         <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">desktop.enable</a>      hyprland · pipewire · fonts</div>
         <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">development.enable</a>  git · docker · qemu/kvm</div>
-        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">media.enable</a>        spotify · mpv         <span class="ls__perm">auto</span></div>
-        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">office.enable</a>       libreoffice · papers  <span class="ls__perm">auto</span></div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">media.enable</a>        obs-studio            <span class="ls__perm">auto</span></div>
+        <div><span class="ls__perm">drwxr-xr-x</span>  <a href="/docs/configuration/feature-flags/">office.enable</a>       papers · obsidian     <span class="ls__perm">auto</span></div>
       </div>
     </section>
 
@@ -154,7 +154,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
       <div class="faq">
         <details>
           <summary><span class="faq__chev">›</span> Why not just use Omarchy?</summary>
-          <p>Omarchy is Arch. I wanted the same opinionated desktop with NixOS guarantees — rollbacks, one config for every machine, and no drift. Parity status is tracked in the repo.</p>
+          <p>Omarchy is Arch. I wanted the same opinionated desktop with NixOS guarantees — rollbacks, one config for every machine, and no drift. Parity status is tracked in <a href="https://github.com/Jylhis/marchyo/blob/main/OMARCHY_PARITY.md">OMARCHY_PARITY.md</a>.</p>
         </details>
         <details>
           <summary><span class="faq__chev">›</span> Do I need my own nixpkgs input?</summary>
