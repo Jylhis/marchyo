@@ -29,7 +29,7 @@ let
 
   binds = hm: hm.wayland.windowManager.hyprland.settings.bindd or [ ];
   hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
-  hasPackage = hm: n: lib.any (p: (p.name or "") == n) hm.home.packages;
+  hasPackage = hm: n: lib.any (p: lib.getName p == n) hm.home.packages;
 in
 {
   # Desktop cascade: both toggles default on, so every script and bind lands.
