@@ -16,14 +16,30 @@ marchyo.users.myuser = {
 
 This creates a user account named `myuser` with the provided name and email configured across git and other applications.
 
+On NixOS, each Marchyo user is created as a normal user with `extraGroups = [ "wheel" "networkmanager" ]` — sudo access and NetworkManager control out of the box.
+
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.users.<name>.enable` | `bool` | `true` | Whether to apply Marchyo configuration to this user |
+| `marchyo.users.<name>.name` | `string` | attribute name | The name of the Unix user account (override to decouple it from the attribute name) |
 | `marchyo.users.<name>.fullname` | `string` | — | Full name (used in git config and applications) |
 | `marchyo.users.<name>.email` | `string` | — | Email address (used in git config and applications) |
 | `marchyo.users.<name>.uid` | `int` or `null` | `null` | Numeric user id. On NixOS sets `users.users.<name>.uid`; on macOS opts the user into declarative login-shell management (see below) |
+| `marchyo.users.<name>.wakatimeApiKeyFile` | `path` or `null` | `null` | Path to a user-readable file containing the WakaTime API key (preferred — see below) |
+| `marchyo.users.<name>.wakatimeApiKey` | `string` or `null` | `null` | WakaTime API key as a literal string — written verbatim into the world-readable Nix store; prefer `wakatimeApiKeyFile` |
+
+## WakaTime API key
+
+When `marchyo.tracking.editor.enable` is on, a per-user `~/.wakatime.cfg` is generated for editor heartbeat tracking. Supply the API key one of two ways:
+
+- **`wakatimeApiKeyFile`** (preferred) — a path to a user-readable file (e.g. a sops-nix secret like `/run/secrets/wakatime-api-key`). The key is read at Home Manager activation time and never enters the Nix store.
+- **`wakatimeApiKey`** — the key as a literal string. Also exports `WAKATIME_API_KEY`.
+
+:::caution
+  `wakatimeApiKey` is written verbatim into the Nix store, which is readable by every local user and process. Use `wakatimeApiKeyFile` to keep the secret out of the store.
+:::
 
 ## Login shell
 

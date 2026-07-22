@@ -25,16 +25,14 @@ Edit the generated configuration:
 
 - Change `networking.hostName` to your workstation name
 - Update `marchyo.users.developer` with your details
-- Adjust timezone and locale settings
-- Review and modify development tools
+- Set `marchyo.timezone` / `marchyo.defaultLocale` if the defaults
+  (`Europe/Zurich`, `en_US.UTF-8`) don't fit
+- Development tooling is a single switch — set
+  `marchyo.development.enable = false` if you don't want it
 
 ### 4. Test in a VM (optional)
 
 ```bash
-# With disko
-nix run -L '.#nixosConfigurations.workstation.config.system.build.vmWithDisko'
-
-# Without disko
 nixos-rebuild build-vm --flake .#workstation
 ./result/bin/run-workstation-vm
 ```
@@ -49,14 +47,16 @@ sudo nixos-rebuild switch --flake .#workstation
 
 ### Desktop environment
 - Hyprland (Wayland compositor) with all Marchyo customizations
-- Multiple terminal emulators (Kitty, Alacritty)
+- Ghostty terminal
 
 ### Development tools
-- **Editors** — Vim/Neovim, VS Code
+- **Editors** — jotain (Jylhis's Emacs config) by default; switch via
+  `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and
+  `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
 - **Version control** — Git with Git LFS, GitHub CLI
-- **Containers** — Docker with docker-compose, kubectl
+- **Containers** — Docker with docker-compose, buildah, skopeo, lazydocker
 - **Virtualization** — QEMU/KVM via libvirtd
-- **DevOps** — Terraform, Ansible
+- **Build & debug** — gnumake, cmake, gcc, jq/yq, nmap, tcpdump
 
 ### Terminal enhancements
 - Starship prompt
