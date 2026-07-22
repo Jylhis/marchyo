@@ -1,0 +1,109 @@
+---
+title: The marchyo CLI
+description: One control surface for the whole desktop — runtime toggles, theme switching, capture, session helpers, and declarative system management
+---
+
+Every marchyo system ships the `marchyo` CLI (`marchyo.cli.enable`, default `true`). It is the single control surface for the desktop: the Hyprland keybindings, waybar click actions, and menus all dispatch through it, and you can drive the same actions from any terminal.
+
+## The change model: runtime-first
+
+Every *mutating* desktop command follows one three-mode contract:
+
+- **default = runtime** — the change applies live (hyprctl, systemd user units, symlink swaps) and is recorded as an ephemeral override in `~/.local/state/marchyo/runtime.json`. Instant, no rebuild. Overrides survive compositor restarts (`marchyo runtime restore` runs as a Hyprland `exec-once`) but reset on the next `nixos-rebuild` activation.
+- **`--apply`** — additionally persists the change to `/etc/marchyo/cli-state.json` and runs `nixos-rebuild switch`. Survives reboot; hand-written flake configuration still wins (the sidecar merges at `lib.mkDefault` priority).
+- **`--revert`** — undoes: drops the runtime override, restores the declarative value live, and deletes + rebuilds any persisted key.
+
+Declarative-only commands (`install`, `remove`, `webapp`, `security`) have no runtime leg — they always edit the state file and rebuild.
+
+### Wiring `--apply` into your flake
+
+The marchyo flake never reads absolute paths (evaluation stays pure). To let CLI-persisted settings reach your system, read the sidecar in your own flake:
+
+```nix
+# in your flake.nix configuration module
+{
+  marchyoCliState =
+    builtins.fromJSON (builtins.readFile /etc/marchyo/cli-state.json);
+}
+```
+
+and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
+
+## Command reference
+
+### System
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo status` | Dashboard of current config + system info |
+| `marchyo rebuild [-n]` | `nixos-rebuild switch --impure --flake` against the detected flake |
+| `marchyo update [-n]` | `nix flake update` in the detected flake |
+| `marchyo upgrade [-n]` | Update inputs, then rebuild |
+| `marchyo rollback [-n]` | Switch to the previous generation |
+| `marchyo gc [--delete-older-than 14d]` | Collect Nix garbage |
+| `marchyo diff [-n]` | Diff system generations (dix) |
+| `marchyo debug` | Diagnostics bundle (versions, generation, journal errors) |
+
+### Theme & wallpaper
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo theme list` | Switchable themes (`marchyo.theme.themes`) with the active one marked |
+| `marchyo theme get` | Active theme |
+| `marchyo theme set <name> [--apply\|--revert]` | Live switch (`dark`/`light` alias the Jylhis pair) |
+| `marchyo theme next` | Cycle the manifest |
+| `marchyo bg set <path>` / `bg next` | Wallpaper set / cycle (runtime-only) |
+
+### Toggles
+
+`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu` (the last is `--apply`-only — it changes hardware configuration, persisting `marchyo.graphics.prime.enable`).
+
+### Capture
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo capture screenshot [--target area\|active\|output\|screen] [--edit]` | Screenshot (satty annotation with `--edit`) |
+| `marchyo capture record [--audio none\|desktop\|mic]` | Region recording toggle (run again to stop) |
+| `marchyo capture ocr` | Select a region, copy the recognized text |
+| `marchyo capture color` | Color picker (hex to clipboard) |
+
+### Menus, launch & session
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo menu [power]` | Central system menu / power menu (gum TUIs) |
+| `marchyo keybindings` | Searchable live keybinding cheatsheet |
+| `marchyo launch <app>` | Detached launch (`file-manager` opens at the focused terminal's cwd) |
+| `marchyo focus-or-launch <class> [cmd…]` | Focus an existing window or launch |
+| `marchyo zoom in\|out\|reset` | Cursor zoom |
+| `marchyo monitor scale-cycle\|laptop-toggle` | Monitor scale / laptop panel |
+| `marchyo lock` / `logout` / `suspend` / `hibernate` / `reboot` / `shutdown` | Session & power |
+| `marchyo powerprofile get\|list\|set <p>` | Power profiles |
+
+### Utilities
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo reminder set\|show\|clear` | Reminders on transient systemd user timers |
+| `marchyo info datetime\|battery` | Quick-info notifications |
+| `marchyo transcode [file] [--to mp4\|webm\|gif] [--ascii]` | Media transcode (ffmpeg / tte) |
+| `marchyo share [file]` | Stage content on the clipboard |
+| `marchyo font list\|current\|set <family> [--revert]` | Runtime terminal-font switch (ghostty) |
+
+### Declarative management
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo install\|remove <feature>` | Flip `marchyo.<feature>.enable` (desktop, development, media, office, dictation, webapps) + rebuild |
+| `marchyo webapp add <url> [--name --key]` / `webapp rm <name>` | Manage CLI-added PWA windows (`marchyo.webapps.extraApps`) |
+| `marchyo security enroll fido2\|fingerprint` | Enrollment (requires the matching `marchyo.security.*` flag) |
+
+### Plumbing
+
+`marchyo runtime status` lists active overrides; `marchyo runtime restore` replays them (wired at session start). `marchyo completion bash|zsh|fish|man` emits completions and the man page — installed with the package.
+
+## Standard flags & conventions
+
+`--format text|json` (or `--json`), `--color`, `--no-color`, `--plain`, `--no-animation`, `--no-input`, `-q`, `-v`. Data goes to stdout, diagnostics to stderr. Exit codes: `0` success, `1` runtime failure, `2` usage error.
+
+**Stability:** as of 1.0, command names, arguments, flags, and exit codes are frozen until 2.0 (additions allowed in 1.x). The state files (`cli-state.json`, `runtime.json`) are internal and may change between minor versions.
