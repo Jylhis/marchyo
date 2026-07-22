@@ -26,6 +26,29 @@ in
       '';
     };
 
+    themes = mkOption {
+      type = types.listOf types.str;
+      default = [
+        "jylhis-dark"
+        "jylhis-light"
+      ];
+      example = [
+        "jylhis-dark"
+        "jylhis-light"
+        "nord"
+        "gruvbox-dark-hard"
+      ];
+      description = ''
+        Themes available for runtime switching (`marchyo theme set/next`).
+        Each listed theme's desktop assets are pre-built into the system
+        closure so switching is an instant symlink swap. `jylhis-dark` and
+        `jylhis-light` are the Jylhis Design System variants; any other
+        name must match a `.yaml` file under the `base16-schemes` package
+        (e.g. "nord", "gruvbox-dark-hard"). This does not change the
+        build-time default — see `variant`/`scheme` for that.
+      '';
+    };
+
     scheme = mkOption {
       type = types.nullOr types.str;
       default = null;
