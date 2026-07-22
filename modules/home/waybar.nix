@@ -145,7 +145,10 @@ let
     }
   '';
 
-  terminal = "${pkgs.ghostty}/bin/ghostty";
+  terminal = lib.getExe pkgs.ghostty;
+  hyprctl = lib.getExe' pkgs.hyprland "hyprctl";
+  wpctl = lib.getExe' pkgs.wireplumber "wpctl";
+  voxtype = lib.getExe pkgs.voxtype;
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -200,7 +203,7 @@ in
               format = "{short}";
               tooltip-format = "{long}";
               # No-op with a single layout; cycles every keyboard otherwise.
-              on-click = "${pkgs.hyprland}/bin/hyprctl switchxkblayout all next";
+              on-click = "${hyprctl} switchxkblayout all next";
             };
             # Click actions that open a window launch it with an
             # org.omarchy.* --class so the floating-window tag rule in
@@ -210,7 +213,7 @@ in
             cpu = {
               interval = 5;
               format = "cpu {usage}%";
-              on-click = "${terminal} --class=org.omarchy.btop -e ${pkgs.btop}/bin/btop";
+              on-click = "${terminal} --class=org.omarchy.btop -e ${lib.getExe pkgs.btop}";
             };
             clock = {
               format = "{:%a %d %b · %H:%M}";
@@ -223,7 +226,9 @@ in
               format-disconnected = "offline";
               tooltip-format = "{ipaddr}  {ifname}";
               interval = 3;
-              on-click = "${terminal} --class=org.omarchy.impala -e ${pkgs.impala}/bin/impala";
+              # Wi-Fi is managed by iwd (NetworkManager's wifi.backend in
+              # modules/nixos/network.nix) — impala is an iwd frontend.
+              on-click = "${terminal} --class=org.omarchy.impala -e ${lib.getExe pkgs.impala}";
             };
             battery = {
               interval = 5;
@@ -253,7 +258,7 @@ in
               format-disabled = "bt off";
               format-connected = "bt {num_connections}";
               tooltip-format = "Devices connected: {num_connections}";
-              on-click = "${terminal} --class=org.omarchy.bluetui -e ${pkgs.bluetui}/bin/bluetui";
+              on-click = "${terminal} --class=org.omarchy.bluetui -e ${lib.getExe pkgs.bluetui}";
             };
             wireplumber = {
               format = "vol {volume}%";
@@ -261,9 +266,9 @@ in
               scroll-step = 5;
               # wiremix (not pavucontrol): the same floating mixer TUI the
               # SUPER+CTRL+A bind and the Setup menu open.
-              on-click = "${terminal} --class=org.omarchy.wiremix -e ${pkgs.wiremix}/bin/wiremix";
+              on-click = "${terminal} --class=org.omarchy.wiremix -e ${lib.getExe pkgs.wiremix}";
               tooltip-format = "Playing at {volume}%";
-              on-click-right = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+              on-click-right = "${wpctl} set-mute @DEFAULT_AUDIO_SINK@ toggle";
               max-volume = 150;
             };
             tray = {
@@ -317,7 +322,7 @@ in
             # that Waybar reads directly via return-type = "json"; the JSON's
             # class field (idle/recording/transcribing) drives the CSS above.
             "custom/voxtype" = {
-              exec = "${pkgs.voxtype}/bin/voxtype status --format json --follow --icon-theme nerd-font";
+              exec = "${voxtype} status --format json --follow --icon-theme nerd-font";
               return-type = "json";
               tooltip = true;
               # omarchy binds left/right-click to a model picker and a config
@@ -326,8 +331,8 @@ in
               # symlink), so we map the clicks to the useful equivalents: toggle
               # recording, and open the floating status window (same command and
               # --class as the Super+Shift+H bind).
-              on-click = "${pkgs.voxtype}/bin/voxtype record toggle";
-              on-click-right = "${terminal} --class=org.omarchy.voxtype -e ${pkgs.voxtype}/bin/voxtype status --follow";
+              on-click = "${voxtype} record toggle";
+              on-click-right = "${terminal} --class=org.omarchy.voxtype -e ${voxtype} status --follow";
             };
           }
         )
@@ -340,7 +345,7 @@ in
       Service = {
         ExecReload = lib.mkForce [
           ""
-          "${pkgs.systemd}/bin/systemctl --user restart waybar.service"
+          "${lib.getExe' pkgs.systemd "systemctl"} --user restart waybar.service"
         ];
       };
     };
