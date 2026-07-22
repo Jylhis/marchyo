@@ -13,9 +13,15 @@ let
     withTestUser
     ;
 
+  # The manifest text intentionally carries store-path context (it roots
+  # the theme dirs in the closure); fromJSON forbids context, so the test
+  # reader discards it first.
   manifestOf =
     cfg:
-    builtins.fromJSON cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
+    builtins.fromJSON (
+      builtins.unsafeDiscardStringContext
+        cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text
+    );
 
   evalManifest =
     themes:
