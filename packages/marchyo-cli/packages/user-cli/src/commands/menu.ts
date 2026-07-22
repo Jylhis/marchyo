@@ -28,7 +28,7 @@ import { runThemeSet } from "./theme.ts";
 
 // gum renders its UI on the tty (stderr) and prints the selection to
 // stdout — so pipe stdout only. A cancelled prompt exits non-zero.
-async function gumChoose(
+export async function gumChoose(
   header: string,
   options: string[],
 ): Promise<string | null> {
@@ -48,7 +48,51 @@ async function gumChoose(
   }
 }
 
-async function gumStyle(message: string, seconds = 2): Promise<void> {
+// Prompt for a line of input; null on cancel/empty.
+export async function gumInput(
+  prompt: string,
+  placeholder: string,
+  initial?: string,
+): Promise<string | null> {
+  try {
+    const argv = ["gum", "input", "--prompt", prompt, "--placeholder", placeholder];
+    if (initial !== undefined) argv.push("--value", initial);
+    const proc = Bun.spawn(argv, {
+      stdout: "pipe",
+      stderr: "inherit",
+      stdin: "inherit",
+    });
+    const code = await proc.exited;
+    const out = (await new Response(proc.stdout).text()).trim();
+    if (code !== 0 || out === "") return null;
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+// File/directory picker; null on cancel.
+export async function gumFile(
+  base: string,
+  directory = false,
+): Promise<string | null> {
+  try {
+    const argv = ["gum", "file", ...(directory ? ["--directory"] : []), base];
+    const proc = Bun.spawn(argv, {
+      stdout: "pipe",
+      stderr: "inherit",
+      stdin: "inherit",
+    });
+    const code = await proc.exited;
+    const out = (await new Response(proc.stdout).text()).trim();
+    if (code !== 0 || out === "") return null;
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+export async function gumStyle(message: string, seconds = 2): Promise<void> {
   await runArgv(["gum", "style", message]).catch(() => 0);
   await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }

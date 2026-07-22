@@ -49,6 +49,15 @@ import {
   runShutdown,
   runSuspend,
 } from "./commands/power.ts";
+import {
+  runInfo,
+  runReminderClear,
+  runReminderSet,
+  runReminderShow,
+  runShare,
+  runTranscode,
+} from "./commands/utilities.ts";
+import { runFontCurrent, runFontList, runFontSet } from "./commands/font.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -563,6 +572,96 @@ program
   .argument("[profile]", "power-saver | balanced | performance (for set)")
   .action(async (action: string, profile: string | undefined) => {
     process.exit(await runPowerprofile(rt(), action, profile));
+  });
+
+const reminder = program
+  .command("reminder")
+  .description("Reminders via transient systemd user timers");
+
+reminder
+  .command("set")
+  .description("Schedule a reminder (prompts via gum when args are omitted)")
+  .argument("[message]", "reminder text")
+  .argument("[delay]", "systemd time span: 10m, 2h, 1h30m…")
+  .action(async (message: string | undefined, delay: string | undefined) => {
+    process.exit(await runReminderSet(rt(), message, delay));
+  });
+
+reminder
+  .command("show")
+  .description("Show pending reminder timers and the reminder log")
+  .action(async () => {
+    process.exit(await runReminderShow(rt()));
+  });
+
+reminder
+  .command("clear")
+  .description("Cancel pending reminders and clear the log")
+  .action(async () => {
+    process.exit(await runReminderClear(rt()));
+  });
+
+program
+  .command("info")
+  .description("Quick-info notification (datetime, battery)")
+  .argument("<what>", "datetime | battery")
+  .action(async (what: string) => {
+    process.exit(await runInfo(rt(), what));
+  });
+
+program
+  .command("transcode")
+  .description("Transcode media next to the source (ffmpeg / tte)")
+  .argument("[file]", "source file (gum picker when omitted)")
+  .option("--to <fmt>", "mp4 | webm | gif (gum prompt when omitted)")
+  .option("--ascii", "Animate the file's text with tte instead")
+  .action(
+    async (file: string | undefined, opts: { to?: string; ascii?: boolean }) => {
+      process.exit(await runTranscode(rt(), file, opts));
+    },
+  )
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo transcode video.mov --to mp4
+  $ marchyo transcode notes.txt --ascii
+`,
+  );
+
+program
+  .command("share")
+  .description("Copy content or a path to the clipboard for sharing")
+  .argument("[file]", "copy this file's contents (gum menu when omitted)")
+  .action(async (file: string | undefined) => {
+    process.exit(await runShare(rt(), file));
+  });
+
+const font = program
+  .command("font")
+  .description("Terminal font: list, current, or runtime switch");
+
+font
+  .command("list")
+  .description("List installed monospace font families")
+  .action(async () => {
+    process.exit(await runFontList(rt()));
+  });
+
+font
+  .command("current")
+  .description("Show the active terminal font")
+  .action(async () => {
+    process.exit(await runFontCurrent(rt()));
+  });
+
+font
+  .command("set")
+  .description("Switch the terminal font live (ghostty override include)")
+  .argument("[family]", "font family name (omit with --revert)")
+  .option("--revert", "Back to the declarative font")
+  .action(async (family: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runFontSet(rt(), family, opts));
   });
 
 const runtime = program
