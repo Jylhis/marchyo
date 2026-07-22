@@ -9,7 +9,14 @@ import {
   type RuntimeFlags,
 } from "@marchyo/core";
 import { runStatus } from "./commands/status.tsx";
-import { runThemeGet, runThemeSet } from "./commands/theme.ts";
+import {
+  runBgNext,
+  runBgSet,
+  runThemeGet,
+  runThemeList,
+  runThemeNext,
+  runThemeSet,
+} from "./commands/theme.ts";
 import { runRebuild } from "./commands/rebuild.ts";
 import { runUpdate } from "./commands/update.ts";
 import { runUpgrade } from "./commands/upgrade.ts";
@@ -53,7 +60,8 @@ program.addHelpText(
   `
 Examples:
   $ marchyo status
-  $ marchyo theme set dark --rebuild
+  $ marchyo theme set nord
+  $ marchyo theme set dark --apply
   $ marchyo theme get --format json
   $ marchyo rebuild --dry-run
 
@@ -98,11 +106,26 @@ Examples:
 
 const theme = program
   .command("theme")
-  .description("Inspect or set the Marchyo theme variant");
+  .description("Inspect and switch Marchyo themes at runtime");
+
+theme
+  .command("list")
+  .description("List switchable themes (marchyo.theme.themes)")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo theme list
+  $ marchyo theme list --format json
+`,
+  )
+  .action(async () => {
+    process.exit(await runThemeList(rt()));
+  });
 
 theme
   .command("get")
-  .description("Print the current theme variant")
+  .description("Print the active theme")
   .addHelpText(
     "after",
     `
@@ -117,21 +140,79 @@ Examples:
 
 theme
   .command("set")
-  .description("Set the theme variant (writes the CLI state file)")
-  .argument("<variant>", "dark | light")
-  .option("--rebuild", "Run nixos-rebuild switch after writing state")
+  .description("Switch the theme live (persist with --apply)")
+  .argument("<name>", "a theme from `marchyo theme list` (dark|light = Jylhis pair)")
+  .option("--apply", "Also persist to the CLI state file and rebuild")
+  .option("--revert", "Undo: back to the declarative theme")
+  .option("--rebuild", "Deprecated alias for --apply")
+  .addHelpText(
+    "after",
+    `
+Default is a live, ephemeral switch (resets on activation). --apply
+additionally persists the selection and runs nixos-rebuild.
+
+Examples:
+  $ marchyo theme set nord
+  $ marchyo theme set dark
+  $ marchyo theme set gruvbox-dark-hard --apply
+  $ marchyo theme set nord --revert
+`,
+  )
+  .action(
+    async (
+      name: string,
+      opts: { apply?: boolean; revert?: boolean; rebuild?: boolean },
+    ) => {
+      process.exit(await runThemeSet(rt(), name, opts));
+    },
+  );
+
+theme
+  .command("next")
+  .description("Cycle to the next theme in the manifest")
+  .option("--apply", "Also persist to the CLI state file and rebuild")
   .addHelpText(
     "after",
     `
 Examples:
-  $ marchyo theme set dark
-  $ sudo marchyo theme set light --rebuild
+  $ marchyo theme next
 `,
   )
-  .action(async (variant: string, opts: { rebuild?: boolean }) => {
-    process.exit(
-      await runThemeSet(rt(), variant, { rebuild: opts.rebuild ?? false }),
-    );
+  .action(async (opts: { apply?: boolean }) => {
+    process.exit(await runThemeNext(rt(), opts));
+  });
+
+const bg = program
+  .command("bg")
+  .description("Set or cycle the wallpaper (runtime-only)");
+
+bg.command("set")
+  .description("Set the wallpaper to an image file")
+  .argument("[path]", "image file (omit with --revert)")
+  .option("--revert", "Back to the active theme's wallpaper")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bg set ~/Pictures/wall.png
+  $ marchyo bg set --revert
+`,
+  )
+  .action(async (path: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runBgSet(rt(), path ?? "", opts));
+  });
+
+bg.command("next")
+  .description("Cycle through the wallpaper package's images")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bg next
+`,
+  )
+  .action(async () => {
+    process.exit(await runBgNext(rt()));
   });
 
 program
