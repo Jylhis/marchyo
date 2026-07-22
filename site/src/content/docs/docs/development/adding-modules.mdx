@@ -32,42 +32,55 @@ in
 }
 ```
 
-### 3. Register the import
+### 3. No import registration needed (usually)
 
-Add the file to the corresponding `default.nix`:
+`modules/nixos/` and `modules/home/` are auto-discovered via `lib/discover-modules.nix` — every `.nix` file in the directory (plus any subdirectory containing a `default.nix`) is imported automatically, so adding a module is a one-file change.
+
+The one hand-curated exception is `modules/darwin/default.nix`: it holds a curated darwin-safe subset (Wayland/systemd/desktop modules are NixOS-only), so darwin modules must be added to its import list manually:
 
 ```nix
-# modules/nixos/default.nix
+# modules/darwin/default.nix
 {
   imports = [
-    ./my-feature.nix
-    # ... other imports
+    # ... existing imports
+    ./my-darwin-feature.nix
   ];
 }
 ```
 
 ### 4. Define options
 
-Add any new options to `modules/nixos/options.nix` under the `marchyo.*` namespace:
+Add any new options in a file under the `modules/nixos/options/` directory (one file per logical namespace, auto-discovered — use an existing namespace file or create a new one) declaring `options.marchyo.<namespace>`:
 
 ```nix
-myFeature = {
-  enable = mkOption {
-    type = types.bool;
-    default = false;
-    description = "Enable my feature";
+# modules/nixos/options/my-feature.nix
+{ lib, ... }:
+{
+  options.marchyo.myFeature = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable my feature";
+    };
   };
-};
+}
 ```
 
 ### 5. Add a test
 
-Add an evaluation test in `tests/module-tests.nix`:
+Add an evaluation test in `tests/eval/<feature>.nix` (auto-discovered) — each file is a function receiving the shared helpers and returning an attrset of named tests:
 
 ```nix
-eval-my-feature = testNixOS "my-feature" (withTestUser {
-  marchyo.myFeature.enable = true;
-});
+# tests/eval/my-feature.nix
+{ helpers, ... }:
+let
+  inherit (helpers) testNixOS withTestUser;
+in
+{
+  eval-my-feature = testNixOS "my-feature" (withTestUser {
+    marchyo.myFeature.enable = true;
+  });
+}
 ```
 
 ## Home Manager modules
@@ -91,5 +104,5 @@ in
 - **Use `lib.mkIf`** for feature-gated configuration blocks
 - **Use `lib.mkDefault`** for values consumers should be able to override
 - **Use `lib.mkMerge`** when a module has multiple conditional branches
-- **Define all options in `options.nix`** — never define `marchyo.*` options in individual modules
+- **Define all options under `modules/nixos/options/`** (one file per namespace) — never define `marchyo.*` options in individual modules
 - **Add a test** for every new feature flag

@@ -29,7 +29,7 @@ Find your GPU with: `lspci | grep -E 'VGA|3D'`
 | `"amd"` | AMD GPUs (integrated or discrete) |
 | `"nvidia"` | NVIDIA discrete GPUs |
 
-When `vendors` is empty (default), Intel packages are applied on x86_64 for backward compatibility.
+When `vendors` is empty (default), Intel packages are applied on x86_64 for backward compatibility. If `vendors` is left empty while `marchyo.desktop.enable = true`, evaluation emits a warning telling you to set `vendors` explicitly (e.g. `["nvidia"]` or `["amd"]`).
 
 ## NVIDIA options
 
@@ -87,6 +87,16 @@ Run `lspci | grep -E 'VGA|3D'` and convert hex bus IDs to the `PCI:bus:device:fu
 | `"offload"` | On-demand rendering (default). Power efficient — use `nvidia-offload <command>` to run apps on the discrete GPU. |
 | `"sync"` | Always use discrete GPU. Best performance but more power consumption. |
 | `"reverse-sync"` | iGPU for display, dGPU for compute. |
+
+### PRIME requirements
+
+Enabling PRIME is validated with assertions — the build fails with a clear
+message if any of these are not met:
+
+- `vendors` must contain `"nvidia"` **and** an iGPU vendor (`"intel"` or `"amd"`)
+- `prime.nvidiaBusId` must be set
+- `prime.intelBusId` must be set when `"intel"` is in `vendors`
+- `prime.amdgpuBusId` must be set when `"amd"` is the iGPU (i.e. `"amd"` in `vendors` without `"intel"`)
 
 ## Examples
 
