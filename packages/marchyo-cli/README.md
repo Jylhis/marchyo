@@ -65,14 +65,16 @@ they always take the `--apply` route (edit `cli-state.json`, then rebuild).
 | `marchyo`    | `theme get`                              | Print current theme variant                |
 | `marchyo`    | `theme set <dark\|light> [--rebuild]`    | Persist theme variant; optionally rebuild  |
 | `marchyo`    | `rebuild [-n,--dry-run]`                 | `nixos-rebuild switch --impure --flake`    |
+| `marchyo`    | `update` / `upgrade` / `rollback` / `gc` / `diff` / `debug` | Declarative system management (see #121)   |
+| `marchyo`    | `runtime status`                         | List active ephemeral runtime overrides    |
+| `marchyo`    | `runtime restore`                        | Re-apply overrides (wired as Hyprland exec-once) |
 | `marchyoctl` | `scaffold module <name>`                 | New module + import + stub eval test       |
 | `marchyoctl` | `options search <q>`                     | Fuzzy-search `marchyo.*` option tree (TUI) |
 
-### Planned (omarchy-parity roadmap — see repo `plan.md` Phase 3)
+### Planned (CLI 1.0 — see `docs/superpowers/plans/2026-07-22-cli-1.0-plan.md`)
 
 | Group        | Commands                                                                 |
 |--------------|--------------------------------------------------------------------------|
-| System       | `upgrade`, `update`, `rollback`, `gc`, `diff`, `debug`                    |
 | Theme        | `list`, `set <name> [--apply]`, `next`, `bg set\|next` (full runtime switch) |
 | Toggle       | `gaps`/`transparency`/`nightlight`/`waybar`/`touchpad`/`touchscreen`/`idle`/`screensaver`/`notifications`/`suspend`/`hybrid-gpu` `[on\|off] [--apply] [--revert]` |
 | Capture      | `screenshot`, `record [--audio none\|desktop\|mic]`, `ocr`, `color`      |

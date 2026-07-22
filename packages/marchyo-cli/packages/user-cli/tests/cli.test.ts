@@ -226,6 +226,68 @@ test("debug text output survives missing system tools", async () => {
   expect(r.stdout).toContain("CLI version:     0.1.0");
 });
 
+// A fresh XDG_STATE_HOME so runtime-override reads/writes never touch real
+// state. Mirrors flakeFixture's isolation approach.
+function stateFixture(): { dir: string; env: Record<string, string> } {
+  const dir = `/tmp/marchyo-cli-test-state-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  Bun.spawnSync(["mkdir", "-p", dir]);
+  return { dir, env: { XDG_STATE_HOME: dir, XDG_CONFIG_HOME: `${dir}/xdg` } };
+}
+
+test("runtime status with no overrides prints the empty notice", async () => {
+  const { env } = stateFixture();
+  const r = await run(["runtime", "status"], env);
+  expect(r.code).toBe(0);
+  expect(r.stdout).toContain("(no runtime overrides)");
+});
+
+test("runtime status --json lists stored overrides", async () => {
+  const { dir, env } = stateFixture();
+  await Bun.write(
+    `${dir}/marchyo/runtime.json`,
+    JSON.stringify({
+      schemaVersion: 1,
+      overrides: { "toggle.nightlight": true },
+    }) + "\n",
+  );
+  const r = await run(["runtime", "status", "--json"], env);
+  expect(r.code).toBe(0);
+  const parsed = JSON.parse(r.stdout);
+  expect(parsed.overrides).toEqual([
+    { key: "toggle.nightlight", value: true },
+  ]);
+});
+
+test("runtime restore with no overrides is a quiet no-op", async () => {
+  const { env } = stateFixture();
+  const r = await run(["runtime", "restore"], env);
+  expect(r.code).toBe(0);
+  expect(r.stderr).toContain("no runtime overrides to restore");
+});
+
+test("runtime restore skips unknown override keys with a warning", async () => {
+  const { dir, env } = stateFixture();
+  await Bun.write(
+    `${dir}/marchyo/runtime.json`,
+    JSON.stringify({
+      schemaVersion: 1,
+      overrides: { "no.such.key": "x" },
+    }) + "\n",
+  );
+  const r = await run(["runtime", "restore"], env);
+  expect(r.code).toBe(0);
+  expect(r.stderr).toContain("no handler registered");
+  expect(r.stderr).toContain("restored 0/1");
+});
+
+test("runtime restore ignores a corrupt runtime.json with a warning", async () => {
+  const { dir, env } = stateFixture();
+  await Bun.write(`${dir}/marchyo/runtime.json`, "{corrupt");
+  const r = await run(["runtime", "restore"], env);
+  expect(r.code).toBe(0);
+  expect(r.stderr).toContain("ignoring invalid runtime state");
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
