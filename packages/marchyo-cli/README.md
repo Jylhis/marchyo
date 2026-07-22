@@ -57,31 +57,27 @@ they always take the `--apply` route (edit `cli-state.json`, then rebuild).
 
 ## Commands
 
-### Implemented today
+### The 1.0 surface (frozen)
 
-| Binary       | Command                                  | Purpose                                    |
-|--------------|------------------------------------------|--------------------------------------------|
-| `marchyo`    | `status`                                 | Ink dashboard of current config + system   |
-| `marchyo`    | `theme get`                              | Print current theme variant                |
-| `marchyo`    | `theme set <dark\|light> [--rebuild]`    | Persist theme variant; optionally rebuild  |
-| `marchyo`    | `rebuild [-n,--dry-run]`                 | `nixos-rebuild switch --impure --flake`    |
-| `marchyo`    | `update` / `upgrade` / `rollback` / `gc` / `diff` / `debug` | Declarative system management (see #121)   |
-| `marchyo`    | `runtime status`                         | List active ephemeral runtime overrides    |
-| `marchyo`    | `runtime restore`                        | Re-apply overrides (wired as Hyprland exec-once) |
-| `marchyoctl` | `scaffold module <name>`                 | New module + import + stub eval test       |
-| `marchyoctl` | `options search <q>`                     | Fuzzy-search `marchyo.*` option tree (TUI) |
+As of 1.0, command names, arguments, flags, and exit codes are **stable
+until 2.0** (additions allowed in 1.x; renames/removals are not). The
+contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.ts`).
 
-### Planned (CLI 1.0 — see `docs/superpowers/plans/2026-07-22-cli-1.0-plan.md`)
+| Group       | Commands |
+|-------------|----------|
+| System      | `status`, `rebuild`, `update`, `upgrade`, `rollback`, `gc`, `diff`, `debug` |
+| Theme       | `theme list\|get\|set <name>\|next`, `bg set\|next` (`dark`/`light` alias the Jylhis pair; `--rebuild` is a deprecated alias for `--apply`) |
+| Toggle      | `toggle <name> [on\|off] [--status\|--apply\|--revert]` — gaps, transparency, nightlight, waybar, touchpad, touchscreen, idle, screensaver, notifications, suspend, hybrid-gpu (`--apply`-only) |
+| Capture     | `capture screenshot [--target …] [--edit]`, `capture record [--audio …]`, `capture ocr`, `capture color` |
+| Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle` |
+| Power       | `lock`, `logout`, `suspend`, `hibernate`, `reboot`, `shutdown`, `powerprofile get\|list\|set` |
+| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [file]`, `font list\|current\|set` |
+| Declarative | `install\|remove <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
+| Plumbing    | `runtime status\|restore`, `completion bash\|zsh\|fish\|man` |
 
-| Group        | Commands                                                                 |
-|--------------|--------------------------------------------------------------------------|
-| Theme        | `list`, `set <name> [--apply]`, `next`, `bg set\|next` (full runtime switch) |
-| Toggle       | `gaps`/`transparency`/`nightlight`/`waybar`/`touchpad`/`touchscreen`/`idle`/`screensaver`/`notifications`/`suspend`/`hybrid-gpu` `[on\|off] [--apply] [--revert]` |
-| Capture      | `screenshot`, `record [--audio none\|desktop\|mic]`, `ocr`, `color`      |
-| Menu         | `menu`, `keybindings`, `launch <app>`, `focus-or-launch <app>`           |
-| Power        | `lock`, `logout`, `reboot`, `shutdown`, `suspend`, `powerprofile get\|list\|set` |
-| Media/font   | `transcode <file> [--ascii]`, `font list\|current\|set`                  |
-| Declarative  | `install\|remove <feature>`, `toggle <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
+`marchyoctl` (dev shell only): `scaffold module <name>`, `options search <q>`.
+
+Full reference with examples: https://marchyo.org/docs/usage/cli/
 
 ## Standard flags (both binaries)
 

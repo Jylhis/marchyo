@@ -8,6 +8,18 @@ machinery — there is no bespoke updater or "update channel" to manage. Every
 `nixos-rebuild switch` builds a new **generation** you can boot back into if
 something breaks.
 
+## The short way: the marchyo CLI
+
+The [marchyo CLI](/docs/usage/cli/) wraps the whole loop:
+
+```bash
+marchyo update      # nix flake update in your flake
+marchyo upgrade     # update inputs, then rebuild
+marchyo rollback    # switch back to the previous generation
+marchyo gc          # collect old generations (default: older than 14d)
+marchyo diff        # what changed between generations
+```
+
 ## Update your system
 
 Bump the pinned inputs (including `marchyo` itself), then rebuild:
