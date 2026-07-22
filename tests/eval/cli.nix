@@ -1,6 +1,6 @@
-{ helpers, ... }:
+{ helpers, lib, ... }:
 let
-  inherit (helpers) testNixOS withTestUser;
+  inherit (helpers) testNixOS testNixOSCheck withTestUser;
 in
 {
   # CLI module: defaults to enabled, installs `marchyo` system-wide.
@@ -19,4 +19,32 @@ in
       theme.variant = "light";
     };
   });
+
+  # With desktop + cli enabled (both default true for cli), the Hyprland
+  # session restores CLI runtime overrides at startup.
+  eval-cli-runtime-restore =
+    testNixOSCheck "cli-runtime-restore"
+      (
+        cfg:
+        builtins.any (
+          e: lib.hasInfix "marchyo runtime restore" (toString e)
+        ) cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
+  # cli.enable = false must also drop the exec-once entry.
+  eval-cli-disabled-no-restore =
+    testNixOSCheck "cli-disabled-no-restore"
+      (
+        cfg:
+        !(builtins.any (
+          e: lib.hasInfix "marchyo runtime restore" (toString e)
+        ) cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once)
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.cli.enable = false;
+      });
 }
