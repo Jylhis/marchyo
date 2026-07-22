@@ -52,7 +52,7 @@ in
       throw "FAIL: waybar click actions missing a floating --class: ${toString (lib.attrNames badClicks)}"
     else if unruled != [ ] then
       throw "FAIL: no floating-window rule covers waybar popup class: ${toString unruled}"
-    else if !(lib.hasInfix "marchyo-power-menu" waybar.battery.on-click) then
+    else if !(lib.hasInfix "marchyo menu power" waybar.battery.on-click) then
       throw "FAIL: battery click should open the power menu"
     else if !(lib.hasInfix "switchxkblayout" (waybar."hyprland/language".on-click or "")) then
       throw "FAIL: language click should cycle keyboard layouts"

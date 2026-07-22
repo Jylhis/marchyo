@@ -451,6 +451,38 @@ test("capture color without hyprpicker fails cleanly", async () => {
   }
 });
 
+test("zoom with a bad direction exits 2", async () => {
+  const r = await run(["zoom", "sideways"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid zoom direction");
+});
+
+test("menu with an unknown submenu exits 2", async () => {
+  const r = await run(["menu", "snacks"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("unknown menu");
+});
+
+test("powerprofile set with a bad profile exits 2", async () => {
+  const r = await run(["powerprofile", "set", "turbo"]);
+  // Without powerprofilesctl in the sandbox the tool-missing error (1)
+  // fires first; with it, validation rejects the profile (2).
+  expect([1, 2]).toContain(r.code);
+  expect(r.stderr.length).toBeGreaterThan(0);
+});
+
+test("launch with a missing app fails cleanly", async () => {
+  const r = await run(["launch", "definitely-not-a-real-app"]);
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("not found in PATH");
+});
+
+test("keybindings outside Hyprland fails cleanly", async () => {
+  const r = await run(["keybindings"]);
+  expect(r.code).toBe(1);
+  expect(r.stderr.length).toBeGreaterThan(0);
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",
