@@ -12,6 +12,10 @@ let
   # whole module is inert, so consumers no longer need to `disabledModules` it.
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
+  # The marchyo CLI persists ephemeral runtime overrides (theme/toggle
+  # changes made without --apply); restore them at session start.
+  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
+
   # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
   isPrimeOffload =
@@ -555,6 +559,9 @@ in
         ++ lib.optionals wallpaperEnabled [
           "${pkgs.awww}/bin/awww-daemon --format xrgb"
           "${setWallpaper}"
+        ]
+        ++ lib.optionals cliEnabled [
+          "marchyo runtime restore"
         ];
       };
     };

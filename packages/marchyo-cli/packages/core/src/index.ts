@@ -5,3 +5,6 @@ export * from "./options-eval.ts";
 export * from "./system.ts";
 export * from "./runtime.ts";
 export * from "./output.ts";
+export * from "./runtime-state.ts";
+export * from "./desktop.ts";
+export * from "./apply.ts";

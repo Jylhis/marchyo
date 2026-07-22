@@ -17,6 +17,7 @@ import { runRollback } from "./commands/rollback.ts";
 import { runGc } from "./commands/gc.ts";
 import { runDiff } from "./commands/diff.ts";
 import { runDebug } from "./commands/debug.ts";
+import { runRuntimeRestore, runRuntimeStatus } from "./commands/runtime.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -258,6 +259,46 @@ Examples:
   )
   .action(async () => {
     process.exit(await runDebug(rt()));
+  });
+
+const runtime = program
+  .command("runtime")
+  .description("Inspect or re-apply ephemeral runtime overrides");
+
+runtime
+  .command("status")
+  .description("List active runtime overrides")
+  .addHelpText(
+    "after",
+    `
+Overrides are live changes made by mutating marchyo commands without
+--apply. They reset on nixos-rebuild activation.
+
+Examples:
+  $ marchyo runtime status
+  $ marchyo runtime status --format json
+`,
+  )
+  .action(async () => {
+    process.exit(await runRuntimeStatus(rt()));
+  });
+
+runtime
+  .command("restore")
+  .description("Re-apply stored runtime overrides (used at session start)")
+  .addHelpText(
+    "after",
+    `
+Idempotent and best-effort; unknown or failing overrides are skipped
+with a warning. Wired as a Hyprland exec-once so overrides survive
+compositor restarts within a system generation.
+
+Examples:
+  $ marchyo runtime restore
+`,
+  )
+  .action(async () => {
+    process.exit(await runRuntimeRestore(rt()));
   });
 
 await program.parseAsync(process.argv);
