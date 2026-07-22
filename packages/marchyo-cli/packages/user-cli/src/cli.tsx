@@ -65,6 +65,7 @@ import {
   runWebappAdd,
   runWebappRm,
 } from "./commands/declarative.ts";
+import { runCompletion } from "./commands/completion.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -769,6 +770,14 @@ Examples:
   )
   .action(async () => {
     process.exit(await runRuntimeRestore(rt()));
+  });
+
+program
+  .command("completion")
+  .description("Emit shell completions or the man page (generated from the live command tree)")
+  .argument("<target>", "bash | zsh | fish | man")
+  .action(async (target: string) => {
+    process.exit(await runCompletion(rt(), program, target, VERSION));
   });
 
 await program.parseAsync(process.argv);

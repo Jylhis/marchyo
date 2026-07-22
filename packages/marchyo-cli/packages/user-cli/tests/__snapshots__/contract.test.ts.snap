@@ -1,0 +1,330 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`help contract: marchyo (root) 1`] = `
+"Usage: marchyo [options] [command]
+
+Marchyo user CLI — inspect and manage your Marchyo install
+
+Options:
+  -V, --version                         output the version number
+  -F, --format <fmt>                    output format (text | json) (default:
+                                        "text")
+  --json                                alias for --format json
+  --color <when>                        color usage (choices: "auto", "always",
+                                        "never", default: "auto")
+  --no-color                            disable color (alias for --color=never)
+  --plain                               strip color, glyphs, and animation
+                                        (a11y mode)
+  --no-animation                        disable spinners and progress animation
+  --no-input                            disable interactive prompts (also
+                                        auto-set under CI=1)
+  -q, --quiet                           suppress non-error output
+  -v, --verbose                         increase verbosity (repeatable; also
+                                        bumped by MARCHYO_DEBUG=1)
+  -h, --help                            display help for command
+
+Commands:
+  status                                Show current Marchyo configuration and
+                                        system info
+  theme                                 Inspect and switch Marchyo themes at
+                                        runtime
+  bg                                    Set or cycle the wallpaper
+                                        (runtime-only)
+  rebuild [options]                     Run nixos-rebuild switch against the
+                                        detected flake
+  update [options]                      Update flake inputs (nix flake update)
+                                        in the detected flake
+  upgrade [options]                     Update flake inputs, then nixos-rebuild
+                                        switch
+  rollback [options]                    Switch back to the previous system
+                                        generation
+  gc [options]                          Collect Nix garbage (old generations
+                                        and unreferenced paths)
+  diff [options]                        Show what changed between system
+                                        generations (via dix)
+  debug                                 Print a diagnostics bundle (versions,
+                                        generation, journal errors)
+  toggle [options] <name> [state]       Flip a desktop toggle live (gaps,
+                                        nightlight, waybar, …)
+  capture                               Screenshots, screen recording, OCR, and
+                                        color picking
+  menu [submenu]                        Open the central system menu (gum TUI)
+  keybindings                           Searchable Hyprland keybinding cheat
+                                        sheet (fzf)
+  launch <app> [args...]                Launch an app detached (file-manager
+                                        opens at the focused cwd)
+  focus-or-launch <class> [command...]  Focus a window by class, or launch the
+                                        command
+  zoom <direction>                      Step the cursor zoom factor
+  monitor                               Monitor helpers (scale cycling, laptop
+                                        panel)
+  lock                                  Lock the screen (hyprlock, detached)
+  logout                                End the session cleanly (uwsm → hyprctl
+                                        exit → loginctl)
+  suspend                               Suspend the system
+  hibernate                             Hibernate the system
+  reboot                                Reboot the system
+  shutdown                              Power the system off
+  powerprofile <action> [profile]       Get, list, or set the power profile
+  reminder                              Reminders via transient systemd user
+                                        timers
+  info <what>                           Quick-info notification (datetime,
+                                        battery)
+  transcode [options] [file]            Transcode media next to the source
+                                        (ffmpeg / tte)
+  share [file]                          Copy content or a path to the clipboard
+                                        for sharing
+  font                                  Terminal font: list, current, or
+                                        runtime switch
+  install [options] <feature>           Enable a marchyo feature declaratively
+                                        (state + rebuild)
+  remove [options] <feature>            Disable a marchyo feature declaratively
+                                        (state + rebuild)
+  webapp                                Manage CLI-added web apps (PWA windows)
+  security                              Security enrollment helpers
+  runtime                               Inspect or re-apply ephemeral runtime
+                                        overrides
+  completion <target>                   Emit shell completions or the man page
+                                        (generated from the live command tree)
+  help [command]                        display help for command
+
+Examples:
+  $ marchyo status
+  $ marchyo theme set nord
+  $ marchyo theme set dark --apply
+  $ marchyo theme get --format json
+  $ marchyo rebuild --dry-run
+
+Color: honors NO_COLOR, CLICOLOR_FORCE, FORCE_COLOR, --color, --no-color.
+       --plain is a stronger a11y switch (no color, no glyphs, no animation).
+
+"
+`;
+
+exports[`help contract: marchyo theme 1`] = `
+"Usage: marchyo theme [options] [command]
+
+Inspect and switch Marchyo themes at runtime
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  list                  List switchable themes (marchyo.theme.themes)
+  get                   Print the active theme
+  set [options] <name>  Switch the theme live (persist with --apply)
+  next [options]        Cycle to the next theme in the manifest
+  help [command]        display help for command
+"
+`;
+
+exports[`help contract: marchyo bg 1`] = `
+"Usage: marchyo bg [options] [command]
+
+Set or cycle the wallpaper (runtime-only)
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  set [options] [path]  Set the wallpaper to an image file
+  next                  Cycle through the wallpaper package's images
+  help [command]        display help for command
+"
+`;
+
+exports[`help contract: marchyo toggle 1`] = `
+"Usage: marchyo toggle [options] <name> [state]
+
+Flip a desktop toggle live (gaps, nightlight, waybar, …)
+
+Arguments:
+  name        gaps | transparency | nightlight | waybar | touchpad |
+              touchscreen | idle | screensaver | notifications | suspend |
+              hybrid-gpu
+  state       on | off (omit to flip)
+
+Options:
+  --apply     Also persist declaratively and rebuild (hybrid-gpu only)
+  --revert    Undo: back to the declarative default
+  --status    Print the current state instead of toggling
+  -h, --help  display help for command
+
+Toggles are live and ephemeral (reset on activation); hybrid-gpu is
+--apply-only. --status is scriptable (used by the waybar indicator).
+
+Examples:
+  $ marchyo toggle nightlight
+  $ marchyo toggle notifications off
+  $ marchyo toggle waybar --status
+  $ marchyo toggle hybrid-gpu on --apply
+
+"
+`;
+
+exports[`help contract: marchyo capture 1`] = `
+"Usage: marchyo capture [options] [command]
+
+Screenshots, screen recording, OCR, and color picking
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  screenshot [options]  Take a screenshot (grimblast)
+  record [options]      Toggle region screen recording (gpu-screen-recorder)
+  ocr                   Select a region, OCR it, copy the text to the clipboard
+  color                 Pick a color from the screen (hex to clipboard)
+  help [command]        display help for command
+"
+`;
+
+exports[`help contract: marchyo menu 1`] = `
+"Usage: marchyo menu [options] [submenu]
+
+Open the central system menu (gum TUI)
+
+Arguments:
+  submenu     power (the power/session menu)
+
+Options:
+  -h, --help  display help for command
+"
+`;
+
+exports[`help contract: marchyo monitor 1`] = `
+"Usage: marchyo monitor [options] [command]
+
+Monitor helpers (scale cycling, laptop panel)
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  scale-cycle     Cycle the focused monitor's scale (1 → 1.25 → … → 2 → 1)
+  laptop-toggle   Toggle the built-in laptop panel (eDP*) on/off
+  help [command]  display help for command
+"
+`;
+
+exports[`help contract: marchyo reminder 1`] = `
+"Usage: marchyo reminder [options] [command]
+
+Reminders via transient systemd user timers
+
+Options:
+  -h, --help             display help for command
+
+Commands:
+  set [message] [delay]  Schedule a reminder (prompts via gum when args are
+                         omitted)
+  show                   Show pending reminder timers and the reminder log
+  clear                  Cancel pending reminders and clear the log
+  help [command]         display help for command
+"
+`;
+
+exports[`help contract: marchyo font 1`] = `
+"Usage: marchyo font [options] [command]
+
+Terminal font: list, current, or runtime switch
+
+Options:
+  -h, --help              display help for command
+
+Commands:
+  list                    List installed monospace font families
+  current                 Show the active terminal font
+  set [options] [family]  Switch the terminal font live (ghostty override
+                          include)
+  help [command]          display help for command
+"
+`;
+
+exports[`help contract: marchyo webapp 1`] = `
+"Usage: marchyo webapp [options] [command]
+
+Manage CLI-added web apps (PWA windows)
+
+Options:
+  -h, --help           display help for command
+
+Commands:
+  add [options] <url>  Register a site as a standalone app window
+  rm [options] <name>  Remove a CLI-added web app
+  help [command]       display help for command
+"
+`;
+
+exports[`help contract: marchyo security 1`] = `
+"Usage: marchyo security [options] [command]
+
+Security enrollment helpers
+
+Options:
+  -h, --help       display help for command
+
+Commands:
+  enroll <method>  Enroll a FIDO2 key or a fingerprint
+  help [command]   display help for command
+"
+`;
+
+exports[`help contract: marchyo runtime 1`] = `
+"Usage: marchyo runtime [options] [command]
+
+Inspect or re-apply ephemeral runtime overrides
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  status          List active runtime overrides
+  restore         Re-apply stored runtime overrides (used at session start)
+  help [command]  display help for command
+"
+`;
+
+exports[`help contract: marchyo completion 1`] = `
+"Usage: marchyo completion [options] <target>
+
+Emit shell completions or the man page (generated from the live command tree)
+
+Arguments:
+  target      bash | zsh | fish | man
+
+Options:
+  -h, --help  display help for command
+"
+`;
+
+exports[`json contract: theme get shape 1`] = `
+[
+  ".theme.name:null",
+  ".theme.variant:null",
+]
+`;
+
+exports[`json contract: runtime status shape 1`] = `
+[
+  ".overrides[]",
+]
+`;
+
+exports[`json contract: toggle --status shape 1`] = `
+[
+  ".toggle.name:string",
+  ".toggle.on:boolean",
+]
+`;
+
+exports[`json contract: debug shape 1`] = `
+[
+  ".cliVersion:string",
+  ".flake:null",
+  ".generation:null",
+  ".generationDate:null",
+  ".journalErrors[]:string",
+  ".nixosVersion:null",
+]
+`;
