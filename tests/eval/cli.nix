@@ -34,6 +34,29 @@ in
         marchyo.desktop.enable = true;
       });
 
+  # marchyoCliState can append CLI-managed webapps additively: extraApps
+  # entries land in the generated launcher set without replacing the
+  # default marchyo.webapps.apps list.
+  eval-cli-webapp-extra =
+    testNixOSCheck "cli-webapp-extra"
+      (
+        cfg:
+        let
+          apps = cfg.marchyo.webapps.apps ++ cfg.marchyo.webapps.extraApps;
+        in
+        builtins.any (a: a.name == "Figma") apps && builtins.any (a: a.name == "GitHub") apps
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyoCliState.webapps.extraApps = [
+          {
+            name = "Figma";
+            url = "https://figma.com/";
+            key = "F";
+          }
+        ];
+      });
+
   # cli.enable = false must also drop the exec-once entry.
   eval-cli-disabled-no-restore =
     testNixOSCheck "cli-disabled-no-restore"

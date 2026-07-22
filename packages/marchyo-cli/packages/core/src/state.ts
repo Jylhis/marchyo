@@ -35,6 +35,32 @@ export const StateSchema = z
           .optional(),
       })
       .optional(),
+    // Coarse feature flags (marchyo install/remove <feature>).
+    desktop: z.object({ enable: z.boolean().optional() }).optional(),
+    development: z.object({ enable: z.boolean().optional() }).optional(),
+    media: z.object({ enable: z.boolean().optional() }).optional(),
+    office: z.object({ enable: z.boolean().optional() }).optional(),
+    dictation: z.object({ enable: z.boolean().optional() }).optional(),
+    webapps: z
+      .object({
+        enable: z.boolean().optional(),
+        // Additive PWA list (marchyo webapp add/rm) — maps to
+        // marchyo.webapps.extraApps so the default set is never replaced.
+        extraApps: z
+          .array(
+            z
+              .object({
+                name: z.string(),
+                url: z.string(),
+                icon: z.string().optional(),
+                key: z.string().optional(),
+                modifiers: z.string().optional(),
+              })
+              .strict(),
+          )
+          .optional(),
+      })
+      .optional(),
     _flake: z
       .object({
         path: z.string().optional(),
@@ -88,6 +114,9 @@ export function mergeState(prev: State, patch: State): State {
   }
   if (prev.graphics || patch.graphics) {
     merged.graphics = { ...prev.graphics, ...patch.graphics };
+  }
+  if (prev.webapps || patch.webapps) {
+    merged.webapps = { ...prev.webapps, ...patch.webapps };
   }
   if (prev._flake || patch._flake) {
     merged._flake = { ...prev._flake, ...patch._flake };
