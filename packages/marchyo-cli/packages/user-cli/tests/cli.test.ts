@@ -421,6 +421,36 @@ test("toggle nightlight --revert clears the override", async () => {
   expect(JSON.parse(r.stdout).overrides).toEqual([]);
 });
 
+test("capture screenshot with an invalid target exits 2", async () => {
+  const r = await run(["capture", "screenshot", "--target", "moon"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid target");
+});
+
+test("capture record with an invalid audio source exits 2", async () => {
+  const r = await run(["capture", "record", "--audio", "vinyl"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("invalid audio source");
+});
+
+test("capture screenshot without grimblast fails cleanly", async () => {
+  // The sandbox has no desktop tools; the command must error (exit 1),
+  // not crash, and name the missing tool.
+  const r = await run(["capture", "screenshot"]);
+  if (r.code !== 0) {
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("grimblast");
+  }
+});
+
+test("capture color without hyprpicker fails cleanly", async () => {
+  const r = await run(["capture", "color"]);
+  if (r.code !== 0) {
+    expect(r.code).toBe(1);
+    expect(r.stderr).toContain("hyprpicker");
+  }
+});
+
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
   const r = await run(["status", "--color", "always"], {
     NO_COLOR: "",

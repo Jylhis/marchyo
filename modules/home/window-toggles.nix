@@ -33,44 +33,21 @@ let
     '';
   };
 
-  # Nightlight, idle-lock, and notification-DND toggles were absorbed into
-  # the marchyo CLI (`marchyo toggle nightlight|idle|notifications`,
-  # packages/marchyo-cli user-cli/src/toggles.ts) — same actuation commands,
-  # state now tracked as CLI runtime overrides.
-
-  # Screen recording: toggle gpu-screen-recorder on a slurp-selected region.
-  # SIGINT finalizes the mp4. Files land in ~/Videos/Recordings.
-  marchyo-screenrecord-toggle = pkgs.writeShellApplication {
-    name = "marchyo-screenrecord-toggle";
-    runtimeInputs = [
-      pkgs.gpu-screen-recorder
-      pkgs.slurp
-      pkgs.libnotify
-      pkgs.procps
-      pkgs.coreutils
-    ];
-    text = ''
-      recdir="$HOME/Videos/Recordings"
-      # Match the full command line: the kernel truncates the process comm to
-      # 15 chars ("gpu-screen-reco"), so -x on the 19-char name never matches.
-      if pgrep -f gpu-screen-recorder >/dev/null; then
-        pkill -INT -f gpu-screen-recorder
-        notify-send -u low -a marchyo "Screen recording" "Saved to $recdir"
-      else
-        region=$(slurp -f "%wx%h+%x+%y") || exit 0
-        mkdir -p "$recdir"
-        out="$recdir/$(date +%Y-%m-%d_%H-%M-%S).mp4"
-        notify-send -u low -a marchyo "Screen recording" "Recording started"
-        gpu-screen-recorder -w region -region "$region" -f 60 -o "$out" &
-      fi
-    '';
-  };
+  # Nightlight, idle-lock, notification-DND, and screen-recording toggles
+  # were absorbed into the marchyo CLI (`marchyo toggle …` /
+  # `marchyo capture record`, packages/marchyo-cli) — same actuation
+  # commands, state now tracked as CLI runtime overrides / live probes.
+  # The recorder/notify tools the CLI drives stay installed here.
 in
 {
   config = lib.mkIf desktopEnabled {
     home.packages = [
       marchyo-zoom
-      marchyo-screenrecord-toggle
+      # Tools `marchyo capture record` drives (the CLI shells out to them).
+      pkgs.gpu-screen-recorder
+      pkgs.slurp
+      pkgs.libnotify
+      pkgs.procps
     ];
 
     # Merges with the bindd lists from hyprland.nix / screenshot.nix /

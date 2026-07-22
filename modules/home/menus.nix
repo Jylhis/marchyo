@@ -106,11 +106,11 @@ let
                 exit 0
                 ;;
               "Screen record")
-                detach "marchyo-screenrecord-toggle"
+                detach "marchyo capture record"
                 exit 0
                 ;;
               "Color pick")
-                detach "hyprpicker -a"
+                detach "marchyo capture color"
                 exit 0
                 ;;
             esac

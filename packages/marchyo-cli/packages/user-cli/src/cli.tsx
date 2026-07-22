@@ -26,6 +26,12 @@ import { runDiff } from "./commands/diff.ts";
 import { runDebug } from "./commands/debug.ts";
 import { runRuntimeRestore, runRuntimeStatus } from "./commands/runtime.ts";
 import { runToggle } from "./commands/toggle.ts";
+import {
+  runCaptureColor,
+  runCaptureOcr,
+  runCaptureRecord,
+  runCaptureScreenshot,
+} from "./commands/capture.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -376,6 +382,61 @@ Examples:
       process.exit(await runToggle(rt(), name, state, opts));
     },
   );
+
+const capture = program
+  .command("capture")
+  .description("Screenshots, screen recording, OCR, and color picking");
+
+capture
+  .command("screenshot")
+  .description("Take a screenshot (grimblast)")
+  .option("--target <t>", "area | active | output | screen", "area")
+  .option("--edit", "Annotate in satty before saving")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo capture screenshot
+  $ marchyo capture screenshot --target output
+  $ marchyo capture screenshot --edit
+`,
+  )
+  .action(async (opts: { target?: string; edit?: boolean }) => {
+    process.exit(await runCaptureScreenshot(rt(), opts));
+  });
+
+capture
+  .command("record")
+  .description("Toggle region screen recording (gpu-screen-recorder)")
+  .option("--audio <src>", "none | desktop | mic", "none")
+  .addHelpText(
+    "after",
+    `
+First invocation selects a region and starts recording; the next stops
+and finalizes the mp4 in ~/Videos/Recordings.
+
+Examples:
+  $ marchyo capture record
+  $ marchyo capture record --audio desktop
+`,
+  )
+  .action(async (opts: { audio?: string }) => {
+    process.exit(await runCaptureRecord(rt(), opts));
+  });
+
+capture
+  .command("ocr")
+  .description("Select a region, OCR it, copy the text to the clipboard")
+  .action(async () => {
+    process.exit(await runCaptureOcr(rt()));
+  });
+
+capture
+  .command("color")
+  .description("Pick a color from the screen (hex to clipboard)")
+  .action(async () => {
+    process.exit(await runCaptureColor(rt()));
+  });
 
 const runtime = program
   .command("runtime")
