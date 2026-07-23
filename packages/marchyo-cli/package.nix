@@ -25,7 +25,7 @@ let
     installPhase = ''
       runHook preInstall
       mkdir -p $out
-      cp -r node_modules $out/
+      cp -r --reflink=auto node_modules $out/
       runHook postInstall
     '';
     outputHashMode = "recursive";
@@ -42,7 +42,7 @@ stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
-    cp -r ${nodeModules}/node_modules ./node_modules
+    cp -r --reflink=auto ${nodeModules}/node_modules ./node_modules
     chmod -R u+w ./node_modules
     export HOME="$NIX_BUILD_TOP"
 
