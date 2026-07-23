@@ -1,4 +1,4 @@
-{ options, ... }:
+{ lib, pkgs, options, ... }:
 let
   # Shared aliases for bash and zsh. Both NixOS and Home Manager expose
   # programs.{bash,zsh}.shellAliases, so this file stays platform-agnostic.
@@ -18,6 +18,13 @@ let
     gcm = "git commit -m";
     gcam = "git commit -a -m";
     gcad = "git commit -a --amend";
+  }
+  // lib.optionalAttrs pkgs.stdenv.isLinux {
+    # Always prefer copy-on-write (reflink) copies where the filesystem
+    # supports them (btrfs, xfs, ...); `=auto` transparently falls back to a
+    # full copy elsewhere, so this is always safe. GNU coreutils only —
+    # macOS ships BSD cp (no --reflink), so this is gated to Linux.
+    cp = "cp --reflink=auto";
   };
   hasBashAliases =
     options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;

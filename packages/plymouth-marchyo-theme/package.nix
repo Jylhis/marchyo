@@ -95,9 +95,9 @@ stdenvNoCC.mkDerivation {
 
     theme=$out/share/plymouth/themes/marchyo
     mkdir -p "$theme"
-    cp -r share/plymouth/themes/marchyo/* "$theme"/
+    cp -r --reflink=auto share/plymouth/themes/marchyo/* "$theme"/
 
-    cp marchyo.plymouth marchyo.script "$theme"/
+    cp --reflink=auto marchyo.plymouth marchyo.script "$theme"/
     substituteInPlace "$theme/marchyo.plymouth" \
       --replace-fail "@bgHex@" "${bgHex}"
     substituteInPlace "$theme/marchyo.script" \

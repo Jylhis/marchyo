@@ -47,6 +47,23 @@ in
     hm.programs.bash.enable && (hm.programs.bash.shellAliases ? g) && hm.programs.starship.enable
   ) (withTestUser { });
 
+  # On Linux the shared aliases default `cp` to reflink (copy-on-write) copies
+  # via GNU coreutils' --reflink=auto (generic/shell.nix).
+  eval-shell-cp-reflink = testNixOSCheck "shell-cp-reflink" (
+    cfg:
+    let
+      hm = cfg.home-manager.users.testuser;
+    in
+    (hm.programs.bash.shellAliases.cp or "") == "cp --reflink=auto"
+    && (hm.programs.zsh.shellAliases.cp or "") == "cp --reflink=auto"
+  ) (withTestUser { });
+
+  # The reflink alias is GNU-only, so it must NOT leak onto darwin, whose
+  # interactive shell resolves to BSD cp (no --reflink flag).
+  eval-shell-darwin-no-cp-reflink = testDarwinCheck "shell-darwin-no-cp-reflink" (
+    cfg: !(cfg.home-manager.users.testuser.programs.bash.shellAliases ? cp)
+  ) (withDarwinTestUser { });
+
   # marchyo.users.<name>.uid flows into users.users.<name>.uid on NixOS.
   eval-shell-user-uid =
     testNixOSCheck "shell-user-uid" (cfg: cfg.users.users.seconduser.uid == 1501)

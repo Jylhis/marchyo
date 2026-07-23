@@ -28,7 +28,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/lib/pi"
-    cp -r . "$out/lib/pi/"
+    cp -r --reflink=auto . "$out/lib/pi/"
     makeWrapper ${lib.getExe nodejs} "$out/bin/pi" \
       --add-flags "$out/lib/pi/dist/cli.js"
     runHook postInstall
