@@ -1,4 +1,9 @@
-{ lib, pkgs, options, ... }:
+{
+  lib,
+  pkgs,
+  options,
+  ...
+}:
 let
   # Shared aliases for bash and zsh. Both NixOS and Home Manager expose
   # programs.{bash,zsh}.shellAliases, so this file stays platform-agnostic.
