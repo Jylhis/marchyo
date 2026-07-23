@@ -14,10 +14,12 @@
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/literata": "^5.2.8",
     "astro": "^7.1.1",
+    "fuse.js": "^7.1.0",
     "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@cloudflare/workers-types": "^4.20260101.0",
     "typescript": "^5.9",
     "wrangler": "^4.112.0"
   }
