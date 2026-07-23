@@ -46,6 +46,13 @@ in
       }
 
       (lib.mkIf cfg.enable {
+        # Stylix populates home.pointerCursor.{name,package,size} (see
+        # modules/generic/stylix.nix) but not its enable flag. Recent
+        # home-manager deprecates relying on those sub-options to trigger
+        # cursor config generation, so opt in explicitly (gated on the same
+        # theme.enable that gates stylix). mkDefault lets a consumer override.
+        home.pointerCursor.enable = lib.mkDefault true;
+
         # mako is themed by modules/home/mako.nix (TUI override); starship is
         # configured cross-platform in modules/home/starship.nix.
         gtk = {
