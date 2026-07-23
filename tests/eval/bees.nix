@@ -43,9 +43,9 @@ in
       });
 
   # Off by default: no beesd filesystems configured.
-  eval-bees-disabled =
-    testNixOSCheck "bees-disabled" (cfg: (cfg.services.beesd.filesystems or { }) == { })
-      (withTestUser { });
+  eval-bees-disabled = testNixOSCheck "bees-disabled" (
+    cfg: (cfg.services.beesd.filesystems or { }) == { }
+  ) (withTestUser { });
 
   # Enabling without any filesystem trips the assertion.
   eval-bees-no-filesystem =
