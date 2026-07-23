@@ -22,7 +22,9 @@ let
   # Always prefer copy-on-write (reflink) copies where the filesystem supports
   # them (btrfs, xfs, ...); `=auto` falls back to a full copy elsewhere, so it
   # is always safe. GNU coreutils only — macOS ships BSD cp (no --reflink).
-  cpAlias = lib.optionalAttrs pkgs.stdenv.isLinux { cp = "cp --reflink=auto"; };
+  cpAlias = lib.optionalAttrs pkgs.stdenv.isLinux {
+    cp = "cp --reflink=auto";
+  };
   shellAliases = baseAliases // cpAlias;
   hasBashAliases =
     options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;
