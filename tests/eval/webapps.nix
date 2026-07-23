@@ -27,6 +27,12 @@ let
   entries = hm: hm.xdg.desktopEntries or { };
   binds = hm: hm.wayland.windowManager.hyprland.settings.bindd or [ ];
   hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
+
+  # Mirror the browser default from modules/nixos/defaults.nix: google-chrome is
+  # x86_64-only on Linux, so non-x86_64 platforms fall back to chromium. The
+  # webapps launch command follows marchyo.defaults.browser, so the expected
+  # bind string is arch-dependent.
+  browser = if pkgs.stdenv.hostPlatform.isx86_64 then "google-chrome" else "chromium";
 in
 {
   # Webapps ride the desktop cascade (default-on): a plain desktop config gets a
@@ -42,14 +48,14 @@ in
         chatgpt != null
         && lib.hasInfix "--app=https://chatgpt.com/" chatgpt.exec
         && hasBind hm "SUPER SHIFT, A, ChatGPT, exec, "
-        && hasBind hm "SUPER SHIFT, A, ChatGPT, exec, google-chrome --app=https://chatgpt.com/"
+        && hasBind hm "SUPER SHIFT, A, ChatGPT, exec, ${browser} --app=https://chatgpt.com/"
         # Discord declares no key -> .desktop entry present but no bind.
         && (entries hm) ? "marchyo-webapp-discord"
         && !(hasBind hm "Discord")
         # Parity round-out: X and Google Photos ship with binds...
         && (entries hm) ? "marchyo-webapp-x"
-        && hasBind hm "SUPER SHIFT, X, X, exec, google-chrome --app=https://x.com/"
-        && hasBind hm "SUPER SHIFT, P, Google Photos, exec, google-chrome --app=https://photos.google.com/"
+        && hasBind hm "SUPER SHIFT, X, X, exec, ${browser} --app=https://x.com/"
+        && hasBind hm "SUPER SHIFT, P, Google Photos, exec, ${browser} --app=https://photos.google.com/"
         # ...Google Calendar and Gmail are entries only (no key).
         && (entries hm) ? "marchyo-webapp-google-calendar"
         && (entries hm) ? "marchyo-webapp-gmail"
