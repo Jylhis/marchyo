@@ -30,18 +30,24 @@ in
         else
           palette.base16;
 
+      # Jylhis Design System v2 ("The Survey") three-role type stack:
+      # display/headings = Zilla Slab, body = Hanken Grotesk, mono = IBM Plex
+      # Mono. Stylix only has serif/sansSerif/monospace, so the slab display
+      # face lands on `serif` and the grotesque body face on `sansSerif`.
+      # Monospace uses the Nerd Font patch of IBM Plex Mono ("BlexMono"), which
+      # marchyo's desktop chrome (waybar, mako, hyprlock) needs for glyphs.
       fonts = {
         serif = {
-          package = pkgs.literata;
-          name = "Literata";
+          package = pkgs.zilla-slab;
+          name = "Zilla Slab";
         };
         sansSerif = {
-          package = pkgs.liberation_ttf;
-          name = "Liberation Sans";
+          package = pkgs.hanken-grotesk;
+          name = "Hanken Grotesk";
         };
         monospace = {
-          package = pkgs.nerd-fonts.jetbrains-mono;
-          name = "JetBrainsMono Nerd Font";
+          package = pkgs.nerd-fonts.blex-mono;
+          name = "BlexMono Nerd Font";
         };
       };
     }

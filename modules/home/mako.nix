@@ -27,7 +27,7 @@ in
     services.mako = {
       enable = true;
       settings = {
-        font = "JetBrainsMono Nerd Font 10";
+        font = "BlexMono Nerd Font 10";
         anchor = "top-right";
         margin = "10";
         border-radius = 0;

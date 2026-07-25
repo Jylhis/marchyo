@@ -19,7 +19,7 @@ let
   color = name: tokens.palette.${name}.${key};
 
   # Semantic role -> token mapping for the splash surfaces.
-  logoColor = color "brand"; # copper wordmark (large brand mark)
+  logoColor = color "brand"; # benchmark-vermilion wordmark (large brand mark)
   entryColor = color "border-strong"; # password field outline
   lockColor = color "text-muted"; # padlock glyph
   bulletColor = color "text"; # password bullets
@@ -72,8 +72,8 @@ stdenvNoCC.mkDerivation {
     theme=share/plymouth/themes/marchyo
     mkdir -p "$theme"
 
-    # Logo: rasterize the reordered "marchyo" wordmark (logo.svg) in brand
-    # copper at the same 800x188 the old static PNG shipped at.
+    # Logo: rasterize the reordered "marchyo" wordmark (logo.svg) in the brand
+    # mark color at the same 800x188 the old static PNG shipped at.
     sed 's/@fill@/${logoColor}/' logo.svg > marchyo-logo.svg
     resvg --width 800 marchyo-logo.svg "$theme/logo.png"
 

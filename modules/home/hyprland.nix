@@ -592,7 +592,7 @@ in
         mimeo
 
         # Fonts
-        nerd-fonts.jetbrains-mono
+        nerd-fonts.blex-mono
         nerd-fonts.caskaydia-cove
 
         # Utilities

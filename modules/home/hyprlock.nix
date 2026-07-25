@@ -58,7 +58,7 @@ in
           text_align = "center";
           color = rgba palette.hex.text "ff";
           font_size = 24;
-          font_family = "JetBrainsMono Nerd Font";
+          font_family = "BlexMono Nerd Font";
           position = "0, -100";
           halign = "center";
           valign = "center";
@@ -78,7 +78,7 @@ in
           check_color = rgba palette.hex.accent "ff";
           fail_color = rgba palette.hex."status-err" "ff";
 
-          font_family = "JetBrainsMono Nerd Font";
+          font_family = "BlexMono Nerd Font";
           font_size = 32;
 
           placeholder_text = "  Enter Password";

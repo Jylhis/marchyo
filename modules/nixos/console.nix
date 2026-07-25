@@ -5,7 +5,7 @@
 #   - Any visible TTY (Ctrl+Alt+F2..F6, or the brief flash before greetd) uses
 #     the brand palette.
 #   - tuigreet (configured in boot.nix) inherits these colors via its --theme
-#     CLI argument, which uses ANSI slot names (yellow/copper, etc.).
+#     CLI argument, which uses ANSI slot names (yellow/bright-yellow, etc.).
 #
 # We use `palette.tty16` rather than `palette.ansi16`: slots 0/7/15 are taken
 # from the semantic palette (bg / text / text-heading) instead of the raw

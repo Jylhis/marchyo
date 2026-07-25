@@ -92,7 +92,7 @@ export async function runFontSet(
   const mode = parseChangeFlags(rt, { revert: opts.revert });
   if (mode === 2) return 2;
   if (mode !== "revert" && (family === undefined || family === "")) {
-    return usageError(rt, "font set needs a font family", "marchyo font set 'JetBrainsMono Nerd Font'");
+    return usageError(rt, "font set needs a font family", "marchyo font set 'BlexMono Nerd Font'");
   }
   if (mode !== "revert") {
     // Warn (not fail) when fontconfig doesn't know the family — the user
