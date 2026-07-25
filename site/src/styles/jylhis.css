@@ -3,57 +3,70 @@
  *
  * Combines the design system's tokens, typography, motion signature and
  * component styles into one entry point for the landing + search pages.
- * Colour/spacing tokens are the source-of-truth values from tokens.json;
- * only the font-family stacks are adapted to the self-hosted @fontsource
- * variable families ("Literata Variable" / "JetBrains Mono Variable"),
- * which each page imports before this file.
+ * Colour/spacing tokens are the source-of-truth values from tokens.json
+ * (v2, "The Survey"); only the font-family stacks are adapted to the
+ * self-hosted @fontsource families ("Zilla Slab" / "Hanken Grotesk Variable"
+ * / "IBM Plex Mono"), which each page imports before this file.
  */
 
 /* ── Tokens (generated from tokens.json) ─────────────────── */
 
-/* Light theme (Jylhis Paper) — default */
+/* Light theme (Jylhis Paper — the Sheet) — default */
 :root {
   /* Background */
-  --color-bg: #faf7f2;
-  --color-bg-subtle: #f0ebe3;
+  --color-bg: #f6f8fb;
+  --color-bg-subtle: #eef2f6;
   /* Surface */
-  --color-surface: #e8e1d6;
-  --color-surface-raised: #fefdfb;
+  --color-surface: #e6ecf1;
+  --color-surface-raised: #fcfdff;
   /* Text */
-  --color-text: #2c2825;
-  --color-text-muted: #6b5f54;
-  --color-text-heading: #1e1b18;
-  --color-text-faint: #8a7f72;
+  --color-text: #23262e;
+  --color-text-muted: #565a63;
+  --color-text-heading: #12141a;
+  --color-text-faint: #878c95;
   /* Accent */
-  --color-accent: #9a5a2a;
-  --color-accent-hover: #7a4622;
-  --color-brand: #b5703c;
+  --color-accent: #8a4d00;
+  --color-accent-hover: #a75f0a;
+  --color-brand: #b5450e;
+  --color-selection-bg: #ece0cf;
+  --color-cursor: #8a4d00;
   /* Borders */
-  --color-border: #d5cec4;
-  --color-border-strong: #b0a898;
-  --color-decorator: #c4baa8;
+  --color-border: #cfd6de;
+  --color-border-strong: #aab4c0;
+  --color-decorator: #7f8fb5;
+  --color-contour: #2f4fb0;
   /* Code */
-  --color-code-bg: #f0ebe3;
-  --color-code-text: #2c2825;
-  --color-code-border: #d5cec4;
+  --color-code-bg: #eef2f6;
+  --color-code-text: #23262e;
+  --color-code-border: #cfd6de;
   /* Syntax */
-  --color-syntax-keyword: #4a2d80;
-  --color-syntax-string: #3d5a1f;
-  --color-syntax-number: #1f4d8a;
-  --color-syntax-function: #8a2348;
-  --color-syntax-builtin: #6f1f6a;
-  --color-syntax-type: #134a4a;
-  --color-syntax-variable: #2a4a6a;
-  --color-syntax-comment: #7e6c4d;
+  --color-syntax-keyword: #5317ac;
+  --color-syntax-string: #2544bb;
+  --color-syntax-number: #0031a9;
+  --color-syntax-function: #721045;
+  --color-syntax-builtin: #8f0075;
+  --color-syntax-type: #005a5f;
+  --color-syntax-variable: #0044aa;
+  --color-syntax-comment: #595959;
   --color-syntax-docstring: #2a5a3a;
-  --color-syntax-tag: #134a4a;
+  --color-syntax-tag: #005a5f;
   /* Status */
   --color-status-err: #a60000;
-  --color-status-warn: #6f5500;
+  --color-status-warn: #8a5000;
   --color-status-ok: #006800;
-  --color-status-info: #0031a9;
-  --color-accent-subtle: rgba(154, 90, 42, 0.12);
+  --color-status-info: #005e8b;
+  /* Foreground pairs */
+  --color-accent-foreground: #f6f8fb;
+  --color-accent-hover-foreground: #f6f8fb;
+  --color-brand-foreground: #f6f8fb;
+  --color-bg-subtle-foreground: #23262e;
+  --color-surface-foreground: #23262e;
+  --color-surface-raised-foreground: #23262e;
+  --color-selection-bg-foreground: #23262e;
+  --color-accent-subtle: rgba(138, 77, 0, 0.12);
+  --color-scrim: rgba(20, 23, 30, 0.4);
   /* Spacing */
+  --space-2xs: 0.125rem;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
@@ -71,61 +84,94 @@
   --radius-sm: 3px;
   --radius-md: 4px;
   --radius-pill: 999px;
+  /* Border widths */
+  --border-hairline: 1px;
+  --border-focus: 2px;
+  --border-marker: 3px;
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
   --transition-base: 250ms cubic-bezier(0.2, 0.6, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-spring: 420ms cubic-bezier(0.34, 1.25, 0.64, 1);
+  --transition-spring: 480ms cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  /* Font stacks — self-hosted variable fonts via @fontsource */
-  --font-body: "Literata Variable", Charter, "Bitstream Charter", Georgia, "Noto Serif", serif;
-  --font-mono: "JetBrains Mono Variable", "IBM Plex Mono", "Cascadia Code", "Fira Code", "Source Code Pro", "Courier New", monospace;
-  --font-heading: var(--font-mono); /* headings are MONOSPACE — important */
-  --font-size-base: 1.125rem;
+  /* Font stacks — self-hosted @fontsource families.
+     v2 is a three-role stack: slab display, grotesque body, mono chrome. */
+  --font-display: "Zilla Slab", "Roboto Slab", Rockwell, Georgia, serif;
+  --font-body: "Hanken Grotesk Variable", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-heading: var(--font-display); /* headings are the SLAB display face */
+  --font-size-base: 1.0625rem;
+  /* Type scale */
+  --type-scale-0: 3.25rem;
+  --type-scale-1: 2rem;
+  --type-scale-2: 1.4rem;
+  --type-scale-3: 1.15rem;
+  --type-scale-4: 1.0625rem;
+  --type-scale-5: 0.95rem;
+  --type-scale-6: 0.85rem;
+  --type-scale-7: 0.8rem;
+  --type-scale-8: 0.75rem;
+  --type-scale-9: 0.72rem;
+  /* Focus ring */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--color-accent);
 }
 
-/* Dark theme (Jylhis Roast) */
+/* Dark theme (Jylhis Roast — the Field) */
 :root[data-theme="dark"] {
   /* Background */
-  --color-bg: #1a1714;
-  --color-bg-subtle: #242019;
+  --color-bg: #0d0f14;
+  --color-bg-subtle: #14171e;
   /* Surface */
-  --color-surface: #2a2520;
-  --color-surface-raised: #363230;
+  --color-surface: #1b1f28;
+  --color-surface-raised: #232833;
   /* Text */
-  --color-text: #e8e0d4;
-  --color-text-muted: #b0a496;
-  --color-text-heading: #f0eae0;
-  --color-text-faint: #8a7f72;
+  --color-text: #d6dae2;
+  --color-text-muted: #9aa0ab;
+  --color-text-heading: #f2f4f8;
+  --color-text-faint: #656b76;
   /* Accent */
-  --color-accent: #e89b5e;
-  --color-accent-hover: #f5b07a;
-  --color-brand: #d4884a;
+  --color-accent: #e0a33a;
+  --color-accent-hover: #f0b95c;
+  --color-brand: #ef8a4a;
+  --color-selection-bg: #3a2f1c;
+  --color-cursor: #e0a33a;
   /* Borders */
-  --color-border: #3d3830;
-  --color-border-strong: #5a5248;
-  --color-decorator: #4a4338;
+  --color-border: #2b303b;
+  --color-border-strong: #3a4150;
+  --color-decorator: #39415a;
+  --color-contour: #6f9be0;
   /* Code */
-  --color-code-bg: #242019;
-  --color-code-text: #c8bca8;
-  --color-code-border: #3d3830;
+  --color-code-bg: #14171e;
+  --color-code-text: #d6dae2;
+  --color-code-border: #2b303b;
   /* Syntax */
-  --color-syntax-keyword: #c8a5ff;
-  --color-syntax-string: #b3c785;
-  --color-syntax-number: #a8b4dc;
-  --color-syntax-function: #f0a8c3;
-  --color-syntax-builtin: #e3a0d8;
-  --color-syntax-type: #80c8b3;
-  --color-syntax-variable: #95b3cc;
-  --color-syntax-comment: #9c8c6e;
-  --color-syntax-docstring: #9bbf9b;
-  --color-syntax-tag: #80c8b3;
+  --color-syntax-keyword: #b6a0ff;
+  --color-syntax-string: #79a8ff;
+  --color-syntax-number: #79bbff;
+  --color-syntax-function: #feacd0;
+  --color-syntax-builtin: #f78fe7;
+  --color-syntax-type: #6ae4b9;
+  --color-syntax-variable: #00d3d0;
+  --color-syntax-comment: #9a9a9a;
+  --color-syntax-docstring: #88ca9f;
+  --color-syntax-tag: #6ae4b9;
   /* Status */
-  --color-status-err: #ff5f59;
-  --color-status-warn: #d0bc00;
-  --color-status-ok: #44bc44;
-  --color-status-info: #2fafff;
-  --color-accent-subtle: rgba(232, 155, 94, 0.15);
+  --color-status-err: #f0685f;
+  --color-status-warn: #d9b34a;
+  --color-status-ok: #6bbf6b;
+  --color-status-info: #5fb8cf;
+  /* Foreground pairs */
+  --color-accent-foreground: #0d0f14;
+  --color-accent-hover-foreground: #0d0f14;
+  --color-brand-foreground: #0d0f14;
+  --color-bg-subtle-foreground: #d6dae2;
+  --color-surface-foreground: #d6dae2;
+  --color-surface-raised-foreground: #d6dae2;
+  --color-selection-bg-foreground: #d6dae2;
+  --color-accent-subtle: rgba(224, 163, 58, 0.15);
+  --color-scrim: rgba(5, 6, 10, 0.55);
 }
 
 /* ── Base + typography ──────────────────────────────────── */
@@ -138,9 +184,8 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 1.125rem;
-  line-height: 1.65;
-  font-variant-numeric: oldstyle-nums;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
   text-wrap: pretty;
   transition: background-color 0.3s ease-out, color 0.3s ease-out;
 }
@@ -148,19 +193,31 @@ body {
   body { font-size: 1rem; }
 }
 
-h1, h2, h3, h4 {
+/* Display title — the slab plate title. Only h1 sits in Zilla Slab. */
+h1 {
   font-family: var(--font-heading);
-  line-height: 1.25;
-  letter-spacing: 0.01em;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
   color: var(--color-text-heading);
   text-wrap: balance;
 }
 
-/* Mono chrome keeps lining figures */
+/* Sub-headings — grotesk (Hanken) at a heavier weight, so a second display
+   face is not needed below the plate title. */
+h2, h3, h4 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--color-text-heading);
+  text-wrap: balance;
+}
+
+/* Headings and mono chrome keep lining figures */
 h1, h2, h3, h4,
 code, pre, kbd, samp { font-variant-numeric: lining-nums; }
 
-/* Links — copper, the single interactive colour, with the drawn underline */
+/* Links — the bronze accent, the single interactive colour, with the drawn underline */
 a {
   color: var(--color-accent);
   text-decoration: none;

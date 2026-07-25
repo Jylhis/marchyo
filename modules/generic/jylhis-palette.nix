@@ -10,10 +10,16 @@
 #                inheriting it stay readable in both Paper and Roast variants.
 #                Mirrors the override done in the upstream design generator
 #                (scripts/generate.mjs) for jylhis-{paper,roast}.nix.
-#   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use
+#   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
+#                Merges palette + status + syntax, so every token the design
+#                system adds shows up here without a change to this file —
+#                e.g. v2's `contour` (structural blue linework, never used for
+#                interaction) is reachable as `palette.hex.contour`.
 #   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
 # Source of truth: ${pkgs.jylhis-design-src}/tokens.json (tracked via flake.lock).
+# Tracks design system v2 ("The Survey"): cool Sheet/Field grounds, a bronze
+# interactive `accent`, and a benchmark-vermilion `brand` mark.
 {
   pkgs,
   lib,

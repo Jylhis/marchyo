@@ -5,10 +5,13 @@
       {
         fonts.fontconfig = {
           enable = true;
+          # Mirrors the Jylhis Design System v2 type roles (see
+          # modules/generic/stylix.nix): Zilla Slab display, Hanken Grotesk
+          # body, IBM Plex Mono (Nerd Font patch) mono.
           defaultFonts = {
-            serif = [ "Literata" ];
-            sansSerif = [ "Liberation Sans" ];
-            monospace = [ "JetBrainsMono Nerd Font" ];
+            serif = [ "Zilla Slab" ];
+            sansSerif = [ "Hanken Grotesk" ];
+            monospace = [ "BlexMono Nerd Font" ];
           };
         };
       }

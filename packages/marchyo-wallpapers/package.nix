@@ -22,7 +22,7 @@ let
           <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
             <path d="M 48 0 H 0 V 48" fill="none" stroke="${color "decorator" mode}" stroke-opacity="${gridOpacity}" stroke-width="1"/>
           </pattern>
-          <radialGradient id="copper-vignette" cx="50%" cy="18%" r="72%">
+          <radialGradient id="accent-vignette" cx="50%" cy="18%" r="72%">
             <stop offset="0%" stop-color="${color "accent" mode}" stop-opacity="${vignetteOpacity}"/>
             <stop offset="60%" stop-color="${color "accent" mode}" stop-opacity="0"/>
             <stop offset="100%" stop-color="${color "accent" mode}" stop-opacity="0"/>
@@ -30,7 +30,7 @@ let
         </defs>
         <rect width="3840" height="2160" fill="${color "bg" mode}"/>
         <rect width="3840" height="2160" fill="url(#grid)"/>
-        <rect width="3840" height="2160" fill="url(#copper-vignette)"/>
+        <rect width="3840" height="2160" fill="url(#accent-vignette)"/>
       </svg>
     '';
 

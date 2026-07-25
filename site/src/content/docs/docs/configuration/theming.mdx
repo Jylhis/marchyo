@@ -31,8 +31,13 @@ By default the theme is the [Jylhis Design System](https://github.com/jylhis/des
 
 | Variant | Palette |
 |---------|---------|
-| `"dark"` | Jylhis Roast |
-| `"light"` | Jylhis Paper |
+| `"dark"` | Jylhis Roast — the Field |
+| `"light"` | Jylhis Paper — the Sheet |
+
+Both variants sit on a cool, near-neutral ground with a single bronze
+interactive accent, a benchmark-vermilion brand mark, and a structural contour
+blue used for linework only. Code colors are Emacs Modus Operandi (light) /
+Vivendi (dark), so syntax reads identically in every editor and terminal.
 
 To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file shipped by the `base16-schemes` package:
 
@@ -40,6 +45,28 @@ To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name
 marchyo.theme = {
   variant = "dark";
   scheme = "gruvbox-dark-medium"; # any base16-schemes name, e.g. "nord"
+};
+```
+
+## Fonts
+
+Stylix carries the design system's three type roles across the system. The
+defaults are:
+
+| Role | Family | Package |
+|------|--------|---------|
+| Display / headings (`serif`) | Zilla Slab | `pkgs.zilla-slab` |
+| Body (`sansSerif`) | Hanken Grotesk | `pkgs.hanken-grotesk` |
+| Monospace | BlexMono Nerd Font (IBM Plex Mono, Nerd Font patched) | `pkgs.nerd-fonts.blex-mono` |
+
+The Nerd Font patch of IBM Plex Mono is used for monospace because the desktop
+chrome — Waybar, Mako, hyprlock, Ghostty — needs the icon glyphs. To use a
+different stack, set the Stylix font options directly:
+
+```nix
+stylix.fonts.monospace = {
+  package = pkgs.nerd-fonts.jetbrains-mono;
+  name = "JetBrainsMono Nerd Font";
 };
 ```
 
