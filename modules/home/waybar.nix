@@ -87,7 +87,7 @@ let
     /* tmux-style TUI statusline — square segments, monospace, inverse active */
     * {
       border-radius: 0;
-      font-family: "JetBrainsMono Nerd Font", monospace;
+      font-family: "BlexMono Nerd Font", "IBM Plex Mono", monospace;
     }
 
     /* tmux session label */

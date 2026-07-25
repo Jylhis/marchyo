@@ -117,7 +117,7 @@ in
 
     settings = {
       theme = ghosttyTheme;
-      font-family = "JetBrainsMono Nerd Font";
+      font-family = "BlexMono Nerd Font";
       window-padding-x = 8;
       window-padding-y = 8;
       cursor-style = "block";
