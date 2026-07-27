@@ -61,6 +61,19 @@ in
       '';
     };
 
+    fontScale = mkOption {
+      type = types.numbers.between 0.5 4.0;
+      default = 1.25;
+      example = 1.0;
+      description = ''
+        Global font-size multiplier applied system-wide. Scales every text
+        surface (Stylix applications/terminal/desktop/popups, the terminal,
+        waybar, notifications, the lock screen, the launcher, GTK apps and the
+        TTY console) from a single number. 1.0 restores the historical sizes;
+        values above 1.0 make everything larger for HiDPI/accessibility.
+      '';
+    };
+
     wallpaper = {
       enable = mkOption {
         type = types.bool;

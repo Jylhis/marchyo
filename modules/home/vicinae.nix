@@ -6,6 +6,11 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale;
+  };
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -20,7 +25,7 @@ in
         };
 
         font = {
-          size = 14;
+          size = fs.round 14;
         };
       };
     };

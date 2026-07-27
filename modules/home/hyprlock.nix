@@ -16,6 +16,12 @@ let
     variant = themeVariant;
   };
 
+  fontScale = if cfg != null then cfg.fontScale else 1.0;
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale;
+  };
+
   hexNoHash = lib.removePrefix "#";
   rgba = h: a: "rgba(${hexNoHash h}${a})";
 in
@@ -57,7 +63,7 @@ in
           text = "$FPRINTPROMPT";
           text_align = "center";
           color = rgba palette.hex.text "ff";
-          font_size = 24;
+          font_size = fs.round 24;
           font_family = "BlexMono Nerd Font";
           position = "0, -100";
           halign = "center";
@@ -79,7 +85,7 @@ in
           fail_color = rgba palette.hex."status-err" "ff";
 
           font_family = "BlexMono Nerd Font";
-          font_size = 32;
+          font_size = fs.round 32;
 
           placeholder_text = "  Enter Password";
           fail_text = "<i>$PAMFAIL ($ATTEMPTS)</i>";

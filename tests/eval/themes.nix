@@ -121,4 +121,16 @@ in
   eval-themes-unknown-name = assertTest "themes-unknown-name" (
     !(builtins.tryEval (builtins.deepSeq (evalManifest [ "definitely-not-a-scheme" ]) true)).success
   ) "unknown theme name did not fail evaluation";
+
+  # marchyo.theme.fontScale scales every font surface from one knob. With
+  # desktop on, this also exercises the directly-themed surfaces (waybar / mako /
+  # hyprlock / ghostty / vicinae / gtk / console) that read the scale. 2.0x
+  # doubles the stylix base sizes (12 -> 24, 10 -> 20).
+  eval-theme-fontscale =
+    testNixOSCheck "theme-fontscale"
+      (cfg: cfg.stylix.fonts.sizes.applications == 24 && cfg.stylix.fonts.sizes.desktop == 20)
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.fontScale = 2.0;
+      });
 }

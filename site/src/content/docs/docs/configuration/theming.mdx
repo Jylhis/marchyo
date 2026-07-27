@@ -12,6 +12,7 @@ Marchyo themes the system from two coordinated sources. The core desktop surface
 | `marchyo.theme.enable` | `bool` | `true` | Enable the theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a `base16-schemes` name) |
+| `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
 | `marchyo.theme.themes` | `list of string` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
@@ -69,6 +70,22 @@ stylix.fonts.monospace = {
   name = "JetBrainsMono Nerd Font";
 };
 ```
+
+### Font size
+
+`marchyo.theme.fontScale` is a single multiplier that resizes **every** text
+surface at once — the Stylix-driven apps (Qt, fontconfig, GNOME/KDE) and the
+directly-themed chrome alike (the terminal, Waybar, notifications, the lock
+screen, the launcher, GTK apps, and the TTY console). It defaults to `1.25`
+(noticeably larger than upstream defaults). Set it to `1.0` to restore the
+historical sizes, or higher for HiDPI-at-distance or accessibility:
+
+```nix
+marchyo.theme.fontScale = 1.5; # everything ~50% larger
+```
+
+Each surface scales from its own base size and rounds to a whole number, so the
+proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
