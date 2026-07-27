@@ -21,13 +21,19 @@ let
     inherit pkgs lib;
     variant = themeVariant;
   };
+
+  fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale;
+  };
 in
 {
   config = lib.mkIf desktopEnabled {
     services.mako = {
       enable = true;
       settings = {
-        font = "BlexMono Nerd Font 10";
+        font = "BlexMono Nerd Font ${toString (fs.round 10)}";
         anchor = "top-right";
         margin = "10";
         border-radius = 0;

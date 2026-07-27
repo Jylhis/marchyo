@@ -55,6 +55,12 @@ in
 
         # mako is themed by modules/home/mako.nix (TUI override); starship is
         # configured cross-platform in modules/home/starship.nix.
+        # GTK app font size is NOT set here: marchyo disables only Stylix's
+        # `gtk` target (which would write gtk settings.ini / CSS), but Stylix's
+        # `gnome` target stays enabled and writes the scaled interface font to
+        # dconf `org/gnome/desktop/interface font-name` (e.g. "Hanken Grotesk 15"
+        # at fontScale 1.25), which GTK apps read via the gsettings backend even
+        # under Hyprland. Setting gtk.font here would collide with that dconf key.
         gtk = {
           gtk3.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
           gtk4.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";

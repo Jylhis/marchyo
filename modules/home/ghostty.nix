@@ -17,6 +17,12 @@ let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   ghosttyTheme = if themeVariant == "dark" then "jylhis-roast" else "jylhis-paper";
 
+  fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale;
+  };
+
   linuxKeybinds = [
     "alt+1=goto_tab:1"
     "alt+2=goto_tab:2"
@@ -118,6 +124,7 @@ in
     settings = {
       theme = ghosttyTheme;
       font-family = "BlexMono Nerd Font";
+      font-size = fs.round 13;
       window-padding-x = 8;
       window-padding-y = 8;
       cursor-style = "block";

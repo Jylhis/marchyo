@@ -19,6 +19,10 @@ let
     inherit pkgs lib;
     inherit (cfg) variant;
   };
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = cfg.fontScale;
+  };
 in
 {
   stylix = lib.mkMerge [
@@ -48,6 +52,18 @@ in
         monospace = {
           package = pkgs.nerd-fonts.blex-mono;
           name = "BlexMono Nerd Font";
+        };
+
+        # Scaled by marchyo.theme.fontScale (single knob for all fonts). These
+        # reach the surfaces marchyo leaves to stylix (Qt/KDE/GNOME/fontconfig
+        # apps); the surfaces marchyo themes directly (ghostty, waybar, mako,
+        # hyprlock, vicinae, gtk, console) scale from the same fontScale in
+        # their own modules.
+        sizes = {
+          applications = fs.round 12;
+          terminal = fs.round 12;
+          desktop = fs.round 10;
+          popups = fs.round 10;
         };
       };
     }

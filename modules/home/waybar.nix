@@ -28,6 +28,12 @@ let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
 
+  fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale;
+  };
+
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;
     variant = themeVariant;
@@ -88,6 +94,7 @@ let
     * {
       border-radius: 0;
       font-family: "BlexMono Nerd Font", "IBM Plex Mono", monospace;
+      font-size: ${toString (fs.round 12.5)}px;
     }
 
     /* tmux session label */
@@ -163,7 +170,7 @@ in
             layer = "top";
             position = "top";
             spacing = 0;
-            height = 28;
+            height = fs.round 28;
             modules-left = [
               "custom/session"
               "hyprland/workspaces"
