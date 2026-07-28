@@ -578,7 +578,20 @@ in
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
       nixosHardwareModules = nixosModules.hardware;
-    };
+    }
+    # The one non-eval check: actually build the Plymouth theme in both
+    # variants. This is the only place the light variant's asset pipeline
+    # (resvg/imagemagick + the package's installCheckPhase) is exercised —
+    # CI's toplevel build only bakes the dark one. Deliberately tiny.
+    // (
+      let
+        pkgs = mkPkgs system;
+      in
+      nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+        build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
+        build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
+      }
+    );
 
   mkFormatter =
     { system }:
