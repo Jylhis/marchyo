@@ -105,6 +105,10 @@ Tests are fast evaluation-based checks in `tests/`, run by `nix flake check`:
   attrset of named tests.
 - `tests/lib-tests.nix` — unit tests for lib functions (`assertTest` helper).
 
+One exception to eval-only: the `build-plymouth-theme-{dark,light}` checks in
+`outputs.nix` really build the (tiny) Plymouth theme package in both variants,
+running its asset pipeline and `installCheckPhase`.
+
 Every new module or option needs an eval test:
 
 ```nix
