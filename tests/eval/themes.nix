@@ -54,9 +54,9 @@ in
     };
   });
 
-  # Paper (light) variant with desktop — catches dark-only regressions in
+  # Sheet (light) variant with desktop — catches dark-only regressions in
   # waybar / hyprland / mako / hyprlock / fzf / starship / etc.
-  eval-themes-paper = testNixOS "themes-paper" (withTestUser {
+  eval-themes-sheet = testNixOS "themes-sheet" (withTestUser {
     marchyo = {
       desktop.enable = true;
       theme = {

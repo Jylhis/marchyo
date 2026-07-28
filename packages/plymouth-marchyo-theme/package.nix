@@ -8,7 +8,7 @@
   # Theme variant to bake into the splash. Plymouth runs at boot before any
   # runtime theme switch, so the assets are rendered once for whichever variant
   # the system is configured with (marchyo.theme.variant, wired in
-  # modules/nixos/plymouth.nix). "dark" = Jylhis Roast, "light" = Jylhis Paper.
+  # modules/nixos/plymouth.nix). "dark" = Jylhis Field, "light" = Jylhis Sheet.
   variant ? "dark",
 }:
 let

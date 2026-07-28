@@ -15,7 +15,7 @@ let
   inherit (pkgs.stdenv) isDarwin;
 
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
-  ghosttyTheme = if themeVariant == "dark" then "jylhis-roast" else "jylhis-paper";
+  ghosttyTheme = if themeVariant == "dark" then "jylhis-field" else "jylhis-sheet";
 
   fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
   fs = import ../../lib/font-scale.nix {
@@ -102,10 +102,10 @@ in
   # in programs.ghostty.settings.theme). Done here rather than through the
   # upstream HM module (disabled in modules/home/jylhis-theme.nix) so the
   # themes are also installed on darwin, where that module is Linux-gated.
-  xdg.configFile."ghostty/themes/jylhis-roast".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-roast";
-  xdg.configFile."ghostty/themes/jylhis-paper".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-paper";
+  xdg.configFile."ghostty/themes/jylhis-field".source =
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-field";
+  xdg.configFile."ghostty/themes/jylhis-sheet".source =
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-sheet";
 
   programs.ghostty = {
     enable = true;

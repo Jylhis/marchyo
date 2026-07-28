@@ -26,7 +26,7 @@ Verify NixOS modules evaluate without errors:
 | File | Tests |
 |------|-------|
 | `eval/feature-flags.nix` | `eval-minimal`, `eval-desktop`, `eval-development`, `eval-all-features` |
-| `eval/themes.nix` | `eval-themes`, `eval-themes-light`, `eval-themes-paper` |
+| `eval/themes.nix` | `eval-themes`, `eval-themes-light`, `eval-themes-sheet` |
 | `eval/keyboard.nix` | `eval-keyboard`, `eval-keyboard-no-compose` |
 | `eval/graphics.nix` | `eval-graphics-{intel,amd,nvidia,prime-offload,prime-sync,legacy}` |
 | `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,jotain}` |

@@ -20,8 +20,8 @@ in
       description = ''
         Theme variant preference (light or dark).
         Selects the Jylhis Design System palette derived from tokens.json:
-        - "dark" uses Jylhis Roast
-        - "light" uses Jylhis Paper
+        - "dark" uses Jylhis Field
+        - "light" uses Jylhis Sheet
         Override with `marchyo.theme.scheme` to use a base16-schemes YAML instead.
       '';
     };

@@ -1,8 +1,8 @@
 inputs:
   nixpkgs:
-    url: github:NixOS/nixpkgs/421eebfd0ec7bccd4abe826ce62d7e6e83129493
+    url: github:NixOS/nixpkgs/38a4887411571457d700c51c64a6e49ead2ed5ab
   treefmt-nix:
-    url: github:numtide/treefmt-nix/db947814a175b7ca6ded66e21383d938df01c227
+    url: github:numtide/treefmt-nix/df3c0640565d04a0261253cdd89fce78ec50168a
     inputs:
       nixpkgs:
         follows: nixpkgs
