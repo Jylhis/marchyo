@@ -181,7 +181,7 @@ in
           follow_mouse = 1;
           accel_profile = "flat";
           force_no_accel = true;
-          sensitivity = 0;
+          sensitivity = 0.15;
           touchpad = {
             natural_scroll = false;
             disable_while_typing = true;
