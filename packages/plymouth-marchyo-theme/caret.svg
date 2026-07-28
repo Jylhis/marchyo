@@ -1,0 +1,10 @@
+<!-- The sweeping "❯" caret. A bespoke heavy chevron rather than a font
+     glyph, so the splash doesn't depend on any initrd font shipping U+276F.
+     Stroke color is substituted at build time from the Jylhis Design System
+     accent token (see package.nix); rasterized by resvg to ~80% of the
+     wordmark cap height. The left-facing twin is produced at runtime by
+     marchyo.script via Image.Rotate(Pi), so the shape must read correctly
+     mirrored — it is symmetric about its horizontal midline. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="160" viewBox="0 0 100 160" fill="none">
+  <path d="M24 20 L76 80 L24 140" stroke="@stroke@" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
