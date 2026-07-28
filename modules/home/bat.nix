@@ -14,15 +14,15 @@ in
       enable = true;
 
       themes = {
-        jylhis-roast = {
-          src = "${designSrc}/jylhis-roast.tmTheme";
+        jylhis-field = {
+          src = "${designSrc}/jylhis-field.tmTheme";
         };
-        jylhis-paper = {
-          src = "${designSrc}/jylhis-paper.tmTheme";
+        jylhis-sheet = {
+          src = "${designSrc}/jylhis-sheet.tmTheme";
         };
       };
 
-      config.theme = if isDark then "jylhis-roast" else "jylhis-paper";
+      config.theme = if isDark then "jylhis-field" else "jylhis-sheet";
     };
   };
 }

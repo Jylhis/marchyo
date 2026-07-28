@@ -82,7 +82,7 @@ let
     general:col.inactive_border ${rgba palettes.${v}.hex."border-strong" "ff"}
   '';
 
-  ghosttyThemeFor = v: if v == "dark" then "jylhis-roast" else "jylhis-paper";
+  ghosttyThemeFor = v: if v == "dark" then "jylhis-field" else "jylhis-sheet";
 
   themeDirFor =
     v:

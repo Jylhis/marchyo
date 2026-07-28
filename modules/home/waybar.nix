@@ -9,7 +9,7 @@
 # - https://github.com/Alexays/Waybar/issues/3344 (Multiple instances after DPMS resume)
 # - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
 #
-# Theming: composes the upstream Jylhis design CSS (Roast or Paper) with a small
+# Theming: composes the upstream Jylhis design CSS (Field or Sheet) with a small
 # marchyo overlay covering selectors not present upstream (wireplumber, bluetooth,
 # power-profiles-daemon, hyprland/language, the tray expander). The upstream HM
 # module's waybar target is disabled in modules/home/jylhis-theme.nix so we own
@@ -59,7 +59,7 @@ let
     '';
   };
 
-  upstreamFile = if isDark then "style.css" else "style-paper.css";
+  upstreamFile = if isDark then "style.css" else "style-sheet.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
   # marchyo additions — selectors and tweaks not in upstream design

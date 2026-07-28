@@ -7,9 +7,9 @@
 #   - tty16    : 16-element list — kernel-TTY palette. Same as ansi16 except
 #                slots 0/7/15 come from semantic tokens (bg/text/text-heading)
 #                so the bare TTY (slot 0 = actual background) and any greeter
-#                inheriting it stay readable in both Paper and Roast variants.
+#                inheriting it stay readable in both Sheet and Field variants.
 #                Mirrors the override done in the upstream design generator
-#                (scripts/generate.mjs) for jylhis-{paper,roast}.nix.
+#                (scripts/generate.mjs) for jylhis-{sheet,field}.nix.
 #   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
 #                Merges palette + status + syntax, so every token the design
 #                system adds shows up here without a change to this file —
@@ -36,7 +36,7 @@ let
 in
 {
   base16 = {
-    scheme = if key == "dark" then "Jylhis Roast" else "Jylhis Paper";
+    scheme = if key == "dark" then "Jylhis Field" else "Jylhis Sheet";
     author = "Markus Jylhankangas (jylhis.com)";
     base00 = sh p.bg.${key};
     base01 = sh p."bg-subtle".${key};
