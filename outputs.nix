@@ -433,6 +433,142 @@ let
       ++ modules;
       home-manager-path = droidInputs.home-manager.outPath;
     };
+  # Build-time data generator for the website's package/option search
+  # (site/src/pages/search.astro). Produces a directory with two JSON files:
+  #
+  #   options.json          — every `marchyo.*` NixOS option, extracted from the
+  #                           declarations via `nixosOptionsDoc` (rendered type /
+  #                           default / example / description) with declaration
+  #                           paths rewritten to repo-relative + GitHub blob URLs.
+  #   marchyo-packages.json — pname/version/meta for marchyo's own packages.
+  #
+  # The output is committed under site/src/data/ (the Cloudflare build runs bun
+  # only, no Nix) via `just site-data`, and a CI gate re-runs this and fails on a
+  # diff. nixpkgs (all-of-nixpkgs) search is served separately by the D1-backed
+  # Worker; this generator only covers marchyo's own options and packages.
+  mkSiteSearchData =
+    { system }:
+    let
+      selectedNixpkgs = (inputsFor system).nixpkgs;
+      inherit (selectedNixpkgs) lib;
+      pkgs = mkPkgs system;
+
+      # Evaluate ONLY the marchyo option declarations (modules/nixos/options),
+      # not the full nixosModules.default — the option files are declaration-only
+      # and depend on nothing but lib/pkgs and other marchyo.* options, so this
+      # skips the entire NixOS + home-manager + stylix option universe and keeps
+      # nixosOptionsDoc fast. `_module.check = false` tolerates the reduced arg
+      # set. (This is the NuschtOS/search generation approach.)
+      eval = lib.evalModules {
+        specialArgs = { inherit pkgs lib; };
+        modules = [
+          ./modules/nixos/options
+          { config._module.check = false; }
+        ];
+      };
+
+      # The flake source in the store; used to rewrite absolute declaration
+      # paths (e.g. /nix/store/HASH-source/modules/nixos/options/theme.nix) back
+      # to repo-relative paths + GitHub blob URLs. Non-marchyo declarations
+      # (home-manager, stylix, …) keep their store path and are filtered out by
+      # the jq `startswith("marchyo.")` selection below, so their URLs never ship.
+      srcPrefix = "${toString ./.}/";
+      gitBlob = "https://github.com/Jylhis/marchyo/blob/main/";
+
+      optionsDoc = pkgs.nixosOptionsDoc {
+        inherit (eval) options;
+        warningsAreErrors = false;
+        transformOptions =
+          opt:
+          opt
+          // {
+            declarations = map (
+              decl:
+              let
+                declStr = toString decl;
+              in
+              if lib.hasPrefix srcPrefix declStr then
+                let
+                  rel = lib.removePrefix srcPrefix declStr;
+                in
+                {
+                  name = rel;
+                  url = gitBlob + rel;
+                }
+              else
+                decl
+            ) opt.declarations;
+          };
+      };
+
+      # marchyo's own packages (the overlay/mkPackages set), reduced to the
+      # metadata the search UI shows. Optional meta fields are guarded with `or`.
+      pkgSet = {
+        inherit (pkgs) marchyo-wallpapers marchyo-cli;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        inherit (pkgs)
+          hyprmon
+          plymouth-marchyo-theme
+          openviking
+          pi
+          ;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        inherit (pkgs) wallpapper;
+      };
+
+      renderLicense =
+        l:
+        if l == null then
+          ""
+        else if lib.isList l then
+          lib.concatMapStringsSep ", " (x: x.spdxId or x.shortName or "") l
+        else
+          l.spdxId or l.shortName or "";
+
+      pkgRows = lib.sort (a: b: a.name < b.name) (
+        lib.mapAttrsToList (attr: p: {
+          inherit attr;
+          name = p.pname or (lib.getName p);
+          version = p.version or "";
+          description = p.meta.description or "";
+          homepage = p.meta.homepage or "";
+          license = renderLicense (p.meta.license or null);
+          mainProgram = p.meta.mainProgram or "";
+          source = "marchyo";
+        }) pkgSet
+      );
+
+      # jq filter: keep marchyo.* options, reshape to the row shape search.astro
+      # consumes. render() flattens nixosOptionsDoc's {_type,text} wrappers.
+      optionsFilter = ''
+        def render(v): if v == null then "" elif (v|type)=="object" then (v.text // "") else (v|tostring) end;
+        [ to_entries[]
+          | select(.key | startswith("marchyo."))
+          | { name: .key,
+              type: (.value.type // ""),
+              default: render(.value.default),
+              example: render(.value.example),
+              description: ((.value.description // "") | gsub("\\s+$"; "")),
+              declared: (.value.declarations[0].name // ""),
+              url: (.value.declarations[0].url // "") }
+        ]
+      '';
+    in
+    pkgs.runCommand "marchyo-site-search-data"
+      {
+        nativeBuildInputs = [ pkgs.jq ];
+        passAsFile = [ "pkgsJson" ];
+        pkgsJson = builtins.toJSON pkgRows;
+      }
+      ''
+        mkdir -p "$out"
+        jq -S '${optionsFilter}' \
+          ${optionsDoc.optionsJSON}/share/doc/nixos/options.json \
+          > "$out/options.json"
+        jq -S '.' "$pkgsJsonPath" > "$out/marchyo-packages.json"
+      '';
 in
 {
   inherit
@@ -555,6 +691,7 @@ in
         openviking
         pi
         ;
+      site-search-data = mkSiteSearchData { inherit system; };
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
       inherit (pkgs) wallpapper;

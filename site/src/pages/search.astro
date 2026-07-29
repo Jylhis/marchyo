@@ -1,5 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import optionsData from '../data/options.json';
+import marchyoPackagesData from '../data/marchyo-packages.json';
+
+// Serialized for the client. `<` is escaped so the JSON can never terminate the
+// surrounding <script> tag early.
+const optionsJson = JSON.stringify(optionsData).replace(/</g, '\\u003c');
+const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\\u003c');
 ---
 
 <Base
@@ -40,13 +47,7 @@ import Base from '../layouts/Base.astro';
       <aside class="search__aside">
         <div class="ns">
           <div class="ns__label">// namespace</div>
-          <div class="ns__tree">
-            <span>├── marchyo.desktop</span>
-            <span>├── marchyo.development</span>
-            <span>├── marchyo.theme</span>
-            <span>├── marchyo.users</span>
-            <span>└── marchyo.defaults</span>
-          </div>
+          <div class="ns__tree" id="ns-tree"></div>
         </div>
         <div class="ai-note">
           <div class="ai-note__label">// ai</div>
@@ -62,6 +63,9 @@ import Base from '../layouts/Base.astro';
   <footer class="site-footer">
     <div class="colophon"><a href="/">marchyo(7)</a> · everything marchyo ships, one index · a reimagined <a href="https://search.nixos.org">search.nixos.org</a></div>
   </footer>
+
+  <script type="application/json" id="options-data" is:inline set:html={optionsJson}></script>
+  <script type="application/json" id="marchyo-packages-data" is:inline set:html={marchyoPackagesJson}></script>
 </Base>
 
 <style>
@@ -231,55 +235,125 @@ import Base from '../layouts/Base.astro';
     color: var(--color-accent);
     cursor: pointer;
   }
+  .result-section {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-faint);
+    padding: 20px 0 4px;
+    letter-spacing: 0.02em;
+  }
+  .result-section:first-child {
+    padding-top: 0;
+  }
+  .result__badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-brand);
+    border: 1px solid var(--color-brand);
+    border-radius: 3px;
+    padding: 1px 6px;
+  }
+  .ns__item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 2;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease-out;
+  }
+  .ns__item:hover {
+    color: var(--color-accent);
+  }
+  .ns__count {
+    opacity: 0.5;
+  }
 </style>
 
 <script>
+  import Fuse from 'fuse.js';
+
   interface OptionRow {
     name: string;
     type: string;
     default: string;
-    declared: string;
+    example: string;
     description: string;
+    declared: string;
+    url: string;
   }
-  interface PackageRow {
+  interface MarchyoPkg {
+    attr: string;
     name: string;
     version: string;
     license: string;
-    flag: string;
     description: string;
+    homepage: string;
+    mainProgram: string;
+    source: string;
+  }
+  interface NixpkgsRow {
+    attr_name: string;
+    pname: string;
+    version: string;
+    description: string | null;
+    homepage: string | null;
+    license: string | null;
+    main_program: string | null;
   }
 
-  const OPTIONS: OptionRow[] = [
-    { name: 'marchyo.desktop.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/desktop.nix', description: 'Full desktop environment: Hyprland, Wayland, PipeWire audio, bluetooth, curated fonts. Cascades media and office on.' },
-    { name: 'marchyo.development.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/development.nix', description: 'Development stack: git with LFS, Docker, QEMU/KVM virtualization, buildah, kubectl, starship, zoxide, fzf.' },
-    { name: 'marchyo.media.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/media.nix', description: 'Media applications — Spotify, MPV. Auto-enabled with desktop via lib.mkDefault; override freely.' },
-    { name: 'marchyo.office.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/office.nix', description: 'Office applications — LibreOffice, Papers. Auto-enabled with desktop via lib.mkDefault.' },
-    { name: 'marchyo.theme.variant', type: '"light" | "dark"', default: '"dark"', declared: 'modules/nixos/options/theme.nix', description: 'Jylhis Paper or Roast palette, applied across GTK, Qt and terminals via stylix. Set theme.scheme for any base16 scheme instead.' },
-    { name: 'marchyo.users.<name>.fullname', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Full name used for the account, git identity, and application metadata.' },
-    { name: 'marchyo.users.<name>.email', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Email wired into git config and user-facing applications.' },
-    { name: 'marchyo.defaults.browser', type: 'string', default: '"firefox"', declared: 'modules/nixos/options/default-apps.nix', description: 'Default browser registered for xdg-open and desktop portals.' },
-    { name: 'marchyo.keybindingsHelp.enable', type: 'boolean', default: 'true', declared: 'modules/nixos/options/keyboard.nix', description: 'SUPER+K searchable on-screen cheat sheet of all active Hyprland keybindings.' },
-  ];
+  function parseData<T>(id: string): T[] {
+    const el = document.getElementById(id);
+    if (!el || !el.textContent) return [];
+    try {
+      return JSON.parse(el.textContent) as T[];
+    } catch {
+      return [];
+    }
+  }
 
-  const PACKAGES: PackageRow[] = [
-    { name: 'hyprland', version: '0.49.1', license: 'bsd3', flag: 'marchyo.desktop.enable', description: 'Dynamic tiling Wayland compositor — the marchyo desktop.' },
-    { name: 'kitty', version: '0.42.0', license: 'gpl3', flag: 'marchyo.desktop.enable', description: 'GPU-accelerated terminal emulator, themed by stylix.' },
-    { name: 'alacritty', version: '0.15.1', license: 'asl20', flag: 'marchyo.desktop.enable', description: 'Cross-platform OpenGL terminal emulator.' },
-    { name: 'starship', version: '1.23.0', license: 'isc', flag: 'marchyo.development.enable', description: 'Minimal, fast shell prompt.' },
-    { name: 'zoxide', version: '0.9.8', license: 'mit', flag: 'marchyo.development.enable', description: 'Smarter cd that learns your habits.' },
-    { name: 'ripgrep', version: '14.1.1', license: 'unlicense', flag: 'marchyo.development.enable', description: 'Recursively search directories with a regex, fast.' },
-    { name: 'docker', version: '28.3.1', license: 'asl20', flag: 'marchyo.development.enable', description: 'Container runtime with docker-compose.' },
-    { name: 'mpv', version: '0.40.0', license: 'gpl2Plus', flag: 'marchyo.media.enable', description: 'Command-line media player.' },
-    { name: 'spotify', version: '1.2.62', license: 'unfree', flag: 'marchyo.media.enable', description: 'Music streaming client.' },
-    { name: 'libreoffice', version: '25.2.4', license: 'mpl20', flag: 'marchyo.office.enable', description: 'Office suite.' },
-  ];
+  const OPTIONS = parseData<OptionRow>('options-data');
+  const MARCHYO_PKGS = parseData<MarchyoPkg>('marchyo-packages-data');
+
+  const optionsFuse = new Fuse(OPTIONS, {
+    keys: [
+      { name: 'name', weight: 0.7 },
+      { name: 'description', weight: 0.3 },
+    ],
+    threshold: 0.3,
+    ignoreLocation: true,
+    minMatchCharLength: 2,
+  });
+  const marchyoFuse = new Fuse(MARCHYO_PKGS, {
+    keys: [
+      { name: 'name', weight: 0.6 },
+      { name: 'description', weight: 0.3 },
+      { name: 'attr', weight: 0.1 },
+    ],
+    threshold: 0.3,
+    ignoreLocation: true,
+    minMatchCharLength: 2,
+  });
 
   let q = '';
   let tab: 'options' | 'packages' = 'options';
 
+  // nixpkgs (remote, D1-backed) state.
+  let nixState: 'idle' | 'loading' | 'done' | 'error' = 'idle';
+  let nixResults: NixpkgsRow[] = [];
+  let nixError = '';
+  let nixController: AbortController | null = null;
+  let debounceTimer: number | undefined;
+
   const input = document.getElementById('q') as HTMLInputElement;
   const results = document.getElementById('results')!;
   const stats = document.getElementById('stats')!;
+  const nsTree = document.getElementById('ns-tree')!;
   const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.tab'));
   const countEls = {
     options: document.querySelector('[data-count="options"]')!,
@@ -288,13 +362,14 @@ import Base from '../layouts/Base.astro';
 
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const matches = (s: string) => s.toLowerCase().includes(q.trim().toLowerCase());
 
-  function filteredOptions() {
-    return OPTIONS.filter((o) => !q.trim() || matches(o.name) || matches(o.description));
+  function filteredOptions(): OptionRow[] {
+    const query = q.trim();
+    return query ? optionsFuse.search(query).map((r) => r.item) : OPTIONS;
   }
-  function filteredPackages() {
-    return PACKAGES.filter((p) => !q.trim() || matches(p.name) || matches(p.description) || matches(p.flag));
+  function filteredMarchyoPkgs(): MarchyoPkg[] {
+    const query = q.trim();
+    return query ? marchyoFuse.search(query).map((r) => r.item) : MARCHYO_PKGS;
   }
 
   function copyText(btn: HTMLButtonElement, text: string, done = '✓ copied') {
@@ -305,48 +380,131 @@ import Base from '../layouts/Base.astro';
     setTimeout(() => (btn.textContent = original), 1600);
   }
 
+  // ---- nixpkgs remote search (Worker /api/packages → D1 FTS5) ----
+  function scheduleNixpkgs() {
+    const query = q.trim();
+    if (tab !== 'packages' || !query) {
+      nixState = 'idle';
+      nixResults = [];
+      return;
+    }
+    window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(() => runNixpkgs(query), 160);
+  }
+
+  async function runNixpkgs(query: string) {
+    nixController?.abort();
+    nixController = new AbortController();
+    nixState = 'loading';
+    render();
+    try {
+      const res = await fetch(`/api/packages?q=${encodeURIComponent(query)}`, {
+        signal: nixController.signal,
+        headers: { accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { results?: NixpkgsRow[]; error?: string };
+      if (query !== q.trim()) return; // a newer query superseded this one
+      nixResults = data.results ?? [];
+      nixError = data.error ?? '';
+      nixState = data.error ? 'error' : 'done';
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return;
+      nixResults = [];
+      nixError = (e as Error).message;
+      nixState = 'error';
+    }
+    render();
+  }
+
+  // ---- rendering ----
+  function sectionHeader(label: string): HTMLElement {
+    const el = document.createElement('div');
+    el.className = 'result-section';
+    el.textContent = label;
+    return el;
+  }
+
   function render() {
     const opts = filteredOptions();
-    const pkgs = filteredPackages();
+    const marchyoPkgs = filteredMarchyoPkgs();
     countEls.options.textContent = `(${opts.length})`;
-    countEls.packages.textContent = `(${pkgs.length})`;
-
-    const list = tab === 'options' ? opts : pkgs;
-    stats.textContent = `${list.length} results · 0.03s`;
+    countEls.packages.textContent = `(${marchyoPkgs.length + nixResults.length})`;
 
     tabButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tab));
-
     results.replaceChildren();
 
-    if (list.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'result-empty';
-      empty.innerHTML = `<span style="color:var(--color-status-err)">✗</span> no matches for “${esc(q)}” — try <button data-try="desktop">desktop</button> or <button data-try="hyprland" data-try-tab="packages">hyprland</button>`;
-      empty.querySelectorAll<HTMLButtonElement>('button[data-try]').forEach((b) => {
-        b.addEventListener('click', () => {
-          q = b.dataset.try!;
-          input.value = q;
-          if (b.dataset.tryTab) tab = b.dataset.tryTab as 'packages';
-          render();
-        });
-      });
-      results.appendChild(empty);
+    if (tab === 'options') {
+      stats.textContent = `${opts.length} option${opts.length === 1 ? '' : 's'}`;
+      if (opts.length === 0) {
+        results.appendChild(emptyState());
+        return;
+      }
+      opts.forEach((r) => results.appendChild(renderOption(r)));
       return;
     }
 
-    if (tab === 'options') {
-      (list as OptionRow[]).forEach((r) => results.appendChild(renderOption(r)));
+    // packages tab: marchyo packages (local) + nixpkgs (remote)
+    stats.textContent = `${marchyoPkgs.length} marchyo · ${nixResults.length} nixpkgs`;
+
+    if (marchyoPkgs.length) {
+      results.appendChild(sectionHeader('// marchyo packages'));
+      marchyoPkgs.forEach((r) => results.appendChild(renderMarchyoPkg(r)));
+    }
+
+    results.appendChild(sectionHeader('// nixpkgs'));
+    if (!q.trim()) {
+      results.appendChild(hint('type to search all of nixpkgs…'));
+    } else if (nixState === 'loading') {
+      results.appendChild(hint('searching nixpkgs…'));
+    } else if (nixState === 'error') {
+      results.appendChild(
+        hint(`nixpkgs search unavailable${nixError ? ` (${nixError})` : ''}. marchyo options & packages still work.`),
+      );
+    } else if (nixResults.length === 0) {
+      results.appendChild(hint(`no nixpkgs packages match “${q.trim()}”.`));
     } else {
-      (list as PackageRow[]).forEach((r) => results.appendChild(renderPackage(r)));
+      nixResults.forEach((r) => results.appendChild(renderNixpkg(r)));
+    }
+
+    if (marchyoPkgs.length === 0 && nixResults.length === 0 && nixState !== 'loading') {
+      // keep the nixpkgs hint visible; nothing else to add
     }
   }
 
-  function renderOption(r: OptionRow) {
+  function hint(text: string): HTMLElement {
+    const el = document.createElement('div');
+    el.className = 'result-empty';
+    el.textContent = text;
+    return el;
+  }
+
+  function emptyState(): HTMLElement {
+    const empty = document.createElement('div');
+    empty.className = 'result-empty';
+    empty.innerHTML = `<span style="color:var(--color-status-err)">✗</span> no matches for “${esc(q)}” — try <button data-try="desktop">desktop</button> or <button data-try="theme" data-try-tab="options">theme</button>`;
+    empty.querySelectorAll<HTMLButtonElement>('button[data-try]').forEach((b) => {
+      b.addEventListener('click', () => {
+        q = b.dataset.try!;
+        input.value = q;
+        if (b.dataset.tryTab) tab = b.dataset.tryTab as 'options' | 'packages';
+        scheduleNixpkgs();
+        render();
+      });
+    });
+    return empty;
+  }
+
+  function renderOption(r: OptionRow): HTMLElement {
     const el = document.createElement('article');
     el.className = 'result';
+    const nameHtml = r.url
+      ? `<a href="${esc(r.url)}" class="result__name" target="_blank" rel="noopener">${esc(r.name)}</a>`
+      : `<span class="result__name">${esc(r.name)}</span>`;
+    const exampleFoot = r.example ? `<span>example: <span class="k">${esc(r.example)}</span></span>` : '';
     el.innerHTML = `
       <div class="result__head">
-        <a href="#" class="result__name">${esc(r.name)}</a>
+        ${nameHtml}
         <span class="result__type">${esc(r.type)}</span>
         <span class="result__actions">
           <button class="result-copy" data-role="plain">⧉ copy</button>
@@ -355,54 +513,166 @@ import Base from '../layouts/Base.astro';
       </div>
       <p class="result__desc">${esc(r.description)}</p>
       <div class="result__foot">
-        <span>default: <span class="k">${esc(r.default)}</span></span>
+        <span>default: <span class="k">${esc(r.default || '—')}</span></span>
+        ${exampleFoot}
         <span>declared in ${esc(r.declared)}</span>
       </div>`;
-    const plain = `${r.name} = ${r.default};`;
-    const ai = `NixOS option (marchyo flake):\n\n${r.name}\n  type: ${r.type}\n  default: ${r.default}\n  ${r.description}\n  declared in: ${r.declared}`;
-    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, plain, '✓'));
-    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, ai));
+    const plain = `${r.name} = ${r.default || '…'};`;
+    const ai = [
+      'NixOS option (marchyo flake):',
+      '',
+      r.name,
+      `  type: ${r.type}`,
+      `  default: ${r.default || '(none)'}`,
+      r.example ? `  example: ${r.example}` : null,
+      `  ${r.description}`,
+      `  declared in: ${r.declared}`,
+      r.url ? `  source: ${r.url}` : null,
+    ]
+      .filter((l) => l !== null)
+      .join('\n');
+    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, plain, '✓'),
+    );
+    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, ai),
+    );
     return el;
   }
 
-  function renderPackage(r: PackageRow) {
+  function renderMarchyoPkg(r: MarchyoPkg): HTMLElement {
     const el = document.createElement('article');
     el.className = 'result';
+    const homeFoot = r.homepage ? ` · <a href="${esc(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
     el.innerHTML = `
       <div class="result__head">
-        <a href="#" class="result__name">${esc(r.name)}</a>
+        <span class="result__name">${esc(r.name)}</span>
         <span class="result__version">${esc(r.version)}</span>
         <span class="result__license">${esc(r.license)}</span>
+        <span class="result__badge">marchyo</span>
         <span class="result__actions">
           <button class="result-copy" data-role="plain">⧉ copy</button>
           <button class="result-copy" data-role="ai">» ai</button>
         </span>
       </div>
       <p class="result__desc">${esc(r.description)}</p>
-      <div class="result__foot">└── nixpkgs.${esc(r.name)} · pulled in by ${esc(r.flag)}</div>`;
-    const plain = `environment.systemPackages = [ pkgs.${r.name} ];`;
-    const ai = `Nix package:\n\n${r.name} ${r.version} (${r.license})\n  ${r.description}\n  pulled in by: ${r.flag}`;
-    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, plain, '✓'));
-    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) => copyText(e.currentTarget as HTMLButtonElement, ai));
+      <div class="result__foot">└── pkgs.${esc(r.attr)} · marchyo overlay${homeFoot}</div>`;
+    const plain = `environment.systemPackages = [ pkgs.${r.attr} ];`;
+    const ai = [
+      'Nix package (marchyo overlay):',
+      '',
+      `${r.name} ${r.version}${r.license ? ` (${r.license})` : ''}`,
+      `  ${r.description}`,
+      `  attribute: pkgs.${r.attr}`,
+      r.homepage ? `  homepage: ${r.homepage}` : null,
+    ]
+      .filter((l) => l !== null)
+      .join('\n');
+    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, plain, '✓'),
+    );
+    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, ai),
+    );
     return el;
   }
 
+  function renderNixpkg(r: NixpkgsRow): HTMLElement {
+    const el = document.createElement('article');
+    el.className = 'result';
+    const name = r.pname || r.attr_name;
+    const license = r.license ? `<span class="result__license">${esc(r.license)}</span>` : '';
+    const homeFoot = r.homepage ? ` · <a href="${esc(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
+    el.innerHTML = `
+      <div class="result__head">
+        <span class="result__name">${esc(name)}</span>
+        <span class="result__version">${esc(r.version)}</span>
+        ${license}
+        <span class="result__actions">
+          <button class="result-copy" data-role="plain">⧉ copy</button>
+          <button class="result-copy" data-role="ai">» ai</button>
+        </span>
+      </div>
+      <p class="result__desc">${esc(r.description || '')}</p>
+      <div class="result__foot">└── pkgs.${esc(r.attr_name)}${homeFoot}</div>`;
+    const plain = `environment.systemPackages = [ pkgs.${r.attr_name} ];`;
+    const ai = [
+      'Nix package (nixpkgs):',
+      '',
+      `${name} ${r.version}${r.license ? ` (${r.license})` : ''}`,
+      r.description ? `  ${r.description}` : null,
+      `  attribute: pkgs.${r.attr_name}`,
+      r.homepage ? `  homepage: ${r.homepage}` : null,
+    ]
+      .filter((l) => l !== null)
+      .join('\n');
+    el.querySelector<HTMLButtonElement>('[data-role="plain"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, plain, '✓'),
+    );
+    el.querySelector<HTMLButtonElement>('[data-role="ai"]')!.addEventListener('click', (e) =>
+      copyText(e.currentTarget as HTMLButtonElement, ai),
+    );
+    return el;
+  }
+
+  // ---- namespace tree (derived from options) ----
+  function buildNsTree() {
+    const counts = new Map<string, number>();
+    OPTIONS.forEach((o) => {
+      const seg = o.name.split('.').slice(0, 2).join('.');
+      counts.set(seg, (counts.get(seg) ?? 0) + 1);
+    });
+    const entries = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+    nsTree.replaceChildren();
+    entries.forEach(([ns, count], i) => {
+      const glyph = i === entries.length - 1 ? '└──' : '├──';
+      const btn = document.createElement('button');
+      btn.className = 'ns__item';
+      btn.type = 'button';
+      btn.innerHTML = `${glyph} ${esc(ns)} <span class="ns__count">${count}</span>`;
+      btn.addEventListener('click', () => {
+        q = ns;
+        input.value = ns;
+        tab = 'options';
+        scheduleNixpkgs();
+        render();
+        input.focus();
+      });
+      nsTree.appendChild(btn);
+    });
+  }
+
+  // ---- events ----
   input.addEventListener('input', () => {
     q = input.value;
+    scheduleNixpkgs();
     render();
   });
   tabButtons.forEach((b) => {
     b.addEventListener('click', () => {
       tab = b.dataset.tab as 'options' | 'packages';
+      scheduleNixpkgs();
       render();
     });
   });
 
   document.getElementById('copy-all')!.addEventListener('click', (e) => {
-    const list = tab === 'options' ? filteredOptions() : filteredPackages();
-    const text =
-      `Marchyo ${tab} search results for "${q || '*'}":\n\n` +
-      list.map((r) => `- ${r.name} — ${r.description}`).join('\n');
+    let text: string;
+    if (tab === 'options') {
+      const list = filteredOptions();
+      text =
+        `Marchyo options matching "${q || '*'}":\n\n` +
+        list.map((r) => `- ${r.name} (${r.type}) — ${r.description}`).join('\n');
+    } else {
+      const marchyoPkgs = filteredMarchyoPkgs();
+      text =
+        `Marchyo package search for "${q || '*'}":\n\n` +
+        `## marchyo overlay\n` +
+        marchyoPkgs.map((r) => `- pkgs.${r.attr} (${r.version}) — ${r.description}`).join('\n') +
+        (nixResults.length
+          ? `\n\n## nixpkgs\n` + nixResults.map((r) => `- pkgs.${r.attr_name} (${r.version}) — ${r.description ?? ''}`).join('\n')
+          : '');
+    }
     copyText(e.currentTarget as HTMLButtonElement, text);
   });
 
@@ -436,5 +706,6 @@ import Base from '../layouts/Base.astro';
     });
   });
 
+  buildNsTree();
   render();
 </script>
