@@ -3,7 +3,9 @@ title: Theming
 description: Customize system appearance with Stylix and base16 color schemes
 ---
 
-Marchyo themes the system from two coordinated sources. The core desktop surfaces — GTK, Hyprland, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, and the Plymouth boot splash — are themed directly from the [Jylhis Design System](https://github.com/jylhis/design) (their Stylix targets are explicitly disabled). [Stylix](https://github.com/danth/stylix) supplies the base16 color scheme and fonts, and themes everything else — Qt, fontconfig, vicinae, and the remaining targets.
+Marchyo themes the system from two coordinated sources. The core desktop surfaces — GTK, Hyprland, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, the Vicinae launcher, and the Plymouth boot splash — are themed directly from the [Jylhis Design System](https://github.com/jylhis/design) (their Stylix targets are explicitly disabled). [Stylix](https://github.com/danth/stylix) supplies the base16 color scheme and fonts, and themes everything else — Qt, fontconfig, and the remaining targets.
+
+The launcher is a slightly different case: rather than reading base16 slots, Marchyo generates two real Vicinae themes (`jylhis-field` for dark, `jylhis-sheet` for light) from the design tokens and registers both, so the full color surface — text, inputs, buttons, list and grid selection, scrollbars, tooltips — is covered rather than just the background/accent basics. See [Launcher](/docs/configuration/launcher/).
 
 ## Options
 
