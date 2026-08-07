@@ -259,6 +259,11 @@ let
         hmSharedConfig
         stylix.nixosModules.stylix
         sops-nix.nixosModules.sops
+        # Declares programs.vicinae.input-server: the cap_dac_override wrapper
+        # the launcher needs to inject keystrokes. Upstream defaults it ON, so
+        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* —
+        # importing this module alone does not install the capability.
+        vicinae.nixosModules.default
         { nixpkgs.overlays = overlayList; }
 
         ./modules/nixos/default.nix

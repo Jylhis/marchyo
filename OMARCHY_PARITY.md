@@ -48,6 +48,7 @@ A structural fact that reframes half of omarchy's surface: **omarchy is an imper
 | Launcher | Walker + Elephant, `SUPER+SPACE` | Vicinae, `SUPER+R` |
 | Emoji picker | Walker symbols, `SUPER CTRL+E` | Vicinae, `SUPER+period` |
 | Clipboard history | Walker, `SUPER CTRL+V` | Vicinae, `SUPER CTRL+V` (same combo) |
+| Paste-at-cursor | Walker types the selection | Vicinae types it too, via the `cap_dac_override` input-server wrapper (`marchyo.launcher.inputServer.enable`); set false and both fall back to clipboard-only |
 | Color picker | hyprpicker, `SUPER+PRINT` | hyprpicker, `SUPER SHIFT+C` |
 | Screen recording | menu, `ALT+PRINT` | `marchyo-screenrecord-toggle`, `SUPER ALT+PRINT` |
 | Screenshot | `PRINT` | `PRINT` / `SUPER+S` (grimblast + satty) |
