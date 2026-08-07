@@ -766,11 +766,16 @@ in
           (env "XDG_CURRENT_DESKTOP" "Hyprland")
           (env "XDG_SESSION_DESKTOP" "Hyprland")
 
-          # Make .desktop files available for the launcher and discovery tools
-          (env "XDG_DATA_DIRS" "$XDG_DATA_DIRS:$HOME/.nix-profile/share:/nix/var/nix/profiles/default/share")
+          # XDG_DATA_DIRS is deliberately NOT set here. `env` values are rendered
+          # as Lua string literals with no shell expansion, so a value containing
+          # $XDG_DATA_DIRS / $HOME is exported verbatim -- uwsm then pushes that
+          # literal into the systemd user manager, breaking .desktop and icon
+          # lookup for every user service (the launcher saw 4 apps instead of 90).
+          # NixOS already provides the full list via environment.profiles +
+          # environment.profileRelativeSessionVariables.XDG_DATA_DIRS.
 
-          # Use XCompose file
-          (env "XCOMPOSEFILE" "~/.XCompose")
+          # Use XCompose file (absolute: no tilde expansion happens here either)
+          (env "XCOMPOSEFILE" "${config.home.homeDirectory}/.XCompose")
         ]
         # NVIDIA GPU environment variables for Wayland
         ++ lib.optionals hasNvidia [

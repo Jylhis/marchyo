@@ -61,10 +61,22 @@ in
         # dconf `org/gnome/desktop/interface font-name` (e.g. "Hanken Grotesk 15"
         # at fontScale 1.25), which GTK apps read via the gsettings backend even
         # under Hyprland. Setting gtk.font here would collide with that dconf key.
-        gtk = {
-          gtk3.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
-          gtk4.extraCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
-        };
+        gtk =
+          let
+            designCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
+
+            # GTK3's CSS parser has no support for the GTK4/libadwaita custom
+            # properties (`--accent-color: ...`) in the file's `.dark` block: it
+            # emits "Expected semicolon" for each one, in waybar and in every other
+            # GTK3 app. The GTK3 palette comes from @define-color and the file never
+            # uses var(), so dropping these lines is lossless for GTK3.
+            isCustomProp = line: builtins.match "[[:space:]]*--.*" line != null;
+            gtk3Css = lib.concatLines (builtins.filter (l: !isCustomProp l) (lib.splitString "\n" designCss));
+          in
+          {
+            gtk3.extraCss = gtk3Css;
+            gtk4.extraCss = designCss;
+          };
       })
     ]
   );
