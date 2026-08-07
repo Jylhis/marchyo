@@ -124,8 +124,9 @@ in
 
   # marchyo.theme.fontScale scales every font surface from one knob. With
   # desktop on, this also exercises the directly-themed surfaces (waybar / mako /
-  # hyprlock / ghostty / vicinae / gtk / console) that read the scale. 2.0x
-  # doubles the stylix base sizes (12 -> 24, 10 -> 20).
+  # hyprlock / ghostty / gtk / console) that read the scale. 2.0x doubles the
+  # stylix base sizes (12 -> 24, 10 -> 20). The launcher scales the same way but
+  # is asserted in tests/eval/launcher.nix, which owns its font keys.
   eval-theme-fontscale =
     testNixOSCheck "theme-fontscale"
       (cfg: cfg.stylix.fonts.sizes.applications == 24 && cfg.stylix.fonts.sizes.desktop == 20)

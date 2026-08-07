@@ -11,10 +11,12 @@ let
 in
 {
   config = lib.mkIf cfg.desktop.enable {
-    # Automatically enable office, media, and web apps by default when desktop is enabled
+    # Automatically enable office, media, web apps and the launcher by default
+    # when desktop is enabled
     marchyo.office.enable = lib.mkDefault true;
     marchyo.media.enable = lib.mkDefault true;
     marchyo.webapps.enable = lib.mkDefault true;
+    marchyo.launcher.enable = lib.mkDefault true;
 
     # dconf is required for GTK apps to read settings (icon theme, font, etc.)
     programs.dconf.enable = lib.mkDefault true;

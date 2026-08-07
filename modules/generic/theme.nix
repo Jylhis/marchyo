@@ -44,6 +44,10 @@ let
     "hyprlock"
     "console"
     "starship"
+    # modules/home/vicinae.nix ships jylhis-field/jylhis-sheet as real Vicinae
+    # TOML themes (the full ~55-key colour surface, vs the 3 groups Stylix
+    # filled) and owns font.normal.* + launcher_window.opacity itself.
+    "vicinae"
   ];
 
   targetDisable = lib.mkMerge (
