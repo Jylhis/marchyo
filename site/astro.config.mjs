@@ -40,6 +40,7 @@ export default defineConfig({
             'docs/configuration/keyboard',
             'docs/configuration/graphics',
             'docs/configuration/default-apps',
+            'docs/configuration/launcher',
             'docs/configuration/ai',
             'docs/configuration/dictation',
             'docs/configuration/hardware',

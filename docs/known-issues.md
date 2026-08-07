@@ -11,6 +11,74 @@ Each entry: **symptom**, **root cause**, **resolution**, and enough **evidence**
 
 ---
 
+## Vicinae emoji/clipboard paste and snippets never worked (resolved 2026-08-07)
+
+**Symptom.** `Super+period` (emoji picker) and `Super+Ctrl+V` (clipboard history)
+never typed the selected item at the cursor; at best the value landed on the
+clipboard and had to be pasted manually. Snippet expansion did nothing. No
+error surfaced anywhere except one journal line per daemon start.
+
+**Root cause.** Two independent halves of the wiring were missing. Found by
+reviewing marchyo's Vicinae config against the pinned upstream source rather
+than from a bug report, so there is no incident window — it had never worked.
+
+1. Vicinae injects keystrokes through `libexec/vicinae/vicinae-input-server`,
+   which opens `/dev/uinput` **for writing**
+   (`src/lib/linux-utils/src/keyboard.cpp:25`). `/dev/uinput` is
+   `root:root 0660`, so the plain store binary cannot open it. Upstream ships
+   `vicinae.nixosModules.default` to install a `cap_dac_override+ep` wrapper for
+   exactly this; marchyo never imported it.
+2. Even with the wrapper installed, the daemon would not have used it. Helper
+   lookup goes through `findHelperProgram()`
+   (`src/lib/common/src/common.cpp:55-70`), which only tries paths relative to
+   the running binary — `self/`, `self/../libexec/vicinae/`, and
+   `VICINAE_LIBEXEC_PATH`. `/run/wrappers/bin` is never searched. Upstream's
+   escape hatch is the `VICINAE_INPUT_SERVER_BIN` env var, whose in-source
+   comment names NixOS as the reason it exists
+   (`src/server/src/services/input-server/linux-input-server.cpp:85-93`).
+
+Evidence — one line per daemon start, easy to miss among startup chatter:
+
+```
+vicinae[…]: could not find vicinae-input-server helper binary, snippet expansion will not work
+```
+
+or, with the helper found but unprivileged:
+
+```
+vicinae[…]: Failed to open /dev/uinput: Permission denied
+```
+
+**Resolution.** Both halves, gated on the same new option
+(`marchyo.launcher.inputServer.enable`, default true):
+
+- `outputs.nix` imports `vicinae.nixosModules.default`, and
+  `modules/nixos/launcher.nix` gates `programs.vicinae.input-server.enable`.
+  That option defaults to `true` upstream, so the gate is deliberately **not**
+  wrapped in `lib.mkIf` — a conditional definition would leave headless hosts
+  falling back to the upstream default and growing the capability.
+- `modules/home/vicinae.nix` exports
+  `VICINAE_INPUT_SERVER_BIN=/run/wrappers/bin/vicinae-input-server` through
+  `programs.vicinae.systemd.environment`.
+
+`tests/eval/launcher.nix` (`eval-launcher-input-server`) asserts both halves
+together, plus that neither appears when the option or the desktop is off.
+
+**Recognising a recurrence.** `getcap /run/wrappers/bin/vicinae-input-server`
+should report `cap_dac_override+ep`, and
+`systemctl --user show vicinae -p Environment` should contain
+`VICINAE_INPUT_SERVER_BIN`. If either is absent, paste is clipboard-only again.
+
+**Related limitation (unresolved).** The "What's New" section in root search has
+no declarative kill switch — it is a `SectionSource` fed by a build-time
+`NewsService` with per-item imperative dismissal, and no config key gates it.
+Marchyo's `telemetry.system_info = false` happens to empty it today because
+`telemetry-notice-v1` is the only item shipped and `news-service.cpp:62` skips
+that item when telemetry is off. A future upstream news item would reappear and
+could only be dismissed by hand.
+
+---
+
 ## iwd backend Wi-Fi crashes (resolved 2026-07-22)
 
 **Symptom.** Wi-Fi dropped repeatedly and would not stay connected after the
