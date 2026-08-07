@@ -83,11 +83,14 @@ in
       eza
     ];
 
-    # Enable KVM modules
-    boot.kernelModules = [
-      "kvm-intel"
-      "kvm-amd"
-    ];
+    # Enable KVM for the host CPU vendor only. Loading both makes
+    # systemd-modules-load fail on every boot for the vendor that is absent
+    # ("Failed to insert module 'kvm_intel': Operation not supported").
+    # hardware.cpu.<vendor>.updateMicrocode is the conventional vendor signal,
+    # set by nixos-hardware's common-cpu-{amd,intel} modules.
+    boot.kernelModules =
+      lib.optional config.hardware.cpu.amd.updateMicrocode "kvm-amd"
+      ++ lib.optional config.hardware.cpu.intel.updateMicrocode "kvm-intel";
 
     # Development documentation
     documentation.dev.enable = true;
