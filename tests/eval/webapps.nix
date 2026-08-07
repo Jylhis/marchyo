@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
   evalWith =
     extra:
@@ -25,8 +25,10 @@ let
     };
 
   entries = hm: hm.xdg.desktopEntries or { };
-  binds = hm: hm.wayland.windowManager.hyprland.settings.bindd or [ ];
-  hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
+  binds = hm: hm.wayland.windowManager.hyprland.settings.bind or [ ];
+  hasBind = hm: hyprHasBind (binds hm);
+  # Substring search over every rendered bind, for "no bind mentions X" checks.
+  hasBindText = hm: s: lib.hasInfix s (hyprEntriesText (binds hm));
 
   # Mirror the browser default from modules/nixos/defaults.nix: google-chrome is
   # x86_64-only on Linux, so non-x86_64 platforms fall back to chromium. The
@@ -47,20 +49,20 @@ in
       if
         chatgpt != null
         && lib.hasInfix "--app=https://chatgpt.com/" chatgpt.exec
-        && hasBind hm "SUPER SHIFT, A, ChatGPT, exec, "
-        && hasBind hm "SUPER SHIFT, A, ChatGPT, exec, ${browser} --app=https://chatgpt.com/"
+        && hasBind hm "SUPER + SHIFT + A" "ChatGPT"
+        && hasBind hm "SUPER + SHIFT + A" "${browser} --app=https://chatgpt.com/"
         # Discord declares no key -> .desktop entry present but no bind.
         && (entries hm) ? "marchyo-webapp-discord"
-        && !(hasBind hm "Discord")
+        && !(hasBindText hm "Discord")
         # Parity round-out: X and Google Photos ship with binds...
         && (entries hm) ? "marchyo-webapp-x"
-        && hasBind hm "SUPER SHIFT, X, X, exec, ${browser} --app=https://x.com/"
-        && hasBind hm "SUPER SHIFT, P, Google Photos, exec, ${browser} --app=https://photos.google.com/"
+        && hasBind hm "SUPER + SHIFT + X" "${browser} --app=https://x.com/"
+        && hasBind hm "SUPER + SHIFT + P" "${browser} --app=https://photos.google.com/"
         # ...Google Calendar and Gmail are entries only (no key).
         && (entries hm) ? "marchyo-webapp-google-calendar"
         && (entries hm) ? "marchyo-webapp-gmail"
-        && !(hasBind hm "Gmail")
-        && !(hasBind hm "Google Calendar")
+        && !(hasBindText hm "Gmail")
+        && !(hasBindText hm "Google Calendar")
       then
         "pass"
       else
@@ -76,7 +78,8 @@ in
     in
     pkgs.writeText "eval-webapps-disabled" (
       if
-        !(lib.any (k: lib.hasPrefix "marchyo-webapp-" k) keys) && !(hasBind hm "--app=https://chatgpt.com/")
+        !(lib.any (k: lib.hasPrefix "marchyo-webapp-" k) keys)
+        && !(hasBindText hm "--app=https://chatgpt.com/")
       then
         "pass"
       else
@@ -94,7 +97,7 @@ in
         }).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-webapps-firefox-fallback" (
-      if hasBind hm "SUPER SHIFT, A, ChatGPT, exec, chromium --app=https://chatgpt.com/" then
+      if hasBind hm "SUPER + SHIFT + A" "chromium --app=https://chatgpt.com/" then
         "pass"
       else
         throw "FAIL: firefox browser but the ChatGPT bind did not fall back to chromium --app"

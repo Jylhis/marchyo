@@ -9,6 +9,7 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
   # Cursor zoom moved to `marchyo zoom in|out|reset` (commands/launch.ts).
@@ -28,13 +29,17 @@ in
       pkgs.procps
     ];
 
-    # Merges with the bindd lists from hyprland.nix / screenshot.nix /
+    # Merges with the bind lists from hyprland.nix / screenshot.nix /
     # webapps.nix (home-manager concatenates the lists; order is irrelevant
     # to Hyprland). Dismiss-all moved here from SUPER CTRL, comma in
     # hyprland.nix, which now belongs to the DND toggle (omarchy parity).
-    wayland.windowManager.hyprland.settings.bindd = [
-      "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo toggle notifications"
-      "SUPER CTRL SHIFT, comma, Dismiss all notifications, exec, makoctl dismiss --all"
+    wayland.windowManager.hyprland.settings.bind = [
+      (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
+        hlua.exec "marchyo toggle notifications"
+      ))
+      (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
+        hlua.exec "makoctl dismiss --all"
+      ))
     ];
   };
 }

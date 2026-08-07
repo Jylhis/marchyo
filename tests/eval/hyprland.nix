@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 in
 {
   # Build the Hyprland config and run hyprland --verify-config against it.
@@ -25,7 +25,7 @@ in
           })
         ];
       };
-      hyprlandConfig = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.conf".source;
+      hyprlandConfig = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.lua".source;
       hyprland = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.package;
     in
     pkgs.runCommand "check-hyprland-config"
@@ -37,19 +37,26 @@ in
         log=$(mktemp)
         ${hyprland}/bin/hyprland --verify-config --config ${hyprlandConfig} 2>&1 | tee "$log"
 
-        # `--verify-config` exits 0 even when it would otherwise print
-        # config errors, so also grep for any error markers it emits.
-        # NOTE: In current Hyprland (0.55.x) `--verify-config` does NOT
-        # report unknown dispatchers (e.g. `togglesplit`) or unknown
-        # options (e.g. `dwindle:pseudotile`) — those only surface via
-        # `hyprctl configerrors` on a live compositor. This grep is
-        # defense-in-depth for anything that *is* printed (parser errors
-        # in newer versions, malformed bind syntax, etc.).
+        # A clean run prints "config ok"; require it explicitly rather than
+        # trusting the exit code, which is 0 even when errors are printed.
+        if ! grep -q -F 'config ok' "$log"; then
+          echo "FAIL: hyprland --verify-config did not report 'config ok'" >&2
+          exit 1
+        fi
+
+        # Also grep for error markers. The Lua renderer makes this much
+        # stronger than the old hyprlang path: a typo'd `hl.*` name is a nil
+        # call that aborts the whole config load instead of being skipped.
+        # Keep the patterns specific - the debug preamble legitimately says
+        # "Config is lua, loading lua mgr", so a bare /lua/ would false-positive.
         if grep -E -i \
              -e 'invalid dispatcher' \
              -e 'config option <[^>]+> does not exist' \
              -e '^\s*error' \
              -e 'parse error' \
+             -e 'attempt to (call|index) a nil value' \
+             -e 'lua error' \
+             -e 'error loading' \
              "$log"; then
           echo "FAIL: hyprland --verify-config reported config errors (see above)" >&2
           exit 1
@@ -74,8 +81,9 @@ in
         ];
       };
       hm = eval.config.home-manager.users.testuser;
-      bindd = hm.wayland.windowManager.hyprland.settings.bindd;
-      hasBind = lib.any (b: lib.hasInfix "marchyo keybindings" b) bindd;
+      hasBind = lib.hasInfix "marchyo keybindings" (
+        hyprEntriesText hm.wayland.windowManager.hyprland.settings.bind
+      );
       hasPkg = lib.any (p: lib.hasInfix "fzf" (p.name or "")) hm.home.packages;
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet" (
@@ -100,8 +108,9 @@ in
           })
         ];
       };
-      bindd = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bindd;
-      hasBind = lib.any (b: lib.hasInfix "marchyo keybindings" b) bindd;
+      hasBind = lib.hasInfix "marchyo keybindings" (
+        hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind
+      );
     in
     pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
       if hasBind then throw "FAIL: keybindings cheat sheet bind present when disabled" else "pass"
@@ -124,24 +133,24 @@ in
         ];
       };
       hm = eval.config.home-manager.users.testuser;
-      bindd = hm.wayland.windowManager.hyprland.settings.bindd;
       bind = hm.wayland.windowManager.hyprland.settings.bind;
-      hasBindd = needle: lib.any (b: lib.hasInfix needle b) bindd;
+      bindText = hyprEntriesText bind;
+      hasBindText = needle: lib.hasInfix needle bindText;
       hasPkg = name: lib.any (p: lib.hasInfix name (p.name or "")) hm.home.packages;
 
-      # New window-management dispatchers are present.
+      # New window-management dispatchers are present, in their Lua spellings.
       newBinds = [
-        "togglegroup"
-        "moveintogroup"
-        "movetoworkspacesilent"
-        "movecurrentworkspacetomonitor"
-        "resizeactive"
+        "hl.dsp.group.toggle()"
+        "into_group"
+        "follow = false"
+        "hl.dsp.workspace.move("
+        "hl.dsp.window.resize({ x = -100"
         "marchyo zoom in"
         "marchyo toggle nightlight"
         "marchyo toggle idle"
         "marchyo capture record"
       ];
-      missingBinds = lib.filter (n: !hasBindd n) newBinds;
+      missingBinds = lib.filter (n: !hasBindText n) newBinds;
 
       # All former wrapper scripts are absorbed into the marchyo CLI; the
       # recorder tool closure remains.
@@ -152,9 +161,9 @@ in
 
       # Monitor focus relocated: no SUPER+comma/period focusmonitor bind remains,
       # the CTRL+ALT+Tab focus bind exists, and comma/period drive emoji/mako.
-      focusmonitorMoved = !lib.any (b: lib.hasInfix "SUPER, comma, focusmonitor" b) bind;
-      hasCtrlAltMonitor = hasBindd "Focus next monitor, focusmonitor, +1";
-      hasEmoji = hasBindd "Emoji picker";
+      focusmonitorMoved = !(hyprHasBind bind "SUPER + comma" "hl.dsp.focus({ monitor");
+      hasCtrlAltMonitor = hyprHasBind bind "CTRL + ALT + TAB" ''hl.dsp.focus({ monitor = "+1" })'';
+      hasEmoji = hasBindText "Emoji picker";
     in
     pkgs.writeText "eval-hyprland-window-management-binds" (
       if missingBinds != [ ] then
@@ -171,7 +180,7 @@ in
         "pass"
     );
 
-  # The Super+E editor bind resolves through the $editor variable, which is
+  # The Super+E editor bind resolves through the `editor` Lua local, which is
   # derived from marchyo.defaults.editor (jotain -> jotain-visual by default,
   # and e.g. vscode -> code when reselected).
   eval-hyprland-editor-bind =
@@ -199,17 +208,17 @@ in
         marchyo.defaults.editor = "vscode";
       });
 
-      hasEditorBind = lib.any (b: lib.hasInfix "SUPER, E, Editor, exec, $editor" b) defaultSettings.bindd;
-      defaultEditorVar = defaultSettings."$editor";
-      vscodeEditorVar = vscodeSettings."$editor";
+      hasEditorBind = hyprHasBind defaultSettings.bind "SUPER + E" "hl.dsp.exec_cmd(editor)";
+      defaultEditorVar = defaultSettings.editor._var;
+      vscodeEditorVar = vscodeSettings.editor._var;
     in
     pkgs.writeText "eval-hyprland-editor-bind" (
       if !hasEditorBind then
-        throw "FAIL: Super+E bind should exec $editor"
+        throw "FAIL: Super+E bind should exec the editor local"
       else if defaultEditorVar != "jotain-visual" then
-        throw "FAIL: default $editor should be jotain-visual, got ${toString defaultEditorVar}"
+        throw "FAIL: default editor local should be jotain-visual, got ${toString defaultEditorVar}"
       else if vscodeEditorVar != "code" then
-        throw "FAIL: $editor for vscode should be code, got ${toString vscodeEditorVar}"
+        throw "FAIL: editor local for vscode should be code, got ${toString vscodeEditorVar}"
       else
         "pass"
     );
@@ -228,9 +237,8 @@ in
           })
         ];
       };
-      execOnce =
-        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once;
-      hasAwww = lib.any (cmd: lib.hasInfix "awww-daemon --format xrgb" cmd) execOnce;
+      startup = hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on;
+      hasAwww = lib.hasInfix "awww-daemon --format xrgb" startup;
     in
     pkgs.writeText "eval-hyprland-wallpaper-enabled" (
       if hasAwww then "pass" else throw "FAIL: Hyprland wallpaper startup did not include awww-daemon"
@@ -253,9 +261,8 @@ in
           })
         ];
       };
-      execOnce =
-        eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once;
-      hasAwww = lib.any (cmd: lib.hasInfix "awww-daemon" cmd) execOnce;
+      startup = hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on;
+      hasAwww = lib.hasInfix "awww-daemon" startup;
     in
     pkgs.writeText "eval-hyprland-wallpaper-disabled" (
       if hasAwww then

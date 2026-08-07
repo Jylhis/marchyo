@@ -20,6 +20,7 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   marchyoCfg = osConfig.marchyo or { };
   desktopEnabled = pkgs.stdenv.isLinux && (marchyoCfg.desktop.enable or false);
   # `or true` mirrors the option defaults (desktop-cascade opt-outs).
@@ -30,14 +31,14 @@ let
   # keybindings-cheatsheet pattern: org.omarchy.terminal picks up the
   # centered floating-window rule); the notify commands run directly.
   reminderBinds = [
-    "SUPER CTRL, R, Set reminder, exec, $terminal --class=org.omarchy.terminal -e marchyo reminder set"
-    "SUPER CTRL ALT, R, Show reminders, exec, $terminal --class=org.omarchy.terminal -e marchyo reminder show"
-    "SUPER CTRL SHIFT, R, Clear reminders, exec, marchyo reminder clear"
+    (hlua.bindd "SUPER + CTRL + R" "Set reminder" (hlua.execInTerminal "marchyo reminder set"))
+    (hlua.bindd "SUPER + CTRL + ALT + R" "Show reminders" (hlua.execInTerminal "marchyo reminder show"))
+    (hlua.bindd "SUPER + CTRL + SHIFT + R" "Clear reminders" (hlua.exec "marchyo reminder clear"))
   ];
   utilityBinds = [
-    "SUPER CTRL ALT, T, Show date and time, exec, marchyo info datetime"
-    "SUPER CTRL ALT, B, Show battery status, exec, marchyo info battery"
-    "SUPER CTRL, period, Transcode media, exec, $terminal --class=org.omarchy.terminal -e marchyo transcode"
+    (hlua.bindd "SUPER + CTRL + ALT + T" "Show date and time" (hlua.exec "marchyo info datetime"))
+    (hlua.bindd "SUPER + CTRL + ALT + B" "Show battery status" (hlua.exec "marchyo info battery"))
+    (hlua.bindd "SUPER + CTRL + period" "Transcode media" (hlua.execInTerminal "marchyo transcode"))
   ];
 in
 {
@@ -47,7 +48,7 @@ in
         pkgs.gum
         pkgs.libnotify
       ];
-      wayland.windowManager.hyprland.settings.bindd = reminderBinds;
+      wayland.windowManager.hyprland.settings.bind = reminderBinds;
     })
     (lib.mkIf utilitiesEnabled {
       home.packages = [
@@ -58,7 +59,7 @@ in
         pkgs.fontconfig # fc-list / fc-match for `marchyo font`
       ]
       ++ lib.optional (pkgs ? terminaltexteffects) pkgs.terminaltexteffects;
-      wayland.windowManager.hyprland.settings.bindd = utilityBinds;
+      wayland.windowManager.hyprland.settings.bind = utilityBinds;
 
       # `marchyo font set` writes this optional include (ghostty processes
       # config-file includes after the main file, so its font-family wins

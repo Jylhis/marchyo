@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
   evalWith =
     extra:
@@ -24,8 +24,10 @@ let
       ];
     };
 
-  binds = hm: hm.wayland.windowManager.hyprland.settings.bindd or [ ];
-  hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
+  binds = hm: hm.wayland.windowManager.hyprland.settings.bind or [ ];
+  hasBind = hm: hyprHasBind (binds hm);
+  # Substring search over every rendered bind, for "no bind mentions X" checks.
+  hasBindText = hm: s: lib.hasInfix s (hyprEntriesText (binds hm));
   scriptNames = hm: map (p: p.name or "") (hm.home.packages or [ ]);
   hasScript = hm: n: lib.any (lib.hasInfix n) (scriptNames hm);
 in
@@ -39,8 +41,8 @@ in
     in
     pkgs.writeText "eval-menus-enabled" (
       if
-        hasBind hm "SUPER, Escape, Power menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu power"
-        && hasBind hm "SUPER ALT, Space, System menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu"
+        hasBind hm "SUPER + Escape" "-e marchyo menu power"
+        && hasBind hm "SUPER + ALT + Space" "-e marchyo menu"
         && hasScript hm "gum"
         && !(hasScript hm "marchyo-power-menu")
       then
@@ -58,7 +60,9 @@ in
       hm = (evalWith { marchyo.menus.enable = false; }).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-menus-disabled" (
-      if !(hasBind hm "Power menu") && !(hasBind hm "System menu") && !(hasScript hm "wiremix") then
+      if
+        !(hasBindText hm "Power menu") && !(hasBindText hm "System menu") && !(hasScript hm "wiremix")
+      then
         "pass"
       else
         throw "FAIL: menus disabled but a menu bind or the menu tool closure is still present"

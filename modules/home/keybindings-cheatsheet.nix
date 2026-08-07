@@ -7,6 +7,7 @@
 }:
 let
   inherit (lib) mkIf mkEnableOption;
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.keybindingsHelp;
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
@@ -28,8 +29,8 @@ in
 
     # Reuse the existing floating-terminal class so the overlay picks up the
     # centered floating-window rule from hyprland.nix without a new windowrule.
-    wayland.windowManager.hyprland.settings.bindd = [
-      "SUPER, K, Keybindings cheat sheet, exec, $terminal --class=org.omarchy.terminal -e marchyo keybindings"
+    wayland.windowManager.hyprland.settings.bind = [
+      (hlua.bindd "SUPER + K" "Keybindings cheat sheet" (hlua.execInTerminal "marchyo keybindings"))
     ];
   };
 }

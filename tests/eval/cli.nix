@@ -1,6 +1,11 @@
 { helpers, lib, ... }:
 let
-  inherit (helpers) testNixOS testNixOSCheck withTestUser;
+  inherit (helpers)
+    testNixOS
+    testNixOSCheck
+    withTestUser
+    hyprEntriesText
+    ;
 in
 {
   # CLI module: defaults to enabled, installs `marchyo` system-wide.
@@ -26,9 +31,9 @@ in
     testNixOSCheck "cli-runtime-restore"
       (
         cfg:
-        builtins.any (
-          e: lib.hasInfix "marchyo runtime restore" (toString e)
-        ) cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once
+        lib.hasInfix "marchyo runtime restore" (
+          hyprEntriesText cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on
+        )
       )
       (withTestUser {
         marchyo.desktop.enable = true;
@@ -57,14 +62,14 @@ in
         ];
       });
 
-  # cli.enable = false must also drop the exec-once entry.
+  # cli.enable = false must also drop the startup-hook entry.
   eval-cli-disabled-no-restore =
     testNixOSCheck "cli-disabled-no-restore"
       (
         cfg:
-        !(builtins.any (
-          e: lib.hasInfix "marchyo runtime restore" (toString e)
-        ) cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.exec-once)
+        !(lib.hasInfix "marchyo runtime restore" (
+          hyprEntriesText cfg.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on
+        ))
       )
       (withTestUser {
         marchyo.desktop.enable = true;

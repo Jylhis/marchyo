@@ -104,8 +104,11 @@ in
 
     # Fullscreen the screensaver window (same list-merge pattern the webapps
     # and screenshot modules use to contribute Hyprland settings).
-    wayland.windowManager.hyprland.settings.windowrule = [
-      "fullscreen 1, match:class org.omarchy.screensaver"
+    wayland.windowManager.hyprland.settings.window_rule = [
+      {
+        match.class = "org.omarchy.screensaver";
+        fullscreen = true;
+      }
     ];
   };
 }

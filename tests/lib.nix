@@ -194,6 +194,43 @@ rec {
       };
     } extraConfig;
 
+  # Flatten a Hyprland Lua settings entry (a bind `{ _args = [...]; }`, a
+  # window rule, a monitor spec, ...) into one searchable string, so tests can
+  # keep asserting with `hasInfix` the way they did against the old hyprlang
+  # strings. mkLuaInline values contribute their raw Lua expression.
+  hyprEntryText =
+    let
+      render =
+        v:
+        if lib.isAttrs v && (v._type or null) == "lua-inline" then
+          v.expr
+        else if lib.isAttrs v then
+          lib.concatStringsSep " " (lib.mapAttrsToList (k: x: "${k}=${render x}") v)
+        else if lib.isList v then
+          lib.concatMapStringsSep " " render v
+        else if lib.isBool v then
+          lib.boolToString v
+        else
+          toString v;
+    in
+    render;
+
+  # `hyprEntryText` over a list, joined by newlines.
+  hyprEntriesText = entries: lib.concatMapStringsSep "\n" hyprEntryText entries;
+
+  # True when some bind entry is bound to exactly `keys` and its rendered text
+  # contains `needle` (the dispatcher expression and/or description). Replaces
+  # the old "match the whole hyprlang bind string" assertions.
+  hyprHasBind =
+    entries: keys: needle:
+    lib.any (
+      e:
+      let
+        args = e._args or [ ];
+      in
+      args != [ ] && builtins.head args == keys && lib.hasInfix needle (hyprEntryText e)
+    ) entries;
+
   # Minimal NixOS configuration required for a config to evaluate.
   minimalConfig = {
     boot.loader.grub.enable = false;
