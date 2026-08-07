@@ -37,7 +37,7 @@ in
     home.packages = [ pkgs.nautilus-open-any-terminal ];
 
     # Point the context-menu entry at marchyo's terminal (ghostty, the same
-    # default as hyprland.nix's $terminal). mkDefault so a host running a
+    # default as hyprland.nix's terminal local). mkDefault so a host running a
     # different terminal can override the key.
     dconf.settings."com/github/stunkymonkey/nautilus-open-any-terminal".terminal =
       lib.mkDefault "ghostty";

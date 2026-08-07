@@ -9,7 +9,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind;
 
   hm =
     (lib.nixosSystem {
@@ -23,8 +23,8 @@ let
       ];
     }).config.home-manager.users.testuser;
 
-  binds = hm.wayland.windowManager.hyprland.settings.bindd or [ ];
-  hasBind = s: lib.any (b: lib.hasInfix s b) binds;
+  binds = hm.wayland.windowManager.hyprland.settings.bind or [ ];
+  hasBind = hyprHasBind binds;
 
   waybar = builtins.head hm.programs.waybar.settings;
 in
@@ -41,10 +41,10 @@ in
       && waybar."custom/dnd".signal == 9
       && waybar."custom/dnd".on-click == "marchyo toggle notifications"
       && !(lib.any (p: (p.name or "") == "marchyo-dnd-toggle") hm.home.packages)
-      && hasBind "SUPER CTRL, comma, Toggle do-not-disturb, exec, marchyo toggle notifications"
-      && hasBind "SUPER CTRL SHIFT, comma, Dismiss all notifications, exec, makoctl dismiss --all"
+      && hasBind "SUPER + CTRL + comma" ''hl.dsp.exec_cmd("marchyo toggle notifications")''
+      && hasBind "SUPER + CTRL + SHIFT + comma" ''hl.dsp.exec_cmd("makoctl dismiss --all")''
       # The old dismiss-all bind must be gone from SUPER CTRL, comma.
-      && !(hasBind "SUPER CTRL, comma, Dismiss all")
+      && !(hasBind "SUPER + CTRL + comma" "Dismiss all")
     then
       "pass"
     else

@@ -12,6 +12,7 @@ let
     mkOption
     types
     ;
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.screenshot;
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
@@ -69,37 +70,49 @@ in
 
     # Hyprland keybindings for screenshots
     wayland.windowManager.hyprland.settings = {
-      bindd = [
+      bind = [
         # Screenshot area/window selection (interactive)
-        ", Print, Screenshot area/window, exec, marchyo capture screenshot"
-        "SUPER, S, Screenshot area/window, exec, marchyo capture screenshot"
+        (hlua.bindd "Print" "Screenshot area/window" (hlua.exec "marchyo capture screenshot"))
+        (hlua.bindd "SUPER + S" "Screenshot area/window" (hlua.exec "marchyo capture screenshot"))
 
         # Screenshot active window
-        "SHIFT, Print, Screenshot active window, exec, marchyo capture screenshot --target active"
-        "SUPER CTRL, S, Screenshot active window, exec, marchyo capture screenshot --target active"
+        (hlua.bindd "SHIFT + Print" "Screenshot active window" (
+          hlua.exec "marchyo capture screenshot --target active"
+        ))
+        (hlua.bindd "SUPER + CTRL + S" "Screenshot active window" (
+          hlua.exec "marchyo capture screenshot --target active"
+        ))
 
         # Screenshot current output (fullscreen)
-        "CTRL, Print, Screenshot current screen, exec, marchyo capture screenshot --target output"
-        "SUPER ALT, S, Screenshot current screen, exec, marchyo capture screenshot --target output"
+        (hlua.bindd "CTRL + Print" "Screenshot current screen" (
+          hlua.exec "marchyo capture screenshot --target output"
+        ))
+        (hlua.bindd "SUPER + ALT + S" "Screenshot current screen" (
+          hlua.exec "marchyo capture screenshot --target output"
+        ))
 
         # Screenshot all screens
-        "ALT, Print, Screenshot all screens, exec, marchyo capture screenshot --target screen"
-        "SUPER CTRL ALT, S, Screenshot all screens, exec, marchyo capture screenshot --target screen"
+        (hlua.bindd "ALT + Print" "Screenshot all screens" (
+          hlua.exec "marchyo capture screenshot --target screen"
+        ))
+        (hlua.bindd "SUPER + CTRL + ALT + S" "Screenshot all screens" (
+          hlua.exec "marchyo capture screenshot --target screen"
+        ))
       ]
       ++ lib.optionals cfg.enableAnnotation [
         # Screenshot with annotation
-        "SUPER SHIFT, Print, Screenshot with annotation, exec, ${sattyCmd}"
-        "SUPER SHIFT, S, Screenshot with annotation, exec, ${sattyCmd}"
+        (hlua.bindd "SUPER + SHIFT + Print" "Screenshot with annotation" (hlua.exec sattyCmd))
+        (hlua.bindd "SUPER + SHIFT + S" "Screenshot with annotation" (hlua.exec sattyCmd))
       ]
       ++ lib.optionals cfg.enableOcr [
         # OCR: select a region, extract text to clipboard
-        "SUPER SHIFT, O, OCR region to clipboard, exec, ${ocrCmd}"
-        "SUPER CTRL SHIFT, S, OCR region to clipboard, exec, ${ocrCmd}"
+        (hlua.bindd "SUPER + SHIFT + O" "OCR region to clipboard" (hlua.exec ocrCmd))
+        (hlua.bindd "SUPER + CTRL + SHIFT + S" "OCR region to clipboard" (hlua.exec ocrCmd))
       ];
 
       # Environment variable for grimblast to use the correct directory
       env = [
-        "XDG_SCREENSHOTS_DIR,${cfg.directory}"
+        (hlua.env "XDG_SCREENSHOTS_DIR" cfg.directory)
       ];
     };
   };

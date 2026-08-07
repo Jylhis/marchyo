@@ -7,13 +7,12 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
-  hasVoxtypeBind = bindd: lib.any (b: lib.hasInfix "voxtype record toggle" b) bindd;
-  hasStatusBind = bindd: lib.any (b: lib.hasInfix "voxtype status --follow" b) bindd;
+  hasVoxtypeBind = binds: lib.hasInfix "voxtype record toggle" (hyprEntriesText binds);
+  hasStatusBind = binds: lib.hasInfix "voxtype status --follow" (hyprEntriesText binds);
   # The toggle bind matches omarchy's Super+Ctrl+X (marchyo.dictation.toggleKey).
-  hasToggleKeyBind =
-    bindd: lib.any (b: lib.hasInfix "SUPER CTRL, X" b && lib.hasInfix "voxtype record toggle" b) bindd;
+  hasToggleKeyBind = binds: hyprHasBind binds "SUPER + CTRL + X" "voxtype record toggle";
   hasVoxtypeModule =
     hm: lib.elem "custom/voxtype" (builtins.elemAt hm.programs.waybar.settings 0).modules-right;
 
@@ -46,9 +45,9 @@ in
     pkgs.writeText "eval-dictation-enabled" (
       if
         hm.services.voxtype.enable
-        && hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bindd
-        && hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bindd
-        && hasStatusBind hm.wayland.windowManager.hyprland.settings.bindd
+        && hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bind
+        && hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bind
+        && hasStatusBind hm.wayland.windowManager.hyprland.settings.bind
         && hasVoxtypeModule hm
         && s.output.notification.on_recording_start
         && s.audio.feedback.enabled
@@ -78,7 +77,7 @@ in
       if
         (!hm.services.voxtype.settings.hotkey.enabled)
         && (!lib.elem "input" cfg.users.users.testuser.extraGroups)
-        && hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bindd
+        && hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bind
       then
         "pass"
       else
@@ -111,7 +110,7 @@ in
     pkgs.writeText "eval-dictation-disabled" (
       if
         (!hm.services.voxtype.enable)
-        && (!hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bindd)
+        && (!hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bind)
         && (!hasVoxtypeModule hm)
       then
         "pass"

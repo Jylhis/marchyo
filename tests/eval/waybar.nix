@@ -12,7 +12,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprEntriesText;
 
   cfgFor =
     extra:
@@ -32,7 +32,7 @@ let
   cfg = cfgFor { };
   hm = cfg.home-manager.users.testuser;
   waybar = builtins.head hm.programs.waybar.settings;
-  windowrules = lib.concatStringsSep "\n" hm.wayland.windowManager.hyprland.settings.windowrule;
+  windowrules = hyprEntriesText hm.wayland.windowManager.hyprland.settings.window_rule;
 
   # class every window-opening click must carry -> the on-click that opens it
   floatingClicks = {

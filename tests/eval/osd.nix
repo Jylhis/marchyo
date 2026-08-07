@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
   evalWith =
     extra:
@@ -24,8 +24,9 @@ let
       ];
     };
 
-  bindel = hm: hm.wayland.windowManager.hyprland.settings.bindel or [ ];
-  hasBindel = hm: s: lib.any (b: lib.hasInfix s b) (bindel hm);
+  binds = hm: hm.wayland.windowManager.hyprland.settings.bind or [ ];
+  hasBind = hm: hyprHasBind (binds hm);
+  bindsText = hm: hyprEntriesText (binds hm);
   hasUdevSwayosd = cfg: lib.any (p: lib.getName p == "swayosd") cfg.services.udev.packages;
 in
 {
@@ -40,10 +41,10 @@ in
     pkgs.writeText "eval-osd-default" (
       if
         (hm.systemd.user.services ? swayosd)
-        && hasBindel hm "XF86AudioRaiseVolume, exec, swayosd-client --output-volume raise"
-        && hasBindel hm "XF86MonBrightnessDown, exec, swayosd-client --brightness lower"
-        && !(hasBindel hm "XF86AudioRaiseVolume, exec, wpctl")
-        && !(hasBindel hm "XF86MonBrightnessDown, exec, brightnessctl")
+        && hasBind hm "XF86AudioRaiseVolume" ''hl.dsp.exec_cmd("swayosd-client --output-volume raise")''
+        && hasBind hm "XF86MonBrightnessDown" ''hl.dsp.exec_cmd("swayosd-client --brightness lower")''
+        && !(hasBind hm "XF86AudioRaiseVolume" "wpctl")
+        && !(hasBind hm "XF86MonBrightnessDown" "brightnessctl")
         && hasUdevSwayosd cfg
         && lib.elem "video" cfg.users.users.testuser.extraGroups
       then
@@ -62,9 +63,9 @@ in
     pkgs.writeText "eval-osd-disabled" (
       if
         !(hm.systemd.user.services ? swayosd)
-        && hasBindel hm "XF86AudioRaiseVolume, exec, wpctl set-volume"
-        && hasBindel hm "XF86MonBrightnessDown, exec, brightnessctl"
-        && !(hasBindel hm "swayosd-client")
+        && hasBind hm "XF86AudioRaiseVolume" "wpctl set-volume"
+        && hasBind hm "XF86MonBrightnessDown" "brightnessctl"
+        && !(lib.hasInfix "swayosd-client" (bindsText hm))
         && !(hasUdevSwayosd cfg)
         && !(lib.elem "video" cfg.users.users.testuser.extraGroups)
       then

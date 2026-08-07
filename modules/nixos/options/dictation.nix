@@ -55,12 +55,13 @@ in
 
     toggleKey = mkOption {
       type = types.nullOr types.str;
-      default = "SUPER CTRL, X";
-      example = "SUPER, H";
+      default = "SUPER + CTRL + X";
+      example = "SUPER + H";
       description = ''
-        Hyprland bind spec ("MODS, key") wired to `voxtype record toggle`, matching
-        omarchy's Super+Ctrl+X toggle. Drives the same daemon state as the
-        push-to-talk hotkey. Set to null to bind no compositor toggle.
+        Hyprland Lua bind spec ("MOD + MOD + key") wired to
+        `voxtype record toggle`, matching omarchy's Super+Ctrl+X toggle. Drives
+        the same daemon state as the push-to-talk hotkey. Set to null to bind no
+        compositor toggle.
       '';
     };
 

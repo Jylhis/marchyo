@@ -1,9 +1,9 @@
 # Omarchy-parity keybinds (OMARCHY_PARITY.md Phase 2): monitor-control
 # helpers, connectivity TUIs in floating terminals, and app-launch binds.
 # Scripts follow the modules/home/window-toggles.nix writeShellApplication
-# pattern; binds merge into the bindd list the same way
+# pattern; binds merge into the bind list the same way
 # modules/home/webapps.nix does (home-manager concatenates the lists, order
-# is irrelevant to Hyprland). `$terminal` and the org.omarchy.* floating
+# is irrelevant to Hyprland). The `terminal` Lua local and the org.omarchy.* floating
 # window classes are defined in modules/home/hyprland.nix.
 {
   lib,
@@ -12,11 +12,12 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   marchyoCfg = osConfig.marchyo or { };
   desktopEnabled = pkgs.stdenv.isLinux && (marchyoCfg.desktop.enable or false);
   devEnabled = marchyoCfg.development.enable or false;
 
-  # Same resolution as $fileManager in modules/home/hyprland.nix: follow
+  # Same resolution as the fileManager Lua local in modules/home/hyprland.nix: follow
   # marchyo.defaults.fileManager, fall back to xdg-open when unmanaged (null).
   fileManagerPackages = {
     inherit (pkgs) nautilus;
@@ -43,12 +44,14 @@ in
     ]
     ++ fileManagerDeps;
 
-    wayland.windowManager.hyprland.settings.bindd = [
+    wayland.windowManager.hyprland.settings.bind = [
       # --- Monitor controls ---
       # SUPER+/ (slash) is the password manager, so the scale cycle sits on the
       # adjacent backslash.
-      "SUPER, backslash, Cycle monitor scale, exec, marchyo monitor scale-cycle"
-      "SUPER CTRL, Delete, Toggle laptop display, exec, marchyo monitor laptop-toggle"
+      (hlua.bindd "SUPER + backslash" "Cycle monitor scale" (hlua.exec "marchyo monitor scale-cycle"))
+      (hlua.bindd "SUPER + CTRL + Delete" "Toggle laptop display" (
+        hlua.exec "marchyo monitor laptop-toggle"
+      ))
 
       # --- Connectivity TUIs (floating, omarchy setup-menu parity) ---
       # Same TUIs waybar's segments launch (wiremix/nmtui/bluetui); the
@@ -56,18 +59,26 @@ in
       # modules/home/hyprland.nix. nmtui ships with the networkmanager package
       # (see modules/nixos/network.nix — Wi-Fi is on the wpa_supplicant
       # backend, not iwd; docs/known-issues.md).
-      "SUPER CTRL, A, Audio mixer, exec, $terminal --class=org.omarchy.wiremix -e wiremix"
-      "SUPER CTRL, B, Bluetooth manager, exec, $terminal --class=org.omarchy.bluetui -e bluetui"
-      "SUPER CTRL, W, Wi-Fi manager, exec, $terminal --class=org.omarchy.nmtui -e nmtui"
+      (hlua.bindd "SUPER + CTRL + A" "Audio mixer" (
+        hlua.execInTerminalAs "org.omarchy.wiremix" "wiremix"
+      ))
+      (hlua.bindd "SUPER + CTRL + B" "Bluetooth manager" (
+        hlua.execInTerminalAs "org.omarchy.bluetui" "bluetui"
+      ))
+      (hlua.bindd "SUPER + CTRL + W" "Wi-Fi manager" (hlua.execInTerminalAs "org.omarchy.nmtui" "nmtui"))
 
       # --- App launches ---
-      "SUPER ALT, return, tmux Work session, exec, $terminal -e tmux new -A -s Work"
-      "SUPER ALT SHIFT, F, File manager at terminal cwd, exec, marchyo launch file-manager"
+      (hlua.bindd "SUPER + ALT + return" "tmux Work session" (
+        hlua.execInPlainTerminal "tmux new -A -s Work"
+      ))
+      (hlua.bindd "SUPER + ALT + SHIFT + F" "File manager at terminal cwd" (
+        hlua.exec "marchyo launch file-manager"
+      ))
     ]
     ++ lib.optionals devEnabled [
       # lazydocker is system-side via marchyo.development.enable (devTools in
       # modules/nixos/packages.nix), so the bind follows the same gate.
-      "SUPER ALT, D, Docker TUI, exec, $terminal --class=org.omarchy.terminal -e lazydocker"
+      (hlua.bindd "SUPER + ALT + D" "Docker TUI" (hlua.execInTerminal "lazydocker"))
     ];
   };
 }

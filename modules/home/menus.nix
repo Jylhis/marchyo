@@ -13,6 +13,7 @@
 }:
 let
   inherit (lib) mkIf;
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   desktopEnabled = pkgs.stdenv.isLinux && (osConfig.marchyo.desktop.enable or false);
   enabled = desktopEnabled && (osConfig.marchyo.menus.enable or true);
 in
@@ -30,12 +31,12 @@ in
       power-profiles-daemon # powerprofilesctl
     ];
 
-    # Merges with the bindd lists from hyprland.nix / screenshot.nix /
+    # Merges with the bind lists from hyprland.nix / screenshot.nix /
     # webapps.nix (home-manager concatenates the lists). Both combos were
     # verified free in hyprland.nix.
-    wayland.windowManager.hyprland.settings.bindd = [
-      "SUPER, Escape, Power menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu power"
-      "SUPER ALT, Space, System menu, exec, $terminal --class=org.omarchy.terminal -e marchyo menu"
+    wayland.windowManager.hyprland.settings.bind = [
+      (hlua.bindd "SUPER + Escape" "Power menu" (hlua.execInTerminal "marchyo menu power"))
+      (hlua.bindd "SUPER + ALT + Space" "System menu" (hlua.execInTerminal "marchyo menu"))
     ];
   };
 }

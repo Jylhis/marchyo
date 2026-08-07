@@ -7,7 +7,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprEntriesText;
 
   evalWith =
     extra:
@@ -30,8 +30,8 @@ let
   hasListener = hm: lib.any (l: (l.on-timeout or "") == "marchyo-screensaver-launch") (listeners hm);
   hasRule =
     hm:
-    lib.any (r: lib.hasInfix "org.omarchy.screensaver" r) (
-      hm.wayland.windowManager.hyprland.settings.windowrule or [ ]
+    lib.hasInfix "org.omarchy.screensaver" (
+      hyprEntriesText (hm.wayland.windowManager.hyprland.settings.window_rule or [ ])
     );
 in
 {

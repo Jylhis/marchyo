@@ -5,6 +5,7 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = (osConfig.marchyo or { }).emacs or { };
   enabled = cfg.enable or false;
   emacsPkg = cfg.package or pkgs.emacs-pgtk;
@@ -221,36 +222,72 @@ let
 
   # pgtk reports the Wayland app-id as lowercase `emacs`; X11/native uses
   # uppercase `Emacs`. Match both so the rules apply regardless of build.
-  hyprWindowRules = lib.optionals enabled [
-    "float on, match:class ^(Emacs|emacs)$, match:title ^(emacs-scratchpad)$"
-    "workspace special:magic silent, match:class ^(Emacs|emacs)$, match:title ^(emacs-scratchpad)$"
-    "float on, match:class ^(Emacs|emacs)$, match:title ^(emacs-everywhere)$"
-    "size 800 500, match:class ^(Emacs|emacs)$, match:title ^(emacs-everywhere)$"
-    "center on, match:class ^(Emacs|emacs)$, match:title ^(emacs-everywhere)$"
-  ];
-
-  hyprBindd =
+  hyprWindowRules =
+    let
+      scratchpad = {
+        class = "^(Emacs|emacs)$";
+        title = "^(emacs-scratchpad)$";
+      };
+      everywhere = {
+        class = "^(Emacs|emacs)$";
+        title = "^(emacs-everywhere)$";
+      };
+    in
     lib.optionals enabled [
-      "SUPER SHIFT, E, New Emacs frame, exec, emacsclient -c -n"
+      {
+        match = scratchpad;
+        float = true;
+      }
+      {
+        match = scratchpad;
+        workspace = "special:magic silent";
+      }
+      {
+        match = everywhere;
+        float = true;
+      }
+      {
+        match = everywhere;
+        size = [
+          800
+          500
+        ];
+      }
+      {
+        match = everywhere;
+        center = true;
+      }
+    ];
+
+  hyprBinds =
+    let
+      windmove = action: dir: hlua.exec "${windmoveScript}/bin/marchyo-cross-windmove ${action} ${dir}";
+    in
+    lib.optionals enabled [
+      (hlua.bindd "SUPER + SHIFT + E" "New Emacs frame" (hlua.exec "emacsclient -c -n"))
     ]
     ++ lib.optionals windmoveEnabled [
-      "SUPER ALT, H, Focus window (Emacs-aware) left,  exec, ${windmoveScript}/bin/marchyo-cross-windmove focus l"
-      "SUPER ALT, L, Focus window (Emacs-aware) right, exec, ${windmoveScript}/bin/marchyo-cross-windmove focus r"
-      "SUPER ALT, K, Focus window (Emacs-aware) up,    exec, ${windmoveScript}/bin/marchyo-cross-windmove focus u"
-      "SUPER ALT, J, Focus window (Emacs-aware) down,  exec, ${windmoveScript}/bin/marchyo-cross-windmove focus d"
-      "SUPER ALT SHIFT, H, Swap window (Emacs-aware) left,  exec, ${windmoveScript}/bin/marchyo-cross-windmove move l"
-      "SUPER ALT SHIFT, L, Swap window (Emacs-aware) right, exec, ${windmoveScript}/bin/marchyo-cross-windmove move r"
-      "SUPER ALT SHIFT, K, Swap window (Emacs-aware) up,    exec, ${windmoveScript}/bin/marchyo-cross-windmove move u"
-      "SUPER ALT SHIFT, J, Swap window (Emacs-aware) down,  exec, ${windmoveScript}/bin/marchyo-cross-windmove move d"
+      (hlua.bindd "SUPER + ALT + H" "Focus window (Emacs-aware) left" (windmove "focus" "l"))
+      (hlua.bindd "SUPER + ALT + L" "Focus window (Emacs-aware) right" (windmove "focus" "r"))
+      (hlua.bindd "SUPER + ALT + K" "Focus window (Emacs-aware) up" (windmove "focus" "u"))
+      (hlua.bindd "SUPER + ALT + J" "Focus window (Emacs-aware) down" (windmove "focus" "d"))
+      (hlua.bindd "SUPER + ALT + SHIFT + H" "Swap window (Emacs-aware) left" (windmove "move" "l"))
+      (hlua.bindd "SUPER + ALT + SHIFT + L" "Swap window (Emacs-aware) right" (windmove "move" "r"))
+      (hlua.bindd "SUPER + ALT + SHIFT + K" "Swap window (Emacs-aware) up" (windmove "move" "u"))
+      (hlua.bindd "SUPER + ALT + SHIFT + J" "Swap window (Emacs-aware) down" (windmove "move" "d"))
     ]
     ++ lib.optionals scratchpadEnabled [
-      "SUPER, Z, Emacs scratchpad, exec, ${scratchpadScript}/bin/marchyo-emacs-scratchpad"
+      (hlua.bindd "SUPER + Z" "Emacs scratchpad" (
+        hlua.exec "${scratchpadScript}/bin/marchyo-emacs-scratchpad"
+      ))
     ]
     ++ lib.optionals everywhereEnabled [
-      "SUPER CTRL, E, Emacs everywhere, exec, emacsclient -ne '(emacs-everywhere)'"
+      (hlua.bindd "SUPER + CTRL + E" "Emacs everywhere" (
+        hlua.exec "emacsclient -ne '(emacs-everywhere)'"
+      ))
     ]
     ++ lib.optionals orgProtocolEnabled [
-      "SUPER SHIFT, C, Org capture, exec, emacsclient -c -n -e '(org-capture)'"
+      (hlua.bindd "SUPER + SHIFT + C" "Org capture" (hlua.exec "emacsclient -c -n -e '(org-capture)'"))
     ];
 in
 {
@@ -294,8 +331,8 @@ in
     );
 
     wayland.windowManager.hyprland.settings = {
-      windowrule = lib.mkAfter hyprWindowRules;
-      bindd = lib.mkAfter hyprBindd;
+      window_rule = lib.mkAfter hyprWindowRules;
+      bind = lib.mkAfter hyprBinds;
     };
   };
 }

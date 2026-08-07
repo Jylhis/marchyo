@@ -10,7 +10,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
   evalWith =
     extra:
@@ -27,8 +27,10 @@ let
       ];
     };
 
-  binds = hm: hm.wayland.windowManager.hyprland.settings.bindd or [ ];
-  hasBind = hm: s: lib.any (b: lib.hasInfix s b) (binds hm);
+  binds = hm: hm.wayland.windowManager.hyprland.settings.bind or [ ];
+  hasBind = hm: hyprHasBind (binds hm);
+  # Substring search over every rendered bind, for "no bind mentions X" checks.
+  hasBindText = hm: s: lib.hasInfix s (hyprEntriesText (binds hm));
   hasPackage = hm: n: lib.any (p: lib.getName p == n) hm.home.packages;
 in
 {
@@ -39,16 +41,16 @@ in
     in
     pkgs.writeText "eval-utilities-enabled" (
       if
-        hasBind hm "SUPER CTRL, R, Set reminder, exec, $terminal --class=org.omarchy.terminal -e marchyo reminder set"
-        && hasBind hm "SUPER CTRL ALT, R, Show reminders, exec, "
-        && hasBind hm "SUPER CTRL SHIFT, R, Clear reminders, exec, marchyo reminder clear"
-        && hasBind hm "SUPER CTRL ALT, T, Show date and time, exec, marchyo info datetime"
-        && hasBind hm "SUPER CTRL ALT, B, Show battery status, exec, marchyo info battery"
-        && hasBind hm "SUPER CTRL, period, Transcode media, exec, "
+        hasBind hm "SUPER + CTRL + R" "-e marchyo reminder set"
+        && hasBind hm "SUPER + CTRL + ALT + R" "Show reminders"
+        && hasBind hm "SUPER + CTRL + SHIFT + R" "marchyo reminder clear"
+        && hasBind hm "SUPER + CTRL + ALT + T" "marchyo info datetime"
+        && hasBind hm "SUPER + CTRL + ALT + B" "marchyo info battery"
+        && hasBind hm "SUPER + CTRL + period" "Transcode media"
         # Share stays deliberately unbound (CLI/central-menu entry); the
         # scripts were absorbed into the CLI, whose tools are installed.
         && hasPackage hm "gum"
-        && !(hasBind hm "marchyo share")
+        && !(hasBindText hm "marchyo share")
       then
         "pass"
       else
@@ -62,8 +64,7 @@ in
     in
     pkgs.writeText "eval-utilities-reminders-disabled" (
       if
-        !(hasBind hm "marchyo reminder")
-        && hasBind hm "SUPER CTRL ALT, T, Show date and time, exec, marchyo info datetime"
+        !(hasBindText hm "marchyo reminder") && hasBind hm "SUPER + CTRL + ALT + T" "marchyo info datetime"
       then
         "pass"
       else
@@ -77,9 +78,9 @@ in
     in
     pkgs.writeText "eval-utilities-disabled" (
       if
-        !(hasBind hm "marchyo info datetime")
-        && !(hasBind hm "marchyo transcode")
-        && hasBind hm "SUPER CTRL, R, Set reminder, exec, "
+        !(hasBindText hm "marchyo info datetime")
+        && !(hasBindText hm "marchyo transcode")
+        && hasBind hm "SUPER + CTRL + R" "Set reminder"
       then
         "pass"
       else

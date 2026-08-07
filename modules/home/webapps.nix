@@ -5,6 +5,7 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   cfg = (osConfig.marchyo or { }).webapps or { };
   enabled = desktopEnabled && (cfg.enable or false);
@@ -50,15 +51,17 @@ let
   # Hyprland launch binds for apps that declare a key (omarchy-style). Reuses
   # the same resolved browser command as the .desktop entries.
   keyedApps = builtins.filter (app: (app.key or null) != null) apps;
-  mkBind = app: "${app.modifiers}, ${app.key}, ${app.name}, exec, ${appExec app}";
+  # `modifiers` keeps its "SUPER SHIFT" form in the option; luaKeys turns it
+  # into the "SUPER + SHIFT + A" the Lua renderer wants.
+  mkBind = app: hlua.bindd (hlua.luaKeys app.modifiers app.key) app.name (hlua.exec (appExec app));
 in
 {
   config = lib.mkIf enabled {
     xdg.desktopEntries = builtins.listToAttrs (map mkEntry apps);
     home.packages = lib.optional needsChromium pkgs.chromium;
 
-    # Merges with the bindd lists from hyprland.nix / screenshot.nix (home-manager
+    # Merges with the bind lists from hyprland.nix / screenshot.nix (home-manager
     # concatenates the list); order is irrelevant to Hyprland.
-    wayland.windowManager.hyprland.settings.bindd = map mkBind keyedApps;
+    wayland.windowManager.hyprland.settings.bind = map mkBind keyedApps;
   };
 }
