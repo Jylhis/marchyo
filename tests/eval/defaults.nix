@@ -62,6 +62,34 @@ in
     };
   });
 
+  # aerc styleset regression: marchyo hand-rolls its own styleset (the Stylix
+  # aerc target is disabled in modules/generic/theme.nix) because upstream used
+  # base07 (= surface-raised, near-white in Sheet) as a *foreground*, giving
+  # white-on-white unread subjects / title / header in the light variant. Assert
+  # (in the light variant) that the styleset is named "marchyo", that unread
+  # subjects / title / selected-tab share the heading ink, and — the crux — that
+  # that ink is NOT the near-white surface-raised (which the styleset reuses only
+  # as completion_pill.bg, a background). Kept config-relative so it needs no
+  # overlay pkgs to recompute the palette.
+  eval-defaults-aerc-styleset =
+    testNixOSCheck "defaults-aerc-styleset"
+      (
+        config:
+        let
+          aerc = config.home-manager.users.testuser.programs.aerc;
+          g = aerc.stylesets.marchyo.global;
+        in
+        aerc.extraConfig.ui.styleset-name == "marchyo"
+        && g."msglist_unread.fg" == g."title.fg"
+        && g."msglist_unread.fg" == g."tab.selected.fg"
+        && g."msglist_unread.fg" != g."completion_pill.bg"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.variant = "light";
+        marchyo.defaults.email = "aerc";
+      });
+
   # The other module-backed selections: ncspot (music), cmus (audio), neomutt
   # (email). Exercises the defaults.nix hasAttr guards (these install via their
   # Home-Manager modules, not environment.systemPackages).
