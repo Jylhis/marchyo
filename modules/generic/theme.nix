@@ -44,6 +44,12 @@ let
     "hyprlock"
     "console"
     "starship"
+    # modules/home/aerc.nix ships its own styleset. Upstream Stylix's aerc
+    # target uses base07 (the base16 "Light Background" slot, = surface-raised
+    # here) as a *foreground* for title/header/unread-subject, which is
+    # white-on-white in the Sheet variant. We theme aerc from the semantic
+    # palette tokens instead.
+    "aerc"
     # modules/home/vicinae.nix ships jylhis-field/jylhis-sheet as real Vicinae
     # TOML themes (the full ~55-key colour surface, vs the 3 groups Stylix
     # filled) and owns font.normal.* + launcher_window.opacity itself.
