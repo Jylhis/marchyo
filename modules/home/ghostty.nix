@@ -35,16 +35,9 @@ let
     "alt+9=last_tab"
   ];
 
-  # Aerospace owns alt-* on macOS (workspace switching, focus movement). Unbind
-  # ghostty's alt-arrow word-jump bindings so those keys pass through to the
-  # shell / tmux / Aerospace. cmd never escapes to the TTY, so cmd+N is a safe
-  # choice for tab switching.
+  # cmd never escapes to the TTY, so cmd+N is a safe choice for tab switching
+  # on macOS.
   darwinKeybinds = [
-    "alt+left=unbind"
-    "alt+right=unbind"
-    "alt+up=unbind"
-    "alt+down=unbind"
-
     "cmd+1=goto_tab:1"
     "cmd+2=goto_tab:2"
     "cmd+3=goto_tab:3"
@@ -62,9 +55,9 @@ let
   # "jylhis/marchyo") when idle, and "<short-path>: <command>" while a command
   # runs. Ghostty's own "title" shell-integration feature is disabled below
   # (it hardcodes the full `\w` path); this replaces it. Registered via the
-  # precmd/preexec arrays: zsh provides them natively; bash needs bash-preexec,
-  # loaded explicitly for bash below (see bashTitleHooks). Sharing these arrays
-  # is what lets the title hooks coexist with starship's own precmd hook.
+  # precmd/preexec arrays, which bash gets from bash-preexec, loaded explicitly
+  # below (see bashTitleHooks). Sharing these arrays is what lets the title
+  # hooks coexist with starship's own precmd hook.
   titleHooks = ''
     __marchyo_short_pwd() {
       local p=''${PWD/#$HOME/\~}
@@ -119,7 +112,6 @@ in
     installBatSyntax = mkIf isDarwin false;
 
     enableBashIntegration = config.programs.bash.enable;
-    enableZshIntegration = config.programs.zsh.enable;
 
     settings = {
       theme = ghosttyTheme;
@@ -152,9 +144,8 @@ in
     };
   };
 
-  # Register the short-path title hook in each active shell. mkAfter places it
-  # after ghostty's own integration snippet. bash additionally loads bash-preexec
-  # (see bashTitleHooks); zsh drives the precmd/preexec arrays natively.
+  # Register the short-path title hook in bash. mkAfter places it after
+  # ghostty's own integration snippet; bash additionally loads bash-preexec
+  # (see bashTitleHooks).
   programs.bash.initExtra = mkIf config.programs.bash.enable (mkAfter bashTitleHooks);
-  programs.zsh.initContent = mkIf config.programs.zsh.enable (mkAfter titleHooks);
 }

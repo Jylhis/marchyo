@@ -195,8 +195,6 @@ let
     {
       time.timeZone = "UTC";
       system.stateVersion = "24.05";
-      # Bash is the marchyo default login shell on every platform (zsh stays
-      # installed and configured as an alternative — see modules/nix-on-droid).
       user.shell = "${pkgs.bashInteractive}/bin/bash";
     };
 

@@ -33,20 +33,12 @@ let
       export OTEL_EXPORTER_OTLP_HEADERS="$(cat "${authFile}")"
     fi
   '';
-
-  fishInit = ''
-    if test -r "${authFile}"
-        set -gx OTEL_EXPORTER_OTLP_HEADERS (cat "${authFile}")
-    end
-  '';
 in
 {
   config = lib.mkIf enabled {
     home.sessionVariables = baseEnv;
 
     programs.bash.initExtra = shellInit;
-    programs.zsh.initExtra = shellInit;
-    programs.fish.interactiveShellInit = fishInit;
 
     home.activation.marchyoClaudeCodeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       header=""

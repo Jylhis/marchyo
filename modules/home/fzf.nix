@@ -65,7 +65,6 @@ in
       {
         enable = true;
         enableBashIntegration = lib.mkDefault true;
-        enableZshIntegration = lib.mkDefault true;
 
         defaultCommand = lib.mkDefault "fd --type f --hidden --follow --exclude .git";
         defaultOptions = lib.mkDefault [

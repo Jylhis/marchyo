@@ -5,8 +5,8 @@
   ...
 }:
 let
-  # Shared aliases for bash and zsh. Both NixOS and Home Manager expose
-  # programs.{bash,zsh}.shellAliases, so this file stays platform-agnostic.
+  # Shared aliases for bash. Both NixOS and Home Manager expose
+  # programs.bash.shellAliases, so this file stays platform-agnostic.
   # nix-darwin does not have these options, so we guard with option checks.
   baseAliases = {
     ls = "eza -lh --group-directories-first --icons=auto";
@@ -33,10 +33,7 @@ let
   shellAliases = baseAliases // cpAlias;
   hasBashAliases =
     options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;
-  hasZshAliases = options ? programs && options.programs ? zsh && options.programs.zsh ? shellAliases;
 in
 {
-  programs =
-    (if hasBashAliases then { bash = { inherit shellAliases; }; } else { })
-    // (if hasZshAliases then { zsh = { inherit shellAliases; }; } else { });
+  programs = if hasBashAliases then { bash = { inherit shellAliases; }; } else { };
 }
