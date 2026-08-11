@@ -55,7 +55,6 @@ in
       hm = cfg.home-manager.users.testuser;
     in
     (hm.programs.bash.shellAliases.cp or "") == "cp --reflink=auto"
-    && (hm.programs.zsh.shellAliases.cp or "") == "cp --reflink=auto"
   ) (withTestUser { });
 
   # The reflink alias is GNU-only, so it must NOT leak onto darwin, whose

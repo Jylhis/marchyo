@@ -7,7 +7,7 @@
 #
 # Reuses the HM-version-agnostic marchyo generic modules — generic/git.nix
 # (enable + lfs + git package, guarded by an option check) and generic/shell.nix
-# (shared bash/zsh aliases). The full modules/home/* tree needs HM 25.05+ and is
+# (shared bash aliases). The full modules/home/* tree needs HM 25.05+ and is
 # still NOT imported here.
 { lib, pkgs, ... }:
 {
@@ -32,11 +32,6 @@
         pull.rebase = true;
         push.autoSetupRemote = true;
       };
-    };
-
-    zsh = {
-      enable = true;
-      enableCompletion = true;
     };
 
     bash.enable = true;

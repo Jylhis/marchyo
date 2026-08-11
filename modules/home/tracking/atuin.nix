@@ -18,8 +18,6 @@ in
     programs.atuin = {
       enable = true;
       enableBashIntegration = config.programs.bash.enable;
-      enableZshIntegration = config.programs.zsh.enable;
-      enableFishIntegration = config.programs.fish.enable;
       settings = {
         search_mode = "fuzzy";
         filter_mode = "global";

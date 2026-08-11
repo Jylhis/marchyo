@@ -84,12 +84,6 @@ let
     fi
   '';
 
-  fishInit = ''
-    if test -r "${keyFile}"
-        set -gx OPENROUTER_API_KEY (cat "${keyFile}")
-    end
-  '';
-
   # Machine-readable routing policy for the future gateway / marchyo CLI.
   routingJson = builtins.toJSON {
     inherit (routing) enable;
@@ -153,8 +147,6 @@ in
 
     # OpenRouter key (secret) — exported from a file at runtime, never in store.
     programs.bash.initExtra = shellInit;
-    programs.zsh.initExtra = shellInit;
-    programs.fish.interactiveShellInit = fishInit;
 
     xdg.configFile = {
       "aichat/config.yaml".source = aichatConfig;
