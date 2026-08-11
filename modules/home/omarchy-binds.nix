@@ -45,7 +45,7 @@ in
     ++ fileManagerDeps;
 
     wayland.windowManager.hyprland.settings.bind = [
-      # --- Monitor controls ---
+      # Monitor controls
       # SUPER+/ (slash) is the password manager, so the scale cycle sits on the
       # adjacent backslash.
       (hlua.bindd "SUPER + backslash" "Cycle monitor scale" (hlua.exec "marchyo monitor scale-cycle"))
@@ -53,7 +53,7 @@ in
         hlua.exec "marchyo monitor laptop-toggle"
       ))
 
-      # --- Connectivity TUIs (floating, omarchy setup-menu parity) ---
+      # Connectivity TUIs (floating, omarchy setup-menu parity)
       # Same TUIs waybar's segments launch (wiremix/nmtui/bluetui); the
       # org.omarchy.* classes are matched by the floating-window tag rule in
       # modules/home/hyprland.nix. nmtui ships with the networkmanager package
@@ -67,7 +67,7 @@ in
       ))
       (hlua.bindd "SUPER + CTRL + W" "Wi-Fi manager" (hlua.execInTerminalAs "org.omarchy.nmtui" "nmtui"))
 
-      # --- App launches ---
+      # App launches
       (hlua.bindd "SUPER + ALT + return" "tmux Work session" (
         hlua.execInPlainTerminal "tmux new -A -s Work"
       ))

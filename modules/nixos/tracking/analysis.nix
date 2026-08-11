@@ -52,7 +52,7 @@ let
       LLAMA_URL   = f"http://127.0.0.1:{LLAMA_PORT}/completion"
       DAYS        = 7
 
-      # ── Shell history (atuin) ──────────────────────────────────────────
+      # Shell history (atuin)
 
       def tokenize(cmd: str) -> str:
           parts = cmd.strip().split()
@@ -96,7 +96,7 @@ let
           }
           return list(sessions.values()), stats
 
-      # ── PrefixSpan ────────────────────────────────────────────────────
+      # PrefixSpan
 
       def _prefixspan(sequences, min_support):
           results = []
@@ -122,7 +122,7 @@ let
               return []
           return [p for p in _prefixspan(sessions, min_support) if len(p[1]) >= min_len]
 
-      # ── Git activity ──────────────────────────────────────────────────
+      # Git activity
 
       def load_git_activity():
           path = DATA_DIR / "git-activity.jsonl"
@@ -155,7 +155,7 @@ let
               "commits_by_day": dict(commits_by_day),
           }
 
-      # ── File changes ──────────────────────────────────────────────────
+      # File changes
 
       def load_file_changes():
           path = DATA_DIR / "file-changes.jsonl"
@@ -188,7 +188,7 @@ let
               "by_event": dict(by_event),
           }
 
-      # ── ActivityWatch ──────────────────────────────────────────────────
+      # ActivityWatch
 
       def load_activitywatch():
           try:
@@ -247,7 +247,7 @@ let
               "idle_hours": round(total_idle / 3600, 1),
           }
 
-      # ── Wakapi ─────────────────────────────────────────────────────────
+      # Wakapi
 
       def load_wakapi():
           try:
@@ -273,7 +273,7 @@ let
               "editors": extract_top(data.get("editors", [])),
           }
 
-      # ── Report generation ─────────────────────────────────────────────
+      # Report generation
 
       def fmt_duration_ns(ns: int) -> str:
           secs = ns // 1_000_000_000
@@ -383,7 +383,7 @@ let
           lines.append("")
           return "\n".join(lines) + "\n"
 
-      # ── LLM ────────────────────────────────────────────────────────────
+      # LLM
 
       def ask_llm(summary_text: str) -> str:
           prompt = (
@@ -418,7 +418,7 @@ let
               except Exception as exc:
                   return f"* LLM call failed: {exc}\n"
 
-      # ── Main ────────────────────────────────────────────────────────────
+      # Main
 
       def main() -> None:
           sessions, shell_stats = load_sessions()

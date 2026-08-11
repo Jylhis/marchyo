@@ -1,4 +1,3 @@
-# Default applications module
 # Installs configured default apps and sets BROWSER/VISUAL/EDITOR env vars
 {
   config,

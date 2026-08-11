@@ -63,8 +63,6 @@ let
 in
 {
   config = lib.mkIf (kbdCfg.layouts != [ ]) {
-    # Always enable fcitx5 when layouts are configured
-    # This provides unified input management for both simple layouts and IME
     i18n.inputMethod = {
       enable = true;
       type = "fcitx5";
@@ -90,9 +88,7 @@ in
           }
           // inputMethodItems;
 
-          # Global fcitx5 options
           globalOptions = {
-            # Hotkey settings
             "Hotkey" = {
               "EnumerateWithTriggerKeys" = true;
               "AltTriggerKeys" = lib.concatStringsSep ";" kbdCfg.imeTriggerKey;
@@ -106,7 +102,6 @@ in
               (lib.nameValuePair "0" "Super+Space")
             ];
 
-            # Navigation keys for candidate selection
             "Hotkey/PrevPage" = lib.listToAttrs [
               (lib.nameValuePair "0" (lib.mkDefault "Up"))
             ];
@@ -124,25 +119,14 @@ in
             ];
 
             "Behavior" = {
-              # Auto-activate IME when switching to layout with IME
               "ActiveByDefault" = kbdCfg.autoActivateIME;
-
-              # Reset state on focus in
               "resetStateWhenFocusIn" = "No";
-
-              # Share input state across all windows for consistency
               "ShareInputState" = "All";
-
-              # Show preedit in application
               "PreeditEnabledByDefault" = true;
-
-              # Show input method information when switching
               "ShowInputMethodInformation" = true;
               "showInputMethodInformationWhenFocusIn" = false;
               "CompactInputMethodInformation" = true;
               "ShowFirstInputMethodInformation" = true;
-
-              # Default page size for candidates
               "DefaultPageSize" = 5;
 
               # Don't override XKB options (we manage them separately)
@@ -153,7 +137,6 @@ in
               "EnabledAddons" = "";
               "DisabledAddons" = "";
 
-              # Preload input methods for faster activation
               "PreloadInputMethod" = true;
 
               # Security: Don't allow IME in password fields

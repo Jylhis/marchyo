@@ -53,8 +53,8 @@
       };
 
       variables = {
-        colored-completion-prefix = true; # Enable coloured highlighting of completions
-        completion-ignore-case = true; # Auto-complete files with the wrong case
+        colored-completion-prefix = true;
+        completion-ignore-case = true;
         revert-all-at-newline = true; # Don't save edited commands until run
         show-all-if-ambiguous = true;
 

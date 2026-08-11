@@ -37,10 +37,8 @@ in
       # Configure all layouts (including those with IME) for basic TTY support
       layout = lib.mkDefault (lib.concatStringsSep "," simpleLayouts);
 
-      # Configure variants for each layout
       variant = lib.mkDefault (lib.concatStringsSep "," variants);
 
-      # Convert list of options to comma-separated string
       options = lib.mkDefault (
         lib.concatStringsSep "," (
           cfg.options ++ lib.optional (cfg.composeKey != null) "compose:${cfg.composeKey}"
@@ -48,9 +46,8 @@ in
       );
     };
 
-    # Enable console keyboard layout switching in TTY
-    # This allows Super+Space to work in virtual consoles (TTY1-TTY6)
-    # Note: IME functionality is not available in TTY (fcitx5 requires graphical environment)
+    # Lets Super+Space switch layouts in virtual consoles (TTY1-TTY6).
+    # IME is not available in TTY (fcitx5 requires a graphical environment).
     console.useXkbConfig = true;
   };
 }

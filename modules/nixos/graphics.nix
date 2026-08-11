@@ -1,4 +1,3 @@
-# Graphics and GPU configuration module
 # Supports Intel, AMD, NVIDIA, and hybrid graphics (PRIME)
 {
   config,
@@ -23,7 +22,6 @@ let
 in
 {
   config = lib.mkMerge [
-    # Base graphics configuration (always applied)
     {
       hardware.graphics = {
         enable = lib.mkDefault true;
@@ -42,7 +40,6 @@ in
       ];
     })
 
-    # Intel GPU configuration
     (lib.mkIf (hasIntel || legacyIntel) {
       hardware.graphics.extraPackages = with pkgs; [
         intel-media-driver # iHD driver for modern Intel (Broadwell+)
@@ -55,7 +52,6 @@ in
       };
     })
 
-    # AMD GPU configuration
     (lib.mkIf hasAmd {
       hardware.amdgpu = {
         initrd.enable = lib.mkDefault true;
@@ -78,9 +74,7 @@ in
       };
     })
 
-    # NVIDIA GPU configuration
     (lib.mkIf hasNvidia {
-      # Use NVIDIA driver
       services.xserver.videoDrivers = [ "nvidia" ];
 
       hardware.nvidia = {
@@ -96,7 +90,6 @@ in
       ];
 
       environment.sessionVariables = {
-        # Tell GLX to use NVIDIA
         __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
         # Use direct backend for nvidia-vaapi-driver (better performance)
         NVD_BACKEND = lib.mkDefault "direct";
@@ -123,7 +116,6 @@ in
     # NVIDIA PRIME hybrid graphics configuration
     (lib.mkIf isHybrid {
       hardware.nvidia.prime = lib.mkMerge [
-        # Bus IDs
         (lib.mkIf hasIntel {
           inherit (cfg.prime) intelBusId;
         })
@@ -134,7 +126,6 @@ in
           inherit (cfg.prime) nvidiaBusId;
         }
 
-        # Mode-specific configuration
         (lib.mkIf (cfg.prime.mode == "offload") {
           offload = {
             enable = true;
@@ -152,7 +143,6 @@ in
       ];
     })
 
-    # Assertions and warnings
     {
       warnings = lib.optionals (legacyIntel && config.marchyo.desktop.enable) [
         "marchyo.graphics.vendors is empty on x86_64. This defaults to Intel behavior. Set vendors explicitly (e.g. [\"nvidia\"] or [\"amd\"])."

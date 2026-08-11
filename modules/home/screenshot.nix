@@ -49,7 +49,6 @@ in
   };
 
   config = mkIf (desktopEnabled && cfg.enable) {
-    # Install screenshot tools
     home.packages =
       with pkgs;
       [
@@ -65,10 +64,8 @@ in
         wl-clipboard # wl-copy for the OCR bind
       ];
 
-    # Create screenshot directory
     home.file."${cfg.directory}/.keep".text = "";
 
-    # Hyprland keybindings for screenshots
     wayland.windowManager.hyprland.settings = {
       bind = [
         # Screenshot area/window selection (interactive)

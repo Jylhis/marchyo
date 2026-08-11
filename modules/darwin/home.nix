@@ -10,7 +10,6 @@ let
 in
 {
   config = lib.mkIf (mUsers != { }) {
-    # Backup existing files with this extension when home-manager overwrites them
     home-manager.backupFileExtension = "backup";
 
     # HM on darwin needs the user's home directory set; default the macOS

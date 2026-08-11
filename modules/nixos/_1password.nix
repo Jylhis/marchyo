@@ -4,7 +4,6 @@ let
 in
 {
   programs = {
-    # Enable 1Password CLI for shell plugins and op command
     _1password.enable = true;
 
     _1password-gui = {

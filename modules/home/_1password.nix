@@ -8,7 +8,6 @@
 with lib;
 
 let
-  # Default values for the module
   defaultVaults = [
     "Private"
   ];
@@ -47,7 +46,6 @@ in
       Include ~/.ssh/1Password/config
     '';
 
-    # Configure the 1Password SSH agent TOML file
     home.file.".config/1Password/ssh/agent.toml".source = format.generate "agent.toml" {
       ssh-keys = map (vault: { inherit vault; }) config.programs._1password.sshVaults;
     };

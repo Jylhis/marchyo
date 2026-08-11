@@ -31,7 +31,6 @@ import {
 } from "@marchyo/core";
 import { mkdir, symlink, rename } from "node:fs/promises";
 
-// ---------------------------------------------------------------------------
 // Actuation helpers (absorbed from modules/home/theme-runtime.nix's
 // marchyo-theme-toggle — same commands, same || true tolerance)
 
@@ -109,7 +108,6 @@ function declarativeTheme(
   return themeAtPointer(manifest, declarativePointerPath());
 }
 
-// ---------------------------------------------------------------------------
 // ChangeSpec — registered in changes.ts so `runtime restore` replays theme
 // overrides; the persistence legs are attached per-invocation (they need
 // the resolved manifest entry, and restore never uses them).
@@ -149,7 +147,6 @@ function themeSpecFor(entry: ThemeManifestEntry): ChangeSpec {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Commands
 
 export async function runThemeList(rt: Runtime): Promise<number> {
@@ -253,7 +250,6 @@ export async function runThemeNext(
   return setTheme(rt, entry, opts);
 }
 
-// ---------------------------------------------------------------------------
 // Wallpaper (`marchyo bg`) — runtime-only (the wallpaper package is
 // declarative; there is no per-image persistence, so no --apply leg).
 

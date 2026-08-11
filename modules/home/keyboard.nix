@@ -19,15 +19,12 @@ let
   # Extract variants (empty string if no variant)
   variants = map (l: l.variant) normalizedLayouts;
 
-  # Check if any layout has a non-empty variant
   hasVariants = lib.any (v: v != "") variants;
 in
 {
   config = {
-    # Configure home.keyboard for Hyprland compatibility
-    # Note: fcitx5 is the authoritative input manager, but Hyprland reads home.keyboard
-    # This configuration is automatically picked up by Hyprland via
-    # the existing code in modules/home/hyprland.nix (lines 66-78)
+    # fcitx5 is the authoritative input manager, but Hyprland reads home.keyboard
+    # directly, so mirror the layout config here for the compositor to pick up.
     home.keyboard = lib.mkMerge [
       {
         # Concatenate layout list into comma-separated string (e.g., "us,fi,cn")

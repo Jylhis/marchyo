@@ -24,7 +24,7 @@
 Window.SetBackgroundTopColor(@bgR@, @bgG@, @bgB@);
 Window.SetBackgroundBottomColor(@bgR@, @bgG@, @bgB@);
 
-#----------------------------------------- Words + caret --------------------------------
+# Words + caret
 
 word.images[0] = Image("marchyo.png");
 word.images[1] = Image("jylhis.png");
@@ -58,7 +58,7 @@ global.caret_dir = 1;   # 1 = facing right, -1 = facing left
 cover.image = Image("cover.png");
 cover.sprite = Sprite(cover.image);
 
-#----------------------------------------- Sparkles --------------------------------
+# Sparkles
 
 # Particle pool. Three syntax-palette tints (sparkle1-3.png, built in
 # package.nix) x three pre-scaled sizes = nine variants, so nothing is
@@ -126,7 +126,7 @@ fun update_sparkles()
       }
   }
 
-#----------------------------------------- Sweep --------------------------------
+# Sweep
 
 # Timing in seconds (refresh callback ticks at ~50 fps -> 0.02 s/frame):
 # sweep right (reveal) -> hold -> sweep left (hide) -> blank gap + word swap.
@@ -315,7 +315,7 @@ fun refresh_callback ()
 
 Plymouth.SetRefreshFunction (refresh_callback);
 
-#----------------------------------------- Helper Functions --------------------------------
+# Helper Functions
 
 fun update_progress_bar(progress)
   {
@@ -380,7 +380,7 @@ fun stop_fake_progress()
     global.fake_progress_active = 0;
   }
 
-#----------------------------------------- Dialogue --------------------------------
+# Dialogue
 
 lock.image = Image("lock.png");
 entry.image = Image("entry.png");
@@ -463,7 +463,7 @@ fun display_password_callback (prompt, bullets)
 Plymouth.SetDisplayNormalFunction(display_normal_callback);
 Plymouth.SetDisplayPasswordFunction(display_password_callback);
 
-#----------------------------------------- Progress Bar --------------------------------
+# Progress Bar
 
 progress_box.image = Image("progress_box.png");
 progress_box.sprite = Sprite(progress_box.image);
@@ -496,7 +496,7 @@ fun progress_callback (duration, progress)
 
 Plymouth.SetBootProgressFunction(progress_callback);
 
-#----------------------------------------- Quit --------------------------------
+# Quit
 
 fun quit_callback ()
 {
@@ -508,7 +508,7 @@ fun quit_callback ()
 
 Plymouth.SetQuitFunction(quit_callback);
 
-#----------------------------------------- Message --------------------------------
+# Message
 
 message_sprite = Sprite();
 message_sprite.SetPosition(10, 10, 10000);

@@ -189,7 +189,6 @@ in
           ecosystem.no_update_news = true;
           xwayland.force_zero_scaling = true;
 
-          # Enhanced input configuration
           input = {
             kb_layout = lib.mkIf (
               (config.home ? keyboard) && (config.home.keyboard ? layout) && (config.home.keyboard.layout != null)
@@ -560,7 +559,7 @@ in
           ))
           (bindd "SUPER + mouse_up" "Scroll active workspace backward" (dsp "focus({ workspace = \"e-1\" })"))
 
-          # --- Window grouping (tabbed/stacked windows) ---
+          # Window grouping (tabbed/stacked windows)
           (bindd "SUPER + ALT + G" "Toggle window grouping" (dsp "group.toggle()"))
           (bindd "SUPER + ALT + SHIFT + G" "Move window out of group" (
             dsp "window.move({ out_of_group = true })"
@@ -580,7 +579,7 @@ in
           (bindd "SUPER + ALT + TAB" "Next window in group" (dsp "group.next()"))
           (bindd "SUPER + ALT + SHIFT + TAB" "Previous window in group" (dsp "group.prev()"))
 
-          # --- Keyboard resize (base resize is via border-drag / SUPER+RMB) ---
+          # Keyboard resize (base resize is via border-drag / SUPER+RMB)
           (bindd "SUPER + minus" "Expand window left" (
             dsp "window.resize({ x = -100, y = 0, relative = true })"
           ))
@@ -594,13 +593,13 @@ in
             dsp "window.resize({ x = 0, y = 100, relative = true })"
           ))
 
-          # --- Extra fullscreen modes (base full screen is SUPER+Page_Up) ---
+          # Extra fullscreen modes (base full screen is SUPER+Page_Up)
           (bindd "SUPER + CTRL + F" "Tiled full screen" (
             dsp "window.fullscreen_state({ internal = 0, client = 2 })"
           ))
           (bindd "SUPER + ALT + F" "Full width" (dsp "window.fullscreen({ mode = \"maximized\" })"))
         ]
-        # --- Move active window silently to a workspace (does not follow) ---
+        # Move active window silently to a workspace (does not follow)
         ++ (lib.genList (
           i:
           let
@@ -611,7 +610,7 @@ in
             (dsp "window.move({ workspace = ${toString n}, follow = false })")
         ) 10)
         ++ [
-          # --- Move whole workspace to an adjacent monitor ---
+          # Move whole workspace to an adjacent monitor
           # (single-window monitor move stays on SUPER+SHIFT+comma/period below)
           (bindd "SUPER + SHIFT + ALT + left" "Move workspace to left monitor" (
             dsp "workspace.move({ monitor = \"l\" })"
@@ -626,25 +625,25 @@ in
             dsp "workspace.move({ monitor = \"d\" })"
           ))
 
-          # --- Monitor focus (relocated here from SUPER+comma/period) ---
+          # Monitor focus (relocated here from SUPER+comma/period)
           (bindd "CTRL + ALT + TAB" "Focus next monitor" (dsp "focus({ monitor = \"+1\" })"))
           (bindd "CTRL + ALT + SHIFT + TAB" "Focus previous monitor" (dsp "focus({ monitor = \"-1\" })"))
 
-          # --- Clipboard history / emoji picker (both via vicinae) ---
+          # Clipboard history / emoji picker (both via vicinae)
           (bindd "SUPER + CTRL + V" "Clipboard history" (
             exec "vicinae vicinae://launch/clipboard/history?toggle=true"
           ))
           (bindd "SUPER + period" "Emoji picker" (exec "vicinae open --query emoji"))
 
-          # --- Notifications (mako) ---
+          # Notifications (mako)
           (bindd "SUPER + comma" "Dismiss last notification" (exec "makoctl dismiss"))
 
-          # --- Cursor zoom (screen magnifier) ---
+          # Cursor zoom (screen magnifier)
           (bindd "SUPER + CTRL + Z" "Zoom in" (exec "marchyo zoom in"))
           (bindd "SUPER + CTRL + SHIFT + Z" "Zoom out" (exec "marchyo zoom out"))
           (bindd "SUPER + CTRL + ALT + Z" "Reset zoom" (exec "marchyo zoom reset"))
 
-          # --- System toggles (backed by modules/home/window-toggles.nix) ---
+          # System toggles (backed by modules/home/window-toggles.nix)
           (bindd "SUPER + SHIFT + SPACE" "Toggle top bar" (
             exec "systemctl --user kill -s SIGUSR1 waybar.service"
           ))
@@ -754,9 +753,7 @@ in
           { workspace = "4"; }
         ];
 
-        # Environment variables for optimal performance
         env = [
-          # Cursor size
           (env "XCURSOR_SIZE" "24")
           (env "HYPRCURSOR_SIZE" "24")
 

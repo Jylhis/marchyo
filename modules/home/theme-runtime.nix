@@ -111,7 +111,7 @@ let
     light = themeDirFor "light";
   };
 
-  # ---- N-theme layer (marchyo.theme.themes) --------------------------------
+  # N-theme layer (marchyo.theme.themes)
   # Beyond the always-built Jylhis pair, any base16-schemes YAML can be
   # listed for runtime switching. Its assets are derived by translating the
   # build variant's resolved surfaces from semantic-token hexes to the

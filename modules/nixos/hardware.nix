@@ -19,7 +19,6 @@
   # Thunderbolt
   services.hardware.bolt.enable = lib.mkDefault true;
 
-  # Bluetooth
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
@@ -32,7 +31,6 @@
   };
   environment.systemPackages = [ pkgs.bluetui ];
 
-  # Power management
   services = {
     power-profiles-daemon.enable = lib.mkDefault true;
     upower.enable = lib.mkDefault true;
