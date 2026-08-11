@@ -869,6 +869,9 @@ in
 
     services.hyprpolkitagent.enable = true;
     services.hyprsunset.enable = true;
-    services.gnome-keyring.enable = true;
+    # Keyring is provided + PAM-unlocked by the NixOS module
+    # (gnome.gnome-keyring.enable). Running the HM user daemon too starts a
+    # second gnome-keyring-daemon -> "discover_other_daemon"/"already initialized".
+    services.gnome-keyring.enable = false;
   };
 }
