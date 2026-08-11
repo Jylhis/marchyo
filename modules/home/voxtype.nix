@@ -42,6 +42,11 @@ in
         # Required for `record toggle` / `status` to share daemon state.
         state_file = "auto";
         engine = "whisper";
+        # The daemon's built-in OSD defaults to on and spawns `voxtype-osd`,
+        # which is not on the voxtype-vulkan unit PATH (it ships in plain
+        # pkgs.voxtype). Notifications (mako) already cover start/stop feedback,
+        # so disable the OSD to stop the "Failed to spawn voxtype-osd" warning.
+        osd.enabled = false;
         # Daemon evdev push-to-talk hotkey (hold F9 by default). Disabling it via
         # marchyo.dictation.pushToTalk.enable = false leaves only the Hyprland
         # toggle bind (`voxtype record toggle`), which needs no /dev/input access.
