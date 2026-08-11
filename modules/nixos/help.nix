@@ -8,9 +8,7 @@
     man.enable = lib.mkDefault true;
     nixos = {
       enable = lib.mkDefault true;
-      # Include custom module sources for better documentation
       extraModuleSources = lib.mkDefault [
-        # Include the marchyo modules in the documentation
         ../../modules/nixos
         ../../modules/home
         ../../modules/generic

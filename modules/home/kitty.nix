@@ -23,17 +23,14 @@
         single_instance = true;
         allow_remote_control = "socket-only";
 
-        # Tab configuration
         tab_bar_style = "powerline";
         tab_bar_edge = "bottom";
         tab_title_template = "{title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}";
 
-        # Window configuration
         inactive_text_alpha = lib.mkDefault "0.7";
         active_border_color = lib.mkDefault "none";
         remember_window_size = false;
 
-        # Layout
         enabled_layouts = "splits,horizontal,vertical,tall";
         enable_audio_bell = "no";
       }

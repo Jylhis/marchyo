@@ -83,7 +83,7 @@ stdenvNoCC.mkDerivation {
     theme=share/plymouth/themes/marchyo
     mkdir -p "$theme"
 
-    # --- Word marks: the splash alternates between the two ------------------
+    # Word marks: the splash alternates between the two
     # "marchyo": rasterize the reordered omarchy wordmark (logo.svg) in the
     # brand color at the same 800x188 the old static PNG shipped at.
     sed 's/@fill@/${logoColor}/' logo.svg > marchyo-logo.svg
@@ -95,7 +95,7 @@ stdenvNoCC.mkDerivation {
       -font '${monoFont}' -pointsize 300 label:jylhis \
       -resize x"$height" "$theme/jylhis.png"
 
-    # --- Sweep assets ------------------------------------------------------
+    # Sweep assets
     # The ❯ caret: a bespoke chevron (caret.svg) so we don't depend on any
     # font shipping U+276F. Accent color, slightly under cap height.
     caret_h=$((height * 8 / 10))
@@ -116,7 +116,7 @@ stdenvNoCC.mkDerivation {
     wm_w=$(magick identify -format '%w' "$theme/marchyo.png")
     magick -size "$wm_w"x$((height + 8)) xc:'${bgColor}' "$theme/cover.png"
 
-    # --- Password-dialog chrome -------------------------------------------
+    # Password-dialog chrome
     # Keep the omarchy glyph shapes but flatten their RGB to a palette color,
     # preserving the original alpha (anti-aliasing).
     magick entry.png  -channel RGB -fill "${entryColor}"  -colorize 100 "$theme/entry.png"

@@ -1,4 +1,3 @@
-# Development configuration module
 # Automatically enables development tools and services when marchyo.development.enable is true
 {
   config,
@@ -11,7 +10,6 @@ let
 in
 {
   config = lib.mkIf cfg.development.enable {
-    # Development shell programs
     programs = {
       git = {
         enable = true;
@@ -24,7 +22,6 @@ in
       };
     };
 
-    # Virtualization for development
     virtualisation = {
       docker = lib.mkIf (!config.virtualisation.podman.enable) {
         enable = lib.mkDefault true;
@@ -44,7 +41,6 @@ in
       };
     };
 
-    # Development tools
     environment.systemPackages = with pkgs; [
       # Version control
       git
@@ -92,7 +88,6 @@ in
       lib.optional config.hardware.cpu.amd.updateMicrocode "kvm-amd"
       ++ lib.optional config.hardware.cpu.intel.updateMicrocode "kvm-intel";
 
-    # Development documentation
     documentation.dev.enable = true;
   };
 }

@@ -83,7 +83,7 @@ in
       '';
     };
 
-    # --- Task-based model routing -------------------------------------------
+    # Task-based model routing
     routing = {
       enable = mkOption {
         type = types.bool;
@@ -169,7 +169,7 @@ in
       };
     };
 
-    # --- OpenViking context / memory layer ----------------------------------
+    # OpenViking context / memory layer
     context = {
       enable = mkOption {
         type = types.bool;
@@ -196,7 +196,7 @@ in
       };
     };
 
-    # --- Marchyo-specific skills (Agent Skills standard) --------------------
+    # Marchyo-specific skills (Agent Skills standard)
     skills = {
       enable = mkOption {
         type = types.bool;
@@ -224,7 +224,7 @@ in
       };
     };
 
-    # --- MCP tools ----------------------------------------------------------
+    # MCP tools
     mcp = {
       enable = mkOption {
         type = types.bool;

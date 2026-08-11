@@ -12,7 +12,6 @@
   config = lib.mkIf config.marchyo.xournalpp.enable {
     home.packages = [ pkgs.xournalpp ];
 
-    # Xournal++ configuration
     xdg.configFile."xournalpp/settings.xml".text = ''
       <?xml version="1.0" encoding="UTF-8"?>
       <settings dark="forceDark" iconTheme="iconsColor">

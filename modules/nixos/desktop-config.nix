@@ -1,4 +1,3 @@
-# Desktop configuration module
 # Automatically enables desktop-related services and settings when marchyo.desktop.enable is true
 {
   config,
@@ -25,7 +24,6 @@ in
     xdg.icons.enable = lib.mkDefault true;
     xdg.mime.enable = lib.mkDefault true;
 
-    # Desktop services
     services = {
       printing.enable = lib.mkDefault true;
       blueman.enable = lib.mkDefault true;
@@ -41,7 +39,6 @@ in
       gvfs.enable = lib.mkDefault true;
     };
 
-    # Hardware
     hardware = {
       graphics = {
         enable = true;
@@ -53,13 +50,11 @@ in
       };
     };
 
-    # Power management
     powerManagement = {
       enable = lib.mkDefault true;
       powertop.enable = lib.mkDefault false;
     };
 
-    # Audio
     security.rtkit.enable = true;
     services.pipewire = {
       enable = true;
@@ -83,7 +78,6 @@ in
     # xdg-user-dirs-gtk generates GTK bookmarks for sidebar folders (Documents, Downloads, etc.)
     environment.systemPackages = [ pkgs.xdg-user-dirs-gtk ];
 
-    # XDG portal
     xdg.portal = {
       enable = true;
       extraPortals = [ ];
