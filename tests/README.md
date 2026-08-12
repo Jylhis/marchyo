@@ -30,7 +30,6 @@ Verify NixOS modules evaluate without errors:
 | `eval/keyboard.nix` | `eval-keyboard`, `eval-keyboard-no-compose` |
 | `eval/graphics.nix` | `eval-graphics-{intel,amd,nvidia,prime-offload,prime-sync,legacy}` |
 | `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,jotain}` |
-| `eval/tracking.nix` | `eval-tracking-{minimal,shell,git,editor-wakatime,analysis}` |
 | `eval/hyprland.nix` | `check-home-hyprland-config` (verifies generated `hyprland.conf` parses) |
 
 ### Library Tests

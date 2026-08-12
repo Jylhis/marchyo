@@ -165,7 +165,6 @@ let
         name = "developer";
         fullname = "Marchyo Developer";
         email = "dev@example.org";
-        wakatimeApiKey = null;
       };
       desktop = {
         enable = false;
@@ -179,7 +178,6 @@ let
         };
       };
       defaults = { };
-      tracking = { };
       theme = {
         enable = false;
         variant = "dark";

@@ -23,30 +23,4 @@ in
       (withTestUser {
         boot.kernelParams = lib.mkForce [ "mitigations=off" ];
       });
-
-  # Tracking collectors must enumerate only ENABLED marchyo users. A disabled
-  # user has no users.users entry, so reading config.users.users.<u>.home for
-  # it threw "attribute missing". Force the rendered audit rules to exercise it.
-  eval-tracking-disabled-user =
-    testNixOSCheck "tracking-disabled-user"
-      (
-        c:
-        let
-          rules = c.security.audit.rules;
-        in
-        # testuser (enabled) is watched; ghost (disabled) must not appear and must
-        # not crash the evaluation.
-        lib.any (lib.hasInfix "/home/testuser/.config") rules && !(lib.any (lib.hasInfix "ghost") rules)
-      )
-      (withTestUser {
-        marchyo.users.ghost = {
-          enable = false;
-          fullname = "Ghost User";
-          email = "ghost@example.com";
-        };
-        marchyo.tracking = {
-          enable = true;
-          system.auditd = true;
-        };
-      });
 }
