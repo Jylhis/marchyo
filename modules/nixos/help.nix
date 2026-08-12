@@ -19,7 +19,6 @@
     man-pages
     man-pages-posix
     clang-manpages
-    zeal
     stdmanpages
   ];
 }
