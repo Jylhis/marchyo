@@ -3,7 +3,7 @@
 # Enabled when marchyo.ai.enable && marchyo.ai.skills.enable. Installs the
 # vendored Agent Skills (SKILL.md dirs under ./ai-skills/skills) to each selected
 # client. claude-code and pi both consume the Agent Skills standard natively
-# (~/.claude/skills, ~/.pi/agent/skills); aichat gets each skill as a role.
+# (~/.claude/skills, ~/.pi/agent/skills).
 #
 # OpenViking has no MCP/native skill-consumption path, so it is not a delivery
 # target here; when context is enabled it can index the skill dirs via
@@ -24,7 +24,6 @@ let
     skillsCfg.clients or [
       "claude-code"
       "pi"
-      "aichat"
     ];
   has = c: builtins.elem c clients;
 
@@ -44,17 +43,6 @@ let
         }
       ) skillNames
     );
-
-  mkRoleLinks =
-    prefix:
-    lib.listToAttrs (
-      map (
-        n:
-        lib.nameValuePair "${prefix}/${n}.md" {
-          source = skillsDir + "/${n}/SKILL.md";
-        }
-      ) skillNames
-    );
 in
 {
   config = lib.mkIf enabled {
@@ -62,6 +50,5 @@ in
       (lib.mkIf (has "claude-code") (mkDirLinks ".claude/skills"))
       (lib.mkIf (has "pi") (mkDirLinks ".pi/agent/skills"))
     ];
-    xdg.configFile = lib.mkIf (has "aichat") (mkRoleLinks "aichat/roles");
   };
 }

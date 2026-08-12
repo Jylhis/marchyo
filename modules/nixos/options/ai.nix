@@ -75,8 +75,8 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Install the AI client CLIs (aichat, pi, claude-code) for the user and
-        wire the OpenRouter-backed ones to the provider. On by default when
+        Install the AI client CLIs (pi, claude-code) for the user and
+        wire the OpenRouter-backed one to the provider. On by default when
         marchyo.ai is enabled. (claude-code speaks the Anthropic API and is not
         wired to OpenRouter; it comes from llm-agents.nix, which also packages
         codex/gemini-cli/goose/crush/… via the overlay for future opt-in.)
@@ -159,7 +159,6 @@ in
       tools = mkOption {
         type = types.attrsOf types.str;
         default = {
-          aichat = "everydayCoding";
           pi = "everydayCoding";
         };
         description = ''
@@ -212,13 +211,11 @@ in
           types.enum [
             "claude-code"
             "pi"
-            "aichat"
           ]
         );
         default = [
           "claude-code"
           "pi"
-          "aichat"
         ];
         description = "Clients to surface vendored skills to (native fallback per client).";
       };

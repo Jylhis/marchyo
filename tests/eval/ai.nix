@@ -29,7 +29,7 @@ in
   # Routing default table evaluates; a per-bucket override evaluates.
   eval-ai-routing-override = testNixOS "ai-routing-override" (withKey {
     routing.tasks.frontier.model = "openai/gpt-5.5";
-    routing.tools.aichat = "frontier";
+    routing.tools.pi = "frontier";
   });
 
   # OpenViking context layer evaluates.
