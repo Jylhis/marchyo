@@ -5,13 +5,18 @@ description: Migrate from deprecated and removed options
 
 ## Removed: `marchyo.inputMethod.*`
 
-The `marchyo.inputMethod.*` options have been **removed**. Using `marchyo.inputMethod.enable = true` will cause a build failure with a migration message.
+The entire `marchyo.inputMethod.*` namespace (`enable`, `enableCJK`, `triggerKey`)
+has been **removed**. The option declarations no longer exist, so setting any of
+them now fails evaluation as an undefined option. Configure input methods and the
+IME trigger key directly through `marchyo.keyboard.layouts` and
+`marchyo.keyboard.imeTriggerKey`.
 
 ### Before (will fail)
 
 ```nix
 marchyo.inputMethod.enable = true;
 marchyo.inputMethod.enableCJK = true;
+marchyo.inputMethod.triggerKey = [ "Alt+grave" ];
 marchyo.keyboard.layouts = [ "us" "fi" ];
 ```
 
@@ -47,34 +52,5 @@ marchyo.keyboard = {
 ```nix
 marchyo.keyboard.layouts = [
   { layout = "us"; variant = "intl"; }
-];
-```
-
-## Deprecated: `marchyo.inputMethod.triggerKey`
-
-This option is **inert** (has no effect). Use `marchyo.keyboard.imeTriggerKey` instead:
-
-```nix
-# Old (no effect):
-marchyo.inputMethod.triggerKey = [ "Alt+grave" ];
-
-# New:
-marchyo.keyboard.imeTriggerKey = [ "Alt+grave" ];
-```
-
-## Deprecated: `marchyo.inputMethod.enableCJK`
-
-This option is **inert** (has no effect). Add CJK layouts directly to `marchyo.keyboard.layouts`:
-
-```nix
-# Old (no effect):
-marchyo.inputMethod.enableCJK = true;
-
-# New:
-marchyo.keyboard.layouts = [
-  "us"
-  { layout = "cn"; ime = "pinyin"; }
-  { layout = "jp"; ime = "mozc"; }
-  { layout = "kr"; ime = "hangul"; }
 ];
 ```

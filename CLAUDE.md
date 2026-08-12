@@ -117,11 +117,10 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, 
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. All packages are Linux-only (wrapped in `lib.optionalAttrs stdenv.isLinux`).
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `{ linux, darwin, all }` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.
-- `modules/nixos/options/` — `marchyo.*` option declarations split by namespace (users, defaults, feature-flags, performance, graphics, localization, theme, keyboard, tracking, deprecated). The directory's `default.nix` auto-imports every file.
+- `modules/nixos/options/` — `marchyo.*` option declarations split by namespace (users, defaults, feature-flags, performance, graphics, localization, theme, keyboard, deprecated). The directory's `default.nix` auto-imports every file.
 - `modules/nixos/default.nix` — Auto-discovers every NixOS module via `lib/discover-modules.nix`. Module merging is order-independent at the option/config layer; use `mkBefore`/`mkAfter`/priorities if a specific merge order matters.
 - `modules/darwin/default.nix` — **Manual** import list for nix-darwin modules. Curated subset (Wayland/systemd/desktop modules are NixOS-only and intentionally excluded). Imports `../nixos/options` for the shared option namespace.
 - `modules/home/default.nix` — Auto-discovers every Home Manager module via `lib/discover-modules.nix`.
-- `modules/nixos/input-migration.nix` — Assertions that enforce removal of deprecated `marchyo.inputMethod.*` options.
 - `tests/default.nix` — Test suite entry point. Auto-discovers every file in `tests/eval/` and merges the attrsets they return; appends `lib-tests.nix`.
 - `tests/lib.nix` — Shared test helpers (`testNixOS`, `withTestUser`, `minimalConfig`).
 - `tests/eval/*.nix` — Per-feature evaluation tests. Each file receives helpers + `lib`/`pkgs`/`nixosModules`/`homeManagerModules` and returns an attrset of named tests.
@@ -194,7 +193,7 @@ The `testNixOS` helper evaluates the NixOS config without building derivations. 
 ## Testing
 
 Tests in `tests/` are fast evaluation-based checks (no builds required). Two categories:
-- **Module tests** (`tests/eval/*.nix`, auto-discovered): verify NixOS configs evaluate without errors for various feature combinations (minimal/feature-flags, themes, keyboard, graphics, defaults, tracking, hyprland config check).
+- **Module tests** (`tests/eval/*.nix`, auto-discovered): verify NixOS configs evaluate without errors for various feature combinations (minimal/feature-flags, themes, keyboard, graphics, defaults, hyprland config check).
 - **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
 
 One deliberate exception to eval-only: the `build-plymouth-theme-{dark,light}` checks (added in `outputs.nix`'s `mkChecks`, Linux only) actually build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`.
@@ -349,18 +348,18 @@ marchyo.ai = {
 | `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required when enabled) |
 | `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
 | `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Model used when routing is off |
-| `marchyo.ai.tooling.enable` | `true` | Install aichat / pi / claude-code |
+| `marchyo.ai.tooling.enable` | `true` | Install pi / claude-code |
 | `marchyo.ai.routing.enable` | `true` | Task→model routing (`routing.tasks.<bucket>`, `routing.tools`) |
 | `marchyo.ai.context.enable` | `false` | OpenViking (`ov`) local context layer |
 | `marchyo.ai.skills.enable` | `true` | Install Agent Skills to all clients |
 | `marchyo.ai.mcp.enable` | `true` | Wire MCP tools (mcp-nixos via uvx) |
 | `marchyo.ai.local.enable` | `false` | Local inference — **not yet implemented** (fails an assertion) |
 
-**Clients:** `aichat` (bound to `Super+A`), `pi` (Armin Ronacher's minimal coding agent, wired to OpenRouter via `~/.pi/agent/settings.json` + a provider extension), and `claude-code` (Anthropic-native — **not** wired to OpenRouter; sourced from `llm-agents.nix` with the Numtide binary cache). `aider`/`opencode` and the Emacs/gptel integration were removed.
+**Clients:** `pi` (Armin Ronacher's minimal coding agent, wired to OpenRouter via `~/.pi/agent/settings.json` + a provider extension), and `claude-code` (Anthropic-native — **not** wired to OpenRouter; sourced from `llm-agents.nix` with the Numtide binary cache). `aider`/`opencode` and the Emacs/gptel integration were removed.
 
-**Routing:** `routing.tasks.<bucket> = { model; fallbacks; }` (buckets: frontier, everydayCoding, fast, reasoning, summarize, longContext, budget, local). Defaults are churn-resistant (`lib.mkDefault`; pin frontier/reasoning, lean on `openrouter/auto` + `:nitro`/`:floor`); slugs are starting points to verify against OpenRouter. The resolved policy is exported to `~/.config/marchyo/ai-routing.json`; each bucket is an aichat role.
+**Routing:** `routing.tasks.<bucket> = { model; fallbacks; }` (buckets: frontier, everydayCoding, fast, reasoning, summarize, longContext, budget, local). Defaults are churn-resistant (`lib.mkDefault`; pin frontier/reasoning, lean on `openrouter/auto` + `:nitro`/`:floor`); slugs are starting points to verify against OpenRouter. The resolved policy is exported to `~/.config/marchyo/ai-routing.json`.
 
-**Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + aichat/pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup (mirrors `tracking/claude-code.nix`). sops-nix and llm-agents.nix (claude-code + Numtide cache, applied via `overlayList` in `outputs.nix`) are flake inputs. Local inference (ollama) and the execution gateway are deferred.
+**Implementation:** `modules/nixos/options/ai.nix` (options), `modules/nixos/ai.nix` (assertions), `modules/home/ai-tooling.nix` (clients + key export + routing + pi config), `modules/home/ai-context.nix` (OpenViking ov.conf), `modules/home/ai-skills.nix` (+ vendored `SKILL.md` under `modules/home/ai-skills/skills/`), `modules/home/ai-mcp.nix` (mcp-nixos). Packages: `packages/openviking/` (vendored from Jylhis/skills#56, real hashes), `packages/pi/` (npm tarball wrapper). The key is exported as `OPENROUTER_API_KEY` at interactive-shell startup. sops-nix and llm-agents.nix (claude-code + Numtide cache, applied via `overlayList` in `outputs.nix`) are flake inputs. Local inference (ollama) and the execution gateway are deferred.
 
 ### Omarchy-parity desktop extras (2026-07 batch)
 
@@ -435,22 +434,6 @@ Each app's submodule: `name` (label + slugified `.desktop` id), `url`, `icon` (d
 
 ## Breaking Changes
 
-### `marchyo.inputMethod.*` is REMOVED
-
-These options have been removed. Using them causes a build failure. Migrate to `marchyo.keyboard.layouts`:
-
-```nix
-# Old (error):
-marchyo.inputMethod.enable = true;
-marchyo.inputMethod.enableCJK = true;
-
-# New:
-marchyo.keyboard.layouts = [
-  "us"
-  { layout = "cn"; ime = "pinyin"; }
-];
-```
-
 ### `marchyo.defaults.email = "thunderbird"` is REMOVED
 
 `thunderbird` is no longer a valid `marchyo.defaults.email` value (the enum will
@@ -461,8 +444,6 @@ native GUI is no longer managed by marchyo.
 ### Deprecated Options
 
 - `marchyo.keyboard.variant` → use `{ layout = "us"; variant = "intl"; }` in layouts
-- `marchyo.inputMethod.triggerKey` → **inert (has no effect)**, use `marchyo.keyboard.imeTriggerKey`
-- `marchyo.inputMethod.enableCJK` → **inert (has no effect)**, add CJK entries to `marchyo.keyboard.layouts`
 
 ## Session Completion
 
@@ -486,7 +467,6 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 
 ## Gotchas
 
-- **Assertions for removed options**: `input-migration.nix` uses NixOS assertions to fail the build with migration instructions if anyone uses the removed `marchyo.inputMethod.*` options.
 - **Deprecated options**: Some options emit warnings but still work. They are defined in `modules/nixos/options/deprecated.nix` (and `keyboard.nix`'s `variant` field) with deprecation notes in their descriptions.
 - **Auto-discovery of modules**: Both `modules/nixos/default.nix` and `modules/home/default.nix` use `lib/discover-modules.nix` to import every `.nix` file in the directory plus any subdirectory containing a `default.nix`. Adding a new module is one file — no import-list edit needed. The NixOS module system merges options/config order-independently, so the dropped explicit ordering is safe; reach for `mkBefore`/`mkAfter`/priorities if a specific merge order ever matters.
 - **Theme source of truth**: All theme assets (palette, ANSI 16, Hyprland colors, Waybar CSS, Mako config, GTK overrides, fzf colors, bat tmThemes, starship.toml, ghostty themes, hyprlock colors, console.colors) come from `pkgs.jylhis-design-src` (the unpacked `inputs.jylhis-design` flake input). The base16 mapping is computed from `tokens.json` by `modules/generic/jylhis-palette.nix`'s `mkPalette { variant, pkgs, lib }` helper. The upstream `${inputs.jylhis-design}/nix/home-manager-module.nix` is imported via `modules/home/jylhis-theme.nix` and writes ghostty themes, mako config, gtk CSS, starship.toml, and `FZF_DEFAULT_OPTS` directly. Only `marchyo.theme.scheme = "<name>"` overrides this and points at a `pkgs.base16-schemes` YAML instead.
@@ -511,6 +491,3 @@ Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Depen
 - **Nixpkgs passthrough**: Most flake inputs use `follows = "nixpkgs"` (the unstable primary). Exceptions: `nixpkgs-stable` (nixos-26.05) and its matching release-26.05 trio `home-manager-stable`/`nix-darwin-stable`/`stylix-stable` (all follow `nixpkgs-stable`, used only by `darwinConfigurations.x86_64`), and the nix-on-droid stack (`nix-on-droid` + `home-manager-droid`) which is pinned to its own 2024-era nixpkgs for internal consistency. Consumers should build via `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, which pick the system-correct nixpkgs through the `inputsFor` selector in `outputs.nix` (the single source of truth for the x86_64-darwin→stable decision). The raw `marchyo.inputs.nixpkgs` passthrough is always unstable; `marchyo.legacyPackages.<system>` is the system-aware, overlay-applied alternative. The workstation template demonstrates the builder pattern.
 - **`site/`**: The Astro + Starlight website (landing page + docs), built with bun (in the dev shell) and deployed to Cloudflare Workers at https://marchyo.org. `just site-dev` / `just site-build` are the local entry points. Option documentation in `site/src/content/docs/docs/configuration/` should be kept in sync with the option declarations under `modules/nixos/options/`.
 - **hyprlock fingerprint auth is gated on fprintd**: `modules/home/hyprlock.nix` sets `auth."fingerprint:enabled" = osConfig.services.fprintd.enable or false`, not a hardcoded `true`. hyprlock's fprintd D-Bus backend aborts the process when the service is absent, so hardcoding it on breaks the lock screen on any desktop without a fingerprint reader — and marchyo never enables `services.fprintd` itself. A host that wants fingerprint unlock enables `services.fprintd` (e.g. via `nixos-hardware`) and the setting follows automatically. Don't "simplify" it back to `true`.
-- **Tracking cascade auto-enables auditd**: `marchyo.tracking.enable = true` flips every sub-collector on via `lib.mkDefault`, including `system.auditd` (kernel audit subsystem with execve + per-user `~/.config` watch rules). To opt out without disabling the whole stack: `marchyo.tracking.system.auditd = false`. Tuning knobs live under `marchyo.tracking.system.auditd*` (backlog limit, failure mode, log rotation, ruleset lock, early-boot kernel cmdline) — see `modules/nixos/options/tracking.nix` and `modules/nixos/tracking/system.nix`.
-- **Laurel audisp plugin**: `modules/nixos/tracking/laurel.nix` is enabled when `system.auditd && aggregation.enable` are both on. It runs as the `_laurel` system user, writes JSONL to `/var/log/laurel/audit.log`, and that file is added to the Vector source list in `modules/nixos/tracking/aggregation.nix`. Laurel is the only path by which kernel audit events reach the Loki sink — the raw `/var/log/audit/audit.log` is never read by Vector directly.
-- **`config_changes` watch overlap**: When `system.auditd && system.fileWatch` are both on (the default cascade), `~/.config` is observed by both auditd's syscall watch and the per-user inotifywait service. Kept by design — they capture different things — but worth knowing if you see duplicated-looking events in aggregation output.

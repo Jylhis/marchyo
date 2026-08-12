@@ -62,8 +62,7 @@ A structural fact that reframes half of omarchy's surface: **omarchy is an imper
 
 ## A4. Where marchyo goes BEYOND omarchy
 
-- **Self-tracking stack** — ActivityWatch, auditd + Laurel → Vector → DuckDB/Loki, wakapi, git-activity, weekly org-mode reports, optional local-LLM insights.
-- **BYOK AI desktop** — OpenRouter routing buckets, aichat/pi/claude-code, OpenViking context, MCP (mcp-nixos), Agent Skills.
+- **BYOK AI desktop** — OpenRouter routing buckets, pi/claude-code, OpenViking context, MCP (mcp-nixos), Agent Skills.
 - **Reproducibility & multi-platform** — one flake builds NixOS + nix-darwin + nix-on-droid; declarative rollback; disko/installer ISOs.
 - **Editor integration** — jotain (Jylhis Emacs) as first-class default with daemon + Hyprland wiring.
 - **Performance module** — declarative kernel/sysctl/IO tuning.

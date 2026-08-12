@@ -49,12 +49,8 @@
   enabling it currently fails an assertion (use OpenRouter instead).
 - **Goal:** `marchyo.ai.local.enable` → `services.ollama` (with
   `acceleration = "cuda"|"rocm"` driven by `marchyo.graphics.vendors`),
-  optional model pre-pull; expose endpoint to shell/editor/tracking.
+  optional model pre-pull; expose endpoint to shell/editor.
 - **Files:** new `modules/nixos/ollama.nix`; option in `ai.nix`.
-- **Decision D1 (open):** tracking already runs **llama-cpp**
-  (`tracking/analysis.nix` → `marchyo-llama-server`). Adding ollama = two
-  local-inference stacks. *Recommended:* keep llama.cpp for tracking + ollama
-  for user AI and document both (least churn); revisit convergence later.
 - **Effort:** M. **Notes:** acceleration wiring should read graphics vendors so
   CUDA/ROCm is automatic.
 
