@@ -5,9 +5,10 @@ description: Common issues and questions for Marchyo systems
 
 ## Build & evaluation failures
 
-- **`nixos-rebuild` fails on a `marchyo.inputMethod.*` option.** Those options
-  were removed and now fail the build on purpose. Migrate to
-  `marchyo.keyboard.layouts` — see the [Migration guide](/docs/guides/migration/).
+- **`nixos-rebuild` fails on a `marchyo.inputMethod.*` option.** That namespace
+  was removed entirely, so it now fails evaluation as an undefined option.
+  Migrate to `marchyo.keyboard.layouts` — see the
+  [Migration guide](/docs/guides/migration/).
 - **Formatting / lint errors in CI.** Run `just fmt` (nixfmt, deadnix, statix,
   shellcheck, yamlfmt) before committing; CI enforces it.
 - **Check your config quickly without a full build.** `just check` (or

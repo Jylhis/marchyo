@@ -29,7 +29,6 @@ read at startup.
 
 ## Clients
 
-- **aichat** — terminal chat client, also bound to `Super+A` (floating terminal).
 - **pi** — Armin Ronacher's minimal coding agent, wired to OpenRouter via a
   registered provider (`~/.pi/agent/settings.json` + an extension).
 - **claude-code** — installed for convenience, but it speaks the **Anthropic**
@@ -44,10 +43,10 @@ read at startup.
 | `marchyo.ai.openrouter.apiKeyFile` | `null` | Runtime path to the API key (required) |
 | `marchyo.ai.openrouter.baseUrl` | `https://openrouter.ai/api/v1` | OpenAI-compatible base URL |
 | `marchyo.ai.openrouter.defaultModel` | `anthropic/claude-sonnet-4` | Model used when routing is off |
-| `marchyo.ai.tooling.enable` | `true` | Install aichat / pi / claude-code |
+| `marchyo.ai.tooling.enable` | `true` | Install pi / claude-code |
 | `marchyo.ai.routing.enable` | `true` | Task→model routing (see below) |
 | `marchyo.ai.routing.tasks.<bucket>` | pinned defaults | Per-bucket `{ model; fallbacks; }` — primary OpenRouter slug plus fallback chain |
-| `marchyo.ai.routing.tools` | `{ aichat = "everydayCoding"; pi = "everydayCoding"; }` | Which task bucket each OpenRouter-backed client defaults to |
+| `marchyo.ai.routing.tools` | `{ pi = "everydayCoding"; }` | Which task bucket each OpenRouter-backed client defaults to |
 | `marchyo.ai.context.enable` | `false` | OpenViking local context layer |
 | `marchyo.ai.context.workspacePath` | `".openviking/workspace"` | OpenViking workspace dir, relative to `$HOME` |
 | `marchyo.ai.context.service.enable` | `false` | Run the OpenViking HTTP server as a per-user systemd service |
@@ -68,14 +67,13 @@ against OpenRouter's live model list and adjust.** Every default is overridable:
 
 ```nix
 marchyo.ai.routing.tasks.frontier.model = "openai/gpt-5.5";
-marchyo.ai.routing.tools.aichat = "frontier";   # which bucket aichat uses
+marchyo.ai.routing.tools.pi = "frontier";   # which bucket pi uses
 ```
 
 Buckets: `frontier`, `everydayCoding`, `fast`, `reasoning`, `summarize`,
-`longContext`, `budget`, `local` (placeholder). Both aichat and pi default to the
+`longContext`, `budget`, `local` (placeholder). pi defaults to the
 `everydayCoding` bucket (`marchyo.ai.routing.tools`). The resolved policy is
-exported to `~/.config/marchyo/ai-routing.json`, and each bucket is available as
-an aichat role (`aichat -r frontier`).
+exported to `~/.config/marchyo/ai-routing.json`.
 
 ## Context / memory (OpenViking)
 
@@ -94,7 +92,7 @@ activation (never in the store). Index your skills with
 `marchyo.ai.skills` installs Marchyo Agent Skills (`SKILL.md`) — `marchyo-config`
 and `nix-build-debug` — to every client in `skills.clients`. claude-code
 (`~/.claude/skills`) and pi (`~/.pi/agent/skills`) consume the Agent Skills
-standard natively; aichat gets each skill as a role. Add more skills by dropping
+standard natively. Add more skills by dropping
 `<name>/SKILL.md` dirs under `modules/home/ai-skills/skills/`.
 
 ## MCP tools

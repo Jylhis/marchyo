@@ -55,7 +55,7 @@ evaluation-only — no builds).
 Features are gated behind enable flags: `marchyo.desktop.enable`,
 `marchyo.development.enable`, `marchyo.media.enable`, `marchyo.office.enable`,
 plus per-feature namespaces (`marchyo.ai`, `marchyo.dictation`,
-`marchyo.webapps`, `marchyo.tracking`, `marchyo.theme`, `marchyo.keyboard`,
+`marchyo.webapps`, `marchyo.theme`, `marchyo.keyboard`,
 `marchyo.graphics`, `marchyo.defaults`, …). Umbrella flags cascade: e.g.
 `desktop.enable = true` auto-enables `office`/`media` via `lib.mkDefault` so
 consumers can still override. Follow this pattern for new features: an enable
@@ -126,17 +126,6 @@ in
 `testNixOS` evaluates a full NixOS config without building; `withTestUser`
 merges in a minimal bootable config. There are no standalone Home Manager
 tests — HM modules are exercised through the NixOS configs.
-
-## Recording runtime incidents
-
-When you diagnose a real runtime failure on a marchyo system — a crash, a
-service that won't stay up, a regression traced to a specific commit, a
-hardware/driver quirk found in `journalctl` — **always add an entry to
-[docs/known-issues.md](docs/known-issues.md)** as part of the fix, so the next
-person or agent doesn't have to re-derive it from the journal. Include the
-symptom, the root cause, the resolution, and enough evidence (key journal
-lines, versions, the commit that introduced it) to recognise a recurrence.
-This applies to any diagnosis session, not just ones that change code.
 
 ## Formatting and commits
 
