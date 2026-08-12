@@ -2,11 +2,11 @@
 #
 # Enabled when marchyo.ai.enable && marchyo.ai.mcp.enable. Wires mcp-nixos (real
 # NixOS package/option lookups — kills hallucinated attr names) into claude-code
-# by merging an mcpServers entry into ~/.claude.json (preserving existing state,
-# mirroring modules/home/tracking/claude-code.nix's jq merge). mcp-nixos runs via
+# by merging an mcpServers entry into ~/.claude.json (preserving existing state
+# via a jq merge). mcp-nixos runs via
 # `uvx` (fetched from PyPI on first use); `uv` is installed for that.
 #
-# pi/aichat MCP wiring is intentionally omitted for now (their MCP support is less
+# pi MCP wiring is intentionally omitted for now (its MCP support is less
 # standardized in the pinned versions); they get skills via the Agent Skills
 # standard and roles instead (see ai-skills.nix).
 {
