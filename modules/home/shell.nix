@@ -57,7 +57,6 @@
         completion-ignore-case = true;
         revert-all-at-newline = true; # Don't save edited commands until run
         show-all-if-ambiguous = true;
-
       };
     };
   };

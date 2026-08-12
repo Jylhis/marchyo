@@ -9,10 +9,6 @@
     boot = {
       plymouth = {
         enable = lib.mkDefault true;
-        # Render the splash for the configured theme variant so a light/dark
-        # switch retints the logo, chrome and background (assets are generated
-        # from tokens.json at build time; see the package). Plymouth runs at
-        # boot, so this bakes in the variant rather than switching at runtime.
         themePackages = lib.mkDefault [
           (pkgs.plymouth-marchyo-theme.override {
             inherit (config.marchyo.theme) variant;

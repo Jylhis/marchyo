@@ -45,8 +45,8 @@ in
 
   };
   config = lib.mkIf cfg.enable {
-
     environment.systemPackages = [ cfg.package ];
+
     # https://slack.com/help/articles/11906214948755-Manage-desktop-app-configurations#linux-2
     environment.etc."slack-desktop.conf" = {
       enable = true;
