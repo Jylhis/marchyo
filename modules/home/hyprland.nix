@@ -54,8 +54,6 @@ let
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
-  aiToolingEnabled = (import ../../lib/ai.nix osConfig).featureEnabled "tooling" true;
-
   dictationEnabled = ((osConfig.marchyo or { }).dictation or { }).enable or false;
   dictationToggleKey = ((osConfig.marchyo or { }).dictation or { }).toggleKey or "SUPER + CTRL + X";
   dictationStatusWindow =
@@ -371,7 +369,7 @@ in
           }
 
           {
-            match.class = "(org.omarchy.bluetui|org.omarchy.nmtui|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.aichat|org.omarchy.voxtype|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)";
+            match.class = "(org.omarchy.bluetui|org.omarchy.nmtui|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.spotify-player|org.omarchy.ncspot|org.omarchy.voxtype|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv)";
             tag = "+floating-window";
           }
           {
@@ -728,11 +726,6 @@ in
           in
           lib.mapAttrsToList (key: cmd: bindOpts key (exec cmd) { locked = true; }) mediaCommands
         )
-        ++ lib.optionals aiToolingEnabled [
-          (bindd "SUPER + A" "AI chat" (
-            execLua ''terminal .. " --class=org.omarchy.aichat -e marchyo-aichat"''
-          ))
-        ]
         ++ lib.optionals (dictationEnabled && dictationToggleKey != null) [
           (bindd dictationToggleKey "Dictation toggle" (exec "voxtype record toggle"))
         ]

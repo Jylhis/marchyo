@@ -1,10 +1,9 @@
 # Per-user BYOK AI client tooling.
 #
 # Enabled when marchyo.ai.enable && marchyo.ai.tooling.enable. Installs the AI
-# client CLIs and wires the OpenRouter-backed ones (aichat, pi) to the routing
-# table. The API key is read from marchyo.ai.openrouter.apiKeyFile at
-# interactive-shell startup and exported as OPENROUTER_API_KEY, so it never
-# enters the Nix store (mirrors modules/home/tracking/claude-code.nix).
+# client CLIs and wires the OpenRouter-backed one (pi) to the routing table.
+# The API key is read from marchyo.ai.openrouter.apiKeyFile at interactive-shell
+# startup and exported as OPENROUTER_API_KEY, so it never enters the Nix store.
 #
 # claude-code speaks the Anthropic API (not OpenAI/OpenRouter) and is installed
 # but NOT wired to OpenRouter — authenticate it separately with an Anthropic key.
@@ -40,71 +39,15 @@ let
     else
       fallbackModel;
 
-  aichatModel = modelFor "aichat";
   piModel = modelFor "pi";
 
-  # All routed models (+ the aichat default), for the aichat client model list.
-  aichatModels = lib.unique ([ aichatModel ] ++ lib.mapAttrsToList (_: t: t.model) tasks);
-
-  # aichat: OpenRouter via an openai-compatible client honoring baseUrl. The
-  # client is named "openrouter", so aichat reads OPENROUTER_API_KEY.
-  yamlFormat = pkgs.formats.yaml { };
-  aichatConfig = yamlFormat.generate "aichat-config.yaml" {
-    model = "openrouter:${aichatModel}";
-    save = true;
-    keybindings = "emacs";
-    clients = [
-      {
-        type = "openai-compatible";
-        name = "openrouter";
-        api_base = baseUrl;
-        models = map (m: { name = m; }) aichatModels;
-      }
-    ];
-  };
-
-  # Wrapper that loads the OpenRouter key from the file before exec'ing aichat.
-  # Needed for non-shell launchers (e.g. the Hyprland Super+A bind runs the
-  # command directly via Ghostty `-e`, bypassing interactive shell init).
-  marchyoAichat = pkgs.writeShellApplication {
-    name = "marchyo-aichat";
-    runtimeInputs = [ pkgs.aichat ];
-    text = ''
-      if [ -r "${keyFile}" ]; then
-        OPENROUTER_API_KEY="$(cat "${keyFile}")"
-        export OPENROUTER_API_KEY
-      fi
-      exec aichat "$@"
-    '';
-  };
-
+  # Export the OpenRouter key from its file at interactive-shell startup. Needed
+  # so the key never enters the Nix store yet reaches pi's provider extension.
   shellInit = ''
     if [ -r "${keyFile}" ]; then
       export OPENROUTER_API_KEY="$(cat "${keyFile}")"
     fi
   '';
-
-  # Machine-readable routing policy for the future gateway / marchyo CLI.
-  routingJson = builtins.toJSON {
-    inherit (routing) enable;
-    tools = toolBuckets;
-    tasks = lib.mapAttrs (_: t: {
-      inherit (t) model fallbacks;
-    }) tasks;
-  };
-
-  # An aichat role per task bucket: `aichat -r frontier "..."`.
-  bucketRoleFiles = lib.mapAttrs' (
-    bucket: t:
-    lib.nameValuePair "aichat/roles/${bucket}.md" {
-      text = ''
-        ---
-        model: openrouter:${t.model}
-        ---
-        You are an assistant configured for the "${bucket}" task profile.
-      '';
-    }
-  ) tasks;
 
   # pi extension registering OpenRouter as an OpenAI-compatible provider.
   # Mirrors the documented pi.registerProvider() API (best-effort; pi config is
@@ -137,8 +80,6 @@ in
 {
   config = lib.mkIf enabled {
     home.packages = [
-      pkgs.aichat
-      marchyoAichat
       pkgs.pi
       # Anthropic-native; not wired to OpenRouter. Sourced from llm-agents.nix
       # (daily-updated, Numtide-cached) rather than nixpkgs.
@@ -147,14 +88,6 @@ in
 
     # OpenRouter key (secret) — exported from a file at runtime, never in store.
     programs.bash.initExtra = shellInit;
-
-    xdg.configFile = {
-      "aichat/config.yaml".source = aichatConfig;
-
-      # Routing policy export.
-      "marchyo/ai-routing.json".text = routingJson;
-    }
-    // bucketRoleFiles;
 
     # pi: JSON settings + OpenRouter provider extension.
     home.file = {
