@@ -21,5 +21,11 @@ final: prev:
 
     openviking = final.callPackage ./packages/openviking/package.nix { };
     pi = final.callPackage ./packages/pi/package.nix { };
+
+    # wf-recorder 0.6.0 reads AVCodec::pix_fmts/sample_fmts/ch_layouts, all
+    # removed in ffmpeg 9. Mirrors nixpkgs fc31aa40; drop this once
+    # nixpkgs-unstable carries it: the override throws at that point, because
+    # upstream renames the argument ffmpeg -> ffmpeg_8.
+    wf-recorder = prev.wf-recorder.override { ffmpeg = final.ffmpeg_8; };
   }
 )
