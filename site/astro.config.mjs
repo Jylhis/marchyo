@@ -1,10 +1,19 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://marchyo.org',
   integrations: [
+    // Explicit sitemap ownership. Starlight bundles @astrojs/sitemap and only
+    // injects its own when the integration is absent, so declaring it here
+    // (single-language site → no i18n config needed) lets us control what ends
+    // up in `sitemap-index.xml`. `/search/` is a client-rendered demo with
+    // hardcoded sample data and is marked noindex, so keep it out of the map.
+    sitemap({
+      filter: (page) => !page.endsWith('/search/'),
+    }),
     starlight({
       title: 'marchyo',
       description: 'A modular NixOS configuration flake with sensible defaults',
