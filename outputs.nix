@@ -552,6 +552,7 @@ in
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
       inherit (pkgs)
         hyprmon
+        marchyo-shell
         plymouth-marchyo-theme
         openviking
         pi
