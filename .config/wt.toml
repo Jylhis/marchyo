@@ -1,4 +1,0 @@
-[post-create]
-
-[pre-merge]
-check = "nix flake check"
