@@ -1,4 +1,4 @@
-# Omarchy-parity keybinds (OMARCHY_PARITY.md Phase 2): monitor-control
+# Omarchy-parity keybinds (plans/omarchy-parity.md Phase 2): monitor-control
 # helpers, connectivity TUIs in floating terminals, and app-launch binds.
 # Scripts follow the modules/home/window-toggles.nix writeShellApplication
 # pattern; binds merge into the bind list the same way

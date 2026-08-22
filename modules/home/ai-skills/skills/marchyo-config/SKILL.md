@@ -6,7 +6,8 @@ description: Marchyo NixOS/Home Manager module development specialist. Use when 
 # Marchyo Configuration Skill
 
 Specialist knowledge for the Marchyo modular NixOS configuration flake.
-See `CLAUDE.md` in the repository root for the authoritative reference.
+See the `docs/` contributor tree (start at `docs/README.md`) and root `AGENTS.md`
+for the authoritative reference.
 
 ## Repository Layout
 
