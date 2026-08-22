@@ -40,6 +40,14 @@ export default defineConfig({
           items: ['docs/introduction', 'docs/quickstart'],
         },
         {
+          // End-user manual — authored as flat numbered chapters in the repo-root
+          // `manual/` directory, surfaced into the docs collection via the
+          // `src/content/docs/manual` symlink. Autogenerate keeps the sidebar in
+          // sync with the numbered files.
+          label: 'Manual',
+          items: [{ autogenerate: { directory: 'manual' } }],
+        },
+        {
           label: 'Configuration',
           items: [
             'docs/configuration/feature-flags',
