@@ -1,0 +1,146 @@
+# Plan: Marchyo Shell — a unified Quickshell desktop
+
+**Revision 1 — draft.** Initial design skeleton for a custom
+[Quickshell](https://quickshell.org) desktop shell, to be fleshed out before
+implementation. Reference: omarchy 4.0.0.alpha's `shell/` (read
+`../../omarchy/docs/omarchy-shell.md`, `../../omarchy/shell/README.md`, and
+`../../omarchy/agents/skills/shell-dev.md`).
+
+## Problem
+
+Marchyo's desktop UI is a **composition of discrete Wayland components**, each its
+own Home-Manager module and its own process:
+
+- bar → `modules/home/waybar.nix` (Waybar)
+- notifications → `modules/home/mako.nix` (mako)
+- on-screen display → `modules/home/swayosd.nix` (SwayOSD)
+- launcher / emoji / clipboard → `modules/home/vicinae.nix` (Vicinae)
+- menus / power → `modules/home/menus.nix` (gum TUIs in floating ghostty)
+- screensaver, lock → `modules/home/{screensaver,hyprlock}.nix`
+
+This works, but the surfaces don't share a design runtime, state, or process. Each
+is themed separately (see the "Stylix target disablement" gotcha — 13 surfaces are
+hand-themed), each is a cold start, and cross-surface behavior (e.g. an OSD that
+knows the bar's state) is impossible. Omarchy solved exactly this by collapsing the
+whole desktop into **one long-running Quickshell (QML) process** where bar, panels,
+OSD, notifications, lock, and background switcher are plugins sharing singletons and
+an IPC bus.
+
+Marchyo wants its own equivalent: a single, coherent, fully Jylhis-themed shell —
+built declaratively and packaged in Nix — that can eventually retire the
+waybar/mako/swayosd sprawl.
+
+## Reference architecture (omarchy's shell)
+
+One `quickshell -p <path>` process per session, launched from Hyprland autostart.
+Everything runs inside as a plugin:
+
+- **`shell.qml`** — `ShellRoot` entry point. Injects shared service singletons
+  (`pluginRegistry`, `barWidgetRegistry`, `appLibrary`) as *properties* rather than
+  re-importing singletons (relative-path singleton imports don't share state).
+- **`Commons/`** — shared design-token singletons via `qmldir` (`Color.qml`,
+  `Style.qml`, `Border.qml`, `Util.qml`), imported as `import qs.Commons`.
+- **`Ui/`** — reusable QML component library (Button, Panel, Dropdown, Toggle,
+  TextField, …).
+- **`services/`** — host services: `PluginRegistry.qml` (discovers/validates
+  plugins, tracks enabled state), `BarWidgetRegistry.qml`, `AppLibrary.qml`.
+- **`plugins/`** — every feature as a plugin. A plugin is `manifest.json`
+  (`schemaVersion: 1`, `id`, `kinds[]`, `entryPoints{}`, per-kind `defaults`/
+  `schema`) + a QML entry `Item` (+ usually a `Model.js`). Kinds: `bar-widget`,
+  `bar`, `panel`, `overlay`, `menu`, `service`. Panels/overlays/menus expose
+  `open(payloadJson)`/`close()`; the host injects `omarchyPath`, `shell`,
+  `manifest`, and the registries as properties. First-party services load at
+  startup; the rest load on summon (`keepLoaded: true` to persist).
+- **Config:** a single `~/.config/omarchy/shell.json` (layout + inline per-entry
+  settings + enabled deviations). No deep merge, no per-plugin files.
+- **IPC contract:** a `shell` target (+ per-plugin targets like `osd`, `media`,
+  `notifications`, `background`). Methods: `ping`, `summon`, `hide`, `toggle`,
+  `togglePanelAt`, `call`, `rescanPlugins`, `reloadConfig`, `applyTheme`,
+  `toggleBarTransparency`, `setPluginEnabled`, `enablePlugin`. Summoning a panel is
+  a ~30ms IPC call into the already-running process, not a cold start.
+
+## Rejected approaches
+
+- **Enable noctalia as-is** (`modules/home/noctalia.nix`, present-but-disabled).
+  noctalia *is* a Quickshell shell, but it ships its own notification daemon that
+  seizes `org.freedesktop.Notifications` (clashing with mako), is not themed from
+  the Jylhis design system, and its layout/behavior is upstream's, not marchyo's.
+  Adopting it means inheriting someone else's product decisions — the opposite of
+  the curated, declarative control marchyo wants.
+- **Keep the discrete-component status quo.** Zero build cost, but permanently
+  forgoes shared state, a single theme runtime, and cross-surface behavior; leaves
+  13 hand-themed surfaces to maintain.
+- **Fork omarchy's `shell/`.** Closest to the target, but omarchy's shell is wired
+  to omarchy's imperative `bin/omarchy-*` world (`omarchy-launch-shell`, theme
+  push via `applyTheme`, `~/.config/omarchy/` layout) and its Arch packaging. We'd
+  spend the effort ripping that out. Better to take it as the *reference design*
+  and build a clean, Nix-native shell that reuses its architecture (plugin model,
+  singleton injection, IPC contract) without its plumbing.
+
+**Chosen:** build a marchyo-native Quickshell shell from scratch, borrowing
+omarchy's proven architecture (single process, manifest plugins, injected
+singletons, IPC summon/toggle), packaged and themed the marchyo way.
+
+## Nix packaging plan
+
+- Add **`quickshell`** as a flake input (it is not one today — it only arrives
+  transitively via noctalia). Prefer the upstream flake or nixpkgs `quickshell`;
+  pin it in `flake.lock`.
+- Create **`packages/marchyo-shell/`** — the QML source tree (`shell.qml`,
+  `Commons/`, `Ui/`, `services/`, `plugins/`) + a wrapper that runs
+  `quickshell -p <store-path>`. The QML lives at top-level **`shell/`** in the repo
+  (already reserved) and the package copies it into the store.
+- Wire it into the **Linux block of `overlay.nix`** (same pattern as
+  `hyprmon`/`noctalia`): `marchyo-shell = final.callPackage ./packages/marchyo-shell { }`.
+- Add **`modules/home/marchyo-shell.nix`**, gated behind a new
+  `marchyo.shell.enable` option (declared in `modules/nixos/options/`). It installs
+  the package, adds the Hyprland autostart `exec-once`, and writes the initial
+  `shell.json`. Default **off** initially; it does not touch waybar/mako/swayosd
+  until it reaches parity, then a feature flag flips the desktop from the discrete
+  stack to the unified shell.
+- Coverage: a `tests/eval/shell.nix` eval test for the module + option, following
+  the existing per-feature test pattern.
+
+## Theming bridge
+
+The shell's design-token singletons (`Commons/Color.qml`, `Commons/Style.qml`)
+should be **generated from the Jylhis design system**, not hand-authored, so the
+shell tracks the same `tokens.json` every other surface does. Reuse the existing
+`modules/generic/jylhis-palette.nix` `mkPalette { variant, pkgs, lib }` mechanism
+to emit a `Color.qml` (and font sizes from `marchyo.theme.fontScale` via
+`lib/font-scale.nix`) at build/activation time. Dark = Jylhis Field, light = Jylhis
+Sheet, matching the rest of marchyo. Runtime variant switch (`marchyo theme`) would
+push new colors over IPC (omarchy's `applyTheme`) rather than rebuild.
+
+## Phasing
+
+Each phase behind `marchyo.shell.*` flags; nothing is removed from the discrete
+stack until the shell reaches parity for that surface.
+
+- **Phase 0 — packaging spike.** `quickshell` input + `packages/marchyo-shell/` +
+  `modules/home/marchyo-shell.nix`; a blank `ShellRoot` renders under Hyprland.
+  Proves the Nix packaging, autostart, and QML-from-store path.
+- **Phase 1 — bar.** Port the Waybar segment set (workspaces, active window, clock,
+  tray, audio, network, battery, DND, dictation, updates) as bar widgets. Behind a
+  flag that, when on, disables `waybar.nix`.
+- **Phase 2 — panels + OSD.** audio/network/power/monitor panels; retire SwayOSD.
+- **Phase 3 — notifications.** A notifications plugin owning
+  `org.freedesktop.Notifications`; retire mako (the noctalia conflict, done right).
+- **Phase 4 — lock + launcher.** Lock surface; evaluate whether to keep Vicinae
+  (a strong standalone launcher) or bring launching in-shell.
+
+## Open questions
+
+- Config surface: mirror omarchy's single `shell.json`, or express layout
+  declaratively through `marchyo.shell.*` Nix options and *generate* `shell.json`?
+  (Marchyo's declarative ethos argues for the latter; runtime tweaks argue for a
+  writable file. Likely: generate defaults, allow a runtime overlay.)
+- Third-party plugin story: omarchy clones git repos into `~/.config`. That is
+  imperative and unsandboxed — probably out of scope for marchyo, or replaced by a
+  Nix-declared plugin list.
+- Do we keep Vicinae permanently (Phase 4) rather than reimplement a launcher?
+
+## Status
+
+RFC skeleton only. Nothing implemented; `shell/` holds a placeholder README. Next
+step is Phase 0 (packaging spike) once this design is reviewed.
