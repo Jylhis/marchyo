@@ -1,8 +1,9 @@
 # Agent Instructions
 
 Tool-agnostic guidance for AI agents working in this repository. This file is the
-distilled source of truth for the essentials; [CLAUDE.md](CLAUDE.md) holds the full
-detailed reference (architecture, flake outputs, options tables, gotchas).
+distilled source of truth for the essentials; the [`docs/`](docs/) contributor tree
+holds the full detailed reference (architecture, flake outputs, options tables,
+gotchas, CI/testing) — start at [docs/README.md](docs/README.md).
 
 ## What this repository is
 

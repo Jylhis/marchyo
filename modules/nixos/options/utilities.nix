@@ -1,4 +1,4 @@
-# Omarchy-parity "Trigger" utility toggles (see OMARCHY_PARITY.md Phase 3).
+# Omarchy-parity "Trigger" utility toggles (see plans/omarchy-parity.md Phase 3).
 # Declarations only (platform-neutral; the darwin set imports this namespace
 # too) - all configuration lives in the desktop-gated modules/home/utilities.nix.
 { lib, ... }:
