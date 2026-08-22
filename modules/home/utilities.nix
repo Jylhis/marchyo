@@ -1,4 +1,4 @@
-# Omarchy-style "Trigger" utilities (OMARCHY_PARITY.md Phase 3): reminders
+# Omarchy-style "Trigger" utilities (plans/omarchy-parity.md Phase 3): reminders
 # backed by transient systemd user timers, quick-info notifications
 # (date/time, battery), and a media transcode + share pair. The logic lives
 # in the marchyo CLI (`marchyo reminder|info|transcode|share`, absorbed from
