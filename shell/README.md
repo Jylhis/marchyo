@@ -1,11 +1,34 @@
-# shell/ — reserved for the marchyo Quickshell shell
+# shell/ — the marchyo Quickshell shell
 
-This directory is reserved for a future custom [Quickshell](https://quickshell.org)
-desktop shell (bar, panels, OSD, notifications, lock — a single QML process),
-replacing today's discrete waybar + mako + swayosd + vicinae composition.
+A custom [Quickshell](https://quickshell.org) desktop shell: a single
+long-running QML process that will eventually replace today's discrete
+waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
+notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-Nothing lives here yet. The design lives in **[../plans/shell.md](../plans/shell.md)**;
-the QML source will land here once Phase 0 (packaging spike) is implemented.
+## Status — Phase 0 (packaging spike)
 
-Until then this is a placeholder so the top-level layout mirrors the intended
-structure (and the omarchy `shell/` it takes reference from).
+A minimal Jylhis-themed top bar with a live clock, proving the Nix path
+(package → autostart → QML-from-store) and the tokens→QML theming bridge.
+Gated behind `marchyo.shell.enable` (default off); does not touch the
+discrete stack. The plugin registry and IPC architecture land in Phase 1.
+
+Layout:
+
+```
+shell/
+  shell.qml           ShellRoot entry point (the themed bar)
+  Commons/
+    qmldir            declares the qs.Commons module
+    Color.qml         Jylhis design-token color singleton (Field defaults;
+                      the Nix build regenerates it for the host theme variant)
+```
+
+## Development
+
+Run the tree directly for a fast QML iteration loop (no rebuild):
+
+```bash
+quickshell -p shell          # from the repo root
+# or, the wrapped, theme-baked package:
+nix run .#marchyo-shell
+```
