@@ -1,0 +1,11 @@
+module qs.Bar
+SessionWidget 1.0 SessionWidget.qml
+ClockWidget 1.0 ClockWidget.qml
+WorkspacesWidget 1.0 WorkspacesWidget.qml
+BatteryWidget 1.0 BatteryWidget.qml
+AudioWidget 1.0 AudioWidget.qml
+PowerProfileWidget 1.0 PowerProfileWidget.qml
+TrayWidget 1.0 TrayWidget.qml
+CpuWidget 1.0 CpuWidget.qml
+BluetoothWidget 1.0 BluetoothWidget.qml
+NetworkWidget 1.0 NetworkWidget.qml

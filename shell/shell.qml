@@ -1,20 +1,17 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 
 import qs.Commons
+import qs.Bar
 
-// Phase 0 spike: a single Jylhis-themed top bar with a live clock, proving the
-// packaging + theming spine (quickshell package -> store QML -> autostart ->
-// tokens-derived Color singleton). The plugin registry / IPC architecture lands
-// in Phase 1; there is deliberately no plugin system here yet.
+// Phase 1: a Jylhis-themed top bar at waybar parity, built as a simple monolith
+// — shell.qml composes reusable widgets from qs.Bar (backed by qs.Ui primitives
+// and the qs.Commons Color/Style singletons). No plugin registry or IPC yet;
+// that architecture lands with the summonable panels of Phase 2.
 ShellRoot {
   id: shell
-
-  SystemClock {
-    id: clock
-    precision: SystemClock.Minutes
-  }
 
   Variants {
     model: Quickshell.screens
@@ -28,15 +25,40 @@ ShellRoot {
         left: true
         right: true
       }
-      implicitHeight: 30
+      implicitHeight: Style.barHeight
       color: Color.background
 
-      Text {
-        anchors.centerIn: parent
-        color: Color.foreground
-        font.family: "monospace"
-        font.pixelSize: 14
-        text: Qt.formatDateTime(clock.date, "ddd d MMM  HH:mm")
+      // Three anchored sections: left and right groups, an absolutely-centered
+      // clock. Simpler and more robust than fill-width spacers for centering.
+      Item {
+        anchors.fill: parent
+
+        RowLayout {
+          anchors.left: parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: Style.spacing
+
+          SessionWidget {}
+          WorkspacesWidget {}
+        }
+
+        ClockWidget {
+          anchors.centerIn: parent
+        }
+
+        RowLayout {
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          spacing: Style.spacing
+
+          TrayWidget {}
+          BluetoothWidget {}
+          NetworkWidget {}
+          AudioWidget {}
+          CpuWidget {}
+          PowerProfileWidget {}
+          BatteryWidget {}
+        }
       }
     }
   }

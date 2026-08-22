@@ -142,5 +142,21 @@ stack until the shell reaches parity for that surface.
 
 ## Status
 
-RFC skeleton only. Nothing implemented; `shell/` holds a placeholder README. Next
-step is Phase 0 (packaging spike) once this design is reviewed.
+- **Phase 0 — done.** `quickshell` (from nixpkgs), `packages/marchyo-shell/`,
+  `modules/home/marchyo-shell.nix`, the `marchyo.shell.enable` option, overlay +
+  flake wiring, and eval tests all landed; the tokens→QML theming bridge works.
+- **Phase 1 (bar) — landed (self-contained subset).** A monolithic Jylhis-themed
+  bar at near-waybar parity: `Ui/BarItem` primitive + `Bar/` widgets composed by
+  `shell.qml`, all driven by native Quickshell service bindings (Hyprland,
+  Pipewire, UPower incl. PowerProfiles, SystemTray, Bluetooth, Networking, plus a
+  `/proc/stat` FileView for CPU). `Commons/Color.qml` now carries the full
+  palette+status token set and a `Commons/Style.qml` scales geometry from
+  `marchyo.theme.fontScale`. Coexists with waybar (opt-in, no cutover yet).
+  - **Deferred within Phase 1** (waybar still covers these during coexistence):
+    keyboard-layout / DND / dictation widgets, click-to-launch-TUI actions, and
+    network SSID+signal — all blocked on hermetic tool-path baking (a generated
+    `Config.qml` of resolved `/nix/store` bin paths), since the native Networking
+    API lacks SSID/signal and the rest shell out to `hyprctl`/`voxtype`/`marchyo`.
+    See [../shell/README.md](../shell/README.md).
+- **Next:** finish the deferred widgets (tool-path baking), then the waybar
+  mutual-exclusion cutover flag, then Phase 2 (panels + OSD).
