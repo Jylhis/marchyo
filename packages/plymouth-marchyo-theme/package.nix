@@ -111,10 +111,17 @@ stdenvNoCC.mkDerivation {
     done
 
     # Cover mask: solid bg-color rectangle the script slides over the active
-    # word. Same color as the window background = invisible clipping. Sized
-    # to the widest word ("marchyo") plus anti-aliasing margin.
+    # word. Same color as the window background = invisible clipping. The
+    # script tracks the cover's LEFT edge to the caret and lets it overhang
+    # the word's right edge, so the mask must be wider than the widest word:
+    # when the caret parks left of the word (word fully hidden) the mask is
+    # shifted left by up to ~0.6 caret-widths, and a mask sized to exactly the
+    # wordmark would fall short on the right, leaving a visible text sliver.
+    # Pad by 2x the cap height (well over the largest leftward shift); the
+    # extra only ever paints bg over bg. Slightly taller for anti-aliasing.
     wm_w=$(magick identify -format '%w' "$theme/marchyo.png")
-    magick -size "$wm_w"x$((height + 8)) xc:'${bgColor}' "$theme/cover.png"
+    cover_w=$((wm_w + height * 2))
+    magick -size "$cover_w"x$((height + 8)) xc:'${bgColor}' "$theme/cover.png"
 
     # Password-dialog chrome
     # Keep the omarchy glyph shapes but flatten their RGB to a palette color,
@@ -139,7 +146,8 @@ stdenvNoCC.mkDerivation {
 
     cp --reflink=auto marchyo.plymouth marchyo.script "$theme"/
     substituteInPlace "$theme/marchyo.plymouth" \
-      --replace-fail "@bgHex@" "${bgHex}"
+      --replace-fail "@bgHex@" "${bgHex}" \
+      --replace-fail "@fgHex@" "${textHex}"
     substituteInPlace "$theme/marchyo.script" \
       --replace-fail "@bgR@" "${channelFloat bgHex 0}" \
       --replace-fail "@bgG@" "${channelFloat bgHex 2}" \
