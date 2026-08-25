@@ -54,7 +54,10 @@ global.caret_dir = 1;   # 1 = facing right, -1 = facing left
 
 # Cover sits above the words, below the caret. Its left edge follows the
 # caret; anything past the word's right edge lands on plain bg and is
-# invisible. Sized to the widest word, slightly taller for anti-aliasing.
+# invisible. Wider than the widest word (see package.nix) so that when the
+# caret parks left of the word the mask still overhangs the word's right
+# edge — otherwise a sliver of text stays uncovered. Slightly taller for
+# anti-aliasing.
 cover.image = Image("cover.png");
 cover.sprite = Sprite(cover.image);
 

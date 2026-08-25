@@ -6,6 +6,13 @@ ModuleName=script
 [script]
 ImageDir=/usr/share/plymouth/themes/marchyo
 ScriptFile=/usr/share/plymouth/themes/marchyo/marchyo.script
-ConsoleLogBackgroundColor=0x@bgHex@
+# Boot log shown when the user presses ESC (the script plugin's console
+# viewer). Both colors are themed from tokens.json and forced opaque (0xff
+# alpha) so the log is a solid, readable panel on both variants: without an
+# explicit ConsoleLogTextColor the plugin defaults to white, which is
+# invisible on the light (Sheet) background; a 6-digit background (0x00RRGGBB)
+# is fully transparent, so it is widened to 0xff for a solid ground.
+ConsoleLogBackgroundColor=0xff@bgHex@
+ConsoleLogTextColor=0xff@fgHex@
 MonospaceFont=Cantarell 11
 Font=Cantarell 11
