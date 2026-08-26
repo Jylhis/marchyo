@@ -50,6 +50,13 @@ evaluation-only — no builds).
   `modules/home/*`, `modules/nixos/options`, or the overlay there.
 - Option declarations go in `modules/nixos/options/` (one file per logical
   namespace, auto-discovered), declaring `options.marchyo.<namespace>`.
+- `modules/users/` is the self-contained unified identity module
+  (`marchyo.identity.*`): `lib.nix` holds the cross-platform contract, with
+  `nixos.nix`/`darwin.nix` renderers wired into the default module sets and
+  exported standalone as `nixosModules.user-management` /
+  `darwinModules.user-management`. Deliberately relocatable — its options
+  live in `modules/users/lib.nix`, NOT in `modules/nixos/options/`. Identity
+  declarations for the reference configs live in `configurations/people/`.
 
 ## The `marchyo.*` flag model
 
