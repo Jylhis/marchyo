@@ -364,6 +364,14 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+  // href-safe URL: allow only http(s) so a `javascript:`/`data:` value in the
+  // data (option decl URL, package homepage) can't become a clickable script.
+  // Falls back to '#'. Still run through esc() for attribute safety.
+  const safeUrl = (u: string) => {
+    const t = (u || '').trim();
+    return /^https?:\/\//i.test(t) ? esc(t) : '#';
+  };
+
   function filteredOptions(): OptionRow[] {
     const query = q.trim();
     return query ? optionsFuse.search(query).map((r) => r.item) : OPTIONS;
@@ -389,6 +397,10 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
       nixResults = [];
       return;
     }
+    // Clear prior results immediately so the just-rendered frame can't show
+    // stale nixpkgs hits for the previous query while the debounce is pending.
+    nixState = 'loading';
+    nixResults = [];
     window.clearTimeout(debounceTimer);
     debounceTimer = window.setTimeout(() => runNixpkgs(query), 160);
   }
@@ -500,7 +512,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
     const el = document.createElement('article');
     el.className = 'result';
     const nameHtml = r.url
-      ? `<a href="${esc(r.url)}" class="result__name" target="_blank" rel="noopener">${esc(r.name)}</a>`
+      ? `<a href="${safeUrl(r.url)}" class="result__name" target="_blank" rel="noopener">${esc(r.name)}</a>`
       : `<span class="result__name">${esc(r.name)}</span>`;
     const exampleFoot = r.example ? `<span>example: <span class="k">${esc(r.example)}</span></span>` : '';
     el.innerHTML = `
@@ -544,7 +556,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
   function renderMarchyoPkg(r: MarchyoPkg): HTMLElement {
     const el = document.createElement('article');
     el.className = 'result';
-    const homeFoot = r.homepage ? ` · <a href="${esc(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
+    const homeFoot = r.homepage ? ` · <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
     el.innerHTML = `
       <div class="result__head">
         <span class="result__name">${esc(r.name)}</span>
@@ -583,7 +595,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
     el.className = 'result';
     const name = r.pname || r.attr_name;
     const license = r.license ? `<span class="result__license">${esc(r.license)}</span>` : '';
-    const homeFoot = r.homepage ? ` · <a href="${esc(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
+    const homeFoot = r.homepage ? ` · <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
     el.innerHTML = `
       <div class="result__head">
         <span class="result__name">${esc(name)}</span>
