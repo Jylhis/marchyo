@@ -5,15 +5,17 @@ long-running QML process that will eventually replace today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
 notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-## Status — Phase 1 (bar) done, Phase 2 (OSD) in progress
+## Status — Phase 1 (bar) done, Phase 2 (OSD + panels) in progress
 
 A Jylhis-themed top bar at (near) waybar parity, built as a **simple monolith**:
-`shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitive
+`shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitives
 and the `Commons/` design-token singletons). Phase 2 adds surfaces **alongside**
-the bar as plain in-process components — starting with the **OSD** (`Osd/`).
-There is deliberately **no plugin registry or manifest system**: marchyo rejected
-the third-party-plugin story (see `plans/shell.md`), so native Quickshell service
-bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
+the bar as plain in-process components — the **OSD** (`Osd/`) and the summonable
+**panels** (`Panels/`, toggled from their bar widgets through the `Services/`
+`PanelManager` singleton). There is deliberately **no plugin registry or manifest
+system**: marchyo rejected the third-party-plugin story (see `plans/shell.md`), so
+native Quickshell service bindings plus (where a keybind must reach in) a stock
+`IpcHandler` suffice.
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
 waybar** and, now, **SwayOSD** (each mutually exclusive with its discrete
@@ -35,13 +37,21 @@ shell/
                        with absolute /nix/store paths (dev default = PATH names)
   Ui/
     qmldir             declares module qs.Ui
-    BarItem.qml        the one shared primitive (padded label, hover, signals)
+    BarItem.qml        bar-segment primitive (padded label, hover, signals)
+    Panel.qml          summonable-panel base (layer-shell card + dismiss)
+    PanelButton.qml    labelled pill control for panel bodies
   Bar/
     qmldir             declares module qs.Bar
     <Widget>.qml       one component per bar segment
   Osd/
     qmldir             declares module qs.Osd
     Osd.qml            volume/brightness/mic-mute overlay (replaces SwayOSD)
+  Services/
+    qmldir             declares module qs.Services
+    PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
+  Panels/
+    qmldir             declares module qs.Panels
+    <Name>Panel.qml    one summonable panel (audio / network / power)
 ```
 
 ### Widgets
@@ -61,11 +71,11 @@ below), so nothing depends on the session `PATH`.
 | DndWidget | `makoctl mode` probe + `marchyo toggle notifications` |
 | KeyboardLayoutWidget | `hyprctl devices` (click = cycle layout) |
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
-| NetworkWidget | `Quickshell.Networking` + `nmcli` for SSID/signal (click = nmtui) |
-| AudioWidget | `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = wiremix) |
+| NetworkWidget | `Quickshell.Networking` + `nmcli` for SSID/signal (click = network panel) |
+| AudioWidget | `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Quickshell.Io.FileView` over `/proc/stat` (click = btop) |
 | PowerProfileWidget | `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
-| BatteryWidget | `Quickshell.Services.UPower` (click = power menu / launcher) |
+| BatteryWidget | `Quickshell.Services.UPower` (click = power panel) |
 
 TUI launches use `ghostty --class=org.omarchy.* -e <tool>` so Hyprland's existing
 float rule applies — the same classes and commands as `modules/home/waybar.nix`.
@@ -101,6 +111,26 @@ SwayOSD down (`modules/home/swayosd.nix`); the backlight udev write-access from
 > confirmed on a real host. If a brightness key doesn't flash the overlay, the
 > fallback is a one-line IPC poke from the bind (`qs ipc call`) — see
 > `plans/shell.md`.
+
+### Panels
+
+Summonable cards under the bar, one per cluster, opened by clicking the matching
+bar widget. The whole "registry" is `Services/PanelManager.qml`: a singleton
+holding the one open panel's id, so they are **mutually exclusive** (opening one
+closes any other) with no manifest system or IPC. A bar widget's click calls
+`PanelManager.toggle(id)`; `Ui/Panel.qml` (a full-screen, transparent layer-shell
+overlay that dismisses on outside click) binds its visibility to
+`PanelManager.openId === id` and only materialises a surface while open.
+
+| Panel | Opened by | Backing service | Contents |
+| --- | --- | --- | --- |
+| AudioPanel | AudioWidget | `Pipewire` | volume -/+, mute, output-device picker, `wiremix` escape |
+| NetworkPanel | NetworkWidget | `Networking` + `nmcli` | connection status, SSID/signal, `nmtui` escape |
+| PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
+
+Each panel reuses the exact native bindings of its bar widget and keeps a button
+to the corresponding TUI/menu for anything the panel doesn't cover. Panels
+currently render on the default screen (per-output panels are deferred).
 
 ### Deferred (cosmetic parity, optional)
 

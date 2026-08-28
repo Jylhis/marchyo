@@ -1,11 +1,11 @@
-import Quickshell
 import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Default-sink volume. Scroll to adjust, right-click to mute, left-click opens the
-// wiremix mixer in a floating terminal — matches waybar's wireplumber widget
-// (scroll-step 5, max-volume 150, org.omarchy.wiremix class).
+// in-shell audio panel (output picker + volume/mute, with a wiremix escape hatch).
+// Scroll-step 5, max-volume 150, matching waybar's wireplumber widget.
 BarItem {
   id: root
 
@@ -30,5 +30,5 @@ BarItem {
   onRightClicked: () => {
     if (audio) audio.muted = !audio.muted;
   }
-  onClicked: Quickshell.execDetached([ Config.terminal, "--class=org.omarchy.wiremix", "-e", Config.wiremix ])
+  onClicked: PanelManager.toggle("audio")
 }

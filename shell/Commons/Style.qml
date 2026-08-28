@@ -21,6 +21,13 @@ QtObject {
   readonly property int osdBarWidth: 140
   readonly property int osdBarHeight: 6
 
+  // Summonable-panel geometry (audio/network/power cards under the bar).
+  readonly property int panelWidth: 260
+  readonly property int panelPad: 14
+  readonly property int panelGap: 6
+  readonly property int panelRadius: 8
+  readonly property int panelRowHeight: 30
+
   // Baked feature flags (parity with waybar's conditional widgets). Dev default
   // shows the dictation widget; the build sets it from marchyo.dictation.
   readonly property bool dictationIndicator: true

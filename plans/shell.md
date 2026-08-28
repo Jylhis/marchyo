@@ -184,4 +184,15 @@ stack until the shell reaches parity for that surface.
     layer-shell `PanelWindow` card anchored to its bar button, backed directly by
     the native service, toggled in-process on bar-widget click (IPC only for
     keybind summons).
-  - **Next in Phase 2:** the audio / network / power summonable panels.
+  - **Panels landed.** `Services/PanelManager.qml` (a singleton holding the one
+    open panel id, mutual exclusion), `Ui/Panel.qml` (layer-shell overlay card +
+    outside-click dismiss) and `Ui/PanelButton.qml`, plus three panels in
+    `Panels/`: **audio** (Pipewire volume/mute + output-device picker), **network**
+    (Networking + nmcli status), **power** (UPower battery + PowerProfiles
+    selector). Each is opened by clicking its bar widget
+    (`PanelManager.toggle(id)`) and keeps a button to the matching TUI/menu
+    (wiremix / nmtui / power menu) as an escape hatch. No new Nix option — pure
+    in-process QML; panels render on the default screen (per-output deferred).
+  - **Next in Phase 2:** OSD live-verify on a real host, then optionally a
+    monitor panel and keybind summons (a single `IpcHandler`); otherwise Phase 3
+    (notifications).

@@ -1,0 +1,2 @@
+module qs.Services
+singleton PanelManager 1.0 PanelManager.qml
