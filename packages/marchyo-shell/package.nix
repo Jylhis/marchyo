@@ -15,7 +15,6 @@
   btop,
   networkmanager,
   bluetui,
-  mako,
   procps,
   coreutils,
   vicinae,
@@ -107,6 +106,21 @@ let
       readonly property int panelRadius: ${toString (fs.round 8)}
       readonly property int panelRowHeight: ${toString (fs.round 30)}
 
+      // Notification-toast geometry (replaces mako; mako uses width 380, pad 8,
+      // radius 0 sharp corners, border 2, margin 10). Pixel sizes scale with the
+      // font; the timeouts are milliseconds and stay unscaled.
+      readonly property int notifWidth: ${toString (fs.round 380)}
+      readonly property int notifPad: ${toString (fs.round 12)}
+      readonly property int notifRadius: 0
+      readonly property int notifBorder: 2
+      readonly property int notifGap: ${toString (fs.round 8)}
+      readonly property int notifMargin: ${toString (fs.round 10)}
+      readonly property int notifIconSize: ${toString (fs.round 40)}
+      readonly property int notifMaxVisible: 5
+      readonly property int notifTimeoutLow: 5000
+      readonly property int notifTimeoutNormal: 5000
+      readonly property int notifTimeoutCritical: 0
+
       // Baked feature flags (parity with waybar's conditional widgets).
       readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
       readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
@@ -131,7 +145,6 @@ let
       readonly property string nmtui: "${lib.getExe' networkmanager "nmtui"}"
       readonly property string nmcli: "${lib.getExe' networkmanager "nmcli"}"
       readonly property string bluetui: "${lib.getExe bluetui}"
-      readonly property string makoctl: "${lib.getExe' mako "makoctl"}"
       readonly property string pgrep: "${lib.getExe' procps "pgrep"}"
       readonly property string ls: "${lib.getExe' coreutils "ls"}"
       readonly property string df: "${lib.getExe' coreutils "df"}"

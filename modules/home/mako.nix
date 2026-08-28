@@ -15,6 +15,11 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  # The unified shell owns org.freedesktop.Notifications and draws its own toasts
+  # (shell/Notifications), so mako stands down when the shell is on — the same
+  # mutual-exclusion cutover as waybar.nix / swayosd.nix. The two daemons never
+  # both bind the notification bus.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
 
   palette = import ../generic/jylhis-palette.nix {
@@ -29,7 +34,7 @@ let
   };
 in
 {
-  config = lib.mkIf desktopEnabled {
+  config = lib.mkIf (desktopEnabled && !shellEnabled) {
     services.mako = {
       enable = true;
       settings = {

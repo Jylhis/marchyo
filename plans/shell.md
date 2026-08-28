@@ -205,3 +205,28 @@ stack until the shell reaches parity for that surface.
     fallback, panel service bindings). Phase 2 is otherwise **feature-complete**;
     the remaining item is live verification, so work continues into Phase 3
     (notifications).
+- **Phase 3 (notifications) — done.**
+  - **Notification server + toasts landed.** `Notifications/NotificationDaemon.qml`
+    instantiates a Quickshell `NotificationServer` that owns
+    `org.freedesktop.Notifications` (body + markup + actions + image capabilities,
+    no inline reply / persistence). Incoming notifications are retained
+    (`tracked`) and handed to a shared `Services/NotificationState` singleton;
+    `Notifications/NotificationList.qml` renders them newest-first as a top-right
+    layer-shell stack of `NotificationPopup` cards (sharp-cornered, 2px
+    urgency-coloured border, per-urgency auto-expire, click-to-dismiss, action
+    pills). Native throughout; no custom bus.
+  - **DND is in-shell state.** `NotificationState.dnd` replaces mako's
+    `mode=do-not-disturb`; the bar's DndWidget binds/toggles it in-process (no
+    `makoctl`, no poll), and the keybind/CLI reach it through the `shell` IPC
+    (`toggleDnd` / `clearNotifications`). Under DND non-critical notifications
+    queue and reappear when it clears; criticals always show.
+  - **Mako cutover landed.** Enabling the shell stands mako down
+    (`modules/home/mako.nix`, mutually exclusive like waybar/swayosd), routes the
+    `modules/home/window-toggles.nix` DND/dismiss binds through the shell IPC, and
+    the shell package no longer bakes `makoctl` at all. Eval tests assert the
+    mako/shell mutual exclusion. No new Nix option (reuses `marchyo.shell.enable`).
+  - **Live-verify:** D-Bus name acquisition, real toast rendering/stacking,
+    action round-trips, `Quickshell.iconPath` resolution, and the markup subset
+    need a Wayland host with mako actually retired.
+- **Next: Phase 4** (lock + launcher), plus the outstanding Phase 2/3 live
+  verification on a real Hyprland host.

@@ -28,6 +28,19 @@ QtObject {
   readonly property int panelRadius: 8
   readonly property int panelRowHeight: 30
 
+  // Notification-toast geometry (replaces mako). Timeouts are milliseconds.
+  readonly property int notifWidth: 380
+  readonly property int notifPad: 12
+  readonly property int notifRadius: 0
+  readonly property int notifBorder: 2
+  readonly property int notifGap: 8
+  readonly property int notifMargin: 10
+  readonly property int notifIconSize: 40
+  readonly property int notifMaxVisible: 5
+  readonly property int notifTimeoutLow: 5000
+  readonly property int notifTimeoutNormal: 5000
+  readonly property int notifTimeoutCritical: 0
+
   // Baked feature flags (parity with waybar's conditional widgets). Dev default
   // shows the dictation widget; the build sets it from marchyo.dictation.
   readonly property bool dictationIndicator: true

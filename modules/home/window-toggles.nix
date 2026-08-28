@@ -11,6 +11,9 @@
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  # When the unified shell owns notifications, DND is in-shell state and mako is
+  # gone, so these binds reach the shell over IPC instead of the CLI/makoctl.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
   # Cursor zoom moved to `marchyo zoom in|out|reset` (commands/launch.ts).
   # Nightlight, idle-lock, notification-DND, and screen-recording toggles
@@ -33,13 +36,26 @@ in
     # webapps.nix (home-manager concatenates the lists; order is irrelevant
     # to Hyprland). Dismiss-all moved here from SUPER CTRL, comma in
     # hyprland.nix, which now belongs to the DND toggle (omarchy parity).
-    wayland.windowManager.hyprland.settings.bind = [
-      (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
-        hlua.exec "marchyo toggle notifications"
-      ))
-      (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
-        hlua.exec "makoctl dismiss --all"
-      ))
-    ];
+    # With the shell on, DND is in-shell state and mako is retired, so both
+    # binds reach the running shell over IPC; otherwise they drive the CLI/mako.
+    wayland.windowManager.hyprland.settings.bind =
+      if shellEnabled then
+        [
+          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
+            hlua.exec "marchyo-shell ipc -n call -- shell toggleDnd"
+          ))
+          (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
+            hlua.exec "marchyo-shell ipc -n call -- shell clearNotifications"
+          ))
+        ]
+      else
+        [
+          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
+            hlua.exec "marchyo toggle notifications"
+          ))
+          (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
+            hlua.exec "makoctl dismiss --all"
+          ))
+        ];
   };
 }
