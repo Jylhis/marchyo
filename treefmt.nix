@@ -1,3 +1,4 @@
+{ pkgs, ... }:
 {
   projectRootFile = "flake.nix";
 
@@ -27,5 +28,13 @@
       "devenv.lock"
       "site/bun.lock"
     ];
+    # QML formatting via qmlformat (from Qt's qtdeclarative). Edits in place
+    # (-i); treefmt passes the matched file list. Absolute command path so it
+    # needs no PATH entry and works both in the devenv shell and in CI.
+    qmlformat = {
+      command = "${pkgs.qt6.qtdeclarative}/bin/qmlformat";
+      options = [ "-i" ];
+      includes = [ "*.qml" ];
+    };
   };
 }
