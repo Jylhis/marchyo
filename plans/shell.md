@@ -225,7 +225,7 @@ stack until the shell reaches parity for that surface.
     `mode=do-not-disturb`; the bar's DndWidget binds/toggles it in-process (no
     `makoctl`, no poll), and the keybind/CLI reach it through the `shell` IPC
     (`toggleDnd` / `clearNotifications`). Under DND non-critical notifications
-    queue and reappear when it clears; criticals always show.
+    queue and reappear when it clears; critical always show.
   - **Mako cutover landed.** Enabling the shell stands mako down
     (`modules/home/mako.nix`, mutually exclusive like waybar/swayosd), routes the
     `modules/home/window-toggles.nix` DND/dismiss binds through the shell IPC, and
