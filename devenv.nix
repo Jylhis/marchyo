@@ -16,10 +16,27 @@ in
     pkgs.qt6.qtdeclarative
   ];
 
-  # qmlls resolves Quickshell.* / QtQuick imports from QML_IMPORT_PATH when
-  # invoked with `-E' (the editor does). Quickshell installs its QML modules
-  # under lib/qt-6/qml.
-  env.QML_IMPORT_PATH = "${pkgs.quickshell}/lib/qt-6/qml";
+  # qmlls/qmllint/qmlformat (all invoked with `-E' or from this env) resolve
+  # Quickshell.* and QtQuick* imports from QML_IMPORT_PATH. Quickshell installs
+  # its QML modules under lib/qt-6/qml; Qt's own modules (QtQuick, Layouts,
+  # Window, ...) come from qtdeclarative's qml dir.
+  env.QML_IMPORT_PATH = "${pkgs.quickshell}/lib/qt-6/qml:${pkgs.qt6.qtdeclarative}/lib/qt-6/qml";
+
+  # `import qs.*' is a Quickshell convention: the config root is the `qs'
+  # module namespace. Quickshell's own tooling support mirrors the scanned
+  # .qml files into a runtime vfs and drops a .qmlls.ini symlink into shell/,
+  # but that mirror contains no qmldir files, so qmlls still cannot resolve
+  # qs.* through it. Instead, point the import path at a `qs -> shell' alias
+  # directory: the checked-in per-directory qmldirs (module qs.Commons, qs.Bar,
+  # ...) then resolve the same way the running shell resolves them.
+  # enterShell runs as part of the shellHook, which `devenv shell', direnv, and
+  # Emacs (devenv-env-mode evaluates the hook) all execute, so CLI and eglot
+  # qmlls see identical import paths. `.devenv/' is gitignored.
+  enterShell = ''
+    mkdir -p "$DEVENV_ROOT/.devenv/qml-modules"
+    ln -sfn "$DEVENV_ROOT/shell" "$DEVENV_ROOT/.devenv/qml-modules/qs"
+    export QML_IMPORT_PATH="$DEVENV_ROOT/.devenv/qml-modules:$QML_IMPORT_PATH"
+  '';
 
   enterTest = ''
     just --version
