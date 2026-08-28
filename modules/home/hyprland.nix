@@ -59,6 +59,10 @@ let
   dictationStatusWindow =
     dictationEnabled && (((osConfig.marchyo or { }).dictation or { }).statusWindow or true);
 
+  # The unified shell adds keybind summons for its panels via `marchyo-shell ipc`
+  # (see the panel binds below); only wire them when the shell owns the desktop.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+
   # Lua-renderer helpers (bind/exec/env/onStart, see lib/hyprland-lua.nix).
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   inherit (hlua)
@@ -690,7 +694,6 @@ in
           # and let the shell draw the overlay. `locked` keeps them working over
           # the lock screen and `repeating` allows press-and-hold.
           let
-            shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
             osdEnabled = (((osConfig.marchyo or { }).osd or { }).enable or true) && !shellEnabled;
             elOpts = {
               locked = true;
@@ -736,6 +739,24 @@ in
         ++ lib.optionals dictationStatusWindow [
           (bindd "SUPER + SHIFT + H" "Dictation status" (
             execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''
+          ))
+        ]
+        # Unified-shell panel summons. `marchyo-shell ipc` reaches the running
+        # shell process (the wrapper bakes its own -p, so it self-targets); the
+        # panels are the same ones the bar widgets toggle in-process. Only wired
+        # when the shell is on — the IPC target does not exist otherwise.
+        ++ lib.optionals shellEnabled [
+          (bindd "SUPER + SHIFT + V" "Audio panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel audio"
+          ))
+          (bindd "SUPER + SHIFT + N" "Network panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel network"
+          ))
+          (bindd "SUPER + SHIFT + B" "Power panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel power"
+          ))
+          (bindd "SUPER + SHIFT + M" "Monitor panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel monitor"
           ))
         ];
 

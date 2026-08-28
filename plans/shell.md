@@ -186,13 +186,22 @@ stack until the shell reaches parity for that surface.
     keybind summons).
   - **Panels landed.** `Services/PanelManager.qml` (a singleton holding the one
     open panel id, mutual exclusion), `Ui/Panel.qml` (layer-shell overlay card +
-    outside-click dismiss) and `Ui/PanelButton.qml`, plus three panels in
+    outside-click dismiss) and `Ui/PanelButton.qml`, plus four panels in
     `Panels/`: **audio** (Pipewire volume/mute + output-device picker), **network**
     (Networking + nmcli status), **power** (UPower battery + PowerProfiles
-    selector). Each is opened by clicking its bar widget
-    (`PanelManager.toggle(id)`) and keeps a button to the matching TUI/menu
-    (wiremix / nmtui / power menu) as an escape hatch. No new Nix option — pure
-    in-process QML; panels render on the default screen (per-output deferred).
-  - **Next in Phase 2:** OSD live-verify on a real host, then optionally a
-    monitor panel and keybind summons (a single `IpcHandler`); otherwise Phase 3
+    selector), and **monitor** (CPU/mem/disk/temp meters from a shared
+    `Services/SystemStats` singleton + `df` + hwmon). Each is opened by clicking
+    its bar widget (`PanelManager.toggle(id)`) and keeps a button to the matching
+    TUI/menu (wiremix / nmtui / power menu / btop) as an escape hatch. No new Nix
+    option — pure in-process QML; panels render on the default screen (per-output
+    deferred).
+  - **Keybind summons landed.** A single stock `IpcHandler { target: "shell" }`
+    in `shell.qml` (`togglePanel`/`openPanel`/`closePanels`/`osdShow`); Hyprland
+    binds (`modules/home/hyprland.nix`, gated on `shellEnabled`) call
+    `marchyo-shell ipc -n call -- shell togglePanel <id>`. The `marchyo-shell`
+    wrapper bakes its own `-p`, so the call self-targets the running instance —
+    no instance discovery. This is the shell's only IPC; no custom bus.
+  - **Next in Phase 2:** OSD live-verify on a real host (brightness sysfs poke
+    fallback, panel service bindings). Phase 2 is otherwise **feature-complete**;
+    the remaining item is live verification, so work continues into Phase 3
     (notifications).
