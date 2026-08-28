@@ -131,14 +131,18 @@ stack until the shell reaches parity for that surface.
 
 ## Open questions
 
-- Config surface: mirror omarchy's single `shell.json`, or express layout
-  declaratively through `marchyo.shell.*` Nix options and *generate* `shell.json`?
-  (Marchyo's declarative ethos argues for the latter; runtime tweaks argue for a
-  writable file. Likely: generate defaults, allow a runtime overlay.)
-- Third-party plugin story: omarchy clones git repos into `~/.config`. That is
-  imperative and unsandboxed — probably out of scope for marchyo, or replaced by a
-  Nix-declared plugin list.
-- Do we keep Vicinae permanently (Phase 4) rather than reimplement a launcher?
+- **(Open)** Config surface: mirror omarchy's single `shell.json`, or express
+  layout declaratively through `marchyo.shell.*` Nix options and *generate*
+  `shell.json`? The shell currently bakes everything at build time (no runtime
+  config file); revisit if runtime tweaks are needed. (Marchyo's declarative ethos
+  argues for generated defaults with an optional runtime overlay.)
+- **(Resolved)** Third-party plugin story: **rejected.** See the Phase 2
+  "Architecture decision" — marchyo does not port omarchy's
+  `PluginRegistry`/manifest/`shell.json` machinery; surfaces are plain in-process
+  QML. No git-clone-into-`~/.config` plugins; a Nix-declared list can be added
+  later if ever needed.
+- **(Resolved)** Keep Vicinae as the launcher: **yes.** See the Phase 4 status;
+  the shell integrates with Vicinae rather than reimplementing a launcher.
 
 ## Status
 
@@ -230,5 +234,22 @@ stack until the shell reaches parity for that surface.
   - **Live-verify:** D-Bus name acquisition, real toast rendering/stacking,
     action round-trips, `Quickshell.iconPath` resolution, and the markup subset
     need a Wayland host with mako actually retired.
-- **Next: Phase 4** (lock + launcher), plus the outstanding Phase 2/3 live
-  verification on a real Hyprland host.
+- **Phase 4 (lock + launcher) — scoped, not started.**
+  - **Launcher: keep Vicinae (decision).** This resolves the third Open Question.
+    Vicinae is a strong standalone launcher (emoji/clipboard/apps) already themed
+    and wired (`modules/home/vicinae.nix`); reimplementing it in-shell is a large
+    effort for no user-visible gain. The shell integrates with it rather than
+    replacing it (the battery/power widgets already fall back to `vicinae toggle`
+    when menus are off). Revisit only if a launcher needs shell-shared state.
+  - **Lock surface: the one remaining implementation, intentionally deferred.**
+    Quickshell provides `WlSessionLock`, but a lock screen must be verified live
+    before shipping: a lock surface that fails to render or accept input locks the
+    user out of the session. It also needs a real Hyprland/greetd + PAM loop that
+    cannot be exercised offscreen. So it is left for a session with host access,
+    where it can replace `hyprlock`/`screensaver` behind the same mutual-exclusion
+    cutover pattern used for waybar/swayosd/mako.
+- **Outstanding (host-only):** live verification of the OSD (brightness sysfs
+  poke), the panels' service bindings, the IPC keybind round-trips, and the
+  notification surface (bus acquisition, rendering, actions, icons) on a real
+  Hyprland host. Everything buildable/offscreen-testable in Phases 0–3 plus the
+  bar's full waybar parity is complete and committed.
