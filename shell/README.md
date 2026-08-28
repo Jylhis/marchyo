@@ -225,11 +225,29 @@ Run the tree directly for a fast QML iteration loop (no rebuild):
 quickshell -p shell          # from the repo root
 # or, the wrapped, theme-baked package:
 nix run .#marchyo-shell
+# or, via the dev recipe (also stops the store-backed user service first):
+just -f shell/Justfile dev
 ```
 
 The checked-in `Commons/Color.qml` / `Commons/Style.qml` are the Field (dark),
 `fontScale 1.0` defaults so the dev loop works standalone; the Nix build
 overwrites both for the host's `marchyo.theme.variant` and `fontScale`.
+
+### Runtime environment
+
+The `marchyo-shell` wrapper bakes two env vars so the shell never depends on
+session-env quirks (the dev recipe exports the same pair):
+
+- `TZDIR=/etc/zoneinfo` — Qt's tz database search only probes
+  `/usr/share/zoneinfo`, which doesn't exist on NixOS, so without this Qt
+  can't map `/etc/localtime` to an IANA name and warns
+  *"Unable to determine system time zone"* on D-Bus `QDateTime` conversions.
+  `/etc/zoneinfo` follows the live symlink, so auto-timezone changes apply.
+  Harmless (plain fallback to the old behaviour) on hosts without it.
+- `QT_QPA_PLATFORMTHEME=gtk3` — the session value is typically `qt5ct` (HM's
+  qt module via stylix), which has no Qt6 plugin; the shell then resolves
+  themed icons against `hicolor` and tray/notification icons fail to load.
+  The `gtk3` platform theme reads marchyo's own GTK settings (`Adwaita`).
 
 To type-check the QML without a Wayland compositor, point Quickshell at a small
 harness that instantiates the widgets outside a `PanelWindow` and run it under

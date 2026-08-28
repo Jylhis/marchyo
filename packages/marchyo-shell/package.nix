@@ -170,8 +170,28 @@ stdenvNoCC.mkDerivation {
     install -Dm0644 ${styleQml} "$out/share/marchyo/shell/Commons/Style.qml"
     install -Dm0644 ${configQml} "$out/share/marchyo/shell/Commons/Config.qml"
 
+    # The wrapper owns the shell's runtime environment so neither of the two
+    # recurring Qt warnings depends on session env (same philosophy as the
+    # baked tool paths in Config.qml):
+    #
+    #   - TZDIR points Qt's tz database at NixOS's /etc/zoneinfo (the store
+    #     tzdata paths are not in Qt's hardcoded /usr/share/zoneinfo search
+    #     list, so without this Qt cannot map /etc/localtime to an IANA name
+    #     and warns "Unable to determine system time zone" on every D-Bus
+    #     QDateTime conversion). --set-default so a custom TZDIR wins, and
+    #     /etc/zoneinfo follows the live symlink, so marchyo.autoTimezone
+    #     (automatic-timezoned) zone changes still apply.
+    #
+    #   - QT_QPA_PLATFORMTHEME=gtk3 makes the Qt6 shell read marchyo's GTK
+    #     settings (modules/home/gtk.nix: icon theme "Adwaita"). The session
+    #     value is typically "qt5ct" (HM qt module via stylix), which has no
+    #     Qt6 platform-theme plugin — without the override, tray and
+    #     notification themed icons resolve against hicolor and fail
+    #     ("Could not load icon ... from request").
     makeWrapper ${lib.getExe quickshell} "$out/bin/marchyo-shell" \
-      --add-flags "-p $out/share/marchyo/shell"
+      --add-flags "-p $out/share/marchyo/shell" \
+      --set-default TZDIR /etc/zoneinfo \
+      --set QT_QPA_PLATFORMTHEME gtk3
 
     runHook postInstall
   '';
