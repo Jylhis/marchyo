@@ -23,11 +23,24 @@ QtObject {
     property var popups: []
     property var queued: []
 
+    // Cap on notifications held while DND is on: a long do-not-disturb stretch
+    // must not accumulate an unbounded pile of tracked notifications (memory,
+    // plus a toast flood the moment DND clears). Oldest beyond the cap are
+    // dismissed outright — mako's behaviour is to simply not show them.
+    readonly property int maxQueued: 20
+
     // Add a notification to the visible stack, or hold it under DND. Enforces the
     // visible cap by dismissing the oldest non-critical toasts beyond the limit.
     function show(n) {
         if (root.dnd && n.urgency !== NotificationUrgency.Critical) {
-            root.queued = [n].concat(root.queued);
+            let q = [n].concat(root.queued);
+            // `queued` is newest-first; the oldest sit at the end. Dismiss the
+            // overflow so it disappears at the sender too (never re-shown).
+            while (q.length > root.maxQueued) {
+                const drop = q.pop();
+                drop.dismiss();
+            }
+            root.queued = q;
             return;
         }
         let list = [n].concat(root.popups);

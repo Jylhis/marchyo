@@ -17,6 +17,7 @@ BarItem {
     interactive: true
     text: "voice"
     textColor: state === "recording" ? Color.statusErr : (state === "transcribing" ? Color.accent : Color.textMuted)
+    tooltipText: "Dictation: " + state
 
     // Long-running --follow stream: one JSON object per state change.
     Process {

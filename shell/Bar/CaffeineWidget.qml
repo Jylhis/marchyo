@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Caffeine (keep-awake) indicator. Mirrors waybar's custom/caffeine: "on" when the
 // tagged `marchyo-caffeine-inhibit` systemd-inhibit process is present. Click
@@ -15,16 +16,19 @@ BarItem {
     interactive: true
     text: active ? "calf on" : "calf"
     textColor: active ? Color.accent : Color.textMuted
+    tooltipText: active ? "Caffeine on — screen stays awake" : "Caffeine off"
 
-    // Exit code 0 = a matching process exists, so caffeine is on.
+    // One-shot probe: running defaults to false and only the timer arms it.
     Process {
         id: probe
         command: [Config.pgrep, "-f", "marchyo-caffeine-inhibit"]
         onExited: code => root.active = (code === 0)
     }
 
+    // One-shot toggle: armed on click, re-probes when it exits.
     Process {
         id: toggle
+        running: false
         command: [Config.marchyo, "toggle", "caffeine"]
         onExited: probe.running = true
     }

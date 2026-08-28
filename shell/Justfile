@@ -17,3 +17,27 @@ dev:
 # Hand the bar back to the store-backed user service after a dev session
 resume:
     systemctl --user start marchyo-shell
+
+# Type-check the QML tree offscreen: run the harness (harness.qml) under
+# QT_QPA_PLATFORM=offscreen and fail on any QML warning/error pointing at a
+# file in this tree. Service-level noise from Quickshell itself (missing
+# Hyprland socket, absent external tools offscreen) is tolerated — the harness
+# exits itself after the settle period; the timeout is a safety net.
+check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    log="$(mktemp)"
+    trap 'rm -f "$log"' EXIT
+    if ! TZDIR=/etc/zoneinfo QT_QPA_PLATFORM=offscreen timeout 30 quickshell -p ./harness.qml 2>&1 | tee "$log"; then
+        echo "check: quickshell harness failed or timed out" >&2
+        exit 1
+    fi
+    if ! grep -q "Configuration Loaded" "$log"; then
+        echo "check: harness never reached 'Configuration Loaded'" >&2
+        exit 1
+    fi
+    if grep -E "(WARN|ERROR).*(qml\[|/shell/)" "$log" | grep -v "offscreen"; then
+        echo "check: QML warnings/errors from the shell tree" >&2
+        exit 1
+    fi
+    echo "check: shell tree parsed and bound cleanly"

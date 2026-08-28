@@ -4,21 +4,22 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Summoned from BatteryWidget. Battery status from UPower's composite display
-// device and a power-profile selector on PowerProfiles — the same services the
-// battery and power-profile bar widgets read. "power menu" reaches marchyo's
-// session actions (or the launcher when menus are disabled), the action the
-// battery widget used to trigger directly.
+// device (shared with the bar widget via Services/Power) and a power-profile
+// selector on PowerProfiles — the same services the battery and power-profile
+// bar widgets read. "power menu" reaches marchyo's session actions (or the
+// launcher when menus are disabled), the action the battery widget used to
+// trigger directly.
 Panel {
     id: root
     panelId: "power"
     title: "Power"
 
-    readonly property var dev: UPower.displayDevice
-    readonly property bool hasBattery: dev && dev.isLaptopBattery && dev.isPresent
-    readonly property int pct: dev ? Math.round(dev.percentage) : 0
-    readonly property bool charging: dev && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
+    readonly property var dev: Power.dev
+    readonly property bool hasBattery: Power.hasBattery
+    readonly property int pct: Power.pct
 
     function fmtTime(seconds) {
         if (!seconds || seconds <= 0)
@@ -32,15 +33,19 @@ Panel {
         if (!hasBattery)
             return "No battery";
         let s = pct + "%";
-        if (dev.state === UPowerDeviceState.FullyCharged) {
+        if (Power.full) {
             s += " (full)";
-        } else if (charging) {
-            const t = fmtTime(dev.timeToFull);
+        } else if (Power.charging) {
+            const t = fmtTime(Power.pctFull);
             s += t.length > 0 ? (" charging, " + t + " to full") : " charging";
         } else {
-            const t = fmtTime(dev.timeToEmpty);
+            const t = fmtTime(Power.pctLeft);
             s += t.length > 0 ? (" (" + t + " left)") : " on battery";
         }
+        // Append the live power draw when the battery reports one.
+        const r = Math.abs(Power.rate);
+        if (r > 0.05)
+            s += "  ·  " + r.toFixed(1) + "W" + (Power.charging ? "↑" : "↓");
         return s;
     }
 

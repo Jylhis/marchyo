@@ -1,5 +1,6 @@
 import Quickshell.Services.UPower
 import qs.Ui
+import qs.Commons
 
 // Power profile indicator. Left-click cycles saver → balanced → performance,
 // mirroring waybar's power-profiles-daemon widget (native cycle on click).
@@ -13,6 +14,16 @@ BarItem {
             return "perf";
         default:
             return "bal";
+        }
+    }
+    tooltipText: {
+        switch (PowerProfiles.profile) {
+        case PowerProfile.PowerSaver:
+            return "Power profile: power-saver";
+        case PowerProfile.Performance:
+            return "Power profile: performance";
+        default:
+            return "Power profile: balanced";
         }
     }
     onClicked: () => {
