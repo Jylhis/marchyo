@@ -141,7 +141,7 @@ Flip a desktop toggle live (gaps, nightlight, waybar, …)
 Arguments:
   name        gaps | transparency | nightlight | waybar | touchpad |
               touchscreen | idle | screensaver | notifications | suspend |
-              hybrid-gpu
+              caffeine | hybrid-gpu
   state       on | off (omit to flip)
 
 Options:

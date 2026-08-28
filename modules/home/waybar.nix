@@ -59,6 +59,22 @@ let
     '';
   };
 
+  # Caffeine (keep-awake) state for the custom/caffeine module: same one-shot
+  # pattern as dndStatus, re-run on SIGRTMIN+8 — sent by `marchyo toggle
+  # caffeine` (packages/marchyo-cli) right after it flips the inhibitor. On =
+  # the tagged systemd-inhibit process is present.
+  caffeineStatus = pkgs.writeShellApplication {
+    name = "marchyo-caffeine-status";
+    runtimeInputs = [ pkgs.procps ];
+    text = ''
+      if pgrep -f marchyo-caffeine-inhibit >/dev/null; then
+        printf '{"text":"󰅶","class":"caffeine","tooltip":"Caffeine — staying awake"}\n'
+      else
+        printf '{"text":"󰾪","class":"idle","tooltip":"Caffeine off"}\n'
+      fi
+    '';
+  };
+
   upstreamFile = if isDark then "style.css" else "style-sheet.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
@@ -119,6 +135,7 @@ let
 
     /* │ separators between right-hand status segments */
     #custom-voxtype,
+    #custom-caffeine,
     #custom-dnd,
     #language,
     #bluetooth,
@@ -149,6 +166,15 @@ let
     }
     #custom-dnd.dnd {
       color: ${palette.hex."status-err"};
+    }
+
+    /* caffeine indicator: muted mug when off, accent when keeping awake */
+    #custom-caffeine {
+      padding: 0 10px;
+      color: ${palette.hex."text-muted"};
+    }
+    #custom-caffeine.caffeine {
+      color: ${palette.hex.accent};
     }
   '';
 
@@ -181,6 +207,7 @@ in
             ]
             ++ lib.optional voxtypeIndicator "custom/voxtype"
             ++ [
+              "custom/caffeine"
               "custom/dnd"
               "hyprland/language"
               "bluetooth"
@@ -308,6 +335,17 @@ in
               interval = "once";
               signal = 9;
               on-click = "marchyo toggle notifications";
+            };
+            # Caffeine (keep-awake) indicator. Same interval = "once" + signal
+            # pattern as custom/dnd; signal = 8 pairs with the SIGRTMIN+8 that
+            # `marchyo toggle caffeine` sends, so state changes show without
+            # polling. Left click flips it.
+            "custom/caffeine" = {
+              exec = lib.getExe caffeineStatus;
+              return-type = "json";
+              interval = "once";
+              signal = 8;
+              on-click = "marchyo toggle caffeine";
             };
             # No on-click: the module cycles power profiles natively on left
             # click (reverse on right click) and ignores on-click config —

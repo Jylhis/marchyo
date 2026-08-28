@@ -647,6 +647,7 @@ in
           ))
           (bindd "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight"))
           (bindd "SUPER + CTRL + I" "Toggle idle lock" (exec "marchyo toggle idle"))
+          (bindd "SUPER + CTRL + K" "Toggle caffeine (keep awake)" (exec "marchyo toggle caffeine"))
           (bindd "SUPER + ALT + Print" "Toggle screen recording" (exec "marchyo capture record"))
 
           # Plain binds (no cheat-sheet description)
