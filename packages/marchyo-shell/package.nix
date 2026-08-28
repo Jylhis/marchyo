@@ -17,6 +17,7 @@
   bluetui,
   mako,
   procps,
+  coreutils,
   vicinae,
   marchyo-cli,
   # "dark" = Jylhis Field, "light" = Jylhis Sheet — matches marchyo.theme.variant.
@@ -92,6 +93,13 @@ let
       readonly property int paddingH: ${toString (fs.round 10)}
       readonly property string fontFamily: "monospace"
 
+      // On-screen-display geometry (volume/brightness overlay).
+      readonly property int osdPad: ${toString (fs.round 14)}
+      readonly property int osdRadius: ${toString (fs.round 8)}
+      readonly property int osdMargin: ${toString (fs.round 80)}
+      readonly property int osdBarWidth: ${toString (fs.round 140)}
+      readonly property int osdBarHeight: ${toString (fs.round 6)}
+
       // Baked feature flags (parity with waybar's conditional widgets).
       readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
       readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
@@ -118,6 +126,7 @@ let
       readonly property string bluetui: "${lib.getExe bluetui}"
       readonly property string makoctl: "${lib.getExe' mako "makoctl"}"
       readonly property string pgrep: "${lib.getExe' procps "pgrep"}"
+      readonly property string ls: "${lib.getExe' coreutils "ls"}"
       readonly property string vicinae: "${lib.getExe vicinae}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
     }

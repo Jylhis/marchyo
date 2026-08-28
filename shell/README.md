@@ -5,16 +5,20 @@ long-running QML process that will eventually replace today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
 notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-## Status — Phase 1 (bar)
+## Status — Phase 1 (bar) done, Phase 2 (OSD) in progress
 
 A Jylhis-themed top bar at (near) waybar parity, built as a **simple monolith**:
 `shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitive
-and the `Commons/` design-token singletons). No plugin registry or IPC yet — that
-architecture lands with the summonable panels of Phase 2.
+and the `Commons/` design-token singletons). Phase 2 adds surfaces **alongside**
+the bar as plain in-process components — starting with the **OSD** (`Osd/`).
+There is deliberately **no plugin registry or manifest system**: marchyo rejected
+the third-party-plugin story (see `plans/shell.md`), so native Quickshell service
+bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar** (the two bars are mutually exclusive — see `modules/home/waybar.nix`);
-mako/swayosd stay until the shell reaches their parity in Phases 2–3.
+waybar** and, now, **SwayOSD** (each mutually exclusive with its discrete
+counterpart — see `modules/home/waybar.nix` and `modules/home/swayosd.nix`);
+mako stays until the shell reaches its parity in Phase 3.
 
 Layout:
 
@@ -35,6 +39,9 @@ shell/
   Bar/
     qmldir             declares module qs.Bar
     <Widget>.qml       one component per bar segment
+  Osd/
+    qmldir             declares module qs.Osd
+    Osd.qml            volume/brightness/mic-mute overlay (replaces SwayOSD)
 ```
 
 ### Widgets
@@ -70,6 +77,30 @@ float rule applies — the same classes and commands as `modules/home/waybar.nix
 tool packages arrive as `callPackage` args; `lib.getExe` resolves them. The
 checked-in `Config.qml` holds bare `PATH` names so `quickshell -p shell` still runs
 standalone; the build overwrites it.
+
+### OSD (on-screen display)
+
+`Osd/Osd.qml` is a single bottom-centred, click-through overlay that flashes the
+current level whenever it changes, replacing SwayOSD. Its triggers are **native
+and pull-based** — nothing pokes it:
+
+- **volume / mic mute** — `Quickshell.Services.Pipewire` bindings on the default
+  sink/source; a `Connections` on their `audio` object shows the overlay on any
+  volume or mute change (guarded so the startup binding storm doesn't flash it).
+- **brightness** — the first `/sys/class/backlight/<dev>` node (discovered once
+  via the baked `Config.ls`) is watched with a `FileView` (`watchChanges`); a
+  change redraws the overlay with `brightness / max_brightness`.
+
+The Hyprland media keys therefore keep doing the *actual* change (silent
+`wpctl` / `brightnessctl`, see `modules/home/hyprland.nix`) and the shell draws
+the overlay reactively — no `swayosd-client`, no IPC. Enabling the shell stands
+SwayOSD down (`modules/home/swayosd.nix`); the backlight udev write-access from
+`modules/nixos/osd.nix` still applies, so `brightnessctl` keeps working.
+
+> Live-verify note: sysfs `inotify` delivery for the backlight node must be
+> confirmed on a real host. If a brightness key doesn't flash the overlay, the
+> fallback is a one-line IPC poke from the bind (`qs ipc call`) — see
+> `plans/shell.md`.
 
 ### Deferred (cosmetic parity, optional)
 

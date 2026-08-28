@@ -14,6 +14,13 @@ QtObject {
   readonly property int paddingH: 10
   readonly property string fontFamily: "monospace"
 
+  // On-screen-display geometry (volume/brightness overlay).
+  readonly property int osdPad: 14
+  readonly property int osdRadius: 8
+  readonly property int osdMargin: 80
+  readonly property int osdBarWidth: 140
+  readonly property int osdBarHeight: 6
+
   // Baked feature flags (parity with waybar's conditional widgets). Dev default
   // shows the dictation widget; the build sets it from marchyo.dictation.
   readonly property bool dictationIndicator: true

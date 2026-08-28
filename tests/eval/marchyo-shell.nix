@@ -81,4 +81,29 @@ in
       else
         throw "FAIL: marchyo.shell is off but waybar is not enabled under a plain desktop"
     );
+
+  # OSD cutover: the shell provides its own OSD, so with the shell on the SwayOSD
+  # server must stand down — the two OSDs never both run.
+  eval-marchyo-shell-disables-swayosd =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-swayosd" (
+      if !(hm.systemd.user.services ? swayosd) then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell.enable = true but the swayosd server is still defined (both OSDs would run)"
+    );
+
+  # Plain desktop (shell off): SwayOSD is the OSD, so its server must be present.
+  eval-marchyo-shell-off-keeps-swayosd =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-swayosd" (
+      if (hm.systemd.user.services ? swayosd) then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but the swayosd server is missing under a plain desktop"
+    );
 }
