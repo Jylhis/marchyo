@@ -207,10 +207,16 @@ stack until the shell reaches parity for that surface.
     `marchyo-shell ipc -n call -- shell togglePanel <id>`. The `marchyo-shell`
     wrapper bakes its own `-p`, so the call self-targets the running instance —
     no instance discovery. This is the shell's only IPC; no custom bus.
-  - **Next in Phase 2:** OSD live-verify on a real host (brightness sysfs poke
-    fallback, panel service bindings). Phase 2 is otherwise **feature-complete**;
-    the remaining item is live verification, so work continues into Phase 3
-    (notifications).
+  - **Next in Phase 2:** OSD live-verify on a real host (panel service
+    bindings). Phase 2 is otherwise **feature-complete**; the remaining item is
+    live verification, so work continues into Phase 3 (notifications).
+  - **Brightness OSD: the IPC poke is now the primary path.** Sysfs attribute
+    writes signal `POLLPRI`, which `FileView`'s inotify-based `watchChanges`
+    does not see on most hosts, so the Hyprland brightness binds
+    (`modules/home/hyprland.nix`) run `brightnessctl` and then
+    `marchyo-shell ipc -n call -- shell osdShow BRT <pct> true`; the native
+    sysfs watcher stays as a best-effort fallback. This resolves the earlier
+    live-verify open item by design rather than by host confirmation.
 - **Phase 3 (notifications) — done.**
   - **Notification server + toasts landed.** `Notifications/NotificationDaemon.qml`
     instantiates a Quickshell `NotificationServer` that owns
@@ -248,8 +254,40 @@ stack until the shell reaches parity for that surface.
     cannot be exercised offscreen. So it is left for a session with host access,
     where it can replace `hyprlock`/`screensaver` behind the same mutual-exclusion
     cutover pattern used for waybar/swayosd/mako.
-- **Outstanding (host-only):** live verification of the OSD (brightness sysfs
-  poke), the panels' service bindings, the IPC keybind round-trips, and the
-  notification surface (bus acquisition, rendering, actions, icons) on a real
-  Hyprland host. Everything buildable/offscreen-testable in Phases 0–3 plus the
-  bar's full waybar parity is complete and committed.
+- **Hardening pass (post-Phase 3) — done.** A review-driven batch over the whole
+  `shell/` tree:
+    - **Tooltips**: `BarItem.tooltipText` + the shared `Services/Tooltip`
+      singleton + one `Ui/TooltipWindow` layer surface below the bar, centered
+      under the hovered item on its screen. Waybar-parity content: network
+      IP/interface/SSID (`nmcli` address probe), battery power draw
+      (`changeRate`), bluetooth connected devices, power profile, keyboard
+      layout (long form), dictation state, audio sink, tray item title/desc.
+    - **SNI tray menus**: right-click opens the item's DBus menu via the stock
+      `QsMenuAnchor` (menu-only items open it on left-click); falls back to
+      `secondaryActivate()`.
+    - **Per-monitor workspaces + persistent 1–5** (`WorkspacesWidget.screenName`,
+      mirroring waybar's per-output workspaces and `persistent-workspaces`).
+    - **Battery text forms**: `pwr` (plugged, not charging) and `bat full`, on
+      top of the existing `bat`/`chg` (via the shared `Services/Power`).
+    - **Shared service singletons**: `Services/Audio` (default sink/source + one
+      `PwObjectTracker` for bar/panel/OSD), `Services/Power` (UPower display
+      device + formatting), `Services/NetworkStatus` (one nmcli poll for
+      SSID/signal/IP shared by widget, panel, and tooltip).
+    - **Keyboard layout without polling**: startup `hyprctl devices` probe +
+      `Hyprland` `activelayout` raw events.
+    - **OSD**: volume clamps at 150% (matching the bar/panel ceiling), mic-unmute
+      shows the mic's live level.
+    - **Notifications**: DND queue capped at 20 (oldest overflow dismissed),
+      toast add/remove/displaced transitions (mako's toast feel).
+    - **Tooling**: committed offscreen type-check harness (`shell/harness.qml`)
+      and a `just -f shell/Justfile check` recipe; restored the portable
+      `.qmlls.ini` that a qmlls run had clobbered with machine-specific paths.
+    - *Verified non-bugs along the way:* `Quickshell.Io.Process.running` defaults
+      to **false** (empirically confirmed offscreen), so the one-shot
+      probe/toggle Processes never fired at startup.
+- **Outstanding (host-only):** live verification of the panels' service
+  bindings, the IPC keybind round-trips (incl. the brightness poke), the tray
+  menu popup on a layer surface, the tooltip positioning, and the notification
+  surface (bus acquisition, rendering, actions, icons) on a real Hyprland host.
+  Everything buildable/offscreen-testable in Phases 0–3, the bar's full waybar
+  parity, and the hardening pass above are complete.

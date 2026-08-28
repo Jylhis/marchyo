@@ -18,6 +18,14 @@ summonable **panels** (`Panels/`, toggled from their bar widgets through the
 third-party-plugin story (see `plans/shell.md`), so native Quickshell service
 bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
 
+A hardening pass added **tooltips** (one shared hover surface under the bar),
+**SNI tray menus** on right-click, **per-monitor workspaces** with waybar's
+persistent 1–5, the remaining **battery text forms** (`pwr` / `bat full`),
+shared `Services/` singletons for audio/power/network (one binding each for
+bar, panel, and OSD), an **event-driven keyboard-layout widget** (no poll),
+toast transitions, a DND queue cap, and a committed offscreen **type-check
+harness** (`just -f shell/Justfile check`).
+
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
 waybar**, **SwayOSD**, and **mako** (each mutually exclusive with its discrete
 counterpart — see `modules/home/waybar.nix`, `modules/home/swayosd.nix`, and
@@ -29,6 +37,7 @@ Layout:
 ```
 shell/
   shell.qml            ShellRoot -> PanelWindow bar (left / centre / right)
+  harness.qml          offscreen type-check harness (just check)
   Commons/
     qmldir             declares module qs.Commons
     Color.qml          design-token colours (palette + status); the Nix build
@@ -39,9 +48,10 @@ shell/
                        with absolute /nix/store paths (dev default = PATH names)
   Ui/
     qmldir             declares module qs.Ui
-    BarItem.qml        bar-segment primitive (padded label, hover, signals)
+    BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
     Panel.qml          summonable-panel base (layer-shell card + dismiss)
     PanelButton.qml    labelled pill control for panel bodies
+    TooltipWindow.qml  the one tooltip surface (hover text below the bar)
   Bar/
     qmldir             declares module qs.Bar
     <Widget>.qml       one component per bar segment
@@ -53,6 +63,10 @@ shell/
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
     SystemStats.qml    singleton: shared CPU/memory sampler (bar + monitor panel)
     NotificationState.qml  singleton: DND flag + live toast list (shared state)
+    Audio.qml          singleton: shared Pipewire default sink/source + tracker
+    Power.qml          singleton: shared UPower battery state + waybar-parity text
+    NetworkStatus.qml  singleton: active device + nmcli SSID/signal/IP poll
+    Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
@@ -76,19 +90,25 @@ below), so nothing depends on the session `PATH`.
 | Widget | Backing service / tool |
 | --- | --- |
 | SessionWidget | static "marchyo" label |
-| WorkspacesWidget | `Quickshell.Hyprland` |
+| WorkspacesWidget | `Quickshell.Hyprland` (per-monitor; persistent 1–5, waybar parity) |
 | ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
-| TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide) |
+| TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
 | DictationWidget | `voxtype status --follow` (click = toggle); baked on/off via `Style.dictationIndicator` |
 | CaffeineWidget | `pgrep` probe + `marchyo toggle caffeine` |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
-| KeyboardLayoutWidget | `hyprctl devices` (click = cycle layout) |
+| KeyboardLayoutWidget | `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
-| NetworkWidget | `Quickshell.Networking` + `nmcli` for SSID/signal (click = network panel) |
-| AudioWidget | `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
+| NetworkWidget | `Quickshell.Networking` + `Services/NetworkStatus` nmcli poll (click = network panel) |
+| AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
-| BatteryWidget | `Quickshell.Services.UPower` (click = power panel) |
+| BatteryWidget | `Services/Power` → `Quickshell.Services.UPower` (click = power panel) |
+
+Most widgets also carry a hover **tooltip** (waybar parity: network shows
+IP/interface, battery the power draw `4.2W↓ 87%`, bluetooth the connected
+devices, power-profile the profile name, …). `BarItem.tooltipText` feeds the
+shared `Services/Tooltip` singleton; the one `Ui/TooltipWindow` layer surface
+renders it below the bar, centered under the hovered item on its screen.
 
 TUI launches use `ghostty --class=org.omarchy.* -e <tool>` so Hyprland's existing
 float rule applies — the same classes and commands as `modules/home/waybar.nix`.
@@ -104,26 +124,30 @@ standalone; the build overwrites it.
 ### OSD (on-screen display)
 
 `Osd/Osd.qml` is a single bottom-centred, click-through overlay that flashes the
-current level whenever it changes, replacing SwayOSD. Its triggers are **native
-and pull-based** — nothing pokes it:
+current level whenever it changes, replacing SwayOSD. Its triggers are mostly
+**native and pull-based**:
 
 - **volume / mic mute** — `Quickshell.Services.Pipewire` bindings on the default
-  sink/source; a `Connections` on their `audio` object shows the overlay on any
-  volume or mute change (guarded so the startup binding storm doesn't flash it).
-- **brightness** — the first `/sys/class/backlight/<dev>` node (discovered once
-  via the baked `Config.ls`) is watched with a `FileView` (`watchChanges`); a
-  change redraws the overlay with `brightness / max_brightness`.
+  sink/source (shared with the bar and the audio panel through
+  `Services/Audio`); a `Connections` on their `audio` objects shows the overlay
+  on any volume or mute change (guarded so the startup binding storm doesn't
+  flash it). Unmuting the mic shows its live level as a bar; volume reads up to
+  150% like the bar's scroll ceiling (the filled bar caps at 100% of its
+  track, the label tells the truth).
+- **brightness** — the primary path is the **keybind IPC poke**: the Hyprland
+  brightness binds (see `modules/home/hyprland.nix`) run `brightnessctl` and
+  then `marchyo-shell ipc -n call -- shell osdShow BRT <pct> true` with the
+  resulting level. This is deliberate: sysfs attribute writes signal
+  `POLLPRI`, which `FileView`'s watcher (inotify) does not see on most hosts.
+  A native `FileView` (`watchChanges`) on the first `/sys/class/backlight`
+  node remains as a best-effort fallback for brightness changes made outside
+  the keybinds (other tools, external monitors' DDC).
 
 The Hyprland media keys therefore keep doing the *actual* change (silent
-`wpctl` / `brightnessctl`, see `modules/home/hyprland.nix`) and the shell draws
-the overlay reactively — no `swayosd-client`, no IPC. Enabling the shell stands
-SwayOSD down (`modules/home/swayosd.nix`); the backlight udev write-access from
+`wpctl` / `brightnessctl` + the poke for brightness; see
+`modules/home/hyprland.nix`). Enabling the shell stands SwayOSD down
+(`modules/home/swayosd.nix`); the backlight udev write-access from
 `modules/nixos/osd.nix` still applies, so `brightnessctl` keeps working.
-
-> Live-verify note: sysfs `inotify` delivery for the backlight node must be
-> confirmed on a real host. If a brightness key doesn't flash the overlay, the
-> fallback is a one-line IPC poke from the bind (`qs ipc call`) — see
-> `plans/shell.md`.
 
 ### Panels
 
@@ -142,9 +166,11 @@ overlay that dismisses on outside click) binds its visibility to
 | PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
 | MonitorPanel | CpuWidget | `Services/SystemStats` + `df` + hwmon | CPU / mem / disk / temp meters, `btop` escape |
 
-Each panel reuses the exact native bindings of its bar widget and keeps a button
-to the corresponding TUI/menu for anything the panel doesn't cover. Panels
-currently render on the default screen (per-output panels are deferred).
+Each panel reuses the exact native bindings of its bar widget (via the shared
+`Services/` singletons — `Audio`, `Power`, `NetworkStatus`, `SystemStats`) and
+keeps a button to the corresponding TUI/menu for anything the panel doesn't
+cover. Panels currently render on the default screen (per-output panels are
+deferred).
 
 The MonitorPanel adds two data sources the other panels don't: disk-use of `/`
 (there is no native statvfs binding, so it shells out to the baked `Config.df`,
@@ -159,10 +185,11 @@ motherboard, not the package). CPU and memory come from the shared
 
 `shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
 `togglePanel(id)` / `openPanel(id)` / `closePanels()`, the notification controls
-`toggleDnd()` / `setDnd(on)` / `clearNotifications()`, and `osdShow(...)`.
-Hyprland binds (added by `modules/home/hyprland.nix` and
-`modules/home/window-toggles.nix` only when the shell is enabled) reach the
-running process through the wrapped binary:
+`toggleDnd()` / `setDnd(on)` / `clearNotifications()`, and `osdShow(...)` — the
+last is the brightness OSD's **primary trigger** (the brightness binds poke it
+after every `brightnessctl` change; see the OSD section). Hyprland binds (added
+by `modules/home/hyprland.nix` and `modules/home/window-toggles.nix` only when
+the shell is enabled) reach the running process through the wrapped binary:
 
 ```
 marchyo-shell ipc -n call -- shell togglePanel monitor
@@ -195,7 +222,11 @@ poll). The bar's DndWidget binds to and toggles it directly; the keybind and CLI
 reach it over IPC (above). Under DND, non-critical notifications are queued and
 suppressed (no toast), then flushed back when DND clears (mako's
 `mode=do-not-disturb` "invisible" semantics), while critical ones always show.
-Per-urgency timeouts mirror mako: low/normal 5s, critical persistent.
+The queue is capped (`maxQueued` = 20; the oldest overflow is dismissed, not
+re-shown) so a long DND stretch cannot pile up unbounded state. Per-urgency
+timeouts mirror mako: low/normal 5s, critical persistent. The toast stack
+animates: toasts fade/slide in, fade out, and reshuffle smoothly (`Column`
+positioner transitions — mako's toast feel).
 
 | Piece | Backing |
 | --- | --- |
@@ -215,7 +246,11 @@ The bar now matches waybar's full segment set, including the two former gaps:
 the **tray expander** (a `·` toggle that shows/hides the icons, so the bar stays
 compact when the tray is idle) and the **clock `format-alt` toggle** (left-click
 switches between `Sat 22 Aug · 14:30` and the long `22 August W34 2025` form with
-ISO week). Nothing waybar renders is missing.
+ISO week). Since then a hardening pass closed the remaining behavioural gaps:
+tooltips (see above), SNI tray menus on right-click (`QsMenuAnchor`, with
+menu-only items opening their menu on left-click), per-monitor workspaces plus
+the persistent 1–5 (waybar's `persistent-workspaces`), and the battery's
+`pwr` / `bat full` text forms. Nothing waybar renders is missing.
 
 ## Development
 
@@ -249,7 +284,16 @@ session-env quirks (the dev recipe exports the same pair):
   themed icons against `hicolor` and tray/notification icons fail to load.
   The `gtk3` platform theme reads marchyo's own GTK settings (`Adwaita`).
 
-To type-check the QML without a Wayland compositor, point Quickshell at a small
-harness that instantiates the widgets outside a `PanelWindow` and run it under
-`QT_QPA_PLATFORM=offscreen` — "Configuration Loaded" with no `WARN`/`ERROR` from
-your own files means the tree parses and binds cleanly.
+To type-check the QML without a Wayland compositor, run the committed harness
+under the offscreen platform:
+
+```bash
+just -f shell/Justfile check
+```
+
+`harness.qml` instantiates the Ui primitives and every bar widget (exercising
+the Commons and Services singletons plus the native service bindings); the
+Panels/OSD/notification surfaces can't load offscreen (they need a layer-shell
+backend), so they are covered by the dev loop and `qmlformat` (treefmt) for
+syntax. "Configuration Loaded" with no `WARN`/`ERROR` from the shell's own
+files means the tree parses and binds cleanly.

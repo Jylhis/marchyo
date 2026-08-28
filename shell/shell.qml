@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Bar
 import qs.Osd
+import qs.Ui
 import qs.Panels
 import qs.Notifications
 import qs.Services
@@ -37,6 +38,10 @@ ShellRoot {
     // its own top-right toast stack. DND lives in the shared NotificationState
     // singleton, toggled by the bar's DndWidget and the IPC below.
     NotificationDaemon {}
+
+    // The one tooltip surface: hover text from any BarItem / tray icon, rendered
+    // below the bar on the hovered item's screen (Services/Tooltip holds the state).
+    TooltipWindow {}
 
     // Keybind bridge: Hyprland binds reach the already-running shell through
     // `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper bakes its own
@@ -113,7 +118,9 @@ ShellRoot {
                     spacing: Style.spacing
 
                     SessionWidget {}
-                    WorkspacesWidget {}
+                    WorkspacesWidget {
+                        screenName: modelData.name
+                    }
                 }
 
                 ClockWidget {

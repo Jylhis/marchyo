@@ -4,17 +4,19 @@ import Quickshell
 import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Summoned from AudioWidget. Default-sink volume/mute plus an output-device
-// picker, all on native Pipewire bindings (the same service the bar widget and
-// OSD use). "wiremix" opens the full mixer TUI for anything this doesn't cover.
+// picker, all on native Pipewire bindings (the same Services/Audio the bar
+// widget and OSD use). "wiremix" opens the full mixer TUI for anything this
+// doesn't cover.
 Panel {
     id: root
     panelId: "audio"
     title: "Audio"
 
-    readonly property var sink: Pipewire.defaultAudioSink
-    readonly property var audio: sink ? sink.audio : null
+    readonly property var sink: Audio.sink
+    readonly property var audio: Audio.sinkAudio
 
     // Real output sinks, excluding per-application stream nodes.
     readonly property var sinks: {
@@ -30,11 +32,6 @@ Panel {
 
     function sinkLabel(n) {
         return n ? (n.description || n.nickname || n.name) : "No output";
-    }
-
-    // Without a tracker the default sink's volume/mute never bind/update.
-    PwObjectTracker {
-        objects: root.sink ? [root.sink] : []
     }
 
     body: [
