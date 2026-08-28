@@ -9,9 +9,12 @@ let
   # on headless hosts, so consumers never need to disabledModules it.
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
+  # The unified shell provides its own OSD (shell/Osd), so SwayOSD stands down
+  # when the shell is on — mutually exclusive, the same cutover as waybar.nix.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 in
 {
-  config = lib.mkIf (desktopEnabled && osdEnabled) {
+  config = lib.mkIf (desktopEnabled && osdEnabled && !shellEnabled) {
     home.packages = [ pkgs.swayosd ];
 
     # No upstream Home Manager module exists for swayosd - run the server as a

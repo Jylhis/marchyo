@@ -161,4 +161,27 @@ stack until the shell reaches parity for that surface.
     exclusive); mako/swayosd stay until Phases 2–3. See
     [../shell/README.md](../shell/README.md).
   - **Deferred (cosmetic, optional):** tray expander grouping, clock `format-alt`.
-- **Next:** Phase 2 (panels + OSD).
+- **Phase 2 (panels + OSD) — in progress.**
+  - **OSD landed.** `shell/Osd/Osd.qml`: one bottom-centred, click-through
+    overlay for volume / mic-mute / brightness, triggered **natively** (Pipewire
+    bindings + a watched `/sys/class/backlight` node), no external poke and no
+    IPC. Enabling the shell now also retires SwayOSD: `modules/home/swayosd.nix`
+    stands its server down and `modules/home/hyprland.nix` routes the media keys
+    through the silent `wpctl`/`brightnessctl` path so the shell draws the
+    overlay. Eval tests assert the swayosd/shell mutual exclusion.
+    - *Open live-verify:* sysfs `inotify` delivery for the backlight node is
+      unverifiable offscreen. If a brightness key doesn't flash the overlay on a
+      real host, fall back to a one-line IPC poke from the bind (`qs ipc call`).
+  - **Architecture decision (supersedes the "plugin registry + IPC bus" wording
+    above).** marchyo does **not** port omarchy's `PluginRegistry` /
+    `BarWidgetRegistry` / `manifest.json` system: that machinery exists almost
+    entirely to discover and hot-reload *third-party* plugins from `~/.config`
+    and persist enable-state to `shell.json` — exactly the imperative,
+    unsandboxed third-party-plugin story this plan already rejects (see "Open
+    questions"). The reusable core is just stock Quickshell `IpcHandler` (native
+    `qs ipc`, no custom bus) plus plain in-process objects/singletons. Panels
+    will follow the same lightweight shape: a `bool open` controller + a
+    layer-shell `PanelWindow` card anchored to its bar button, backed directly by
+    the native service, toggled in-process on bar-widget click (IPC only for
+    keybind summons).
+  - **Next in Phase 2:** the audio / network / power summonable panels.

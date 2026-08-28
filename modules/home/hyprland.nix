@@ -682,13 +682,16 @@ in
           (binddOpts "SUPER + mouse:273" "Resize window" (dsp "window.resize()") { mouse = true; })
         ]
         ++ (
-          # Laptop multimedia keys for volume and LCD brightness. With the OSD
-          # enabled (default) they route through swayosd-client so an overlay
-          # shows the change; otherwise they fall back to silent wpctl /
-          # brightnessctl. `locked` keeps them working over the lock screen and
-          # `repeating` allows press-and-hold.
+          # Laptop multimedia keys for volume and LCD brightness. When SwayOSD
+          # owns the OSD they route through swayosd-client so an overlay shows the
+          # change; otherwise they fall back to silent wpctl / brightnessctl. The
+          # unified shell provides its own OSD that reacts natively to the volume
+          # and backlight changes, so with the shell on we take the silent path
+          # and let the shell draw the overlay. `locked` keeps them working over
+          # the lock screen and `repeating` allows press-and-hold.
           let
-            osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
+            shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+            osdEnabled = (((osConfig.marchyo or { }).osd or { }).enable or true) && !shellEnabled;
             elOpts = {
               locked = true;
               repeating = true;
