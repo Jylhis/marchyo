@@ -14,7 +14,6 @@ QtObject {
   readonly property string nmtui: "nmtui"
   readonly property string nmcli: "nmcli"
   readonly property string bluetui: "bluetui"
-  readonly property string makoctl: "makoctl"
   readonly property string pgrep: "pgrep"
   readonly property string ls: "ls"
   readonly property string df: "df"

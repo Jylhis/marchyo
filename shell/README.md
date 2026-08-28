@@ -5,22 +5,24 @@ long-running QML process that will eventually replace today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
 notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-## Status — Phase 1 (bar) done, Phase 2 (OSD + panels) in progress
+## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) done
 
 A Jylhis-themed top bar at (near) waybar parity, built as a **simple monolith**:
 `shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitives
-and the `Commons/` design-token singletons). Phase 2 adds surfaces **alongside**
-the bar as plain in-process components — the **OSD** (`Osd/`) and the summonable
-**panels** (`Panels/`, toggled from their bar widgets through the `Services/`
-`PanelManager` singleton). There is deliberately **no plugin registry or manifest
-system**: marchyo rejected the third-party-plugin story (see `plans/shell.md`), so
-native Quickshell service bindings plus (where a keybind must reach in) a stock
-`IpcHandler` suffice.
+and the `Commons/` design-token singletons). Phases 2 and 3 add surfaces
+**alongside** the bar as plain in-process components — the **OSD** (`Osd/`), the
+summonable **panels** (`Panels/`, toggled from their bar widgets through the
+`Services/` `PanelManager` singleton), and the **notification** toasts
+(`Notifications/`, owning `org.freedesktop.Notifications`). There is deliberately
+**no plugin registry or manifest system**: marchyo rejected the
+third-party-plugin story (see `plans/shell.md`), so native Quickshell service
+bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar** and, now, **SwayOSD** (each mutually exclusive with its discrete
-counterpart — see `modules/home/waybar.nix` and `modules/home/swayosd.nix`);
-mako stays until the shell reaches its parity in Phase 3.
+waybar**, **SwayOSD**, and **mako** (each mutually exclusive with its discrete
+counterpart — see `modules/home/waybar.nix`, `modules/home/swayosd.nix`, and
+`modules/home/mako.nix`), so the shell owns the bar, the OSD, and notifications
+outright. Vicinae (launcher) and the lock/screensaver stay for Phase 4.
 
 Layout:
 
@@ -50,9 +52,15 @@ shell/
     qmldir             declares module qs.Services
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
     SystemStats.qml    singleton: shared CPU/memory sampler (bar + monitor panel)
+    NotificationState.qml  singleton: DND flag + live toast list (shared state)
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
+  Notifications/
+    qmldir             declares module qs.Notifications
+    NotificationDaemon.qml  owns org.freedesktop.Notifications (replaces mako)
+    NotificationList.qml    top-right layer-shell toast stack
+    NotificationPopup.qml   one themed toast card (delegate)
 ```
 
 The shell also declares a single stock `Quickshell.Io.IpcHandler` (target
@@ -73,7 +81,7 @@ below), so nothing depends on the session `PATH`.
 | TrayWidget | `Quickshell.Services.SystemTray` |
 | DictationWidget | `voxtype status --follow` (click = toggle); baked on/off via `Style.dictationIndicator` |
 | CaffeineWidget | `pgrep` probe + `marchyo toggle caffeine` |
-| DndWidget | `makoctl mode` probe + `marchyo toggle notifications` |
+| DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `hyprctl devices` (click = cycle layout) |
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` + `nmcli` for SSID/signal (click = network panel) |
@@ -150,9 +158,11 @@ motherboard, not the package). CPU and memory come from the shared
 ### Keybind summons
 
 `shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
-`togglePanel(id)` / `openPanel(id)` / `closePanels()` / `osdShow(...)`. Hyprland
-binds (added by `modules/home/hyprland.nix` only when the shell is enabled) reach
-the running process through the wrapped binary:
+`togglePanel(id)` / `openPanel(id)` / `closePanels()`, the notification controls
+`toggleDnd()` / `setDnd(on)` / `clearNotifications()`, and `osdShow(...)`.
+Hyprland binds (added by `modules/home/hyprland.nix` and
+`modules/home/window-toggles.nix` only when the shell is enabled) reach the
+running process through the wrapped binary:
 
 ```
 marchyo-shell ipc -n call -- shell togglePanel monitor
@@ -161,8 +171,43 @@ marchyo-shell ipc -n call -- shell togglePanel monitor
 The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
 self-targets the running instance (no instance id to track). Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
-`SUPER+SHIFT+M` monitor. This is the only IPC in the shell — there is no custom
-bus (see `plans/shell.md`).
+`SUPER+SHIFT+M` monitor. The DND toggle (`SUPER+CTRL+comma`) and dismiss-all
+(`SUPER+CTRL+SHIFT+comma`) binds route through `toggleDnd` / `clearNotifications`
+when the shell is on, and fall back to the CLI/mako when it is off. This is the
+only IPC in the shell; there is no custom bus (see `plans/shell.md`).
+
+### Notifications
+
+`Notifications/NotificationDaemon.qml` instantiates a Quickshell
+`NotificationServer` that owns `org.freedesktop.Notifications`, replacing mako.
+It advertises body + limited markup + action buttons + an app image (no inline
+reply, no persistence). On each incoming notification it retains the object
+(`tracked = true`, so the toast and its actions stay live) and hands it to the
+shared `Services/NotificationState` singleton, which applies the do-not-disturb
+policy and the visible cap. `NotificationList.qml` is a top-right layer-shell
+stack that renders `NotificationState.popups` newest-first;
+`NotificationPopup.qml` is one themed card (sharp corners + a 2px urgency-coloured
+border, matching mako's aesthetic) with its own auto-expire timer, click-to-
+dismiss, and action pills.
+
+Do-not-disturb is **in-shell state** on `NotificationState` (no `makoctl`, no
+poll). The bar's DndWidget binds to and toggles it directly; the keybind and CLI
+reach it over IPC (above). Under DND, non-critical notifications are queued and
+suppressed (no toast), then flushed back when DND clears (mako's
+`mode=do-not-disturb` "invisible" semantics), while critical ones always show.
+Per-urgency timeouts mirror mako: low/normal 5s, critical persistent.
+
+| Piece | Backing |
+| --- | --- |
+| NotificationDaemon | `Quickshell.Services.Notifications` `NotificationServer` |
+| NotificationList | layer-shell `PanelWindow`, top-right, content-sized |
+| NotificationPopup | `Notification` fields; actions via `NotificationAction.invoke()` |
+| DND state | `Services/NotificationState` singleton (shared) |
+
+> Live-verify note: D-Bus name acquisition, real toast rendering/stacking,
+> action round-trips, `Quickshell.iconPath` icon resolution, and the
+> `bodyMarkupSupported` HTML subset can only be confirmed on a Wayland host with
+> mako actually stood down.
 
 ### Deferred (cosmetic parity, optional)
 

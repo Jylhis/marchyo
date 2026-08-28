@@ -106,4 +106,30 @@ in
       else
         throw "FAIL: marchyo.shell is off but the swayosd server is missing under a plain desktop"
     );
+
+  # Notification cutover: the shell owns org.freedesktop.Notifications and draws
+  # its own toasts, so with the shell on mako must stand down — the two daemons
+  # never both bind the notification bus.
+  eval-marchyo-shell-disables-mako =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-mako" (
+      if !hm.services.mako.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell.enable = true but mako is still enabled (both would seize org.freedesktop.Notifications)"
+    );
+
+  # Plain desktop (shell off): mako is the notification daemon, so it must be on.
+  eval-marchyo-shell-off-keeps-mako =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-mako" (
+      if hm.services.mako.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but mako is not enabled under a plain desktop"
+    );
 }

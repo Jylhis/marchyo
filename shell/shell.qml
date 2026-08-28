@@ -8,6 +8,7 @@ import qs.Commons
 import qs.Bar
 import qs.Osd
 import qs.Panels
+import qs.Notifications
 import qs.Services
 
 // Phase 1: a Jylhis-themed top bar at waybar parity, built as a simple monolith
@@ -32,6 +33,11 @@ ShellRoot {
   PowerPanel {}
   MonitorPanel {}
 
+  // Notifications: owns org.freedesktop.Notifications (replaces mako) and draws
+  // its own top-right toast stack. DND lives in the shared NotificationState
+  // singleton, toggled by the bar's DndWidget and the IPC below.
+  NotificationDaemon {}
+
   // Keybind bridge: Hyprland binds reach the already-running shell through
   // `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper bakes its own
   // -p, so it self-targets the running instance). A single stock IpcHandler — no
@@ -53,6 +59,21 @@ ShellRoot {
 
     function closePanels(): string {
       PanelManager.close();
+      return "ok";
+    }
+
+    function toggleDnd(): string {
+      NotificationState.toggleDnd();
+      return NotificationState.dnd ? "on" : "off";
+    }
+
+    function setDnd(on: string): string {
+      NotificationState.setDnd(on === "true" || on === "on" || on === "1");
+      return NotificationState.dnd ? "on" : "off";
+    }
+
+    function clearNotifications(): string {
+      NotificationState.clearAll();
       return "ok";
     }
 
