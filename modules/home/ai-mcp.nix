@@ -23,7 +23,7 @@ let
 
   servers = lib.optionalAttrs nixosEnabled {
     mcp-nixos = {
-      command = "${pkgs.uv}/bin/uvx";
+      command = "${pkgs.uv}/bin/uvx"; # TODO: Use `nix run`
       args = [ "mcp-nixos" ];
     };
   };
