@@ -77,8 +77,8 @@ below), so nothing depends on the session `PATH`.
 | --- | --- |
 | SessionWidget | static "marchyo" label |
 | WorkspacesWidget | `Quickshell.Hyprland` |
-| ClockWidget | `Quickshell.SystemClock` |
-| TrayWidget | `Quickshell.Services.SystemTray` |
+| ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
+| TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide) |
 | DictationWidget | `voxtype status --follow` (click = toggle); baked on/off via `Style.dictationIndicator` |
 | CaffeineWidget | `pgrep` probe + `marchyo toggle caffeine` |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
@@ -209,10 +209,13 @@ Per-urgency timeouts mirror mako: low/normal 5s, critical persistent.
 > `bodyMarkupSupported` HTML subset can only be confirmed on a Wayland host with
 > mako actually stood down.
 
-### Deferred (cosmetic parity, optional)
+### Waybar parity
 
-- **Tray expander/drawer grouping** — the shell shows tray icons inline.
-- **Clock `format-alt` toggle** — click-to-switch date/time form.
+The bar now matches waybar's full segment set, including the two former gaps:
+the **tray expander** (a `·` toggle that shows/hides the icons, so the bar stays
+compact when the tray is idle) and the **clock `format-alt` toggle** (left-click
+switches between `Sat 22 Aug · 14:30` and the long `22 August W34 2025` form with
+ISO week). Nothing waybar renders is missing.
 
 ## Development
 
