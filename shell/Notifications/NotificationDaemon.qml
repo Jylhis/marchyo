@@ -13,25 +13,25 @@ import qs.Services
 // glue. Named NotificationDaemon (not NotificationServer) so it does not collide
 // with the Quickshell NotificationServer type it instantiates.
 Scope {
-  id: root
+    id: root
 
-  NotificationServer {
-    id: server
+    NotificationServer {
+        id: server
 
-    keepOnReload: false
-    bodySupported: true
-    bodyMarkupSupported: true
-    imageSupported: true
-    actionsSupported: true
-    persistenceSupported: false
-    inlineReplySupported: false
+        keepOnReload: false
+        bodySupported: true
+        bodyMarkupSupported: true
+        imageSupported: true
+        actionsSupported: true
+        persistenceSupported: false
+        inlineReplySupported: false
 
-    onNotification: function (notification) {
-      notification.tracked = true;
-      NotificationState.show(notification);
+        onNotification: function (notification) {
+            notification.tracked = true;
+            NotificationState.show(notification);
+        }
     }
-  }
 
-  // The visible stack (its own top-right layer-shell surface).
-  NotificationList {}
+    // The visible stack (its own top-right layer-shell surface).
+    NotificationList {}
 }

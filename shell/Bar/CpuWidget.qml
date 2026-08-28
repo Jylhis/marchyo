@@ -6,9 +6,9 @@ import qs.Services
 // waybar's "cpu N%". Click opens the monitor panel (btop still one click away
 // inside it).
 BarItem {
-  id: root
+    id: root
 
-  interactive: true
-  text: "cpu " + SystemStats.cpuUsage + "%"
-  onClicked: PanelManager.toggle("monitor")
+    interactive: true
+    text: "cpu " + SystemStats.cpuUsage + "%"
+    onClicked: PanelManager.toggle("monitor")
 }

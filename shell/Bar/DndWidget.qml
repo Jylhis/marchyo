@@ -7,11 +7,11 @@ import qs.Services
 // NotificationState singleton and toggles it in-process. No makoctl probe, no
 // marchyo subprocess, no poll timer.
 BarItem {
-  id: root
+    id: root
 
-  interactive: true
-  text: NotificationState.dnd ? "dnd" : "notif"
-  textColor: NotificationState.dnd ? Color.statusErr : Color.textMuted
+    interactive: true
+    text: NotificationState.dnd ? "dnd" : "notif"
+    textColor: NotificationState.dnd ? Color.statusErr : Color.textMuted
 
-  onClicked: NotificationState.toggleDnd()
+    onClicked: NotificationState.toggleDnd()
 }

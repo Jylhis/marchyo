@@ -7,18 +7,18 @@ import QtQuick
 // call toggle(id) on click; each Ui/Panel binds its visibility to openId === id.
 // No manifest system, no IPC, no plugin discovery (see plans/shell.md).
 QtObject {
-  // Empty string = nothing open; otherwise the panelId of the open panel.
-  property string openId: ""
+    // Empty string = nothing open; otherwise the panelId of the open panel.
+    property string openId: ""
 
-  function toggle(id) {
-    openId = (openId === id) ? "" : id;
-  }
+    function toggle(id) {
+        openId = (openId === id) ? "" : id;
+    }
 
-  function open(id) {
-    openId = id;
-  }
+    function open(id) {
+        openId = id;
+    }
 
-  function close() {
-    openId = "";
-  }
+    function close() {
+        openId = "";
+    }
 }
