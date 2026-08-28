@@ -268,6 +268,32 @@ The checked-in `Commons/Color.qml` / `Commons/Style.qml` are the Field (dark),
 `fontScale 1.0` defaults so the dev loop works standalone; the Nix build
 overwrites both for the host's `marchyo.theme.variant` and `fontScale`.
 
+### Editor tooling (qmlls)
+
+`import qs.*` is a Quickshell convention: the config root is the `qs` module
+namespace. Quickshell 0.3.0's built-in tooling support mirrors the scanned
+`.qml` files into a runtime vfs (`/run/user/$UID/quickshell/vfs/…`) and drops a
+`.qmlls.ini` symlink into `shell/` — but that mirror contains **no `qmldir`
+files**, so qmlls can never resolve `qs.*` through it. (It's a runtime
+artifact: untracked, and recreated by any `quickshell -p shell` run.)
+
+Instead, `devenv.nix` builds a stable alias at `.devenv/qml-modules/qs ->
+shell/` (`enterShell`) and exports
+
+```
+QML_IMPORT_PATH = .devenv/qml-modules : quickshell/lib/qt-6/qml : qtdeclarative/lib/qt-6/qml
+```
+
+so the checked-in per-directory `qmldir`s (`module qs.Commons`, `qs.Bar`, …)
+resolve `qs.*` for qmlls/qmllint exactly the way the running shell resolves
+them, and `Quickshell.*` / `QtQuick*` resolve from the store paths. Any editor
+that launches qmlls with `-E` from the devenv shell (eglot, neovim-lsp, …)
+inherits this; inside the devenv shell you can check by hand:
+
+```bash
+qmllint -E shell/shell.qml   # expect no "Failed to import" lines
+```
+
 ### Runtime environment
 
 The `marchyo-shell` wrapper bakes two env vars so the shell never depends on
