@@ -388,7 +388,7 @@ program
   .description("Flip a desktop toggle live (gaps, nightlight, waybar, …)")
   .argument(
     "<name>",
-    "gaps | transparency | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | hybrid-gpu",
+    "gaps | transparency | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | caffeine | hybrid-gpu",
   )
   .argument("[state]", "on | off (omit to flip)")
   .option("--apply", "Also persist declaratively and rebuild (hybrid-gpu only)")

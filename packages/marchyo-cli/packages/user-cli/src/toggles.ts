@@ -88,6 +88,7 @@ function screensaverMarkerPath(): string {
 }
 
 const SUSPEND_INHIBIT_TAG = "marchyo-suspend-inhibit";
+const CAFFEINE_INHIBIT_TAG = "marchyo-caffeine-inhibit";
 
 // Device names from `hyprctl -j devices` matching a predicate (touchpads /
 // touch screens).
@@ -327,6 +328,49 @@ export const TOGGLES: ToggleDef[] = [
     },
     revert: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", SUSPEND_INHIBIT_TAG]);
+    },
+  },
+  {
+    // "on" = caffeine: keep the machine awake. Stops hypridle (no lock, dim,
+    // DPMS, screensaver, or idle-suspend) AND holds a tagged sleep:idle
+    // inhibitor (blocks lid/logind/manual idle sleep). Distinct tag from the
+    // `suspend` toggle so the two never collide.
+    name: "caffeine",
+    defaultOn: false,
+    probe: async (capture) => {
+      const r = await capture(["pgrep", "-f", CAFFEINE_INHIBIT_TAG]);
+      return r.code === 0; // inhibitor present => caffeine on
+    },
+    setOn: async (ctx) => {
+      await safeExec(ctx, systemctlUserArgv("stop", "hypridle.service"));
+      try {
+        const proc = Bun.spawn(
+          [
+            "systemd-inhibit",
+            `--what=sleep:idle`,
+            "--who=marchyo",
+            `--why=${CAFFEINE_INHIBIT_TAG}`,
+            "sleep",
+            "infinity",
+          ],
+          { stdout: "ignore", stderr: "ignore", stdin: "ignore" },
+        );
+        proc.unref();
+      } catch {
+        // systemd-inhibit unavailable
+      }
+      await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      await notify(ctx, "Caffeine", "On — screen and sleep kept awake");
+    },
+    setOff: async (ctx) => {
+      await safeExec(ctx, ["pkill", "-f", CAFFEINE_INHIBIT_TAG]);
+      await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
+      await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      await notify(ctx, "Caffeine", "Off — normal idle behaviour restored");
+    },
+    revert: async (ctx) => {
+      await safeExec(ctx, ["pkill", "-f", CAFFEINE_INHIBIT_TAG]);
+      await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
     },
   },
   {

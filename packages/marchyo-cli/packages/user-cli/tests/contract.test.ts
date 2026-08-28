@@ -108,6 +108,7 @@ test("exit-code contract", async () => {
     return await proc.exited;
   };
   expect(await run(["--version"])).toBe(0);
+  expect(await run(["toggle", "caffeine", "--status"])).toBe(0);
   expect(await run(["toggle", "warp-drive"])).toBe(2);
   expect(await run(["launch", "definitely-not-a-real-app"])).toBe(1);
 });
