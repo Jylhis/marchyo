@@ -35,7 +35,7 @@ statix.toml         # Statix linter configuration
 docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)
 plans/              # Design RFCs for in-progress and proposed work
-shell/              # Reserved for the future custom Quickshell shell (see plans/shell.md)
+shell/              # Custom Quickshell shell QML tree (Phase 1 bar; see plans/shell.md)
 modules/nixos/      # NixOS system-level modules (~31 modules)
 modules/darwin/     # nix-darwin modules (imports shared options + generic modules)
 modules/nix-on-droid/  # nix-on-droid (Android terminal): built via lib.mkNixOnDroidConfiguration; reuses generic git/shell modules; HM 24.05

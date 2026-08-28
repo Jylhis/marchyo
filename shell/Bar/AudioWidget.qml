@@ -1,10 +1,11 @@
+import Quickshell
 import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
 
-// Default-sink volume. Scroll to adjust, right-click to mute — matches waybar's
-// wireplumber widget (scroll-step 5, max-volume 150). Left-click opens the
-// mixer (wired in a later step alongside the other TUI launches).
+// Default-sink volume. Scroll to adjust, right-click to mute, left-click opens the
+// wiremix mixer in a floating terminal — matches waybar's wireplumber widget
+// (scroll-step 5, max-volume 150, org.omarchy.wiremix class).
 BarItem {
   id: root
 
@@ -29,4 +30,5 @@ BarItem {
   onRightClicked: () => {
     if (audio) audio.muted = !audio.muted;
   }
+  onClicked: Quickshell.execDetached([ Config.terminal, "--class=org.omarchy.wiremix", "-e", Config.wiremix ])
 }

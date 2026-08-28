@@ -1,6 +1,7 @@
-# Phase 0 Quickshell shell: the marchyo-shell user service appears only when
-# marchyo.shell.enable is set, and stays absent under a plain desktop (it does
-# not cascade from desktop.enable, so it never collides with the waybar stack).
+# Quickshell shell: the marchyo-shell user service appears only when
+# marchyo.shell.enable is set, and stays absent under a plain desktop (it does not
+# cascade from desktop.enable). The shell and waybar are mutually exclusive — when
+# the shell is on, waybar stands down — so the two bars never both run.
 {
   helpers,
   lib,
@@ -54,5 +55,30 @@ in
         "pass"
       else
         throw "FAIL: marchyo.shell is off by default but the marchyo-shell user service is present under a plain desktop"
+    );
+
+  # Cutover: with the shell on, waybar must stand down so the two bars are never
+  # both active.
+  eval-marchyo-shell-disables-waybar =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-waybar" (
+      if !hm.programs.waybar.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell.enable = true but waybar is still enabled (both bars would run)"
+    );
+
+  # Plain desktop (shell off): waybar is the bar, so it must be enabled.
+  eval-marchyo-shell-off-keeps-waybar =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-waybar" (
+      if hm.programs.waybar.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but waybar is not enabled under a plain desktop"
     );
 }

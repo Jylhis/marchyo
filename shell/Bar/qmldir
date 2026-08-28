@@ -9,3 +9,7 @@ TrayWidget 1.0 TrayWidget.qml
 CpuWidget 1.0 CpuWidget.qml
 BluetoothWidget 1.0 BluetoothWidget.qml
 NetworkWidget 1.0 NetworkWidget.qml
+CaffeineWidget 1.0 CaffeineWidget.qml
+DndWidget 1.0 DndWidget.qml
+DictationWidget 1.0 DictationWidget.qml
+KeyboardLayoutWidget 1.0 KeyboardLayoutWidget.qml
