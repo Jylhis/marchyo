@@ -49,10 +49,15 @@ shell/
   Services/
     qmldir             declares module qs.Services
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
+    SystemStats.qml    singleton: shared CPU/memory sampler (bar + monitor panel)
   Panels/
     qmldir             declares module qs.Panels
-    <Name>Panel.qml    one summonable panel (audio / network / power)
+    <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
 ```
+
+The shell also declares a single stock `Quickshell.Io.IpcHandler` (target
+`shell`) in `shell.qml` so Hyprland keybinds can summon panels and poke the OSD;
+see [Keybind summons](#keybind-summons) below.
 
 ### Widgets
 
@@ -73,7 +78,7 @@ below), so nothing depends on the session `PATH`.
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` + `nmcli` for SSID/signal (click = network panel) |
 | AudioWidget | `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
-| CpuWidget | `Quickshell.Io.FileView` over `/proc/stat` (click = btop) |
+| CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
 | BatteryWidget | `Quickshell.Services.UPower` (click = power panel) |
 
@@ -127,10 +132,37 @@ overlay that dismisses on outside click) binds its visibility to
 | AudioPanel | AudioWidget | `Pipewire` | volume -/+, mute, output-device picker, `wiremix` escape |
 | NetworkPanel | NetworkWidget | `Networking` + `nmcli` | connection status, SSID/signal, `nmtui` escape |
 | PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
+| MonitorPanel | CpuWidget | `Services/SystemStats` + `df` + hwmon | CPU / mem / disk / temp meters, `btop` escape |
 
 Each panel reuses the exact native bindings of its bar widget and keeps a button
 to the corresponding TUI/menu for anything the panel doesn't cover. Panels
 currently render on the default screen (per-output panels are deferred).
+
+The MonitorPanel adds two data sources the other panels don't: disk-use of `/`
+(there is no native statvfs binding, so it shells out to the baked `Config.df`,
+polled only while the panel is open) and CPU temperature (the first
+`/sys/class/hwmon` node whose `name` is a known CPU sensor — `coretemp` /
+`k10temp` / `zenpower` / `cpu_thermal` — since `thermal_zone0` is often the
+motherboard, not the package). CPU and memory come from the shared
+`Services/SystemStats` singleton, which owns the single `/proc/stat` +
+`/proc/meminfo` sampler that the bar's CpuWidget reads too.
+
+### Keybind summons
+
+`shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
+`togglePanel(id)` / `openPanel(id)` / `closePanels()` / `osdShow(...)`. Hyprland
+binds (added by `modules/home/hyprland.nix` only when the shell is enabled) reach
+the running process through the wrapped binary:
+
+```
+marchyo-shell ipc -n call -- shell togglePanel monitor
+```
+
+The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
+self-targets the running instance (no instance id to track). Default binds:
+`SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
+`SUPER+SHIFT+M` monitor. This is the only IPC in the shell — there is no custom
+bus (see `plans/shell.md`).
 
 ### Deferred (cosmetic parity, optional)
 

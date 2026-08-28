@@ -21,7 +21,7 @@ QtObject {
   readonly property int osdBarWidth: 140
   readonly property int osdBarHeight: 6
 
-  // Summonable-panel geometry (audio/network/power cards under the bar).
+  // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
   readonly property int panelWidth: 260
   readonly property int panelPad: 14
   readonly property int panelGap: 6

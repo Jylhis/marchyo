@@ -100,7 +100,7 @@ let
       readonly property int osdBarWidth: ${toString (fs.round 140)}
       readonly property int osdBarHeight: ${toString (fs.round 6)}
 
-      // Summonable-panel geometry (audio/network/power cards under the bar).
+      // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
       readonly property int panelWidth: ${toString (fs.round 260)}
       readonly property int panelPad: ${toString (fs.round 14)}
       readonly property int panelGap: ${toString (fs.round 6)}
@@ -134,6 +134,7 @@ let
       readonly property string makoctl: "${lib.getExe' mako "makoctl"}"
       readonly property string pgrep: "${lib.getExe' procps "pgrep"}"
       readonly property string ls: "${lib.getExe' coreutils "ls"}"
+      readonly property string df: "${lib.getExe' coreutils "df"}"
       readonly property string vicinae: "${lib.getExe vicinae}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
     }

@@ -1,2 +1,3 @@
 module qs.Services
 singleton PanelManager 1.0 PanelManager.qml
+singleton SystemStats 1.0 SystemStats.qml

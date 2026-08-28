@@ -2,3 +2,4 @@ module qs.Panels
 AudioPanel 1.0 AudioPanel.qml
 NetworkPanel 1.0 NetworkPanel.qml
 PowerPanel 1.0 PowerPanel.qml
+MonitorPanel 1.0 MonitorPanel.qml
