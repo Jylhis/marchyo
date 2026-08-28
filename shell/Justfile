@@ -1,0 +1,15 @@
+# List all available recipes
+default:
+    @just --list
+
+# Dev loop: run the shell straight from the tree (hot-reloads QML on save).
+# Stops the store-backed user service first so the two instances don't fight
+# over the bar slot and org.freedesktop.Notifications. Dev defaults apply:
+# dark variant, fontScale 1.0, tools from PATH (see README.md).
+dev:
+    systemctl --user stop marchyo-shell
+    quickshell -p .
+
+# Hand the bar back to the store-backed user service after a dev session
+resume:
+    systemctl --user start marchyo-shell
