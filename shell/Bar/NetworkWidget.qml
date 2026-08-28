@@ -1,14 +1,14 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Connectivity readout. The native Networking binding gives connected/type; the
 // active SSID and signal (which it does not expose) come from an `nmcli` poll while
-// on Wi-Fi, matching waybar's "{essid} {signal}%". Click opens nmtui in a floating
-// terminal (same org.omarchy.nmtui class waybar uses).
+// on Wi-Fi, matching waybar's "{essid} {signal}%". Click opens the in-shell network
+// panel (status + an nmtui escape hatch).
 BarItem {
   id: root
 
@@ -62,5 +62,5 @@ BarItem {
     onTriggered: wifiProbe.running = true
   }
 
-  onClicked: Quickshell.execDetached([ Config.terminal, "--class=org.omarchy.nmtui", "-e", Config.nmtui ])
+  onClicked: PanelManager.toggle("network")
 }

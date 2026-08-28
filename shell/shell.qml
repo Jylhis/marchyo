@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Bar
 import qs.Osd
+import qs.Panels
 
 // Phase 1: a Jylhis-themed top bar at waybar parity, built as a simple monolith
 // — shell.qml composes reusable widgets from qs.Bar (backed by qs.Ui primitives
@@ -18,6 +19,13 @@ ShellRoot {
   // On-screen display for volume/brightness/mic-mute (replaces SwayOSD). Reacts
   // natively to Pipewire and the backlight sysfs node — no external poke.
   Osd {}
+
+  // Summonable panels: toggled in-process from their bar widgets via the shared
+  // PanelManager (mutually exclusive). Each is a layer-shell overlay that only
+  // materialises a surface while open.
+  AudioPanel {}
+  NetworkPanel {}
+  PowerPanel {}
 
   Variants {
     model: Quickshell.screens

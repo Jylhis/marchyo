@@ -100,6 +100,13 @@ let
       readonly property int osdBarWidth: ${toString (fs.round 140)}
       readonly property int osdBarHeight: ${toString (fs.round 6)}
 
+      // Summonable-panel geometry (audio/network/power cards under the bar).
+      readonly property int panelWidth: ${toString (fs.round 260)}
+      readonly property int panelPad: ${toString (fs.round 14)}
+      readonly property int panelGap: ${toString (fs.round 6)}
+      readonly property int panelRadius: ${toString (fs.round 8)}
+      readonly property int panelRowHeight: ${toString (fs.round 30)}
+
       // Baked feature flags (parity with waybar's conditional widgets).
       readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
       readonly property bool menusEnabled: ${lib.boolToString menusEnabled}

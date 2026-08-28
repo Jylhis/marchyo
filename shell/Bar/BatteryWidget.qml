@@ -1,12 +1,12 @@
-import Quickshell
 import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
+import qs.Services
 
 // Battery readout via UPower's composite display device. Hidden on desktops
 // (no laptop battery). Warning/critical thresholds match waybar (20% / 10%).
-// Click opens the power menu (or the launcher when menus are disabled), matching
-// waybar's battery on-click.
+// Click opens the in-shell power panel (battery detail + profile selector, with a
+// power-menu escape hatch).
 BarItem {
   readonly property var dev: UPower.displayDevice
   readonly property int pct: dev ? Math.round(dev.percentage) : 0
@@ -18,7 +18,5 @@ BarItem {
   text: (charging ? "chg " : "bat ") + pct + "%"
   textColor: pct <= 10 ? Color.statusErr : (pct <= 20 ? Color.statusWarn : Color.text)
 
-  onClicked: Style.menusEnabled
-    ? Quickshell.execDetached([ Config.terminal, "--class=org.omarchy.terminal", "-e", Config.marchyo, "menu", "power" ])
-    : Quickshell.execDetached([ Config.vicinae, "toggle" ])
+  onClicked: PanelManager.toggle("power")
 }
