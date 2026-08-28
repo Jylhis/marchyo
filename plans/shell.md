@@ -160,7 +160,9 @@ stack until the shell reaches parity for that surface.
   - **Cutover landed:** `marchyo.shell.enable` now disables `waybar.nix` (mutually
     exclusive); mako/swayosd stay until Phases 2–3. See
     [../shell/README.md](../shell/README.md).
-  - **Deferred (cosmetic, optional):** tray expander grouping, clock `format-alt`.
+  - **Cosmetic parity done:** the tray expander (`·` toggle to show/hide icons)
+    and the clock `format-alt` toggle (compact vs long ISO-week form) now match
+    waybar; nothing waybar renders is missing from the bar.
 - **Phase 2 (panels + OSD) — in progress.**
   - **OSD landed.** `shell/Osd/Osd.qml`: one bottom-centred, click-through
     overlay for volume / mic-mute / brightness, triggered **natively** (Pipewire
