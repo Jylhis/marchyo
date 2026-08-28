@@ -7,28 +7,28 @@ import qs.Services
 // in-shell audio panel (output picker + volume/mute, with a wiremix escape hatch).
 // Scroll-step 5, max-volume 150, matching waybar's wireplumber widget.
 BarItem {
-  id: root
+    id: root
 
-  readonly property var sink: Pipewire.defaultAudioSink
-  readonly property var audio: sink ? sink.audio : null
+    readonly property var sink: Pipewire.defaultAudioSink
+    readonly property var audio: sink ? sink.audio : null
 
-  // Without an object tracker the node's audio properties never bind/update.
-  PwObjectTracker {
-    objects: root.sink ? [ root.sink ] : []
-  }
+    // Without an object tracker the node's audio properties never bind/update.
+    PwObjectTracker {
+        objects: root.sink ? [root.sink] : []
+    }
 
-  interactive: true
-  text: audio
-    ? (audio.muted ? "vol mute" : "vol " + Math.round(audio.volume * 100) + "%")
-    : "vol"
-  textColor: (audio && audio.muted) ? Color.textFaint : Color.text
+    interactive: true
+    text: audio ? (audio.muted ? "vol mute" : "vol " + Math.round(audio.volume * 100) + "%") : "vol"
+    textColor: (audio && audio.muted) ? Color.textFaint : Color.text
 
-  onWheel: (delta) => {
-    if (!audio) return;
-    audio.volume = Math.max(0.0, Math.min(1.5, audio.volume + (delta > 0 ? 0.05 : -0.05)));
-  }
-  onRightClicked: () => {
-    if (audio) audio.muted = !audio.muted;
-  }
-  onClicked: PanelManager.toggle("audio")
+    onWheel: delta => {
+        if (!audio)
+            return;
+        audio.volume = Math.max(0.0, Math.min(1.5, audio.volume + (delta > 0 ? 0.05 : -0.05)));
+    }
+    onRightClicked: () => {
+        if (audio)
+            audio.muted = !audio.muted;
+    }
+    onClicked: PanelManager.toggle("audio")
 }

@@ -9,62 +9,62 @@ import qs.Commons
 // click cycles layouts (a no-op on single-layout hosts). Hidden until a layout is
 // known so it never shows a stray placeholder.
 BarItem {
-  id: root
+    id: root
 
-  // Common full keymap names → short codes; fall back to the first word lowercased.
-  readonly property var shortMap: ({
-    "English (US)": "us",
-    "English (UK)": "gb",
-    "Finnish": "fi",
-    "Swedish": "se",
-    "German": "de",
-    "French": "fr",
-    "Norwegian": "no"
-  })
-  property string layout: ""
+    // Common full keymap names → short codes; fall back to the first word lowercased.
+    readonly property var shortMap: ({
+            "English (US)": "us",
+            "English (UK)": "gb",
+            "Finnish": "fi",
+            "Swedish": "se",
+            "German": "de",
+            "French": "fr",
+            "Norwegian": "no"
+        })
+    property string layout: ""
 
-  visible: layout.length > 0
-  interactive: true
-  text: layout
-  textColor: Color.textMuted
+    visible: layout.length > 0
+    interactive: true
+    text: layout
+    textColor: Color.textMuted
 
-  function shortCode(keymap) {
-    if (!keymap)
-      return "";
-    if (shortMap[keymap] !== undefined)
-      return shortMap[keymap];
-    return keymap.split(/[ (]/)[0].toLowerCase().slice(0, 3);
-  }
-
-  Process {
-    id: probe
-    command: [ Config.hyprctl, "devices", "-j" ]
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          const kbs = JSON.parse(text).keyboards || [];
-          let kb = kbs.find(k => k.main) || kbs[0];
-          root.layout = root.shortCode(kb ? kb.active_keymap : "");
-        } catch (e) {
-          // Leave the last known layout on a parse hiccup.
-        }
-      }
+    function shortCode(keymap) {
+        if (!keymap)
+            return "";
+        if (shortMap[keymap] !== undefined)
+            return shortMap[keymap];
+        return keymap.split(/[ (]/)[0].toLowerCase().slice(0, 3);
     }
-  }
 
-  Process {
-    id: cycle
-    command: [ Config.hyprctl, "switchxkblayout", "all", "next" ]
-    onExited: probe.running = true
-  }
+    Process {
+        id: probe
+        command: [Config.hyprctl, "devices", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const kbs = JSON.parse(text).keyboards || [];
+                    let kb = kbs.find(k => k.main) || kbs[0];
+                    root.layout = root.shortCode(kb ? kb.active_keymap : "");
+                } catch (e) {
+                    // Leave the last known layout on a parse hiccup.
+                }
+            }
+        }
+    }
 
-  Timer {
-    interval: 3000
-    running: true
-    repeat: true
-    triggeredOnStart: true
-    onTriggered: probe.running = true
-  }
+    Process {
+        id: cycle
+        command: [Config.hyprctl, "switchxkblayout", "all", "next"]
+        onExited: probe.running = true
+    }
 
-  onClicked: cycle.running = true
+    Timer {
+        interval: 3000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: probe.running = true
+    }
+
+    onClicked: cycle.running = true
 }

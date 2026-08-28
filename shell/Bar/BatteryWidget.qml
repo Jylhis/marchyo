@@ -8,15 +8,14 @@ import qs.Services
 // Click opens the in-shell power panel (battery detail + profile selector, with a
 // power-menu escape hatch).
 BarItem {
-  readonly property var dev: UPower.displayDevice
-  readonly property int pct: dev ? Math.round(dev.percentage) : 0
-  readonly property bool charging: dev
-    && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
+    readonly property var dev: UPower.displayDevice
+    readonly property int pct: dev ? Math.round(dev.percentage) : 0
+    readonly property bool charging: dev && (dev.state === UPowerDeviceState.Charging || dev.state === UPowerDeviceState.FullyCharged)
 
-  visible: dev && dev.isLaptopBattery && dev.isPresent
-  interactive: true
-  text: (charging ? "chg " : "bat ") + pct + "%"
-  textColor: pct <= 10 ? Color.statusErr : (pct <= 20 ? Color.statusWarn : Color.text)
+    visible: dev && dev.isLaptopBattery && dev.isPresent
+    interactive: true
+    text: (charging ? "chg " : "bat ") + pct + "%"
+    textColor: pct <= 10 ? Color.statusErr : (pct <= 20 ? Color.statusWarn : Color.text)
 
-  onClicked: PanelManager.toggle("power")
+    onClicked: PanelManager.toggle("power")
 }
