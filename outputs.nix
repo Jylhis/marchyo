@@ -585,6 +585,9 @@ in
     # variants. This is the only place the light variant's asset pipeline
     # (resvg/imagemagick + the package's installCheckPhase) is exercised —
     # CI's toplevel build only bakes the dark one. Deliberately tiny.
+    # Also build marchyo-shell and assert its wrapper bakes the runtime-env
+    # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
+    # icons) — see plans/shell-warnings-fix.md.
     // (
       let
         pkgs = mkPkgs system;
@@ -592,6 +595,14 @@ in
       nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
         build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
+        build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
+          wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
+          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$wrapper" \
+            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
+          grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
+            || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
+          touch "$out"
+        '';
       }
     );
 

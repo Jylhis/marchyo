@@ -5,10 +5,14 @@ default:
 # Dev loop: run the shell straight from the tree (hot-reloads QML on save).
 # Stops the store-backed user service first so the two instances don't fight
 # over the bar slot and org.freedesktop.Notifications. Dev defaults apply:
-# dark variant, fontScale 1.0, tools from PATH (see README.md).
+# dark variant, fontScale 1.0, tools from PATH (see README.md). The env vars
+# mirror the marchyo-shell wrapper (packages/marchyo-shell/package.nix) so
+# the dev instance behaves like the store shell: TZDIR lets Qt resolve the
+# system time zone from NixOS's /etc/zoneinfo, and the gtk3 platform theme
+# makes themed icons resolve against marchyo's Adwaita GTK settings.
 dev:
     systemctl --user stop marchyo-shell
-    quickshell -p .
+    TZDIR=/etc/zoneinfo QT_QPA_PLATFORMTHEME=gtk3 quickshell -p .
 
 # Hand the bar back to the store-backed user service after a dev session
 resume:
