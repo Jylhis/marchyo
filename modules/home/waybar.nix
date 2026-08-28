@@ -22,6 +22,10 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  # The unified Quickshell shell (modules/home/marchyo-shell.nix) renders its own
+  # bar, so waybar stands down when it is enabled — the two bars are mutually
+  # exclusive. mako/swayosd stay until the shell reaches their parity (Phases 2–3).
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   dictation = (osConfig.marchyo or { }).dictation or { };
   voxtypeIndicator = (dictation.enable or false) && (dictation.indicator or true);
@@ -184,7 +188,7 @@ let
   voxtype = lib.getExe pkgs.voxtype;
 in
 {
-  config = lib.mkIf desktopEnabled {
+  config = lib.mkIf (desktopEnabled && !shellEnabled) {
     programs.waybar = {
       enable = true;
       systemd.enable = true;

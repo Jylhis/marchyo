@@ -1,10 +1,12 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.Ui
+import qs.Commons
 
 // CPU utilisation from /proc/stat. Usage is the busy fraction between two
 // samples, so the first tick primes the baseline and the readout starts at the
-// second. Matches waybar's "cpu N%".
+// second. Matches waybar's "cpu N%". Click opens btop in a floating terminal.
 BarItem {
   id: root
 
@@ -12,7 +14,9 @@ BarItem {
   property real prevTotal: 0
   property int usage: 0
 
+  interactive: true
   text: "cpu " + usage + "%"
+  onClicked: Quickshell.execDetached([ Config.terminal, "--class=org.omarchy.btop", "-e", Config.btop ])
 
   FileView {
     id: stat

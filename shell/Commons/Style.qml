@@ -17,4 +17,7 @@ QtObject {
   // Baked feature flags (parity with waybar's conditional widgets). Dev default
   // shows the dictation widget; the build sets it from marchyo.dictation.
   readonly property bool dictationIndicator: true
+  // Whether the gum-TUI menus feature is on (marchyo.menus.enable). Drives the
+  // battery click target: `marchyo menu power` when on, else `vicinae toggle`.
+  readonly property bool menusEnabled: true
 }

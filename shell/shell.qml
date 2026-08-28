@@ -52,6 +52,10 @@ ShellRoot {
           spacing: Style.spacing
 
           TrayWidget {}
+          DictationWidget {}
+          CaffeineWidget {}
+          DndWidget {}
+          KeyboardLayoutWidget {}
           BluetoothWidget {}
           NetworkWidget {}
           AudioWidget {}

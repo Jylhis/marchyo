@@ -18,11 +18,14 @@ let
   # and its indicator opt-out is left set. Bakes the dictation bar widget in/out.
   dictation = (osConfig.marchyo or { }).dictation or { };
   dictationIndicator = (dictation.enable or false) && (dictation.indicator or true);
+  # Same default as waybar.nix: menus on unless explicitly disabled. Drives the
+  # battery widget's click target (marchyo menu power vs vicinae toggle).
+  menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   # Theme + scale the store package to the host at build time — declarative, no
   # activation-time file writes. Runtime theme switching is deferred.
   shellPkg = pkgs.marchyo-shell.override {
     variant = themeVariant;
-    inherit fontScale dictationIndicator;
+    inherit fontScale dictationIndicator menusEnabled;
   };
 in
 {
