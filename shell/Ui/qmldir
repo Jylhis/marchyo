@@ -1,0 +1,5 @@
+module qs.Ui
+BarItem 1.0 BarItem.qml
+Panel 1.0 Panel.qml
+PanelButton 1.0 PanelButton.qml
+TooltipWindow 1.0 TooltipWindow.qml

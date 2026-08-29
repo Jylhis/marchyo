@@ -22,6 +22,10 @@
 }:
 let
   desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  # The unified Quickshell shell (modules/home/marchyo-shell.nix) renders its own
+  # bar, so waybar stands down when it is enabled — the two bars are mutually
+  # exclusive. mako/swayosd stay until the shell reaches their parity (Phases 2–3).
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   dictation = (osConfig.marchyo or { }).dictation or { };
   voxtypeIndicator = (dictation.enable or false) && (dictation.indicator or true);
@@ -55,6 +59,22 @@ let
         printf '{"text":"󰂛","class":"dnd","tooltip":"Do not disturb — notifications hidden"}\n'
       else
         printf '{"text":"󰂚","class":"idle","tooltip":"Notifications on"}\n'
+      fi
+    '';
+  };
+
+  # Caffeine (keep-awake) state for the custom/caffeine module: same one-shot
+  # pattern as dndStatus, re-run on SIGRTMIN+8 — sent by `marchyo toggle
+  # caffeine` (packages/marchyo-cli) right after it flips the inhibitor. On =
+  # the tagged systemd-inhibit process is present.
+  caffeineStatus = pkgs.writeShellApplication {
+    name = "marchyo-caffeine-status";
+    runtimeInputs = [ pkgs.procps ];
+    text = ''
+      if pgrep -f marchyo-caffeine-inhibit >/dev/null; then
+        printf '{"text":"󰅶","class":"caffeine","tooltip":"Caffeine — staying awake"}\n'
+      else
+        printf '{"text":"󰾪","class":"idle","tooltip":"Caffeine off"}\n'
       fi
     '';
   };
@@ -119,6 +139,7 @@ let
 
     /* │ separators between right-hand status segments */
     #custom-voxtype,
+    #custom-caffeine,
     #custom-dnd,
     #language,
     #bluetooth,
@@ -150,6 +171,15 @@ let
     #custom-dnd.dnd {
       color: ${palette.hex."status-err"};
     }
+
+    /* caffeine indicator: muted mug when off, accent when keeping awake */
+    #custom-caffeine {
+      padding: 0 10px;
+      color: ${palette.hex."text-muted"};
+    }
+    #custom-caffeine.caffeine {
+      color: ${palette.hex.accent};
+    }
   '';
 
   terminal = lib.getExe pkgs.ghostty;
@@ -158,7 +188,7 @@ let
   voxtype = lib.getExe pkgs.voxtype;
 in
 {
-  config = lib.mkIf desktopEnabled {
+  config = lib.mkIf (desktopEnabled && !shellEnabled) {
     programs.waybar = {
       enable = true;
       systemd.enable = true;
@@ -181,6 +211,7 @@ in
             ]
             ++ lib.optional voxtypeIndicator "custom/voxtype"
             ++ [
+              "custom/caffeine"
               "custom/dnd"
               "hyprland/language"
               "bluetooth"
@@ -308,6 +339,17 @@ in
               interval = "once";
               signal = 9;
               on-click = "marchyo toggle notifications";
+            };
+            # Caffeine (keep-awake) indicator. Same interval = "once" + signal
+            # pattern as custom/dnd; signal = 8 pairs with the SIGRTMIN+8 that
+            # `marchyo toggle caffeine` sends, so state changes show without
+            # polling. Left click flips it.
+            "custom/caffeine" = {
+              exec = lib.getExe caffeineStatus;
+              return-type = "json";
+              interval = "once";
+              signal = 8;
+              on-click = "marchyo toggle caffeine";
             };
             # No on-click: the module cycles power profiles natively on left
             # click (reverse on right click) and ignores on-click config —

@@ -1,0 +1,8 @@
+module qs.Services
+singleton PanelManager 1.0 PanelManager.qml
+singleton SystemStats 1.0 SystemStats.qml
+singleton NotificationState 1.0 NotificationState.qml
+singleton Audio 1.0 Audio.qml
+singleton Power 1.0 Power.qml
+singleton NetworkStatus 1.0 NetworkStatus.qml
+singleton Tooltip 1.0 Tooltip.qml

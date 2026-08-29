@@ -131,16 +131,163 @@ stack until the shell reaches parity for that surface.
 
 ## Open questions
 
-- Config surface: mirror omarchy's single `shell.json`, or express layout
-  declaratively through `marchyo.shell.*` Nix options and *generate* `shell.json`?
-  (Marchyo's declarative ethos argues for the latter; runtime tweaks argue for a
-  writable file. Likely: generate defaults, allow a runtime overlay.)
-- Third-party plugin story: omarchy clones git repos into `~/.config`. That is
-  imperative and unsandboxed — probably out of scope for marchyo, or replaced by a
-  Nix-declared plugin list.
-- Do we keep Vicinae permanently (Phase 4) rather than reimplement a launcher?
+- **(Open)** Config surface: mirror omarchy's single `shell.json`, or express
+  layout declaratively through `marchyo.shell.*` Nix options and *generate*
+  `shell.json`? The shell currently bakes everything at build time (no runtime
+  config file); revisit if runtime tweaks are needed. (Marchyo's declarative ethos
+  argues for generated defaults with an optional runtime overlay.)
+- **(Resolved)** Third-party plugin story: **rejected.** See the Phase 2
+  "Architecture decision" — marchyo does not port omarchy's
+  `PluginRegistry`/manifest/`shell.json` machinery; surfaces are plain in-process
+  QML. No git-clone-into-`~/.config` plugins; a Nix-declared list can be added
+  later if ever needed.
+- **(Resolved)** Keep Vicinae as the launcher: **yes.** See the Phase 4 status;
+  the shell integrates with Vicinae rather than reimplementing a launcher.
 
 ## Status
 
-RFC skeleton only. Nothing implemented; `shell/` holds a placeholder README. Next
-step is Phase 0 (packaging spike) once this design is reviewed.
+- **Phase 0 — done.** `quickshell` (from nixpkgs), `packages/marchyo-shell/`,
+  `modules/home/marchyo-shell.nix`, the `marchyo.shell.enable` option, overlay +
+  flake wiring, and eval tests all landed; the tokens→QML theming bridge works.
+- **Phase 1 (bar) — done.** A monolithic Jylhis-themed bar at waybar parity:
+  `Ui/BarItem` primitive + `Bar/` widgets composed by `shell.qml`, driven by native
+  Quickshell service bindings (Hyprland, Pipewire, UPower incl. PowerProfiles,
+  SystemTray, Bluetooth, Networking, plus a `/proc/stat` FileView for CPU) and, for
+  the tool-backed widgets, absolute `/nix/store` paths baked into a generated
+  `Commons/Config.qml`. `Commons/Color.qml` carries the full palette+status token
+  set; `Commons/Style.qml` scales geometry from `marchyo.theme.fontScale` and bakes
+  the `dictationIndicator`/`menusEnabled` feature flags.
+  - **Tool-path baking landed:** keyboard-layout / DND / dictation / caffeine
+    widgets, click-to-launch-TUI actions (audio→wiremix, cpu→btop, network→nmtui,
+    battery→power menu, bluetooth→bluetui), and `nmcli`-backed network SSID+signal —
+    all reuse waybar's exact commands and `org.omarchy.*` float classes.
+  - **Cutover landed:** `marchyo.shell.enable` now disables `waybar.nix` (mutually
+    exclusive); mako/swayosd stay until Phases 2–3. See
+    [../shell/README.md](../shell/README.md).
+  - **Cosmetic parity done:** the tray expander (`·` toggle to show/hide icons)
+    and the clock `format-alt` toggle (compact vs long ISO-week form) now match
+    waybar; nothing waybar renders is missing from the bar.
+- **Phase 2 (panels + OSD) — in progress.**
+  - **OSD landed.** `shell/Osd/Osd.qml`: one bottom-centred, click-through
+    overlay for volume / mic-mute / brightness, triggered **natively** (Pipewire
+    bindings + a watched `/sys/class/backlight` node), no external poke and no
+    IPC. Enabling the shell now also retires SwayOSD: `modules/home/swayosd.nix`
+    stands its server down and `modules/home/hyprland.nix` routes the media keys
+    through the silent `wpctl`/`brightnessctl` path so the shell draws the
+    overlay. Eval tests assert the swayosd/shell mutual exclusion.
+    - *Open live-verify:* sysfs `inotify` delivery for the backlight node is
+      unverifiable offscreen. If a brightness key doesn't flash the overlay on a
+      real host, fall back to a one-line IPC poke from the bind (`qs ipc call`).
+  - **Architecture decision (supersedes the "plugin registry + IPC bus" wording
+    above).** marchyo does **not** port omarchy's `PluginRegistry` /
+    `BarWidgetRegistry` / `manifest.json` system: that machinery exists almost
+    entirely to discover and hot-reload *third-party* plugins from `~/.config`
+    and persist enable-state to `shell.json` — exactly the imperative,
+    unsandboxed third-party-plugin story this plan already rejects (see "Open
+    questions"). The reusable core is just stock Quickshell `IpcHandler` (native
+    `qs ipc`, no custom bus) plus plain in-process objects/singletons. Panels
+    will follow the same lightweight shape: a `bool open` controller + a
+    layer-shell `PanelWindow` card anchored to its bar button, backed directly by
+    the native service, toggled in-process on bar-widget click (IPC only for
+    keybind summons).
+  - **Panels landed.** `Services/PanelManager.qml` (a singleton holding the one
+    open panel id, mutual exclusion), `Ui/Panel.qml` (layer-shell overlay card +
+    outside-click dismiss) and `Ui/PanelButton.qml`, plus four panels in
+    `Panels/`: **audio** (Pipewire volume/mute + output-device picker), **network**
+    (Networking + nmcli status), **power** (UPower battery + PowerProfiles
+    selector), and **monitor** (CPU/mem/disk/temp meters from a shared
+    `Services/SystemStats` singleton + `df` + hwmon). Each is opened by clicking
+    its bar widget (`PanelManager.toggle(id)`) and keeps a button to the matching
+    TUI/menu (wiremix / nmtui / power menu / btop) as an escape hatch. No new Nix
+    option — pure in-process QML; panels render on the default screen (per-output
+    deferred).
+  - **Keybind summons landed.** A single stock `IpcHandler { target: "shell" }`
+    in `shell.qml` (`togglePanel`/`openPanel`/`closePanels`/`osdShow`); Hyprland
+    binds (`modules/home/hyprland.nix`, gated on `shellEnabled`) call
+    `marchyo-shell ipc -n call -- shell togglePanel <id>`. The `marchyo-shell`
+    wrapper bakes its own `-p`, so the call self-targets the running instance —
+    no instance discovery. This is the shell's only IPC; no custom bus.
+  - **Next in Phase 2:** OSD live-verify on a real host (panel service
+    bindings). Phase 2 is otherwise **feature-complete**; the remaining item is
+    live verification, so work continues into Phase 3 (notifications).
+  - **Brightness OSD: the IPC poke is now the primary path.** Sysfs attribute
+    writes signal `POLLPRI`, which `FileView`'s inotify-based `watchChanges`
+    does not see on most hosts, so the Hyprland brightness binds
+    (`modules/home/hyprland.nix`) run `brightnessctl` and then
+    `marchyo-shell ipc -n call -- shell osdShow BRT <pct> true`; the native
+    sysfs watcher stays as a best-effort fallback. This resolves the earlier
+    live-verify open item by design rather than by host confirmation.
+- **Phase 3 (notifications) — done.**
+  - **Notification server + toasts landed.** `Notifications/NotificationDaemon.qml`
+    instantiates a Quickshell `NotificationServer` that owns
+    `org.freedesktop.Notifications` (body + markup + actions + image capabilities,
+    no inline reply / persistence). Incoming notifications are retained
+    (`tracked`) and handed to a shared `Services/NotificationState` singleton;
+    `Notifications/NotificationList.qml` renders them newest-first as a top-right
+    layer-shell stack of `NotificationPopup` cards (sharp-cornered, 2px
+    urgency-coloured border, per-urgency auto-expire, click-to-dismiss, action
+    pills). Native throughout; no custom bus.
+  - **DND is in-shell state.** `NotificationState.dnd` replaces mako's
+    `mode=do-not-disturb`; the bar's DndWidget binds/toggles it in-process (no
+    `makoctl`, no poll), and the keybind/CLI reach it through the `shell` IPC
+    (`toggleDnd` / `clearNotifications`). Under DND non-critical notifications
+    queue and reappear when it clears; critical always show.
+  - **Mako cutover landed.** Enabling the shell stands mako down
+    (`modules/home/mako.nix`, mutually exclusive like waybar/swayosd), routes the
+    `modules/home/window-toggles.nix` DND/dismiss binds through the shell IPC, and
+    the shell package no longer bakes `makoctl` at all. Eval tests assert the
+    mako/shell mutual exclusion. No new Nix option (reuses `marchyo.shell.enable`).
+  - **Live-verify:** D-Bus name acquisition, real toast rendering/stacking,
+    action round-trips, `Quickshell.iconPath` resolution, and the markup subset
+    need a Wayland host with mako actually retired.
+- **Phase 4 (lock + launcher) — scoped, not started.**
+  - **Launcher: keep Vicinae (decision).** This resolves the third Open Question.
+    Vicinae is a strong standalone launcher (emoji/clipboard/apps) already themed
+    and wired (`modules/home/vicinae.nix`); reimplementing it in-shell is a large
+    effort for no user-visible gain. The shell integrates with it rather than
+    replacing it (the battery/power widgets already fall back to `vicinae toggle`
+    when menus are off). Revisit only if a launcher needs shell-shared state.
+  - **Lock surface: the one remaining implementation, intentionally deferred.**
+    Quickshell provides `WlSessionLock`, but a lock screen must be verified live
+    before shipping: a lock surface that fails to render or accept input locks the
+    user out of the session. It also needs a real Hyprland/greetd + PAM loop that
+    cannot be exercised offscreen. So it is left for a session with host access,
+    where it can replace `hyprlock`/`screensaver` behind the same mutual-exclusion
+    cutover pattern used for waybar/swayosd/mako.
+- **Hardening pass (post-Phase 3) — done.** A review-driven batch over the whole
+  `shell/` tree:
+    - **Tooltips**: `BarItem.tooltipText` + the shared `Services/Tooltip`
+      singleton + one `Ui/TooltipWindow` layer surface below the bar, centered
+      under the hovered item on its screen. Waybar-parity content: network
+      IP/interface/SSID (`nmcli` address probe), battery power draw
+      (`changeRate`), bluetooth connected devices, power profile, keyboard
+      layout (long form), dictation state, audio sink, tray item title/desc.
+    - **SNI tray menus**: right-click opens the item's DBus menu via the stock
+      `QsMenuAnchor` (menu-only items open it on left-click); falls back to
+      `secondaryActivate()`.
+    - **Per-monitor workspaces + persistent 1–5** (`WorkspacesWidget.screenName`,
+      mirroring waybar's per-output workspaces and `persistent-workspaces`).
+    - **Battery text forms**: `pwr` (plugged, not charging) and `bat full`, on
+      top of the existing `bat`/`chg` (via the shared `Services/Power`).
+    - **Shared service singletons**: `Services/Audio` (default sink/source + one
+      `PwObjectTracker` for bar/panel/OSD), `Services/Power` (UPower display
+      device + formatting), `Services/NetworkStatus` (one nmcli poll for
+      SSID/signal/IP shared by widget, panel, and tooltip).
+    - **Keyboard layout without polling**: startup `hyprctl devices` probe +
+      `Hyprland` `activelayout` raw events.
+    - **OSD**: volume clamps at 150% (matching the bar/panel ceiling), mic-unmute
+      shows the mic's live level.
+    - **Notifications**: DND queue capped at 20 (oldest overflow dismissed),
+      toast add/remove/displaced transitions (mako's toast feel).
+    - **Tooling**: committed offscreen type-check harness (`shell/harness.qml`)
+      and a `just -f shell/Justfile check` recipe; restored the portable
+      `.qmlls.ini` that a qmlls run had clobbered with machine-specific paths.
+    - *Verified non-bugs along the way:* `Quickshell.Io.Process.running` defaults
+      to **false** (empirically confirmed offscreen), so the one-shot
+      probe/toggle Processes never fired at startup.
+- **Outstanding (host-only):** live verification of the panels' service
+  bindings, the IPC keybind round-trips (incl. the brightness poke), the tray
+  menu popup on a layer surface, the tooltip positioning, and the notification
+  surface (bus acquisition, rendering, actions, icons) on a real Hyprland host.
+  Everything buildable/offscreen-testable in Phases 0–3, the bar's full waybar
+  parity, and the hardening pass above are complete.

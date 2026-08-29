@@ -59,6 +59,10 @@ let
   dictationStatusWindow =
     dictationEnabled && (((osConfig.marchyo or { }).dictation or { }).statusWindow or true);
 
+  # The unified shell adds keybind summons for its panels via `marchyo-shell ipc`
+  # (see the panel binds below); only wire them when the shell owns the desktop.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+
   # Lua-renderer helpers (bind/exec/env/onStart, see lib/hyprland-lua.nix).
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   inherit (hlua)
@@ -647,6 +651,7 @@ in
           ))
           (bindd "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight"))
           (bindd "SUPER + CTRL + I" "Toggle idle lock" (exec "marchyo toggle idle"))
+          (bindd "SUPER + CTRL + K" "Toggle caffeine (keep awake)" (exec "marchyo toggle caffeine"))
           (bindd "SUPER + ALT + Print" "Toggle screen recording" (exec "marchyo capture record"))
 
           # Plain binds (no cheat-sheet description)
@@ -681,17 +686,31 @@ in
           (binddOpts "SUPER + mouse:273" "Resize window" (dsp "window.resize()") { mouse = true; })
         ]
         ++ (
-          # Laptop multimedia keys for volume and LCD brightness. With the OSD
-          # enabled (default) they route through swayosd-client so an overlay
-          # shows the change; otherwise they fall back to silent wpctl /
-          # brightnessctl. `locked` keeps them working over the lock screen and
-          # `repeating` allows press-and-hold.
+          # Laptop multimedia keys for volume and LCD brightness. When SwayOSD
+          # owns the OSD they route through swayosd-client so an overlay shows the
+          # change; with the unified shell on, volume keys stay silent (the
+          # shell's OSD reacts natively to Pipewire) while the brightness keys
+          # poke the shell OSD over IPC with the resulting level — sysfs writes
+          # signal POLLPRI rather than a watchable change, so the shell's native
+          # backlight watcher is unreliable on many hosts (the poke is the
+          # primary path, the watcher stays as best-effort). `locked` keeps them
+          # working over the lock screen and `repeating` allows press-and-hold.
           let
-            osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
+            osdEnabled = (((osConfig.marchyo or { }).osd or { }).enable or true) && !shellEnabled;
             elOpts = {
               locked = true;
               repeating = true;
             };
+            # brightnessctl, then poke the shell OSD with the new percent
+            # (brightnessctl get/max are plain integers; guard max > 0 so the
+            # arithmetic expansion can never divide by zero). `exit 0` keeps
+            # press-and-hold chains alive when the poke cannot be delivered.
+            brightnessPoke = delta: ''
+              brightnessctl -e4 -n2 set ${delta}
+              max=$(brightnessctl max)
+              [ "$max" -gt 0 ] && marchyo-shell ipc -n call -- shell osdShow BRT $(( $(brightnessctl get) * 100 / max )) true
+              exit 0
+            '';
             volumeCommands =
               if osdEnabled then
                 {
@@ -708,8 +727,10 @@ in
                   XF86AudioLowerVolume = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
                   XF86AudioMute = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
                   XF86AudioMicMute = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-                  XF86MonBrightnessUp = "brightnessctl -e4 -n2 set 5%+";
-                  XF86MonBrightnessDown = "brightnessctl -e4 -n2 set 5%-";
+                  XF86MonBrightnessUp =
+                    if shellEnabled then brightnessPoke "5%+" else "brightnessctl -e4 -n2 set 5%+";
+                  XF86MonBrightnessDown =
+                    if shellEnabled then brightnessPoke "5%-" else "brightnessctl -e4 -n2 set 5%-";
                 };
           in
           lib.mapAttrsToList (key: cmd: bindOpts key (exec cmd) elOpts) volumeCommands
@@ -732,6 +753,24 @@ in
         ++ lib.optionals dictationStatusWindow [
           (bindd "SUPER + SHIFT + H" "Dictation status" (
             execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''
+          ))
+        ]
+        # Unified-shell panel summons. `marchyo-shell ipc` reaches the running
+        # shell process (the wrapper bakes its own -p, so it self-targets); the
+        # panels are the same ones the bar widgets toggle in-process. Only wired
+        # when the shell is on — the IPC target does not exist otherwise.
+        ++ lib.optionals shellEnabled [
+          (bindd "SUPER + SHIFT + V" "Audio panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel audio"
+          ))
+          (bindd "SUPER + SHIFT + N" "Network panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel network"
+          ))
+          (bindd "SUPER + SHIFT + B" "Power panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel power"
+          ))
+          (bindd "SUPER + SHIFT + M" "Monitor panel" (
+            exec "marchyo-shell ipc -n call -- shell togglePanel monitor"
           ))
         ];
 
