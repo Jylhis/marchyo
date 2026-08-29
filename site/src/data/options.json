@@ -686,7 +686,7 @@
   {
     "declared": "modules/nixos/options/osd.nix",
     "default": "true",
-    "description": "On-screen display for volume/brightness via SwayOSD (auto-enabled with\ndesktop). When enabled, the SwayOSD server runs as a user service and\nthe Hyprland volume/brightness media keys route through\n`swayosd-client`, showing an overlay on change. Set false to keep the\nsilent wpctl/brightnessctl bindings.",
+    "description": "On-screen display for volume/brightness (auto-enabled with desktop).\nWhen enabled, the SwayOSD server runs as a user service and the Hyprland\nvolume/brightness media keys route through `swayosd-client`, showing an\noverlay on change. Set false to keep the silent wpctl/brightnessctl\nbindings. When the unified `marchyo.shell` is enabled it provides its own\nnative OSD instead, so SwayOSD stands down and the media keys take the\nsilent path (the shell draws the overlay reactively).",
     "example": "",
     "name": "marchyo.osd.enable",
     "type": "boolean",
@@ -871,6 +871,15 @@
     "name": "marchyo.services.tailscale.enable",
     "type": "boolean",
     "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/tailscale.nix"
+  },
+  {
+    "declared": "modules/nixos/options/shell.nix",
+    "default": "false",
+    "description": "Experimental unified Quickshell desktop shell. When enabled, a single\nlong-running Quickshell process renders a Jylhis-themed top bar (Phase 1:\nworkspaces, clock, tray, audio, battery, network, bluetooth, CPU, power\nprofile), launched as a graphical-session user service. Opt-in and off by\ndefault: it runs alongside — and does not yet replace — the discrete\nwaybar/mako/swayosd stack, so it is not cascaded from\n`marchyo.desktop.enable`. See plans/shell.md for the roadmap.",
+    "example": "",
+    "name": "marchyo.shell.enable",
+    "type": "boolean",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/shell.nix"
   },
   {
     "declared": "modules/nixos/options/snapshots.nix",
