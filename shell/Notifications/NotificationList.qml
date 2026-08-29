@@ -8,8 +8,11 @@ import qs.Commons
 // under the bar, rendering NotificationState.popups newest-first. Sized to its
 // content so only the cards take clicks (the rest of the screen stays free), and
 // only materialised while there is something to show. A Column (positioner, not
-// a layout) so the toasts animate in/out: fade+slide on add, fade on remove, and
-// the stack smoothly reshuffles on displace — mako's toast feel.
+// a layout) so the toasts animate: fade+slide in on add, and the stack smoothly
+// reshuffles via the move transition (mako's toast feel). Positioners expose
+// only add/move/populate, with no remove transition, so a dismissed toast drops
+// immediately (the delegate is filtered out of the model at once); the remaining
+// cards then slide up via move.
 PanelWindow {
     id: root
 
@@ -53,15 +56,7 @@ PanelWindow {
                 easing.type: Easing.OutQuad
             }
         }
-        remove: Transition {
-            NumberAnimation {
-                property: "opacity"
-                from: 1.0
-                to: 0.0
-                duration: 150
-            }
-        }
-        displaced: Transition {
+        move: Transition {
             NumberAnimation {
                 property: "y"
                 duration: 150

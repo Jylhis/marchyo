@@ -27,6 +27,9 @@ BarItem {
     }
 
     interactive: true
+    // Qt.formatDateTime is a valid QML global; qmllint's Qt type model omits it.
+    // qmllint disable missing-property
     text: root.showAlt ? (Qt.formatDateTime(clock.date, "d MMMM") + " W" + root.isoWeek(clock.date) + " " + Qt.formatDateTime(clock.date, "yyyy")) : Qt.formatDateTime(clock.date, "ddd d MMM · HH:mm")
+    // qmllint enable missing-property
     onClicked: root.showAlt = !root.showAlt
 }

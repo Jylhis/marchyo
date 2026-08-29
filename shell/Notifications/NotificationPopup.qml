@@ -10,9 +10,9 @@ import qs.Commons
 // Notification, auto-expires on the sender's timeout (or a per-urgency default),
 // dismisses on click, and removes itself from the shared stack when the
 // notification is closed anywhere. Sharp corners + a 2px urgency-coloured border
-// keep mako's TUI aesthetic. Sized by the stack (a Column, not a Layout — its
-// add/remove/displaced transitions need a positioner), so width comes from
-// the parent rather than Layout.fillWidth.
+// keep mako's TUI aesthetic. Sized by the stack (a Column, not a Layout; its
+// add/move transitions need a positioner), so width comes from the parent
+// rather than Layout.fillWidth.
 Rectangle {
     id: root
 
