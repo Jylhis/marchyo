@@ -46,16 +46,18 @@ PanelWindow {
     // Never intercept clicks — tooltips are read-only.
     mask: Region {}
 
-    // The tooltip fades in; also matches the 150ms feel of the OSD bar.
-    opacity: visible ? 1.0 : 0.0
-    Behavior on opacity {
-        NumberAnimation {
-            duration: 100
-        }
-    }
-
     Rectangle {
         id: card
+        // Fade the card in when the tooltip shows. Opacity lives on the content
+        // item, not the window: Quickshell's PanelWindow has no opacity property
+        // (anchors/margins/exclusiveZone/color/mask only), so a window-level
+        // opacity assignment fails to load.
+        opacity: root.visible ? 1.0 : 0.0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 100
+            }
+        }
         radius: Style.osdRadius
         color: Color.surface
         border.color: Color.border
