@@ -135,6 +135,11 @@ in
     // optionalAttrs (!isDarwin) {
       window-decoration = false;
       gtk-single-instance = true;
+      # Force the GTK window chrome (tab bar) to the active variant. With a
+      # single (non light/dark-split) theme set, `window-theme = auto` falls
+      # back to the system GTK preference on GTK, which leaves the tab bar
+      # light even under our dark terminal theme.
+      window-theme = if themeVariant == "dark" then "dark" else "light";
     }
     // optionalAttrs isDarwin {
       # Left Option = Alt for terminal bindings; right Option keeps OS
