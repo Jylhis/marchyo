@@ -55,9 +55,8 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 When `marchyo.development.enable = true`, Marchyo configures:
 
 - **Git** with Git LFS and GitHub CLI (`gh`)
-- **Docker** with docker-compose and lazydocker
+- **Containers** — Docker (with docker-compose and lazydocker) or rootless Podman, Buildah, Skopeo
 - **Virtualization** via QEMU/KVM (libvirtd), with virt-manager and virt-viewer
-- **Container tools** — Buildah, Skopeo
 - **Build tools** — GNU Make, CMake, GCC, pkg-config
 - **Utilities** — direnv (with nix-direnv), jq, yq, network debugging tools (nmap, tcpdump, netcat)
 
@@ -66,3 +65,33 @@ Shell enhancements are not gated on `development.enable`: fzf, ripgrep, fd, and
 zoxide are installed unconditionally on every Marchyo system, and the Starship
 prompt is tied to `marchyo.theme.enable` instead.
 :::
+
+### Container backend and the `docker` group
+
+The container backend is selectable and defaults to Docker:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.development.containers.backend` | `"docker"` | `"docker"` (rootful daemon) or `"podman"` (rootless, `docker`-compatible CLI) |
+| `marchyo.development.containers.dockerGroup` | `false` | Add Marchyo users to the root-equivalent `docker` group |
+
+:::danger
+Membership in the `docker` group is **equivalent to passwordless root** on the
+host. The Docker daemon runs as root and owns its socket, so any process that
+can reach the socket can start a container that mounts and writes the whole host
+filesystem as root. Supplementary groups are inherited by every process in the
+user's session, so granting it exposes root to *all* code the user runs —
+browsers, editors, AI agents, npm scripts, build tools — not just Docker.
+
+Marchyo therefore does **not** add users to the `docker` group by default. The
+daemon still runs; `sudo docker …` works. Set
+`marchyo.development.containers.dockerGroup = true` only if you accept that every
+process in the session effectively has root.
+:::
+
+For unprivileged containers that need no elevated group at all, switch to
+rootless Podman, which provides a `docker` compatibility shim:
+
+```nix
+marchyo.development.containers.backend = "podman";
+```
