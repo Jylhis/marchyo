@@ -2,7 +2,7 @@
 let
   # qmllint over the shell tree, wired as a treefmt check. It resolves the
   # shell's `import qs.*` (per-directory qmldirs) via a temporary `qs -> shell`
-  # alias root, plus Quickshell's and QtQuick's own qml modules — the CI/treefmt
+  # alias root, plus Quickshell's and QtQuick's own qml modules, the CI/treefmt
   # analogue of the QML_IMPORT_PATH devenv.nix sets for the editor. Category
   # tuning and the MaxWarnings=0 threshold live in shell/.qmllint.ini (qmllint
   # auto-discovers it by walking up from each file). treefmt runs formatters from
