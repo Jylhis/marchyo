@@ -1,6 +1,6 @@
 # Linux virtual console (TTY) theming.
 #
-# Sets the 16-color console palette from the Jylhis Design System tokens.json
+# Sets the 16-color console palette from the Jylhis Design System survey theme
 # so that:
 #   - Any visible TTY (Ctrl+Alt+F2..F6, or the brief flash before greetd) uses
 #     the brand palette.

@@ -19,7 +19,7 @@
 # The dual-variant mako config and waybar CSS are derived from the *resolved*
 # Home Manager config by translating the build variant's semantic-token hexes
 # to the other variant's (both palettes come from
-# modules/generic/jylhis-palette.nix, i.e. the same tokens.json). This avoids
+# modules/generic/jylhis-palette.nix, i.e. the same survey theme). This avoids
 # duplicating the mako/waybar settings here — future edits to those modules
 # flow into both variants automatically. The mapping is well-defined: within
 # the semantic tokens (palette/status/syntax) the only shared hex is

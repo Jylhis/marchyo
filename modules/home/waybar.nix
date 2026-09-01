@@ -79,7 +79,9 @@ let
     '';
   };
 
-  upstreamFile = if isDark then "style.css" else "style-sheet.css";
+  # Design v2.0.0 renamed the waybar variants to style-<theme>-<mode>.css;
+  # marchyo tracks the survey theme (dark = Field, light = Sheet).
+  upstreamFile = if isDark then "style-survey-dark.css" else "style-survey-light.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
   # marchyo additions — selectors and tweaks not in upstream design

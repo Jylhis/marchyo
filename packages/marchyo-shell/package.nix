@@ -34,7 +34,7 @@
 let
   # Reuse the design-system palette helper (single source of truth for token ->
   # hex resolution and the palette/status/syntax merge) rather than re-reading
-  # tokens.json here. It only touches pkgs.jylhis-design-src, so a one-attr stub
+  # the theme palette here. It only touches pkgs.jylhis-design-src, so a one-attr stub
   # is enough in this callPackage context. Same idiom as modules/home/vicinae.nix.
   palette = import ../../modules/generic/jylhis-palette.nix {
     pkgs = { inherit jylhis-design-src; };
@@ -62,12 +62,12 @@ let
 
   # Generated design-token color singleton, overwriting the checked-in dev
   # default so the store shell is themed to the host's variant. Same
-  # tokens.json-driven, build-time generation idiom as marchyo-wallpapers.
+  # design-token-driven, build-time generation idiom as marchyo-wallpapers.
   colorQml = builtins.toFile "Color.qml" ''
     pragma Singleton
     import QtQuick
 
-    // Generated from the Jylhis design system (tokens.json), variant "${variant}".
+    // Generated from the Jylhis design system (themes/survey.json), variant "${variant}".
     QtObject {
     ${colorLines}
       // Back-compat aliases for the Phase 0 property names.

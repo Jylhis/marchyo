@@ -13,12 +13,15 @@ in
     programs.bat = {
       enable = true;
 
+      # Upstream .tmTheme file names track design v2.0.0's survey theme
+      # (Field = survey dark, Sheet = survey light); the local bat theme names
+      # stay jylhis-{field,sheet} (referenced by delta in modules/home/git.nix).
       themes = {
         jylhis-field = {
-          src = "${designSrc}/jylhis-field.tmTheme";
+          src = "${designSrc}/jylhis-survey-dark.tmTheme";
         };
         jylhis-sheet = {
-          src = "${designSrc}/jylhis-sheet.tmTheme";
+          src = "${designSrc}/jylhis-survey-light.tmTheme";
         };
       };
 

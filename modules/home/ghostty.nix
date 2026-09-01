@@ -95,10 +95,12 @@ in
   # in programs.ghostty.settings.theme). Done here rather than through the
   # upstream HM module (disabled in modules/home/jylhis-theme.nix) so the
   # themes are also installed on darwin, where that module is Linux-gated.
+  # Upstream file names track design v2.0.0's survey theme (Field = survey
+  # dark, Sheet = survey light); the local theme names stay jylhis-{field,sheet}.
   xdg.configFile."ghostty/themes/jylhis-field".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-field";
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-dark";
   xdg.configFile."ghostty/themes/jylhis-sheet".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-sheet";
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-light";
 
   programs.ghostty = {
     enable = true;

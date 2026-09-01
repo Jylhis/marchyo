@@ -19,9 +19,10 @@ in
       example = "light";
       description = ''
         Theme variant preference (light or dark).
-        Selects the Jylhis Design System palette derived from tokens.json:
-        - "dark" uses Jylhis Field
-        - "light" uses Jylhis Sheet
+        Selects the Jylhis Design System palette from the survey theme
+        (themes/survey.json):
+        - "dark" uses Jylhis Field (survey dark)
+        - "light" uses Jylhis Sheet (survey light)
         Override with `marchyo.theme.scheme` to use a base16-schemes YAML instead.
       '';
     };

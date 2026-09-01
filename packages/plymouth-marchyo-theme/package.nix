@@ -12,10 +12,13 @@
   variant ? "dark",
 }:
 let
-  # All colors come from the Jylhis Design System tokens.json (the same source
-  # of truth as modules/generic/jylhis-palette.nix). Every asset is generated
-  # or recolored at build time, so a variant flip retints the whole splash.
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens.json");
+  # All colors come from the Jylhis Design System `survey` theme (the same
+  # source of truth as modules/generic/jylhis-palette.nix). Design v2.0.0 (the
+  # theming framework) split tokens.json into tokens.core.json plus per-theme
+  # palette/syntax under themes/<slug>.json; the token shape is unchanged. Every
+  # asset is generated or recolored at build time, so a variant flip retints the
+  # whole splash.
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/survey.json");
   key = if variant == "light" then "light" else "dark";
   color = name: tokens.palette.${name}.${key};
   synColor = name: tokens.syntax.${name}.${key};
@@ -207,7 +210,7 @@ stdenvNoCC.mkDerivation {
     # Two word marks — the omarchy "marchyo" (basecamp/omarchy, leading "o"
     # moved to the end) and a JetBrains Mono "jylhis" — which the ">" caret
     # wipes on and off alternately at boot (see marchyo.script). Every
-    # surface is themed from the Jylhis Design System tokens.json at build.
+    # surface is themed from the Jylhis Design System survey theme at build.
     description = "Marchyo Plymouth boot splash — alternating caret-wipe wordmarks, themed from Jylhis Design System tokens";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;

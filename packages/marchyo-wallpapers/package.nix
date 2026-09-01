@@ -5,7 +5,10 @@
   jylhis-design-src,
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens.json");
+  # Design v2.0.0 (the theming framework) split tokens.json into a
+  # theme-independent core (tokens.core.json) plus per-theme palettes;
+  # marchyo tracks the `survey` theme. palette.<name>.{light,dark} is unchanged.
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/survey.json");
 
   color = name: mode: tokens.palette.${name}.${mode};
 

@@ -1,6 +1,6 @@
 # Jylhis Design System — palette helper.
 #
-# Reads tokens.json from the upstream design system and exposes:
+# Reads themes/survey.json from the upstream design system and exposes:
 #   - base16   : { scheme, author, base00..base0F } for Stylix
 #   - ansi16   : 16-element list of 6-digit hex strings — ANSI escape palette
 #                tuned for terminal apps that paint their own bg (Ghostty etc.)
@@ -9,7 +9,8 @@
 #                so the bare TTY (slot 0 = actual background) and any greeter
 #                inheriting it stay readable in both Sheet and Field variants.
 #                Mirrors the override done in the upstream design generator
-#                (scripts/generate.mjs) for jylhis-{sheet,field}.nix.
+#                (scripts/generate.mjs) for the console
+#                jylhis-survey-{light,dark}.nix palettes.
 #   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
 #                Merges palette + status + syntax, so every token the design
 #                system adds shows up here without a change to this file —
@@ -17,16 +18,20 @@
 #                interaction) is reachable as `palette.hex.contour`.
 #   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
-# Source of truth: ${pkgs.jylhis-design-src}/tokens.json (tracked via flake.lock).
-# Tracks design system v2 ("The Survey"): cool Sheet/Field grounds, a bronze
-# interactive `accent`, and a benchmark-vermilion `brand` mark.
+# Source of truth: ${pkgs.jylhis-design-src}/themes/survey.json (tracked via
+# flake.lock). Tracks design system v2.0.0 (the theming framework): the
+# theme-independent core lives in tokens.core.json, and each theme's palette
+# lives in themes/<slug>.json with a first-class light and dark mode. Marchyo
+# consumes the `survey` theme — cool Sheet (light) / Field (dark) grounds, a
+# bronze interactive `accent`, and a benchmark-vermilion `brand` mark; the
+# retired tokens.json flattened these into one file.
 {
   pkgs,
   lib,
   variant ? "dark",
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/tokens.json");
+  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/themes/survey.json");
   key = if variant == "dark" then "dark" else "light";
   sh = lib.removePrefix "#";
 

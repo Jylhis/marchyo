@@ -503,11 +503,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785441669,
-        "narHash": "sha256-tYpRZwNUmeGG2tQ3sJ6Lc1jBPgLCMP8iVSHumPXxFIU=",
+        "lastModified": 1788249338,
+        "narHash": "sha256-lJnBVlCZDfEbMnlA9v+MEB8EKumfIXJoF951t79D1qo=",
         "owner": "Jylhis",
         "repo": "design",
-        "rev": "79ffd8ec1488d409e122f3fc46f9564d89ea7254",
+        "rev": "464012a3d84e113492962f7cfc7cc02d768a8e1b",
         "type": "github"
       },
       "original": {
