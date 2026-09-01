@@ -31,20 +31,26 @@
   pkgs,
   nixosModule,
 }:
-# `testers.nixosTest` (not `runNixOSTest`): the latter injects a read-only
-# `nixpkgs.pkgs` into every node, which collides with the marchyo modules that
-# set `nixpkgs.overlays`. With `nixosTest` the node evaluates its own nixpkgs
-# from those overlays, exactly like the real system.
-pkgs.testers.nixosTest {
+let
+  # Drive the test through the low-level `runTest` rather than
+  # `pkgs.testers.runNixOSTest`/`nixosTest`: those force `node.pkgs` to an
+  # externally-built nixpkgs, which makes the node's `nixpkgs.*` options
+  # read-only and collides with the marchyo modules that set `nixpkgs.overlays`.
+  # Leaving `node.pkgs` at its default (null) lets the node build its own
+  # nixpkgs from those overlays — a faithful Marchyo system.
+  nixosLib = import (pkgs.path + "/nixos/lib") { inherit (pkgs) lib; };
+in
+nixosLib.runTest {
   name = "marchyo-security-scan";
+  hostPkgs = pkgs;
 
   nodes.machine =
-    { ... }:
+    { pkgs, ... }:
     {
       imports = [ nixosModule ];
 
-      # marchyo pulls unfree packages (e.g. 1Password); the node builds its own
-      # pkgs, so allow unfree here as the real reference build does.
+      # The node builds its own pkgs; marchyo pulls unfree packages
+      # (e.g. 1Password), so allow unfree as the real reference build does.
       nixpkgs.config.allowUnfree = true;
 
       marchyo = {
