@@ -96,9 +96,9 @@ in
   # upstream HM module (disabled in modules/home/jylhis-theme.nix) so the
   # themes are also installed on darwin, where that module is Linux-gated.
   xdg.configFile."ghostty/themes/jylhis-field".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-field";
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-dark";
   xdg.configFile."ghostty/themes/jylhis-sheet".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-sheet";
+    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-light";
 
   programs.ghostty = {
     enable = true;

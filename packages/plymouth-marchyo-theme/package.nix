@@ -12,10 +12,10 @@
   variant ? "dark",
 }:
 let
-  # All colors come from the Jylhis Design System tokens.json (the same source
+  # All colors come from the Jylhis Design System Survey theme (the same source
   # of truth as modules/generic/jylhis-palette.nix). Every asset is generated
   # or recolored at build time, so a variant flip retints the whole splash.
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens.json");
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/survey.json");
   key = if variant == "light" then "light" else "dark";
   color = name: tokens.palette.${name}.${key};
   synColor = name: tokens.syntax.${name}.${key};

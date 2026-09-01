@@ -2,7 +2,7 @@
 #
 # Colors are set via programs.fzf.colors (merged into FZF_DEFAULT_OPTS
 # alongside defaultOptions) from the Jylhis palette, mirroring the canonical
-# generated set in ${jylhis-design-src}/platforms/shell/fzf-{field,sheet}.sh.
+# generated set in ${jylhis-design-src}/platforms/shell/fzf-survey-{dark,light}.sh.
 # The upstream Jylhis HM module's fzf target stays disabled in
 # modules/home/jylhis-theme.nix: it mkForce-overwrites FZF_DEFAULT_OPTS (which
 # would drop the layout options below), ships fewer color keys than the
