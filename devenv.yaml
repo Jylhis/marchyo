@@ -1,6 +1,6 @@
 inputs:
   nixpkgs:
-    url: github:NixOS/nixpkgs/8e2eeb9477c9d40009a5bd51cd3eef2f5abb26f1
+    url: github:NixOS/nixpkgs/174eb786fb68e3a13e4e535a3deea479a0c07a6a
   treefmt-nix:
     url: github:numtide/treefmt-nix/ae7910970dddc408fe6ab1c8e4b277bb21d72dc0
     inputs:
