@@ -12,7 +12,7 @@ let
     mkIf
     optionalAttrs
     ;
-  inherit (pkgs.stdenv) isDarwin;
+  inherit (pkgs.stdenv.hostPlatform) isDarwin;
 
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   ghosttyTheme = if themeVariant == "dark" then "jylhis-field" else "jylhis-sheet";

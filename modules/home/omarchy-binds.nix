@@ -14,7 +14,7 @@
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.isLinux && (marchyoCfg.desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
   devEnabled = marchyoCfg.development.enable or false;
 
   # Same resolution as the fileManager Lua local in modules/home/hyprland.nix: follow

@@ -14,7 +14,8 @@
   ...
 }:
 let
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # The unified shell owns org.freedesktop.Notifications and draws its own toasts
   # (shell/Notifications), so mako stands down when the shell is on — the same
   # mutual-exclusion cutover as waybar.nix / swayosd.nix. The two daemons never

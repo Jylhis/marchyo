@@ -10,7 +10,7 @@
 }:
 let
   marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.isLinux && ((marchyoCfg.desktop or { }).enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && ((marchyoCfg.desktop or { }).enable or false);
   fileManager = (marchyoCfg.defaults or { }).fileManager or null;
   enabled = desktopEnabled && fileManager == "nautilus";
 

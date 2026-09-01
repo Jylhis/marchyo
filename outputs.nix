@@ -549,7 +549,7 @@ in
     {
       inherit (pkgs) marchyo-wallpapers marchyo-cli;
     }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
         hyprmon
         marchyo-shell
@@ -558,7 +558,7 @@ in
         pi
         ;
     }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       inherit (pkgs) wallpapper;
     };
 
@@ -592,7 +592,7 @@ in
       let
         pkgs = mkPkgs system;
       in
-      nixpkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+      nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
         build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''

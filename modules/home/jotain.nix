@@ -16,7 +16,8 @@
 let
   defaults = (osConfig.marchyo or { }).defaults or { };
   selected = (defaults.editor or null) == "jotain" || (defaults.terminalEditor or null) == "jotain";
-  enabled = pkgs.stdenv.isLinux && (osConfig.marchyo.desktop.enable or false) && selected;
+  enabled =
+    pkgs.stdenv.hostPlatform.isLinux && (osConfig.marchyo.desktop.enable or false) && selected;
 
   inherit (pkgs.glib) getSchemaPath;
 in

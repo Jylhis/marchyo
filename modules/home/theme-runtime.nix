@@ -34,7 +34,8 @@
   ...
 }:
 let
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   themeCfg = (osConfig.marchyo or { }).theme or { };
   themeEnabled = themeCfg.enable or true;
   buildVariant = themeCfg.variant or "dark";

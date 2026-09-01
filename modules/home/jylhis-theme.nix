@@ -24,7 +24,7 @@ in
 {
   imports = [ inputs.jylhis-design.homeManagerModules.default ];
 
-  config = lib.mkIf pkgs.stdenv.isLinux (
+  config = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (
     lib.mkMerge [
       {
         jylhis.theme = {

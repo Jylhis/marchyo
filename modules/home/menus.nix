@@ -14,7 +14,7 @@
 let
   inherit (lib) mkIf;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  desktopEnabled = pkgs.stdenv.isLinux && (osConfig.marchyo.desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (osConfig.marchyo.desktop.enable or false);
   enabled = desktopEnabled && (osConfig.marchyo.menus.enable or true);
 in
 {
