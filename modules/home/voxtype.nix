@@ -15,7 +15,7 @@
 }:
 let
   cfg = (osConfig.marchyo or { }).dictation or { };
-  enabled = pkgs.stdenv.isLinux && (cfg.enable or false);
+  enabled = pkgs.stdenv.hostPlatform.isLinux && (cfg.enable or false);
 in
 {
   config = lib.mkIf enabled {

@@ -127,8 +127,14 @@ in
         ]
       then
         throw "FAIL: Donate/Report a Bug/About should be hidden from root search"
-      else if loud ? providers then
-        throw "FAIL: declutter = false should leave providers unset"
+      # declutter = false drops marchyo's decluttering, but the upstream vicinae
+      # module still sets providers.calculator (enableNumen defaults on), so
+      # `providers` is never wholly absent — assert only that marchyo's own
+      # declutter entries are gone.
+      else if (loud.providers.theme.enabled or true) == false then
+        throw "FAIL: declutter = false should not disable the theme (Set Theme) provider"
+      else if (loud.providers.vicinae.entrypoints or { }) != { } then
+        throw "FAIL: declutter = false should not hide the housekeeping entrypoints"
       else
         "pass"
     );

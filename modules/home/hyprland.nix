@@ -10,7 +10,8 @@ let
   # Desktop shell modules only apply on Linux with the marchyo desktop enabled.
   # On darwin (isLinux false) and on headless Linux hosts (desktop disabled) this
   # whole module is inert, so consumers no longer need to `disabledModules` it.
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
   # The marchyo CLI persists ephemeral runtime overrides (theme/toggle
   # changes made without --apply); restore them at session start.

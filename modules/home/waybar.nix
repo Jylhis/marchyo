@@ -21,7 +21,8 @@
   ...
 }:
 let
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # The unified Quickshell shell (modules/home/marchyo-shell.nix) renders its own
   # bar, so waybar stands down when it is enabled — the two bars are mutually
   # exclusive. mako/swayosd stay until the shell reaches their parity (Phases 2–3).

@@ -7,7 +7,8 @@
 let
   # Linux-only, like every other desktop-gated home module: inert on darwin and
   # on headless hosts, so consumers never need to disabledModules it.
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   osdEnabled = ((osConfig.marchyo or { }).osd or { }).enable or true;
   # The unified shell provides its own OSD (shell/Osd), so SwayOSD stands down
   # when the shell is on — mutually exclusive, the same cutover as waybar.nix.

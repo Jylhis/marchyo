@@ -10,7 +10,8 @@
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # When the unified shell owns notifications, DND is in-shell state and mako is
   # gone, so these binds reach the shell over IPC instead of the CLI/makoctl.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;

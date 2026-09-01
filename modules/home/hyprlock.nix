@@ -6,7 +6,8 @@
 }:
 let
   inherit (lib) mkIf;
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   hasOsConfig = osConfig != { } && osConfig ? marchyo;
   cfg = if hasOsConfig then osConfig.marchyo.theme else null;
 

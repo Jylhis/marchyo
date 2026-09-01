@@ -7,7 +7,8 @@
 let
   # Linux-only, like every other desktop-gated home module: inert on darwin and
   # on headless hosts, so consumers never need to disabledModules it.
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # Opt-in: unlike osd/menus this defaults off (Phase 0 spike runs alongside the
   # discrete stack), so no `or true` fallback.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;

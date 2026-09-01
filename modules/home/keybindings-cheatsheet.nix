@@ -9,7 +9,8 @@ let
   inherit (lib) mkIf mkEnableOption;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.keybindingsHelp;
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
   # The cheatsheet logic (hyprctl binds -j → modmask decode → fzf overlay)
   # lives in the marchyo CLI (`marchyo keybindings`, absorbed from the old
