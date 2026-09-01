@@ -17,16 +17,19 @@
 #                interaction) is reachable as `palette.hex.contour`.
 #   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
-# Source of truth: ${pkgs.jylhis-design-src}/tokens.json (tracked via flake.lock).
-# Tracks design system v2 ("The Survey"): cool Sheet/Field grounds, a bronze
-# interactive `accent`, and a benchmark-vermilion `brand` mark.
+# Source of truth: ${pkgs.jylhis-design-src}/themes/survey.json (tracked via
+# flake.lock). Design system 2.0.0 split the flat tokens.json into a
+# theme-independent tokens.core.json plus per-theme themes/<slug>.json; marchyo
+# tracks the default Survey theme (cool Sheet/Field grounds, a bronze
+# interactive `accent`, a benchmark-vermilion `brand` mark). The theme file
+# exposes palette/status/syntax/ansi with per-mode light/dark values.
 {
   pkgs,
   lib,
   variant ? "dark",
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/tokens.json");
+  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/themes/survey.json");
   key = if variant == "dark" then "dark" else "light";
   sh = lib.removePrefix "#";
 

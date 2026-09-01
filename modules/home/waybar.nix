@@ -80,7 +80,7 @@ let
     '';
   };
 
-  upstreamFile = if isDark then "style.css" else "style-sheet.css";
+  upstreamFile = if isDark then "style-survey-dark.css" else "style-survey-light.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
 
   # marchyo additions — selectors and tweaks not in upstream design

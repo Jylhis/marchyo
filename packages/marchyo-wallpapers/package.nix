@@ -5,7 +5,7 @@
   jylhis-design-src,
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens.json");
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/survey.json");
 
   color = name: mode: tokens.palette.${name}.${mode};
 

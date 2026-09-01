@@ -15,10 +15,10 @@ in
 
       themes = {
         jylhis-field = {
-          src = "${designSrc}/jylhis-field.tmTheme";
+          src = "${designSrc}/jylhis-survey-dark.tmTheme";
         };
         jylhis-sheet = {
-          src = "${designSrc}/jylhis-sheet.tmTheme";
+          src = "${designSrc}/jylhis-survey-light.tmTheme";
         };
       };
 
