@@ -3,9 +3,11 @@
 # Upstream: https://github.com/Jylhis/design/blob/main/nix/home-manager-module.nix
 #
 # The upstream module installs theme assets via xdg.configFile (no programs.*
-# conflicts), driven by `jylhis.theme.variant ∈ { field | sheet }`. We translate
-# from marchyo's variant naming (dark | light) and selectively disable targets
-# that marchyo composes on top of (currently: waybar — see modules/home/waybar.nix).
+# conflicts), driven by two orthogonal options `jylhis.theme.name ∈ { survey |
+# mono }` × `jylhis.theme.mode ∈ { light | dark }`. We translate from marchyo's
+# variant naming (dark | light) onto the Survey theme's mode and selectively
+# disable targets that marchyo composes on top of (currently: waybar — see
+# modules/home/waybar.nix).
 {
   inputs,
   lib,
@@ -19,7 +21,7 @@ let
       enable = true;
       variant = "dark";
     };
-  variant = if cfg.variant == "dark" then "field" else "sheet";
+  mode = if cfg.variant == "dark" then "dark" else "light";
 in
 {
   imports = [ inputs.jylhis-design.homeManagerModules.default ];
@@ -29,7 +31,8 @@ in
       {
         jylhis.theme = {
           inherit (cfg) enable;
-          inherit variant;
+          name = "survey";
+          inherit mode;
           waybar.enable = false;
           bat.enable = false;
           mako.enable = false;
