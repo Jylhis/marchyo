@@ -7,7 +7,8 @@
   ...
 }:
 let
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   defaults = (osConfig.marchyo or { }).defaults or { };
 
   browserDesktopFiles = {

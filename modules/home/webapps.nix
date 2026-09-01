@@ -6,7 +6,8 @@
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   cfg = (osConfig.marchyo or { }).webapps or { };
   enabled = desktopEnabled && (cfg.enable or false);
 

@@ -9,12 +9,12 @@
     # Use lib.mkDefault so tests can override this
     enableRedistributableFirmware = lib.mkDefault true;
 
-    # Logitech wireless devices (Solaar GUI + udev rules), opt-in.
-    logitech.wireless = lib.mkIf config.marchyo.hardware.logitech.enable {
-      enable = true;
-      enableGraphical = true;
-    };
+    # Logitech wireless devices (udev rules), opt-in.
+    logitech.wireless.enable = lib.mkIf config.marchyo.hardware.logitech.enable true;
   };
+
+  # Solaar GUI (renamed from hardware.logitech.wireless.enableGraphical).
+  programs.solaar.enable = lib.mkIf config.marchyo.hardware.logitech.enable true;
 
   # Thunderbolt
   services.hardware.bolt.enable = lib.mkDefault true;

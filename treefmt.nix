@@ -1,5 +1,6 @@
 { pkgs, ... }:
 let
+  inherit (pkgs) lib;
   # qmllint over the shell tree, wired as a treefmt check. It resolves the
   # shell's `import qs.*` (per-directory qmldirs) via a temporary `qs -> shell`
   # alias root, plus Quickshell's and QtQuick's own qml modules, the CI/treefmt
@@ -59,6 +60,12 @@ in
       options = [ "-i" ];
       includes = [ "*.qml" ];
     };
+  }
+  # qmllint pulls in Quickshell's QML modules (Linux-only); gate it so the
+  # formatter output still evaluates on darwin, where the QML shell surfaces
+  # (Wayland layer-shell) never run anyway. Kept lazy in the let binding so
+  # pkgs.quickshell is never forced off Linux.
+  // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     # Static QML check: fails on a non-existent-property assignment (the crash
     # class the offscreen harness can't reach, since it never loads the layer-
     # shell surfaces). See shell/.qmllint.ini for the enabled categories.

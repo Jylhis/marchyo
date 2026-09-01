@@ -14,7 +14,8 @@ let
     ;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.screenshot;
-  desktopEnabled = pkgs.stdenv.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled =
+    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
 
   # Shared exec strings, bound on both the Print key and Super+S (see

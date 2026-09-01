@@ -31,5 +31,5 @@
   # `trash-list`, `trash-restore`). Intentionally does NOT alias `rm` — silently
   # changing rm semantics in a shared flake surprises consumers. Linux-only:
   # trash-cli implements the FreeDesktop spec, not the macOS Trash.
-  home.packages = lib.optionals (!pkgs.stdenv.isDarwin) [ pkgs.trash-cli ];
+  home.packages = lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ pkgs.trash-cli ];
 }
