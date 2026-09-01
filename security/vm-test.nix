@@ -31,13 +31,21 @@
   pkgs,
   nixosModule,
 }:
-pkgs.testers.runNixOSTest {
+# `testers.nixosTest` (not `runNixOSTest`): the latter injects a read-only
+# `nixpkgs.pkgs` into every node, which collides with the marchyo modules that
+# set `nixpkgs.overlays`. With `nixosTest` the node evaluates its own nixpkgs
+# from those overlays, exactly like the real system.
+pkgs.testers.nixosTest {
   name = "marchyo-security-scan";
 
   nodes.machine =
     { ... }:
     {
       imports = [ nixosModule ];
+
+      # marchyo pulls unfree packages (e.g. 1Password); the node builds its own
+      # pkgs, so allow unfree here as the real reference build does.
+      nixpkgs.config.allowUnfree = true;
 
       marchyo = {
         development.enable = true;
