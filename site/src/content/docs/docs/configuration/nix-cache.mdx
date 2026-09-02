@@ -1,0 +1,70 @@
+---
+title: Nix caches & cache router
+description: Binary caches and the ncro cache-route optimizer
+---
+
+## Binary caches
+
+`marchyo.nix.caches` is the single source of truth for the binary caches marchyo
+trusts. Each entry's `url` populates `nix.settings.substituters` and
+`trusted-substituters`; each non-null `publicKey` populates
+`trusted-public-keys`. The same list also feeds the cache router (below), so a
+cache is declared exactly once.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.nix.caches` | `list of { url; publicKey; }` | marchyo's 7 default caches | Binary caches used as substituters and (when the router is on) ncro upstreams |
+| `marchyo.nix.caches.*.url` | `str` | — | Cache URL |
+| `marchyo.nix.caches.*.publicKey` | `nullable str` | `null` | Trusted public key; `null` for an unsigned cache |
+
+Adding a cache is a one-line change that both the substituter list and the
+router consume:
+
+```nix
+marchyo.nix.caches = options.marchyo.nix.caches.default ++ [
+  {
+    url = "https://my-cache.example.com";
+    publicKey = "my-cache.example.com-1:...";
+  }
+];
+```
+
+## Cache router (ncro)
+
+[ncro](https://github.com/manic-systems/ncro) (Nix Cache Route Optimizer) is a
+local HTTP proxy that measures upstream latency in real time and routes each
+binary-cache request to the fastest reachable upstream, streaming NARs with zero
+local NAR storage. It runs as a `DynamicUser` systemd service.
+
+When enabled, `http://localhost:<port>` is prepended to
+`nix.settings.substituters` and the caches from `marchyo.nix.caches` stay as
+direct fallbacks (Nix dedups and routes by priority, so the local proxy wins).
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.nix.router.enable` | `bool` | `true` | Run ncro and front the caches with it |
+| `marchyo.nix.router.port` | `port` | `4200` | Port ncro listens on / the prepended `localhost` substituter |
+| `marchyo.nix.router.netrcFile` | `nullable path` | `null` | netrc file for authenticating to private upstreams (e.g. a sops-generated `/etc/nix/netrc`) |
+| `marchyo.nix.router.extraUpstreams` | `list of str` | `[ "https://cache.nixos.org" ]` | Extra upstream URLs to route through ncro that are not in `marchyo.nix.caches` |
+
+```nix
+# Opt out and talk to the caches directly:
+marchyo.nix.router.enable = false;
+
+# Authenticate to a private upstream:
+marchyo.nix.router.netrcFile = "/etc/nix/netrc";
+```
+
+:::note
+The router is **NixOS only**. It is a systemd service, so darwin and
+nix-on-droid ignore `marchyo.nix.router.*` and use the caches in
+`marchyo.nix.caches` as direct substituters.
+:::
+
+After activation, verify with:
+
+```sh
+systemctl status ncro
+curl -sf http://localhost:4200/nix-cache-info
+nix config show substituters   # localhost:4200 first
+```

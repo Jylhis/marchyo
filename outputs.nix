@@ -11,6 +11,7 @@ let
     nix-on-droid
     nixos-hardware
     vicinae
+    ncro
     noctalia
     stylix
     stylix-stable
@@ -260,6 +261,10 @@ let
         # modules/nixos/launcher.nix gates it behind marchyo.launcher.* —
         # importing this module alone does not install the capability.
         vicinae.nixosModules.default
+        # ncro service options; enablement is gated by marchyo.nix.router.enable
+        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service) —
+        # deliberately absent from mkDarwinModules and hmSharedConfig.
+        ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }
 
         ./modules/nixos/default.nix

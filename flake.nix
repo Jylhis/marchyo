@@ -79,6 +79,13 @@
       url = "github:vicinaehq/vicinae";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # ncro (Nix Cache Route Optimizer): a local HTTP proxy that routes binary-cache
+    # requests to the fastest reachable upstream. Wired into every NixOS system via
+    # nixosModules.default and gated behind marchyo.nix.router.enable.
+    ncro = {
+      url = "github:manic-systems/ncro";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";

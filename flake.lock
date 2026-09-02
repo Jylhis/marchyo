@@ -538,6 +538,26 @@
         "type": "github"
       }
     },
+    "ncro": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788018155,
+        "narHash": "sha256-TB3Q6xpaV7APiC6qAM4ENV6MNuUjR4OgatQtj88PBWY=",
+        "owner": "manic-systems",
+        "repo": "ncro",
+        "rev": "a367692d67bed3225d64fed0fffefed141927fd3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "manic-systems",
+        "repo": "ncro",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -1060,6 +1080,7 @@
         "jotain": "jotain",
         "jylhis-design": "jylhis-design",
         "llm-agents": "llm-agents",
+        "ncro": "ncro",
         "nix-darwin": "nix-darwin",
         "nix-darwin-stable": "nix-darwin-stable",
         "nix-on-droid": "nix-on-droid_2",
