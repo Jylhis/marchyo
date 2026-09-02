@@ -28,7 +28,7 @@ trap 'rm -f "$RAW" "$JQ_PROG"' EXIT
 
 # jq program that turns the `nix-env --json --meta` object into one INSERT per
 # package. Written via a quoted heredoc so single quotes (SQL escaping) and jq
-# `$vars` are taken literally — no shell quoting/expansion applies.
+# `$vars` are taken literally; no shell quoting/expansion applies.
 cat > "$JQ_PROG" <<'JQ'
 def esc: gsub("'"; "''");
 def lic:

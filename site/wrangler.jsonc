@@ -21,12 +21,12 @@
     "run_worker_first": ["/api/*"]
   },
   // nixpkgs package search index (SQLite FTS5), backing /api/packages.
-  // DISABLED until the database is provisioned — a placeholder database_id
+  // DISABLED until the database is provisioned: a placeholder database_id
   // fails `wrangler deploy`, which would break the whole site deploy. The
   // Worker treats env.DB as optional, so with this commented out the site
   // deploys normally and the nixpkgs tab shows a graceful "unavailable" notice.
   //
-  // To enable: create the DB once and uncomment with the real id —
+  // To enable: create the DB once and uncomment with the real id:
   //   cd site && bunx wrangler d1 create marchyo-nixpkgs
   // paste the returned database_id, then let .github/workflows/nixpkgs-index.yml
   // load it. For local dev (`just site-serve`) uncomment with any id.

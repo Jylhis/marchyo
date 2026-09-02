@@ -4,8 +4,8 @@ name: nixpkgs search index
 # /api/packages route of the site Worker (the "nixpkgs" tab of /search/).
 #
 # Requires two repository secrets:
-#   CLOUDFLARE_API_TOKEN   — token with D1 edit permission
-#   CLOUDFLARE_ACCOUNT_ID  — the Cloudflare account id
+#   CLOUDFLARE_API_TOKEN   - token with D1 edit permission
+#   CLOUDFLARE_ACCOUNT_ID  - the Cloudflare account id
 # Provision the database once before the first run:
 #   cd site && bunx wrangler d1 create marchyo-nixpkgs
 # then paste the returned database_id into site/wrangler.jsonc.

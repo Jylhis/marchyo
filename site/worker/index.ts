@@ -33,8 +33,13 @@ interface PackageRow {
 const MAX_RESULTS = 50;
 const CACHE_SECONDS = 300;
 
-function json(body: unknown, extraHeaders: Record<string, string> = {}): Response {
+function json(
+  body: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
+    status,
     headers: {
       "content-type": "application/json; charset=utf-8",
       ...extraHeaders,
@@ -54,7 +59,7 @@ function ftsQuery(raw: string): string | null {
     .toLowerCase()
     .split(/[^a-z0-9.+_-]+/i)
     .map((t) => t.replace(/[-.]+$/g, "").replace(/^[-.]+/g, ""))
-    .filter((t) => t.length > 0)
+    .filter((t) => /[a-z0-9]/.test(t))
     .slice(0, 8);
   if (tokens.length === 0) return null;
   return tokens.map((t) => `"${t.replace(/"/g, '""')}"*`).join(" ");
@@ -71,6 +76,7 @@ async function handlePackages(url: URL, env: Env): Promise<Response> {
         results: [],
         error: "nixpkgs index unavailable (D1 binding not configured)",
       },
+      200,
       { "cache-control": "no-store" },
     );
   }
@@ -92,11 +98,13 @@ async function handlePackages(url: URL, env: Env): Promise<Response> {
 
     return json(
       { query: q, results: results ?? [] },
+      200,
       { "cache-control": `public, max-age=${CACHE_SECONDS}` },
     );
   } catch (e) {
     return json(
       { query: q, results: [], error: (e as Error).message },
+      200,
       { "cache-control": "no-store" },
     );
   }
@@ -108,14 +116,14 @@ export default {
 
     if (url.pathname === "/api/packages") {
       if (request.method !== "GET") {
-        return json({ error: "method not allowed" }, { allow: "GET" });
+        return json({ error: "method not allowed" }, 405, { allow: "GET" });
       }
       return handlePackages(url, env);
     }
 
     // Any other /api/* path is unknown; everything else defers to assets.
     if (url.pathname.startsWith("/api/")) {
-      return json({ error: "not found" });
+      return json({ error: "not found" }, 404);
     }
 
     return env.ASSETS.fetch(request);

@@ -10,7 +10,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
 ---
 
 <Base
-  title="marchyo search — packages & options, one index"
+  title="marchyo search: packages & options, one index"
   description="Search every option and package Marchyo ships, from one index. Each result copies as context-ready markdown for your model."
   noindex
 >
@@ -29,10 +29,10 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
 
   <main class="search" data-screen-label="Search">
     <div class="search__top">
-      <label for="q" class="search__hint">$ marchyo search — packages &amp; options, one index</label>
+      <label for="q" class="search__hint">$ marchyo search: packages &amp; options, one index</label>
       <div class="search__box">
         <span class="search__chev">❯</span>
-        <input id="q" type="text" placeholder="try hyprland, desktop.enable, git…" autocomplete="off" spellcheck="false" />
+        <input id="q" type="text" placeholder="try hyprland, desktop.enable, git..." autocomplete="off" spellcheck="false" />
         <span class="ds-kbd">/</span>
       </div>
       <div class="search__meta">
@@ -52,7 +52,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
         </div>
         <div class="ai-note">
           <div class="ai-note__label">// ai</div>
-          <p>Every result copies as context-ready markdown — paste it straight into your model.</p>
+          <p>Every result copies as context-ready markdown, paste it straight into your model.</p>
           <button class="copy-chip" id="copy-all">» copy results for ai</button>
         </div>
       </aside>
@@ -62,7 +62,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
   </main>
 
   <footer class="site-footer">
-    <div class="colophon"><a href="/">marchyo(7)</a> · everything marchyo ships, one index · a reimagined <a href="https://search.nixos.org">search.nixos.org</a></div>
+    <div class="colophon"><a href="/">marchyo(7)</a> | everything marchyo ships, one index | a reimagined <a href="https://search.nixos.org">search.nixos.org</a></div>
   </footer>
 
   <script type="application/json" id="options-data" is:inline set:html={optionsJson}></script>
@@ -389,10 +389,11 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
     setTimeout(() => (btn.textContent = original), 1600);
   }
 
-  // ---- nixpkgs remote search (Worker /api/packages → D1 FTS5) ----
+  // ---- nixpkgs remote search (Worker /api/packages -> D1 FTS5) ----
   function scheduleNixpkgs() {
     const query = q.trim();
     if (tab !== 'packages' || !query) {
+      window.clearTimeout(debounceTimer);
       nixState = 'idle';
       nixResults = [];
       return;
@@ -458,7 +459,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
     }
 
     // packages tab: marchyo packages (local) + nixpkgs (remote)
-    stats.textContent = `${marchyoPkgs.length} marchyo · ${nixResults.length} nixpkgs`;
+    stats.textContent = `${marchyoPkgs.length} marchyo | ${nixResults.length} nixpkgs`;
 
     if (marchyoPkgs.length) {
       results.appendChild(sectionHeader('// marchyo packages'));
@@ -467,21 +468,17 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
 
     results.appendChild(sectionHeader('// nixpkgs'));
     if (!q.trim()) {
-      results.appendChild(hint('type to search all of nixpkgs…'));
+      results.appendChild(hint('type to search all of nixpkgs...'));
     } else if (nixState === 'loading') {
-      results.appendChild(hint('searching nixpkgs…'));
+      results.appendChild(hint('searching nixpkgs...'));
     } else if (nixState === 'error') {
       results.appendChild(
         hint(`nixpkgs search unavailable${nixError ? ` (${nixError})` : ''}. marchyo options & packages still work.`),
       );
     } else if (nixResults.length === 0) {
-      results.appendChild(hint(`no nixpkgs packages match “${q.trim()}”.`));
+      results.appendChild(hint(`no nixpkgs packages match "${q.trim()}".`));
     } else {
       nixResults.forEach((r) => results.appendChild(renderNixpkg(r)));
-    }
-
-    if (marchyoPkgs.length === 0 && nixResults.length === 0 && nixState !== 'loading') {
-      // keep the nixpkgs hint visible; nothing else to add
     }
   }
 
@@ -495,7 +492,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
   function emptyState(): HTMLElement {
     const empty = document.createElement('div');
     empty.className = 'result-empty';
-    empty.innerHTML = `<span style="color:var(--color-status-err)">✗</span> no matches for “${esc(q)}” — try <button data-try="desktop">desktop</button> or <button data-try="theme" data-try-tab="options">theme</button>`;
+    empty.innerHTML = `<span style="color:var(--color-status-err)">✗</span> no matches for "${esc(q)}", try <button data-try="desktop">desktop</button> or <button data-try="theme" data-try-tab="options">theme</button>`;
     empty.querySelectorAll<HTMLButtonElement>('button[data-try]').forEach((b) => {
       b.addEventListener('click', () => {
         q = b.dataset.try!;
@@ -556,7 +553,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
   function renderMarchyoPkg(r: MarchyoPkg): HTMLElement {
     const el = document.createElement('article');
     el.className = 'result';
-    const homeFoot = r.homepage ? ` · <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
+    const homeFoot = r.homepage ? ` | <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
     el.innerHTML = `
       <div class="result__head">
         <span class="result__name">${esc(r.name)}</span>
@@ -569,7 +566,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
         </span>
       </div>
       <p class="result__desc">${esc(r.description)}</p>
-      <div class="result__foot">└── pkgs.${esc(r.attr)} · marchyo overlay${homeFoot}</div>`;
+      <div class="result__foot">└── pkgs.${esc(r.attr)} | marchyo overlay${homeFoot}</div>`;
     const plain = `environment.systemPackages = [ pkgs.${r.attr} ];`;
     const ai = [
       'Nix package (marchyo overlay):',
@@ -595,7 +592,7 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
     el.className = 'result';
     const name = r.pname || r.attr_name;
     const license = r.license ? `<span class="result__license">${esc(r.license)}</span>` : '';
-    const homeFoot = r.homepage ? ` · <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
+    const homeFoot = r.homepage ? ` | <a href="${safeUrl(r.homepage)}" target="_blank" rel="noopener">${esc(r.homepage)}</a>` : '';
     el.innerHTML = `
       <div class="result__head">
         <span class="result__name">${esc(name)}</span>
@@ -675,15 +672,15 @@ const marchyoPackagesJson = JSON.stringify(marchyoPackagesData).replace(/</g, '\
       const list = filteredOptions();
       text =
         `Marchyo options matching "${q || '*'}":\n\n` +
-        list.map((r) => `- ${r.name} (${r.type}) — ${r.description}`).join('\n');
+        list.map((r) => `- ${r.name} (${r.type}): ${r.description}`).join('\n');
     } else {
       const marchyoPkgs = filteredMarchyoPkgs();
       text =
         `Marchyo package search for "${q || '*'}":\n\n` +
         `## marchyo overlay\n` +
-        marchyoPkgs.map((r) => `- pkgs.${r.attr} (${r.version}) — ${r.description}`).join('\n') +
+        marchyoPkgs.map((r) => `- pkgs.${r.attr} (${r.version}): ${r.description}`).join('\n') +
         (nixResults.length
-          ? `\n\n## nixpkgs\n` + nixResults.map((r) => `- pkgs.${r.attr_name} (${r.version}) — ${r.description ?? ''}`).join('\n')
+          ? `\n\n## nixpkgs\n` + nixResults.map((r) => `- pkgs.${r.attr_name} (${r.version}): ${r.description ?? ''}`).join('\n')
           : '');
     }
     copyText(e.currentTarget as HTMLButtonElement, text);

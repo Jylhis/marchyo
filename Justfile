@@ -157,7 +157,7 @@ site-data:
     echo "Wrote site/src/data/{options,marchyo-packages}.json"
 
 # Build the full nixpkgs search index SQL (from marchyo's pinned nixpkgs) for
-# Cloudflare D1. Slow — enumerates all of nixpkgs. Loaded into D1 by the
+# Cloudflare D1. Slow, enumerates all of nixpkgs. Loaded into D1 by the
 # nixpkgs-index workflow; run locally to seed a dev database.
 site-index system="x86_64-linux":
     site/scripts/build-nixpkgs-index.sh {{system}} site/scripts/nixpkgs.sql
@@ -173,6 +173,6 @@ site-serve:
     if [ -f scripts/nixpkgs.sql ]; then
       bunx wrangler d1 execute marchyo-nixpkgs --local --file scripts/nixpkgs.sql
     else
-      echo "note: scripts/nixpkgs.sql missing — run 'just site-index' to enable the nixpkgs tab locally" >&2
+      echo "note: scripts/nixpkgs.sql missing, run 'just site-index' to enable the nixpkgs tab locally" >&2
     fi
     bunx wrangler dev
