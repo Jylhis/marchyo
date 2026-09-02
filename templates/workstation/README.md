@@ -51,7 +51,7 @@ nixos-rebuild build-vm --flake .#workstation
 - GitHub CLI (gh)
 
 #### Containers
-- Rootless Podman with lazypodman (or Docker with lazydocker, opt-in)
+- Rootless Podman with podman-tui (or Docker with lazydocker, opt-in)
 - buildah, skopeo
 - Virtualization (QEMU/KVM via libvirtd)
 

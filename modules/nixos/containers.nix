@@ -37,7 +37,7 @@ in
         skopeo
       ]
       ++ (lib.optionals (backend == "podman") [
-        pkgs.lazypodman # made in the same spirit like Lazygit
+        pkgs.podman-tui # terminal UI for managing Podman, in the spirit of lazydocker
       ])
       ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
 
