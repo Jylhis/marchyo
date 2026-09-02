@@ -1,8 +1,9 @@
 # Pure-eval loader for a base16-schemes YAML (tinted-theming format).
 #
-# The files are uniform enough for a line-based parse — no YAML engine (and
-# no import-from-derivation beyond reading the already-fetched schemes
-# package):
+# The YAMLs come from the `base16-schemes` flake input, exposed by the overlay
+# as `pkgs.base16-schemes-src` (a source tree, not a derivation), so reading
+# them is a plain eval-time file read with no import-from-derivation. The files
+# are uniform enough for a line-based parse, no YAML engine:
 #
 #   system: "base16"
 #   name: "Nord"
@@ -17,7 +18,7 @@
 { pkgs, lib }:
 schemeName:
 let
-  path = "${pkgs.base16-schemes}/share/themes/${schemeName}.yaml";
+  path = "${pkgs.base16-schemes-src}/base16/${schemeName}.yaml";
   raw =
     if builtins.pathExists path then
       builtins.readFile path

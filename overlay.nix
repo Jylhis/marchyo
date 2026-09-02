@@ -2,6 +2,10 @@
 final: prev:
 {
   jylhis-design-src = inputs.jylhis-design;
+  # base16 scheme YAMLs as a source tree (not a derivation), so the theme
+  # loaders read them at eval time without import-from-derivation. See
+  # modules/generic/base16-scheme.nix and modules/generic/stylix.nix.
+  base16-schemes-src = inputs.base16-schemes;
   marchyo-wallpapers = final.callPackage ./packages/marchyo-wallpapers/package.nix { };
   marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
 }

@@ -94,6 +94,14 @@
       url = "github:Jylhis/design";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # base16 colour-scheme YAMLs (tinted-theming). Consumed as a plain source
+    # tree at eval time (never built), so the theme loader stays IFD-free: the
+    # marchyo.theme.themes / .scheme readers parse these files directly. See
+    # modules/generic/base16-scheme.nix and overlay.nix (base16-schemes-src).
+    base16-schemes = {
+      url = "github:tinted-theming/schemes";
+      flake = false;
+    };
     # Jotain — Jylhis's Emacs config, distributed as a flake. Its
     # homeManagerModules.default is self-contained (extends pkgs with its own
     # overlay internally), so only nixpkgs needs to follow. Wired in as the
