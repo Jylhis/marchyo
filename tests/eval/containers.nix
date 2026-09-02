@@ -9,15 +9,33 @@ let
   inDocker = cfg: lib.elem "docker" cfg.users.users.testuser.extraGroups;
 in
 {
-  # Default development config: the Docker daemon is available, but the user is
-  # NOT placed in the root-equivalent `docker` group. This is the regression
-  # guard — enabling development tools must not silently grant passwordless root
-  # to every process in the session.
+  # Default development config: the backend is rootless Podman (dockerCompat),
+  # the Docker daemon is NOT enabled, and no `docker` group exists to join. This
+  # is the regression guard for the default — enabling development tools must
+  # not stand up a rootful daemon or grant passwordless root to the session.
+  eval-containers-podman-by-default =
+    testNixOSCheck "containers-podman-by-default"
+      (
+        cfg:
+        cfg.virtualisation.podman.enable
+        && cfg.virtualisation.podman.dockerCompat
+        && !cfg.virtualisation.docker.enable
+        && !(inDocker cfg)
+      )
+      (withTestUser {
+        marchyo.development.enable = true;
+      });
+
+  # Docker backend opt-in: selecting the Docker backend enables the daemon, but
+  # the user is NOT placed in the root-equivalent `docker` group. This is the
+  # regression guard — opting into Docker must not silently grant passwordless
+  # root to every process in the session.
   eval-containers-no-docker-group-by-default =
     testNixOSCheck "containers-no-docker-group-by-default"
       (cfg: cfg.virtualisation.docker.enable && !(inDocker cfg))
       (withTestUser {
         marchyo.development.enable = true;
+        marchyo.development.containers.backend = "docker";
       });
 
   # Explicit opt-in: only when marchyo.development.containers.dockerGroup = true
@@ -26,6 +44,7 @@ in
     testNixOSCheck "containers-docker-group-opt-in" inDocker
       (withTestUser {
         marchyo.development.enable = true;
+        marchyo.development.containers.backend = "docker";
         marchyo.development.containers.dockerGroup = true;
       });
 

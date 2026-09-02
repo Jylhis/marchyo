@@ -51,8 +51,8 @@ nixos-rebuild build-vm --flake .#workstation
 - GitHub CLI (gh)
 
 #### Containers
-- Docker with docker-compose
-- buildah, skopeo, lazydocker
+- Rootless Podman with lazypodman (or Docker with lazydocker, opt-in)
+- buildah, skopeo
 - Virtualization (QEMU/KVM via libvirtd)
 
 #### Build & Debug
@@ -132,18 +132,15 @@ environment.systemPackages = with pkgs; [
 
 ### Container Alternatives
 
-Choose between Docker and Podman:
+`marchyo.development.enable` provisions a container backend for you. It defaults
+to rootless Podman; switch to the rootful Docker daemon with a single option:
 
 ```nix
-# Option 1: Docker (default in template)
-virtualisation.docker.enable = true;
+# Default: rootless Podman (daemonless, docker-compatible CLI)
+marchyo.development.containers.backend = "podman";
 
-# Option 2: Podman (rootless alternative)
-virtualisation.podman = {
-  enable = true;
-  dockerCompat = true;
-  defaultNetwork.settings.dns_enabled = true;
-};
+# Opt into the classic Docker daemon instead
+marchyo.development.containers.backend = "docker";
 ```
 
 ### Custom Development Shells

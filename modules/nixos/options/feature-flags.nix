@@ -16,27 +16,27 @@ in
       enable = mkOption {
         type = types.bool;
         default = false;
-        description = "Enable development tools (Docker, buildah, gh, etc.)";
+        description = "Enable development tools (Podman, buildah, gh, etc.)";
       };
 
       containers = {
         backend = mkOption {
           type = types.enum [
-            "docker"
             "podman"
+            "docker"
           ];
-          default = "docker";
+          default = "podman";
           description = ''
             Container backend enabled by `marchyo.development.enable`.
 
-            - `"docker"` (default) runs the classic Docker daemon as root.
-              `docker` commands require `sudo` unless the invoking user is a
-              member of the `docker` group — see
+            - `"podman"` (default) runs Podman rootless: daemonless, in a user
+              namespace, needing no privileged group. The `docker` command is
+              provided as a compatibility shim (`dockerCompat`), so most
+              workflows keep working without granting any host-level privilege.
+            - `"docker"` runs the classic Docker daemon as root. `docker`
+              commands require `sudo` unless the invoking user is a member of
+              the `docker` group — see
               `marchyo.development.containers.dockerGroup`.
-            - `"podman"` runs Podman rootless: daemonless, in a user namespace,
-              needing no privileged group. The `docker` command is provided as a
-              compatibility shim (`dockerCompat`), so most workflows keep
-              working without granting any host-level privilege.
           '';
         };
 
@@ -56,10 +56,11 @@ in
             all code the user runs — browsers, editors, AI agents, npm scripts,
             build tools — not just to Docker itself.
 
-            Leave this off (the recommended default): the daemon still runs and
-            `sudo docker …` works. For unprivileged containers that need no
-            group at all, prefer `marchyo.development.containers.backend =
-            "podman"`. Enable this only on machines where you have accepted that
+            This flag only applies when you have opted into the Docker backend
+            (`marchyo.development.containers.backend = "docker"`); the default
+            rootless Podman backend needs no group at all. Leave this off (the
+            recommended default): the daemon still runs and `sudo docker …`
+            works. Enable this only on machines where you have accepted that
             every session process effectively has root.
           '';
         };
