@@ -638,8 +638,11 @@ in
           ))
           (bindd "SUPER + period" "Emoji picker" (exec "vicinae open --query emoji"))
 
-          # Notifications (mako)
-          (bindd "SUPER + comma" "Dismiss last notification" (exec "makoctl dismiss"))
+          # Dismiss last notification. With the shell on, mako is retired and the
+          # toast list lives in the shell, so route to its IPC; otherwise makoctl.
+          (bindd "SUPER + comma" "Dismiss last notification" (
+            exec (if shellEnabled then "marchyo-shell ipc -n call -- shell dismissLast" else "makoctl dismiss")
+          ))
 
           # Cursor zoom (screen magnifier)
           (bindd "SUPER + CTRL + Z" "Zoom in" (exec "marchyo zoom in"))
@@ -647,8 +650,15 @@ in
           (bindd "SUPER + CTRL + ALT + Z" "Reset zoom" (exec "marchyo zoom reset"))
 
           # System toggles (backed by modules/home/window-toggles.nix)
+          # Toggle top bar. The shell hides/shows its bar over IPC; waybar uses
+          # SIGUSR1. Guarded so the bind never targets a stood-down daemon.
           (bindd "SUPER + SHIFT + SPACE" "Toggle top bar" (
-            exec "systemctl --user kill -s SIGUSR1 waybar.service"
+            exec (
+              if shellEnabled then
+                "marchyo-shell ipc -n call -- shell toggleBar"
+              else
+                "systemctl --user kill -s SIGUSR1 waybar.service"
+            )
           ))
           (bindd "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight"))
           (bindd "SUPER + CTRL + I" "Toggle idle lock" (exec "marchyo toggle idle"))
