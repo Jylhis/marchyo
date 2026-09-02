@@ -10,7 +10,9 @@ sync when changing option declarations).
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.desktop.enable` | `false` | Desktop (Hyprland, audio, bluetooth, fonts) |
-| `marchyo.development.enable` | `false` | Dev tools (git, docker, virtualization) |
+| `marchyo.development.enable` | `false` | Dev tools (git, Podman, virtualization) |
+| `marchyo.development.containers.backend` | `"podman"` | Container backend: `"podman"` (rootless) or `"docker"` (rootful daemon) |
+| `marchyo.development.containers.dockerGroup` | `false` | Add users to the root-equivalent `docker` group (Docker backend only) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |
 | `marchyo.office.enable` | `false` | Office apps (auto-enabled with desktop) |
 

@@ -30,7 +30,7 @@
   # Enable desktop environment (includes Hyprland, office apps, media apps)
   marchyo.desktop.enable = true;
 
-  # Enable development tools (docker, virtualization, dev tools)
+  # Enable development tools (rootless Podman, virtualization, dev tools)
   marchyo.development.enable = true;
 
   # BYOK AI tooling (OpenRouter). Supply the API key via a sops-nix secret so it
