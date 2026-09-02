@@ -17,7 +17,7 @@
     "mainProgram": "marchyo",
     "name": "marchyo-cli",
     "source": "marchyo",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   {
     "attr": "marchyo-wallpapers",
@@ -51,12 +51,12 @@
   },
   {
     "attr": "plymouth-marchyo-theme",
-    "description": "Marchyo Plymouth boot splash, generated and themed from Jylhis Design System tokens",
+    "description": "Marchyo Plymouth boot splash — alternating caret-wipe wordmarks, themed from Jylhis Design System tokens",
     "homepage": "",
     "license": "MIT",
     "mainProgram": "",
     "name": "plymouth-marchyo-theme",
     "source": "marchyo",
-    "version": "v4.0.0"
+    "version": "v5.0.0"
   }
 ]

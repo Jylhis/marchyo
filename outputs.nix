@@ -11,6 +11,7 @@ let
     nix-on-droid
     nixos-hardware
     vicinae
+    ncro
     noctalia
     stylix
     stylix-stable
@@ -260,6 +261,10 @@ let
         # modules/nixos/launcher.nix gates it behind marchyo.launcher.* —
         # importing this module alone does not install the capability.
         vicinae.nixosModules.default
+        # ncro service options; enablement is gated by marchyo.nix.router.enable
+        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service) —
+        # deliberately absent from mkDarwinModules and hmSharedConfig.
+        ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }
 
         ./modules/nixos/default.nix
@@ -694,6 +699,16 @@ in
         pi
         ;
       site-search-data = mkSiteSearchData { inherit system; };
+
+      # NixOS VM security test: boots a Marchyo system and runs a lynis host
+      # hardening audit (plus the vuls collector) inside it. Deliberately kept
+      # out of `checks` — it boots a VM (needs KVM) and is run locally on
+      # demand (`nix build .#security-vm-test` / `just security-vm`), not on the
+      # fast PR gate. See security/vm-test.nix.
+      security-vm-test = import ./security/vm-test.nix {
+        inherit pkgs;
+        nixosModule = nixosModules.default;
+      };
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
       inherit (pkgs) wallpapper;
@@ -777,12 +792,48 @@ in
       runner = pkgs.writeShellScriptBin "run-vm" ''
         exec ${vm.config.system.build.vm}/bin/run-${vm.config.networking.hostName}-vm "$@"
       '';
+
+      # Reference system closure that the SBOM / vulnerability scanners target
+      # by default — the same build as nixosConfigurations.x86_64. Interpolated
+      # into the scanner scripts, so `nix run .#sbom` builds it first; `nix
+      # flake check` only evaluates it (already evaluated for the config).
+      refToplevel =
+        (mkNixosSystem {
+          inherit system;
+          modules = [
+            sharedNixosConfig
+            { networking.hostName = "marchyo-x86-64"; }
+          ];
+        }).config.system.build.toplevel;
+
+      sbomApp = import ./security/sbom.nix {
+        inherit pkgs;
+        defaultTarget = refToplevel;
+      };
+      vulnScanApp = import ./security/vuln-scan.nix {
+        inherit pkgs;
+        defaultTarget = refToplevel;
+      };
     in
     {
       default = {
         type = "app";
         program = "${runner}/bin/run-vm";
         meta.description = "Run a QEMU VM with all Marchyo features enabled";
+      };
+
+      # Supply-chain / vulnerability tooling, run on the host against the real
+      # system closure (they query the Nix store and fetch CVE data online, so
+      # they can't be hermetic checks). See security/sbom.nix, security/vuln-scan.nix.
+      sbom = {
+        type = "app";
+        program = "${sbomApp}/bin/marchyo-sbom";
+        meta.description = "Generate a CycloneDX/SPDX SBOM of the reference Marchyo system (sbomnix)";
+      };
+      vuln-scan = {
+        type = "app";
+        program = "${vulnScanApp}/bin/marchyo-vuln-scan";
+        meta.description = "Scan the reference Marchyo system closure for known CVEs (vulnxscan + vulnix; needs network)";
       };
     };
 }

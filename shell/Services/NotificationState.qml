@@ -86,6 +86,23 @@ QtObject {
         root.setDnd(!root.dnd);
     }
 
+    // Dismiss the single newest notification (mako's `makoctl dismiss`, bound to
+    // SUPER+comma). Prefers the newest on-screen toast; falls back to the newest
+    // DND-queued one when nothing is visible. Both lists are newest-first, so
+    // index 0 is the most recent. Reassign via remove() before dismiss() so the
+    // `closed` -> remove() reentry is a no-op (matching clearAll's ordering).
+    function dismissLast() {
+        let n = null;
+        if (root.popups.length > 0)
+            n = root.popups[0];
+        else if (root.queued.length > 0)
+            n = root.queued[0];
+        if (n === null)
+            return;
+        root.remove(n);
+        n.dismiss();
+    }
+
     function clearAll() {
         const all = root.popups.concat(root.queued);
         root.popups = [];

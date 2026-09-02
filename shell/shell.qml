@@ -20,6 +20,10 @@ import qs.Services
 ShellRoot {
     id: shell
 
+    // Bar visibility, toggled over IPC (SUPER+SHIFT+SPACE). Replaces waybar's
+    // SIGUSR1 show/hide; one property drives every per-screen bar below.
+    property bool barVisible: true
+
     // On-screen display for volume/brightness/mic-mute (replaces SwayOSD). Reacts
     // natively to Pipewire and the backlight sysfs node — no external poke.
     Osd {
@@ -82,6 +86,21 @@ ShellRoot {
             return "ok";
         }
 
+        function dismissLast(): string {
+            NotificationState.dismissLast();
+            return "ok";
+        }
+
+        function toggleBar(): string {
+            shell.barVisible = !shell.barVisible;
+            return shell.barVisible ? "on" : "off";
+        }
+
+        function setBar(on: string): string {
+            shell.barVisible = on === "true" || on === "on" || on === "1";
+            return shell.barVisible ? "on" : "off";
+        }
+
         function osdShow(label: string, percent: string, hasBar: string): string {
             osd.show(label, parseInt(percent) || 0, hasBar !== "false");
             return "ok";
@@ -98,6 +117,7 @@ ShellRoot {
         PanelWindow {
             required property var modelData
             screen: modelData
+            visible: shell.barVisible
 
             anchors {
                 top: true

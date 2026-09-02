@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.marchyo;
-  backend = "docker"; # podman, containerd
+  backend = cfg.development.containers.backend;
   mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 in
 {
@@ -14,8 +14,12 @@ in
 
     virtualisation = {
       containers.enable = true;
+      # Rootless Podman: daemonless, user-namespaced, no privileged group. The
+      # `docker` CLI is provided via dockerCompat. Deliberately no root-owned
+      # docker-compat socket (dockerSocket) — that would re-expose a root
+      # daemon socket, defeating the point of the rootless backend.
       podman = lib.mkIf (backend == "podman") {
-        dockerSocket.enable = true;
+        enable = true;
         defaultNetwork.settings.dns_enable = true;
         dockerCompat = true;
       };
@@ -33,14 +37,20 @@ in
         skopeo
       ]
       ++ (lib.optionals (backend == "podman") [
-        pkgs.lazypodman # made in the same spirit like Lazygit
+        pkgs.podman-tui # terminal UI for managing Podman, in the spirit of lazydocker
       ])
       ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
 
-    users.users = lib.genAttrs mUsers (_name: {
-      extraGroups = [
-        config.users.groups."${backend}".name
-      ];
-    });
+    # The Docker daemon runs as root and its socket is root-owned, so the
+    # `docker` group is root-equivalent (a group member can mount and write the
+    # whole host filesystem as root via a container). Groups are inherited by
+    # every session process, so this is not granted by default — only when the
+    # host explicitly opts in via marchyo.development.containers.dockerGroup.
+    # Without it, `sudo docker …` still works. Podman rootless needs no group.
+    users.users = lib.mkIf (backend == "docker" && cfg.development.containers.dockerGroup) (
+      lib.genAttrs mUsers (_name: {
+        extraGroups = [ config.users.groups.docker.name ];
+      })
+    );
   };
 }

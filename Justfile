@@ -97,6 +97,21 @@ run:
 # Alias for run
 vm: run
 
+# Generate a CycloneDX/SPDX SBOM of the reference NixOS system (sbomnix)
+sbom:
+    nix run .#sbom
+
+# Scan the reference system closure for known CVEs (vulnxscan + vulnix; needs network)
+vuln-scan:
+    nix run .#vuln-scan
+
+# Boot the reference system in a VM and run host-hardening + vuln scanners (lynis, vuls)
+security-vm:
+    nix build .#security-vm-test -L
+
+# Full local security sweep: SBOM + closure CVE scan + VM hardening audit
+security-scan: sbom vuln-scan security-vm
+
 # Typecheck and unit-test the marchyo CLI
 cli-test:
     cd packages/marchyo-cli && bun install --frozen-lockfile && bun run typecheck && bun test
