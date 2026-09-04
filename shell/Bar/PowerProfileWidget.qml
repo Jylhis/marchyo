@@ -9,11 +9,11 @@ BarItem {
     text: {
         switch (PowerProfiles.profile) {
         case PowerProfile.PowerSaver:
-            return "eco";
+            return "󰾆";
         case PowerProfile.Performance:
-            return "perf";
+            return "󰓇";
         default:
-            return "bal";
+            return "󰾅";
         }
     }
     tooltipText: {

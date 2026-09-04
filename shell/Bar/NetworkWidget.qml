@@ -18,10 +18,10 @@ BarItem {
     interactive: true
     text: {
         if (!activeDevice)
-            return "offline";
+            return "󰤭";
         if (activeDevice.type === DeviceType.Wired)
-            return "eth";
-        return ssid.length > 0 ? ssid + " " + NetworkStatus.signalStrength + "%" : "wifi";
+            return "󰈁";
+        return ssid.length > 0 ? "󰤨 " + NetworkStatus.signalStrength : "󰤨";
     }
     textColor: activeDevice ? Color.text : Color.textFaint
     tooltipText: NetworkStatus.tooltipText

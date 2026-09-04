@@ -10,9 +10,9 @@ QtObject {
     readonly property int barHeight: 28
     readonly property int fontSize: 14
     readonly property int fontSizeSmall: 12
-    readonly property int spacing: 8
-    readonly property int paddingH: 10
-    readonly property string fontFamily: "monospace"
+    readonly property int spacing: 4
+    readonly property int paddingH: 6
+    readonly property string fontFamily: "BlexMono Nerd Font"
 
     // On-screen-display geometry (volume/brightness overlay).
     readonly property int osdPad: 14

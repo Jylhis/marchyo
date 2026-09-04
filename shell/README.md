@@ -20,7 +20,7 @@ bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
 
 A hardening pass added **tooltips** (one shared hover surface under the bar),
 **SNI tray menus** on right-click, **per-monitor workspaces** with waybar's
-persistent 1–5, the remaining **battery text forms** (`pwr` / `bat full`),
+persistent 1–5, the full **battery state set** (charging / full / plugged-in),
 shared `Services/` singletons for audio/power/network (one binding each for
 bar, panel, and OSD), an **event-driven keyboard-layout widget** (no poll),
 toast transitions, a DND queue cap, and a committed offscreen **type-check
@@ -249,8 +249,15 @@ switches between `Sat 22 Aug · 14:30` and the long `22 August W34 2025` form wi
 ISO week). Since then a hardening pass closed the remaining behavioural gaps:
 tooltips (see above), SNI tray menus on right-click (`QsMenuAnchor`, with
 menu-only items opening their menu on left-click), per-monitor workspaces plus
-the persistent 1–5 (waybar's `persistent-workspaces`), and the battery's
-`pwr` / `bat full` text forms. Nothing waybar renders is missing.
+the persistent 1–5 (waybar's `persistent-workspaces`), and the full battery
+state set (charging / full / plugged-in). Nothing waybar renders is missing.
+
+The right-hand readouts are **compact Nerd-font glyph + value** rather than word
+labels (e.g. `󰕾 100`, `󰁹 87`, `󰓅 45`, `󰤨 72`), rendered in `BlexMono Nerd Font`
+(the `fontFamily` in `Commons/Style.qml`, installed system-wide via
+`modules/nixos/fonts.nix`). This keeps the right group narrow enough to clear the
+screen-centered clock on small outputs; the verbose text (`Volume 100%`,
+`CPU 45%`, SSID/signal, …) lives in each widget's hover tooltip.
 
 ## Development
 
