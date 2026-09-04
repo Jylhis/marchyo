@@ -6,3 +6,6 @@ singleton Audio 1.0 Audio.qml
 singleton Power 1.0 Power.qml
 singleton NetworkStatus 1.0 NetworkStatus.qml
 singleton Tooltip 1.0 Tooltip.qml
+singleton Dictation 1.0 Dictation.qml
+singleton Caffeine 1.0 Caffeine.qml
+singleton KeyboardLayout 1.0 KeyboardLayout.qml
