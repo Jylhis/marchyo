@@ -36,6 +36,7 @@ in
     git = {
       enable = true;
       settings = {
+        advice.skippedCherryPicks = lib.mkDefault false;
         user = {
           name = userConfig.fullname;
           inherit (userConfig) email;
@@ -80,7 +81,7 @@ in
           autoSetupRemote = lib.mkDefault true;
         };
         help = {
-          autocorrect = lib.mkDefault "prompt";
+          autocorrect = lib.mkDefault "immediate";
         };
         rerere = {
           enabled = lib.mkDefault true;

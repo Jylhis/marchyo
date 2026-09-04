@@ -12,10 +12,14 @@
       enable = true;
       git = config.programs.git.enable;
       icons = "auto";
+      colors = "auto";
     };
 
     nh.enable = true;
-    ripgrep.enable = true;
+    ripgrep = {
+      enable = true;
+      arguments = [ "--smart-case" ];
+    };
     fd = {
       enable = true;
 
