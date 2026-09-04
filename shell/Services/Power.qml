@@ -9,7 +9,8 @@ import Quickshell.Services.UPower
 QtObject {
     readonly property var dev: UPower.displayDevice
     readonly property bool hasBattery: dev && dev.isLaptopBattery && dev.isPresent
-    readonly property int pct: dev ? Math.round(dev.percentage) : 0
+    // UPower percentage is a 0.0–1.0 fraction (energy / energyCapacity); scale to 0–100.
+    readonly property int pct: dev ? Math.round(dev.percentage * 100) : 0
     readonly property bool charging: dev && dev.state === UPowerDeviceState.Charging
     readonly property bool full: dev && dev.state === UPowerDeviceState.FullyCharged
     // UPower energy-rate in W; positive while charging, negative while discharging.
