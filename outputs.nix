@@ -629,33 +629,38 @@ in
         # repo as a build input would rebuild these on every site/ or docs/
         # edit. Each suite derives its root from its own location, so the
         # staged layout has to mirror the repo's.
-        shell-format-unit = pkgs.runCommand "check-shell-format-unit"
-          {
-            nativeBuildInputs = [ pkgs.nodejs ];
-          }
-          ''
-            mkdir -p src/shell src/tests
-            cp -r ${./shell/Commons} src/shell/Commons
-            cp -r ${./tests/shell} src/tests/shell
-            cd src
-            node tests/shell/format-test.js
-            touch "$out"
-          '';
+        shell-format-unit =
+          pkgs.runCommand "check-shell-format-unit"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            }
+            ''
+              mkdir -p src/shell src/tests
+              cp -r ${./shell/Commons} src/shell/Commons
+              cp -r ${./tests/shell} src/tests/shell
+              cd src
+              node tests/shell/format-test.js
+              touch "$out"
+            '';
 
-        shell-contracts = pkgs.runCommand "check-shell-contracts"
-          {
-            nativeBuildInputs = [ pkgs.gnugrep pkgs.gawk ];
-          }
-          ''
-            mkdir -p src/tests src/packages
-            cp -r ${./shell} src/shell
-            cp -r ${./modules} src/modules
-            cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
-            cp -r ${./tests/shell} src/tests/shell
-            cd src
-            bash tests/shell/contracts-test.sh
-            touch "$out"
-          '';
+        shell-contracts =
+          pkgs.runCommand "check-shell-contracts"
+            {
+              nativeBuildInputs = [
+                pkgs.gnugrep
+                pkgs.gawk
+              ];
+            }
+            ''
+              mkdir -p src/tests src/packages
+              cp -r ${./shell} src/shell
+              cp -r ${./modules} src/modules
+              cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
+              cp -r ${./tests/shell} src/tests/shell
+              cd src
+              bash tests/shell/contracts-test.sh
+              touch "$out"
+            '';
       }
     );
 
