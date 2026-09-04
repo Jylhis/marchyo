@@ -21,7 +21,11 @@ BarItem {
     // One-shot probe: running defaults to false and only the timer arms it.
     Process {
         id: probe
-        command: [Config.pgrep, "-f", "marchyo-caffeine-inhibit"]
+        // [m]… so this pgrep's own argv (and every other monitor's caffeine
+        // probe) never matches the pattern — only the real
+        // `--why=marchyo-caffeine-inhibit` inhibitor does. A bare pattern
+        // cross-matches sibling pgreps and flickers the widget on/off.
+        command: [Config.pgrep, "-f", "[m]archyo-caffeine-inhibit"]
         onExited: code => root.active = (code === 0)
     }
 

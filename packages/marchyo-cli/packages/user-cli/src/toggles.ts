@@ -90,6 +90,12 @@ function screensaverMarkerPath(): string {
 const SUSPEND_INHIBIT_TAG = "marchyo-suspend-inhibit";
 const CAFFEINE_INHIBIT_TAG = "marchyo-caffeine-inhibit";
 
+// Self-excluding pgrep pattern: bracket the first char so a concurrent
+// `pgrep -f <pattern>` never matches its own (or a peer's) argv — only the
+// real `--why=<tag>` inhibitor. See shell/Bar/CaffeineWidget.qml for the same
+// idiom. Keep the literal tag for `--why=` and `pkill -f`.
+const probePattern = (tag: string): string => `[${tag[0]}]${tag.slice(1)}`;
+
 // Device names from `hyprctl -j devices` matching a predicate (touchpads /
 // touch screens).
 async function deviceNames(
@@ -300,7 +306,7 @@ export const TOGGLES: ToggleDef[] = [
     name: "suspend",
     defaultOn: true,
     probe: async (capture) => {
-      const r = await capture(["pgrep", "-f", SUSPEND_INHIBIT_TAG]);
+      const r = await capture(["pgrep", "-f", probePattern(SUSPEND_INHIBIT_TAG)]);
       return r.code !== 0;
     },
     setOn: async (ctx) => {
@@ -338,7 +344,7 @@ export const TOGGLES: ToggleDef[] = [
     name: "caffeine",
     defaultOn: false,
     probe: async (capture) => {
-      const r = await capture(["pgrep", "-f", CAFFEINE_INHIBIT_TAG]);
+      const r = await capture(["pgrep", "-f", probePattern(CAFFEINE_INHIBIT_TAG)]);
       return r.code === 0; // inhibitor present => caffeine on
     },
     setOn: async (ctx) => {
