@@ -179,7 +179,7 @@ Added, both wired into `nix flake check` as Linux-only `runCommand` checks:
   escapes a literal colon inside a value as `\:`, and both nmcli parsers split
   on a bare `:` — an SSID of `Cafe: Free` was read as SSID `Cafe` with a signal
   strength of `Free` → `0%`. `splitTerse` handles the escaping, and an
-  unparseable signal is now `-1` ("no reading") rather than `0`.
+  unparsable signal is now `-1` ("no reading") rather than `0`.
 - **`tests/shell/contracts-test.sh`** (10 contracts): qmldir completeness both
   ways, `Bar/` widgets owning no runtime state, every `Services/` component
   actually being a singleton, the `Config.<tool>` chain of finding 3, and every
