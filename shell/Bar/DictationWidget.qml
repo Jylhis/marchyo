@@ -1,45 +1,27 @@
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import qs.Ui
 import qs.Commons
+import qs.Services
 
-// Dictation (voxtype) indicator. Streams `voxtype status --format json --follow`;
-// the JSON `class` (idle/recording/transcribing) drives text colour. Click toggles
-// recording. Visibility is baked from marchyo.dictation (Style.dictationIndicator),
-// matching waybar's voxtypeIndicator gate.
+// Dictation (voxtype) indicator: a pure view over Services/Dictation, which owns
+// the one `voxtype status --follow` subscription for the seat (the widget itself
+// is instantiated once per monitor). The JSON `class` drives the text colour;
+// click toggles recording. Visibility is baked from marchyo.dictation
+// (Style.dictationIndicator), matching waybar's voxtypeIndicator gate.
 BarItem {
     id: root
 
-    property string state: "idle"
-    // Nerd-font glyph voxtype emits under --icon-theme nerd-font; falls back to a
-    // microphone glyph until the first status line arrives.
-    property string glyph: ""
-
     visible: Style.dictationIndicator
     interactive: true
-    text: glyph.length > 0 ? glyph : "󰍬"
-    textColor: state === "recording" ? Color.statusErr : (state === "transcribing" ? Color.accent : Color.textMuted)
-    tooltipText: "Dictation: " + state
+    // Nerd-font glyph voxtype emits under --icon-theme nerd-font; falls back to a
+    // microphone glyph until the first status line arrives.
+    text: Dictation.glyph.length > 0 ? Dictation.glyph : "󰍬"
+    textColor: Dictation.state === "recording" ? Color.statusErr : (Dictation.state === "transcribing" ? Color.accent : Color.textMuted)
+    // A dead stream is reported here, not by recolouring the glyph: the colour
+    // already means "recording", so spending it on "voxtype is not answering"
+    // would make one state read as another (and the last known state is still
+    // the best guess the bar has).
+    tooltipText: Dictation.streaming ? "Dictation: " + Dictation.state : "Dictation: " + Dictation.state + " (voxtype not responding)"
 
-    // Long-running --follow stream: one JSON object per state change.
-    Process {
-        running: root.visible
-        command: [Config.voxtype, "status", "--format", "json", "--follow", "--icon-theme", "nerd-font"]
-        stdout: SplitParser {
-            onRead: line => {
-                try {
-                    const obj = JSON.parse(line);
-                    if (obj.class)
-                        root.state = obj.class;
-                    if (obj.text)
-                        root.glyph = obj.text;
-                } catch (e) {
-                    // Ignore non-JSON lines.
-                }
-            }
-        }
-    }
-
-    onClicked: Quickshell.execDetached([Config.voxtype, "record", "toggle"])
+    onClicked: Dictation.toggle()
 }

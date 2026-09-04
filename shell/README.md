@@ -26,6 +26,15 @@ bar, panel, and OSD), an **event-driven keyboard-layout widget** (no poll),
 toast transitions, a DND queue cap, and a committed offscreen **type-check
 harness** (`just -f shell/Justfile check`).
 
+A second pass (see **[../plans/shell-research.md](../plans/shell-research.md)**,
+a survey of ten public Hyprland/Quickshell projects) moved the last three
+stateful widgets into `Services/` singletons: `shell.qml` builds the bar once per
+screen, so a `Process` or `Timer` inside a widget was one subprocess **per
+monitor** answering a seat-global question. `Bar/` widgets are now pure views,
+the `voxtype --follow` stream **restarts with backoff** when it ends, and the
+shell grew two **headless test suites** that `nix flake check` runs (see
+[Tests](#tests)).
+
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
 waybar**, **SwayOSD**, and **mako** (each mutually exclusive with its discrete
 counterpart — see `modules/home/waybar.nix`, `modules/home/swayosd.nix`, and
@@ -46,6 +55,8 @@ shell/
                        marchyo.theme.fontScale, plus baked feature flags
     Config.qml         resolved external-tool paths; the Nix build regenerates it
                        with absolute /nix/store paths (dev default = PATH names)
+    Format.js          pure parsing helpers (keymap short codes, nmcli records);
+                       plain JS with a CommonJS guard so Node can unit-test it
   Ui/
     qmldir             declares module qs.Ui
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
@@ -66,6 +77,9 @@ shell/
     Audio.qml          singleton: shared Pipewire default sink/source + tracker
     Power.qml          singleton: shared UPower battery state + waybar-parity text
     NetworkStatus.qml  singleton: active device + nmcli SSID/signal/IP poll
+    Dictation.qml      singleton: the one voxtype --follow stream (with restart)
+    Caffeine.qml       singleton: the one keep-awake probe + toggle
+    KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
   Panels/
     qmldir             declares module qs.Panels
@@ -93,10 +107,10 @@ below), so nothing depends on the session `PATH`.
 | WorkspacesWidget | `Quickshell.Hyprland` (per-monitor; persistent 1–5, waybar parity) |
 | ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
 | TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
-| DictationWidget | `voxtype status --follow` (click = toggle); baked on/off via `Style.dictationIndicator` |
-| CaffeineWidget | `pgrep` probe + `marchyo toggle caffeine` |
+| DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = toggle); baked on/off via `Style.dictationIndicator` |
+| CaffeineWidget | `Services/Caffeine` → `pgrep` probe + `marchyo toggle caffeine` |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
-| KeyboardLayoutWidget | `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
+| KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` + `Services/NetworkStatus` nmcli poll (click = network panel) |
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
@@ -317,8 +331,32 @@ session-env quirks (the dev recipe exports the same pair):
   themed icons against `hicolor` and tray/notification icons fail to load.
   The `gtk3` platform theme reads marchyo's own GTK settings (`Adwaita`).
 
-To type-check the QML without a Wayland compositor, run the committed harness
-under the offscreen platform:
+### Tests
+
+Three layers, split by what each can reach:
+
+| Suite | Runs where | Covers |
+| --- | --- | --- |
+| `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
+| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
+| `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
+
+The first two are the reason `Commons/Format.js` is a plain `.js` module with a
+CommonJS guard at the bottom rather than QML functions: QML logic needs Quickshell
+and a Qt platform plugin to run at all, so none of it is reachable from
+`nix flake check`, while a JavaScript module is imported unchanged by QML *and*
+loadable by Node. Anything in `Format.js` must therefore stay pure — no Qt types,
+no I/O — and it must not gain a `.pragma library` line, which QML accepts and Node
+rejects. Both rules are pinned by the contract suite.
+
+The contracts exist because QML resolves imports, qmldir entries and `IpcHandler`
+method names at **runtime**: a rename on one side of any of those agreements
+otherwise shows up as a broken bar on a user's desktop rather than a failed build.
+Every contract was verified to fail against a deliberate mutation before being
+kept — a check that moves with the thing it checks can never fail.
+
+To type-check the QML itself without a Wayland compositor, run the committed
+harness under the offscreen platform:
 
 ```bash
 just -f shell/Justfile check

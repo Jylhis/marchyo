@@ -34,6 +34,15 @@ Tests in `tests/` are fast evaluation-based checks (no builds required). Two cat
 
 One deliberate exception to eval-only: the `build-plymouth-theme-{dark,light}` checks (added in `outputs.nix`'s `mkChecks`, Linux only) actually build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`.
 
+### Quickshell shell tests (`tests/shell/`, Linux only)
+
+The QML tree in `shell/` gets two headless suites, wired into `mkChecks` alongside the Plymouth ones. Neither needs Quickshell or a Qt platform plugin — that is the point, since `just -f shell/Justfile check` (which loads the tree for real) can only run on a machine that has both:
+
+- **`shell-format-unit`** — `node tests/shell/format-test.js`, unit tests for `shell/Commons/Format.js`, the shell's pure parsing logic. It is a plain `.js` module with a CommonJS guard so QML imports it unchanged while Node can load it.
+- **`shell-contracts`** — `bash tests/shell/contracts-test.sh`, static cross-file agreements that QML only resolves at runtime: qmldir completeness, `Bar/` widgets owning no `Process`/`Timer`/`Connections` (they are instantiated once per monitor), every `Services/` component being a singleton, every `Config.<tool>` being baked by `packages/marchyo-shell/package.nix`, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving to a function in `shell.qml`.
+
+Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them. Background and rationale: [`plans/shell-research.md`](../plans/shell-research.md).
+
 All changes must pass `just check` (or `nix flake check`).
 
 ## Session Completion

@@ -602,7 +602,9 @@ in
     # CI's toplevel build only bakes the dark one. Deliberately tiny.
     # Also build marchyo-shell and assert its wrapper bakes the runtime-env
     # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
-    # icons) — see plans/shell-warnings-fix.md.
+    # icons) — see plans/shell-warnings-fix.md — and run the shell tree's two
+    # headless suites (tests/shell/): the Format.js unit tests and the static
+    # QML contracts.
     // (
       let
         pkgs = mkPkgs system;
@@ -618,6 +620,42 @@ in
             || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
           touch "$out"
         '';
+
+        # The two headless suites for the Quickshell tree in shell/. Neither
+        # needs Quickshell or a Qt platform plugin, which is the whole point:
+        # `just -f shell/Justfile check` covers what only a running shell can
+        # prove, and these cover what a build machine can. See tests/shell/.
+        # Both stage only the trees they read, rather than ${./.}: the whole
+        # repo as a build input would rebuild these on every site/ or docs/
+        # edit. Each suite derives its root from its own location, so the
+        # staged layout has to mirror the repo's.
+        shell-format-unit = pkgs.runCommand "check-shell-format-unit"
+          {
+            nativeBuildInputs = [ pkgs.nodejs ];
+          }
+          ''
+            mkdir -p src/shell src/tests
+            cp -r ${./shell/Commons} src/shell/Commons
+            cp -r ${./tests/shell} src/tests/shell
+            cd src
+            node tests/shell/format-test.js
+            touch "$out"
+          '';
+
+        shell-contracts = pkgs.runCommand "check-shell-contracts"
+          {
+            nativeBuildInputs = [ pkgs.gnugrep pkgs.gawk ];
+          }
+          ''
+            mkdir -p src/tests src/packages
+            cp -r ${./shell} src/shell
+            cp -r ${./modules} src/modules
+            cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
+            cp -r ${./tests/shell} src/tests/shell
+            cd src
+            bash tests/shell/contracts-test.sh
+            touch "$out"
+          '';
       }
     );
 
