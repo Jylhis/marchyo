@@ -14,7 +14,7 @@ BarItem {
     property bool active: false
 
     interactive: true
-    text: active ? "calf on" : "calf"
+    text: active ? "󰅶" : "󰾪"
     textColor: active ? Color.accent : Color.textMuted
     tooltipText: active ? "Caffeine on — screen stays awake" : "Caffeine off"
 
