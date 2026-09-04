@@ -28,9 +28,20 @@ in
   stylix = lib.mkMerge [
     {
       autoEnable = true;
+      # Override scheme: parse the YAML with marchyo's own pure reader (the same
+      # one marchyo.theme.themes uses) into a base00..base0F attrset, so Stylix
+      # never reads the file itself. Keeps this path IFD-free and matches the
+      # attrset shape jylhis-palette hands Stylix by default.
       base16Scheme =
         if cfg.scheme != null then
-          "${pkgs.base16-schemes}/share/themes/${cfg.scheme}.yaml"
+          let
+            scheme = import ./base16-scheme.nix { inherit pkgs lib; } cfg.scheme;
+          in
+          (lib.mapAttrs (_: lib.removePrefix "#") scheme.slots)
+          // {
+            inherit (cfg) scheme;
+            author = "tinted-theming/schemes";
+          }
         else
           palette.base16;
 

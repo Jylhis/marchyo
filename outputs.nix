@@ -42,7 +42,7 @@ let
   # last nixpkgs release supporting Intel macOS (26.11 drops it), so it rides
   # the stable nixos-26.05 set together with the matching release-branch
   # home-manager / nix-darwin / stylix; every other system rides unstable.
-  # This is the ONLY place the x86_64-darwin special-case is decided — both the
+  # This is the ONLY place the x86_64-darwin special-case is decided, both the
   # consumer-facing builders below and `legacyPackages` flow through it.
   inputsFor =
     system:
@@ -74,7 +74,7 @@ let
       config.allowUnfree = true;
     };
 
-  # Droid input stack — the nix-on-droid analog of `inputsFor`. Pinned
+  # Droid input stack: the nix-on-droid analog of `inputsFor`. Pinned
   # independently of the unstable/stable selector: nix-on-droid's own
   # (2024-era) nixpkgs paired with the HM-24.05 `home-manager-droid`. This is
   # the single place the droid stack is chosen; `mkNixOnDroidConfiguration`
@@ -188,7 +188,7 @@ let
   };
 
   # Shared config for nixOnDroidConfigurations (nix-on-droid's own module
-  # vocabulary — NOT NixOS options).
+  # vocabulary, NOT NixOS options).
   sharedNixOnDroidConfig =
     { pkgs, ... }:
     {
@@ -258,7 +258,7 @@ let
         sops-nix.nixosModules.sops
         # Declares programs.vicinae.input-server: the cap_dac_override wrapper
         # the launcher needs to inject keystrokes. Upstream defaults it ON, so
-        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* —
+        # modules/nixos/launcher.nix gates it behind marchyo.launcher.*;
         # importing this module alone does not install the capability.
         vicinae.nixosModules.default
         # ncro service options; enablement is gated by marchyo.nix.router.enable
@@ -272,7 +272,7 @@ let
     };
     inherit (home-manager.nixosModules) home-manager;
     # Per-machine hardware fixes: the complete nixos-hardware profile set,
-    # re-exported wholesale as a thin passthrough (profiles are lazy — unused
+    # re-exported wholesale as a thin passthrough (profiles are lazy, unused
     # ones cost nothing). A host imports its profile directly, e.g.:
     #
     #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
@@ -286,8 +286,8 @@ let
   # Darwin module set, parameterized by which home-manager darwin module to
   # bake in so each darwinConfiguration pairs its nixpkgs with the matching HM
   # (release branches assume their matching nixpkgs):
-  #   aarch64 → unstable nixpkgs  + home-manager (master)
-  #   x86_64  → nixos-26.05 stable + home-manager-stable (release-26.05)
+  #   aarch64 -> unstable nixpkgs  + home-manager (master)
+  #   x86_64  -> nixos-26.05 stable + home-manager-stable (release-26.05)
   mkDarwinModules = hmDarwinModule: {
     imports = [
       hmDarwinModule
@@ -307,14 +307,14 @@ let
     _1password = ./modules/home/_1password.nix;
   };
 
-  # nix-on-droid module. Droid-native and minimal — no marchyo overlay, no NixOS
+  # nix-on-droid module. Droid-native and minimal, no marchyo overlay, no NixOS
   # modules, and NOT the marchyo HM modules (nix-on-droid ships HM 24.05).
   nixOnDroidModules = {
     default = ./modules/nix-on-droid/default.nix;
   };
 
   # Batteries-included system builders. A downstream consumer that adds only
-  # `marchyo` as an input can build any system with these — the correct nixpkgs
+  # `marchyo` as an input can build any system with these: the correct nixpkgs
   # (unstable, or stable 26.05 for x86_64-darwin), home-manager, nix-darwin,
   # stylix, overlay and marchyo modules are all selected automatically via
   # `inputsFor`. The consumer supplies only their own config modules.
@@ -322,7 +322,7 @@ let
   # All NixOS targets are Linux, so they always ride unstable. `nixosModules.default`
   # already bakes in home-manager + stylix + sops + the overlay (overlayList).
   # `overlays`/`config` let a consumer add their own on top; allowUnfree defaults
-  # on (set plainly — nixpkgs.config is a freeform attrset, so a priority wrapper
+  # on (set plainly: nixpkgs.config is a freeform attrset, so a priority wrapper
   # like mkDefault would leak through to nixpkgs unresolved).
   mkNixosSystem =
     {
@@ -355,7 +355,7 @@ let
   # For x86_64-darwin nix-darwin is handed an externally-built stable pkgs and
   # the config/overlays the shared modules set are mkForce-cleared (nix-darwin
   # rejects nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and
-  # config therefore must be baked INTO that instantiation here — setting them
+  # config therefore must be baked INTO that instantiation here; setting them
   # via a module would be silently cleared.
   mkDarwinSystem =
     {
@@ -413,7 +413,7 @@ let
   # The marchyo overlay is NOT forced on (it is Linux-desktop-shaped); overlays
   # default to [] and a consumer can opt in. The droid stack stays on HM 24.05,
   # so the marchyo HM modules (modules/home/*) and the marchyo.* options
-  # namespace remain out of scope — the droid modules reuse only the
+  # namespace remain out of scope; the droid modules reuse only the
   # HM-version-agnostic generic modules.
   mkNixOnDroidConfiguration =
     {
@@ -439,6 +439,156 @@ let
       ++ modules;
       home-manager-path = droidInputs.home-manager.outPath;
     };
+  # Build-time data generator for the website's package/option search
+  # (site/src/pages/search.astro). Produces a directory with two JSON files:
+  #
+  #   options.json          - every `marchyo.*` NixOS option, extracted from the
+  #                           declarations via `nixosOptionsDoc` (rendered type /
+  #                           default / example / description) with declaration
+  #                           paths rewritten to repo-relative + GitHub blob URLs.
+  #   marchyo-packages.json - pname/version/meta for marchyo's own packages.
+  #
+  # The output is committed under site/src/data/ (the Cloudflare build runs bun
+  # only, no Nix) via `just site-data`, and a CI gate re-runs this and fails on a
+  # diff. nixpkgs (all-of-nixpkgs) search is served separately by the D1-backed
+  # Worker; this generator only covers marchyo's own options and packages.
+  mkSiteSearchData =
+    { system }:
+    let
+      selectedNixpkgs = (inputsFor system).nixpkgs;
+      inherit (selectedNixpkgs) lib;
+      pkgs = mkPkgs system;
+
+      # Evaluate ONLY the marchyo option declarations (modules/nixos/options),
+      # not the full nixosModules.default; the option files are declaration-only
+      # and depend on nothing but lib/pkgs and other marchyo.* options, so this
+      # skips the entire NixOS + home-manager + stylix option universe and keeps
+      # nixosOptionsDoc fast. `_module.check = false` tolerates the reduced arg
+      # set. (This is the NuschtOS/search generation approach.)
+      eval = lib.evalModules {
+        specialArgs = { inherit pkgs lib; };
+        modules = [
+          ./modules/nixos/options
+          { config._module.check = false; }
+        ];
+      };
+
+      # The flake source in the store; used to rewrite absolute declaration
+      # paths (e.g. /nix/store/HASH-source/modules/nixos/options/theme.nix) back
+      # to repo-relative paths + GitHub blob URLs. Non-marchyo declarations
+      # (home-manager, stylix, ...) keep their store path and are filtered out by
+      # the jq `startswith("marchyo.")` selection below, so their URLs never ship.
+      srcPrefix = "${toString ./.}/";
+      gitBlob = "https://github.com/Jylhis/marchyo/blob/main/";
+
+      optionsDoc = pkgs.nixosOptionsDoc {
+        inherit (eval) options;
+        warningsAreErrors = false;
+        transformOptions =
+          opt:
+          opt
+          // {
+            declarations = map (
+              decl:
+              let
+                declStr = toString decl;
+              in
+              if lib.hasPrefix srcPrefix declStr then
+                let
+                  rel = lib.removePrefix srcPrefix declStr;
+                in
+                {
+                  name = rel;
+                  url = gitBlob + rel;
+                }
+              else
+                decl
+            ) opt.declarations;
+          };
+      };
+
+      # marchyo's own packages (the overlay/mkPackages set), reduced to the
+      # metadata the search UI shows. Optional meta fields are guarded with `or`.
+      pkgSet = {
+        inherit (pkgs) marchyo-wallpapers marchyo-cli;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        inherit (pkgs)
+          hyprmon
+          plymouth-marchyo-theme
+          openviking
+          pi
+          ;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        inherit (pkgs) wallpapper;
+      };
+
+      # meta.license may be an attrset (lib.licenses.*), a list of those, or a
+      # bare string (nixpkgs permits a free-form SPDX id). renderOne handles a
+      # single value of any of these shapes; a string element inside a list is
+      # handled too, so neither a top-level string nor a string-in-list errors.
+      renderLicense =
+        let
+          renderOne =
+            x:
+            if builtins.isString x then
+              x
+            else if builtins.isAttrs x then
+              (x.spdxId or x.shortName or "")
+            else
+              "";
+        in
+        l:
+        if l == null then
+          ""
+        else if lib.isList l then
+          lib.concatMapStringsSep ", " renderOne l
+        else
+          renderOne l;
+
+      pkgRows = lib.sort (a: b: a.name < b.name) (
+        lib.mapAttrsToList (attr: p: {
+          inherit attr;
+          name = p.pname or (lib.getName p);
+          version = p.version or "";
+          description = p.meta.description or "";
+          homepage = p.meta.homepage or "";
+          license = renderLicense (p.meta.license or null);
+          mainProgram = p.meta.mainProgram or "";
+          source = "marchyo";
+        }) pkgSet
+      );
+
+      # jq filter: keep marchyo.* options, reshape to the row shape search.astro
+      # consumes. render() flattens nixosOptionsDoc's {_type,text} wrappers.
+      optionsFilter = ''
+        def render(v): if v == null then "" elif (v|type)=="object" then (v.text // "") else (v|tostring) end;
+        [ to_entries[]
+          | select(.key | startswith("marchyo."))
+          | { name: .key,
+              type: (.value.type // ""),
+              default: render(.value.default),
+              example: render(.value.example),
+              description: ((.value.description // "") | gsub("\\s+$"; "")),
+              declared: (.value.declarations[0].name // ""),
+              url: (.value.declarations[0].url // "") }
+        ]
+      '';
+    in
+    pkgs.runCommand "marchyo-site-search-data"
+      {
+        nativeBuildInputs = [ pkgs.jq ];
+        passAsFile = [ "pkgsJson" ];
+        pkgsJson = builtins.toJSON pkgRows;
+      }
+      ''
+        mkdir -p "$out"
+        jq -S '${optionsFilter}' \
+          ${optionsDoc.optionsJSON}/share/doc/nixos/options.json \
+          > "$out/options.json"
+        jq -S '.' "$pkgsJsonPath" > "$out/marchyo-packages.json"
+      '';
 in
 {
   inherit
@@ -513,7 +663,7 @@ in
     };
   };
 
-  # Standalone Home Manager configurations (Linux only — many HM modules
+  # Standalone Home Manager configurations (Linux only, many HM modules
   # depend on Wayland/Hyprland and are not darwin-compatible).
   # Darwin home-manager is tested through darwinConfigurations instead.
   homeConfigurations = {
@@ -536,14 +686,14 @@ in
     aarch64 = mkNixOnDroidConfiguration { };
   };
 
-  # System-aware: x86_64-darwin → stable nixos-26.05, every other system →
+  # System-aware: x86_64-darwin -> stable nixos-26.05, every other system ->
   # unstable. Always with marchyo's overlay applied and unfree allowed.
   legacyPackages = mkPkgs;
 
   mkPackages =
     { system }:
     let
-      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it) — same
+      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it), same
       # per-system selector as legacyPackages/the builders.
       selectedNixpkgs = (inputsFor system).nixpkgs;
       pkgs = import selectedNixpkgs {
@@ -562,6 +712,7 @@ in
         openviking
         pi
         ;
+      site-search-data = mkSiteSearchData { inherit system; };
 
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
       # hardening audit (plus the vuls collector) inside it. Deliberately kept
@@ -598,11 +749,11 @@ in
     }
     # The one non-eval check: actually build the Plymouth theme in both
     # variants. This is the only place the light variant's asset pipeline
-    # (resvg/imagemagick + the package's installCheckPhase) is exercised —
+    # (resvg/imagemagick + the package's installCheckPhase) is exercised;
     # CI's toplevel build only bakes the dark one. Deliberately tiny.
     # Also build marchyo-shell and assert its wrapper bakes the runtime-env
     # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
-    # icons) — see plans/shell-warnings-fix.md.
+    # icons), see plans/shell-warnings-fix.md.
     // (
       let
         pkgs = mkPkgs system;
