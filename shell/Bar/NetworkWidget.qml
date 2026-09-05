@@ -20,7 +20,7 @@ BarItem {
         if (!activeDevice)
             return "󰤭";
         if (activeDevice.type === DeviceType.Wired)
-            return "󰈁";
+            return "󰈀";
         return ssid.length > 0 ? "󰤨 " + NetworkStatus.signalStrength : "󰤨";
     }
     textColor: activeDevice ? Color.text : Color.textFaint
