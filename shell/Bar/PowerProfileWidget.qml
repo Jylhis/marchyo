@@ -11,7 +11,7 @@ BarItem {
         case PowerProfile.PowerSaver:
             return "󰾆";
         case PowerProfile.Performance:
-            return "󰓇";
+            return "󰓅";
         default:
             return "󰾅";
         }
