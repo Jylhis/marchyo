@@ -9,7 +9,8 @@ import Quickshell.Services.UPower
 QtObject {
     readonly property var dev: UPower.displayDevice
     readonly property bool hasBattery: dev && dev.isLaptopBattery && dev.isPresent
-    readonly property int pct: dev ? Math.round(dev.percentage) : 0
+    // UPower percentage is a 0.0–1.0 fraction (energy / energyCapacity); scale to 0–100.
+    readonly property int pct: dev ? Math.round(dev.percentage * 100) : 0
     readonly property bool charging: dev && dev.state === UPowerDeviceState.Charging
     readonly property bool full: dev && dev.state === UPowerDeviceState.FullyCharged
     // UPower energy-rate in W; positive while charging, negative while discharging.
@@ -17,18 +18,19 @@ QtObject {
     readonly property int pctLeft: dev ? Math.round(dev.timeToEmpty) : 0
     readonly property int pctFull: dev ? Math.round(dev.timeToFull) : 0
 
-    // Waybar-parity bar text: "bat N%", "chg N%" while charging, "bat full"
-    // when charged, "pwr" when plugged in but neither charging nor full.
+    // Bar glyph + value (waybar-parity states, compact icon form): battery glyph
+    // + charge %, charging glyph while charging, a full glyph when charged, a
+    // power-plug glyph when plugged in but neither charging nor full.
     readonly property string barText: {
         if (!dev)
-            return "bat";
+            return "󰂑";
         if (full)
-            return "bat full";
+            return "󰁹";
         if (charging)
-            return "chg " + pct + "%";
+            return "󰂄 " + pct;
         if (dev.state === UPowerDeviceState.PendingCharge || dev.state === UPowerDeviceState.PendingDischarge)
-            return "pwr";
-        return "bat " + pct + "%";
+            return "󰚥";
+        return "󰁹 " + pct;
     }
 
     // Waybar-parity tooltip: "4.2W↓ 87%" / "6.0W↑ 45%" (power draw + charge).

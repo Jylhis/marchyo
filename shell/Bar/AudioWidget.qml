@@ -14,7 +14,7 @@ BarItem {
     readonly property var audio: Audio.sinkAudio
 
     interactive: true
-    text: audio ? (audio.muted ? "vol mute" : "vol " + Math.round(audio.volume * 100) + "%") : "vol"
+    text: audio ? (audio.muted ? "󰝟" : "󰕾 " + Math.round(audio.volume * 100)) : "󰕾"
     textColor: (audio && audio.muted) ? Color.textFaint : Color.text
     // Waybar parity ("Playing at N%") plus the sink name for context.
     tooltipText: {

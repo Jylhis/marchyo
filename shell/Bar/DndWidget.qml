@@ -10,7 +10,7 @@ BarItem {
     id: root
 
     interactive: true
-    text: NotificationState.dnd ? "dnd" : "notif"
+    text: NotificationState.dnd ? "󰂛" : "󰂚"
     textColor: NotificationState.dnd ? Color.statusErr : Color.textMuted
     tooltipText: NotificationState.dnd ? "Do not disturb — click to show notifications" : "Notifications on — click to enable do-not-disturb"
 

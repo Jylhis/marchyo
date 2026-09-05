@@ -67,6 +67,11 @@ Everything runs inside as a plugin:
   the Jylhis design system, and its layout/behavior is upstream's, not marchyo's.
   Adopting it means inheriting someone else's product decisions — the opposite of
   the curated, declarative control marchyo wants.
+
+  *Update:* the conclusion stands, but the premise no longer does — noctalia has
+  since been rewritten as a native Wayland + OpenGL ES shell in C++ with no Qt or
+  GTK dependency, so it is not a QML peer at all any more. See
+  [`shell-research.md`](shell-research.md).
 - **Keep the discrete-component status quo.** Zero build cost, but permanently
   forgoes shared state, a single theme runtime, and cross-surface behavior; leaves
   13 hand-themed surfaces to maintain.

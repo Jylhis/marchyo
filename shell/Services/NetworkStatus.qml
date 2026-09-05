@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell.Io
 import Quickshell.Networking
 import qs.Commons
+import "../Commons/Format.js" as Format
 
 // Shared network status: the active device from the native Networking binding
 // plus the bits it does not expose — the Wi-Fi SSID/signal and the IPv4 address
@@ -38,47 +39,33 @@ QtObject {
         return parts.length > 0 ? parts.join("  ") : "offline";
     }
 
-    // `nmcli -t` yields "active:ssid:signal" lines; the active connection starts "yes:".
+    // `nmcli -t` yields "active:ssid:signal" records; the parse lives in
+    // Commons/Format.js so the escaping rules (an SSID may contain a literal
+    // colon, escaped by nmcli as "\\:") are covered by the headless tests
+    // rather than only by a running bar.
     readonly property var wifiProbe: Process {
         id: wifiProbe
         command: [Config.nmcli, "-t", "-f", "active,ssid,signal", "dev", "wifi"]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.ssid = "";
-                root.signalStrength = -1;
-                const lines = text.split("\n");
-                for (let i = 0; i < lines.length; i++) {
-                    if (lines[i].indexOf("yes:") === 0) {
-                        const parts = lines[i].split(":");
-                        root.ssid = parts[1] || "";
-                        root.signalStrength = parseInt(parts[2]) || 0;
-                        break;
-                    }
-                }
+                const wifi = Format.parseWifi(text);
+                root.ssid = wifi.ssid;
+                root.signalStrength = wifi.signal;
             }
         }
     }
 
-    // Per-device IPv4 + interface name: "device:ip4" for each connected device;
-    // we keep the first one that has an address (the device the widget shows).
+    // Per-device IPv4 + interface name: lines look like
+    // "wlan0:connected:192.168.1.10/24", and disconnected devices leave the
+    // address empty. Parsed by Commons/Format.js (see above).
     readonly property var addrProbe: Process {
         id: addrProbe
         command: [Config.nmcli, "-t", "-f", "DEVICE,STATE,IP4.ADDRESS", "device", "status"]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.ipAddress = "";
-                root.ifName = "";
-                const lines = text.split("\n");
-                for (let i = 0; i < lines.length; i++) {
-                    const parts = lines[i].split(":");
-                    // lines look like "wlan0:connected:192.168.1.10/24" —
-                    // disconnected devices have an empty last field.
-                    if (parts.length >= 3 && parts[2].length > 0 && parts[1] === "connected") {
-                        root.ifName = parts[0];
-                        root.ipAddress = parts[2].split("/")[0];
-                        break;
-                    }
-                }
+                const dev = Format.parseDeviceStatus(text);
+                root.ifName = dev.ifName;
+                root.ipAddress = dev.ipAddress;
             }
         }
     }

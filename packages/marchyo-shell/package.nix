@@ -88,9 +88,9 @@ let
       readonly property int barHeight: ${toString (fs.round 28)}
       readonly property int fontSize: ${toString (fs.round 14)}
       readonly property int fontSizeSmall: ${toString (fs.round 12)}
-      readonly property int spacing: ${toString (fs.round 8)}
-      readonly property int paddingH: ${toString (fs.round 10)}
-      readonly property string fontFamily: "monospace"
+      readonly property int spacing: ${toString (fs.round 4)}
+      readonly property int paddingH: ${toString (fs.round 6)}
+      readonly property string fontFamily: "BlexMono Nerd Font"
 
       // On-screen-display geometry (volume/brightness overlay).
       readonly property int osdPad: ${toString (fs.round 14)}
