@@ -250,16 +250,20 @@ import Base from '../layouts/Base.astro';
     description: string;
   }
 
+  // Hand-maintained, with no generator behind it. Every `declared:` path is
+  // checked against the repo by tests/site/option-paths-test.js (run by
+  // `nix flake check`), because four of these pointed at files that do not
+  // exist and one advertised the wrong default.
   const OPTIONS: OptionRow[] = [
-    { name: 'marchyo.desktop.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/desktop.nix', description: 'Full desktop environment: Hyprland, Wayland, PipeWire audio, bluetooth, curated fonts. Cascades media and office on.' },
-    { name: 'marchyo.development.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/development.nix', description: 'Development stack: git with LFS, Docker, QEMU/KVM virtualization, buildah, kubectl, starship, zoxide, fzf.' },
-    { name: 'marchyo.media.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/media.nix', description: 'Media applications — Spotify, MPV. Auto-enabled with desktop via lib.mkDefault; override freely.' },
-    { name: 'marchyo.office.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/office.nix', description: 'Office applications — LibreOffice, Papers. Auto-enabled with desktop via lib.mkDefault.' },
+    { name: 'marchyo.desktop.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/feature-flags.nix', description: 'Full desktop environment: Hyprland, Wayland, PipeWire audio, bluetooth, curated fonts. Cascades media and office on.' },
+    { name: 'marchyo.development.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/feature-flags.nix', description: 'Development stack: git with LFS, Docker, QEMU/KVM virtualization, buildah, kubectl, starship, zoxide, fzf.' },
+    { name: 'marchyo.media.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/feature-flags.nix', description: 'Media applications — Spotify, MPV. Auto-enabled with desktop via lib.mkDefault; override freely.' },
+    { name: 'marchyo.office.enable', type: 'boolean', default: 'false', declared: 'modules/nixos/options/feature-flags.nix', description: 'Office applications — LibreOffice, Papers. Auto-enabled with desktop via lib.mkDefault.' },
     { name: 'marchyo.theme.variant', type: '"light" | "dark"', default: '"dark"', declared: 'modules/nixos/options/theme.nix', description: 'Jylhis Paper or Roast palette, applied across GTK, Qt and terminals via stylix. Set theme.scheme for any base16 scheme instead.' },
     { name: 'marchyo.users.<name>.fullname', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Full name used for the account, git identity, and application metadata.' },
     { name: 'marchyo.users.<name>.email', type: 'string', default: '—', declared: 'modules/nixos/options/users.nix', description: 'Email wired into git config and user-facing applications.' },
-    { name: 'marchyo.defaults.browser', type: 'string', default: '"firefox"', declared: 'modules/nixos/options/default-apps.nix', description: 'Default browser registered for xdg-open and desktop portals.' },
-    { name: 'marchyo.keybindingsHelp.enable', type: 'boolean', default: 'true', declared: 'modules/nixos/options/keyboard.nix', description: 'SUPER+K searchable on-screen cheat sheet of all active Hyprland keybindings.' },
+    { name: 'marchyo.defaults.browser', type: '"brave" | "google-chrome" | "firefox" | "chromium"', default: '"google-chrome"', declared: 'modules/nixos/options/defaults.nix', description: 'Default browser registered for xdg-open and desktop portals.' },
+    { name: 'marchyo.keybindingsHelp.enable', type: 'boolean', default: 'true', declared: 'modules/home/keybindings-cheatsheet.nix', description: 'SUPER+K searchable on-screen cheat sheet of all active Hyprland keybindings.' },
   ];
 
   const PACKAGES: PackageRow[] = [
@@ -414,27 +418,8 @@ import Base from '../layouts/Base.astro';
     }
   });
 
-  // Theme toggle (shared behaviour)
-  function currentTheme() {
-    return document.documentElement.dataset.theme === 'dark' ? 'dark' : '';
-  }
-  function applyTheme(t: string) {
-    if (t) document.documentElement.dataset.theme = t;
-    else delete document.documentElement.dataset.theme;
-    document
-      .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
-      .forEach((b) => (b.textContent = t === 'dark' ? '☀' : '☾'));
-  }
-  applyTheme(currentTheme());
-  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const t = currentTheme() === 'dark' ? '' : 'dark';
-      try {
-        localStorage.setItem('marchyo-theme', t);
-      } catch (err) {}
-      applyTheme(t);
-    });
-  });
+  // Theme toggle lives in src/layouts/Base.astro, next to the pre-paint script
+  // it has to agree with.
 
   render();
 </script>

@@ -647,6 +647,26 @@ in
               touch "$out"
             '';
 
+        # site/src/pages/search.astro's option table is hand-maintained with no
+        # generator behind it, so nothing stopped it drifting from the options
+        # tree — four of its `declared:` paths named files that do not exist and
+        # one advertised the wrong default. This is the guard.
+        site-option-paths =
+          pkgs.runCommand "check-site-option-paths"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            }
+            ''
+              # Only the parents: `cp -r dir target` nests when target exists.
+              mkdir -p src/tests src/site/src
+              cp -r ${./tests/site} src/tests/site
+              cp -r ${./site/src/pages} src/site/src/pages
+              cp -r ${./modules} src/modules
+              cd src
+              node tests/site/option-paths-test.js
+              touch "$out"
+            '';
+
         shell-contracts =
           pkgs.runCommand "check-shell-contracts"
             {

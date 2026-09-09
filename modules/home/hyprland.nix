@@ -583,10 +583,13 @@ in
           (bindd "SUPER + ALT + SHIFT + TAB" "Previous window in group" (dsp "group.prev()"))
 
           # Keyboard resize (base resize is via border-drag / SUPER+RMB)
-          (bindd "SUPER + minus" "Expand window left" (
+          # Descriptions name the edge that moves, matching the vertical pair
+          # below: a negative delta shrinks, a positive one expands. These two
+          # were the wrong way round, and the cheat sheet renders them verbatim.
+          (bindd "SUPER + minus" "Shrink window left" (
             dsp "window.resize({ x = -100, y = 0, relative = true })"
           ))
-          (bindd "SUPER + equal" "Shrink window left" (
+          (bindd "SUPER + equal" "Expand window right" (
             dsp "window.resize({ x = 100, y = 0, relative = true })"
           ))
           (bindd "SUPER + SHIFT + minus" "Shrink window up" (

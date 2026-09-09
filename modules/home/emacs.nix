@@ -287,7 +287,14 @@ let
       ))
     ]
     ++ lib.optionals orgProtocolEnabled [
-      (hlua.bindd "SUPER + SHIFT + C" "Org capture" (hlua.exec "emacsclient -c -n -e '(org-capture)'"))
+      # T, not C: SUPER+SHIFT+C is the colour picker in modules/home/hyprland.nix,
+      # and both binds land in the same Hyprland bind list (these arrive via
+      # `bind = lib.mkAfter hyprBinds`), so enabling marchyo.emacs emitted two
+      # binds for one chord. The taken-key ledger lives in
+      # modules/nixos/options/webapps.nix.
+      (hlua.bindd "SUPER + SHIFT + T" "Org capture (task)" (
+        hlua.exec "emacsclient -c -n -e '(org-capture)'"
+      ))
     ];
 in
 {
