@@ -1145,7 +1145,7 @@
   {
     "declared": "modules/nixos/options/theme.nix",
     "default": "null",
-    "description": "Override the base16 color scheme. When set, takes precedence over the\nJylhis palette derived from `variant`. Must match a `.yaml` file under\nthe `base16-schemes` package (e.g. \"nord\", \"nord-light\",\n\"gruvbox-dark-medium\"). When null, the Jylhis palette is used.",
+    "description": "Override the base16 color scheme. When set, takes precedence over the\nJylhis palette derived from `variant`. Must match a `.yaml` file in\nthe tinted-schemes catalog's `base16/` directory (e.g. \"nord\",\n\"nord-light\", \"gruvbox-dark-medium\"). When null, the Jylhis palette\nis used.",
     "example": "\"nord\"",
     "name": "marchyo.theme.scheme",
     "type": "null or string",
@@ -1154,7 +1154,7 @@
   {
     "declared": "modules/nixos/options/theme.nix",
     "default": "[\n  \"jylhis-dark\"\n  \"jylhis-light\"\n]",
-    "description": "Themes available for runtime switching (`marchyo theme set/next`).\nEach listed theme's desktop assets are pre-built into the system\nclosure so switching is an instant symlink swap. `jylhis-dark` and\n`jylhis-light` are the Jylhis Design System variants; any other\nname must match a `.yaml` file under the `base16-schemes` package\n(e.g. \"nord\", \"gruvbox-dark-hard\"). This does not change the\nbuild-time default — see `variant`/`scheme` for that.",
+    "description": "Themes available for runtime switching (`marchyo theme set/next`).\nEach listed theme's desktop assets are pre-built into the system\nclosure so switching is an instant symlink swap. `jylhis-dark` and\n`jylhis-light` are the Jylhis Design System variants; any other\nname must match a `.yaml` file in the tinted-schemes catalog's\n`base16/` directory (e.g. \"nord\", \"gruvbox-dark-hard\"). This does not change the\nbuild-time default — see `variant`/`scheme` for that.",
     "example": "[\n  \"jylhis-dark\"\n  \"jylhis-light\"\n  \"nord\"\n  \"gruvbox-dark-hard\"\n]",
     "name": "marchyo.theme.themes",
     "type": "list of string",
@@ -1163,7 +1163,7 @@
   {
     "declared": "modules/nixos/options/theme.nix",
     "default": "\"dark\"",
-    "description": "Theme variant preference (light or dark).\nSelects the Jylhis Design System palette derived from tokens.json:\n- \"dark\" uses Jylhis Field\n- \"light\" uses Jylhis Sheet\nOverride with `marchyo.theme.scheme` to use a base16-schemes YAML instead.",
+    "description": "Theme variant preference (light or dark).\nSelects the Jylhis Design System palette derived from tokens.json:\n- \"dark\" uses Jylhis Field\n- \"light\" uses Jylhis Sheet\nOverride with `marchyo.theme.scheme` to use a scheme from the\ntinted-schemes catalog instead.",
     "example": "\"light\"",
     "name": "marchyo.theme.variant",
     "type": "one of \"light\", \"dark\"",

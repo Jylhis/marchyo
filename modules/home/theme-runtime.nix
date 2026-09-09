@@ -113,12 +113,16 @@ let
   };
 
   # N-theme layer (marchyo.theme.themes)
-  # Beyond the always-built Jylhis pair, any base16-schemes YAML can be
+  # Beyond the always-built Jylhis pair, any scheme from the tinted-schemes
+  # catalog can be
   # listed for runtime switching. Its assets are derived by translating the
   # build variant's resolved surfaces from semantic-token hexes to the
   # scheme's base16 slots via the same token→slot correspondence
   # jylhis-palette.nix uses to export the Jylhis palette to Stylix.
-  loadScheme = import ../generic/base16-scheme.nix { inherit pkgs lib; };
+  loadScheme = import ../generic/base16-scheme.nix {
+    schemes = pkgs.tinted-schemes-src;
+    inherit lib;
+  };
 
   # Token → base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
   # base16 attrset; the extras (border/hover/subtle/ok/comment) get the

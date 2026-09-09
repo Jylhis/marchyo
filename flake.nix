@@ -94,11 +94,12 @@
       url = "github:Jylhis/design";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # base16 colour-scheme YAMLs (tinted-theming). Consumed as a plain source
-    # tree at eval time (never built), so the theme loader stays IFD-free: the
-    # marchyo.theme.themes / .scheme readers parse these files directly. See
-    # modules/generic/base16-scheme.nix and overlay.nix (base16-schemes-src).
-    base16-schemes = {
+    # Base16 scheme catalog (successor of the archived
+    # tinted-theming/base16-schemes that pkgs.base16-schemes packages).
+    # Pure data source: read at eval time from the fetched tree instead of
+    # the built pkgs.base16-schemes package, so evaluation never forces a
+    # package build (no import-from-derivation).
+    tinted-schemes = {
       url = "github:tinted-theming/schemes";
       flake = false;
     };

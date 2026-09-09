@@ -5,7 +5,7 @@
 # modules/darwin/default.nix (NOT by Home Manager — these are system-level
 # stylix options). The base16 palette is derived from marchyo.theme.variant via
 # modules/generic/jylhis-palette.nix; setting marchyo.theme.scheme overrides it
-# with a base16-schemes YAML instead.
+# with a scheme from the tinted-schemes catalog instead.
 {
   pkgs,
   config,
@@ -28,20 +28,9 @@ in
   stylix = lib.mkMerge [
     {
       autoEnable = true;
-      # Override scheme: parse the YAML with marchyo's own pure reader (the same
-      # one marchyo.theme.themes uses) into a base00..base0F attrset, so Stylix
-      # never reads the file itself. Keeps this path IFD-free and matches the
-      # attrset shape jylhis-palette hands Stylix by default.
       base16Scheme =
         if cfg.scheme != null then
-          let
-            scheme = import ./base16-scheme.nix { inherit pkgs lib; } cfg.scheme;
-          in
-          (lib.mapAttrs (_: lib.removePrefix "#") scheme.slots)
-          // {
-            inherit (cfg) scheme;
-            author = "tinted-theming/schemes";
-          }
+          "${pkgs.tinted-schemes-src}/base16/${cfg.scheme}.yaml"
         else
           palette.base16;
 

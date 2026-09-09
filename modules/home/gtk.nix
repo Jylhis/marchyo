@@ -14,6 +14,15 @@ in
   config = lib.mkIf desktopEnabled {
     gtk = {
       gtk4.theme = lib.mkDefault config.gtk.theme;
+      # marchyo disables Stylix's `gtk` target (modules/generic/theme.nix), so
+      # nothing else sets the GTK3/4 dark preference in settings.ini. Adwaita
+      # (the active theme) is dual-variant; this makes GTK3 apps load its dark
+      # half and GTK4 ones advertise dark to libadwaita apps. dconf
+      # `color-scheme = prefer-dark` from Stylix's `gnome` target covers GTK4
+      # apps that read gsettings instead of settings.ini.
+      colorScheme = lib.mkDefault (
+        if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then "dark" else "light"
+      );
       iconTheme = {
         package = pkgs.adwaita-icon-theme;
         name = "Adwaita";

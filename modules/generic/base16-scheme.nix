@@ -1,9 +1,8 @@
-# Pure-eval loader for a base16-schemes YAML (tinted-theming format).
+# Pure-eval loader for a base16 scheme YAML (tinted-theming format).
 #
-# The YAMLs come from the `base16-schemes` flake input, exposed by the overlay
-# as `pkgs.base16-schemes-src` (a source tree, not a derivation), so reading
-# them is a plain eval-time file read with no import-from-derivation. The files
-# are uniform enough for a line-based parse, no YAML engine:
+# The files are uniform enough for a line-based parse — no YAML engine (and
+# no import-from-derivation: the catalog is read from the already-fetched
+# tinted-schemes source input, not the built pkgs.base16-schemes package):
 #
 #   system: "base16"
 #   name: "Nord"
@@ -15,15 +14,15 @@
 # "#rrggbb" (lowercase, "#"-prefixed) and variant is "dark"|"light" — from
 # the file's variant field when present, else a relative-luminance estimate
 # of base00.
-{ pkgs, lib }:
+{ schemes, lib }:
 schemeName:
 let
-  path = "${pkgs.base16-schemes-src}/base16/${schemeName}.yaml";
+  path = "${schemes}/base16/${schemeName}.yaml";
   raw =
     if builtins.pathExists path then
       builtins.readFile path
     else
-      throw "marchyo.theme.themes: unknown theme '${schemeName}' — expected jylhis-dark, jylhis-light, or a base16-schemes YAML name (no ${path})";
+      throw "marchyo.theme.themes: unknown theme '${schemeName}' — expected jylhis-dark, jylhis-light, or a base16 scheme name in the tinted-schemes catalog (no ${path})";
   lines = lib.splitString "\n" raw;
 
   # `  base0X: "#RRGGBB"` (comment tails tolerated).
