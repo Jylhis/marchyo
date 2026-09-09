@@ -1,0 +1,8 @@
+# statix (run via `just check` / treefmt) auto-discovers this file at the repo
+# root. `repeated_keys` (code 20) arrived with statix unstable-2026-07-17 in
+# the "lock" bump: it flags the idiomatic NixOS/HM style of setting sibling
+# options as repeated dotted keys (marchyo.desktop.enable = ...;
+# marchyo.development.enable = ...). That style is deliberate in this repo —
+# gating reads clearer per-option — so the lint is disabled rather than
+# refactoring every module to nested attrsets. All other lints stay on.
+disabled = [ "repeated_keys" ]
