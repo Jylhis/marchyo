@@ -34,5 +34,5 @@ BarItem {
         if (audio)
             audio.muted = !audio.muted;
     }
-    onClicked: PanelManager.toggle("audio")
+    onClicked: PanelManager.toggle("audio", root)
 }

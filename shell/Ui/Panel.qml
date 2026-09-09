@@ -23,6 +23,11 @@ PanelWindow {
     property alias body: bodyColumn.data
 
     visible: PanelManager.openId === root.panelId
+    // Open on the output whose bar was clicked, not on whichever screen
+    // happens to be Quickshell's default. Falls back to the default screen for
+    // an IPC summon, which carries no bar item. Same pattern as
+    // Ui/TooltipWindow.
+    screen: Screens.byName(PanelManager.screenName)
     color: "transparent"
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay

@@ -1,5 +1,6 @@
 module qs.Services
 singleton PanelManager 1.0 PanelManager.qml
+singleton Screens 1.0 Screens.qml
 singleton SystemStats 1.0 SystemStats.qml
 singleton NotificationState 1.0 NotificationState.qml
 singleton Audio 1.0 Audio.qml
@@ -8,4 +9,5 @@ singleton NetworkStatus 1.0 NetworkStatus.qml
 singleton Tooltip 1.0 Tooltip.qml
 singleton Dictation 1.0 Dictation.qml
 singleton Caffeine 1.0 Caffeine.qml
+singleton Clock 1.0 Clock.qml
 singleton KeyboardLayout 1.0 KeyboardLayout.qml

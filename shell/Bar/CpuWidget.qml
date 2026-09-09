@@ -11,5 +11,5 @@ BarItem {
     interactive: true
     text: "󰐰 " + SystemStats.cpuUsage
     tooltipText: "CPU " + SystemStats.cpuUsage + "%"
-    onClicked: PanelManager.toggle("monitor")
+    onClicked: PanelManager.toggle("monitor", root)
 }

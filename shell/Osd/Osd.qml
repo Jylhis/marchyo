@@ -132,6 +132,11 @@ Scope {
     // --- Surface: a passive, click-through, bottom-centred overlay ---
     PanelWindow {
         visible: root.shown
+        // One OSD for the seat, shown on the focused output. Nothing "summons"
+        // it from a particular bar (volume/backlight watchers and the osdShow
+        // IPC drive it), so the focused monitor is the meaningful screen;
+        // without a binding it always appeared on the default output.
+        screen: Screens.focused
         color: "transparent"
         exclusiveZone: 0
 
