@@ -135,11 +135,13 @@ in
     // optionalAttrs (!isDarwin) {
       window-decoration = false;
       gtk-single-instance = true;
-      # Force the GTK window chrome (tab bar) to the active variant. With a
-      # single (non light/dark-split) theme set, `window-theme = auto` falls
-      # back to the system GTK preference on GTK, which leaves the tab bar
-      # light even under our dark terminal theme.
-      window-theme = if themeVariant == "dark" then "dark" else "light";
+      # Derive the GTK window chrome (tab bar) from the configured terminal
+      # background/foreground instead of the GTK theme. The injected jylhis
+      # gtk.css overrides Adwaita-dark's colors (see modules/home/jylhis-theme.nix),
+      # so `window-theme = dark` still left the tab bar light; `ghostty` reads
+      # the theme's bg/fg directly and also tracks the runtime theme include
+      # (modules/home/theme-runtime.nix) for new windows.
+      window-theme = "ghostty";
     }
     // optionalAttrs isDarwin {
       # Left Option = Alt for terminal bindings; right Option keeps OS

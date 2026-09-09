@@ -22,6 +22,27 @@ let
       variant = "dark";
     };
   mode = if cfg.variant == "dark" then "dark" else "light";
+
+  # The upstream gtk.css is generated with the LIGHT palette baked into its
+  # top-level `@define-color`s and a `.dark { --custom-prop }` block that only
+  # works on GTK4/libadwaita (GTK3 can't parse custom properties at all) and
+  # never overrides the top-level @define-colors. User CSS loads after the
+  # theme, so those light @define-colors beat Adwaita-dark — every GTK app
+  # (Nautilus, ghostty's tab bar, …) rendered light under the dark theme.
+  #
+  # Fix: translate the light-palette hexes to the active variant's with
+  # builtins.replaceStrings over the same semantic-token palettes
+  # modules/generic/jylhis-palette.nix exports (identical machinery to
+  # modules/home/theme-runtime.nix). The `.dark` block's dark hexes don't
+  # collide with any light token hex (audited), so they're left as-is. Build
+  # variant only — runtime switching of gtk.css is future work.
+  mkGtkPalette = variant: import ../generic/jylhis-palette.nix { inherit pkgs lib variant; };
+  paletteHexes = v: builtins.attrValues (mkGtkPalette v).hex;
+  swapToVariant =
+    if cfg.variant == "dark" then
+      builtins.replaceStrings (paletteHexes "light") (paletteHexes "dark")
+    else
+      lib.id;
 in
 {
   imports = [ inputs.jylhis-design.homeManagerModules.default ];
@@ -67,6 +88,7 @@ in
         gtk =
           let
             designCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
+            variantCss = swapToVariant designCss;
 
             # GTK3's CSS parser has no support for the GTK4/libadwaita custom
             # properties (`--accent-color: ...`) in the file's `.dark` block: it
@@ -74,11 +96,11 @@ in
             # GTK3 app. The GTK3 palette comes from @define-color and the file never
             # uses var(), so dropping these lines is lossless for GTK3.
             isCustomProp = line: builtins.match "[[:space:]]*--.*" line != null;
-            gtk3Css = lib.concatLines (builtins.filter (l: !isCustomProp l) (lib.splitString "\n" designCss));
+            gtk3Css = lib.concatLines (builtins.filter (l: !isCustomProp l) (lib.splitString "\n" variantCss));
           in
           {
             gtk3.extraCss = gtk3Css;
-            gtk4.extraCss = designCss;
+            gtk4.extraCss = variantCss;
           };
       })
     ]
