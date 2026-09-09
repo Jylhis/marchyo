@@ -33,24 +33,70 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#faf7f2" />
-    {/* Apply the stored theme before paint to avoid a flash. */}
+    {/*
+      Apply the stored theme before paint to avoid a flash.
+
+      Three states, not two: 'dark' and 'light' are explicit choices and win
+      outright, and only a *missing* key consults the OS preference. The stored
+      value used to be '' for light, which is falsy and therefore
+      indistinguishable from "never chosen" — so on a dark-mode OS, choosing
+      light lasted until the next navigation and then flipped back.
+
+      In the DOM, data-theme='dark' means dark and no attribute means light;
+      that contract is unchanged.
+    */}
     <script is:inline>
       (function () {
         try {
-          var t = localStorage.getItem('marchyo-theme') || '';
-          if (
-            !t &&
-            window.matchMedia &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches
-          ) {
-            t = 'dark';
+          var stored = localStorage.getItem('marchyo-theme');
+          if (stored === 'dark') {
+            document.documentElement.dataset.theme = 'dark';
+          } else if (stored !== 'light') {
+            if (
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches
+            ) {
+              document.documentElement.dataset.theme = 'dark';
+            }
           }
-          if (t) document.documentElement.dataset.theme = t;
         } catch (e) {}
       })();
     </script>
   </head>
   <body>
     <slot />
+    {/*
+      The theme toggle, once, for every page that uses this layout. It used to
+      be duplicated verbatim in index.astro and search.astro (both comments
+      even said "shared behaviour"), which is how the two drifted from the
+      pre-paint script above.
+    */}
+    <script is:inline>
+      (function () {
+        function isDark() {
+          return document.documentElement.dataset.theme === 'dark';
+        }
+        function apply(theme) {
+          if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+          else delete document.documentElement.dataset.theme;
+          var buttons = document.querySelectorAll('[data-theme-toggle]');
+          for (var i = 0; i < buttons.length; i++) {
+            buttons[i].textContent = theme === 'dark' ? '\u2600' : '\u263e';
+          }
+        }
+        apply(isDark() ? 'dark' : 'light');
+        var buttons = document.querySelectorAll('[data-theme-toggle]');
+        for (var i = 0; i < buttons.length; i++) {
+          buttons[i].addEventListener('click', function () {
+            // Store 'light' explicitly, never '' — see the head script.
+            var next = isDark() ? 'light' : 'dark';
+            try {
+              localStorage.setItem('marchyo-theme', next);
+            } catch (e) {}
+            apply(next);
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

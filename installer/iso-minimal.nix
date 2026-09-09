@@ -5,7 +5,13 @@
 # supports both local and remote installations via SSH, and provides helpful
 # guidance for users during the installation process.
 #
-# Build with: nix build .#nixosConfigurations.installer-minimal.config.system.build.isoImage
+# NOT a flake output: nothing in flake.nix / outputs.nix / the Justfile / CI
+# references this file, so `nix flake check` never evaluates it and it rots
+# silently across nixpkgs bumps (it was carrying two removed package aliases).
+# Evaluate it by hand after updating flake.lock:
+#
+#   nix-build '<nixpkgs/nixos>' -I nixos-config=installer/iso-minimal.nix \
+#     -A config.system.build.isoImage
 
 {
   config,
@@ -64,7 +70,7 @@
     # Filesystem tools
     cryptsetup
     btrfs-progs
-    zfsUnstable
+    zfs_unstable
 
     # Disk management
     disko

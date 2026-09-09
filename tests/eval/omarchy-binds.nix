@@ -31,6 +31,25 @@ let
   # Substring search over every rendered bind, for "no bind mentions X" checks.
   hasBindText = hm: s: lib.hasInfix s (hyprEntriesText (binds hm));
   hasPackage = hm: n: lib.any (p: lib.getName p == n) hm.home.packages;
+
+  # Chords deliberately bound twice: Hyprland runs every bind for a chord in
+  # order, and these pair a window cycle with a raise
+  # (modules/home/hyprland.nix, "Cycle to next window" / "Reveal active window
+  # on top"). Anything else bound twice is two features fighting over one chord.
+  chainedChords = [
+    "ALT + Tab"
+    "ALT + SHIFT + Tab"
+  ];
+
+  # Every chord bound more than once, across the whole generated bind list.
+  duplicateChords =
+    hm:
+    let
+      chords = lib.filter (c: c != null) (map (e: builtins.head (e._args or [ null ])) (binds hm));
+      counts = lib.foldl' (acc: c: acc // { ${c} = (acc.${c} or 0) + 1; }) { } chords;
+      dupes = lib.attrNames (lib.filterAttrs (_: n: n > 1) counts);
+    in
+    lib.subtractLists chainedChords dupes;
 in
 {
   # Desktop + development on: monitor-control, connectivity, and app-launch
@@ -90,5 +109,32 @@ in
         "pass"
       else
         throw "FAIL: desktop disabled but an omarchy-binds keybinding or package is present"
+    );
+
+  # No chord may be bound twice. modules/home/emacs.nix used to claim
+  # SUPER+SHIFT+C, which modules/home/hyprland.nix already binds to the colour
+  # picker; both land in the same list (emacs binds arrive via
+  # `bind = lib.mkAfter hyprBinds`), so enabling marchyo.emacs silently emitted
+  # two binds for one chord. Checked with every bind-contributing feature on.
+  eval-binds-no-duplicate-chords =
+    let
+      dupes = duplicateChords (
+        hmFor (evalWith {
+          marchyo = {
+            # desktop.enable is what makes the Hyprland HM module produce any
+            # binds at all — without it this assertion is vacuous.
+            desktop.enable = true;
+            emacs.enable = true;
+            dictation.enable = true;
+            webapps.enable = true;
+          };
+        })
+      );
+    in
+    pkgs.writeText "eval-binds-no-duplicate-chords" (
+      if dupes == [ ] then
+        "pass"
+      else
+        throw "FAIL: these chords are bound more than once: ${lib.concatStringsSep ", " dupes}"
     );
 }

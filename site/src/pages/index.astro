@@ -351,27 +351,8 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
 </style>
 
 <script>
-  // Theme toggle (shared behaviour with the search page)
-  function currentTheme() {
-    return document.documentElement.dataset.theme === 'dark' ? 'dark' : '';
-  }
-  function applyTheme(t: string) {
-    if (t) document.documentElement.dataset.theme = t;
-    else delete document.documentElement.dataset.theme;
-    document
-      .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
-      .forEach((b) => (b.textContent = t === 'dark' ? '☀' : '☾'));
-  }
-  applyTheme(currentTheme());
-  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const t = currentTheme() === 'dark' ? '' : 'dark';
-      try {
-        localStorage.setItem('marchyo-theme', t);
-      } catch (e) {}
-      applyTheme(t);
-    });
-  });
+  // Theme toggle lives in src/layouts/Base.astro, next to the pre-paint script
+  // it has to agree with.
 
   // Copy / copy-for-AI chips
   document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
