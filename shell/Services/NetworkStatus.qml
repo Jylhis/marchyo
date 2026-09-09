@@ -26,6 +26,8 @@ QtObject {
     property int signalStrength: -1
     property string ipAddress: ""
     property string ifName: ""
+    // Latch so a failing address probe is reported once, not every poll.
+    property bool addrProbeFailed: false
 
     // Tooltip text (waybar parity: "{ipaddr}  {ifname}", plus the SSID on Wi-Fi).
     readonly property string tooltipText: {
@@ -55,15 +57,24 @@ QtObject {
         }
     }
 
-    // Per-device IPv4 + interface name: lines look like
-    // "wlan0:connected:192.168.1.10/24", and disconnected devices leave the
-    // address empty. Parsed by Commons/Format.js (see above).
+    // Per-device IPv4 + interface name. `device show` (not `device status`,
+    // which rejects the IP4.ADDRESS field outright) emits one blank-line
+    // separated "key:value" block per device; parsed by Commons/Format.js.
     readonly property var addrProbe: Process {
         id: addrProbe
-        command: [Config.nmcli, "-t", "-f", "DEVICE,STATE,IP4.ADDRESS", "device", "status"]
+        command: [Config.nmcli, "-t", "-f", "GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS", "device", "show"]
+        // A bad field name makes nmcli exit 2 and print nothing, which is
+        // indistinguishable from "no address" in the bar. Say so once instead
+        // of silently polling a failing command for the whole session.
+        onExited: exitCode => {
+            if (exitCode !== 0 && !root.addrProbeFailed) {
+                root.addrProbeFailed = true;
+                console.warn("NetworkStatus: nmcli device show failed (exit " + exitCode + "); no IPv4 address will be shown");
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
-                const dev = Format.parseDeviceStatus(text);
+                const dev = Format.parseDeviceAddress(text);
                 root.ifName = dev.ifName;
                 root.ipAddress = dev.ipAddress;
             }

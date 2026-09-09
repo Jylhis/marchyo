@@ -68,7 +68,11 @@ let
       pi.registerProvider("openrouter", {
         name: "OpenRouter",
         baseUrl: ${builtins.toJSON baseUrl},
-        apiKey: "$OPENROUTER_API_KEY",
+        // Read at runtime from the variable shellInit exports, so the key stays
+        // out of the Nix store. This is TypeScript, not a shell script: a
+        // "$OPENROUTER_API_KEY" string literal would be passed through verbatim
+        // as the credential and every request would fail auth.
+        apiKey: process.env.OPENROUTER_API_KEY,
         api: "openai-completions",
         models: [
     ${piModelEntries}
