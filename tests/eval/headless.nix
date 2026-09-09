@@ -56,6 +56,20 @@ in
         throw "FAIL: desktop enabled but hyprland/waybar were not configured"
     );
 
+  # The cursor hides on key press (typing) — and because every screenshot bind
+  # is a keyboard bind, this also keeps the cursor out of grimblast captures.
+  eval-hyprland-hides-cursor-on-key-press =
+    let
+      hm = hmOf { marchyo.desktop.enable = true; };
+      misc = hm.wayland.windowManager.hyprland.settings.config.misc or { };
+    in
+    pkgs.writeText "eval-hyprland-hides-cursor-on-key-press" (
+      if misc.hide_cursor_on_key_press or false == true then
+        "pass"
+      else
+        "FAIL: misc.hide_cursor_on_key_press is not true"
+    );
+
   # The NixOS half of the same contract. The tests above only inspect Home
   # Manager, which is why modules/nixos/{hyprland,printing,hyprlock,_1password}
   # and hardware.nix's bluetooth stanza went on enabling themselves on headless

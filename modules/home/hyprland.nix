@@ -239,6 +239,11 @@ in
             disable_splash_rendering = true;
             focus_on_activate = true;
             background_color = lib.mkForce (rgb palette.hex.bg);
+            # Hides the cursor on any key press (shows again on mouse movement).
+            # Also keeps the cursor out of screenshots: every capture bind is a
+            # keyboard bind, so the triggering key press hides it before
+            # grimblast runs.
+            hide_cursor_on_key_press = true;
           };
           # Layout — tmux-style TUI grid: zero gaps, single-line pane borders
           general = {
