@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.security.{fingerprint,fido2}.enable.
 {
   config,
   lib,
@@ -16,7 +17,7 @@ in
       # PAM integration is automatic in NixOS once fprintd runs; the hyprlock
       # module (modules/home/hyprlock.nix) follows services.fprintd.enable via
       # osConfig, so the lock screen picks this up without further wiring.
-      services.fprintd.enable = true;
+      services.fprintd.enable = lib.mkDefault true;
     })
 
     (lib.mkIf cfg.security.fido2.enable {

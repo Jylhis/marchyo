@@ -1,3 +1,4 @@
+# Global (headless-safe): boot splash, off unless the host opts in.
 {
   config,
   pkgs,

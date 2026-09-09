@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.router.enable.
 { config, lib, ... }:
 let
   cfg = config.marchyo.nix;
@@ -6,7 +7,7 @@ in
 {
   config = lib.mkIf cfg.router.enable {
     services.ncro = {
-      enable = true;
+      enable = lib.mkDefault true;
       # Appends each upstream's public_key to nix.settings.trusted-public-keys.
       # Additive, so it coexists with the keys nix-settings.nix already sets from
       # marchyo.nix.caches (Nix dedups).

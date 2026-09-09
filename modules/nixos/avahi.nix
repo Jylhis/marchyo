@@ -1,3 +1,4 @@
+# Global (headless-safe): mDNS/DNS-SD service discovery.
 { lib, ... }:
 {
   # mDNS / DNS-SD: resolve <host>.local and discover LAN services (printers,

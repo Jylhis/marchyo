@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.bees.enable (btrfs deduplication).
 { lib, config, ... }:
 let
   cfg = config.marchyo.bees;

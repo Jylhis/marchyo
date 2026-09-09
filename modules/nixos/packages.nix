@@ -1,3 +1,4 @@
+# Global (headless-safe) CLI/TUI set; desktop/media/office lists are gated.
 {
   config,
   lib,
@@ -84,8 +85,8 @@ in
   config = {
     # Shell
     programs = {
-      television.enable = true;
-      fzf.fuzzyCompletion = true;
+      television.enable = lib.mkDefault true;
+      fzf.fuzzyCompletion = lib.mkDefault true;
     };
 
     environment.systemPackages =

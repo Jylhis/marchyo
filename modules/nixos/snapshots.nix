@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.snapshots.enable.
 { lib, config, ... }:
 let
   cfg = config.marchyo.snapshots;

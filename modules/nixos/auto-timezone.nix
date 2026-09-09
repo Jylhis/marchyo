@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.autoTimezone.enable.
 { lib, config, ... }:
 let
   cfg = config.marchyo;
@@ -8,7 +9,7 @@ in
     # locale.nix sets time.timeZone with lib.mkDefault, which automatic-timezoned
     # tolerates (it requires the static timezone to be at or below default
     # priority), so no mkForce is needed here.
-    services.automatic-timezoned.enable = true;
+    services.automatic-timezoned.enable = lib.mkDefault true;
     services.geoclue2.enable = lib.mkDefault true;
 
     # Setting a non-default marchyo.timezone alongside autoTimezone is

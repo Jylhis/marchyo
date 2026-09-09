@@ -1,3 +1,4 @@
+# Global (headless-safe): compressed swap.
 { lib, ... }:
 {
   # Compressed RAM-backed swap. Cheap way to extend effective memory and reduce

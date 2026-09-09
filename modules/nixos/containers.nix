@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.development.enable.
 {
   lib,
   pkgs,
@@ -13,14 +14,14 @@ in
   config = lib.mkIf cfg.development.enable {
 
     virtualisation = {
-      containers.enable = true;
+      containers.enable = lib.mkDefault true;
       # Rootless Podman: daemonless, user-namespaced, no privileged group. The
       # `docker` CLI is provided via dockerCompat. Deliberately no root-owned
       # docker-compat socket (dockerSocket) — that would re-expose a root
       # daemon socket, defeating the point of the rootless backend.
       podman = lib.mkIf (backend == "podman") {
-        enable = true;
-        defaultNetwork.settings.dns_enable = true;
+        enable = lib.mkDefault true;
+        defaultNetwork.settings.dns_enable = lib.mkDefault true;
         dockerCompat = true;
       };
 

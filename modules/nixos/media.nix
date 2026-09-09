@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.media.enable.
 {
   pkgs,
   lib,
