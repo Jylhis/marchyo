@@ -2,6 +2,7 @@
 final: prev:
 {
   jylhis-design-src = inputs.jylhis-design;
+  tinted-schemes-src = inputs.tinted-schemes;
   marchyo-wallpapers = final.callPackage ./packages/marchyo-wallpapers/package.nix { };
   marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
 }

@@ -5,7 +5,7 @@
 # modules/darwin/default.nix (NOT by Home Manager — these are system-level
 # stylix options). The base16 palette is derived from marchyo.theme.variant via
 # modules/generic/jylhis-palette.nix; setting marchyo.theme.scheme overrides it
-# with a base16-schemes YAML instead.
+# with a scheme from the tinted-schemes catalog instead.
 {
   pkgs,
   config,
@@ -30,7 +30,7 @@ in
       autoEnable = true;
       base16Scheme =
         if cfg.scheme != null then
-          "${pkgs.base16-schemes}/share/themes/${cfg.scheme}.yaml"
+          "${pkgs.tinted-schemes-src}/base16/${cfg.scheme}.yaml"
         else
           palette.base16;
 

@@ -44,7 +44,7 @@ in
     marchyo.theme = {
       enable = true;
       variant = "dark";
-      # Custom scheme override (must exist in pkgs.base16-schemes).
+      # Custom scheme override (must exist in the tinted-schemes catalog).
       scheme = "nord";
     };
   });

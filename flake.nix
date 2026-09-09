@@ -94,6 +94,15 @@
       url = "github:Jylhis/design";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Base16 scheme catalog (successor of the archived
+    # tinted-theming/base16-schemes that pkgs.base16-schemes packages).
+    # Pure data source: read at eval time from the fetched tree instead of
+    # the built pkgs.base16-schemes package, so evaluation never forces a
+    # package build (no import-from-derivation).
+    tinted-schemes = {
+      url = "github:tinted-theming/schemes";
+      flake = false;
+    };
     # Jotain — Jylhis's Emacs config, distributed as a flake. Its
     # homeManagerModules.default is self-contained (extends pkgs with its own
     # overlay internally), so only nixpkgs needs to follow. Wired in as the

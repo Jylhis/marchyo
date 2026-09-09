@@ -13,7 +13,7 @@ The launcher is a slightly different case: rather than reading base16 slots, Mar
 |--------|------|---------|-------------|
 | `marchyo.theme.enable` | `bool` | `true` | Enable the theming system |
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
-| `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a `base16-schemes` name) |
+| `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a tinted-schemes catalog name) |
 | `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
 | `marchyo.theme.themes` | `list of string` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
@@ -42,12 +42,12 @@ interactive accent, a benchmark-vermilion brand mark, and a structural contour
 blue used for linework only. Code colors are Emacs Modus Operandi (light) /
 Vivendi (dark), so syntax reads identically in every editor and terminal.
 
-To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file shipped by the `base16-schemes` package:
+To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file in the [tinted-theming/schemes](https://github.com/tinted-theming/schemes) catalog (the `base16/` directory):
 
 ```nix
 marchyo.theme = {
   variant = "dark";
-  scheme = "gruvbox-dark-medium"; # any base16-schemes name, e.g. "nord"
+  scheme = "gruvbox-dark-medium"; # any tinted-schemes catalog name, e.g. "nord"
 };
 ```
 
@@ -91,7 +91,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any `base16-schemes` name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [

@@ -22,7 +22,8 @@ in
         Selects the Jylhis Design System palette derived from tokens.json:
         - "dark" uses Jylhis Field
         - "light" uses Jylhis Sheet
-        Override with `marchyo.theme.scheme` to use a base16-schemes YAML instead.
+        Override with `marchyo.theme.scheme` to use a scheme from the
+        tinted-schemes catalog instead.
       '';
     };
 
@@ -43,8 +44,8 @@ in
         Each listed theme's desktop assets are pre-built into the system
         closure so switching is an instant symlink swap. `jylhis-dark` and
         `jylhis-light` are the Jylhis Design System variants; any other
-        name must match a `.yaml` file under the `base16-schemes` package
-        (e.g. "nord", "gruvbox-dark-hard"). This does not change the
+        name must match a `.yaml` file in the tinted-schemes catalog's
+        `base16/` directory (e.g. "nord", "gruvbox-dark-hard"). This does not change the
         build-time default — see `variant`/`scheme` for that.
       '';
     };
@@ -55,9 +56,10 @@ in
       example = "nord";
       description = ''
         Override the base16 color scheme. When set, takes precedence over the
-        Jylhis palette derived from `variant`. Must match a `.yaml` file under
-        the `base16-schemes` package (e.g. "nord", "nord-light",
-        "gruvbox-dark-medium"). When null, the Jylhis palette is used.
+        Jylhis palette derived from `variant`. Must match a `.yaml` file in
+        the tinted-schemes catalog's `base16/` directory (e.g. "nord",
+        "nord-light", "gruvbox-dark-medium"). When null, the Jylhis palette
+        is used.
       '';
     };
 
