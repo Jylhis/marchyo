@@ -17,6 +17,9 @@ PanelWindow {
     id: root
 
     visible: NotificationState.popups.length > 0
+    // Toasts follow the focused output rather than always stacking on
+    // Quickshell's default screen.
+    screen: Screens.focused
     color: "transparent"
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay

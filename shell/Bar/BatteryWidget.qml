@@ -9,6 +9,8 @@ import qs.Services
 // waybar (20% / 10%). Click opens the in-shell power panel (battery detail +
 // profile selector, with a power-menu escape hatch).
 BarItem {
+    id: root
+
     readonly property var dev: Power.dev
     readonly property int pct: Power.pct
 
@@ -18,5 +20,5 @@ BarItem {
     textColor: pct <= 10 ? Color.statusErr : (pct <= 20 ? Color.statusWarn : Color.text)
     tooltipText: Power.tooltipText
 
-    onClicked: PanelManager.toggle("power")
+    onClicked: PanelManager.toggle("power", root)
 }

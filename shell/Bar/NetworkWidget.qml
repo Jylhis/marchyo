@@ -26,5 +26,5 @@ BarItem {
     textColor: activeDevice ? Color.text : Color.textFaint
     tooltipText: NetworkStatus.tooltipText
 
-    onClicked: PanelManager.toggle("network")
+    onClicked: PanelManager.toggle("network", root)
 }

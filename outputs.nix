@@ -633,7 +633,7 @@ in
         # edit. Each suite derives its root from its own location, so the
         # staged layout has to mirror the repo's.
         shell-format-unit =
-          pkgs.runCommand "check-shell-format-unit"
+          pkgs.runCommand "check-shell-js-unit"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             }
@@ -643,6 +643,7 @@ in
               cp -r ${./tests/shell} src/tests/shell
               cd src
               node tests/shell/format-test.js
+              node tests/shell/notify-test.js
               touch "$out"
             '';
 
