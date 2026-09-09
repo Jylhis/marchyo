@@ -30,6 +30,26 @@ in
         marchyo.snapshots.enable = true;
       });
 
+  # Setting one retention horizon must leave the others at their defaults.
+  # With the old `attrsOf int` option an attrset definition replaced the whole
+  # default, so DAILY/WEEKLY/MONTHLY/YEARLY collapsed to "0" while
+  # TIMELINE_CLEANUP stayed true — snapper then deleted those snapshots.
+  eval-omarchy-snapshots-partial-limits =
+    testNixOSCheck "omarchy-snapshots-partial-limits"
+      (
+        cfg:
+        let
+          root = cfg.services.snapper.configs.root;
+        in
+        root.TIMELINE_LIMIT_HOURLY == "24" && root.TIMELINE_LIMIT_DAILY == "7"
+      )
+      (withTestUser {
+        marchyo.snapshots = {
+          enable = true;
+          timelineLimits.hourly = 24;
+        };
+      });
+
   # snapshots on a non-btrfs host: no snapper config, warning emitted.
   eval-omarchy-snapshots-nonbtrfs =
     testNixOSCheck "omarchy-snapshots-nonbtrfs"

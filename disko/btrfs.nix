@@ -19,8 +19,11 @@
 # Good for: VMs, servers, machines that don't need disk encryption
 # Benefits: Snapshot support, compression, no passphrase at boot
 
+# No default: --mode disko repartitions and mkfs the target with no prompt,
+# so falling back to /dev/sda would silently wipe whatever disk happens to be
+# first on the host.
 {
-  device ? "/dev/sda",
+  device ? throw "disko/btrfs.nix: pass the target disk: --arg device '\"/dev/nvme0n1\"'",
   ...
 }:
 {
@@ -39,7 +42,13 @@
                 type = "filesystem";
                 format = "vfat";
                 mountpoint = "/boot";
-                mountOptions = [ "defaults" ];
+                # Owner-only, matching disko/luks-btrfs-raid1.nix. vfat has no
+                # permission bits of its own, and "defaults" leaves /boot
+                # world-readable.
+                mountOptions = [
+                  "fmask=0077"
+                  "dmask=0077"
+                ];
               };
             };
             root = {

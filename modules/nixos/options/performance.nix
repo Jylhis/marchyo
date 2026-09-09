@@ -18,10 +18,18 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) for maximum performance.
-        WARNING: This reduces security. Only enable on trusted single-user workstations
-        where maximum performance is required (e.g., gaming, benchmarking).
-        Do NOT enable if running untrusted code or containers.
+        Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) by
+        passing `mitigations=off`, trading security for performance.
+
+        WARNING: this defaults to `true`, so mitigations are OFF unless you set
+        it to `false`. That default suits the trusted single-user workstations
+        marchyo targets (gaming, benchmarking, local development). Set it to
+        `false` on any host that runs untrusted code or untrusted containers —
+        including anything reachable by others, or a CI/build machine executing
+        code you did not write.
+
+        A host that enables a container runtime while this is on gets a build
+        warning; see `modules/nixos/performance.nix`.
       '';
     };
 

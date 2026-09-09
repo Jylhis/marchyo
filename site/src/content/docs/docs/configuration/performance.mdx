@@ -14,7 +14,7 @@ marchyo.performance.disableMitigations = true;
 ```
 
 :::caution
-Disabling CPU mitigations (Spectre, Meltdown, etc.) reduces security. Only enable on trusted single-user workstations where maximum performance is required (e.g., gaming, benchmarking). Do **not** enable if running untrusted code or containers.
+This defaults to `true`, so mitigations (Spectre, Meltdown, etc.) are **off** unless you turn them back on. That suits the trusted single-user workstations Marchyo targets. Set it to `false` on any host that runs untrusted code or untrusted containers, is reachable by others, or builds code you did not write. Enabling a container runtime while mitigations are off produces a build warning.
 :::
 
 To keep mitigations enabled:

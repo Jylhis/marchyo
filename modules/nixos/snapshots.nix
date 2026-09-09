@@ -13,11 +13,14 @@ in
         ALLOW_USERS = mUsers;
         TIMELINE_CREATE = true;
         TIMELINE_CLEANUP = true;
-        TIMELINE_LIMIT_HOURLY = toString (L.hourly or 0);
-        TIMELINE_LIMIT_DAILY = toString (L.daily or 0);
-        TIMELINE_LIMIT_WEEKLY = toString (L.weekly or 0);
-        TIMELINE_LIMIT_MONTHLY = toString (L.monthly or 0);
-        TIMELINE_LIMIT_YEARLY = toString (L.yearly or 0);
+        # No `or 0` fallbacks: timelineLimits is a submodule, so every horizon
+        # is always defined. The fallbacks are what turned a partial override
+        # into silent snapshot deletion.
+        TIMELINE_LIMIT_HOURLY = toString L.hourly;
+        TIMELINE_LIMIT_DAILY = toString L.daily;
+        TIMELINE_LIMIT_WEEKLY = toString L.weekly;
+        TIMELINE_LIMIT_MONTHLY = toString L.monthly;
+        TIMELINE_LIMIT_YEARLY = toString L.yearly;
       };
     })
 
