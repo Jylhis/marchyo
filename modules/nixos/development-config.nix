@@ -12,13 +12,13 @@ in
   config = lib.mkIf cfg.development.enable {
     programs = {
       git = {
-        enable = true;
-        lfs.enable = true;
+        enable = lib.mkDefault true;
+        lfs.enable = lib.mkDefault true;
       };
-      bash.completion.enable = true;
+      bash.completion.enable = lib.mkDefault true;
       direnv = {
-        enable = true;
-        nix-direnv.enable = true;
+        enable = lib.mkDefault true;
+        nix-direnv.enable = lib.mkDefault true;
       };
     };
 
@@ -36,7 +36,7 @@ in
         qemu = {
           package = pkgs.qemu_kvm;
           runAsRoot = false;
-          swtpm.enable = true;
+          swtpm.enable = lib.mkDefault true;
         };
       };
     };
@@ -88,6 +88,6 @@ in
       lib.optional config.hardware.cpu.amd.updateMicrocode "kvm-amd"
       ++ lib.optional config.hardware.cpu.intel.updateMicrocode "kvm-intel";
 
-    documentation.dev.enable = true;
+    documentation.dev.enable = lib.mkDefault true;
   };
 }

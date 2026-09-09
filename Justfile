@@ -16,7 +16,10 @@ check:
       nix eval .#homeManagerModules --apply builtins.attrNames > /dev/null
       echo "darwin: evaluating darwin configurations..."
       for cfg in $(nix eval .#darwinConfigurations --apply builtins.attrNames --json | nix run nixpkgs#jq -- -r '.[]'); do
-        nix eval ".#darwinConfigurations.$cfg.config.system.build.toplevel" --apply '(_: "ok")' > /dev/null
+        # `--apply 'd: d.drvPath'`, not '(_: "ok")': the latter discards its
+        # argument, so the toplevel was never forced and a configuration whose
+        # packages fail to evaluate still passed this gate.
+        nix eval --raw ".#darwinConfigurations.$cfg.config.system.build.toplevel" --apply 'd: d.drvPath' > /dev/null
         echo "  ok: darwinConfigurations.$cfg"
       done
       echo "darwin: checking formatter..."

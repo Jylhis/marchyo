@@ -1,3 +1,4 @@
+# Global (headless-safe): users, home-manager wiring, base services.
 {
   config,
   lib,
@@ -10,11 +11,11 @@ let
 in
 {
   services = {
-    earlyoom.enable = true;
+    earlyoom.enable = lib.mkDefault true;
   };
 
   programs = {
-    nix-ld.enable = true;
+    nix-ld.enable = lib.mkDefault true;
   };
 
   environment.systemPackages = with pkgs; [

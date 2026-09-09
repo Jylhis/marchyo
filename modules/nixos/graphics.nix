@@ -128,6 +128,11 @@ in
 
         (lib.mkIf (cfg.prime.mode == "offload") {
           offload = {
+            # Normal priority, deliberately not lib.mkDefault: nixpkgs'
+            # nvidia module already defines this option at mkDefault
+            # (hardware/video/nvidia.nix), so a second mkDefault here would be
+            # an equal-priority conflict rather than an override. The consumer
+            # knob is marchyo.graphics.prime.mode.
             enable = true;
             enableOffloadCmd = true; # Provides `nvidia-offload` command
           };

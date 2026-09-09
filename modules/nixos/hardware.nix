@@ -1,3 +1,4 @@
+# Global (headless-safe) firmware/thermal/power; bluetooth is desktop-gated.
 {
   pkgs,
   lib,
@@ -19,9 +20,11 @@
   # Thunderbolt
   services.hardware.bolt.enable = lib.mkDefault true;
 
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
+  # Desktop-only, and the sole owner of hardware.bluetooth.enable —
+  # modules/nixos/desktop-config.nix deliberately does not set it.
+  hardware.bluetooth = lib.mkIf config.marchyo.desktop.enable {
+    enable = lib.mkDefault true;
+    powerOnBoot = lib.mkDefault true;
     settings = {
       General = {
         Enable = "Source,Sink,Media,Socket";
@@ -29,7 +32,7 @@
       };
     };
   };
-  environment.systemPackages = [ pkgs.bluetui ];
+  environment.systemPackages = lib.mkIf config.marchyo.desktop.enable [ pkgs.bluetui ];
 
   services = {
     power-profiles-daemon.enable = lib.mkDefault true;

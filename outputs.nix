@@ -91,7 +91,10 @@ let
       nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
-      boot.loader.systemd-boot.enable = lib.mkForce false;
+      # Plain `false`, no lib.mkForce: modules/nixos/boot.nix sets systemd-boot
+      # with lib.mkDefault, so a consumer (this reference VM included) can turn
+      # it off normally.
+      boot.loader.systemd-boot.enable = false;
       boot.loader.grub.enable = lib.mkForce false;
       fileSystems."/" = {
         device = "/dev/vda";
@@ -781,7 +784,7 @@ in
         # edit. Each suite derives its root from its own location, so the
         # staged layout has to mirror the repo's.
         shell-format-unit =
-          pkgs.runCommand "check-shell-format-unit"
+          pkgs.runCommand "check-shell-js-unit"
             {
               nativeBuildInputs = [ pkgs.nodejs ];
             }
@@ -791,6 +794,27 @@ in
               cp -r ${./tests/shell} src/tests/shell
               cd src
               node tests/shell/format-test.js
+              node tests/shell/notify-test.js
+              touch "$out"
+            '';
+
+        # site/src/data/options.json is generated from the marchyo.* option
+        # declarations (nix build .#site-search-data / `just site-data`) and
+        # rendered by search.astro. This guards that generated data against
+        # dead `declared:` paths and options attributed to the wrong file.
+        site-option-paths =
+          pkgs.runCommand "check-site-option-paths"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            }
+            ''
+              # Only the parents: `cp -r dir target` nests when target exists.
+              mkdir -p src/tests src/site/src
+              cp -r ${./tests/site} src/tests/site
+              cp -r ${./site/src/data} src/site/src/data
+              cp -r ${./modules} src/modules
+              cd src
+              node tests/site/option-paths-test.js
               touch "$out"
             '';
 

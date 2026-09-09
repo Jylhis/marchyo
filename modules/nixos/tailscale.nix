@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.services.tailscale.enable.
 { config, lib, ... }:
 let
   cfg = config.marchyo;

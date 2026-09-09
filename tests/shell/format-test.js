@@ -39,7 +39,13 @@ function test(name, fn) {
 // fail outright — but an *empty* export object would let every test below pass
 // vacuously, so pin the surface explicitly.
 test("the module exports its whole public surface to Node", () => {
-  assert.deepEqual(Object.keys(Format).sort(), ["parseDeviceStatus", "parseWifi", "shortCode", "splitTerse"]);
+  assert.deepEqual(Object.keys(Format).sort(), [
+    "parseDeviceAddress",
+    "parseDeviceShow",
+    "parseWifi",
+    "shortCode",
+    "splitTerse",
+  ]);
 });
 
 // ── shortCode ────────────────────────────────────────────────────────────────
@@ -119,27 +125,107 @@ test("parseWifi does not mistake an SSID of 'yes' for the active marker", () => 
   assert.deepEqual(Format.parseWifi("no:yes:61"), { ssid: "", signal: -1 });
 });
 
-// ── parseDeviceStatus ────────────────────────────────────────────────────────
+// ── parseDeviceShow / parseDeviceAddress ─────────────────────────────────────
 
-test("parseDeviceStatus returns the first connected device that has an address", () => {
-  const status = ["lo:unmanaged:", "eth0:unavailable:", "wlan0:connected:192.168.1.10/24"].join("\n");
-  assert.deepEqual(Format.parseDeviceStatus(status), { ifName: "wlan0", ipAddress: "192.168.1.10" });
+// Verbatim `nmcli -t -f GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS device show`
+// output, captured from a wired host. The previous fixtures here encoded a
+// one-record-per-line "DEVICE:STATE:ADDR" shape that no nmcli subcommand emits,
+// which is why these tests stayed green while the bar showed "offline": note
+// the numeric state prefix, the indexed address key, the blank-line block
+// separator, and tailscale0 omitting the address line entirely.
+const DEVICE_SHOW = [
+  "GENERAL.DEVICE:enp12s0",
+  "GENERAL.STATE:100 (connected)",
+  "IP4.ADDRESS[1]:10.104.35.92/23",
+  "",
+  "GENERAL.DEVICE:lo",
+  "GENERAL.STATE:100 (connected (externally))",
+  "IP4.ADDRESS[1]:127.0.0.1/8",
+  "",
+  "GENERAL.DEVICE:tailscale0",
+  "GENERAL.STATE:10 (unmanaged)",
+  "",
+].join("\n");
+
+test("parseDeviceAddress reads real `nmcli device show` output", () => {
+  assert.deepEqual(Format.parseDeviceAddress(DEVICE_SHOW), {
+    ifName: "enp12s0",
+    ipAddress: "10.104.35.92",
+  });
 });
 
-test("parseDeviceStatus skips a connected device with no address", () => {
-  const status = ["tun0:connected:", "wlan0:connected:10.0.0.5/8"].join("\n");
-  assert.deepEqual(Format.parseDeviceStatus(status), { ifName: "wlan0", ipAddress: "10.0.0.5" });
+test("parseDeviceShow keeps one record per device, in nmcli's order", () => {
+  assert.deepEqual(Format.parseDeviceShow(DEVICE_SHOW), [
+    { ifName: "enp12s0", state: "100 (connected)", ipAddress: "10.104.35.92" },
+    { ifName: "lo", state: "100 (connected (externally))", ipAddress: "127.0.0.1" },
+    { ifName: "tailscale0", state: "10 (unmanaged)", ipAddress: "" },
+  ]);
 });
 
-test("parseDeviceStatus strips the CIDR prefix", () => {
-  assert.equal(Format.parseDeviceStatus("wlan0:connected:192.168.1.10/24").ipAddress, "192.168.1.10");
+test("parseDeviceAddress skips loopback even when it is listed first", () => {
+  const show = [
+    "GENERAL.DEVICE:lo",
+    "GENERAL.STATE:100 (connected (externally))",
+    "IP4.ADDRESS[1]:127.0.0.1/8",
+    "",
+    "GENERAL.DEVICE:wlan0",
+    "GENERAL.STATE:100 (connected)",
+    "IP4.ADDRESS[1]:192.168.1.10/24",
+  ].join("\n");
+  assert.deepEqual(Format.parseDeviceAddress(show), { ifName: "wlan0", ipAddress: "192.168.1.10" });
 });
 
-test("parseDeviceStatus returns empties when nothing is connected", () => {
+test("parseDeviceAddress skips a connected device that has no address line", () => {
+  const show = [
+    "GENERAL.DEVICE:tun0",
+    "GENERAL.STATE:100 (connected)",
+    "",
+    "GENERAL.DEVICE:wlan0",
+    "GENERAL.STATE:100 (connected)",
+    "IP4.ADDRESS[1]:10.0.0.5/8",
+  ].join("\n");
+  assert.deepEqual(Format.parseDeviceAddress(show), { ifName: "wlan0", ipAddress: "10.0.0.5" });
+});
+
+test("parseDeviceAddress prefers a managed device over an externally-managed bridge", () => {
+  const show = [
+    "GENERAL.DEVICE:podman0",
+    "GENERAL.STATE:100 (connected (externally))",
+    "IP4.ADDRESS[1]:10.88.0.1/16",
+    "",
+    "GENERAL.DEVICE:enp1s0",
+    "GENERAL.STATE:100 (connected)",
+    "IP4.ADDRESS[1]:192.168.1.20/24",
+  ].join("\n");
+  assert.deepEqual(Format.parseDeviceAddress(show), { ifName: "enp1s0", ipAddress: "192.168.1.20" });
+});
+
+test("parseDeviceAddress falls back to an externally-managed device", () => {
+  // systemd-networkd hosts: NetworkManager only observes the uplink, so
+  // "connected (externally)" is the best address available.
+  const show = [
+    "GENERAL.DEVICE:enp1s0",
+    "GENERAL.STATE:100 (connected (externally))",
+    "IP4.ADDRESS[1]:192.168.1.20/24",
+  ].join("\n");
+  assert.deepEqual(Format.parseDeviceAddress(show), { ifName: "enp1s0", ipAddress: "192.168.1.20" });
+});
+
+test("parseDeviceAddress returns empties when nothing is connected", () => {
   const empty = { ifName: "", ipAddress: "" };
-  assert.deepEqual(Format.parseDeviceStatus("lo:unmanaged:\neth0:disconnected:"), empty);
-  assert.deepEqual(Format.parseDeviceStatus(""), empty);
-  assert.deepEqual(Format.parseDeviceStatus(null), empty);
+  const show = [
+    "GENERAL.DEVICE:enp1s0",
+    "GENERAL.STATE:30 (disconnected)",
+    "",
+    "GENERAL.DEVICE:tailscale0",
+    "GENERAL.STATE:10 (unmanaged)",
+  ].join("\n");
+  assert.deepEqual(Format.parseDeviceAddress(show), empty);
+  assert.deepEqual(Format.parseDeviceAddress(""), empty);
+  assert.deepEqual(Format.parseDeviceAddress(null), empty);
+  // `device status` rejects the IP4.ADDRESS field: nmcli exits 2 and prints
+  // nothing. Empties, never a wrong answer.
+  assert.deepEqual(Format.parseDeviceAddress("\n"), empty);
 });
 
 console.log("# " + passed + " passed");

@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.slack.enable.
 {
   config,
   lib,

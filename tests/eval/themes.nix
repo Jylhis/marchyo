@@ -10,7 +10,9 @@ let
     assertTest
     testNixOS
     testNixOSCheck
+    testDarwinCheckFor
     withTestUser
+    withDarwinTestUser
     ;
 
   # The manifest text intentionally carries store-path context (it roots
@@ -134,4 +136,26 @@ in
         marchyo.desktop.enable = true;
         marchyo.theme.fontScale = 2.0;
       });
+
+  # modules/darwin/home.nix imports a curated subset of modules/home, and that
+  # subset has to include ../generic/theme.nix — the module that opts out of
+  # the Stylix targets marchyo themes itself. Without it, stylix's HM targets
+  # and marchyo's own modules define the same options at normal priority and
+  # the darwin toplevel stops evaluating with "conflicting definition values".
+  # Both input trios are checked: aarch64 (unstable) and x86_64 (stable 26.05).
+  eval-themes-darwin-stylix-optouts =
+    testDarwinCheckFor "aarch64-darwin" "themes-darwin-stylix-optouts"
+      (
+        cfg:
+        let
+          targets = cfg.home-manager.users.testuser.stylix.targets;
+        in
+        !targets.bat.enable && !targets.fzf.enable && !targets.starship.enable
+      )
+      (withDarwinTestUser { });
+
+  eval-themes-darwin-stable-stylix-optouts =
+    testDarwinCheckFor "x86_64-darwin" "themes-darwin-stable-stylix-optouts"
+      (cfg: !cfg.home-manager.users.testuser.stylix.targets.bat.enable)
+      (withDarwinTestUser { });
 }

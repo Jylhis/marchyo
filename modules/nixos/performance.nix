@@ -1,3 +1,4 @@
+# Global (headless-safe): kernel selection and CPU mitigations.
 {
   config,
   lib,
@@ -17,6 +18,10 @@ let
   };
 in
 {
+  # No lib.mkDefault here, unlike boot.kernelPackages below: kernelParams is a
+  # list option, so definitions concatenate rather than compete on priority and
+  # a default would not make the entry removable. Opting out is done through
+  # marchyo.performance.disableMitigations, which drops the entry entirely.
   boot.kernelParams = lib.mkIf cfg.disableMitigations [
     "mitigations=off"
   ];
@@ -25,11 +30,20 @@ in
     lib.mkDefault kernelPackages.${cfg.kernel}
   );
 
-  warnings = lib.optional (config.marchyo.development.enable && cfg.disableMitigations) ''
-    marchyo: CPU mitigations are disabled (marchyo.performance.disableMitigations
-    = true) while the container stack is enabled (marchyo.development.enable).
-    This is fine for trusted local workloads, but do not run untrusted containers
-    in this configuration. Set marchyo.performance.disableMitigations = false to
-    re-enable mitigations.
-  '';
+  # Warn on any container runtime, not just marchyo.development.enable — a host
+  # that turns on podman or docker directly is in the same position.
+  warnings =
+    let
+      containerRuntime =
+        config.marchyo.development.enable
+        || config.virtualisation.podman.enable
+        || config.virtualisation.docker.enable;
+    in
+    lib.optional (containerRuntime && cfg.disableMitigations) ''
+      marchyo: CPU mitigations are disabled (marchyo.performance.disableMitigations
+      = true, which is the default) while a container runtime is enabled. This is
+      fine for trusted local workloads, but do not run untrusted containers in
+      this configuration. Set marchyo.performance.disableMitigations = false to
+      re-enable mitigations.
+    '';
 }

@@ -1,3 +1,4 @@
+# Global (headless-safe): Wayland-related environment only, no services.
 {
   environment.sessionVariables = {
     # Conservative Wayland settings

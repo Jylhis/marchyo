@@ -857,7 +857,7 @@
   {
     "declared": "modules/nixos/options/performance.nix",
     "default": "true",
-    "description": "Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) for maximum performance.\nWARNING: This reduces security. Only enable on trusted single-user workstations\nwhere maximum performance is required (e.g., gaming, benchmarking).\nDo NOT enable if running untrusted code or containers.",
+    "description": "Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) by\npassing `mitigations=off`, trading security for performance.\n\nWARNING: this defaults to `true`, so mitigations are OFF unless you set\nit to `false`. That default suits the trusted single-user workstations\nmarchyo targets (gaming, benchmarking, local development). Set it to\n`false` on any host that runs untrusted code or untrusted containers —\nincluding anything reachable by others, or a CI/build machine executing\ncode you did not write.\n\nA host that enables a container runtime while this is on gets a build\nwarning; see `modules/nixos/performance.nix`.",
     "example": "",
     "name": "marchyo.performance.disableMitigations",
     "type": "boolean",
@@ -1072,11 +1072,56 @@
   },
   {
     "declared": "modules/nixos/options/snapshots.nix",
-    "default": "{\n  daily = 7;\n  hourly = 5;\n  monthly = 0;\n  weekly = 0;\n  yearly = 0;\n}",
-    "description": "Number-cleanup timeline retention limits passed to snapper.",
+    "default": "{ }",
+    "description": "Number-cleanup timeline retention limits passed to snapper. Each\nhorizon can be set on its own; the others keep their defaults.",
     "example": "",
     "name": "marchyo.snapshots.timelineLimits",
-    "type": "attribute set of signed integer",
+    "type": "submodule",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "declared": "modules/nixos/options/snapshots.nix",
+    "default": "7",
+    "description": "Daily timeline snapshots to keep.",
+    "example": "",
+    "name": "marchyo.snapshots.timelineLimits.daily",
+    "type": "unsigned integer, meaning >=0",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "declared": "modules/nixos/options/snapshots.nix",
+    "default": "5",
+    "description": "Hourly timeline snapshots to keep.",
+    "example": "",
+    "name": "marchyo.snapshots.timelineLimits.hourly",
+    "type": "unsigned integer, meaning >=0",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "declared": "modules/nixos/options/snapshots.nix",
+    "default": "0",
+    "description": "Monthly timeline snapshots to keep.",
+    "example": "",
+    "name": "marchyo.snapshots.timelineLimits.monthly",
+    "type": "unsigned integer, meaning >=0",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "declared": "modules/nixos/options/snapshots.nix",
+    "default": "0",
+    "description": "Weekly timeline snapshots to keep.",
+    "example": "",
+    "name": "marchyo.snapshots.timelineLimits.weekly",
+    "type": "unsigned integer, meaning >=0",
+    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
+  },
+  {
+    "declared": "modules/nixos/options/snapshots.nix",
+    "default": "0",
+    "description": "Yearly timeline snapshots to keep.",
+    "example": "",
+    "name": "marchyo.snapshots.timelineLimits.yearly",
+    "type": "unsigned integer, meaning >=0",
     "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/snapshots.nix"
   },
   {
@@ -1235,7 +1280,7 @@
   {
     "declared": "modules/nixos/options/webapps.nix",
     "default": "null",
-    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)\nand of the keys used by the default app set (A, G, P, W, X, Y, Z).",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on.",
     "example": "\"A\"",
     "name": "marchyo.webapps.apps.*.key",
     "type": "null or string",
@@ -1307,7 +1352,7 @@
   {
     "declared": "modules/nixos/options/webapps.nix",
     "default": "null",
-    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)\nand of the keys used by the default app set (A, G, P, W, X, Y, Z).",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on.",
     "example": "\"A\"",
     "name": "marchyo.webapps.extraApps.*.key",
     "type": "null or string",

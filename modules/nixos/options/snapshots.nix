@@ -26,16 +26,46 @@ in
       description = "Subvolume snapper takes timeline snapshots of.";
     };
 
+    # A submodule, deliberately not `attrsOf int`: with an attrset default, one
+    # `timelineLimits = { hourly = 24; }` replaces the whole default and every
+    # other horizon becomes 0 while TIMELINE_CLEANUP stays on — snapper then
+    # deletes the daily and longer-horizon snapshots. Per-field defaults make a
+    # partial definition merge instead of destroying retention.
     timelineLimits = mkOption {
-      type = types.attrsOf types.int;
-      default = {
-        hourly = 5;
-        daily = 7;
-        weekly = 0;
-        monthly = 0;
-        yearly = 0;
+      type = types.submodule {
+        options = {
+          hourly = mkOption {
+            type = types.ints.unsigned;
+            default = 5;
+            description = "Hourly timeline snapshots to keep.";
+          };
+          daily = mkOption {
+            type = types.ints.unsigned;
+            default = 7;
+            description = "Daily timeline snapshots to keep.";
+          };
+          weekly = mkOption {
+            type = types.ints.unsigned;
+            default = 0;
+            description = "Weekly timeline snapshots to keep.";
+          };
+          monthly = mkOption {
+            type = types.ints.unsigned;
+            default = 0;
+            description = "Monthly timeline snapshots to keep.";
+          };
+          yearly = mkOption {
+            type = types.ints.unsigned;
+            default = 0;
+            description = "Yearly timeline snapshots to keep.";
+          };
+        };
       };
-      description = "Number-cleanup timeline retention limits passed to snapper.";
+      default = { };
+      description = ''
+        Number-cleanup timeline retention limits passed to snapper. Each
+        horizon can be set on its own; the others keep their defaults.
+      '';
     };
   };
 }

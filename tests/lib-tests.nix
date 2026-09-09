@@ -91,4 +91,51 @@ in
     assertTest "fontScale-terminus" (
       fs125.terminusFont 24 == "ter-v28n" && fs10.terminusFont 24 == "ter-v24n"
     ) "Expected terminusFont to snap the scaled base to the nearest terminus PSF size";
+
+  # modules/generic/keyboard-lib.nix: normalizeLayout must always return all
+  # four keys. The attrset branch used to be a bare passthrough, so the
+  # documented example below returned a value with no `variant` and no `label`
+  # — contradicting the function's own doc comment.
+  test-normalizeLayout-string =
+    let
+      inherit (import ../modules/generic/keyboard-lib.nix) normalizeLayout;
+    in
+    assertTest "normalizeLayout-string" (
+      normalizeLayout "us" == {
+        layout = "us";
+        variant = "";
+        ime = null;
+        label = null;
+      }
+    ) "normalizeLayout of a bare layout code did not match the documented example";
+
+  test-normalizeLayout-attrs =
+    let
+      inherit (import ../modules/generic/keyboard-lib.nix) normalizeLayout;
+    in
+    assertTest "normalizeLayout-attrs" (
+      normalizeLayout {
+        layout = "cn";
+        ime = "pinyin";
+      } == {
+        layout = "cn";
+        variant = "";
+        ime = "pinyin";
+        label = null;
+      }
+    ) "normalizeLayout of a partial attrset did not fill in variant/label";
+
+  # Values the caller did supply must survive the merge.
+  test-normalizeLayout-keeps-values =
+    let
+      inherit (import ../modules/generic/keyboard-lib.nix) normalizeLayout;
+      result = normalizeLayout {
+        layout = "fi";
+        variant = "nodeadkeys";
+        label = "Finnish";
+      };
+    in
+    assertTest "normalizeLayout-keeps-values" (
+      result.variant == "nodeadkeys" && result.label == "Finnish" && result.ime == null
+    ) "normalizeLayout overwrote a caller-supplied field";
 }

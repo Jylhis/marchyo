@@ -32,8 +32,11 @@ let
         description = ''
           Hyprland key (the part after the modifiers) that launches this app.
           `null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT
-          binds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)
-          and of the keys used by the default app set (A, G, P, W, X, Y, Z).
+          binds (B, C, D, E, H, I, M, N, O, S, T, V are taken, plus
+          minus/equal/comma/period/SPACE/Print/Tab and the workspace
+          digits/arrows) and of the keys used by the default app set
+          (A, G, P, W, X, Y, Z). T is org-capture, from
+          modules/home/emacs.nix, and only bound when marchyo.emacs is on.
         '';
       };
       modifiers = mkOption {

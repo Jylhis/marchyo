@@ -51,9 +51,12 @@
 # partition outside the RAID1.
 #
 # Good for: laptops/desktops wanting full-disk encryption + drive redundancy.
+# No default: --mode disko repartitions and mkfs the target with no prompt,
+# so falling back to /dev/sda would silently wipe whatever disk happens to be
+# first on the host.
 {
-  deviceA ? "/dev/sda",
-  deviceB ? "/dev/sdb",
+  deviceA ? throw "disko/luks-btrfs-raid1.nix: pass both disks: --arg deviceA '\"/dev/disk/by-id/...\"' --arg deviceB '\"/dev/disk/by-id/...\"'",
+  deviceB ? throw "disko/luks-btrfs-raid1.nix: pass both disks: --arg deviceA '\"/dev/disk/by-id/...\"' --arg deviceB '\"/dev/disk/by-id/...\"'",
   ...
 }:
 let

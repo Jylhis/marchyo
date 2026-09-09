@@ -1,3 +1,4 @@
+# Global (headless-safe) bootloader; the greetd block is desktop-gated.
 {
   config,
   lib,
@@ -9,7 +10,7 @@ let
 in
 {
   boot.loader.systemd-boot = {
-    enable = true;
+    enable = lib.mkDefault true;
     configurationLimit = lib.mkDefault 5;
   };
 

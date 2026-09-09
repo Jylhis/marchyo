@@ -6,6 +6,11 @@
 #   3. During partitioning, you'll be prompted to set a LUKS passphrase
 #   4. Install NixOS normally
 #
+# Key file instead of a prompt: set `passwordFile` on the luks content below.
+# Keep it out of world-readable /tmp — write it to a root-only path
+# (`umask 077; printf %s "$pass" > /root/secret.key`) and delete it after
+# install.
+#
 # Layout:
 #   - ESP: 512MB FAT32 (/boot)
 #   - LUKS encrypted container containing:
@@ -31,8 +36,11 @@
 # randomEncryption = false — then point marchyo.power.hibernation.resumeDevice
 # at the swap device.
 
+# No default: --mode disko repartitions and mkfs the target with no prompt,
+# so falling back to /dev/sda would silently wipe whatever disk happens to be
+# first on the host.
 {
-  device ? "/dev/sda",
+  device ? throw "disko/luks-btrfs.nix: pass the target disk: --arg device '\"/dev/nvme0n1\"'",
   ...
 }:
 {
@@ -51,7 +59,13 @@
                 type = "filesystem";
                 format = "vfat";
                 mountpoint = "/boot";
-                mountOptions = [ "defaults" ];
+                # Owner-only, matching disko/luks-btrfs-raid1.nix. vfat has no
+                # permission bits of its own, and "defaults" leaves /boot
+                # world-readable.
+                mountOptions = [
+                  "fmask=0077"
+                  "dmask=0077"
+                ];
               };
             };
             luks = {
@@ -59,12 +73,11 @@
               content = {
                 type = "luks";
                 name = "encrypted";
-                # Recommended: remove passwordFile entirely for interactive
-                # passphrase entry at partition time. If you must use a key file,
-                # keep it out of world-readable /tmp — write it to a root-only
-                # path (`umask 077; printf %s "$pass" > /root/secret.key`) and
-                # delete it after install.
-                passwordFile = "/root/secret.key"; # change to your key file location
+                # No passwordFile: cryptsetup prompts for the passphrase at
+                # partition time, which is what the header's step 3 documents.
+                # Setting one here made the documented flow abort *after* the
+                # GPT had already been written. To use a key file instead, add
+                # `passwordFile = "/root/secret.key";` and see the header.
                 settings = {
                   allowDiscards = true;
                   bypassWorkqueues = true;

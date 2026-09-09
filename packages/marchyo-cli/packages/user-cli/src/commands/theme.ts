@@ -277,6 +277,17 @@ export async function runBgSet(
 ): Promise<number> {
   const mode = parseChangeFlags(rt, { revert: opts.revert });
   if (mode === 2) return 2;
+  // The positional is optional (it is omitted with --revert), and the action
+  // passes "" when it is missing. Without this guard resolve("") returns the
+  // cwd, existsSync(cwd) is always true, and the cwd got persisted into
+  // runtime.json as the wallpaper. Same shape as `font set` above.
+  if (mode !== "revert" && rawPath === "") {
+    return usageError(
+      rt,
+      "bg set needs an image path",
+      "marchyo bg set ~/pictures/wall.png   (or: marchyo bg set --revert)",
+    );
+  }
   const image = isAbsolute(rawPath) ? rawPath : resolve(rawPath);
   if (mode !== "revert" && !existsSync(image)) {
     err(rt, `no such image: ${image}`);

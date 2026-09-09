@@ -25,7 +25,8 @@ in
     xdg.mime.enable = lib.mkDefault true;
 
     services = {
-      printing.enable = lib.mkDefault true;
+      # printing is owned by modules/nixos/printing.nix (which also ships the
+      # drivers and colord); bluetooth by modules/nixos/hardware.nix.
       blueman.enable = lib.mkDefault true;
       geoclue2.enable = lib.mkDefault true;
       tumbler.enable = lib.mkDefault true;
@@ -41,12 +42,8 @@ in
 
     hardware = {
       graphics = {
-        enable = true;
-        enable32Bit = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
-      };
-      bluetooth = {
         enable = lib.mkDefault true;
-        powerOnBoot = lib.mkDefault true;
+        enable32Bit = lib.mkDefault (pkgs.stdenv.hostPlatform.system == "x86_64-linux");
       };
     };
 
@@ -55,21 +52,21 @@ in
       powertop.enable = lib.mkDefault false;
     };
 
-    security.rtkit.enable = true;
+    security.rtkit.enable = lib.mkDefault true;
     services.pipewire = {
-      enable = true;
-      alsa.enable = true;
-      alsa.support32Bit = true;
-      pulse.enable = true;
+      enable = lib.mkDefault true;
+      alsa.enable = lib.mkDefault true;
+      alsa.support32Bit = lib.mkDefault true;
+      pulse.enable = lib.mkDefault true;
       jack.enable = lib.mkDefault true;
-      wireplumber.enable = true;
+      wireplumber.enable = lib.mkDefault true;
     };
 
     # Fonts — defaultFonts are set in modules/generic/fontconfig.nix and
     # overridden by Stylix in modules/nixos/default.nix.
     fonts = {
-      enableDefaultPackages = true;
-      fontconfig.enable = true;
+      enableDefaultPackages = lib.mkDefault true;
+      fontconfig.enable = lib.mkDefault true;
     };
 
     # Nautilus extension discovery (sushi previews, etc.)
@@ -79,7 +76,7 @@ in
     environment.systemPackages = [ pkgs.xdg-user-dirs-gtk ];
 
     xdg.portal = {
-      enable = true;
+      enable = lib.mkDefault true;
       extraPortals = [ ];
       config.common.default = lib.mkDefault "*";
     };

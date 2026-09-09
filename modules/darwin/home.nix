@@ -34,6 +34,13 @@ in
         ../generic/shell.nix
         ../generic/packages.nix
         ../generic/git.nix
+        # Required, not optional: this is what disables the Stylix targets the
+        # modules above theme themselves. Without it stylix's HM bat/fzf/
+        # ghostty/starship targets and marchyo's own definitions both write the
+        # same options at normal priority, and the darwin toplevel fails to
+        # evaluate with "conflicting definition values". modules/home/default.nix
+        # imports it for the NixOS path for the same reason.
+        ../generic/theme.nix
       ];
       # darwin's system.stateVersion is an int, so the HM stateVersion cannot
       # be derived from it the way modules/nixos/system.nix does.

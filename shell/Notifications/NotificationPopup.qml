@@ -33,29 +33,11 @@ Rectangle {
 
     implicitHeight: layout.implicitHeight + Style.notifPad * 2
 
-    // Auto-expire: honour the sender's timeout when positive (expireTimeout is in
-    // seconds), else the per-urgency default. 0 = never (critical persist).
-    readonly property int timeoutMs: {
-        if (!notif)
-            return Style.notifTimeoutNormal;
-        if (notif.expireTimeout > 0)
-            return Math.round(notif.expireTimeout * 1000);
-        if (notif.urgency === NotificationUrgency.Critical)
-            return Style.notifTimeoutCritical;
-        if (notif.urgency === NotificationUrgency.Low)
-            return Style.notifTimeoutLow;
-        return Style.notifTimeoutNormal;
-    }
-
-    Timer {
-        running: root.timeoutMs > 0
-        interval: Math.max(1, root.timeoutMs)
-        onTriggered: {
-            if (root.notif)
-                root.notif.expire();
-            NotificationState.remove(root.notif);
-        }
-    }
+    // No expiry Timer here on purpose. This delegate is destroyed and rebuilt
+    // every time any notification is added or removed (the stack is a value
+    // model), so a per-delegate countdown restarted on every arrival and older
+    // toasts never expired. NotificationState owns the deadlines and sweeps
+    // them; see the comment at the top of Services/NotificationState.qml.
 
     // Drop the card if the notification is closed elsewhere (app-closed, replaced,
     // or dismissed via clearAll).

@@ -1,3 +1,4 @@
+# Feature-gated: a non-empty marchyo.keyboard.layouts.
 {
   pkgs,
   lib,
@@ -64,7 +65,7 @@ in
 {
   config = lib.mkIf (kbdCfg.layouts != [ ]) {
     i18n.inputMethod = {
-      enable = true;
+      enable = lib.mkDefault true;
       type = "fcitx5";
       fcitx5 = {
         waylandFrontend = true;

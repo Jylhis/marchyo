@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { join } from "node:path";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 
 const REPO = join(import.meta.dir, "..", "..", "..");
@@ -43,6 +43,43 @@ test("scaffold module with missing repo exits 2", async () => {
     const r = await run(["scaffold", "module", "foo", "--repo", dir]);
     expect(r.code).toBe(2);
     expect(r.stderr).toMatch(/(✗|error:)/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("scaffold module writes both files against the real repo layout", async () => {
+  // Runs against a copy of the actual checkout, not a synthetic directory.
+  // The old tests only ever passed a fresh mkdtemp dir, which is why they
+  // never noticed the command had come to require tests/module-tests.nix — a
+  // file this layout has never had, so it aborted against every real repo.
+  const dir = mkdtempSync(join(tmpdir(), "marchyo-scaffold-real-"));
+  try {
+    mkdirSync(join(dir, "modules", "nixos"), { recursive: true });
+    mkdirSync(join(dir, "tests", "eval"), { recursive: true });
+    const r = await run(["scaffold", "module", "zz-scaffold-probe", "--repo", dir]);
+    expect(r.code).toBe(0);
+    expect(existsSync(join(dir, "modules", "nixos", "zz-scaffold-probe.nix"))).toBe(true);
+    expect(existsSync(join(dir, "tests", "eval", "zz-scaffold-probe.nix"))).toBe(true);
+    // The module is picked up by discover-modules.nix and the test by
+    // tests/default.nix, so nothing should have edited an import list.
+    expect(existsSync(join(dir, "modules", "nixos", "default.nix"))).toBe(false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("scaffold module refuses to overwrite and leaves nothing behind", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "marchyo-scaffold-clash-"));
+  try {
+    mkdirSync(join(dir, "modules", "nixos"), { recursive: true });
+    mkdirSync(join(dir, "tests", "eval"), { recursive: true });
+    // A pre-existing eval test, with the module absent: validation has to run
+    // before any write, or the module file is created and then orphaned.
+    writeFileSync(join(dir, "tests", "eval", "zz-clash.nix"), "{ }\n");
+    const r = await run(["scaffold", "module", "zz-clash", "--repo", dir]);
+    expect(r.code).toBe(2);
+    expect(existsSync(join(dir, "modules", "nixos", "zz-clash.nix"))).toBe(false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
