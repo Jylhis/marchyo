@@ -1,6 +1,6 @@
 import { test, expect, afterAll } from "bun:test";
 import { join } from "node:path";
-import { rmSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 
 // Clean up any state file the smoke tests below may have written.
 // Running as root (e.g. in a CI sandbox) writes go to /etc/marchyo;
@@ -615,4 +615,24 @@ test("--color=always with FORCE_COLOR override emits ANSI even when piped", asyn
   expect(r.code).toBe(0);
   // We can't easily assert ANSI presence without a real TTY, but we can
   // at least confirm exit code is clean and the runtime accepted the flag.
+});
+
+test("bg set with no path is a usage error and writes no state", async () => {
+  // Regression: the positional is optional (it is omitted with --revert) and
+  // the action passed "". resolve("") returns the cwd, existsSync(cwd) is
+  // always true, so the guard never fired and the *current directory* got
+  // persisted into runtime.json as the wallpaper.
+  const { dir, env } = stateFixture();
+  const r = await run(["bg", "set"], env);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("bg set needs an image path");
+  expect(existsSync(`${dir}/marchyo/runtime.json`)).toBe(false);
+});
+
+test("bg set with a nonexistent path fails without writing state", async () => {
+  const { dir, env } = stateFixture();
+  const r = await run(["bg", "set", "/nonexistent/wall.png"], env);
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("no such image");
+  expect(existsSync(`${dir}/marchyo/runtime.json`)).toBe(false);
 });
