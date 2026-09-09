@@ -13,8 +13,11 @@
 # This configuration is simple, reliable, and works everywhere.
 # Good for: servers, VMs, machines without special requirements
 
+# No default: --mode disko repartitions and mkfs the target with no prompt,
+# so falling back to /dev/sda would silently wipe whatever disk happens to be
+# first on the host.
 {
-  device ? "/dev/sda",
+  device ? throw "disko/simple-uefi.nix: pass the target disk: --arg device '\"/dev/nvme0n1\"'",
   ...
 }:
 {
@@ -33,7 +36,13 @@
                 type = "filesystem";
                 format = "vfat";
                 mountpoint = "/boot";
-                mountOptions = [ "defaults" ];
+                # Owner-only, matching disko/luks-btrfs-raid1.nix. vfat has no
+                # permission bits of its own, and "defaults" leaves /boot
+                # world-readable.
+                mountOptions = [
+                  "fmask=0077"
+                  "dmask=0077"
+                ];
               };
             };
             swap = {
