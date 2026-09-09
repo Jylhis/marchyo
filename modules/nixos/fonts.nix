@@ -1,12 +1,13 @@
-{ pkgs, ... }:
+# Global (headless-safe): system font packages and fontconfig.
+{ pkgs, lib, ... }:
 {
   # Fonts
   imports = [
     ../generic/fontconfig.nix
   ];
   fonts = {
-    enableDefaultPackages = true;
-    fontDir.enable = true;
+    enableDefaultPackages = lib.mkDefault true;
+    fontDir.enable = lib.mkDefault true;
     packages = with pkgs; [
       # Programming fonts (Nerd Font variants only). BlexMono is the Nerd Font
       # patch of IBM Plex Mono — the Jylhis Design System v2 mono role, and the

@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.cli.enable.
 {
   config,
   lib,

@@ -1,3 +1,4 @@
+# Global (headless-safe): nix daemon settings and GC.
 { config, lib, ... }:
 let
   cfg = config.marchyo.nix;

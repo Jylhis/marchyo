@@ -1,3 +1,4 @@
+# Global (headless-safe): kernel selection and CPU mitigations.
 {
   config,
   lib,

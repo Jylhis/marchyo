@@ -91,7 +91,10 @@ let
       nixpkgs.overlays = overlayList;
       nixpkgs.config.allowUnfree = true;
 
-      boot.loader.systemd-boot.enable = lib.mkForce false;
+      # Plain `false`, no lib.mkForce: modules/nixos/boot.nix sets systemd-boot
+      # with lib.mkDefault, so a consumer (this reference VM included) can turn
+      # it off normally.
+      boot.loader.systemd-boot.enable = false;
       boot.loader.grub.enable = lib.mkForce false;
       fileSystems."/" = {
         device = "/dev/vda";

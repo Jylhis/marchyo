@@ -1,3 +1,4 @@
+# Global (headless-safe): console and X keymap from marchyo.keyboard.
 {
   lib,
   config,

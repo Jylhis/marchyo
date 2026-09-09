@@ -1,3 +1,4 @@
+# Feature-gated: marchyo.security.firewall.enable.
 { lib, config, ... }:
 let
   cfg = config.marchyo;
