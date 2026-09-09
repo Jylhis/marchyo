@@ -63,22 +63,73 @@ function parseWifi(text) {
     };
 }
 
-// `nmcli -t -f DEVICE,STATE,IP4.ADDRESS device status` -> { ifName, ipAddress }
-// for the first connected device that actually has an address. Disconnected
-// devices leave the address field empty.
-function parseDeviceStatus(text) {
+// `nmcli -t -f GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS device show` -> one
+// record per device, in nmcli's order.
+//
+// Why `device show` and not `device status`: IP4.ADDRESS is not a valid
+// `device status` field. That command exits 2 with "invalid field
+// 'IP4.ADDRESS'" and prints nothing, so the address was never resolvable.
+//
+// `device show` emits one blank-line-separated block of "key:value" lines per
+// device. Three shapes have to be tolerated:
+//   - GENERAL.STATE carries the numeric code first: "100 (connected)", not a
+//     bare "connected".
+//   - the address key is indexed: "IP4.ADDRESS[1]".
+//   - a device with no address omits the IP4.ADDRESS line entirely rather than
+//     emitting an empty one.
+function parseDeviceShow(text) {
     var lines = String(text || "").split("\n");
+    var records = [];
+    var current = null;
     for (var i = 0; i < lines.length; i++) {
         var parts = splitTerse(lines[i]);
-        if (parts.length < 3 || parts[1] !== "connected" || !parts[2])
+        var key = parts[0];
+        var value = parts.length > 1 ? parts[1] : "";
+        if (key === "GENERAL.DEVICE") {
+            current = {
+                ifName: value,
+                state: "",
+                // "192.168.1.10/24" -> "192.168.1.10".
+                ipAddress: ""
+            };
+            records.push(current);
+        } else if (!current) {
             continue;
-        return {
-            ifName: parts[0],
-            // "192.168.1.10/24" -> "192.168.1.10".
-            ipAddress: parts[2].split("/")[0]
-        };
+        } else if (key === "GENERAL.STATE") {
+            current.state = value;
+        } else if (key.indexOf("IP4.ADDRESS") === 0 && !current.ipAddress) {
+            current.ipAddress = value.split("/")[0];
+        }
     }
-    return {
+    return records;
+}
+
+// The device whose address the bar and tooltip should show: the first
+// NetworkManager-connected device that actually has an IPv4 address.
+//
+// Loopback is skipped by name, and a device NetworkManager only tracks
+// ("connected (externally)" — container and VPN bridges, or any interface owned
+// by systemd-networkd) is used only as a fallback, so a podman bridge never
+// masks the real uplink on a normally-managed host.
+function parseDeviceAddress(text) {
+    var records = parseDeviceShow(text);
+    var fallback = null;
+    for (var i = 0; i < records.length; i++) {
+        var rec = records[i];
+        if (rec.ifName === "lo" || !rec.ipAddress || !/^100\b/.test(rec.state))
+            continue;
+        if (rec.state.indexOf("externally") === -1)
+            return {
+                ifName: rec.ifName,
+                ipAddress: rec.ipAddress
+            };
+        if (!fallback)
+            fallback = {
+                ifName: rec.ifName,
+                ipAddress: rec.ipAddress
+            };
+    }
+    return fallback || {
         ifName: "",
         ipAddress: ""
     };
@@ -111,6 +162,7 @@ if (typeof module !== "undefined")
     module.exports = {
         shortCode: shortCode,
         parseWifi: parseWifi,
-        parseDeviceStatus: parseDeviceStatus,
+        parseDeviceShow: parseDeviceShow,
+        parseDeviceAddress: parseDeviceAddress,
         splitTerse: splitTerse
     };
