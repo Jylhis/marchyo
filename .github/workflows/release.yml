@@ -33,9 +33,12 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix build --accept-flake-config .#nixosConfigurations.aarch64.config.system.build.toplevel
-  build-darwin:
+  # One job per darwin arch, mirroring the NixOS pair above. The runner's
+  # architecture has to match the configuration it builds: aarch64-darwin
+  # derivations cannot be realised on an Intel runner.
+  build-darwin-arm:
     name: Build Darwin (aarch64-darwin)
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
@@ -45,3 +48,15 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix build --accept-flake-config .#darwinConfigurations.aarch64.config.system.build.toplevel
+  build-darwin-x86:
+    name: Build Darwin (x86_64-darwin)
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v17
+        with:
+          name: jylhis
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix build --accept-flake-config .#darwinConfigurations.x86_64.config.system.build.toplevel
