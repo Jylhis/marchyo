@@ -68,7 +68,7 @@ in
     home.file."${cfg.directory}/.keep".text = "";
 
     wayland.windowManager.hyprland.settings = {
-      # Screenshot binds are keyboard binds, so misc.hide_cursor_on_key_press
+      # Screenshot binds are keyboard binds, so cursor.hide_on_key_press
       # (hyprland.nix) hides the cursor before grimblast runs — captures stay
       # cursor-free. Menu-triggered captures via mouse click are the one path
       # that can still include the cursor; Hyprland has no imperative
