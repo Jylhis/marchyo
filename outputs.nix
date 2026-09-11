@@ -605,7 +605,7 @@ in
     # CI's toplevel build only bakes the dark one. Deliberately tiny.
     # Also build marchyo-shell and assert its wrapper bakes the runtime-env
     # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
-    # icons) — see plans/shell-warnings-fix.md — and run the shell tree's two
+    # icons) and run the shell tree's two
     # headless suites (tests/shell/): the Format.js unit tests and the static
     # QML contracts.
     // (

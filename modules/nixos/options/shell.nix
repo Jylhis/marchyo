@@ -5,12 +5,14 @@
     default = false;
     description = ''
       Experimental unified Quickshell desktop shell. When enabled, a single
-      long-running Quickshell process renders a Jylhis-themed top bar (Phase 1:
-      workspaces, clock, tray, audio, battery, network, bluetooth, CPU, power
-      profile), launched as a graphical-session user service. Opt-in and off by
-      default: it runs alongside — and does not yet replace — the discrete
-      waybar/mako/swayosd stack, so it is not cascaded from
-      `marchyo.desktop.enable`. See plans/shell.md for the roadmap.
+      long-running Quickshell process renders the Jylhis-themed top bar
+      (workspaces, clock, tray, audio, battery, network, bluetooth, CPU,
+      power profile), the OSD, the audio/network/power/monitor panels, and
+      the notification toasts — replacing waybar, SwayOSD, and mako (each
+      mutually exclusive; see tests/eval/marchyo-shell.nix). Opt-in and off
+      by default; it is not cascaded from `marchyo.desktop.enable`.
+      Vicinae (launcher) and hyprlock (lock) stay. See plans/shell.md for
+      the roadmap.
     '';
   };
 }

@@ -1,5 +1,5 @@
-# Evaluation tests for modules/home/omarchy-binds.nix (plans/omarchy-parity.md
-# Phase 2: monitor controls, connectivity TUIs, app-launch binds).
+# Evaluation tests for modules/home/omarchy-binds.nix (plans/omarchy-parity.md:
+# monitor controls, connectivity TUIs, app-launch binds).
 {
   helpers,
   lib,

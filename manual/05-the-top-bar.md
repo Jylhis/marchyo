@@ -11,5 +11,6 @@ TODO — the top bar tour. Cover:
 - how the bar is themed (from the Jylhis design system) and how to toggle it
   (`Super+Shift+Space`)
 
-Note: today's bar is Waybar. A future custom Quickshell shell is planned
-(`plans/shell.md`) and will change this chapter.
+Note: the bar is Waybar unless the marchyo shell is enabled
+(`marchyo.shell.enable`), which replaces it with the in-house Quickshell
+bar (`plans/shell.md`). Cover both, keyed on the flag.
