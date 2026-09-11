@@ -150,6 +150,7 @@ in
         "marchyo toggle idle"
         "marchyo toggle caffeine"
         "marchyo capture record"
+        "marchyo theme next"
       ];
       missingBinds = lib.filter (n: !hasBindText n) newBinds;
 
