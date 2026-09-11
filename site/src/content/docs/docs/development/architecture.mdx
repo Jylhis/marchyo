@@ -14,7 +14,7 @@ modules/
   generic/        # Shared modules imported by nixos, home, and darwin
 lib/              # Flake helpers (system list, module auto-discovery)
 packages/         # Custom Nix packages (hyprmon, marchyo-cli, marchyo-wallpapers,
-                  # openviking, pi, plymouth-marchyo-theme, wallpapper)
+                  # plymouth-marchyo-theme, wallpapper)
 overlay.nix       # Nixpkgs overlay (single file at the repo root)
 tests/            # Evaluation-based test suite
 templates/        # Flake templates (workstation)
@@ -116,9 +116,8 @@ The keyboard/IME system is the most complex cross-module pattern:
 | `treefmt-nix` | Multi-tool code formatter |
 | `vicinae` | Application launcher |
 | `noctalia` | noctalia-shell, a Wayland desktop shell |
-| `sops-nix` | Secrets management (e.g. the AI API key) |
+| `sops-nix` | Secrets management |
 | `jylhis-design` | Jylhis design system — theme tokens and assets |
 | `jotain` | Jylhis's Emacs config, the default editor |
-| `llm-agents` | AI coding agents (claude-code) with the Numtide binary cache |
 | `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |
 | `wallpapper-src` | Source for the wallpapper macOS dynamic-wallpaper tool (non-flake input) |

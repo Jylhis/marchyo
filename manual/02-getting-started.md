@@ -89,7 +89,7 @@ Set `marchyo.theme.variant = "light"` and rebuild. The configuration is the syst
 Once the desktop is running, the [marchyo CLI](./08-the-marchyo-cli.md) gives you a
 faster path for the everyday changes — switching themes, toggling features, capturing
 the screen — without editing a file at all. But the rebuild loop is always underneath,
-and [Updating](./11-updating.md) shows how it also keeps your system current and lets
+and [Updating](./10-updating.md) shows how it also keeps your system current and lets
 you roll back safely.
 
 ## Other ways to install

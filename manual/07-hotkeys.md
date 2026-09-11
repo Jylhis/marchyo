@@ -32,7 +32,6 @@ plain `Super + <letter>` chords, not `Super + Shift`.)
 | `Super + O` | Obsidian |
 | `Super + G` | Messenger |
 | `Super + /` | Password manager (focuses 1Password if open) |
-| `Super + A` | AI chat (when AI is enabled) |
 | `Super + .` | Emoji picker |
 | `Super + Shift + I` | Input-method config (fcitx5) |
 
