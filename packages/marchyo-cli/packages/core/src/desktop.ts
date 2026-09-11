@@ -4,8 +4,10 @@
 // them through system.ts:runArgv (or an injected exec in tests).
 //
 // The reload vocabulary deliberately mirrors modules/home/theme-runtime.nix:
-//  - hyprland: per-keyword `hyprctl keyword` — NEVER `hyprctl reload`,
-//    which re-reads the build-time config and reverts runtime keywords
+//  - hyprland: `hyprctl eval` of an `hl.config({...})` table — the keyword
+//    form is a no-op under non-legacy (Lua) parsers (exit 0, no effect) and
+//    `hyprctl reload` re-reads the build-time config, so never use either
+//    for live restyling
 //  - waybar: full `systemctl --user try-restart` — SIGUSR2 spawns duplicates
 //  - mako: `makoctl reload`
 
@@ -17,8 +19,17 @@ export function hyprlandAvailable(
   return typeof sig === "string" && sig !== "";
 }
 
+// `hyprctl keyword` argv — still used by the hyprlang holdout sites
+// (toggles/launch), which run on hosts the Lua parser hasn't reached.
 export function hyprctlKeywordArgv(keyword: string, value: string): string[] {
   return ["hyprctl", "keyword", keyword, value];
+}
+
+// `hyprctl eval` argv — the only runtime option-mutation path that works
+// under Hyprland's Lua (non-legacy) parser: `hyprctl keyword` prints
+// "keyword can't work with non-legacy parsers. Use eval." and exits 0.
+export function hyprctlEvalArgv(code: string): string[] {
+  return ["hyprctl", "eval", code];
 }
 
 export function hyprctlDispatchArgv(...args: string[]): string[] {

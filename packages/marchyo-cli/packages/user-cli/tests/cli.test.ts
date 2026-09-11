@@ -165,6 +165,47 @@ test("theme set swaps gtk css symlinks and the dconf color-scheme", async () => 
   expect(await Bun.file(dconfLog).text()).toContain("'prefer-dark'");
 });
 
+test("theme set applies Hyprland colors through one hyprctl eval hl.config call", async () => {
+  const { dir, env } = themeFixture();
+  // hyprland.conf in the fixture theme dir arms the Hyprland leg; a stub
+  // hyprctl on PATH records argv so the single eval call is assertable
+  // without a live session.
+  await Bun.write(
+    `${dir}/themes/alpha/hyprland.conf`,
+    [
+      "misc:background_color rgb(0d0f14)",
+      "general:col.active_border rgba(e0a33aff)",
+      "general:col.inactive_border rgba(3a4150ff)",
+    ].join("\n") + "\n",
+  );
+  const bin = `${dir}/bin`;
+  Bun.spawnSync(["mkdir", "-p", bin]);
+  const hyprctlLog = `${dir}/hyprctl.log`;
+  await Bun.write(
+    `${bin}/hyprctl`,
+    `#!/usr/bin/env bash\necho "$@" >> "${hyprctlLog}"\n`,
+  );
+  Bun.spawnSync(["chmod", "+x", `${bin}/hyprctl`]);
+  const full = {
+    ...env,
+    PATH: `${bin}:${process.env.PATH}`,
+    HYPRLAND_INSTANCE_SIGNATURE: "test-signature",
+  };
+
+  const r = await run(["theme", "set", "alpha"], full);
+  expect(r.code).toBe(0);
+  // Exactly one hyprctl invocation, and it is the eval form — the per-keyword
+  // `hyprctl keyword` calls are a silent no-op under non-legacy (Lua) parsers.
+  // ($@ in the stub excludes argv0, so the log line starts at "eval".)
+  const calls = (await Bun.file(hyprctlLog).text()).trim().split("\n");
+  expect(calls.length).toBe(1);
+  expect(calls[0]).toMatch(/^eval hl\.config\(/);
+  expect(calls[0]).toContain('["misc"] = { ["background_color"] = "rgb(0d0f14)" }');
+  expect(calls[0]).toContain(
+    '["general"] = { ["col.active_border"] = "rgba(e0a33aff)", ["col.inactive_border"] = "rgba(3a4150ff)" }',
+  );
+});
+
 test("theme next cycles through the manifest", async () => {
   const { env } = themeFixture();
   let r = await run(["theme", "next"], env);
