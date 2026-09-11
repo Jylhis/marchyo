@@ -1,4 +1,5 @@
 .claude/*.local.json
+.hermes/
 result
 *.qcow2
 *.fd
