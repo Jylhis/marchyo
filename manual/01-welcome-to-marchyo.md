@@ -42,7 +42,7 @@ anymore. Those dotfiles are *generated* from your configuration, so editing them
 hand gets overwritten on the next rebuild. The rebuild loop replaces the tinkering
 loop. It takes a little getting used to, and then it's hard to go back — see
 [Getting Started](02-getting-started) for the loop itself and
-[Updating](./11-updating.md) for how change and rollback work.
+[Updating](./10-updating.md) for how change and rollback work.
 
 ## What's in the box
 
@@ -57,8 +57,6 @@ Enable the desktop and you get a complete, themed environment:
   dark or light variant you can switch at runtime.
 - **The `marchyo` CLI** — one command that drives the whole desktop: toggles,
   theme switching, capture, menus, and system management.
-- **Optional AI** — a bring-your-own-key AI setup wired to OpenRouter, off until you
-  turn it on.
 - **More than one machine** — the same configuration builds a NixOS workstation, a
   nix-darwin Mac, or a nix-on-droid Android terminal.
 

@@ -18,7 +18,7 @@ Documentation is organized into three trees (mirroring the omarchy model):
   (`mkIf`/`mkDefault`/`mkMerge`), how to add a module, cross-module data flow.
 - [options-reference.md](options-reference.md) — the full `marchyo.*` option
   tables (feature flags, users, localization, theming, defaults, keyboard/IME,
-  graphics, performance, AI, desktop extras, dictation, launcher, web apps) and
+  graphics, performance, desktop extras, dictation, launcher, web apps) and
   breaking changes.
 - [gotchas.md](gotchas.md) — the accumulated sharp edges (theme source of truth,
   design-system v2, font stack, Stylix disablement, the Vicinae gotchas, Plymouth

@@ -95,7 +95,7 @@ marchyo diff                 # what changed between generations
 ```
 
 The update and rollback commands are covered in more depth in
-[Updating](./11-updating.md). You can also flip whole feature groups on and off —
+[Updating](./10-updating.md). You can also flip whole feature groups on and off —
 `marchyo install development`, `marchyo remove media` — and add web-app windows with
 `marchyo webapp add <url>`; those always rebuild.
 

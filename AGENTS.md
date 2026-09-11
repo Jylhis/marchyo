@@ -39,7 +39,7 @@ just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host o
 
 ## The `marchyo.*` flag model
 
-Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.development.enable`, `marchyo.media.enable`, `marchyo.office.enable`, plus per-feature namespaces (`marchyo.ai`, `marchyo.dictation`, `marchyo.webapps`, `marchyo.theme`, `marchyo.keyboard`, `marchyo.graphics`, `marchyo.defaults`, …). Umbrella flags cascade: e.g. `desktop.enable = true` auto-enables `office`/`media` via `lib.mkDefault` so consumers can still override. Follow this pattern for new features: an enable flag in `modules/nixos/options/`, implementation gated with `lib.mkIf`, cascaded defaults set with `lib.mkDefault`.
+Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.development.enable`, `marchyo.media.enable`, `marchyo.office.enable`, plus per-feature namespaces (`marchyo.dictation`, `marchyo.webapps`, `marchyo.theme`, `marchyo.keyboard`, `marchyo.graphics`, `marchyo.defaults`, …). Umbrella flags cascade: e.g. `desktop.enable = true` auto-enables `office`/`media` via `lib.mkDefault` so consumers can still override. Follow this pattern for new features: an enable flag in `modules/nixos/options/`, implementation gated with `lib.mkIf`, cascaded defaults set with `lib.mkDefault`.
 
 ## Module conventions (mkIf / mkDefault)
 

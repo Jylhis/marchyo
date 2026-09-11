@@ -24,7 +24,7 @@ answer. Here are the ones people hit first.
   is in [Hotkeys](./07-hotkeys.md).
 - **My monitors are laid out wrong.** Monitor arrangement is something you set in your
   configuration; the bundled `hyprmon` tool helps you position screens. See
-  [Monitors](./13-monitors.md).
+  [Monitors](./12-monitors.md).
 - **The theme doesn't look right.** Make sure theming is enabled
   (`marchyo.theme.enable = true`). If a runtime theme switch didn't stick after a
   rebuild, that's expected — runtime switches are temporary. See
@@ -55,5 +55,5 @@ something behaves, set a `marchyo.*` option (or override the underlying module) 
 rebuild.
 
 **How do I undo a bad update?**
-Roll back to the previous generation. [Updating](./11-updating.md) covers exactly how,
+Roll back to the previous generation. [Updating](./10-updating.md) covers exactly how,
 including recovering from the boot menu if the system won't come up.

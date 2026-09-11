@@ -69,7 +69,7 @@ Plug in a second display and Marchyo treats each screen as its own set of
 workspaces. Move focus between monitors with `Ctrl + Alt + Tab`, and push the
 active window to the next screen with `Super + Shift + ,` and `Super + Shift + .`.
 Setting up the physical arrangement of your monitors is covered under
-[Monitors](./13-monitors.md).
+[Monitors](./12-monitors.md).
 
 ## When you forget a shortcut
 
