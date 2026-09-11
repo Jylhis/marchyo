@@ -20,8 +20,5 @@ final: prev:
     hyprmon = final.callPackage ./packages/hyprmon/package.nix { };
     marchyo-shell = final.callPackage ./packages/marchyo-shell/package.nix { };
     plymouth-marchyo-theme = final.callPackage ./packages/plymouth-marchyo-theme/package.nix { };
-
-    openviking = final.callPackage ./packages/openviking/package.nix { };
-    pi = final.callPackage ./packages/pi/package.nix { };
   }
 )
