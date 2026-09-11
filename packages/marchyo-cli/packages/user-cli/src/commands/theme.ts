@@ -7,11 +7,14 @@ import {
   type Runtime,
   type State,
   type ThemeManifestEntry,
+  COLOR_SCHEME_KEY,
   THEME_ALIASES,
   applyChange,
   awwwImgArgv,
+  colorSchemeGvariant,
   currentThemePointerPath,
   data,
+  dconfWriteArgv,
   declarativePointerPath,
   err,
   hint,
@@ -92,6 +95,22 @@ export async function activateThemeDir(
         hyprctlKeywordArgv(line.slice(0, sp), line.slice(sp + 1).trim()),
       );
     }
+  }
+
+  // GTK: relink the user css for both major versions (HM-managed symlinks
+  // until the next activation restores them) and flip the dconf color-scheme
+  // so libadwaita apps restyle live. Newly launched GTK apps read the
+  // swapped css; running GTK3 apps keep their cached style context. Gated
+  // on the theme carrying GTK assets, so headless hosts and test fixtures
+  // never touch a real dconf session.
+  const gtk = join(entry.dir, "gtk.css");
+  if (existsSync(gtk)) {
+    await relinkConfig(gtk, join(configHome(), "gtk-3.0", "gtk.css"));
+    await relinkConfig(gtk, join(configHome(), "gtk-4.0", "gtk.css"));
+    await safeExec(
+      ctx,
+      dconfWriteArgv(COLOR_SCHEME_KEY, colorSchemeGvariant(entry.variant)),
+    );
   }
 
   await safeExec(

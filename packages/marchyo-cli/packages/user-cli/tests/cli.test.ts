@@ -133,13 +133,13 @@ test("theme set swaps gtk css symlinks and the dconf color-scheme", async () => 
   await Bun.write(`${dir}/themes/alpha/gtk.css`, "/* dark gtk */\n");
   await Bun.write(`${dir}/themes/beta/gtk.css`, "/* light gtk */\n");
   const bin = `${dir}/bin`;
-  await Bun.spawnSync(["mkdir", "-p", bin]).exited;
+  Bun.spawnSync(["mkdir", "-p", bin]);
   const dconfLog = `${dir}/dconf.log`;
   await Bun.write(
     `${bin}/dconf`,
     `#!/usr/bin/env bash\necho "$@" >> "${dconfLog}"\n`,
   );
-  await Bun.spawnSync(["chmod", "+x", `${bin}/dconf`]).exited;
+  Bun.spawnSync(["chmod", "+x", `${bin}/dconf`]);
   const full = { ...env, PATH: `${bin}:${process.env.PATH}` };
 
   let r = await run(["theme", "set", "beta"], full);
