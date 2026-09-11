@@ -505,8 +505,6 @@ let
         inherit (pkgs)
           hyprmon
           plymouth-marchyo-theme
-          openviking
-          pi
           ;
       }
       // lib.optionalAttrs pkgs.stdenv.isDarwin {

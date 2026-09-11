@@ -1,185 +1,5 @@
 [
   {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "\"openai/text-embedding-3-small\"",
-    "description": "OpenRouter embedding model slug used by OpenViking.",
-    "example": "",
-    "name": "marchyo.ai.context.embeddingModel",
-    "type": "string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "false",
-    "description": "Install OpenViking (`ov`), a local context database for AI agents, and\npoint its embeddings at OpenRouter. Data stays under workspacePath.",
-    "example": "",
-    "name": "marchyo.ai.context.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "false",
-    "description": "Run the OpenViking HTTP server as a per-user systemd service.",
-    "example": "",
-    "name": "marchyo.ai.context.service.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "\".openviking/workspace\"",
-    "description": "OpenViking workspace dir, relative to $HOME (kept local/inspectable).",
-    "example": "",
-    "name": "marchyo.ai.context.workspacePath",
-    "type": "string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "false",
-    "description": "Whether to enable BYOK AI tooling and desktop integration.",
-    "example": "true",
-    "name": "marchyo.ai.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "false",
-    "description": "Enable a local inference engine. NOT YET IMPLEMENTED — declared so the\noption is stable. Enabling it currently fails an assertion. Use the\nOpenRouter provider instead (see marchyo.ai.openrouter).",
-    "example": "",
-    "name": "marchyo.ai.local.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "true",
-    "description": "Wire MCP tool servers (e.g. mcp-nixos, for grounded NixOS attr/option\nlookups) into the MCP-capable clients.",
-    "example": "",
-    "name": "marchyo.ai.mcp.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "true",
-    "description": "Enable the mcp-nixos server (run via uvx).",
-    "example": "",
-    "name": "marchyo.ai.mcp.nixos.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "null",
-    "description": "Runtime path to a file containing the OpenRouter API key. The key is\nread at shell startup and exported as OPENROUTER_API_KEY, so it never\nenters the Nix store. Typically this points at a sops-nix secret path\n(e.g. config.sops.secrets.\"openrouter-api-key\".path). Required when\nmarchyo.ai.enable is true.",
-    "example": "\"/run/secrets/openrouter-api-key\"",
-    "name": "marchyo.ai.openrouter.apiKeyFile",
-    "type": "null or absolute path",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "\"https://openrouter.ai/api/v1\"",
-    "description": "OpenRouter OpenAI-compatible API base URL.",
-    "example": "",
-    "name": "marchyo.ai.openrouter.baseUrl",
-    "type": "string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "\"anthropic/claude-sonnet-4\"",
-    "description": "Fallback default model slug used when routing is disabled. When\nmarchyo.ai.routing.enable is true, per-tool models come from the\nrouting table instead.",
-    "example": "\"openai/gpt-4o\"",
-    "name": "marchyo.ai.openrouter.defaultModel",
-    "type": "string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "\"openrouter\"",
-    "description": "AI service provider. Only \"openrouter\" is supported for now; the enum\nis reserved so more providers (and local inference) can be added later.",
-    "example": "",
-    "name": "marchyo.ai.provider",
-    "type": "value \"openrouter\" (singular enum)",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "true",
-    "description": "Route different tasks to different models. Defaults pin the\nfrontier/reasoning buckets and lean on openrouter/auto + the\n:nitro/:floor variant suffixes elsewhere so quarterly slug churn is\nabsorbed. All defaults are mkDefault — override any bucket. Slugs are\nstarting points; verify against OpenRouter's live model list.",
-    "example": "",
-    "name": "marchyo.ai.routing.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "{\n  budget = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"deepseek/deepseek-v3.2:floor\";\n      priority = 1000;\n    };\n  };\n  everydayCoding = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openai/gpt-5.5\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-sonnet-4.6\";\n      priority = 1000;\n    };\n  };\n  fast = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-flash:nitro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-haiku-4.5:nitro\";\n      priority = 1000;\n    };\n  };\n  frontier = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openai/gpt-5.5\"\n        \"google/gemini-3.1-pro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-opus-4.8\";\n      priority = 1000;\n    };\n  };\n  local = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"openrouter/auto\";\n      priority = 1000;\n    };\n  };\n  longContext = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-flash\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"minimax/minimax-m3\";\n      priority = 1000;\n    };\n  };\n  reasoning = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-pro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-fable-5\";\n      priority = 1000;\n    };\n  };\n  summarize = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"x-ai/grok-4.1-fast\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-haiku-4.5\";\n      priority = 1000;\n    };\n  };\n}",
-    "description": "Task bucket -> model + fallback chain.",
-    "example": "",
-    "name": "marchyo.ai.routing.tasks",
-    "type": "attribute set of (submodule)",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "[\n  \"openrouter/auto\"\n]",
-    "description": "Ordered OpenRouter fallback slugs. Consumed as OpenRouter's native\n`models` array (auto-failover on error/rate-limit/downtime).",
-    "example": "",
-    "name": "marchyo.ai.routing.tasks.<name>.fallbacks",
-    "type": "list of string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "",
-    "description": "Primary OpenRouter model slug for this task bucket.",
-    "example": "",
-    "name": "marchyo.ai.routing.tasks.<name>.model",
-    "type": "string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "{\n  pi = \"everydayCoding\";\n}",
-    "description": "Which task bucket each OpenRouter-backed client defaults to. (claude-code\nis Anthropic-native and not routed here.)",
-    "example": "",
-    "name": "marchyo.ai.routing.tools",
-    "type": "attribute set of string",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "[\n  \"claude-code\"\n  \"pi\"\n]",
-    "description": "Clients to surface vendored skills to (native fallback per client).",
-    "example": "",
-    "name": "marchyo.ai.skills.clients",
-    "type": "list of (one of \"claude-code\", \"pi\")",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "true",
-    "description": "Install a curated, vendored subset of the Jylhis/skills marketplace as\nAgent Skills (SKILL.md), surfaced to all clients (claude-code + pi\nshare the standard) and loaded into OpenViking when context is enabled.",
-    "example": "",
-    "name": "marchyo.ai.skills.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
-    "declared": "modules/nixos/options/ai.nix",
-    "default": "true",
-    "description": "Install the AI client CLIs (pi, claude-code) for the user and\nwire the OpenRouter-backed one to the provider. On by default when\nmarchyo.ai is enabled. (claude-code speaks the Anthropic API and is not\nwired to OpenRouter; it comes from llm-agents.nix, which also packages\ncodex/gemini-cli/goose/crush/… via the overlay for future opt-in.)",
-    "example": "",
-    "name": "marchyo.ai.tooling.enable",
-    "type": "boolean",
-    "url": "https://github.com/Jylhis/marchyo/blob/main/modules/nixos/options/ai.nix"
-  },
-  {
     "declared": "modules/nixos/options/localization.nix",
     "default": "false",
     "description": "Whether to enable automatic timezone updates from your location (services.automatic-timezoned\nvia geoclue2). Opt-in and off by default. When enabled it overrides the\nstatic marchyo.timezone; a warning is emitted if marchyo.timezone was also\nchanged from its default.",
@@ -1037,7 +857,7 @@
   {
     "declared": "modules/nixos/options/shell.nix",
     "default": "false",
-    "description": "Experimental unified Quickshell desktop shell. When enabled, a single\nlong-running Quickshell process renders a Jylhis-themed top bar (Phase 1:\nworkspaces, clock, tray, audio, battery, network, bluetooth, CPU, power\nprofile), launched as a graphical-session user service. Opt-in and off by\ndefault: it runs alongside — and does not yet replace — the discrete\nwaybar/mako/swayosd stack, so it is not cascaded from\n`marchyo.desktop.enable`. See plans/shell.md for the roadmap.",
+    "description": "Experimental unified Quickshell desktop shell. When enabled, a single\nlong-running Quickshell process renders the Jylhis-themed top bar\n(workspaces, clock, tray, audio, battery, network, bluetooth, CPU,\npower profile), the OSD, the audio/network/power/monitor panels, and\nthe notification toasts — replacing waybar, SwayOSD, and mako (each\nmutually exclusive; see tests/eval/marchyo-shell.nix). Opt-in and off\nby default; it is not cascaded from `marchyo.desktop.enable`.\nVicinae (launcher) and hyprlock (lock) stay. See plans/shell.md for\nthe roadmap.",
     "example": "",
     "name": "marchyo.shell.enable",
     "type": "boolean",
@@ -1280,7 +1100,7 @@
   {
     "declared": "modules/nixos/options/webapps.nix",
     "default": "null",
-    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on.",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, L, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on;\nL is theme cycling, from modules/home/hyprland.nix.",
     "example": "\"A\"",
     "name": "marchyo.webapps.apps.*.key",
     "type": "null or string",
@@ -1352,7 +1172,7 @@
   {
     "declared": "modules/nixos/options/webapps.nix",
     "default": "null",
-    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on.",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (B, C, D, E, H, I, L, M, N, O, S, T, V are taken, plus\nminus/equal/comma/period/SPACE/Print/Tab and the workspace\ndigits/arrows) and of the keys used by the default app set\n(A, G, P, W, X, Y, Z). T is org-capture, from\nmodules/home/emacs.nix, and only bound when marchyo.emacs is on;\nL is theme cycling, from modules/home/hyprland.nix.",
     "example": "\"A\"",
     "name": "marchyo.webapps.extraApps.*.key",
     "type": "null or string",
