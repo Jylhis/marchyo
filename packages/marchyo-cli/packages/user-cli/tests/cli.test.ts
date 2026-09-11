@@ -126,6 +126,45 @@ test("theme set switches live, records an override, and theme get reads it back"
   ]);
 });
 
+test("theme set swaps gtk css symlinks and the dconf color-scheme", async () => {
+  const { dir, env } = themeFixture();
+  // GTK assets in the fixture theme dirs arm the new actuation legs; a stub
+  // dconf on PATH records argv so the write is assertable without a session.
+  await Bun.write(`${dir}/themes/alpha/gtk.css`, "/* dark gtk */\n");
+  await Bun.write(`${dir}/themes/beta/gtk.css`, "/* light gtk */\n");
+  const bin = `${dir}/bin`;
+  await Bun.spawnSync(["mkdir", "-p", bin]).exited;
+  const dconfLog = `${dir}/dconf.log`;
+  await Bun.write(
+    `${bin}/dconf`,
+    `#!/usr/bin/env bash\necho "$@" >> "${dconfLog}"\n`,
+  );
+  await Bun.spawnSync(["chmod", "+x", `${bin}/dconf`]).exited;
+  const full = { ...env, PATH: `${bin}:${process.env.PATH}` };
+
+  let r = await run(["theme", "set", "beta"], full);
+  expect(r.code).toBe(0);
+  // Both GTK versions' user css are relinked into the theme dir (HM-managed
+  // symlinks until the next activation).
+  expect(await Bun.file(`${env.XDG_CONFIG_HOME}/gtk-3.0/gtk.css`).text()).toBe(
+    "/* light gtk */\n",
+  );
+  expect(await Bun.file(`${env.XDG_CONFIG_HOME}/gtk-4.0/gtk.css`).text()).toBe(
+    "/* light gtk */\n",
+  );
+  // The dconf color-scheme flip follows the theme's polarity.
+  expect(await Bun.file(dconfLog).text()).toBe(
+    "write /org/gnome/desktop/interface/color-scheme 'prefer-light'\n",
+  );
+
+  r = await run(["theme", "set", "alpha"], full);
+  expect(r.code).toBe(0);
+  expect(await Bun.file(`${env.XDG_CONFIG_HOME}/gtk-3.0/gtk.css`).text()).toBe(
+    "/* dark gtk */\n",
+  );
+  expect(await Bun.file(dconfLog).text()).toContain("'prefer-dark'");
+});
+
 test("theme next cycles through the manifest", async () => {
   const { env } = themeFixture();
   let r = await run(["theme", "next"], env);
