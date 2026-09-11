@@ -45,6 +45,30 @@ let
     scale = fontScale;
   };
 
+  # Commons/Theme.qml dev default embeds the dark (Field) fallback palette.
+  # For a light-variant host, translate those literals to the host variant
+  # with the same semantic-token hex swap modules/home/theme-runtime.nix uses
+  # (accent == cursor agree in both variants, so the mapping is well-defined;
+  # the file's only hexes are the fallback literals). This keeps a
+  # theme-disabled light host from flashing/showing dark bar colors.
+  darkPalette = import ../../modules/generic/jylhis-palette.nix {
+    pkgs = { inherit jylhis-design-src; };
+    inherit lib;
+    variant = "dark";
+  };
+  tokenNameList = lib.attrNames darkPalette.hex;
+  themeQml = writeText "Theme.qml" (
+    let
+      devTheme = builtins.readFile ../../shell/Commons/Theme.qml;
+    in
+    if variant == "dark" then
+      devTheme
+    else
+      builtins.replaceStrings (map (n: darkPalette.hex.${n}) tokenNameList) (map (
+        n: palette.hex.${n}
+      ) tokenNameList) devTheme
+  );
+
   # Bar colors: every palette + status token, minus syntax-highlighting tokens
   # (syn-*) which no UI surface uses. QML identifiers can't contain hyphens, so
   # bg-subtle -> bgSubtle, status-err -> statusErr, etc.
@@ -57,17 +81,22 @@ let
     in
     lib.concatStrings (lib.imap0 (i: w: if i == 0 then w else cap w) parts);
   colorLines = lib.concatStringsSep "\n" (
-    lib.mapAttrsToList (name: value: ''readonly property color ${toCamel name}: "${value}"'') hex
+    lib.mapAttrsToList (
+      name: _: "readonly property color ${toCamel name}: Theme.palette.${toCamel name}"
+    ) hex
   );
 
-  # Generated design-token color singleton, overwriting the checked-in dev
-  # default so the store shell is themed to the host's variant. Same
-  # tokens.json-driven, build-time generation idiom as marchyo-wallpapers.
+  # Generated color singleton, overwriting the checked-in dev default (which
+  # carries the same delegation): every token binds Theme.palette.<camel> so
+  # the whole bar live-recolors on `marchyo theme set`. Theme.qml below bakes
+  # the host-variant fallback palette; this file is variant-independent.
   colorQml = builtins.toFile "Color.qml" ''
     pragma Singleton
     import QtQuick
 
-    // Generated from the Jylhis design system (tokens.json), variant "${variant}".
+    // Generated from the Jylhis design system (tokens.json). Every token
+    // delegates to Theme.palette (Commons/Theme.qml) so the whole bar
+    // live-recolors on `marchyo theme set`.
     QtObject {
     ${colorLines}
       // Back-compat aliases for the Phase 0 property names.
@@ -168,6 +197,7 @@ stdenvNoCC.mkDerivation {
     cp -r . "$out/share/marchyo/shell/"
     install -Dm0644 ${colorQml} "$out/share/marchyo/shell/Commons/Color.qml"
     install -Dm0644 ${styleQml} "$out/share/marchyo/shell/Commons/Style.qml"
+    install -Dm0644 ${themeQml} "$out/share/marchyo/shell/Commons/Theme.qml"
     install -Dm0644 ${configQml} "$out/share/marchyo/shell/Commons/Config.qml"
 
     # The wrapper owns the shell's runtime environment so neither of the two
