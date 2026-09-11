@@ -1,35 +1,35 @@
 pragma Singleton
 import QtQuick
 
-// Jylhis design-token colors for the shell. These checked-in values are the
-// Field (dark) variant so `quickshell -p shell` runs standalone during dev.
-// The Nix build (packages/marchyo-shell/package.nix) overwrites this file with
-// the values for the host's marchyo.theme.variant, generated from tokens.json.
-// Keep this in sync with the token set the generator emits (palette + status).
+// Jylhis design-token colors for the shell, delegated to Commons/Theme
+// (the runtime theme reader) so every surface that binds Color.* follows a
+// `marchyo theme set` live. The Nix build (packages/marchyo-shell/
+// package.nix) overwrites this file with the same delegation generated from
+// tokens.json; Theme's embedded fallback carries the dev/build variant.
 QtObject {
-    readonly property color bg: "#0d0f14"
-    readonly property color bgSubtle: "#14171e"
-    readonly property color surface: "#1b1f28"
-    readonly property color surfaceRaised: "#232833"
-    readonly property color text: "#d6dae2"
-    readonly property color textMuted: "#9aa0ab"
-    readonly property color textHeading: "#f2f4f8"
-    readonly property color textFaint: "#656b76"
-    readonly property color accent: "#e0a33a"
-    readonly property color accentHover: "#f0b95c"
-    readonly property color accentSubtle: "#262119"
-    readonly property color brand: "#ef8a4a"
-    readonly property color contour: "#6f9be0"
-    readonly property color border: "#2b303b"
-    readonly property color borderStrong: "#3a4150"
-    readonly property color decorator: "#39415a"
-    readonly property color selectionBg: "#3a2f1c"
-    readonly property color cursor: "#e0a33a"
-    readonly property color scrim: "#05060a"
-    readonly property color statusErr: "#f0685f"
-    readonly property color statusWarn: "#d9b34a"
-    readonly property color statusOk: "#6bbf6b"
-    readonly property color statusInfo: "#5fb8cf"
+    readonly property color bg: Theme.palette.bg
+    readonly property color bgSubtle: Theme.palette.bgSubtle
+    readonly property color surface: Theme.palette.surface
+    readonly property color surfaceRaised: Theme.palette.surfaceRaised
+    readonly property color text: Theme.palette.text
+    readonly property color textMuted: Theme.palette.textMuted
+    readonly property color textHeading: Theme.palette.textHeading
+    readonly property color textFaint: Theme.palette.textFaint
+    readonly property color accent: Theme.palette.accent
+    readonly property color accentHover: Theme.palette.accentHover
+    readonly property color accentSubtle: Theme.palette.accentSubtle
+    readonly property color brand: Theme.palette.brand
+    readonly property color contour: Theme.palette.contour
+    readonly property color border: Theme.palette.border
+    readonly property color borderStrong: Theme.palette.borderStrong
+    readonly property color decorator: Theme.palette.decorator
+    readonly property color selectionBg: Theme.palette.selectionBg
+    readonly property color cursor: Theme.palette.cursor
+    readonly property color scrim: Theme.palette.scrim
+    readonly property color statusErr: Theme.palette.statusErr
+    readonly property color statusWarn: Theme.palette.statusWarn
+    readonly property color statusOk: Theme.palette.statusOk
+    readonly property color statusInfo: Theme.palette.statusInfo
 
     // Back-compat aliases for the Phase 0 property names.
     readonly property color background: bg

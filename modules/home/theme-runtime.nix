@@ -10,10 +10,12 @@
 # ~/.config/marchyo/current-theme pointer) back to the declarative default.
 #
 # Live-swapped surfaces: wallpaper (awww), mako, waybar, Hyprland
-# border/background colors, and ghostty (new windows / config reload only —
+# border/background colors, ghostty (new windows / config reload only —
 # the `?…/current-theme/ghostty.conf` include below is optional and, per
 # ghostty's config-file semantics, processed after the main file so its
-# `theme` wins). Everything else (GTK/Qt via Stylix, bat, fzf, starship,
+# `theme` wins), GTK CSS + the dconf color-scheme (newly launched GTK
+# apps; libadwaita apps restyle live), and the shell bar (reads
+# colors.json). Everything else (Qt via Stylix, bat, fzf, starship,
 # hyprlock, console, plymouth) stays on the build-time default until rebuild.
 #
 # The dual-variant mako config and waybar CSS are derived from the *resolved*
@@ -68,6 +70,18 @@ let
     else
       null;
 
+  # Resolved GTK user CSS (what HM installs as gtk-3.0/gtk.css). The build
+  # variant's polarity is already baked in by modules/home/jylhis-theme.nix,
+  # including the GTK3 custom-property filter, so the same text is valid for
+  # both GTK versions and translating it to another theme is the same
+  # semantic-token hex swap mako/waybar use below. Consumers overriding
+  # gtk.gtk3.extraCss to "" leave this surface build-time.
+  gtkCss =
+    if config.xdg.configFile ? "gtk-3.0/gtk.css" then
+      config.xdg.configFile."gtk-3.0/gtk.css".text
+    else
+      null;
+
   wallpaperCfg = themeCfg.wallpaper or { };
   wallpaperEnabled = wallpaperCfg.enable or true;
   wallpaperPackage = wallpaperCfg.package or pkgs.marchyo-wallpapers;
@@ -90,6 +104,9 @@ let
     pkgs.linkFarm "marchyo-theme-${v}" (
       {
         variant = pkgs.writeText "marchyo-theme-${v}-variant" "${v}\n";
+        "colors.json" = pkgs.writeText "marchyo-theme-${v}-colors.json" (
+          colorsJsonFor ("jylhis-" + v) v (jylhisShellColors v)
+        );
         "ghostty.conf" = pkgs.writeText "marchyo-theme-${v}-ghostty.conf" ''
           theme = ${ghosttyThemeFor v}
         '';
@@ -104,6 +121,9 @@ let
       }
       // lib.optionalAttrs (waybarStyle != null) {
         "waybar.css" = pkgs.writeText "marchyo-theme-${v}-waybar.css" (textFor v waybarStyle);
+      }
+      // lib.optionalAttrs (gtkCss != null) {
+        "gtk.css" = pkgs.writeText "marchyo-theme-${v}-gtk.css" (textFor v gtkCss);
       }
     );
 
@@ -123,6 +143,25 @@ let
     schemes = pkgs.tinted-schemes-src;
     inherit lib;
   };
+
+  # kebab-case token -> camelCase, shared with the Color.qml generator in
+  # packages/marchyo-shell/package.nix so colors.json keys and generated
+  # Color.qml property names can never drift apart.
+  toCamel = import ../../lib/camel-case.nix { inherit lib; };
+
+  # Palette subset the shell's Color.qml exposes (semantic tokens minus the
+  # syntax-highlighting ones — same filter package.nix applies), camelCased.
+  shellTokenNames = lib.filter (n: !lib.hasPrefix "syn-" n) tokenNames;
+  jylhisShellColors =
+    v: lib.listToAttrs (map (n: lib.nameValuePair (toCamel n) palettes.${v}.hex.${n}) shellTokenNames);
+  schemeShellColors =
+    scheme:
+    lib.listToAttrs (
+      map (n: lib.nameValuePair (toCamel n) (schemeHexForToken scheme n)) shellTokenNames
+    );
+  colorsJsonFor =
+    name: variant: colors:
+    builtins.toJSON { inherit name variant colors; };
 
   # Token → base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
   # base16 attrset; the extras (border/hover/subtle/ok/comment) get the
@@ -205,6 +244,9 @@ let
     pkgs.linkFarm "marchyo-theme-${scheme.name}" (
       {
         variant = pkgs.writeText "marchyo-theme-${scheme.name}-variant" "${scheme.variant}\n";
+        "colors.json" = pkgs.writeText "marchyo-theme-${scheme.name}-colors.json" (
+          colorsJsonFor scheme.name scheme.variant (schemeShellColors scheme)
+        );
         "ghostty.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-ghostty.conf" (
           schemeGhosttyConf scheme
         );
@@ -226,6 +268,9 @@ let
         "waybar.css" = pkgs.writeText "marchyo-theme-${scheme.name}-waybar.css" (
           swapToScheme scheme waybarStyle
         );
+      }
+      // lib.optionalAttrs (gtkCss != null) {
+        "gtk.css" = pkgs.writeText "marchyo-theme-${scheme.name}-gtk.css" (swapToScheme scheme gtkCss);
       }
     );
 

@@ -155,6 +155,7 @@ ShellRoot {
                     TrayWidget {}
                     DictationWidget {}
                     CaffeineWidget {}
+                    ThemeWidget {}
                     DndWidget {}
                     KeyboardLayoutWidget {}
                     BluetoothWidget {}

@@ -1,104 +1,28 @@
-# Plan: The Marchyo Manual
+# Plan: The Marchyo Manual — remaining chapters
 
-**Revision 1 — draft.** Initial plan + skeleton for a published end-user manual.
+The manual (`manual/` at the repo root, symlinked into the Starlight site as
+`site/src/content/docs/manual` and covered by the `site.yml` build filter)
+follows omarchy's model: a flat, numbered sequence of prose chapters you read
+front-to-back, distinct from the option reference. Audience is end users, not
+contributors — no Nix internals, no module paths; voice is prose-first,
+second-person, task-oriented.
 
-## Problem
+**Status:** 10 of the 15 skeleton chapters are written
+(01, 02, 04, 06, 07, 08, 09, 10, 11, 12). Five remain TODO stubs:
 
-Marchyo's user-facing documentation today is spread across the Starlight site's
-`configuration/`, `usage/`, and `guides/` sections — organized by *option*, not by
-*the person sitting in front of the desktop*. Omarchy solves this with a `manual/`:
-a flat, numbered sequence of prose chapters you read front-to-back to learn the
-system, distinct from the reference docs. Marchyo wants the same: a cohesive,
-second-person manual that teaches the desktop, separate from the option tables.
+| # | Chapter | Source to adapt | Notes |
+|---|---------|-----------------|-------|
+| 03 | Coming from Other Distros | new | Arch/omarchy/mac/win switchers; the golden rule (never install imperatively) |
+| 05 | The Top Bar | shell/README.md | **Stale stub**: describes the Waybar tour — the marchyo shell (`marchyo.shell.enable`) is now the default-when-enabled bar; cover both, keyed on the flag |
+| 13 | Monitors | `configuration/graphics` + hyprmon | declarative vs TUI, scaling + the scale-cycle bind, lid behavior |
+| 14 | Networking | new | wifi/bt TUIs, tailscale default + trusted interface, localsend, firewall default |
+| 15 | Hardware Authentication | `configuration/…` | fingerprint (`marchyo.security.fingerprint.enable`), FIDO2, `marchyo security enroll` |
 
-This mirrors the three-tree documentation split now in place:
+Conventions for filling them in: minimal Starlight frontmatter (`title`,
+optional `description`), kebab-case numbered files with gaps allowed,
+text-first (screenshots only in a later assets pass). The manual complements
+the `usage/`/`configuration/` reference pages; it does not replace them.
 
-- **`docs/`** — contributor/system-architecture reference (how marchyo is *built*).
-- **`manual/`** — this: published end-user chapters (how to *use* marchyo).
-- **`plans/`** — design RFCs (what we're *building next*).
-
-## Audience & voice
-
-- **Audience:** end users of a marchyo desktop, not contributors. No Nix internals,
-  no module paths, no flake-output tables — those live in `docs/` and the site
-  `configuration/` reference.
-- **Voice:** prose-first, second person ("you"), conversational, task-oriented.
-  Follow omarchy's manual tone. Screenshots welcome later; text first.
-- **Marchyo-specific framing** (differs from omarchy, call these out per chapter):
-  - The system is **declarative** — you change it by editing your Nix config and
-    rebuilding (`nixos-rebuild switch`), not by mutating a running system. The
-    manual teaches the *desktop experience*; the *how-to-change-it* is the rebuild
-    model, covered in "Updating".
-  - The **`marchyo` CLI** is the omarchy-parity command surface (menus, toggles,
-    capture, theme). Frozen contract until 2.0.
-  - **BYOK AI**, **multi-platform** (NixOS + darwin + nix-on-droid) are marchyo
-    extras with no omarchy equivalent.
-
-## Format & location
-
-- **Location:** top-level `manual/` at the repo root — the authoritative source.
-- **Files:** flat, numbered, kebab-case: `01-welcome-to-marchyo.md`, … Sparse
-  numbering (gaps allowed) so chapters can be inserted without renumbering.
-- **Frontmatter:** each chapter carries minimal Starlight frontmatter (`title`,
-  optional `description`). This is the one concession to the renderer — the files
-  are otherwise plain markdown. (Omarchy's have no frontmatter because it renders
-  via a different mirror; marchyo renders through Starlight, which requires a
-  `title`.)
-
-## Rendering (Starlight wiring — the one non-mechanical decision)
-
-Starlight's `docsLoader()` only globs `site/src/content/docs/`. A repo-root
-`manual/` is not auto-seen. Options considered:
-
-1. **Symlink** `site/src/content/docs/manual → ../../../../manual`, add a "Manual"
-   sidebar group (`autogenerate: { directory: 'manual' }`). Keeps `manual/`
-   authoritative at root; the symlink follows on Linux CI and the Cloudflare
-   Workers build. **← chosen** (simplest that keeps root authority).
-2. Second Astro content collection with a custom `glob` loader based at `../manual`
-   — Starlight's sidebar only renders the `docs` collection, so this doesn't
-   integrate cleanly.
-3. Author inside the site and sync root `manual/` at build — duplicates content.
-
-**Chosen: option 1.** Also add `manual/**` to the `paths:` filter in
-`.github/workflows/site.yml` so root-level manual edits trigger the site build
-gate (the filter currently watches only `site/**`).
-
-If the symlink ever proves fragile in the build, fall back to a prebuild copy step
-in `site/package.json` (`cp -r ../manual src/content/docs/manual`) guarded by
-`.gitignore` — same routes, no symlink.
-
-## Chapter outline (initial)
-
-Adapted from omarchy's 37 chapters, trimmed to a marchyo-shaped starter set.
-Reuse/adapt existing site prose where noted.
-
-| # | Chapter | Source to adapt | marchyo-specific notes |
-|---|---------|-----------------|------------------------|
-| 01 | Welcome to Marchyo | new | philosophy: a declarative omarchy |
-| 02 | Getting Started | `docs/quickstart` | first boot, the rebuild loop |
-| 03 | Coming from Other Distros | new | for Arch/omarchy/mac/win switchers |
-| 04 | Navigation | `usage/hotkeys` | workspaces, windows, tiling |
-| 05 | The Top Bar | new | waybar segments + click behavior |
-| 06 | Themes | `configuration/theming` | dark/light variant, runtime `marchyo theme` |
-| 07 | Hotkeys | `usage/hotkeys` | the full bind list (largest chapter) |
-| 08 | The Marchyo CLI | `usage/cli` | `marchyo` subcommands |
-| 09 | Default Apps | `configuration/default-apps` | browser/editor/terminal choices |
-| 10 | AI | `configuration/ai` | BYOK OpenRouter desktop |
-| 11 | Updating | `usage/updating` | the declarative rebuild/flake model |
-| 12 | Troubleshooting | `usage/troubleshooting` | — |
-| 13 | Monitors | `configuration/graphics` + hyprmon | runtime monitor controls |
-| 14 | Networking | new | wifi/bluetooth/tailscale/localsend |
-| 15 | Hardware Authentication | `configuration/…` | fingerprint / FIDO2 |
-
-## Non-goals (this revision)
-
-- No screenshots yet (text-first; add an assets pass later).
-- No mirror to a separate marketing site — the Starlight render at marchyo.org is
-  the published surface.
-- Not a migration of the existing `usage/`/`configuration/` reference pages; the
-  manual *complements* them (narrative) rather than replacing them (reference).
-
-## Status
-
-Skeleton chapters (frontmatter + TODO stubs) land with this plan so the structure,
-routes, and sidebar exist. Filling in prose is incremental, chapter by chapter.
+Also fold into 05 when written: the bar's click behavior (panels, TUI
+launches), tooltips, and `SUPER+SHIFT+SPACE` toggle — see
+`shell/README.md` for the current widget set.

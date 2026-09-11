@@ -3,7 +3,10 @@
 # Eval-only: forcing the manifest text instantiates every listed theme's
 # asset derivations (incl. the hex-translated mako config and waybar CSS)
 # for each build-time variant, without building anything. The switching
-# logic itself lives in the marchyo CLI (bun tests cover it).
+# logic itself lives in the marchyo CLI (bun tests cover it). The one
+# exception is `build-theme-runtime-assets`, a build check that materializes
+# both Jylhis theme dirs and asserts their asset files; `just check`
+# (--no-build) only evaluates it, CI's `nix flake check` builds it.
 {
   helpers,
   lib,
@@ -83,4 +86,37 @@ in
       else
         throw "FAIL: theme-runtime leaked the manifest, pointer, or ghostty include without a desktop"
     );
+
+  # Build check (not eval-only): materialize both Jylhis theme dirs and
+  # assert the runtime asset set. `just check` (--no-build) only evaluates
+  # this; `nix flake check` / CI builds it. The pointer source carries the
+  # linkFarm's context, so interpolating it into the script builds the dir.
+  build-theme-runtime-assets =
+    let
+      darkDir = (hmFor { }).xdg.configFile."marchyo/current-theme".source;
+      lightDir =
+        (hmFor { marchyo.theme.variant = "light"; }).xdg.configFile."marchyo/current-theme".source;
+    in
+    pkgs.runCommand "check-theme-runtime-assets" { } ''
+      for d in ${darkDir} ${lightDir}; do
+        for f in variant colors.json gtk.css hyprland.conf; do
+          test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
+        done
+      done
+      grep -q '"name":"jylhis-dark"' ${darkDir}/colors.json \
+        || { echo "FAIL: dark colors.json name"; exit 1; }
+      grep -q '"variant":"dark"' ${darkDir}/colors.json \
+        || { echo "FAIL: dark colors.json variant"; exit 1; }
+      grep -q '"bg":"#0d0f14"' ${darkDir}/colors.json \
+        || { echo "FAIL: dark colors.json bg hex"; exit 1; }
+      grep -q '"name":"jylhis-light"' ${lightDir}/colors.json \
+        || { echo "FAIL: light colors.json name"; exit 1; }
+      grep -q '"bg":"#f6f8fb"' ${lightDir}/colors.json \
+        || { echo "FAIL: light colors.json bg hex"; exit 1; }
+      grep -q '#0d0f14' ${darkDir}/gtk.css \
+        || { echo "FAIL: dark gtk.css not dark-polarity"; exit 1; }
+      grep -q '#f6f8fb' ${lightDir}/gtk.css \
+        || { echo "FAIL: light gtk.css not light-polarity"; exit 1; }
+      touch "$out"
+    '';
 }

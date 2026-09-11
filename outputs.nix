@@ -16,27 +16,13 @@ let
     stylix
     stylix-stable
     sops-nix
-    llm-agents
     jotain
     treefmt-nix
     ;
 
   overlay = import ./overlay.nix { inherit inputs; };
 
-  # marchyo's overlay plus llm-agents.nix (exposes pkgs.llm-agents.<agent>,
-  # e.g. claude-code, from its Numtide-cached pinned set). Upstream dropped its
-  # `overlays.default` output, so we build the equivalent overlay here from the
-  # per-system `packages` set. The attr is lazy and guarded with `or { }`, so
-  # systems llm-agents doesn't build for (x86_64-darwin) only fail if something
-  # actually reads `pkgs.llm-agents`.
-  llmAgentsOverlay = _final: prev: {
-    llm-agents = llm-agents.packages.${prev.stdenv.hostPlatform.system} or { };
-  };
-
-  overlayList = [
-    overlay
-    llmAgentsOverlay
-  ];
+  overlayList = [ overlay ];
 
   # Single source of truth for the per-system input set. x86_64-darwin is the
   # last nixpkgs release supporting Intel macOS (26.11 drops it), so it rides
@@ -712,8 +698,6 @@ in
         hyprmon
         marchyo-shell
         plymouth-marchyo-theme
-        openviking
-        pi
         ;
       site-search-data = mkSiteSearchData { inherit system; };
 
@@ -756,7 +740,7 @@ in
     # CI's toplevel build only bakes the dark one. Deliberately tiny.
     # Also build marchyo-shell and assert its wrapper bakes the runtime-env
     # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
-    # icons) — see plans/shell-warnings-fix.md — and run the shell tree's two
+    # icons) and run the shell tree's two
     # headless suites (tests/shell/): the Format.js unit tests and the static
     # QML contracts.
     // (

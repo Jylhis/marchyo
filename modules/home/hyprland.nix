@@ -520,6 +520,7 @@ in
             end''))
           (bindd "SUPER + SHIFT + I" "Input method config" (exec "fcitx5-configtool"))
           (bindd "SUPER + SHIFT + C" "Pick color (hex to clipboard)" (exec "marchyo capture color"))
+          (bindd "SUPER + SHIFT + L" "Cycle theme" (exec "marchyo theme next"))
           (bindd "SUPER + W" "Close active window" (dsp "window.close()"))
           (bindd "SUPER + J" "Toggle split" (dsp "layout(\"togglesplit\")"))
           (bindd "SUPER + P" "Pseudo window" (dsp "window.pseudo()"))

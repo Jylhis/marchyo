@@ -59,3 +59,21 @@ export function notifySendArgv(
 export function awwwImgArgv(image: string): string[] {
   return ["awww", "img", image, "--transition-type", "none"];
 }
+
+// The dconf color-scheme key marchyo owns (modules/home/gtk.nix writes the
+// build-time value; HM's dconf activation resets it on every rebuild — the
+// same ephemeral-overlay contract as the current-theme pointer).
+export const COLOR_SCHEME_KEY = "/org/gnome/desktop/interface/color-scheme";
+
+// `dconf write <key> <gvariant>` — libadwaita/GTK4 apps watch this key over
+// D-Bus and restyle live; GTK3 apps pick the relinked gtk.css up on next
+// launch instead.
+export function dconfWriteArgv(key: string, gvariant: string): string[] {
+  return ["dconf", "write", key, gvariant];
+}
+
+// GVariant string for the color-scheme: the value is a string, so the
+// quotes are part of the argument itself.
+export function colorSchemeGvariant(variant: "dark" | "light"): string {
+  return variant === "dark" ? "'prefer-dark'" : "'prefer-light'";
+}

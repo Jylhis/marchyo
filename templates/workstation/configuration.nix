@@ -33,22 +33,6 @@
   # Enable development tools (rootless Podman, virtualization, dev tools)
   marchyo.development.enable = true;
 
-  # BYOK AI tooling (OpenRouter). Supply the API key via a sops-nix secret so it
-  # never enters the Nix store. Add `config` to the module args above to use
-  # `config.sops.secrets`. See docs/configuration/ai.mdx for the full workflow.
-  # sops.defaultSopsFile = ./secrets/ai.yaml;
-  # sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-  # The default secret is root-owned 0400 under /run/secrets — set owner so the
-  # desktop user's AI clients (pi) can read it.
-  # sops.secrets."openrouter-api-key".owner = "developer";
-  # marchyo.ai = {
-  #   enable = true;
-  #   openrouter = {
-  #     apiKeyFile = config.sops.secrets."openrouter-api-key".path;
-  #     defaultModel = "anthropic/claude-sonnet-4";
-  #   };
-  # };
-
   # Keyboard layouts and input methods (defaults shown, can be customized)
   # marchyo.keyboard.layouts = [
   #   "us"                               # US English keyboard
