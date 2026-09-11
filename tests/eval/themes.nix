@@ -68,6 +68,31 @@ in
     };
   });
 
+  # Stylix's `gnome` target and marchyo's gtk.colorScheme both write dconf
+  # `org/gnome/desktop/interface color-scheme` at normal priority. Under the
+  # dark variant both produce "prefer-dark" and merge silently; under light
+  # they diverge (Stylix: "default", HM's gtk3.nix: "prefer-light") and the
+  # merge throws only when the value is forced — i.e. on a real `nixos-rebuild
+  # switch`, not in lazily-evaluated eval tests. Forcing the value here makes
+  # the conflict a build-time failure. (Real-world report: j10s local-lab,
+  # marchyo.theme.variant = "light".)
+  eval-themes-light-dconf-color-scheme =
+    testNixOSCheck "themes-light-dconf-color-scheme"
+      (
+        cfg:
+        cfg.home-manager.users.testuser.dconf.settings."org/gnome/desktop/interface"."color-scheme"
+        == "prefer-light"
+      )
+      (withTestUser {
+        marchyo = {
+          desktop.enable = true;
+          theme = {
+            enable = true;
+            variant = "light";
+          };
+        };
+      });
+
   # Default marchyo.theme.themes: the Jylhis pair, manifest carries both
   # with the right polarity.
   eval-themes-manifest-default =
