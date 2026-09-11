@@ -562,8 +562,6 @@ in
         hyprmon
         marchyo-shell
         plymouth-marchyo-theme
-        openviking
-        pi
         ;
 
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
