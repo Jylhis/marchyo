@@ -53,6 +53,9 @@ shell/
                        regenerates it for the host theme variant
     Style.qml          bar geometry + font sizes; regenerated from
                        marchyo.theme.fontScale, plus baked feature flags
+    Theme.qml          runtime theme state (colors.json behind the
+                       current-theme pointer; regenerates per host variant
+                       in the Nix build)
     Config.qml         resolved external-tool paths; the Nix build regenerates it
                        with absolute /nix/store paths (dev default = PATH names)
     Format.js          pure parsing helpers (keymap short codes, nmcli records);
@@ -109,6 +112,7 @@ below), so nothing depends on the session `PATH`.
 | TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
 | DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = toggle); baked on/off via `Style.dictationIndicator` |
 | CaffeineWidget | `Services/Caffeine` → `pgrep` probe + `marchyo toggle caffeine` |
+| ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
 | BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |

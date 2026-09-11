@@ -5,6 +5,7 @@ WorkspacesWidget 1.0 WorkspacesWidget.qml
 BatteryWidget 1.0 BatteryWidget.qml
 AudioWidget 1.0 AudioWidget.qml
 PowerProfileWidget 1.0 PowerProfileWidget.qml
+ThemeWidget 1.0 ThemeWidget.qml
 TrayWidget 1.0 TrayWidget.qml
 CpuWidget 1.0 CpuWidget.qml
 BluetoothWidget 1.0 BluetoothWidget.qml
