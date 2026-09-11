@@ -88,6 +88,9 @@ QtObject {
         id: fileView
         path: root.themePath()
         watchChanges: true
+        // A missing colors.json is an expected state (no marchyo desktop /
+        // pre-Milestone-1 pointer): stay quiet, apply() keeps the fallback.
+        printErrors: false
         onLoaded: root.apply(fileView.text())
         onFileChanged: fileView.reload()
     }
