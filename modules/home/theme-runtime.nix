@@ -90,6 +90,9 @@ let
     pkgs.linkFarm "marchyo-theme-${v}" (
       {
         variant = pkgs.writeText "marchyo-theme-${v}-variant" "${v}\n";
+        "colors.json" = pkgs.writeText "marchyo-theme-${v}-colors.json" (
+          colorsJsonFor ("jylhis-" + v) v (jylhisShellColors v)
+        );
         "ghostty.conf" = pkgs.writeText "marchyo-theme-${v}-ghostty.conf" ''
           theme = ${ghosttyThemeFor v}
         '';
@@ -123,6 +126,25 @@ let
     schemes = pkgs.tinted-schemes-src;
     inherit lib;
   };
+
+  # kebab-case token -> camelCase, shared with the Color.qml generator in
+  # packages/marchyo-shell/package.nix so colors.json keys and generated
+  # Color.qml property names can never drift apart.
+  toCamel = import ../../lib/camel-case.nix { inherit lib; };
+
+  # Palette subset the shell's Color.qml exposes (semantic tokens minus the
+  # syntax-highlighting ones — same filter package.nix applies), camelCased.
+  shellTokenNames = lib.filter (n: !lib.hasPrefix "syn-" n) tokenNames;
+  jylhisShellColors =
+    v: lib.listToAttrs (map (n: lib.nameValuePair (toCamel n) palettes.${v}.hex.${n}) shellTokenNames);
+  schemeShellColors =
+    scheme:
+    lib.listToAttrs (
+      map (n: lib.nameValuePair (toCamel n) (schemeHexForToken scheme n)) shellTokenNames
+    );
+  colorsJsonFor =
+    name: variant: colors:
+    builtins.toJSON { inherit name variant colors; };
 
   # Token → base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
   # base16 attrset; the extras (border/hover/subtle/ok/comment) get the
@@ -205,6 +227,9 @@ let
     pkgs.linkFarm "marchyo-theme-${scheme.name}" (
       {
         variant = pkgs.writeText "marchyo-theme-${scheme.name}-variant" "${scheme.variant}\n";
+        "colors.json" = pkgs.writeText "marchyo-theme-${scheme.name}-colors.json" (
+          colorsJsonFor scheme.name scheme.variant (schemeShellColors scheme)
+        );
         "ghostty.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-ghostty.conf" (
           schemeGhosttyConf scheme
         );
