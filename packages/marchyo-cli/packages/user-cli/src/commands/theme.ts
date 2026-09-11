@@ -18,7 +18,7 @@ import {
   declarativePointerPath,
   err,
   hint,
-  hyprctlKeywordArgv,
+  hyprctlEvalArgv,
   hyprlandAvailable,
   makoctlArgv,
   nextTheme,
@@ -60,10 +60,51 @@ function configHome(env: NodeJS.ProcessEnv = process.env): string {
   return xdg && xdg !== "" ? xdg : join(process.env.HOME ?? "~", ".config");
 }
 
+// Hyprland: the theme dir ships a hyprlang-style keyword list
+// (`section:subkey value` per line, see theme-runtime.nix's
+// hyprlandKeywordsFor). `hyprctl keyword` is a no-op under non-legacy
+// (Lua) parsers, so the lines are grouped into one nested table and applied
+// through the parse-time-equivalent `hl.config` call via `hyprctl eval`.
+// Values are rgb()/rgba() literals (no quotes or backslashes — verified
+// against theme-runtime.nix's generators), so plain double-quoted Lua
+// strings suffice; the section/subkey keys stay bracket-quoted because of
+// their dots.
+export function hyprlandConfigTable(
+  confText: string,
+): Record<string, Record<string, string>> {
+  const table: Record<string, Record<string, string>> = {};
+  for (const line of confText.split("\n")) {
+    const sp = line.indexOf(" ");
+    if (sp <= 0) continue;
+    const key = line.slice(0, sp);
+    const colon = key.indexOf(":");
+    if (colon <= 0) continue;
+    const section = key.slice(0, colon);
+    const subkey = key.slice(colon + 1);
+    const value = line.slice(sp + 1).trim();
+    (table[section] ??= {})[subkey] = value;
+  }
+  return table;
+}
+
+export function hyprlandConfigLua(
+  table: Record<string, Record<string, string>>,
+): string {
+  const sections = Object.entries(table).map(([section, subkeys]) => {
+    const pairs = Object.entries(subkeys).map(
+      ([subkey, value]) => `["${subkey}"] = "${value}"`,
+    );
+    return `["${section}"] = { ${pairs.join(", ")} }`;
+  });
+  return `hl.config({ ${sections.join(", ")} })`;
+}
+
 // Apply a theme dir's assets live. The reload vocabulary deliberately
 // matches the absorbed shell script: awww for wallpaper, mako via symlink +
 // makoctl reload, waybar via symlink + user-unit try-restart, Hyprland via
-// per-keyword hyprctl (never `hyprctl reload`), low-urgency notify.
+// `hyprctl eval hl.config(...)` (never `hyprctl keyword`, a no-op under
+// non-legacy parsers, nor `hyprctl reload`, which re-reads the build-time
+// config), low-urgency notify.
 export async function activateThemeDir(
   ctx: ChangeContext,
   entry: ThemeManifestEntry,
@@ -87,13 +128,9 @@ export async function activateThemeDir(
 
   const hypr = join(entry.dir, "hyprland.conf");
   if (existsSync(hypr) && hyprlandAvailable()) {
-    for (const line of readFileSync(hypr, "utf8").split("\n")) {
-      const sp = line.indexOf(" ");
-      if (sp <= 0) continue;
-      await safeExec(
-        ctx,
-        hyprctlKeywordArgv(line.slice(0, sp), line.slice(sp + 1).trim()),
-      );
+    const table = hyprlandConfigTable(readFileSync(hypr, "utf8"));
+    if (Object.keys(table).length > 0) {
+      await safeExec(ctx, hyprctlEvalArgv(hyprlandConfigLua(table)));
     }
   }
 
