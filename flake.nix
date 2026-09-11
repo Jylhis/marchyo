@@ -116,11 +116,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.jylhis-emacs.inputs.nixpkgs.follows = "nixpkgs";
     };
-    # AI coding agents (claude-code, codex, gemini-cli, goose, …), daily-updated
-    # with the Numtide binary cache. Intentionally NOT following nixpkgs: its
-    # overlays.default is pinned so cache.numtide.com substitutes prebuilt
-    # binaries (following nixpkgs would force local rebuilds).
-    llm-agents.url = "github:numtide/llm-agents.nix";
     wallpapper-src = {
       url = "github:mczachurski/wallpapper/1.7.4";
       flake = false;
