@@ -91,7 +91,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [
@@ -103,6 +103,12 @@ marchyo.theme.themes = [
 ```
 
 Runtime switching covers the directly-themed surfaces; Stylix-derived targets (Qt, fontconfig, …) follow the build-time `variant`/`scheme` until a rebuild. The switch is ephemeral — the next activation resets to the declarative default.
+
+GTK apps follow a runtime switch on next launch (newly started apps read the
+swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
+live via the dconf color-scheme). The Quickshell bar (`marchyo.shell.enable`)
+recolors live as well — it reads the active theme's palette through the same
+pointer — and `Super+Shift+L` cycles the theme from the compositor.
 
 ## Wallpaper
 
