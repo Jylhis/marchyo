@@ -10,8 +10,8 @@ When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control w
 | Option | Default | Choices |
 |--------|---------|---------|
 | `marchyo.defaults.browser` | `"google-chrome"` | `"brave"`, `"google-chrome"`, `"firefox"`, `"chromium"` |
-| `marchyo.defaults.editor` | `"jotain"` | `"emacs"`, `"jotain"`, `"vscode"`, `"vscodium"`, `"zed"` |
-| `marchyo.defaults.terminalEditor` | `"jotain"` | `"emacs"`, `"jotain"`, `"neovim"`, `"helix"`, `"nano"` |
+| `marchyo.defaults.editor` | `"emacs"` | `"emacs"`, `"vscode"`, `"vscodium"`, `"zed"` |
+| `marchyo.defaults.terminalEditor` | `"emacs"` | `"emacs"`, `"neovim"`, `"helix"`, `"nano"` |
 | `marchyo.defaults.videoPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"celluloid"` |
 | `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"cmus"`, `"vlc"`, `"amberol"` |
 | `marchyo.defaults.musicPlayer` | `"spotify-player"` | `"spotify-player"`, `"ncspot"`, `"spotify"` |
@@ -58,13 +58,9 @@ Some choices are "externally managed" — Marchyo does not install a package for
 
 - **`"gmail"`** and **`"outlook"`** (email) — Web applications opened in the default browser. No package is installed.
 
-## Jotain editor
+## Emacs editor
 
-`"jotain"` is the default `editor` and `terminalEditor` — [Jylhis's Emacs config](https://github.com/Jylhis/jotain), distributed as a flake. When selected, Marchyo enables its `services.jotain` Home-Manager module (installing the Emacs build, the `jotain-editor`/`jotain-visual` wrappers, and `jotain-client.desktop`) and sets `$EDITOR`/`$VISUAL` to those wrappers. Switch `editor` to `"emacs"`/`"vscode"`/… or `terminalEditor` to `"emacs"`/`"neovim"`/… to use a standard editor instead. The two selectors resolve independently, so you can mix (e.g. `editor = "jotain"` with `terminalEditor = "neovim"`).
-
-:::caution
-  jotain is itself a full Emacs distribution, so it cannot share a home profile with another Emacs. Marchyo rejects (at evaluation) mixing `"jotain"` with `"emacs"` across the two selectors, and rejects `marchyo.emacs.enable = true` while either selector is `"jotain"` (both would run an Emacs daemon on the same socket). Use `"jotain"` for both selectors, or `"emacs"` for both — not one of each.
-:::
+`"emacs"` is the default `editor` and `terminalEditor`. When selected, Marchyo installs `pkgs.emacs` and sets `$VISUAL` to `emacsclient -c -a emacs` (graphical frame) and `$EDITOR` to `emacsclient -t -a 'emacs -nw'` (terminal), each with a plain-Emacs fallback when no daemon is running. Switch `editor` to `"vscode"`/… or `terminalEditor` to `"neovim"`/… to use another editor. The two selectors resolve independently, so you can mix (e.g. `editor = "emacs"` with `terminalEditor = "neovim"`).
 
 :::note
   The TUI music (`spotify-player`, `ncspot`) and mail (`aerc`, `neomutt`) clients are installed but require account configuration before use. The music clients launch in a floating terminal under Hyprland (Super+M).

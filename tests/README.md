@@ -29,7 +29,7 @@ Verify NixOS modules evaluate without errors:
 | `eval/themes.nix` | `eval-themes`, `eval-themes-light`, `eval-themes-sheet` |
 | `eval/keyboard.nix` | `eval-keyboard`, `eval-keyboard-no-compose` |
 | `eval/graphics.nix` | `eval-graphics-{intel,amd,nvidia,prime-offload,prime-sync,legacy}` |
-| `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,jotain}` |
+| `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,tui,tui-alt,aerc-styleset,emacs-defaults,emacs-mixed}` |
 | `eval/hyprland.nix` | `check-home-hyprland-config` (verifies generated `hyprland.conf` parses) |
 
 ### Library Tests

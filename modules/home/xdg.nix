@@ -20,7 +20,6 @@ let
 
   editorDesktopFiles = {
     emacs = "emacsclient.desktop";
-    jotain = "jotain-client.desktop";
     vscode = "code.desktop";
     vscodium = "codium.desktop";
     zed = "dev.zed.Zed.desktop";

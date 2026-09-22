@@ -60,7 +60,7 @@ system yourself. The raw `marchyo.inputs.nixpkgs` passthrough is always
 If you only want the Home Manager modules without the NixOS system modules, use
 the exported `marchyo.lib.mkHomeConfiguration` builder. It wires up the correct
 nixpkgs, the third-party Home Manager modules marchyo depends on (noctalia,
-vicinae, sops-nix, jotain), and a mock `osConfig` — a plain
+vicinae, sops-nix), and a mock `osConfig` — a plain
 `homeManagerConfiguration` call with just `marchyo.homeManagerModules.default`
 will not evaluate.
 

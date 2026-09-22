@@ -183,7 +183,7 @@ in
     );
 
   # The Super+E editor bind resolves through the `editor` Lua local, which is
-  # derived from marchyo.defaults.editor (jotain -> jotain-visual by default,
+  # derived from marchyo.defaults.editor (emacs -> emacsclient by default,
   # and e.g. vscode -> code when reselected).
   eval-hyprland-editor-bind =
     let
@@ -217,8 +217,8 @@ in
     pkgs.writeText "eval-hyprland-editor-bind" (
       if !hasEditorBind then
         throw "FAIL: Super+E bind should exec the editor local"
-      else if defaultEditorVar != "jotain-visual" then
-        throw "FAIL: default editor local should be jotain-visual, got ${toString defaultEditorVar}"
+      else if defaultEditorVar != "emacsclient -c -a emacs" then
+        throw "FAIL: default editor local should be emacsclient -c -a emacs, got ${toString defaultEditorVar}"
       else if vscodeEditorVar != "code" then
         throw "FAIL: editor local for vscode should be code, got ${toString vscodeEditorVar}"
       else

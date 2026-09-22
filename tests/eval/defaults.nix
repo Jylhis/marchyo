@@ -3,7 +3,6 @@ let
   inherit (helpers)
     testNixOS
     testNixOSCheck
-    testNixOSFails
     withTestUser
     ;
 in
@@ -15,8 +14,6 @@ in
 
   eval-defaults-editor = testNixOS "defaults-editor" (withTestUser {
     marchyo.desktop.enable = true;
-    # terminalEditor defaults to "jotain"; "emacs" + "jotain" trips the
-    # cannot-mix assertion, so pin both to "emacs".
     marchyo.defaults.editor = "emacs";
     marchyo.defaults.terminalEditor = "emacs";
   });
@@ -102,59 +99,33 @@ in
     };
   });
 
-  # Jotain (Jylhis's Emacs config) is the default editor: marchyo installs no
-  # package directly (its services.jotain Home-Manager module does), but owns
-  # $EDITOR/$VISUAL, pointing them at jotain's on-PATH wrapper scripts.
-  eval-defaults-jotain =
-    testNixOSCheck "defaults-jotain"
+  # Standard Emacs is the default editor: marchyo installs pkgs.emacs and
+  # points $VISUAL/$EDITOR at emacsclient with plain-emacs fallbacks.
+  eval-defaults-emacs-defaults =
+    testNixOSCheck "defaults-emacs-defaults"
       (
         config:
-        config.environment.sessionVariables.EDITOR == "jotain-editor"
-        && config.environment.sessionVariables.VISUAL == "jotain-visual"
+        config.environment.sessionVariables.VISUAL == "emacsclient -c -a emacs"
+        && config.environment.sessionVariables.EDITOR == "emacsclient -t -a 'emacs -nw'"
       )
       (withTestUser {
         marchyo.desktop.enable = true;
-        marchyo.defaults = {
-          editor = "jotain";
-          terminalEditor = "jotain";
-        };
+        # editor/terminalEditor left at their "emacs" defaults.
       });
 
-  # Mixed case: jotain GUI editor + neovim terminal editor resolve independently.
-  eval-defaults-jotain-mixed =
-    testNixOSCheck "defaults-jotain-mixed"
+  # Mixed case: emacs GUI editor + neovim terminal editor resolve independently.
+  eval-defaults-emacs-mixed =
+    testNixOSCheck "defaults-emacs-mixed"
       (
         config:
-        config.environment.sessionVariables.VISUAL == "jotain-visual"
+        config.environment.sessionVariables.VISUAL == "emacsclient -c -a emacs"
         && config.environment.sessionVariables.EDITOR == "nvim"
       )
       (withTestUser {
         marchyo.desktop.enable = true;
         marchyo.defaults = {
-          editor = "jotain";
-          terminalEditor = "neovim";
-        };
-      });
-
-  # jotain + the marchyo.emacs daemon both bind the default Emacs socket — the
-  # default editors leave jotain selected, so enabling marchyo.emacs must fail.
-  eval-defaults-jotain-emacs-daemon-conflict =
-    testNixOSFails "defaults-jotain-emacs-daemon-conflict" "marchyo.emacs.enable conflicts"
-      (withTestUser {
-        marchyo.desktop.enable = true;
-        marchyo.emacs.enable = true;
-        # editor/terminalEditor left at their "jotain" defaults.
-      });
-
-  # jotain's emacs/emacsclient shadow pkgs.emacs on PATH, so mixing the two
-  # editor selections must fail rather than silently run jotain on both.
-  eval-defaults-jotain-emacs-mix =
-    testNixOSFails "defaults-jotain-emacs-mix" "cannot mix"
-      (withTestUser {
-        marchyo.desktop.enable = true;
-        marchyo.defaults = {
           editor = "emacs";
-          terminalEditor = "jotain";
+          terminalEditor = "neovim";
         };
       });
 }
