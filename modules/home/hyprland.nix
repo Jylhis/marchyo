@@ -104,11 +104,8 @@ let
     spotify = "spotify";
   };
 
-  # GUI editor launch commands, keyed by marchyo.defaults.editor. jotain uses its
-  # own `jotain-visual` wrapper (emacsclient --create-frame with a fresh-Emacs
-  # --alternate-editor fallback) — the same command marchyo sets as $VISUAL.
+  # GUI editor launch commands, keyed by marchyo.defaults.editor.
   editorHyprlandCommands = {
-    jotain = "jotain-visual";
     emacs = "emacsclient -c -a emacs";
     vscode = "code";
     vscodium = "codium";
@@ -135,7 +132,7 @@ let
 
   editorCmd =
     let
-      e = marchyoDefaults.editor or "jotain";
+      e = marchyoDefaults.editor or "emacs";
     in
     if e == null then "xdg-open" else editorHyprlandCommands.${e};
 

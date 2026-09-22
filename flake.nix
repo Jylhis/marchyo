@@ -103,19 +103,6 @@
       url = "github:tinted-theming/schemes";
       flake = false;
     };
-    # Jotain — Jylhis's Emacs config, distributed as a flake. Its
-    # homeManagerModules.default is self-contained (extends pkgs with its own
-    # overlay internally), so only nixpkgs needs to follow. Wired in as the
-    # `marchyo.defaults.editor`/`terminalEditor = "jotain"` implementation.
-    # The nested jylhis-emacs.nixpkgs follows ours too: otherwise that pinned
-    # (non-following) nixpkgs lands an extra rev in the closure and gets the
-    # bare `nixpkgs` lock-node name, diverging the flake.lock/devenv.lock
-    # nixpkgs-rev parity check (CI `verify`).
-    jotain = {
-      url = "github:Jylhis/jotain";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.jylhis-emacs.inputs.nixpkgs.follows = "nixpkgs";
-    };
     wallpapper-src = {
       url = "github:mczachurski/wallpapper/1.7.4";
       flake = false;

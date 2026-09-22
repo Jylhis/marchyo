@@ -26,22 +26,17 @@ in
       type = types.nullOr (
         types.enum [
           "emacs"
-          "jotain"
           "vscode"
           "vscodium"
           "zed"
         ]
       );
-      default = "jotain";
+      default = "emacs";
       example = "vscode";
       description = ''
         Default graphical text editor ($VISUAL). Installed automatically when
         desktop is enabled and registered as the system default for plain text
         files. Set to null to skip editor management.
-        "jotain" (the default, Jylhis's Emacs config) installs via its
-        services.jotain Home-Manager module; marchyo sets $VISUAL to its
-        jotain-visual wrapper. Switch to "emacs", "vscode", etc. to use a
-        standard editor instead.
       '';
     };
 
@@ -49,21 +44,16 @@ in
       type = types.nullOr (
         types.enum [
           "emacs"
-          "jotain"
           "neovim"
           "helix"
           "nano"
         ]
       );
-      default = "jotain";
+      default = "emacs";
       example = "neovim";
       description = ''
         Default terminal text editor ($EDITOR). Installed automatically when
         desktop is enabled. Set to null to skip terminal editor management.
-        "jotain" (the default, Jylhis's Emacs config) installs via its
-        services.jotain Home-Manager module; marchyo sets $EDITOR to its
-        jotain-editor wrapper. Switch to "emacs", "neovim", etc. to use a
-        standard editor instead.
       '';
     };
 

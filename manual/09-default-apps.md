@@ -17,8 +17,8 @@ installed and wired up as the handler for its file types.
 | Category | Default | Other choices |
 |----------|---------|---------------|
 | `browser` | `google-chrome` | `brave`, `firefox`, `chromium` |
-| `editor` | `jotain` | `emacs`, `vscode`, `vscodium`, `zed` |
-| `terminalEditor` | `jotain` | `emacs`, `neovim`, `helix`, `nano` |
+| `editor` | `emacs` | `emacs`, `vscode`, `vscodium`, `zed` |
+| `terminalEditor` | `emacs` | `emacs`, `neovim`, `helix`, `nano` |
 | `videoPlayer` | `mpv` | `vlc`, `celluloid` |
 | `audioPlayer` | `mpv` | `cmus`, `vlc`, `amberol` |
 | `musicPlayer` | `spotify-player` | `ncspot`, `spotify` |
@@ -61,12 +61,7 @@ marchyo.defaults = {
 
 ## About the default editor
 
-The default editor, `jotain`, is [Jylhis's Emacs configuration](https://github.com/Jylhis/jotain)
-— a complete, ready-to-use Emacs distribution. If you'd rather use a plain editor,
-switch `editor` (and `terminalEditor`) to something from the lists above.
-
-One catch: because `jotain` *is* a full Emacs, you can't run it alongside a separate
-Emacs. Pick `jotain` for both the graphical and terminal editor, or `emacs` for both
-— Marchyo will stop the build if you try to mix the two, since they'd fight over the
-same Emacs daemon. Any other pairing is fine (for instance, `jotain` graphical with
-`neovim` in the terminal).
+The default editor is `emacs`: Marchyo installs `pkgs.emacs` and points
+`$VISUAL`/`$EDITOR` at `emacsclient` (with a plain-Emacs fallback when no
+daemon is running). If you'd rather use something else, switch `editor`
+(and `terminalEditor`) to something from the lists above.

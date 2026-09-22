@@ -43,7 +43,7 @@ nixos-rebuild build-vm --flake .#workstation
 ### Development Tools
 
 #### Editors
-- jotain (Jylhis's Emacs config) by default
+- Emacs by default
 - Switch via `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
 
 #### Version Control
