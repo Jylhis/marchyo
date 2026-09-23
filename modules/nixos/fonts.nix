@@ -23,6 +23,9 @@
       inter # v2 body fallback
       liberation_ttf
 
+      # Emoji fallback: the shell launcher's emoji mode renders through
+      # fontconfig fallback (fcitx5 already pulls this on IME hosts).
+      noto-fonts-color-emoji
     ];
     fontconfig = {
       cache32Bit = true;
