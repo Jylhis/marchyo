@@ -106,7 +106,11 @@ Runtime switching covers the directly-themed surfaces; Stylix-derived targets (Q
 
 GTK apps follow a runtime switch on next launch (newly started apps read the
 swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
-live via the dconf color-scheme). The Quickshell bar (`marchyo.shell.enable`)
+live via the dconf color-scheme). Ghostty restyles **open** windows live too —
+its runtime include names the Jylhis pair as a ghostty light/dark theme pair
+(`theme = dark:…,light:…`), which ghostty resolves from the system
+color-scheme, so the same dconf write that flips libadwaita apps recolors
+running terminals. The Quickshell bar (`marchyo.shell.enable`)
 recolors live as well — it reads the active theme's palette through the same
 pointer — and `Super+Shift+L` cycles the theme from the compositor.
 

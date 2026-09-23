@@ -139,8 +139,8 @@ in
       # background/foreground instead of the GTK theme. The injected jylhis
       # gtk.css overrides Adwaita-dark's colors (see modules/home/jylhis-theme.nix),
       # so `window-theme = dark` still left the tab bar light; `ghostty` reads
-      # the theme's bg/fg directly and also tracks the runtime theme include
-      # (modules/home/theme-runtime.nix) for new windows.
+      # the theme's bg/fg directly and also tracks the runtime theme pair
+      # include (modules/home/theme-runtime.nix) live.
       window-theme = "ghostty";
     }
     // optionalAttrs isDarwin {
