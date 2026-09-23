@@ -19,7 +19,6 @@
   coreutils,
   wtype,
   cliphist,
-  unicode-emoji,
   marchyo-cli,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
@@ -136,6 +135,9 @@ let
       readonly property int panelGap: ${toString (fs.round 6)}
       readonly property int panelRadius: ${toString (fs.round 8)}
       readonly property int panelRowHeight: ${toString (fs.round 30)}
+
+      // Launcher geometry (apps/emoji/clipboard card).
+      readonly property int launcherWidth: ${toString (fs.round 640)}
 
       // Notification-toast geometry (replaces mako; mako uses width 380, pad 8,
       // radius 0 sharp corners, border 2, margin 10). Pixel sizes scale with the
