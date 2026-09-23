@@ -69,4 +69,38 @@ in
       else
         throw "FAIL: screensaver disabled but its script, window rule, or hypridle listener is still present"
     );
+
+  # Phase 4: with the unified shell on, the launcher must guard against the
+  # in-shell lock the same way it guards against hyprlock — visible as the
+  # lockState IPC probe inside the launcher script (read from the derivation's
+  # eval-visible `text` attr; the flake disables import-from-derivation).
+  eval-screensaver-shell-lock-guard =
+    let
+      hm = hmOf (evalWith {
+        marchyo.shell.enable = true;
+      });
+      launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
+      text = if launcher == null then "" else (launcher.text or "");
+    in
+    pkgs.writeText "eval-screensaver-shell-lock-guard" (
+      if launcher != null && lib.hasInfix "shell lockState" text then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is on but the screensaver launcher does not probe the shell lock state"
+    );
+
+  # Shell off: the launcher keeps its plain hyprlock guard only (no marchyo-shell
+  # dependency, no IPC probe).
+  eval-screensaver-shell-off-no-ipc-probe =
+    let
+      hm = hmOf (evalWith { });
+      launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
+      text = if launcher == null then "" else (launcher.text or "");
+    in
+    pkgs.writeText "eval-screensaver-shell-off-no-ipc-probe" (
+      if launcher != null && !(lib.hasInfix "lockState" text) then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but the screensaver launcher still probes (or misses) the shell lock state"
+    );
 }
