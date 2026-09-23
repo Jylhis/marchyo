@@ -101,7 +101,7 @@ reminder`), screensaver/idle (tte + hypridle at behavioral parity).
 | Polkit agent | `polkit` plugin | discrete polkit agent |
 | Screenshot / recording | `omarchy-capture-*` | `marchyo capture` (grimblast+satty, freeze-frame OCR) / gpu-screen-recorder |
 | Update surface | `omarchy-update` + widget | `nixos-rebuild` + `dix`, `marchyo update/upgrade/rollback/gc/diff` |
-| Login / Boot | SDDM / Limine | greetd + tuigreet / systemd-boot |
+| Login / Boot | SDDM / Limine | greetd + Quickshell greeter (cage) / systemd-boot |
 
 **At parity:** voxtype dictation (+ bar indicator), DND, idle-lock toggle,
 nightlight toggle, cursor zoom, toggle top bar, keybindings cheatsheet,
