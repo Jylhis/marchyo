@@ -218,4 +218,28 @@ in
       else
         throw "FAIL: hypridle idle-lock listener changed although marchyo.shell is off"
     );
+
+  # The NixOS half of the hyprlock cutover: programs.hyprlock and its PAM
+  # service must stand down too, or a stray hyprlock install remains.
+  eval-marchyo-shell-nixos-hyprlock-stands-down =
+    let
+      c = (evalWith { marchyo.shell.enable = true; }).config;
+    in
+    pkgs.writeText "eval-marchyo-shell-nixos-hyprlock-stands-down" (
+      if !c.programs.hyprlock.enable && !(c.security.pam.services ? hyprlock) then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell.enable = true but NixOS still enables hyprlock or its PAM service"
+    );
+
+  eval-marchyo-shell-off-nixos-keeps-hyprlock =
+    let
+      c = (evalWith { }).config;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-nixos-keeps-hyprlock" (
+      if c.programs.hyprlock.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but NixOS hyprlock is missing under a plain desktop"
+    );
 }
