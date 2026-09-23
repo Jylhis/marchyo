@@ -289,7 +289,7 @@ nix run .#marchyo-shell
 just -f shell/Justfile dev
 ```
 
-The checked-in `Commons/Color.qml` / `Commons/Style.qml` are the Field (dark),
+The checked-in `Commons/Color.qml` / `Commons/Style.qml` are the Jylhis Dark
 `fontScale 1.0` defaults so the dev loop works standalone; the Nix build
 overwrites both for the host's `marchyo.theme.variant` and `fontScale`.
 

@@ -1,35 +1,34 @@
 # Jylhis Design System — palette helper.
 #
-# Reads tokens.json from the upstream design system and exposes:
+# Reads themes/jylhis.json from the upstream design system and exposes:
 #   - base16   : { scheme, author, base00..base0F } for Stylix
 #   - ansi16   : 16-element list of 6-digit hex strings — ANSI escape palette
 #                tuned for terminal apps that paint their own bg (Ghostty etc.)
 #   - tty16    : 16-element list — kernel-TTY palette. Same as ansi16 except
 #                slots 0/7/15 come from semantic tokens (bg/text/text-heading)
 #                so the bare TTY (slot 0 = actual background) and any greeter
-#                inheriting it stay readable in both Sheet and Field variants.
+#                inheriting it stay readable in both light and dark variants.
 #                Mirrors the override done in the upstream design generator
 #                (scripts/generate.mjs) for jylhis-{sheet,field}.nix.
-#   - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
+#  - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
 #                Merges palette + status + syntax, so every token the design
 #                system adds shows up here without a change to this file —
 #                e.g. v2's `contour` (structural blue linework, never used for
 #                interaction) is reachable as `palette.hex.contour`.
-#   - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
+#  - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
 #
-# Source of truth: ${pkgs.jylhis-design-src}/themes/survey.json (tracked via
-# flake.lock). Design system 2.0.0 split the flat tokens.json into a
-# theme-independent tokens.core.json plus per-theme themes/<slug>.json; marchyo
-# tracks the default Survey theme (cool Sheet/Field grounds, a bronze
-# interactive `accent`, a benchmark-vermilion `brand` mark). The theme file
-# exposes palette/status/syntax/ansi with per-mode light/dark values.
+# Source of truth: ${pkgs.jylhis-design-src}/themes/jylhis.json (tracked via
+# flake.lock). Design system 3.0.0 is single-theme: one `jylhis` theme with
+# two first-class modes (light "Print", dark "Negative" — cool grounds, a
+# bronze interactive `accent`, a benchmark-vermilion `brand` mark). The theme
+# file exposes palette/status/syntax/ansi with per-mode light/dark values.
 {
   pkgs,
   lib,
   variant ? "dark",
 }:
 let
-  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/themes/survey.json");
+  tokens = builtins.fromJSON (builtins.readFile "${pkgs.jylhis-design-src}/themes/jylhis.json");
   key = if variant == "dark" then "dark" else "light";
   sh = lib.removePrefix "#";
 
@@ -39,7 +38,7 @@ let
 in
 {
   base16 = {
-    scheme = if key == "dark" then "Jylhis Field" else "Jylhis Sheet";
+    scheme = if key == "dark" then "Jylhis Dark" else "Jylhis Light";
     author = "Markus Jylhankangas (jylhis.com)";
     base00 = sh p.bg.${key};
     base01 = sh p."bg-subtle".${key};

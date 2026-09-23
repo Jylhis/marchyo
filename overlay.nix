@@ -22,3 +22,12 @@ final: prev:
     plymouth-marchyo-theme = final.callPackage ./packages/plymouth-marchyo-theme/package.nix { };
   }
 )
+// {
+  # Design system 3.0.0 generates platform files (ghostty themes, gtk css,
+  # bat themes, …) in-derivation; the source tree no longer commits them.
+  # The built package is the only source for those assets, so expose it on
+  # every platform (ghostty themes are installed on darwin too —
+  # modules/home/ghostty.nix). The upstream overlay is Linux-only in this
+  # tree, hence the explicit callPackage here.
+  jylhis-themes = final.callPackage (inputs.jylhis-design + "/nix/themes.nix") { };
+}

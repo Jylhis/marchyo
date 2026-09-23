@@ -11,7 +11,7 @@ import Quickshell.Io
 // delegates its tokens here (the bar live-recolors, matching waybar's
 // runtime-switch behavior) and Bar/ThemeWidget shows/cycles the theme.
 //
-// Dev defaults: the embedded fallback palette is the Jylhis Field (dark)
+// Dev defaults: the embedded fallback palette is the Jylhis Dark
 // variant so `quickshell -p shell` runs standalone; the Nix build
 // (packages/marchyo-shell/package.nix) regenerates this file with the host's
 // build-time variant hex-swapped into the fallback block.
@@ -28,29 +28,30 @@ QtObject {
     // Whole-object reassignment only: bindings read Theme.palette.<token>,
     // and var properties notify per value, not per member.
     property var palette: ({
-            bg: "#0d0f14",
-            bgSubtle: "#14171e",
-            surface: "#1b1f28",
-            surfaceRaised: "#232833",
-            text: "#d6dae2",
-            textMuted: "#9aa0ab",
-            textHeading: "#f2f4f8",
-            textFaint: "#656b76",
-            accent: "#e0a33a",
-            accentHover: "#f0b95c",
-            accentSubtle: "#262119",
-            brand: "#ef8a4a",
-            contour: "#6f9be0",
-            border: "#2b303b",
-            borderStrong: "#3a4150",
-            decorator: "#39415a",
-            selectionBg: "#3a2f1c",
-            cursor: "#e0a33a",
-            scrim: "#05060a",
-            statusErr: "#f0685f",
-            statusWarn: "#d9b34a",
-            statusOk: "#6bbf6b",
-            statusInfo: "#5fb8cf"
+            bg: "#0c0f14",
+            bgSubtle: "#14171c",
+            surface: "#1c1f24",
+            surfaceRaised: "#262a2f",
+            text: "#d1d4dc",
+            textMuted: "#878b91",
+            textHeading: "#e7ebf2",
+            textFaint: "#5d6067",
+            accent: "#f5a351",
+            accentHover: "#ffb063",
+            accentSubtle: "#281604",
+            brand: "#f8763a",
+            contour: "#7ca2ff",
+            border: "#242c37",
+            borderStrong: "#3f4754",
+            decorator: "#525a6b",
+            selectionBg: "#3c2206",
+            cursor: "#f5a351",
+            scrim: "#040508",
+            destructive: "#ffb2b4",
+            statusErr: "#ff8271",
+            statusWarn: "#ec871d",
+            statusOk: "#39ae34",
+            statusInfo: "#17a4ed"
         })
 
     // No reading (no marchyo desktop / theme manifest): widgets stay hidden.

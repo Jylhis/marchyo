@@ -6,7 +6,10 @@
 let
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
-  designSrc = "${pkgs.jylhis-design-src}/platforms/bat";
+  # Design system 3.0.0 generates the tmThemes in-derivation; the built
+  # jylhis-themes package is their only source. The internal theme names are
+  # "Jylhis Dark" / "Jylhis Light".
+  designThemes = "${pkgs.jylhis-themes}/share/jylhis/bat";
 in
 {
   config = {
@@ -14,15 +17,11 @@ in
       enable = true;
 
       themes = {
-        jylhis-field = {
-          src = "${designSrc}/jylhis-survey-dark.tmTheme";
-        };
-        jylhis-sheet = {
-          src = "${designSrc}/jylhis-survey-light.tmTheme";
-        };
+        jylhis-dark.src = "${designThemes}/jylhis-dark.tmTheme";
+        jylhis-light.src = "${designThemes}/jylhis-light.tmTheme";
       };
 
-      config.theme = if isDark then "jylhis-field" else "jylhis-sheet";
+      config.theme = if isDark then "jylhis-dark" else "jylhis-light";
     };
   };
 }

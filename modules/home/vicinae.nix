@@ -51,11 +51,11 @@ let
     in
     {
       meta = {
-        name = if variant == "dark" then "Jylhis Field" else "Jylhis Sheet";
+        name = if variant == "dark" then "Jylhis Dark" else "Jylhis Light";
         description =
-          "Jylhis Design System v2 (The Survey) — "
-          + (if variant == "dark" then "Field (dark) ground" else "Sheet (light) ground")
-          + ", bronze interactive accent.";
+          "Jylhis Design System 3.0 (single theme) — "
+          + (if variant == "dark" then "Negative (dark)" else "Print (light)")
+          + " mode, bronze interactive accent.";
         inherit variant;
         # `inherits` supplies any key marchyo leaves unset. `meta.version` is
         # deliberately absent: the parser does not read it and would flag it.
@@ -170,7 +170,7 @@ let
       };
     };
 
-  activeTheme = if themeVariant == "dark" then "jylhis-field" else "jylhis-sheet";
+  activeTheme = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
 
   keybinding = cfg.keybinding or "emacs";
 
@@ -216,8 +216,8 @@ in
       # Both variants are always registered so a marchyo.theme.variant flip
       # needs no theme rebuild.
       themes = {
-        jylhis-field = mkTheme "dark";
-        jylhis-sheet = mkTheme "light";
+        jylhis-dark = mkTheme "dark";
+        jylhis-light = mkTheme "light";
       };
 
       settings = lib.mkMerge [

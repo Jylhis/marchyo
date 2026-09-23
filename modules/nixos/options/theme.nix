@@ -19,9 +19,9 @@ in
       example = "light";
       description = ''
         Theme variant preference (light or dark).
-        Selects the Jylhis Design System palette derived from tokens.json:
-        - "dark" uses Jylhis Field
-        - "light" uses Jylhis Sheet
+        Selects the Jylhis Design System palette derived from themes/jylhis.json:
+        - "dark" uses Jylhis Dark (the "Negative" mode)
+        - "light" uses Jylhis Light (the "Print" mode)
         Override with `marchyo.theme.scheme` to use a scheme from the
         tinted-schemes catalog instead.
       '';

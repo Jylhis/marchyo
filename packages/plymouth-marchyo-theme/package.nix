@@ -8,14 +8,14 @@
   # Theme variant to bake into the splash. Plymouth runs at boot before any
   # runtime theme switch, so the assets are rendered once for whichever variant
   # the system is configured with (marchyo.theme.variant, wired in
-  # modules/nixos/plymouth.nix). "dark" = Jylhis Field, "light" = Jylhis Sheet.
+  # modules/nixos/plymouth.nix). "dark" = Jylhis Dark, "light" = Jylhis Light.
   variant ? "dark",
 }:
 let
-  # All colors come from the Jylhis Design System Survey theme (the same source
+  # All colors come from the Jylhis Design System theme (the same source
   # of truth as modules/generic/jylhis-palette.nix). Every asset is generated
   # or recolored at build time, so a variant flip retints the whole splash.
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/survey.json");
+  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/jylhis.json");
   key = if variant == "light" then "light" else "dark";
   color = name: tokens.palette.${name}.${key};
   synColor = name: tokens.syntax.${name}.${key};
@@ -207,7 +207,7 @@ stdenvNoCC.mkDerivation {
     # Two word marks — the omarchy "marchyo" (basecamp/omarchy, leading "o"
     # moved to the end) and a JetBrains Mono "jylhis" — which the ">" caret
     # wipes on and off alternately at boot (see marchyo.script). Every
-    # surface is themed from the Jylhis Design System tokens.json at build.
+    # surface is themed from the Jylhis Design System tokens at build.
     description = "Marchyo Plymouth boot splash — alternating caret-wipe wordmarks, themed from Jylhis Design System tokens";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;

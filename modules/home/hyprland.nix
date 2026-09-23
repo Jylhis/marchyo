@@ -247,7 +247,7 @@ in
             # mirrors a tmux active/inactive pane divider (no gradient). The
             # inactive border uses the border-strong token, matching the design
             # system's Hyprland variant files (text-faint is an ink token and
-            # reads brighter than a border should on Field).
+            # reads brighter than a border should on dark).
             col = {
               active_border = lib.mkForce (rgba palette.hex.accent "ff");
               inactive_border = lib.mkForce (rgba palette.hex."border-strong" "ff");

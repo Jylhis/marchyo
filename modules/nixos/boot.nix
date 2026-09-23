@@ -16,7 +16,7 @@ in
 
   # Login. The tuigreet --theme uses ANSI color names that are resolved by the
   # kernel's console palette (set in modules/nixos/console.nix from the Jylhis
-  # tokens.json). Slot 11 (bright-yellow) is the bronze accent. Slot mapping
+  # theme file). Slot 11 (bright-yellow) is the bronze accent. Slot mapping
   # follows the greeter table in the design system's docs/INTEGRATION.md
   # (time=cyan/syn-type, button=magenta, prompt/action=bronze accent).
   services.greetd = lib.mkIf cfg.desktop.enable (

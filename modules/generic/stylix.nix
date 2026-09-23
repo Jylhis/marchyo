@@ -34,7 +34,7 @@ in
         else
           palette.base16;
 
-      # Jylhis Design System v2 ("The Survey") three-role type stack:
+      # Jylhis Design System three-role type stack:
       # display/headings = Zilla Slab, body = Hanken Grotesk, mono = IBM Plex
       # Mono. Stylix only has serif/sansSerif/monospace, so the slab display
       # face lands on `serif` and the grotesque body face on `sansSerif`.

@@ -7,7 +7,7 @@
 #
 # Theming: the Stylix aerc target is disabled in modules/generic/theme.nix
 # (upstream uses base07 — a base16 *background* slot — as a foreground, which is
-# white-on-white in the Sheet/light variant). We ship a "marchyo" styleset built
+# white-on-white in the light variant). We ship a "marchyo" styleset built
 # from the Jylhis palette's semantic tokens instead, so every foreground
 # contrasts against its surface in both variants.
 {
@@ -49,7 +49,7 @@ in
 
           # Heading ink on a subtle raised surface — readable in both variants.
           # Never surface-raised (base07) as a foreground: it is near-white in
-          # Sheet.
+          # the light variant.
           "title.fg" = hex."text-heading";
           "title.bg" = hex.surface;
           "title.bold" = true;

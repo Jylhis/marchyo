@@ -108,23 +108,27 @@ in
       # color-scheme, so the dconf write in `marchyo theme set` restyles open
       # windows instead of only new ones.
       for d in ${darkDir} ${lightDir}; do
-        grep -q 'theme = dark:jylhis-field,light:jylhis-sheet' "$d/ghostty.conf" \
+        grep -q 'theme = dark:jylhis-dark,light:jylhis-light' "$d/ghostty.conf" \
           || { echo "FAIL: $d/ghostty.conf is not the theme pair"; exit 1; }
       done
       grep -q '"name":"jylhis-dark"' ${darkDir}/colors.json \
         || { echo "FAIL: dark colors.json name"; exit 1; }
       grep -q '"variant":"dark"' ${darkDir}/colors.json \
         || { echo "FAIL: dark colors.json variant"; exit 1; }
-      grep -q '"bg":"#0d0f14"' ${darkDir}/colors.json \
+      grep -q '"bg":"#0c0f14"' ${darkDir}/colors.json \
         || { echo "FAIL: dark colors.json bg hex"; exit 1; }
       grep -q '"name":"jylhis-light"' ${lightDir}/colors.json \
         || { echo "FAIL: light colors.json name"; exit 1; }
-      grep -q '"bg":"#f6f8fb"' ${lightDir}/colors.json \
+      grep -q '"bg":"#f5f8fc"' ${lightDir}/colors.json \
         || { echo "FAIL: light colors.json bg hex"; exit 1; }
-      grep -q '#0d0f14' ${darkDir}/gtk.css \
+      grep -q '#0c0f14' ${darkDir}/gtk.css \
         || { echo "FAIL: dark gtk.css not dark-polarity"; exit 1; }
-      grep -q '#f6f8fb' ${lightDir}/gtk.css \
+      grep -q '#f5f8fc' ${lightDir}/gtk.css \
         || { echo "FAIL: light gtk.css not light-polarity"; exit 1; }
+      # The dark gtk.css derives shade_color from the text token as a decimal
+      # rgba; the light copy must translate it (not keep the dark literal).
+      grep -q 'rgba(42, 45, 51, 0.08)' ${lightDir}/gtk.css \
+        || { echo "FAIL: light gtk.css shade_color not translated"; exit 1; }
       touch "$out"
     '';
 }

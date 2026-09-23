@@ -9,7 +9,7 @@
 # - https://github.com/Alexays/Waybar/issues/3344 (Multiple instances after DPMS resume)
 # - https://github.com/Alexays/Waybar/issues/3964 (SIGUSR2 opens multiple instances)
 #
-# Theming: composes the upstream Jylhis design CSS (Field or Sheet) with a small
+# Theming: composes the upstream Jylhis design CSS (dark or light polarity) with a small
 # marchyo overlay covering selectors not present upstream (wireplumber, bluetooth,
 # power-profiles-daemon, hyprland/language, the tray expander). The upstream HM
 # module's waybar target is disabled in modules/home/jylhis-theme.nix so we own
@@ -80,8 +80,13 @@ let
     '';
   };
 
-  upstreamFile = if isDark then "style-survey-dark.css" else "style-survey-light.css";
-  upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/waybar/${upstreamFile}";
+  # Committed upstream reference files (byte-identical to the generator's
+  # platforms/waybar/style-{mode}.css outputs — the _reference files ARE the
+  # generator's recolor sources, and the recolor is identity for the single
+  # jylhis theme). Reading the source tree keeps this IFD-free, and the text
+  # form feeds theme-runtime.nix's semantic-token hex swap.
+  upstreamFile = if isDark then "style.css" else "style-sheet.css";
+  upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/_reference/waybar/${upstreamFile}";
 
   # marchyo additions — selectors and tweaks not in upstream design
   marchyoCss = ''

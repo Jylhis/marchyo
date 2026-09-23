@@ -151,24 +151,22 @@ in
     pkgs.writeText "eval-launcher-theme" (
       if
         registered != [
-          "jylhis-field"
-          "jylhis-sheet"
+          "jylhis-dark"
+          "jylhis-light"
         ]
       then
         throw "FAIL: both jylhis themes should be registered, got ${toString registered}"
-      else if vicinae.themes.jylhis-field.meta ? version then
+      else if vicinae.themes.jylhis-dark.meta ? version then
         throw "FAIL: meta.version is not read by Vicinae's theme parser and is reported as an unused key"
-      else if vicinae.themes.jylhis-field.meta.variant != "dark" then
-        throw "FAIL: jylhis-field should declare the dark variant"
-      else if
-        settings.theme.dark.name != "jylhis-field" || settings.theme.light.name != "jylhis-field"
-      then
+      else if vicinae.themes.jylhis-dark.meta.variant != "dark" then
+        throw "FAIL: jylhis-dark should declare the dark variant"
+      else if settings.theme.dark.name != "jylhis-dark" || settings.theme.light.name != "jylhis-dark" then
         throw "FAIL: both theme slots should pin the dark theme when variant = dark"
-      else if light.theme.dark.name != "jylhis-sheet" || light.theme.light.name != "jylhis-sheet" then
+      else if light.theme.dark.name != "jylhis-light" || light.theme.light.name != "jylhis-light" then
         throw "FAIL: both theme slots should pin the light theme when variant = light"
       else if
-        vicinae.themes.jylhis-field.colors.core.background
-        == vicinae.themes.jylhis-sheet.colors.core.background
+        vicinae.themes.jylhis-dark.colors.core.background
+        == vicinae.themes.jylhis-light.colors.core.background
       then
         throw "FAIL: the two variants resolved to the same background — the palette is not variant-aware"
       else

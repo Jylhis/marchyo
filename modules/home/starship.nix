@@ -4,7 +4,8 @@
 # assets) so the prompt works on darwin too: auto-discovered on Linux via
 # modules/home/default.nix, imported explicitly by modules/darwin/home.nix.
 # The upstream jylhis-design starship target stays disabled in
-# jylhis-theme.nix so starship.toml is only written here.
+# jylhis-theme.nix so starship.toml is only written here. The file is
+# hand-maintained upstream (committed in the source tree, not generated).
 {
   lib,
   pkgs,
