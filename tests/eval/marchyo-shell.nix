@@ -242,4 +242,59 @@ in
       else
         throw "FAIL: marchyo.shell is off but NixOS hyprlock is missing under a plain desktop"
     );
+
+  # Launcher cutover: the shell ships its own launcher surface, so with the
+  # shell on vicinae must stand down — daemon and input-server wrapper both —
+  # the two launchers never both answer Super+R.
+  eval-marchyo-shell-disables-vicinae =
+    let
+      cfg = (evalWith { marchyo.shell.enable = true; }).config;
+      hm = cfg.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-vicinae" (
+      if hm.programs.vicinae.enable then
+        throw "FAIL: marchyo.shell.enable = true but vicinae is still enabled (both launchers would run)"
+      else if cfg.programs.vicinae.input-server.enable then
+        throw "FAIL: marchyo.shell.enable = true but the cap_dac_override input-server wrapper is still installed"
+      else
+        "pass"
+    );
+
+  # With the shell on, the three launcher binds summon the in-shell launcher
+  # over IPC instead of spawning vicinae.
+  eval-marchyo-shell-launcher-binds =
+    let
+      binds =
+        (evalWith { marchyo.shell.enable = true; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-launcher-binds" (
+      if !(hyprHasBind binds "SUPER + R" "toggleLauncher") then
+        throw "FAIL: SUPER+R should summon the in-shell launcher when the shell is on"
+      else if !(hyprHasBind binds "SUPER + period" "toggleLauncher emoji") then
+        throw "FAIL: SUPER+period should summon the in-shell emoji picker when the shell is on"
+      else if !(hyprHasBind binds "SUPER + period" "Emoji picker") then
+        throw "FAIL: SUPER+period should keep its 'Emoji picker' description (hyprland.nix test depends on it)"
+      else if !(hyprHasBind binds "SUPER + CTRL + V" "toggleLauncher clipboard") then
+        throw "FAIL: SUPER+Ctrl+V should summon the in-shell clipboard history when the shell is on"
+      else
+        "pass"
+    );
+
+  # Plain desktop (shell off): vicinae remains the launcher, and its binds
+  # still spawn vicinae.
+  eval-marchyo-shell-off-keeps-vicinae =
+    let
+      c = (evalWith { }).config;
+      hm = c.home-manager.users.testuser;
+      binds = hm.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-vicinae" (
+      if !hm.programs.vicinae.enable then
+        throw "FAIL: marchyo.shell is off but vicinae is not enabled under a plain desktop"
+      else if !(hyprHasBind binds "SUPER + R" "vicinae toggle") then
+        throw "FAIL: marchyo.shell is off but SUPER+R does not spawn vicinae"
+      else
+        "pass"
+    );
 }
