@@ -10,10 +10,14 @@
 # ~/.config/marchyo/current-theme pointer) back to the declarative default.
 #
 # Live-swapped surfaces: wallpaper (awww), mako, waybar, Hyprland
-# border/background colors, ghostty (new windows / config reload only —
-# the `?…/current-theme/ghostty.conf` include below is optional and, per
+# border/background colors, ghostty (live for the Jylhis pair — the
+# `?…/current-theme/ghostty.conf` include below is optional and, per
 # ghostty's config-file semantics, processed after the main file so its
-# `theme` wins), GTK CSS + the dconf color-scheme (newly launched GTK
+# `theme` wins; it names both Jylhis themes as a ghostty light/dark pair,
+# which ghostty resolves from the system color-scheme and restyles open
+# windows with when `marchyo theme set` flips the dconf key. Scheme themes
+# pin inline colors instead, so those still reach new windows / config
+# reload only), GTK CSS + the dconf color-scheme (newly launched GTK
 # apps; libadwaita apps restyle live), and the shell bar (reads
 # colors.json). Everything else (Qt via Stylix, bat, fzf, starship,
 # hyprlock, console, plymouth) stays on the build-time default until rebuild.
@@ -99,6 +103,14 @@ let
 
   ghosttyThemeFor = v: if v == "dark" then "jylhis-field" else "jylhis-sheet";
 
+  # Ghostty theme pair. The jylhis include names BOTH Jylhis themes as a
+  # ghostty light/dark pair (`theme = dark:…,light:…`): ghostty subscribes
+  # to the system color-scheme via the xdg-desktop-portal and restyles open
+  # windows live when the CLI flips the dconf key. Both themes are always
+  # installed (modules/home/ghostty.nix), and the main config keeps the
+  # build-time theme as the fallback when this optional include is absent.
+  ghosttyThemePair = "dark:${ghosttyThemeFor "dark"},light:${ghosttyThemeFor "light"}";
+
   themeDirFor =
     v:
     pkgs.linkFarm "marchyo-theme-${v}" (
@@ -108,7 +120,7 @@ let
           colorsJsonFor ("jylhis-" + v) v (jylhisShellColors v)
         );
         "ghostty.conf" = pkgs.writeText "marchyo-theme-${v}-ghostty.conf" ''
-          theme = ${ghosttyThemeFor v}
+          theme = ${ghosttyThemePair}
         '';
         "hyprland.conf" = pkgs.writeText "marchyo-theme-${v}-hyprland.conf" (hyprlandKeywordsFor v);
       }

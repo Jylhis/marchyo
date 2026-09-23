@@ -99,9 +99,17 @@ in
     in
     pkgs.runCommand "check-theme-runtime-assets" { } ''
       for d in ${darkDir} ${lightDir}; do
-        for f in variant colors.json gtk.css hyprland.conf; do
+        for f in variant colors.json ghostty.conf gtk.css hyprland.conf; do
           test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
         done
+      done
+      # The jylhis include must name BOTH themes as a ghostty light/dark pair
+      # (identical in both dirs): ghostty resolves it from the system
+      # color-scheme, so the dconf write in `marchyo theme set` restyles open
+      # windows instead of only new ones.
+      for d in ${darkDir} ${lightDir}; do
+        grep -q 'theme = dark:jylhis-field,light:jylhis-sheet' "$d/ghostty.conf" \
+          || { echo "FAIL: $d/ghostty.conf is not the theme pair"; exit 1; }
       done
       grep -q '"name":"jylhis-dark"' ${darkDir}/colors.json \
         || { echo "FAIL: dark colors.json name"; exit 1; }
