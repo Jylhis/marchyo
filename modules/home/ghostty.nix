@@ -15,7 +15,7 @@ let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
 
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
-  ghosttyTheme = if themeVariant == "dark" then "jylhis-field" else "jylhis-sheet";
+  ghosttyTheme = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
 
   fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
   fs = import ../../lib/font-scale.nix {
@@ -95,10 +95,14 @@ in
   # in programs.ghostty.settings.theme). Done here rather than through the
   # upstream HM module (disabled in modules/home/jylhis-theme.nix) so the
   # themes are also installed on darwin, where that module is Linux-gated.
-  xdg.configFile."ghostty/themes/jylhis-field".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-dark";
-  xdg.configFile."ghostty/themes/jylhis-sheet".source =
-    "${pkgs.jylhis-design-src}/platforms/ghostty/jylhis-survey-light";
+  # Design system 3.0.0 generates the theme files in-derivation (the source
+  # tree no longer commits them), so they come from the built jylhis-themes
+  # package — a path reference, not an eval-time read (no import-from-
+  # derivation).
+  xdg.configFile."ghostty/themes/jylhis-dark".source =
+    "${pkgs.jylhis-themes}/share/jylhis/ghostty/jylhis-dark";
+  xdg.configFile."ghostty/themes/jylhis-light".source =
+    "${pkgs.jylhis-themes}/share/jylhis/ghostty/jylhis-light";
 
   programs.ghostty = {
     enable = true;

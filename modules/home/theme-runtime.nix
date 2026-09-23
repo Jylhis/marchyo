@@ -25,7 +25,7 @@
 # The dual-variant mako config and waybar CSS are derived from the *resolved*
 # Home Manager config by translating the build variant's semantic-token hexes
 # to the other variant's (both palettes come from
-# modules/generic/jylhis-palette.nix, i.e. the same tokens.json). This avoids
+# modules/generic/jylhis-palette.nix, i.e. the same theme file). This avoids
 # duplicating the mako/waybar settings here — future edits to those modules
 # flow into both variants automatically. The mapping is well-defined: within
 # the semantic tokens (palette/status/syntax) the only shared hex is
@@ -57,7 +57,32 @@ let
   tokenNames = lib.attrNames palettes.dark.hex;
   hexesFor = v: map (n: palettes.${v}.hex.${n}) tokenNames;
   swapToOther = builtins.replaceStrings (hexesFor buildVariant) (hexesFor otherVariant);
-  textFor = v: text: if v == buildVariant then text else swapToOther text;
+
+  # The generated gtk css expresses shade_color as rgba(<text token>, 0.08)
+  # — a decimal-literal form the hex swap above cannot translate. It is the
+  # only such literal in any swapped surface (audited: mako/waybar carry
+  # none), so translate it alongside.
+  hexDigit =
+    c:
+    lib.lists.findFirstIndex (x: x == lib.toLower c) (throw "invalid hex digit '${c}'") (
+      lib.stringToCharacters "0123456789abcdef"
+    );
+  hexByte = s: 16 * hexDigit (builtins.substring 0 1 s) + hexDigit (builtins.substring 1 1 s);
+  rgbTriple =
+    h:
+    map (o: toString (hexByte (builtins.substring o 2 (lib.removePrefix "#" h)))) [
+      0
+      2
+      4
+    ];
+  textRgbaFor = v: "rgba(${lib.concatStringsSep ", " (rgbTriple palettes.${v}.hex.text)}, 0.08)";
+  swapShadeRgba =
+    if buildVariant == "dark" then
+      builtins.replaceStrings [ (textRgbaFor "dark") ] [ (textRgbaFor "light") ]
+    else
+      builtins.replaceStrings [ (textRgbaFor "light") ] [ (textRgbaFor "dark") ];
+
+  textFor = v: text: if v == buildVariant then text else swapShadeRgba (swapToOther text);
 
   # Resolved single-variant sources to translate. Both are marchyo-owned
   # (Stylix targets disabled in modules/generic/theme.nix), so every color in
@@ -74,10 +99,10 @@ let
     else
       null;
 
-  # Resolved GTK user CSS (what HM installs as gtk-3.0/gtk.css). The build
-  # variant's polarity is already baked in by modules/home/jylhis-theme.nix,
-  # including the GTK3 custom-property filter, so the same text is valid for
-  # both GTK versions and translating it to another theme is the same
+  # Resolved GTK user CSS (what HM installs as gtk-3.0/gtk.css). Design 3.0.0
+  # supplies per-polarity stylesheets (no .dark custom-prop block, no
+  # light-baked top level), so the resolved text is already valid for both
+  # GTK3 and GTK4 and translating it to another theme is the same
   # semantic-token hex swap mako/waybar use below. Consumers overriding
   # gtk.gtk3.extraCss to "" leave this surface build-time.
   gtkCss =
@@ -101,7 +126,7 @@ let
     general:col.inactive_border ${rgba palettes.${v}.hex."border-strong" "ff"}
   '';
 
-  ghosttyThemeFor = v: if v == "dark" then "jylhis-field" else "jylhis-sheet";
+  ghosttyThemeFor = v: if v == "dark" then "jylhis-dark" else "jylhis-light";
 
   # Ghostty theme pair. The jylhis include names BOTH Jylhis themes as a
   # ghostty light/dark pair (`theme = dark:…,light:…`): ghostty subscribes

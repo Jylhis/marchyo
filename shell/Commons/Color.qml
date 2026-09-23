@@ -5,7 +5,7 @@ import QtQuick
 // (the runtime theme reader) so every surface that binds Color.* follows a
 // `marchyo theme set` live. The Nix build (packages/marchyo-shell/
 // package.nix) overwrites this file with the same delegation generated from
-// tokens.json; Theme's embedded fallback carries the dev/build variant.
+// themes/jylhis.json; Theme's embedded fallback carries the dev/build variant.
 QtObject {
     readonly property color bg: Theme.palette.bg
     readonly property color bgSubtle: Theme.palette.bgSubtle

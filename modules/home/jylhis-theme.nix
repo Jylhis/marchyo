@@ -3,11 +3,19 @@
 # Upstream: https://github.com/Jylhis/design/blob/main/nix/home-manager-module.nix
 #
 # The upstream module installs theme assets via xdg.configFile (no programs.*
-# conflicts), driven by two orthogonal options `jylhis.theme.name ∈ { survey |
-# mono }` × `jylhis.theme.mode ∈ { light | dark }`. We translate from marchyo's
-# variant naming (dark | light) onto the Survey theme's mode and selectively
-# disable targets that marchyo composes on top of (currently: waybar — see
-# modules/home/waybar.nix).
+# conflicts), driven by `jylhis.theme.mode ∈ { light | dark }` (design system
+# 3.0.0 is single-theme; `jylhis.theme.name` is pinned to "jylhis" upstream
+# and kept only for config compatibility). We translate from marchyo's
+# variant naming (dark | light) and disable every target: marchyo composes
+# each surface itself, from sources that keep marchyo IFD-free —
+#  - generated-only assets (ghostty themes, per-polarity gtk css) come from
+#    the built pkgs.jylhis-themes package as path references
+#    (modules/home/ghostty.nix, the gtk block below);
+#  - the upstream gtk/mako/waybar targets readFile the built package at eval
+#    time, which is import-from-derivation — banned in this flake
+#    (nixbuild.net);
+#  - text surfaces marchyo runtime-hex-swaps (mako config, waybar css) read
+#    the committed platforms/_reference files from the source tree instead.
 {
   inputs,
   lib,
@@ -23,26 +31,11 @@ let
     };
   mode = if cfg.variant == "dark" then "dark" else "light";
 
-  # The upstream gtk.css is generated with the LIGHT palette baked into its
-  # top-level `@define-color`s and a `.dark { --custom-prop }` block that only
-  # works on GTK4/libadwaita (GTK3 can't parse custom properties at all) and
-  # never overrides the top-level @define-colors. User CSS loads after the
-  # theme, so those light @define-colors beat Adwaita-dark — every GTK app
-  # (Nautilus, ghostty's tab bar, …) rendered light under the dark theme.
-  #
-  # Fix: translate the light-palette hexes to the active variant's with
-  # builtins.replaceStrings over the same semantic-token palettes
-  # modules/generic/jylhis-palette.nix exports (identical machinery to
-  # modules/home/theme-runtime.nix). The `.dark` block's dark hexes don't
-  # collide with any light token hex (audited), so they're left as-is. Build
-  # variant only — runtime switching of gtk.css is future work.
-  mkGtkPalette = variant: import ../generic/jylhis-palette.nix { inherit pkgs lib variant; };
-  paletteHexes = v: builtins.attrValues (mkGtkPalette v).hex;
-  swapToVariant =
-    if cfg.variant == "dark" then
-      builtins.replaceStrings (paletteHexes "light") (paletteHexes "dark")
-    else
-      lib.id;
+  # Per-polarity GTK stylesheet, text from the committed upstream snapshot
+  # (design 3.0.0; the file carries the active polarity's @define-colors at
+  # top level, so no .dark custom-prop filtering or hex swap is needed for
+  # either GTK version).
+  gtkCss = builtins.readFile "${inputs.jylhis-design}/platforms/gtk/jylhis-${mode}.css";
 in
 {
   imports = [ inputs.jylhis-design.homeManagerModules.default ];
@@ -52,7 +45,7 @@ in
       {
         jylhis.theme = {
           inherit (cfg) enable;
-          name = "survey";
+          name = "jylhis";
           inherit mode;
           waybar.enable = false;
           bat.enable = false;
@@ -77,31 +70,21 @@ in
         # theme.enable that gates stylix). mkDefault lets a consumer override.
         home.pointerCursor.enable = lib.mkDefault true;
 
-        # mako is themed by modules/home/mako.nix (TUI override); starship is
-        # configured cross-platform in modules/home/starship.nix.
-        # GTK app font size is NOT set here: marchyo disables only Stylix's
-        # `gtk` target (which would write gtk settings.ini / CSS), but Stylix's
-        # `gnome` target stays enabled and writes the scaled interface font to
-        # dconf `org/gnome/desktop/interface font-name` (e.g. "Hanken Grotesk 15"
-        # at fontScale 1.25), which GTK apps read via the gsettings backend even
-        # under Hyprland. Setting gtk.font here would collide with that dconf key.
-        gtk =
-          let
-            designCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/gtk.css";
-            variantCss = swapToVariant designCss;
-
-            # GTK3's CSS parser has no support for the GTK4/libadwaita custom
-            # properties (`--accent-color: ...`) in the file's `.dark` block: it
-            # emits "Expected semicolon" for each one, in waybar and in every other
-            # GTK3 app. The GTK3 palette comes from @define-color and the file never
-            # uses var(), so dropping these lines is lossless for GTK3.
-            isCustomProp = line: builtins.match "[[:space:]]*--.*" line != null;
-            gtk3Css = lib.concatLines (builtins.filter (l: !isCustomProp l) (lib.splitString "\n" variantCss));
-          in
-          {
-            gtk3.extraCss = gtk3Css;
-            gtk4.extraCss = variantCss;
-          };
+        # GTK user CSS: the per-polarity stylesheet design 3.0.0 generates
+        # and commits (platforms/gtk/jylhis-<mode>.css — one file carrying
+        # the active polarity's @define-colors, valid for GTK3 and GTK4
+        # alike; replaces the pre-3.0 hex-swap stopgap over the light-baked
+        # gtk.css). Read as text from the committed source-tree snapshot so
+        # evaluation stays import-from-derivation-free, and so the runtime
+        # layer (modules/home/theme-runtime.nix) can hex-swap a copy per
+        # theme dir. GTK app font size is NOT set here: Stylix's `gnome`
+        # target writes the scaled interface font to dconf
+        # `org/gnome/desktop/interface font-name`, which GTK apps read via
+        # the gsettings backend even under Hyprland.
+        gtk = {
+          gtk3.extraCss = gtkCss;
+          gtk4.extraCss = gtkCss;
+        };
       })
     ]
   );

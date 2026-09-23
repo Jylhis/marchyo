@@ -28,9 +28,9 @@ in
         side-by-side = lib.mkDefault false;
         syntax-theme =
           if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
-            "jylhis-field"
+            "jylhis-dark"
           else
-            "jylhis-sheet";
+            "jylhis-light";
       };
     };
     git = {

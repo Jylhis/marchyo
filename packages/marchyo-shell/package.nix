@@ -19,7 +19,7 @@
   coreutils,
   vicinae,
   marchyo-cli,
-  # "dark" = Jylhis Field, "light" = Jylhis Sheet — matches marchyo.theme.variant.
+  # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
   # marchyo.theme.fontScale — every bar dimension derives from it via
   # lib/font-scale.nix, so the shell scales with the rest of the desktop.
@@ -34,7 +34,7 @@
 let
   # Reuse the design-system palette helper (single source of truth for token ->
   # hex resolution and the palette/status/syntax merge) rather than re-reading
-  # tokens.json here. It only touches pkgs.jylhis-design-src, so a one-attr stub
+  # theme file here. It only touches pkgs.jylhis-design-src, so a one-attr stub
   # is enough in this callPackage context. Same idiom as modules/home/vicinae.nix.
   palette = import ../../modules/generic/jylhis-palette.nix {
     pkgs = { inherit jylhis-design-src; };
@@ -45,7 +45,7 @@ let
     scale = fontScale;
   };
 
-  # Commons/Theme.qml dev default embeds the dark (Field) fallback palette.
+  # Commons/Theme.qml dev default embeds the dark (Jylhis Dark) fallback palette.
   # For a light-variant host, translate those literals to the host variant
   # with the same semantic-token hex swap modules/home/theme-runtime.nix uses
   # (accent == cursor agree in both variants, so the mapping is well-defined;
@@ -94,7 +94,7 @@ let
     pragma Singleton
     import QtQuick
 
-    // Generated from the Jylhis design system (tokens.json). Every token
+    // Generated from the Jylhis design system theme. Every token
     // delegates to Theme.palette (Commons/Theme.qml) so the whole bar
     // live-recolors on `marchyo theme set`.
     QtObject {
