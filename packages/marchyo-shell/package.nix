@@ -4,6 +4,7 @@
   quickshell,
   makeWrapper,
   writeText,
+  gawk,
   jylhis-design-src,
   # External tools the interactive widgets shell out to. Baked into a generated
   # Commons/Config.qml as absolute /nix/store paths so the store shell never
@@ -19,6 +20,7 @@
   coreutils,
   wtype,
   cliphist,
+  unicode-emoji,
   marchyo-cli,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
@@ -193,7 +195,10 @@ stdenvNoCC.mkDerivation {
 
   src = ../../shell;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    makeWrapper
+    gawk
+  ];
 
   installPhase = ''
     runHook preInstall
@@ -204,6 +209,35 @@ stdenvNoCC.mkDerivation {
     install -Dm0644 ${styleQml} "$out/share/marchyo/shell/Commons/Style.qml"
     install -Dm0644 ${themeQml} "$out/share/marchyo/shell/Commons/Theme.qml"
     install -Dm0644 ${configQml} "$out/share/marchyo/shell/Commons/Config.qml"
+
+    # Regenerate Commons/EmojiData.js's RAW rows from unicode-emoji's
+    # emoji-test.txt (the checked-in rows are a dev subset). The parser
+    # lives in the checked-in file; only the rows between the generated
+    # markers are replaced, so there is exactly one implementation of
+    # parse(). Marker text is grepped verbatim — see the header comment in
+    # EmojiData.js: nothing else in the file may spell the markers.
+    emojiJs="$out/share/marchyo/shell/Commons/EmojiData.js"
+    gawk -f ${./emoji.awk} \
+      "${unicode-emoji}/share/unicode/emoji/emoji-test.txt" > "$out/emoji-rows.txt"
+    count=$(wc -l < "$out/emoji-rows.txt")
+    if [ "$count" -lt 1000 ]; then
+      echo "FAIL: emoji generation produced only $count rows (expected 1000+)" >&2
+      exit 1
+    fi
+    # Delete the dev rows strictly between the markers, keep the markers,
+    # then append the generated rows right after the opening marker.
+    sed -i '/BEGIN-GENERATED/,/END-GENERATED/{/BEGIN-GENERATED/!{/END-GENERATED/!d;};}' "$emojiJs"
+    sed -i "/BEGIN-GENERATED/r $out/emoji-rows.txt" "$emojiJs"
+    rm "$out/emoji-rows.txt"
+    # The spliced file must still carry its data and its closing bracket.
+    if ! grep -q '"Smileys & Emotion|face-smiling|' "$emojiJs"; then
+      echo "FAIL: EmojiData.js lost its data rows" >&2
+      exit 1
+    fi
+    if ! grep -q '^];' "$emojiJs"; then
+      echo "FAIL: EmojiData.js lost its closing bracket" >&2
+      exit 1
+    fi
 
     # The wrapper owns the shell's runtime environment so neither of the two
     # recurring Qt warnings depends on session env (same philosophy as the

@@ -2,15 +2,17 @@
 //
 // RAW holds "<group>|<subgroup>|<chars>|<name>" rows. The list below is a
 // small dev subset so `quickshell -p shell` runs standalone; the Nix build
-// (packages/marchyo-shell/package.nix) REGENERATES everything between the
-// BEGIN/END-GENERATED markers from pkgs.unicode-emoji's emoji-test.txt
+// (packages/marchyo-shell/package.nix) REGENERATES the rows between the two
+// generated markers in the array from pkgs.unicode-emoji's emoji-test.txt
 // (fully-qualified entries, Component group dropped). Dual citizenship like
 // Format.js: pure data + pure parse, no Qt types, Node-testable; no
 // `.pragma` line (Node cannot parse one).
 //
 // Emoji names never contain "|" (Unicode data names use spaces and dashes),
-// so a plain split is the whole parser. The markers sit OUTSIDE the array
-// brackets on their own comment lines: the Nix build splices between them.
+// so a plain split is the whole parser. The markers sit INSIDE the array
+// brackets on their own comment lines: the Nix build splices between them,
+// so nothing outside this file's own markers may spell them (the splice
+// greps for the marker text).
 var RAW = [
     // BEGIN-GENERATED (dev subset — the Nix build replaces the rows below)
     "Smileys & Emotion|face-smiling|🙂|slightly smiling face",
