@@ -15,6 +15,7 @@ set -uo pipefail
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 SHELL_DIR="$ROOT/shell"
+GREETER_DIR="$ROOT/greeter"
 
 pass=0
 fail=0
@@ -42,7 +43,7 @@ check() { # check NAME DETAIL_IF_NONEMPTY
 
 missing_from_qmldir=""
 missing_files=""
-for dir in "$SHELL_DIR"/*/; do
+for dir in "$SHELL_DIR"/*/ "$GREETER_DIR"/*/; do
   qmldir="$dir/qmldir"
   [[ -f $qmldir ]] || continue
   for qml in "$dir"*.qml; do
