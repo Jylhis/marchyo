@@ -8,8 +8,11 @@ greetd client (`Quickshell.Services.Greetd`) and launches
 
 Single-file design: `shell.qml` holds the whole state machine (createSession →
 authMessage → respond → readyToLaunch → launch) on the root object, so the
-per-monitor layer-shell surfaces are pure views — the same rule the bar
-follows (`../shell/README.md`). `Commons/` holds dev-default singletons
+surface is a pure view — the same rule the bar follows (`../shell/README.md`).
+The surface is a `FloatingWindow` (a plain xdg-toplevel) that cage fullscreens,
+not a layer-shell `PanelWindow`: cage has no wlr-layer-shell support, so a layer
+surface never maps and the screen stays black (the regreet-under-cage shape).
+`Commons/` holds dev-default singletons
 (palette copies from `../shell/Commons/` plus a greeter `Config.qml`); the Nix
 build (`../packages/marchyo-shell/package.nix`) regenerates them with the
 host's theme variant and store-baked tool paths, and wraps the entry point as

@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import Quickshell.Services.Greetd
 import qs.Commons
 
@@ -10,8 +9,14 @@ import qs.Commons
 // Quickshell.Services.Greetd client: createSession -> authMessage -> respond
 // -> readyToLaunch -> launch("uwsm start hyprland-uwsm.desktop") — the same
 // session command tuigreet launched. All state lives on this root object so
-// the per-monitor surfaces below are pure views, the same rule the bar
-// follows (shell/README.md): one clock, one state machine, N dumb surfaces.
+// the surface below is a pure view, the same rule the bar follows
+// (shell/README.md): one clock, one state machine, one dumb surface.
+//
+// The surface is a FloatingWindow (a plain xdg-toplevel), NOT a PanelWindow:
+// cage is a single-window kiosk with no wlr-layer-shell support, so a
+// PanelWindow layer surface never maps and the screen stays black. cage
+// fullscreens its one toplevel across the outputs (`-m extend`), which is the
+// same shape regreet runs in under cage.
 ShellRoot {
     id: root
 
@@ -136,109 +141,139 @@ ShellRoot {
         }
     }
 
-    // ── surfaces: one full-screen layer-shell surface per output ─────────────
+    // ── surface: the full-screen greeter window ──────────────────────────────
     //
-    // Every surface renders the identical card bound to the shared state
-    // above, and every surface requests Exclusive keyboard focus: with more
-    // than one output the compositor gives the user one keyboard to whichever
-    // surface is last mapped or clicked — whichever it is, it edits the same
-    // state, so the login works from any screen.
-    Variants {
-        model: Quickshell.screens
+    // A single FloatingWindow that cage fullscreens across every output. It
+    // renders the card bound to the shared state above; cage grants it
+    // keyboard focus as the sole toplevel, so no explicit focus grab is needed
+    // beyond steering the caret between the user and secret fields.
+    FloatingWindow {
+        id: surface
 
-        PanelWindow {
-            id: surface
+        color: Color.bg
 
-            required property var modelData
-            screen: modelData
+        Component.onCompleted: userField.forceActiveFocus()
 
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
+        // Focus follows the protocol: a fresh prompt focuses the secret
+        // field; losing the session hands focus back to the user field
+        // (forceActiveFocus on an invisible item is a no-op).
+        Connections {
+            target: root
+            function onAwaitingResponseChanged() {
+                if (root.awaitingResponse)
+                    secretField.forceActiveFocus();
+                else
+                    userField.forceActiveFocus();
             }
-            color: Color.bg
-            exclusiveZone: -1
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        }
 
-            Component.onCompleted: userField.forceActiveFocus()
+        Column {
+            anchors.centerIn: parent
+            spacing: Style.spacing * 4
 
-            // Focus follows the protocol: a fresh prompt focuses the secret
-            // field; losing the session hands focus back to the user field
-            // (forceActiveFocus on an invisible item is a no-op).
-            Connections {
-                target: root
-                function onAwaitingResponseChanged() {
-                    if (root.awaitingResponse)
-                        secretField.forceActiveFocus();
-                    else
-                        userField.forceActiveFocus();
-                }
+            // Qt.formatDateTime is a valid QML global; qmllint's Qt type
+            // model omits it (same guard as Services/Clock.qml).
+            // qmllint disable missing-property
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatDateTime(root.clock.date, "HH:mm")
+                color: Color.textHeading
+                font.family: Style.fontFamily
+                font.pixelSize: root.clockSize
             }
 
-            Column {
-                anchors.centerIn: parent
-                spacing: Style.spacing * 4
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatDateTime(root.clock.date, "ddd d MMMM yyyy")
+                color: Color.textFaint
+                font.family: Style.fontFamily
+                font.pixelSize: Style.fontSize
+            }
+            // qmllint enable missing-property
 
-                // Qt.formatDateTime is a valid QML global; qmllint's Qt type
-                // model omits it (same guard as Services/Clock.qml).
-                // qmllint disable missing-property
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(root.clock.date, "HH:mm")
-                    color: Color.textHeading
-                    font.family: Style.fontFamily
-                    font.pixelSize: root.clockSize
-                }
+            Rectangle {
+                id: card
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: root.fieldWidth + root.cardPad * 2
+                height: cardColumn.implicitHeight + root.cardPad * 2
+                radius: Style.panelRadius
+                color: Color.surface
+                border.color: Color.border
+                border.width: 1
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(root.clock.date, "ddd d MMMM yyyy")
-                    color: Color.textFaint
-                    font.family: Style.fontFamily
-                    font.pixelSize: Style.fontSize
-                }
-                // qmllint enable missing-property
+                Column {
+                    id: cardColumn
+                    x: root.cardPad
+                    y: root.cardPad
+                    width: root.fieldWidth
+                    spacing: Style.spacing * 2
 
-                Rectangle {
-                    id: card
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: root.fieldWidth + root.cardPad * 2
-                    height: cardColumn.implicitHeight + root.cardPad * 2
-                    radius: Style.panelRadius
-                    color: Color.surface
-                    border.color: Color.border
-                    border.width: 1
+                    Text {
+                        text: "marchyo"
+                        color: Color.accent
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                    }
 
-                    Column {
-                        id: cardColumn
-                        x: root.cardPad
-                        y: root.cardPad
+                    // Username entry (idle state).
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
                         width: root.fieldWidth
-                        spacing: Style.spacing * 2
+                        height: root.fieldHeight
+                        radius: Style.panelRadius
+                        color: Color.bgSubtle
+                        border.color: userField.activeFocus ? Color.accent : Color.borderStrong
+                        border.width: 1
+                        visible: !root.sessionActive
+
+                        TextInput {
+                            id: userField
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            color: Color.text
+                            selectionColor: Color.selectionBg
+                            font.family: Style.fontFamily
+                            font.pixelSize: root.fieldFont
+                            text: root.username
+                            onTextChanged: root.username = text
+                            onAccepted: root.beginLogin()
+                            Keys.onEscapePressed: {
+                                clear();
+                                root.cancel();
+                            }
+                        }
+                    }
+
+                    // Prompt + secret entry (authenticating state). The
+                    // field keeps its own text (no cross-surface binding to
+                    // fight); onAccepted hands it straight to the protocol.
+                    Column {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.fieldWidth
+                        spacing: Style.spacing
+                        visible: root.awaitingResponse
 
                         Text {
-                            text: "marchyo"
-                            color: Color.accent
+                            width: parent.width
+                            text: root.prompt
+                            color: Color.textMuted
+                            elide: Text.ElideRight
                             font.family: Style.fontFamily
                             font.pixelSize: Style.fontSizeSmall
                         }
 
-                        // Username entry (idle state).
                         Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
                             width: root.fieldWidth
                             height: root.fieldHeight
                             radius: Style.panelRadius
                             color: Color.bgSubtle
-                            border.color: userField.activeFocus ? Color.accent : Color.borderStrong
+                            border.color: secretField.activeFocus ? Color.accent : Color.borderStrong
                             border.width: 1
-                            visible: !root.sessionActive
 
                             TextInput {
-                                id: userField
+                                id: secretField
                                 anchors.fill: parent
                                 anchors.margins: 8
                                 verticalAlignment: TextInput.AlignVCenter
@@ -247,108 +282,61 @@ ShellRoot {
                                 selectionColor: Color.selectionBg
                                 font.family: Style.fontFamily
                                 font.pixelSize: root.fieldFont
-                                text: root.username
-                                onTextChanged: root.username = text
-                                onAccepted: root.beginLogin()
-                                Keys.onEscapePressed: {
+                                echoMode: root.echoResponse ? TextInput.Normal : TextInput.Password
+                                onAccepted: {
+                                    root.submit(text);
                                     clear();
-                                    root.cancel();
                                 }
+                                Keys.onEscapePressed: root.cancel()
                             }
                         }
+                    }
 
-                        // Prompt + secret entry (authenticating state). The
-                        // field keeps its own text (no cross-surface binding to
-                        // fight); onAccepted hands it straight to the protocol.
-                        Column {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: root.fieldWidth
-                            spacing: Style.spacing
-                            visible: root.awaitingResponse
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: root.sessionActive && !root.awaitingResponse
+                        text: "authenticating…"
+                        color: Color.textFaint
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                    }
 
-                            Text {
-                                width: parent.width
-                                text: root.prompt
-                                color: Color.textMuted
-                                elide: Text.ElideRight
-                                font.family: Style.fontFamily
-                                font.pixelSize: Style.fontSizeSmall
-                            }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.fieldWidth
+                        visible: root.error !== ""
+                        text: root.error
+                        color: Color.statusErr
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                    }
 
-                            Rectangle {
-                                width: root.fieldWidth
-                                height: root.fieldHeight
-                                radius: Style.panelRadius
-                                color: Color.bgSubtle
-                                border.color: secretField.activeFocus ? Color.accent : Color.borderStrong
-                                border.width: 1
-
-                                TextInput {
-                                    id: secretField
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    clip: true
-                                    color: Color.text
-                                    selectionColor: Color.selectionBg
-                                    font.family: Style.fontFamily
-                                    font.pixelSize: root.fieldFont
-                                    echoMode: root.echoResponse ? TextInput.Normal : TextInput.Password
-                                    onAccepted: {
-                                        root.submit(text);
-                                        clear();
-                                    }
-                                    Keys.onEscapePressed: root.cancel()
-                                }
-                            }
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: root.sessionActive && !root.awaitingResponse
-                            text: "authenticating…"
-                            color: Color.textFaint
-                            font.family: Style.fontFamily
-                            font.pixelSize: Style.fontSizeSmall
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: root.fieldWidth
-                            visible: root.error !== ""
-                            text: root.error
-                            color: Color.statusErr
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
-                            font.family: Style.fontFamily
-                            font.pixelSize: Style.fontSizeSmall
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: root.sessionActive ? "esc cancel" : "enter log in"
-                            color: Color.textFaint
-                            font.family: Style.fontFamily
-                            font.pixelSize: Style.fontSizeSmall
-                        }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: root.sessionActive ? "esc cancel" : "enter log in"
+                        color: Color.textFaint
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
                     }
                 }
             }
+        }
 
-            Row {
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: Style.panelGap * 2
-                spacing: Style.spacing * 2
+        Row {
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: Style.panelGap * 2
+            spacing: Style.spacing * 2
 
-                PowerButton {
-                    label: "reboot"
-                    onClicked: Quickshell.execDetached([Config.systemctl, "reboot"])
-                }
-                PowerButton {
-                    label: "power off"
-                    onClicked: Quickshell.execDetached([Config.systemctl, "poweroff"])
-                }
+            PowerButton {
+                label: "reboot"
+                onClicked: Quickshell.execDetached([Config.systemctl, "reboot"])
+            }
+            PowerButton {
+                label: "power off"
+                onClicked: Quickshell.execDetached([Config.systemctl, "poweroff"])
             }
         }
     }
