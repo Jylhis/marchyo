@@ -92,16 +92,54 @@ One `quickshell -p <store-path>` process per session, launched as a
 
 ## Remaining work
 
-### Phase 4a — Lock surface (the one unimplemented phase)
+### Phase 4a — Lock surface (code-complete; live verification pending)
 
-- **Goal:** replace hyprlock with an in-shell `WlSessionLock` surface behind
-  the same mutual-exclusion cutover pattern used for waybar/swayosd/mako
-  (`marchyo.shell.enable` stands `screensaver.nix`/hyprlock wiring down).
+- **Status:** implemented on 2026-09-23 — `shell/Services/Lock.qml` (PAM state
+  machine) + `shell/Lock/LockScreen.qml` (the `WlSessionLock`), `shell lock` /
+  `shell lockState` IPC, SUPER+L and all three hypridle lock points cut over,
+  hyprlock stood down on both the HM and NixOS sides (eval-tested in
+  `tests/eval/marchyo-shell.nix`), and the idle screensaver guards on
+  `lockState`. **Not yet live-verified on a real session — run the runbook
+  below before calling it shipped.**
+- **Goal (met):** replace hyprlock with an in-shell `WlSessionLock` surface
+  behind the same mutual-exclusion cutover pattern used for
+  waybar/swayosd/mako (`marchyo.shell.enable` stands the hyprlock wiring
+  down).
 - **Constraint:** a lock surface that fails to render or accept input locks
   the user out of the session, and the PAM/auth loop needs a real
-  Hyprland/greetd host. Implementation and verification must happen in a
-  session with host access — never ship unverified.
+  Hyprland/greetd host. Implementation is eval/harness/qmllint-verified; the
+  live checks are the operator runbook.
+- **Decisions:** hypridle remains the single idle authority — Quickshell's
+  `IdleMonitor` is deliberately unused, so there is no second idle watcher
+  (no double-lock at 300s) and `marchyo toggle idle` (which stops
+  hypridle.service) keeps disabling idle lock. PAM config is the stock
+  `login` stack (pam_unix + optional fprintd via the message protocol). No
+  new `marchyo.*` option; `marchyo.shell.enable` gates everything.
 - **Launcher: not in scope.** Vicinae stays the launcher (decision below).
+
+#### Live-verification runbook (operator)
+
+On the daily-driver Hyprland host, with `marchyo.shell.enable = true`, and a
+fallback TTY logged in first (Ctrl+Alt+F3):
+
+1. `nixos-rebuild switch --flake .#<host>` then
+   `systemctl --user restart marchyo-shell`.
+2. `marchyo-shell ipc -n call -- shell ping` → `ok`; `... shell lockState` →
+   `unlocked`.
+3. SUPER+L → clock + password card on **every** screen, caret on the focused
+   one.
+4. Correct password → unlocks. Wrong password → `Authentication failed`,
+   field clears, retry works.
+5. Idle: temporarily lower the hypridle 300s listener timeout (or wait
+   5 min) → locks.
+6. `systemctl suspend-then-hibernate` (hibernation hosts) → locks before
+   sleep; password required on resume.
+7. Lock manually, then stay idle past 120s — no screensaver animation burns
+   under the lock.
+8. If bricked: TTY → `loginctl terminate-session <id>` (loses the session)
+   or reboot.
+9. Never save QML edits while a dev-loop instance is locked (hot-reload
+   destroys the lock).
 
 ### Live theme apply into the running shell
 

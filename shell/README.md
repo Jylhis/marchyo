@@ -5,7 +5,7 @@ long-running QML process that will eventually replace today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
 notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) done
+## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 4 (lock) done
 
 A Jylhis-themed top bar at (near) waybar parity, built as a **simple monolith**:
 `shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitives
@@ -36,10 +36,11 @@ shell grew two **headless test suites** that `nix flake check` runs (see
 [Tests](#tests)).
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar**, **SwayOSD**, and **mako** (each mutually exclusive with its discrete
-counterpart — see `modules/home/waybar.nix`, `modules/home/swayosd.nix`, and
-`modules/home/mako.nix`), so the shell owns the bar, the OSD, and notifications
-outright. Vicinae (launcher) and the lock/screensaver stay for Phase 4.
+waybar**, **SwayOSD**, **mako**, and (Phase 4) **hyprlock** (each mutually
+exclusive with its discrete counterpart — see `modules/home/waybar.nix`,
+`modules/home/swayosd.nix`, `modules/home/mako.nix`, `modules/home/hyprlock.nix`),
+so the shell owns the bar, the OSD, notifications, and the lock outright.
+Vicinae (launcher) stays.
 
 Layout:
 
@@ -72,6 +73,9 @@ shell/
   Osd/
     qmldir             declares module qs.Osd
     Osd.qml            volume/brightness/mic-mute overlay (replaces SwayOSD)
+  Lock/
+    qmldir             declares module qs.Lock
+    LockScreen.qml     WlSessionLock surface (replaces hyprlock)
   Services/
     qmldir             declares module qs.Services
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
@@ -84,6 +88,7 @@ shell/
     Caffeine.qml       singleton: the one keep-awake probe + toggle
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
+    Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
@@ -257,6 +262,34 @@ positioner transitions — mako's toast feel).
 > action round-trips, `Quickshell.iconPath` icon resolution, and the
 > `bodyMarkupSupported` HTML subset can only be confirmed on a Wayland host with
 > mako actually stood down.
+
+### Lock
+
+`Lock/LockScreen.qml` is a compositor-level `WlSessionLock`
+(ext-session-lock-v1) with in-process PAM authentication — Phase 4, replacing
+hyprlock under the same mutual-exclusion cutover as waybar/mako/SwayOSD.
+`Services/Lock` owns the state machine: one `PamContext` (config `login`)
+drives the prompt/retry loop, and `locked = false` happens in exactly one
+place — a successful authentication. Trigger paths:
+
+- `SUPER+L` and hypridle's lock points (`lock_cmd`, `before_sleep_cmd`, the
+  300s listener in `modules/home/hypridle.nix`) call
+  `marchyo-shell ipc -n call -- shell lock`. hypridle stays the single idle
+  authority so `marchyo toggle idle` keeps disabling idle lock; Quickshell's
+  `IdleMonitor` is deliberately unused (no second idle watcher, no
+  double-lock race).
+- The idle screensaver asks `shell lockState` before launching — the same
+  guard it had for a running hyprlock.
+
+Each screen gets one `WlSessionLockSurface` (clock + password card, Jylhis
+tokens); the focused output's field takes keyboard focus, any field can be
+clicked to claim it. Focus and `pam.start()` are gated on `secure`
+(compositor-confirmed coverage), per the upstream docs.
+
+> **Testing warning:** destroying the shell (crash, or a hot-reload from the
+> dev loop) while locked leaves a conformant compositor showing a solid
+> color — by design. Never edit QML while a dev instance is locked, and keep
+> a TTY logged in when live-testing (runbook in `plans/shell.md`).
 
 ### Waybar parity
 
