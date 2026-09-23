@@ -602,6 +602,13 @@ in
             || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
           grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
             || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
+          greeter="${pkgs.marchyo-shell}/bin/marchyo-greeter"
+          grep -q "share/marchyo/greeter" "$greeter" \
+            || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
+          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
+            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
+          grep -q "nix/store" "${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml" \
+            || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
           touch "$out"
         '';
 
@@ -660,6 +667,7 @@ in
             ''
               mkdir -p src/tests src/packages
               cp -r ${./shell} src/shell
+              cp -r ${./greeter} src/greeter
               cp -r ${./modules} src/modules
               cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
               cp -r ${./tests/shell} src/tests/shell

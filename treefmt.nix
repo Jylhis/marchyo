@@ -1,25 +1,44 @@
 { pkgs, ... }:
 let
   inherit (pkgs) lib;
-  # qmllint over the shell tree, wired as a treefmt check. It resolves the
-  # shell's `import qs.*` (per-directory qmldirs) via a temporary `qs -> shell`
-  # alias root, plus Quickshell's and QtQuick's own qml modules, the CI/treefmt
-  # analogue of the QML_IMPORT_PATH devenv.nix sets for the editor. Category
-  # tuning and the MaxWarnings=0 threshold live in shell/.qmllint.ini (qmllint
-  # auto-discovers it by walking up from each file). treefmt runs formatters from
-  # the project root, so $PWD/shell is the tree.
+  # qmllint over the shell and greeter trees, wired as a treefmt check. Both
+  # resolve their `import qs.*` (per-directory qmldirs) through a temporary
+  # `qs -> <tree>` alias root — the trees each own their qs.* namespace, so
+  # they get one alias root per tree — plus Quickshell's and QtQuick's own
+  # qml modules, the CI/treefmt analogue of the QML_IMPORT_PATH devenv.nix
+  # sets for the editor. Category tuning and the MaxWarnings=0 threshold live
+  # in each tree's .qmllint.ini (qmllint auto-discovers it by walking up from
+  # each file). treefmt runs formatters from the project root, so $PWD/shell
+  # and $PWD/greeter are the trees.
   qmllint = pkgs.writeShellApplication {
     name = "marchyo-qmllint";
     runtimeInputs = [ pkgs.qt6.qtdeclarative ];
     text = ''
-      root="$(mktemp -d)"
-      trap 'rm -rf "$root"' EXIT
-      ln -s "$PWD/shell" "$root/qs"
-      qmllint \
-        -I "$root" \
-        -I ${pkgs.quickshell}/lib/qt-6/qml \
-        -I ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
-        "$@"
+      set -euo pipefail
+      shell_files=()
+      greeter_files=()
+      for f in "$@"; do
+        case "$f" in
+          greeter/*) greeter_files+=("$f") ;;
+          shell/*) shell_files+=("$f") ;;
+          *) echo "marchyo-qmllint: unrooted QML file: $f" >&2; exit 1 ;;
+        esac
+      done
+      lint_tree() { # tree_dir files...
+        local dir="$1"; shift
+        (($# > 0)) || return 0
+        local root
+        root="$(mktemp -d)"
+        ln -s "$PWD/$dir" "$root/qs"
+        qmllint \
+          -I "$root" \
+          -I ${pkgs.quickshell}/lib/qt-6/qml \
+          -I ${pkgs.qt6.qtdeclarative}/lib/qt-6/qml \
+          "$@"
+        rm -rf "$root"
+      }
+      lint_tree shell "''${shell_files[@]}"
+      lint_tree greeter "''${greeter_files[@]}"
     '';
   };
 in
