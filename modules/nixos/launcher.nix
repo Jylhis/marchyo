@@ -16,13 +16,15 @@
 #
 # Deliberately NOT wrapped in mkIf: upstream's option default is `true`, so a
 # conditional assignment would leave headless hosts falling back to it. The
-# desktop/launcher gates are folded into the value instead.
+# desktop/launcher gates are folded into the value instead. The shell gate
+# (cfg.shell.enable) stands the capability down with the launcher cutover:
+# the in-shell launcher pastes via wtype and needs no uinput helper.
 { config, lib, ... }:
 let
   cfg = config.marchyo;
 in
 {
   config.programs.vicinae.input-server.enable = lib.mkDefault (
-    cfg.desktop.enable && cfg.launcher.enable && cfg.launcher.inputServer.enable
+    cfg.desktop.enable && cfg.launcher.enable && cfg.launcher.inputServer.enable && !cfg.shell.enable
   );
 }
