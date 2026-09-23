@@ -1,11 +1,12 @@
 # shell/ — the marchyo Quickshell shell
 
 A custom [Quickshell](https://quickshell.org) desktop shell: a single
-long-running QML process that will eventually replace today's discrete
+long-running QML process replacing today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
-notifications, lock). Design and roadmap: **[../plans/shell.md](../plans/shell.md)**.
+notifications, launcher; lock pending its live-verification pass). Design and
+roadmap: **[../plans/shell.md](../plans/shell.md)**.
 
-## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 4 (lock) done
+## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 5 (launcher) done
 
 A Jylhis-themed top bar at (near) waybar parity, built as a **simple monolith**:
 `shell.qml` composes reusable widgets from `Bar/` (backed by the `Ui/` primitives
@@ -36,11 +37,12 @@ shell grew two **headless test suites** that `nix flake check` runs (see
 [Tests](#tests)).
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar**, **SwayOSD**, **mako**, and (Phase 4) **hyprlock** (each mutually
-exclusive with its discrete counterpart — see `modules/home/waybar.nix`,
-`modules/home/swayosd.nix`, `modules/home/mako.nix`, `modules/home/hyprlock.nix`),
-so the shell owns the bar, the OSD, notifications, and the lock outright.
-Vicinae (launcher) stays.
+waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4), and **vicinae**
+(Phase 5) — each mutually exclusive with its discrete counterpart (see
+`modules/home/waybar.nix`, `modules/home/swayosd.nix`,
+`modules/home/mako.nix`, `modules/home/hyprlock.nix`, and
+`modules/home/vicinae.nix`) — so the shell owns the bar, the OSD,
+notifications, the lock, and the launcher outright.
 
 Layout:
 
@@ -61,6 +63,10 @@ shell/
                        with absolute /nix/store paths (dev default = PATH names)
     Format.js          pure parsing helpers (keymap short codes, nmcli records);
                        plain JS with a CommonJS guard so Node can unit-test it
+    Match.js           pure fuzzy scoring (launcher: apps / emoji / clipboard)
+    EmojiData.js       emoji catalog rows + parse; the Nix build regenerates the
+                       rows from pkgs.unicode-emoji (dev subset checked in)
+    Cliphist.js        pure cliphist helpers (quoted-printable payload decode)
   Ui/
     qmldir             declares module qs.Ui
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
@@ -76,6 +82,12 @@ shell/
   Lock/
     qmldir             declares module qs.Lock
     LockScreen.qml     WlSessionLock surface (replaces hyprlock)
+  Launcher/
+    qmldir             declares module qs.Launcher
+    LauncherWindow.qml the launcher overlay (exclusive keyboard focus layer)
+    AppsView.qml       app search over DesktopEntries (replaces vicinae apps)
+    EmojiView.qml      emoji grid over Commons/EmojiData.js
+    ClipboardView.qml  cliphist history list + paste
   Services/
     qmldir             declares module qs.Services
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
@@ -89,6 +101,7 @@ shell/
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
+    Launcher.qml       singleton: launcher open-mode state + the paste helper
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
@@ -221,7 +234,9 @@ marchyo-shell ipc -n call -- shell togglePanel monitor
 The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
 self-targets the running instance (no instance id to track). Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
-`SUPER+SHIFT+M` monitor. The DND toggle (`SUPER+CTRL+comma`) and dismiss-all
+`SUPER+SHIFT+M` monitor; the launcher summons (`toggleLauncher apps|emoji|
+clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
+(`SUPER+CTRL+comma`) and dismiss-all
 (`SUPER+CTRL+SHIFT+comma`) binds route through `toggleDnd` / `clearNotifications`
 when the shell is on, and fall back to the CLI/mako when it is off. This is the
 only IPC in the shell; there is no custom bus (see `plans/shell.md`).
@@ -290,6 +305,32 @@ clicked to claim it. Focus and `pam.start()` are gated on `secure`
 > dev loop) while locked leaves a conformant compositor showing a solid
 > color — by design. Never edit QML while a dev instance is locked, and keep
 > a TTY logged in when live-testing (runbook in `plans/shell.md`).
+
+### Launcher
+
+`Launcher/LauncherWindow.qml` is the Phase 5 launcher: a full-screen
+transparent overlay (the Ui/Panel dismiss idiom) with a centered card, one
+shared query field, and three mode views — replacing vicinae under the same
+mutual-exclusion cutover as waybar/mako/SwayOSD/hyprlock. `Services/Launcher`
+holds the open-mode state ("" / "apps" / "emoji" / "clipboard"); the surface
+takes `WlrKeyboardFocus.Exclusive` while open and closes on Escape,
+outside click, or focus loss.
+
+| Mode | Bind | Backing | Activate |
+| --- | --- | --- | --- |
+| apps | `SUPER+R` | `Quickshell.DesktopEntries` (webapps' `xdg.desktopEntries` flow in) | `DesktopEntry.execute()` |
+| emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
+| clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js` | copy + type |
+
+Paste (emoji/clipboard) goes through `Services/Launcher.pasteText`:
+`Quickshell.clipboardText` for the copy, then `wtype` after a 0.25 s settle
+— the launcher closes first so wtype delivers to the previously focused
+window. No privileged helper: vicinae's `cap_dac_override` uinput wrapper
+stands down with the cutover (gated in `modules/nixos/launcher.nix`). The
+text travels as argv (`exec "$0" "$1"`), never through shell interpolation.
+
+Search scoring is `Commons/Match.js` (prefix > word-start > scattered
+subsequence; empty query = name order), unit-tested from Node like Format.js.
 
 ### Waybar parity
 
@@ -375,10 +416,11 @@ Three layers, split by what each can reach:
 | Suite | Runs where | Covers |
 | --- | --- | --- |
 | `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
+| `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS — `Match.js` scoring, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
 | `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
-The first two are the reason `Commons/Format.js` is a plain `.js` module with a
+The first three are the reason `Commons/*.js` files are plain `.js` modules with a
 CommonJS guard at the bottom rather than QML functions: QML logic needs Quickshell
 and a Qt platform plugin to run at all, so none of it is reachable from
 `nix flake check`, while a JavaScript module is imported unchanged by QML *and*

@@ -169,15 +169,15 @@ When enabled, `modules/home/voxtype.nix` configures the **upstream** home-manage
 
 The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The Waybar `custom/voxtype` module (`modules/home/waybar.nix`) is the repo's **first streaming `exec` custom module**: `voxtype status --format json --follow` emits one JSON object per state change, read via `return-type = "json"`; its `class` field (idle/recording/transcribing) recolors the `#custom-voxtype` selector, and both the module definition and the `pkgs.voxtype` store-path reference are guarded by `lib.optionalAttrs` so a desktop without dictation never pulls voxtype into its closure. The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
 
-## Application launcher (Vicinae)
+## Application launcher (Vicinae fallback / in-shell launcher)
 
-`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) runs [Vicinae](https://vicinae.com) as a user service: `Super+R` toggles it, `Super+period` is the emoji picker, `Super+Ctrl+V` clipboard history.
+`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) selects the launcher: with `marchyo.shell.enable = true` the shell's own in-shell launcher (`shell/Launcher/`, Phase 5) answers `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history) — vicinae, its user service, and the `cap_dac_override` input-server wrapper all stand down (mutually exclusive, eval-tested in `tests/eval/marchyo-shell.nix`). The options below then apply only to the discrete-stack (`marchyo.shell.enable = false`) desktop, where they run [Vicinae](https://vicinae.com) as a user service behind the same three binds.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.launcher.enable` | `true` with desktop (mkDefault) | Enable the Vicinae launcher |
-| `marchyo.launcher.keybinding` | `"emacs"` | In-launcher navigation: `"default"`, `"vim"`, `"emacs"` |
-| `marchyo.launcher.inputServer.enable` | `true` | `cap_dac_override` wrapper for `/dev/uinput` keystroke injection |
+| `marchyo.launcher.enable` | `true` with desktop (mkDefault) | Enable the launcher (in-shell when the shell is on; vicinae otherwise) |
+| `marchyo.launcher.keybinding` | `"emacs"` | Vicinae in-launcher navigation: `"default"`, `"vim"`, `"emacs"` |
+| `marchyo.launcher.inputServer.enable` | `true` | `cap_dac_override` wrapper for `/dev/uinput` keystroke injection (vicinae only) |
 | `marchyo.launcher.telemetry.enable` | `false` | Vicinae's usage telemetry (upstream enables it) |
 | `marchyo.launcher.declutter` | `true` | Hide Donate / Report a Bug / About / Set Theme from root search |
 | `marchyo.launcher.settings` | `{}` | Freeform passthrough merged into `programs.vicinae.settings` |

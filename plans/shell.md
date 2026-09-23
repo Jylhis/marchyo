@@ -1,10 +1,12 @@
 # Plan: Marchyo Shell — a unified Quickshell desktop
 
-**Status: Phases 0–3 shipped and live-verified; the shell is the daily-driver
-desktop on markus's host** (the `marchyo-shell` systemd user service runs the
-store package; waybar/mako/SwayOSD are stood down). This document is the design
-record plus the remaining work. The authoritative surface description is
-[`shell/README.md`](../shell/README.md).
+**Status: Phases 0–3 shipped and live-verified; Phases 4 (lock) and 5
+(launcher) code-complete, each awaiting its live-verification pass** (the
+`marchyo-shell` systemd user service runs the store package;
+waybar/mako/SwayOSD are stood down, and with them vicinae — the shell's own
+launcher answers Super+R / Super+period / Super+Ctrl+V). This document is the
+design record plus the remaining work. The authoritative surface description
+is [`shell/README.md`](../shell/README.md).
 
 ## Problem (original)
 
@@ -115,7 +117,8 @@ One `quickshell -p <store-path>` process per session, launched as a
   hypridle.service) keeps disabling idle lock. PAM config is the stock
   `login` stack (pam_unix + optional fprintd via the message protocol). No
   new `marchyo.*` option; `marchyo.shell.enable` gates everything.
-- **Launcher: not in scope.** Vicinae stays the launcher (decision below).
+- **Launcher:** shipped as Phase 5 (see below); this phase left vicinae
+  alone.
 
 #### Live-verification runbook (operator)
 
@@ -141,6 +144,29 @@ fallback TTY logged in first (Ctrl+Alt+F3):
 9. Never save QML edits while a dev-loop instance is locked (hot-reload
    destroys the lock).
 
+### Phase 5 — Launcher (shipped; live verification pending)
+
+- **Status:** implemented on 2026-09-23 — `shell/Services/Launcher.qml` (the
+  open-mode singleton + the `pasteText` helper), `shell/Launcher/`
+  (`LauncherWindow.qml` overlay with exclusive keyboard focus + the three
+  mode views), `shell toggleLauncher/openLauncher/closeLauncher` IPC, and the
+  SUPER+R / SUPER+period / SUPER+Ctrl+V binds cut over to it. Vicinae stands
+  down on both the HM and NixOS sides with the shell on (eval-tested in
+  `tests/eval/marchyo-shell.nix`); the cap_dac_override input-server wrapper
+  goes with it — the in-shell launcher pastes via `wtype` after closing, no
+  uinput helper. Emoji data is generated into `Commons/EmojiData.js` from
+  `pkgs.unicode-emoji` at package build (gawk splice between in-file markers,
+  no IFD); clipboard rows decode from `cliphist list` in Node-tested pure JS
+  (`Commons/Cliphist.js`).
+- **Vicinae stays in-tree** as the discrete-stack launcher
+  (`marchyo.shell.enable = false`); wholesale removal of the discrete stack
+  is a later milestone together with waybar/mako/swayosd.
+- **Live-verify on a real session:** Super+R search/launch (incl. a webapps
+  entry), Super+period emoji search → copy+type at the cursor, Super+Ctrl+V
+  history → paste, Escape/outside-click close, open-on-focused-output on a
+  multi-monitor host, fcitx5 preedit in the query field, `marchyo theme set`
+  live-recolors the card.
+
 ### Live theme apply into the running shell
 
 - **Goal:** `marchyo theme set` currently recolors ghostty, GTK, Hyprland,
@@ -162,10 +188,13 @@ fallback TTY logged in first (Ctrl+Alt+F3):
 - **No third-party plugins.** marchyo does not port omarchy's
   `PluginRegistry`/manifest/`shell.json` machinery; surfaces are plain
   in-process QML. A Nix-declared list can be added later if ever needed.
-- **Keep Vicinae as the launcher.** It is a strong standalone launcher
-  (emoji/clipboard/apps), already themed and wired; reimplementing it
-  in-shell is a large effort for no user-visible gain. Revisit only if a
-  launcher needs shell-shared state.
+- **The shell ships its own launcher (Phase 5); the earlier "keep Vicinae"
+  decision is reversed.** Vicinae remains a strong standalone launcher and
+  stays in-tree as the discrete-stack launcher, but the shell-on desktop
+  uses the in-shell surface — one process, one theme runtime, no privileged
+  uinput helper. The reversal traded Vicinae's frecency and snippet
+  expansion for zero extra privileges and design-token-native theming;
+  revisit frecency inside the shell if daily use misses it.
 - **Config surface:** everything bakes at build time from
   `marchyo.*` options (no runtime `shell.json`); revisit a runtime overlay
   only if runtime tweaks become needed.

@@ -1,17 +1,26 @@
 ---
 title: Launcher
-description: The Vicinae application launcher — keybindings, theming, and the input-server capability
+description: The application launcher — the in-shell launcher (marchyo.shell) and the Vicinae fallback
 ---
 
-Marchyo ships [Vicinae](https://vicinae.com) as the application launcher: a
-Raycast-style, Wayland layer-shell launcher that also handles the emoji picker,
-clipboard history, snippets, a calculator, and file search.
+Marchyo ships two launchers behind the same three binds — **`Super+R`** (apps),
+**`Super+period`** (emoji picker), **`Super+Ctrl+V`** (clipboard history):
 
-It is **on by default** with `marchyo.desktop.enable` and runs as a user service.
-Press **`Super+R`** to toggle it, **`Super+period`** for the emoji picker, and
-**`Super+Ctrl+V`** for clipboard history.
+- **`marchyo.shell.enable = true`** (the unified Quickshell shell): the shell's
+  own in-shell launcher — apps from the freedesktop entries, emoji from the
+  Unicode catalog, clipboard from cliphist — themed by the design tokens at
+  runtime, pasting via `wtype` with **no privileged helper**. Vicinae and its
+  `cap_dac_override` input server stand down entirely (mutually exclusive).
+- **`marchyo.shell.enable = false`** (the discrete stack): [Vicinae](https://vicinae.com),
+  a Raycast-style, Wayland layer-shell launcher that also handles snippets, a
+  calculator, and file search, running as a user service.
+
+The launcher is **on by default** with `marchyo.desktop.enable` either way.
 
 ## Options
+
+The options below apply to the Vicinae fallback (with the shell on, only
+`marchyo.launcher.enable` matters and it gates the binds).
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|

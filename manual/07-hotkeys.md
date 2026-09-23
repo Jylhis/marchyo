@@ -26,7 +26,7 @@ plain `Super + <letter>` chords, not `Super + Shift`.)
 | `Super + Return` | Terminal (Ghostty) |
 | `Super + B` | Web browser |
 | `Super + F` | File manager |
-| `Super + R` | App launcher (vicinae) |
+| `Super + R` | App launcher (in-shell with `marchyo.shell`, else vicinae) |
 | `Super + M` | Music player |
 | `Super + E` | Editor |
 | `Super + O` | Obsidian |
