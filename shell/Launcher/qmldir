@@ -1,0 +1,5 @@
+module qs.Launcher
+LauncherWindow 1.0 LauncherWindow.qml
+AppsView 1.0 AppsView.qml
+EmojiView 1.0 EmojiView.qml
+ClipboardView 1.0 ClipboardView.qml

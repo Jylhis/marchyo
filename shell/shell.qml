@@ -9,6 +9,7 @@ import qs.Bar
 import qs.Osd
 import qs.Ui
 import qs.Panels
+import qs.Launcher
 import qs.Notifications
 import qs.Lock
 import qs.Services
@@ -43,6 +44,10 @@ ShellRoot {
     NetworkPanel {}
     PowerPanel {}
     MonitorPanel {}
+
+    // Launcher: apps / emoji / clipboard surface, summoned over IPC by the
+    // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
+    LauncherWindow {}
 
     // Notifications: owns org.freedesktop.Notifications (replaces mako) and draws
     // its own top-right toast stack. DND lives in the shared NotificationState
@@ -119,6 +124,21 @@ ShellRoot {
 
         function lockState(): string {
             return Lock.locked ? "locked" : "unlocked";
+        }
+
+        function toggleLauncher(mode: string): string {
+            Launcher.toggle(mode);
+            return Launcher.open ? "on" : "off";
+        }
+
+        function openLauncher(mode: string): string {
+            Launcher.openAs(mode);
+            return "on";
+        }
+
+        function closeLauncher(): string {
+            Launcher.close();
+            return "ok";
         }
 
         function ping(): string {

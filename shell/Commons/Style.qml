@@ -28,6 +28,9 @@ QtObject {
     readonly property int panelRadius: 8
     readonly property int panelRowHeight: 30
 
+    // Launcher geometry (apps/emoji/clipboard card).
+    readonly property int launcherWidth: 640
+
     // Notification-toast geometry (replaces mako). Timeouts are milliseconds.
     readonly property int notifWidth: 380
     readonly property int notifPad: 12
