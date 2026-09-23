@@ -19,6 +19,10 @@ ShellRoot {
         width: 1280
         height: 64
 
+        // Pull in the lock service singleton (PAM state machine; the
+        // WlSessionLock surface itself needs a compositor, like the panels).
+        readonly property var lockService: Lock
+
         // Ui primitives.
         BarItem {
             x: 0
