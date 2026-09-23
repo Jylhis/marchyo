@@ -49,7 +49,7 @@ loop. It takes a little getting used to, and then it's hard to go back — see
 Enable the desktop and you get a complete, themed environment:
 
 - **A Hyprland desktop** — a fast, keyboard-driven Wayland compositor, with Waybar
-  across the top, the Vicinae launcher, notifications, clipboard history, and
+  across the top, the launcher, notifications, clipboard history, and
   one-key screenshots, recording, and OCR.
 - **Curated apps** — a browser, editor, terminal (Ghostty), file manager, and media
   players, all chosen for you and all swappable through a single set of options.

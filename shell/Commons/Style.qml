@@ -48,6 +48,7 @@ QtObject {
     // shows the dictation widget; the build sets it from marchyo.dictation.
     readonly property bool dictationIndicator: true
     // Whether the gum-TUI menus feature is on (marchyo.menus.enable). Drives the
-    // battery click target: `marchyo menu power` when on, else `vicinae toggle`.
+    // battery click target: `marchyo menu power` when on, else the in-shell
+    // launcher's power fallback (Launcher.toggle("apps")).
     readonly property bool menusEnabled: true
 }
