@@ -35,14 +35,8 @@ flake pins with rollback (see "N/A under NixOS" below).
   git-repo-into-`~/.config` plugin model; the shell is plain in-process QML
   and all extension is Nix-declared. The imperative `omarchy plugin
   add/update/remove` surface is intentionally absent.
-- **Flat TUI aesthetic.** marchyo forces `rounding=0`, `gaps=0`, `border=2`,
-  `animations=off`, no blur/shadow, and omits omarchy's runtime
-  transparency/gaps/aspect toggles.
-- **App-launch keybind namespace.** omarchy launches on `SUPER+SHIFT+<letter>`;
+- TODO: mode to gaps **App-launch keybind namespace.** omarchy launches on `SUPER+SHIFT+<letter>`;
   marchyo on plain `SUPER+<letter>`. The whole map is shifted, not missing.
-- **Launcher engine.** marchyo uses Vicinae (`SUPER+R`); omarchy's Walker +
-  Elephant were retired into its menu plugin's `apps` provider. Different
-  engines, deliberate.
 - **CLI shape.** omarchy's CLI drives a live Arch system; marchyo's is
   runtime-first over a declarative base (runtime / `--apply` / `--revert`),
   with the flake as the source of truth.

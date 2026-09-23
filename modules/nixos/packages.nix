@@ -1,4 +1,3 @@
-# Global (headless-safe) CLI/TUI set; desktop/media/office lists are gated.
 {
   config,
   lib,
@@ -40,19 +39,13 @@ let
     bluetui # bluetooth
     sysz # systemctl tui
     lazyjournal # journald and logs
-    # Wi-Fi TUI is nmtui, shipped with the networkmanager package (Wi-Fi runs
-    # on the wpa_supplicant backend, not iwd — see docs/known-issues.md).
     dua # interactive disk-usage analyzer TUI
     wiremix # PipeWire mixer TUI
     cliamp # retro terminal music player (Winamp-style)
-    # qalc (calculator REPL, replaces gnome-calculator) installs via the
-    # programs.qalculate Home-Manager module (modules/home/qalculate.nix).
   ];
 
-  # Desktop GUI tools
   desktopTools = with pkgs; [
     signal-desktop # E2E messaging
-    # localsend installs via modules/nixos/localsend.nix (marchyo.services.localsend)
     loupe # Modern GNOME image viewer
     gnome-disk-utility # Disk management
     sushi # Quick file previews in Nautilus
@@ -60,30 +53,25 @@ let
     quickshell # QtQuick toolkit for building custom Wayland shells/bars
   ];
 
-  # Media applications (browser/editor/video/audio/fileManager managed by defaults.nix)
   mediaTools = with pkgs; [ ];
 
-  # Office applications
   officeTools = with pkgs; [
-    papers # Document viewer
+    # papers # Document viewer. Slow to compile. Find lighter alternative?
     obsidian
   ];
 
   # Development tools
   devTools = with pkgs; [
-    # Docker
     docker-compose
     buildah
     skopeo
     lazydocker
 
-    # Service CLIs
     gh # Github
   ];
 in
 {
   config = {
-    # Shell
     programs = {
       television.enable = lib.mkDefault true;
       fzf.fuzzyCompletion = lib.mkDefault true;
