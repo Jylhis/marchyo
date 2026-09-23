@@ -11,7 +11,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprHasBind;
 
   evalWith =
     extra:
@@ -131,5 +131,91 @@ in
         "pass"
       else
         throw "FAIL: marchyo.shell is off but mako is not enabled under a plain desktop"
+    );
+
+  # Phase 4 lock cutover: with the shell on, hyprlock stands down (the shell's
+  # WlSessionLock owns the lock) — same mutual exclusion as waybar/mako/swayosd.
+  eval-marchyo-shell-disables-hyprlock =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-hyprlock" (
+      if !hm.programs.hyprlock.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell.enable = true but hyprlock is still enabled (two lockers)"
+    );
+
+  eval-marchyo-shell-off-keeps-hyprlock =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-hyprlock" (
+      if hm.programs.hyprlock.enable then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but hyprlock is missing under a plain desktop"
+    );
+
+  # SUPER+L reaches the running shell over IPC when it is on; hyprlock when off.
+  eval-marchyo-shell-lock-bind =
+    let
+      bind =
+        (evalWith { marchyo.shell.enable = true; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-lock-bind" (
+      if hyprHasBind bind "SUPER + L" "shell lock" then
+        "pass"
+      else
+        throw "FAIL: SUPER+L should call 'shell lock' over IPC when the shell is enabled"
+    );
+
+  eval-marchyo-shell-off-keeps-hyprlock-bind =
+    let
+      bind =
+        (evalWith { }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-hyprlock-bind" (
+      if hyprHasBind bind "SUPER + L" "hyprlock" then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but SUPER+L no longer execs hyprlock"
+    );
+
+  # hypridle stays the idle authority, but its lock points (general.lock_cmd,
+  # before_sleep_cmd, the 300s listener) target the shell's IPC when it is on.
+  eval-marchyo-shell-hypridle-locks-via-ipc =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+      general = hm.services.hypridle.settings.general;
+      # toJSON, not toString: the listeners are attrsets, which toString
+      # cannot coerce.
+      listenersText = builtins.toJSON hm.services.hypridle.settings.listener;
+      ok =
+        lib.hasInfix "shell lock" (general.lock_cmd or "")
+        && lib.hasInfix "shell lock" (general.before_sleep_cmd or "")
+        && lib.hasInfix "shell lock" listenersText;
+    in
+    pkgs.writeText "eval-marchyo-shell-hypridle-locks-via-ipc" (
+      if ok then
+        "pass"
+      else
+        throw "FAIL: hypridle lock commands do not target the shell IPC when marchyo.shell is on"
+    );
+
+  eval-marchyo-shell-off-hypridle-keeps-loginctl =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+      listenersText = builtins.toJSON hm.services.hypridle.settings.listener;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-hypridle-keeps-loginctl" (
+      if
+        lib.hasInfix "loginctl lock-session" listenersText
+        && !lib.hasInfix "marchyo-shell ipc" listenersText
+      then
+        "pass"
+      else
+        throw "FAIL: hypridle idle-lock listener changed although marchyo.shell is off"
     );
 }

@@ -690,8 +690,11 @@ in
           (bind "SUPER + D" (dsp "workspace.toggle_special(\"magic\")"))
           (bind "SUPER + SHIFT + D" (dsp "window.move({ workspace = \"special:magic\" })"))
 
-          # Session management
-          (bind "SUPER + L" (exec "hyprlock"))
+          # Session management. With the unified shell on, SUPER+L engages the
+          # in-shell WlSessionLock over IPC (Phase 4); otherwise hyprlock.
+          (bind "SUPER + L" (
+            exec (if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "hyprlock")
+          ))
           (bind "CTRL + ALT + Delete" (exec "systemctl poweroff"))
 
           # Move active window to an adjacent monitor (single window).

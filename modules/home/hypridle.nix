@@ -15,6 +15,12 @@ let
       "systemctl suspend-then-hibernate"
     else
       "systemctl suspend";
+
+  # Phase 4: with the unified shell on, the in-shell WlSessionLock replaces
+  # hyprlock / loginctl as the lock actuation. hypridle remains the single
+  # idle authority (screensaver/dim/dpms/sleep timing) so `marchyo toggle
+  # idle` — which stops this very service — keeps disabling idle lock.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -22,8 +28,10 @@ in
       enable = true;
       settings = {
         general = {
-          lock_cmd = "pidof hyprlock || hyprlock";
-          before_sleep_cmd = "loginctl lock-session";
+          lock_cmd =
+            if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "pidof hyprlock || hyprlock";
+          before_sleep_cmd =
+            if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "loginctl lock-session";
           after_sleep_cmd = "hyprctl dispatch dpms on";
           inhibit_sleep = 3;
         };
@@ -49,7 +57,8 @@ in
             }
             {
               timeout = 300;
-              on-timeout = "loginctl lock-session";
+              on-timeout =
+                if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "loginctl lock-session";
             }
             {
               timeout = 330;
