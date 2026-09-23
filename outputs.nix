@@ -607,8 +607,16 @@ in
             || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
           grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
             || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
-          grep -q "nix/store" "${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml" \
+          greeterConfig="${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml"
+          grep -q "nix/store" "$greeterConfig" \
             || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
+          # The generator hand-writes the sessionCommand array; without commas
+          # between the elements it is a QML parse error and the greeter fails
+          # to load, so greetd crash-loops with no login window. Assert the
+          # array is comma-separated (the checked-in dev Config.qml is, but the
+          # generated one silently drifted).
+          grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
+            || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
           touch "$out"
         '';
 
