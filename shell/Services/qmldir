@@ -12,3 +12,4 @@ singleton Caffeine 1.0 Caffeine.qml
 singleton Clock 1.0 Clock.qml
 singleton KeyboardLayout 1.0 KeyboardLayout.qml
 singleton Lock 1.0 Lock.qml
+singleton Launcher 1.0 Launcher.qml

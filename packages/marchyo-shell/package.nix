@@ -17,7 +17,9 @@
   bluetui,
   procps,
   coreutils,
-  vicinae,
+  wtype,
+  cliphist,
+  unicode-emoji,
   marchyo-cli,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
@@ -177,7 +179,8 @@ let
       readonly property string pgrep: "${lib.getExe' procps "pgrep"}"
       readonly property string ls: "${lib.getExe' coreutils "ls"}"
       readonly property string df: "${lib.getExe' coreutils "df"}"
-      readonly property string vicinae: "${lib.getExe vicinae}"
+      readonly property string wtype: "${lib.getExe wtype}"
+      readonly property string cliphist: "${lib.getExe cliphist}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
     }
   '';
