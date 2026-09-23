@@ -37,7 +37,7 @@ assert.ok(grin && grin.chars === "\u{1F600}");
 
 // Cliphist payload decoding: quoted-printable bytes -> UTF-8 string.
 assert.strictEqual(Cliphist.decodePayload("plain text"), "plain text");
-assert.strictEqual(Cliphist.decodePayload("caf=C3=A9"), "caf\u00e9");
+assert.strictEqual(Cliphist.decodePayload("calf=C3=A9"), "calf\u00e9");
 // U+1F600 = F0 9F 98 80 as a 4-byte UTF-8 sequence -> surrogate pair.
 assert.strictEqual(Cliphist.decodePayload("=F0=9F=98=80"), "\u{1F600}");
 assert.strictEqual(Cliphist.decodePayload("100=25 ok"), "100% ok");
