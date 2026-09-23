@@ -10,6 +10,7 @@ import qs.Osd
 import qs.Ui
 import qs.Panels
 import qs.Notifications
+import qs.Lock
 import qs.Services
 
 // Phase 1: a Jylhis-themed top bar at waybar parity, built as a simple monolith
@@ -29,6 +30,11 @@ ShellRoot {
     Osd {
         id: osd
     }
+
+    // The lock surface (Phase 4): Services/Lock owns the PAM state machine;
+    // this is the seat's one compositor-level WlSessionLock. A static child,
+    // never a Loader — see Lock/LockScreen.qml for the protocol hazard.
+    LockScreen {}
 
     // Summonable panels: toggled in-process from their bar widgets via the shared
     // PanelManager (mutually exclusive). Each is a layer-shell overlay that only
@@ -104,6 +110,15 @@ ShellRoot {
         function osdShow(label: string, percent: string, hasBar: string): string {
             osd.show(label, parseInt(percent) || 0, hasBar !== "false");
             return "ok";
+        }
+
+        function lock(): string {
+            Lock.lock();
+            return "locked";
+        }
+
+        function lockState(): string {
+            return Lock.locked ? "locked" : "unlocked";
         }
 
         function ping(): string {
