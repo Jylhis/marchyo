@@ -17,6 +17,10 @@ let
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screensaverEnabled = (osConfig.marchyo or { }).screensaver.enable or true;
 
+  # Phase 4: with the unified shell on, its in-shell lock replaces hyprlock —
+  # the launcher's "never draw over the lock screen" guard must ask the shell.
+  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+
   marchyo-screensaver = pkgs.writeShellApplication {
     name = "marchyo-screensaver";
     runtimeInputs = [
@@ -73,7 +77,8 @@ let
     runtimeInputs = [
       pkgs.procps
       pkgs.ghostty
-    ];
+    ]
+    ++ lib.optionals shellEnabled [ pkgs.marchyo-shell ];
     text = ''
       # `marchyo toggle screensaver off` drops this marker; honor it here so
       # the idle hook stays inert while the toggle is off.
@@ -86,6 +91,14 @@ let
       if pgrep -x hyprlock >/dev/null; then
         exit 0
       fi
+      ${lib.optionalString shellEnabled ''
+        # The unified shell's in-shell lock (Phase 4): same rule as hyprlock —
+        # never animate underneath a locked session. An IPC failure means no
+        # shell is running; treat that as unlocked.
+        if [ "$(marchyo-shell ipc -n call -- shell lockState 2>/dev/null || true)" = "locked" ]; then
+          exit 0
+        fi
+      ''}
       if pgrep -f class=org.omarchy.screensaver >/dev/null; then
         exit 0
       fi
