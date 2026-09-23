@@ -28,7 +28,10 @@ let
   cfg = marchyo.launcher or { };
 
   enabled =
-    pkgs.stdenv.hostPlatform.isLinux && (marchyo.desktop.enable or false) && (cfg.enable or false);
+    pkgs.stdenv.hostPlatform.isLinux
+    && (marchyo.desktop.enable or false)
+    && (cfg.enable or false)
+    && !((marchyo.shell or { }).enable or false);
 
   themeVariant = marchyo.theme.variant or "dark";
   fontScale = marchyo.theme.fontScale or 1.0;

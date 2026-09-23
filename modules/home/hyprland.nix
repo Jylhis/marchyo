@@ -64,6 +64,12 @@ let
   # (see the panel binds below); only wire them when the shell owns the desktop.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
+  # Launcher binds summon the in-shell launcher when the shell is on, and
+  # spawn vicinae otherwise. Gated on marchyo.launcher.enable so an opted-out
+  # host gets no dead binds (previously SUPER+R spawned a missing binary
+  # when the launcher was disabled).
+  launcherEnabled = ((osConfig.marchyo or { }).launcher or { }).enable or false;
+
   # Lua-renderer helpers (bind/exec/env/onStart, see lib/hyprland-lua.nix).
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   inherit (hlua)
@@ -640,12 +646,6 @@ in
           (bindd "CTRL + ALT + TAB" "Focus next monitor" (dsp "focus({ monitor = \"+1\" })"))
           (bindd "CTRL + ALT + SHIFT + TAB" "Focus previous monitor" (dsp "focus({ monitor = \"-1\" })"))
 
-          # Clipboard history / emoji picker (both via vicinae)
-          (bindd "SUPER + CTRL + V" "Clipboard history" (
-            exec "vicinae vicinae://launch/clipboard/history?toggle=true"
-          ))
-          (bindd "SUPER + period" "Emoji picker" (exec "vicinae open --query emoji"))
-
           # Dismiss last notification. With the shell on, mako is retired and the
           # toast list lives in the shell, so route to its IPC; otherwise makoctl.
           (bindd "SUPER + comma" "Dismiss last notification" (
@@ -674,7 +674,6 @@ in
           (bindd "SUPER + ALT + Print" "Toggle screen recording" (exec "marchyo capture record"))
 
           # Plain binds (no cheat-sheet description)
-          (bind "SUPER + R" (exec "vicinae toggle"))
           (bind "SUPER + Page_Up" (dsp "window.fullscreen({ mode = \"fullscreen\" })"))
         ]
         # Workspace switching
@@ -794,6 +793,32 @@ in
           (bindd "SUPER + SHIFT + M" "Monitor panel" (
             exec "marchyo-shell ipc -n call -- shell togglePanel monitor"
           ))
+        ]
+        # Launcher binds: the in-shell launcher when the shell is on, vicinae
+        # for the discrete stack. Only present when the launcher feature is
+        # on, so an opted-out host gets no dead binds.
+        ++ lib.optionals launcherEnabled [
+          (bindd "SUPER + CTRL + V" "Clipboard history" (
+            exec (
+              if shellEnabled then
+                "marchyo-shell ipc -n call -- shell toggleLauncher clipboard"
+              else
+                "vicinae vicinae://launch/clipboard/history?toggle=true"
+            )
+          ))
+          (bindd "SUPER + period" "Emoji picker" (
+            exec (
+              if shellEnabled then
+                "marchyo-shell ipc -n call -- shell toggleLauncher emoji"
+              else
+                "vicinae open --query emoji"
+            )
+          ))
+          (bind "SUPER + R" (
+            exec (
+              if shellEnabled then "marchyo-shell ipc -n call -- shell toggleLauncher apps" else "vicinae toggle"
+            )
+          ))
         ];
 
         # Workspace configuration
@@ -877,6 +902,7 @@ in
         wl-clipboard
         wl-clip-persist
         cliphist
+        wtype
 
         nwg-look
 
