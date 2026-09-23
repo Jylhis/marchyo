@@ -94,7 +94,7 @@ Panel {
         PanelButton {
             Layout.fillWidth: true
             text: "power menu"
-            onClicked: Style.menusEnabled ? Quickshell.execDetached([Config.terminal, "--class=org.omarchy.terminal", "-e", Config.marchyo, "menu", "power"]) : Quickshell.execDetached([Config.vicinae, "toggle"])
+            onClicked: Style.menusEnabled ? Quickshell.execDetached([Config.terminal, "--class=org.omarchy.terminal", "-e", Config.marchyo, "menu", "power"]) : Launcher.toggle("apps")
         }
     ]
 }
