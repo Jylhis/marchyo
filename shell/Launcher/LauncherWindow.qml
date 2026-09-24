@@ -28,10 +28,11 @@ PanelWindow {
         bottom: true
     }
 
-    // Focus tracking: if anything else steals keyboard focus while we are
-    // open, close instead of sitting on an unresponsive overlay.
-    onActiveChanged: if (!active && Launcher.open)
-        Launcher.close()
+    // Dismissal is covered by Escape (Keys.onEscapePressed), the outside-click
+    // MouseArea below, and item activation. There is no window-level focus
+    // signal to hang an auto-close on: Quickshell's PanelWindow exposes no
+    // `active` property, and the Exclusive keyboard grab (WlrKeyboardFocus above)
+    // means the compositor cannot silently route focus elsewhere while open.
 
     // Reset the query whenever the launcher (re)opens, and take focus once
     // the surface has actually mapped (the second call is the one that
