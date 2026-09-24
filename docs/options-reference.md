@@ -169,6 +169,32 @@ When enabled, `modules/home/voxtype.nix` configures the **upstream** home-manage
 
 The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The Waybar `custom/voxtype` module (`modules/home/waybar.nix`) is the repo's **first streaming `exec` custom module**: `voxtype status --format json --follow` emits one JSON object per state change, read via `return-type = "json"`; its `class` field (idle/recording/transcribing) recolors the `#custom-voxtype` selector, and both the module definition and the `pkgs.voxtype` store-path reference are guarded by `lib.optionalAttrs` so a desktop without dictation never pulls voxtype into its closure. The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
 
+## Notifications (in-shell)
+
+With `marchyo.shell.enable = true` the shell owns `org.freedesktop.Notifications` (mako stands down) and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.
+
+`marchyo.notifications.rules` is a list of per-sender rules matched on `appName` and/or `desktopEntry` (exact, case-insensitive; first match wins), baked into the shell at build time. Only used when the shell is on (mako owns notifications otherwise).
+
+| Rule field | Default | Description |
+|--------|---------|-------------|
+| `appName` | `""` | Match the notification's application name |
+| `desktopEntry` | `""` | Match the notification's desktop-entry id |
+| `showToast` | `true` | Show an on-screen toast (false = history only, no popup) |
+| `saveHistory` | `true` | Record in the notification-centre history |
+| `bypassDnd` | `false` | Show the toast even while do-not-disturb is on |
+| `overrideDuration` | `-1` | Toast timeout in ms (`-1` = sender/urgency default, `0` = never expire) |
+
+Example:
+
+```nix
+marchyo.notifications.rules = [
+  { appName = "Slack"; bypassDnd = true; }
+  { desktopEntry = "org.telegram.desktop"; saveHistory = false; }
+];
+```
+
+Options live in `modules/nixos/options/notifications.nix`; the apply logic is in `shell/Services/NotificationState.qml` (pure match/eviction helpers in `shell/Commons/Notify.js`, unit-tested).
+
 ## Application launcher (Vicinae fallback / in-shell launcher)
 
 `marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) selects the launcher: with `marchyo.shell.enable = true` the shell's own in-shell launcher (`shell/Launcher/`, Phase 5) answers `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history) — vicinae, its user service, and the `cap_dac_override` input-server wrapper all stand down (mutually exclusive, eval-tested in `tests/eval/marchyo-shell.nix`). The options below then apply only to the discrete-stack (`marchyo.shell.enable = false`) desktop, where they run [Vicinae](https://vicinae.com) as a user service behind the same three binds.
