@@ -174,6 +174,7 @@ let
       readonly property int notifTimeoutLow: 5000
       readonly property int notifTimeoutNormal: 5000
       readonly property int notifTimeoutCritical: 0
+      readonly property int notifCenterMaxHeight: ${toString (fs.round 420)}
 
       // Whether to run the solaar HID++ fallback for peripherals battery.
       readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
