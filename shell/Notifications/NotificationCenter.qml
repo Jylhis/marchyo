@@ -66,7 +66,7 @@ Panel {
                 implicitHeight: entryLayout.implicitHeight + Style.panelPad
                 radius: Style.notifRadius
                 color: modelData.unread ? Color.surfaceRaised : Color.surface
-                border.width: 1
+                border.width: Style.borderWidth
                 border.color: Color.border
 
                 MouseArea {
