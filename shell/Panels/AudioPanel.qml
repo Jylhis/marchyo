@@ -95,6 +95,115 @@ Panel {
                 onClicked: Pipewire.preferredDefaultAudioSink = modelData
             }
         },
+
+        // Per-application playback streams: name, live meter, volume, mute.
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: Style.spacing
+            visible: Audio.appStreams.length > 0
+            text: "Applications"
+            color: Color.textMuted
+            font.family: Style.fontFamily
+            font.pixelSize: Style.fontSizeSmall
+        },
+        Repeater {
+            model: Audio.appStreams
+
+            ColumnLayout {
+                id: appRow
+                required property var modelData
+                readonly property var a: modelData ? modelData.audio : null
+                Layout.fillWidth: true
+                spacing: 2
+
+                // Live per-stream peak meter (v0.3.0 PwNodePeakMonitor); only
+                // sampled while the panel is open.
+                PwNodePeakMonitor {
+                    id: mon
+                    node: appRow.modelData
+                    enabled: root.visible
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.spacing
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: Audio.streamLabel(appRow.modelData)
+                        color: Color.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        text: appRow.a ? (appRow.a.muted ? "muted" : Math.round(appRow.a.volume * 100) + "%") : ""
+                        color: (appRow.a && appRow.a.muted) ? Color.textFaint : Color.textMuted
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                    }
+                    PanelButton {
+                        text: "-"
+                        onClicked: {
+                            if (appRow.a)
+                                appRow.a.volume = Math.max(0.0, appRow.a.volume - 0.05);
+                        }
+                    }
+                    PanelButton {
+                        text: "+"
+                        onClicked: {
+                            if (appRow.a)
+                                appRow.a.volume = Math.min(1.5, appRow.a.volume + 0.05);
+                        }
+                    }
+                    PanelButton {
+                        text: (appRow.a && appRow.a.muted) ? "unmute" : "mute"
+                        active: appRow.a ? appRow.a.muted : false
+                        onClicked: {
+                            if (appRow.a)
+                                appRow.a.muted = !appRow.a.muted;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: meterTrack
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 3
+                    color: Color.surface
+
+                    Rectangle {
+                        width: meterTrack.width * Math.max(0, Math.min(1, mon.peak))
+                        height: meterTrack.height
+                        color: Color.accent
+                    }
+                }
+            }
+        },
+
+        // Microphone-in-use privacy indicator: which applications are capturing.
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: Style.spacing
+            visible: Audio.micInUse
+            text: "󰍬 Microphone in use"
+            color: Color.statusWarn
+            font.family: Style.fontFamily
+            font.pixelSize: Style.fontSizeSmall
+        },
+        Repeater {
+            model: Audio.captureStreams
+
+            Text {
+                required property var modelData
+                Layout.fillWidth: true
+                text: "  " + Audio.streamLabel(modelData)
+                color: Color.textMuted
+                font.family: Style.fontFamily
+                font.pixelSize: Style.fontSizeSmall
+                elide: Text.ElideRight
+            }
+        },
         PanelButton {
             Layout.fillWidth: true
             text: "wiremix"
