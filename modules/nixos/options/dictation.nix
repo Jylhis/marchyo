@@ -107,6 +107,52 @@ in
       '';
     };
 
+    onDemandModel = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Load the Whisper model on demand when recording starts and unload it
+        after transcription (voxtype `whisper.on_demand_loading`), instead of
+        keeping it resident. Frees GPU/host memory between dictations at the cost
+        of a load delay on the first word — the alternative to leaving VRAM
+        pinned by an always-resident model. Pairs well with `gpuIsolation`.
+      '';
+    };
+
+    gpuIsolation = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enable voxtype's GPU memory isolation (`whisper.gpu_isolation`), running
+        transcription so a discrete GPU can sleep between recordings. Aimed at
+        laptops with hybrid graphics.
+      '';
+    };
+
+    spokenPunctuation = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Convert spoken punctuation words to symbols (say "period" to get "."),
+        via voxtype's `text.spoken_punctuation`.
+      '';
+    };
+
+    replacements = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      example = {
+        "vox type" = "voxtype";
+        "kubernetes" = "Kubernetes";
+      };
+      description = ''
+        Deterministic case-insensitive word/phrase replacements applied to the
+        transcript before output (voxtype's `text.replacements`), for domain
+        jargon Whisper transcribes wrong. Left side is the spoken form, right
+        side the text typed.
+      '';
+    };
+
     # UI surfaces — on by default when dictation is enabled, each opt-out.
     indicator = mkOption {
       type = types.bool;

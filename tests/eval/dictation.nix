@@ -118,6 +118,48 @@ in
         throw "FAIL: dictation disabled but voxtype service, toggle bind or waybar module present"
     );
 
+  # Depth options: on-demand model loading + GPU isolation reach whisper
+  # settings, and the replacements / spoken-punctuation table reaches text.
+  eval-dictation-depth-settings =
+    let
+      s =
+        (evalWith {
+          marchyo.dictation.enable = true;
+          marchyo.dictation.onDemandModel = true;
+          marchyo.dictation.gpuIsolation = true;
+          marchyo.dictation.spokenPunctuation = true;
+          marchyo.dictation.replacements = {
+            "vox type" = "voxtype";
+          };
+        }).config.home-manager.users.testuser.services.voxtype.settings;
+    in
+    pkgs.writeText "eval-dictation-depth-settings" (
+      if
+        s.whisper.on_demand_loading
+        && s.whisper.gpu_isolation
+        && s.text.spoken_punctuation
+        && (s.text.replacements."vox type" == "voxtype")
+      then
+        "pass"
+      else
+        throw "FAIL: dictation depth options did not reach voxtype settings (whisper.on_demand_loading/gpu_isolation, text.spoken_punctuation/replacements)"
+    );
+
+  # Default: no text block is emitted (replacements empty, spoken punctuation
+  # off), so the upstream default config is left untouched.
+  eval-dictation-no-text-by-default =
+    let
+      s =
+        (evalWith { marchyo.dictation.enable = true; })
+        .config.home-manager.users.testuser.services.voxtype.settings;
+    in
+    pkgs.writeText "eval-dictation-no-text-by-default" (
+      if (!(s ? text)) && (!s.whisper.on_demand_loading) then
+        "pass"
+      else
+        throw "FAIL: dictation defaults emit a text block or on-demand loading unexpectedly"
+    );
+
   # Indicator opt-out: dictation stays enabled but the waybar segment drops out.
   eval-dictation-indicator-off =
     let
