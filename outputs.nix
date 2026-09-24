@@ -641,6 +641,7 @@ in
               node tests/shell/format-test.js
               node tests/shell/notify-test.js
               node tests/shell/launcher-test.js
+              node tests/shell/peripherals-test.js
               touch "$out"
             '';
 
