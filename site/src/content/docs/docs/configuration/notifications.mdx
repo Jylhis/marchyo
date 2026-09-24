@@ -1,0 +1,39 @@
+---
+title: Notifications
+description: Notification history and per-sender rules for the in-shell notification centre
+---
+
+With the Marchyo shell enabled (`marchyo.shell.enable = true`) the shell owns
+`org.freedesktop.Notifications` and adds a **notification history** and
+**per-sender rules** on top of the live toast stack. Without the shell, mako is
+the notification daemon and these options do nothing.
+
+Every notification is snapshotted into a persistent history (stored under the
+Quickshell state directory and reloaded on restart), so a toast you dismissed or
+missed under do-not-disturb is still recoverable. The do-not-disturb bar widget
+shows an unread count and opens the history centre on **right-click**; **`Super+N`**
+toggles the centre, and **`Super+Ctrl+Shift+comma`** clears the live stack.
+
+## Per-sender rules
+
+`marchyo.notifications.rules` is a list of rules matched on a notification's
+`appName` and/or `desktopEntry` (exact, case-insensitive; the first matching
+rule wins). A partial rule only overrides the field it names.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `appName` | `str` | `""` | Match the notification's application name |
+| `desktopEntry` | `str` | `""` | Match the notification's desktop-entry id |
+| `showToast` | `bool` | `true` | Show an on-screen toast (`false` = history only, no popup) |
+| `saveHistory` | `bool` | `true` | Record in the notification-centre history |
+| `bypassDnd` | `bool` | `false` | Show the toast even while do-not-disturb is on |
+| `overrideDuration` | `int` | `-1` | Toast timeout in ms (`-1` = default, `0` = never expire) |
+
+```nix
+marchyo.notifications.rules = [
+  # Always let Slack through, even in do-not-disturb.
+  { appName = "Slack"; bypassDnd = true; }
+  # Keep Telegram out of history entirely.
+  { desktopEntry = "org.telegram.desktop"; saveHistory = false; }
+];
+```
