@@ -66,6 +66,27 @@ function addHistory(history, record, cap, now, maxAgeMs) {
     return list;
 }
 
+// First per-sender rule matching a notification's appName or desktopEntry
+// (freedesktop match keys), or null. Matching is case-insensitive and exact;
+// first rule wins. The caller applies field defaults (show/save default on,
+// bypassDnd off, overrideDuration -1 = none) so a partial rule only overrides
+// what it names.
+function matchRule(rules, appName, desktopEntry) {
+    var list = rules || [];
+    var an = (appName || "").toLowerCase();
+    var de = (desktopEntry || "").toLowerCase();
+    for (var i = 0; i < list.length; i++) {
+        var r = list[i];
+        if (!r)
+            continue;
+        var mName = r.appName ? r.appName.toLowerCase() === an : false;
+        var mEntry = r.desktopEntry ? r.desktopEntry.toLowerCase() === de : false;
+        if (mName || mEntry)
+            return r;
+    }
+    return null;
+}
+
 // Number of unread history entries (drives the bar's unread badge).
 function unreadCount(history) {
     var n = 0;
@@ -82,5 +103,6 @@ if (typeof module !== "undefined")
         evictionIndex: evictionIndex,
         partitionExpired: partitionExpired,
         addHistory: addHistory,
-        unreadCount: unreadCount
+        unreadCount: unreadCount,
+        matchRule: matchRule
     };

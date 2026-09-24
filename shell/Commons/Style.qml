@@ -49,6 +49,10 @@ QtObject {
     readonly property int notifTimeoutCritical: 0
     // Notification-centre (history panel) max list height before it scrolls.
     readonly property int notifCenterMaxHeight: 420
+    // Per-sender notification rules (baked from marchyo.notifications.rules).
+    // Each: { appName?, desktopEntry?, showToast?, saveHistory?, bypassDnd?,
+    // overrideDuration? (ms, -1 = default) }. Empty by default.
+    readonly property var notifRules: []
 
     // Whether to run the solaar HID++ fallback for peripherals battery (only
     // useful with a Logitech receiver the kernel will not bind; baked from

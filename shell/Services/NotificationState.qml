@@ -163,8 +163,18 @@ QtObject {
     // snapshotted into history first, so DND-suppressed and evicted toasts are
     // still recoverable from the notification centre.
     function show(n) {
-        root.record(n);
-        if (root.dnd && n.urgency !== NotificationUrgency.Critical) {
+        // Per-sender rules (Style.notifRules, baked from marchyo.notifications
+        // .rules): a partial rule only overrides what it names.
+        const rule = Notify.matchRule(Style.notifRules, n.appName, n.desktopEntry) || {};
+        const saveHistory = rule.saveHistory !== false;
+        const showToast = rule.showToast !== false;
+        const bypassDnd = rule.bypassDnd === true;
+        const override = (rule.overrideDuration !== undefined && rule.overrideDuration >= 0) ? rule.overrideDuration : -1;
+
+        if (saveHistory)
+            root.record(n);
+
+        if (root.dnd && !bypassDnd && n.urgency !== NotificationUrgency.Critical) {
             let q = [n].concat(root.queued);
             // `queued` is newest-first; the oldest sit at the end. Dismiss the
             // overflow so it disappears at the sender too (never re-shown).
@@ -175,14 +185,21 @@ QtObject {
             root.queued = q;
             return;
         }
-        root.present(n);
+
+        // A rule may keep a sender in history but suppress its toast entirely.
+        if (!showToast) {
+            n.dismiss();
+            return;
+        }
+        root.present(n, override);
     }
 
     // Insert into the visible toast stack, enforcing the visible cap. Split from
     // show() so the DND flush can re-present already-recorded notifications
-    // without snapshotting them into history a second time.
-    function present(n) {
-        const timeout = root.timeoutMsFor(n);
+    // without snapshotting them into history a second time. `override` is a
+    // per-rule duration in ms, or -1 for the sender/urgency default.
+    function present(n, override) {
+        const timeout = (override >= 0) ? override : root.timeoutMsFor(n);
         let list = [
             {
                 "n": n,
@@ -238,7 +255,7 @@ QtObject {
             // Oldest first so the newest held notification ends up on top.
             // present(), not show(): they are already in history.
             for (let i = q.length - 1; i >= 0; i--)
-                root.present(q[i]);
+                root.present(q[i], -1);
         }
     }
 
