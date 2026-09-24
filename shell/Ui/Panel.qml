@@ -57,7 +57,7 @@ PanelWindow {
         radius: Style.panelRadius
         color: Color.surface
         border.color: Color.border
-        border.width: 1
+        border.width: Style.borderWidth
 
         // Swallow clicks inside the card so they don't fall through to the dismiss
         // handler; interactive controls sit above this and take their own clicks.

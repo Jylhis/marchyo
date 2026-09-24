@@ -32,6 +32,12 @@ let
   notifRules = map (r: lib.filterAttrs (_n: v: v != "") r) (
     (osConfig.marchyo or { }).notifications.rules or [ ]
   );
+  # Palette-independent shell appearance scale axes.
+  appearance = (osConfig.marchyo or { }).theme.appearance or { };
+  cornerRadiusScale = appearance.cornerRadiusScale or 1.0;
+  uiScale = appearance.uiScale or 1.0;
+  animationSpeed = appearance.animationSpeed or 1.0;
+  highContrast = appearance.highContrast or false;
   # Theme + scale the store package to the host at build time — declarative, no
   # activation-time file writes. Runtime theme switching is deferred.
   shellPkg = pkgs.marchyo-shell.override {
@@ -42,6 +48,10 @@ let
       menusEnabled
       peripheralsFallback
       notifRules
+      cornerRadiusScale
+      uiScale
+      animationSpeed
+      highContrast
       ;
   };
 in

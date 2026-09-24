@@ -44,6 +44,12 @@
   # array literal (JSON is valid JS). Empty by default. See Services/Notification
   # State.qml for the match/apply logic.
   notifRules ? [ ],
+  # marchyo.theme.appearance.* — palette-independent scale axes (Caelestia's
+  # split). Neutral defaults reproduce the current look.
+  cornerRadiusScale ? 1.0,
+  uiScale ? 1.0,
+  animationSpeed ? 1.0,
+  highContrast ? false,
 }:
 let
   # Reuse the design-system palette helper (single source of truth for token ->
@@ -58,6 +64,16 @@ let
     inherit lib;
     scale = fontScale;
   };
+  # Geometry (non-font) dimensions scale by fontScale AND uiScale, so uiScale is
+  # a size axis independent of text size. Fonts keep using `fs` (fontScale only).
+  ui = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = fontScale * uiScale;
+  };
+  # Corner radii additionally scale by cornerRadiusScale (0 = square corners).
+  radiusPx = base: builtins.floor (base * fontScale * uiScale * cornerRadiusScale + 0.5);
+  # Base animation duration (ms) divided by the speed multiplier.
+  animMs = base: builtins.floor (base / animationSpeed + 0.5);
 
   # Commons/Theme.qml dev default embeds the dark (Jylhis Dark) fallback palette.
   # For a light-variant host, translate those literals to the host variant
@@ -137,29 +153,29 @@ let
 
     // Generated from lib/font-scale.nix (scale ${toString fontScale}).
     QtObject {
-      readonly property int barHeight: ${toString (fs.round 28)}
+      readonly property int barHeight: ${toString (ui.round 28)}
       readonly property int fontSize: ${toString (fs.round 14)}
       readonly property int fontSizeSmall: ${toString (fs.round 12)}
-      readonly property int spacing: ${toString (fs.round 4)}
-      readonly property int paddingH: ${toString (fs.round 6)}
+      readonly property int spacing: ${toString (ui.round 4)}
+      readonly property int paddingH: ${toString (ui.round 6)}
       readonly property string fontFamily: "BlexMono Nerd Font"
 
       // On-screen-display geometry (volume/brightness overlay).
-      readonly property int osdPad: ${toString (fs.round 14)}
-      readonly property int osdRadius: ${toString (fs.round 8)}
-      readonly property int osdMargin: ${toString (fs.round 80)}
-      readonly property int osdBarWidth: ${toString (fs.round 140)}
-      readonly property int osdBarHeight: ${toString (fs.round 6)}
+      readonly property int osdPad: ${toString (ui.round 14)}
+      readonly property int osdRadius: ${toString (radiusPx 8)}
+      readonly property int osdMargin: ${toString (ui.round 80)}
+      readonly property int osdBarWidth: ${toString (ui.round 140)}
+      readonly property int osdBarHeight: ${toString (ui.round 6)}
 
       // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
-      readonly property int panelWidth: ${toString (fs.round 260)}
-      readonly property int panelPad: ${toString (fs.round 14)}
-      readonly property int panelGap: ${toString (fs.round 6)}
-      readonly property int panelRadius: ${toString (fs.round 8)}
-      readonly property int panelRowHeight: ${toString (fs.round 30)}
+      readonly property int panelWidth: ${toString (ui.round 260)}
+      readonly property int panelPad: ${toString (ui.round 14)}
+      readonly property int panelGap: ${toString (ui.round 6)}
+      readonly property int panelRadius: ${toString (radiusPx 8)}
+      readonly property int panelRowHeight: ${toString (ui.round 30)}
 
       // Launcher geometry (apps/emoji/clipboard card).
-      readonly property int launcherWidth: ${toString (fs.round 640)}
+      readonly property int launcherWidth: ${toString (ui.round 640)}
 
       // Media (MPRIS) widget: max characters of the track title shown in the bar.
       readonly property int mediaMaxChars: 40
@@ -167,19 +183,24 @@ let
       // Notification-toast geometry (replaces mako; mako uses width 380, pad 8,
       // radius 0 sharp corners, border 2, margin 10). Pixel sizes scale with the
       // font; the timeouts are milliseconds and stay unscaled.
-      readonly property int notifWidth: ${toString (fs.round 380)}
-      readonly property int notifPad: ${toString (fs.round 12)}
-      readonly property int notifRadius: 0
-      readonly property int notifBorder: 2
-      readonly property int notifGap: ${toString (fs.round 8)}
-      readonly property int notifMargin: ${toString (fs.round 10)}
-      readonly property int notifIconSize: ${toString (fs.round 40)}
+      readonly property int notifWidth: ${toString (ui.round 380)}
+      readonly property int notifPad: ${toString (ui.round 12)}
+      readonly property int notifRadius: ${toString (radiusPx 0)}
+      readonly property int notifBorder: ${toString (if highContrast then 3 else 2)}
+      readonly property int notifGap: ${toString (ui.round 8)}
+      readonly property int notifMargin: ${toString (ui.round 10)}
+      readonly property int notifIconSize: ${toString (ui.round 40)}
       readonly property int notifMaxVisible: 5
       readonly property int notifTimeoutLow: 5000
       readonly property int notifTimeoutNormal: 5000
       readonly property int notifTimeoutCritical: 0
-      readonly property int notifCenterMaxHeight: ${toString (fs.round 420)}
+      readonly property int notifCenterMaxHeight: ${toString (ui.round 420)}
       readonly property var notifRules: ${builtins.toJSON notifRules}
+
+      // Appearance scale axes (marchyo.theme.appearance).
+      readonly property int animationDuration: ${toString (animMs 150)}
+      readonly property bool highContrast: ${lib.boolToString highContrast}
+      readonly property int borderWidth: ${toString (if highContrast then 2 else 1)}
 
       // Whether to run the solaar HID++ fallback for peripherals battery.
       readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}

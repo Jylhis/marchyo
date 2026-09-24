@@ -54,6 +54,13 @@ QtObject {
     // overrideDuration? (ms, -1 = default) }. Empty by default.
     readonly property var notifRules: []
 
+    // Appearance scale axes (baked from marchyo.theme.appearance). Neutral
+    // dev defaults; osd/panel radii and geometry above are pre-scaled by the
+    // generator. animationDuration is the base transition length in ms.
+    readonly property int animationDuration: 150
+    readonly property bool highContrast: false
+    readonly property int borderWidth: 1
+
     // Whether to run the solaar HID++ fallback for peripherals battery (only
     // useful with a Logitech receiver the kernel will not bind; baked from
     // marchyo.hardware.logitech.enable). Off by default so no solaar poll runs.

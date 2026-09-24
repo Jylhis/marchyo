@@ -76,6 +76,54 @@ in
       '';
     };
 
+    # Shell appearance scale axes, independent of the palette (Caelestia's
+    # split: scale multipliers over the base design tokens). These affect only
+    # the Quickshell shell (marchyo.shell); the palette stays generated from the
+    # Jylhis design system. Neutral defaults reproduce the current look.
+    appearance = {
+      cornerRadiusScale = mkOption {
+        type = types.numbers.between 0.0 4.0;
+        default = 1.0;
+        example = 0.0;
+        description = ''
+          Multiplier on the shell's corner-radius tokens (panels, OSD). 0
+          squares every corner; larger values round them more. Independent of
+          the palette and of fontScale.
+        '';
+      };
+
+      uiScale = mkOption {
+        type = types.numbers.between 0.5 4.0;
+        default = 1.0;
+        example = 1.2;
+        description = ''
+          Multiplier on the shell's geometry (bar height, spacing, padding,
+          panel/OSD/notification sizes) on top of fontScale, without changing
+          font sizes — a size axis separate from text scale.
+        '';
+      };
+
+      animationSpeed = mkOption {
+        type = types.numbers.between 0.1 10.0;
+        default = 1.0;
+        example = 2.0;
+        description = ''
+          Shell animation speed multiplier. Higher is faster (durations shrink);
+          the shell exposes the resulting duration as Style.animationDuration.
+        '';
+      };
+
+      highContrast = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Emphasise shell separators (thicker panel/notification borders) for a
+          higher-contrast, more legible chrome. Exposed to QML as
+          Style.highContrast / Style.borderWidth.
+        '';
+      };
+    };
+
     wallpaper = {
       enable = mkOption {
         type = types.bool;

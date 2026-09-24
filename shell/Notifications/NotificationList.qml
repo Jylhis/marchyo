@@ -50,19 +50,19 @@ PanelWindow {
                 property: "opacity"
                 from: 0.0
                 to: 1.0
-                duration: 150
+                duration: Style.animationDuration
             }
             NumberAnimation {
                 property: "y"
                 from: -20
-                duration: 150
+                duration: Style.animationDuration
                 easing.type: Easing.OutQuad
             }
         }
         move: Transition {
             NumberAnimation {
                 property: "y"
-                duration: 150
+                duration: Style.animationDuration
                 easing.type: Easing.OutQuad
             }
         }
