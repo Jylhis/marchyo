@@ -152,6 +152,9 @@ let
       // Launcher geometry (apps/emoji/clipboard card).
       readonly property int launcherWidth: ${toString (fs.round 640)}
 
+      // Media (MPRIS) widget: max characters of the track title shown in the bar.
+      readonly property int mediaMaxChars: 40
+
       // Notification-toast geometry (replaces mako; mako uses width 380, pad 8,
       // radius 0 sharp corners, border 2, margin 10). Pixel sizes scale with the
       // font; the timeouts are milliseconds and stay unscaled.

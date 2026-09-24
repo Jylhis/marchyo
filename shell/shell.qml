@@ -188,6 +188,7 @@ ShellRoot {
                     spacing: Style.spacing
 
                     TrayWidget {}
+                    MediaWidget {}
                     DictationWidget {}
                     CaffeineWidget {}
                     ThemeWidget {}

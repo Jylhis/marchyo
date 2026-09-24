@@ -90,6 +90,10 @@ ShellRoot {
             x: 720
             y: 32
         }
+        MediaWidget {
+            x: 840
+            y: 32
+        }
     }
 
     // Self-exit: the check recipe watches the process and its log.
