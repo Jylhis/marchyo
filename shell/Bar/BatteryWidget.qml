@@ -17,7 +17,8 @@ BarItem {
     visible: Power.hasBattery
     interactive: true
     text: Power.barText
-    textColor: pct <= 10 ? Color.statusErr : (pct <= 20 ? Color.statusWarn : Color.text)
+    // Continuous gradient tint (Power.barColor) instead of discrete thresholds.
+    textColor: Power.barColor
     tooltipText: Power.tooltipText
 
     onClicked: PanelManager.toggle("power", root)

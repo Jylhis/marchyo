@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Services.UPower
+import qs.Commons
 
 // Shared UPower derivations for the battery bar widget and the power panel:
 // the composite display device plus the resolved percentage / state / rate.
@@ -31,6 +32,20 @@ QtObject {
         if (dev.state === UPowerDeviceState.PendingCharge || dev.state === UPowerDeviceState.PendingDischarge)
             return "󰚥";
         return "󰁹 " + pct;
+    }
+
+    // Percentage tint as a continuous gradient between theme tokens (logibar's
+    // idea) rather than switching colour at 10%/20% thresholds: the value reads
+    // as a ramp. 0% = statusErr, 50% = statusWarn, 100% = statusOk. Shared by
+    // the bar widget and the power panel so the two never disagree.
+    function lerpColor(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
+    }
+    readonly property color barColor: {
+        const p = Math.max(0, Math.min(100, pct)) / 100;
+        if (p < 0.5)
+            return lerpColor(Color.statusErr, Color.statusWarn, p / 0.5);
+        return lerpColor(Color.statusWarn, Color.statusOk, (p - 0.5) / 0.5);
     }
 
     // Waybar-parity tooltip: "4.2W↓ 87%" / "6.0W↑ 45%" (power draw + charge).
