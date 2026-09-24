@@ -31,6 +31,10 @@ QtObject {
     // Launcher geometry (apps/emoji/clipboard card).
     readonly property int launcherWidth: 640
 
+    // Media (MPRIS) widget: max characters of the track title shown in the bar
+    // before truncation (the full title/artist stays in the tooltip).
+    readonly property int mediaMaxChars: 40
+
     // Notification-toast geometry (replaces mako). Timeouts are milliseconds.
     readonly property int notifWidth: 380
     readonly property int notifPad: 12
