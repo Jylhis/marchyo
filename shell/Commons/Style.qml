@@ -48,6 +48,11 @@ QtObject {
     readonly property int notifTimeoutNormal: 5000
     readonly property int notifTimeoutCritical: 0
 
+    // Whether to run the solaar HID++ fallback for peripherals battery (only
+    // useful with a Logitech receiver the kernel will not bind; baked from
+    // marchyo.hardware.logitech.enable). Off by default so no solaar poll runs.
+    readonly property bool peripheralsFallback: false
+
     // Baked feature flags (parity with waybar's conditional widgets). Dev default
     // shows the dictation widget; the build sets it from marchyo.dictation.
     readonly property bool dictationIndicator: true

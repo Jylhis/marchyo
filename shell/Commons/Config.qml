@@ -20,4 +20,5 @@ QtObject {
     readonly property string wtype: "wtype"
     readonly property string cliphist: "cliphist"
     readonly property string marchyo: "marchyo"
+    readonly property string solaar: "solaar"
 }

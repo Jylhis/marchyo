@@ -22,6 +22,7 @@
   cliphist,
   unicode-emoji,
   marchyo-cli,
+  solaar,
   uwsm,
   systemd,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
@@ -35,6 +36,10 @@
   # marchyo.menus.enable — drives the battery click target (marchyo menu power vs
   # vicinae toggle), matching waybar's menusEnabled gate.
   menusEnabled ? true,
+  # marchyo.hardware.logitech.enable — arms the solaar HID++ fallback in the
+  # peripherals-battery service (only useful with a Logi receiver the kernel
+  # will not bind); off by default so no solaar poll runs.
+  peripheralsFallback ? false,
 }:
 let
   # Reuse the design-system palette helper (single source of truth for token ->
@@ -170,6 +175,9 @@ let
       readonly property int notifTimeoutNormal: 5000
       readonly property int notifTimeoutCritical: 0
 
+      // Whether to run the solaar HID++ fallback for peripherals battery.
+      readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
+
       // Baked feature flags (parity with waybar's conditional widgets).
       readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
       readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
@@ -200,6 +208,7 @@ let
       readonly property string wtype: "${lib.getExe wtype}"
       readonly property string cliphist: "${lib.getExe cliphist}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
+      readonly property string solaar: "${lib.getExe solaar}"
     }
   '';
 

@@ -199,6 +199,7 @@ ShellRoot {
                     AudioWidget {}
                     CpuWidget {}
                     PowerProfileWidget {}
+                    PeripheralsWidget {}
                     BatteryWidget {}
                 }
             }
