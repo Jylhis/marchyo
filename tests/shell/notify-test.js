@@ -175,10 +175,43 @@ test("unreadCount counts only unread entries", () => {
   assert.equal(Notify.unreadCount(null), 0);
 });
 
+// ── matchRule ────────────────────────────────────────────────────────────────
+
+const rules = [
+  { appName: "Slack", bypassDnd: true },
+  { desktopEntry: "org.telegram.desktop", saveHistory: false },
+];
+
+test("matchRule matches on appName, case-insensitively", () => {
+  assert.deepEqual(Notify.matchRule(rules, "slack", ""), { appName: "Slack", bypassDnd: true });
+});
+
+test("matchRule matches on desktopEntry", () => {
+  assert.deepEqual(Notify.matchRule(rules, "Telegram", "org.telegram.desktop"), {
+    desktopEntry: "org.telegram.desktop",
+    saveHistory: false,
+  });
+});
+
+test("matchRule returns null when nothing matches", () => {
+  assert.equal(Notify.matchRule(rules, "Firefox", "firefox.desktop"), null);
+  assert.equal(Notify.matchRule([], "Slack", ""), null);
+  assert.equal(Notify.matchRule(null, "Slack", ""), null);
+});
+
+test("matchRule returns the first matching rule", () => {
+  const rs = [
+    { appName: "Discord", overrideDuration: 1000 },
+    { appName: "Discord", overrideDuration: 9999 },
+  ];
+  assert.equal(Notify.matchRule(rs, "discord", "").overrideDuration, 1000);
+});
+
 test("the module exports its whole public surface to Node", () => {
   assert.deepEqual(Object.keys(Notify).sort(), [
     "addHistory",
     "evictionIndex",
+    "matchRule",
     "partitionExpired",
     "unreadCount",
   ]);

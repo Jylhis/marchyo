@@ -26,6 +26,12 @@ let
   # Logitech support is on (Solaar + udev rules are wired by that same flag in
   # modules/nixos/hardware.nix); otherwise the shell never polls solaar.
   peripheralsFallback = ((osConfig.marchyo or { }).hardware or { }).logitech.enable or false;
+  # Per-sender notification rules, baked into the shell's NotificationState (no
+  # runtime shell config yet). Drop empty match keys so a rule that matches only
+  # on appName does not also carry an empty desktopEntry (and vice versa).
+  notifRules = map (r: lib.filterAttrs (_n: v: v != "") r) (
+    (osConfig.marchyo or { }).notifications.rules or [ ]
+  );
   # Theme + scale the store package to the host at build time — declarative, no
   # activation-time file writes. Runtime theme switching is deferred.
   shellPkg = pkgs.marchyo-shell.override {
@@ -35,6 +41,7 @@ let
       dictationIndicator
       menusEnabled
       peripheralsFallback
+      notifRules
       ;
   };
 in

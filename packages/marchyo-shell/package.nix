@@ -40,6 +40,10 @@
   # peripherals-battery service (only useful with a Logi receiver the kernel
   # will not bind); off by default so no solaar poll runs.
   peripheralsFallback ? false,
+  # marchyo.notifications.rules — per-sender notification rules, baked as a QML
+  # array literal (JSON is valid JS). Empty by default. See Services/Notification
+  # State.qml for the match/apply logic.
+  notifRules ? [ ],
 }:
 let
   # Reuse the design-system palette helper (single source of truth for token ->
@@ -175,6 +179,7 @@ let
       readonly property int notifTimeoutNormal: 5000
       readonly property int notifTimeoutCritical: 0
       readonly property int notifCenterMaxHeight: ${toString (fs.round 420)}
+      readonly property var notifRules: ${builtins.toJSON notifRules}
 
       // Whether to run the solaar HID++ fallback for peripherals battery.
       readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
