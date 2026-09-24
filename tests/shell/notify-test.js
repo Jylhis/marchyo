@@ -120,8 +120,68 @@ test("partitionExpired handles an empty stack", () => {
   assert.deepEqual(Notify.partitionExpired(null, 1), { expired: [], kept: [] });
 });
 
+// ── addHistory ───────────────────────────────────────────────────────────────
+
+test("addHistory prepends newest-first", () => {
+  let h = [];
+  h = Notify.addHistory(h, { id: 1, timeMs: 100, unread: true }, 100, 100, 0);
+  h = Notify.addHistory(h, { id: 2, timeMs: 200, unread: true }, 100, 200, 0);
+  assert.deepEqual(
+    h.map((e) => e.id),
+    [2, 1],
+  );
+});
+
+test("addHistory trims to the cap, dropping the oldest", () => {
+  let h = [];
+  for (let i = 1; i <= 5; i++) h = Notify.addHistory(h, { id: i, timeMs: i, unread: true }, 3, i, 0);
+  assert.deepEqual(
+    h.map((e) => e.id),
+    [5, 4, 3],
+  );
+});
+
+test("addHistory prunes entries older than the retention window", () => {
+  const maxAge = 1000;
+  let h = [
+    { id: "old", timeMs: 0, unread: false },
+    { id: "recent", timeMs: 900, unread: false },
+  ];
+  // now = 1500: "old" is 1500ms back (> window), "recent" is 600ms back (kept).
+  h = Notify.addHistory(h, { id: "new", timeMs: 1500, unread: true }, 100, 1500, maxAge);
+  assert.deepEqual(
+    h.map((e) => e.id),
+    ["new", "recent"],
+  );
+});
+
+test("addHistory with maxAgeMs <= 0 keeps everything within the cap", () => {
+  let h = [{ id: "ancient", timeMs: 0, unread: false }];
+  h = Notify.addHistory(h, { id: "new", timeMs: 9e12, unread: true }, 100, 9e12, 0);
+  assert.deepEqual(
+    h.map((e) => e.id),
+    ["new", "ancient"],
+  );
+});
+
+// ── unreadCount ──────────────────────────────────────────────────────────────
+
+test("unreadCount counts only unread entries", () => {
+  assert.equal(
+    Notify.unreadCount([{ unread: true }, { unread: false }, { unread: true }]),
+    2,
+  );
+  assert.equal(Notify.unreadCount([]), 0);
+  assert.equal(Notify.unreadCount(null), 0);
+});
+
 test("the module exports its whole public surface to Node", () => {
-  assert.deepEqual(Object.keys(Notify).sort(), ["evictionIndex", "partitionExpired"]);
+  assert.deepEqual(Object.keys(Notify).sort(), [
+    "addHistory",
+    "evictionIndex",
+    "partitionExpired",
+    "unreadCount",
+  ]);
 });
 
 console.log("# " + passed + " passed");

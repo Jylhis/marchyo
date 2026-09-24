@@ -40,6 +40,51 @@ QtObject {
     // Notifications held back by DND. Plain JS array of Notification objects.
     property var queued: []
 
+    // Persistent notification history: immutable data snapshots (not live
+    // Notification objects — see Notify.addHistory for why). Newest-first. Every
+    // received notification is snapshotted here on arrival, so a toast dismissed
+    // or missed under DND is still recoverable from the notification centre.
+    property var history: []
+    property int seq: 0
+    readonly property int historyCap: 100
+    // Retention window: entries older than this are pruned on the next arrival.
+    readonly property int historyMaxAgeMs: 7 * 24 * 3600 * 1000
+
+    // Unread count for the bar's badge; dismissing a toast does not mark it read
+    // — only opening the notification centre (markAllRead) does.
+    readonly property int unreadCount: Notify.unreadCount(root.history)
+
+    // Snapshot a notification into history on arrival. Kept as plain data so it
+    // outlives the destroyed Notification object and serializes to disk as-is.
+    function record(n) {
+        const rec = {
+            "id": ++root.seq,
+            "appName": n.appName || "",
+            "appIcon": n.appIcon || "",
+            "summary": n.summary || "",
+            "body": n.body || "",
+            "image": n.image || "",
+            "urgency": n.urgency,
+            "timeMs": Date.now(),
+            "unread": true
+        };
+        root.history = Notify.addHistory(root.history, rec, root.historyCap, rec.timeMs, root.historyMaxAgeMs);
+    }
+
+    function markAllRead() {
+        root.history = root.history.map(e => Object.assign({}, e, {
+                "unread": false
+            }));
+    }
+
+    function removeHistory(id) {
+        root.history = root.history.filter(e => e.id !== id);
+    }
+
+    function clearHistory() {
+        root.history = [];
+    }
+
     // Cap on notifications held while DND is on: a long do-not-disturb stretch
     // must not accumulate an unbounded pile of tracked notifications (memory,
     // plus a toast flood the moment DND clears). Oldest beyond the cap are
@@ -61,8 +106,11 @@ QtObject {
     }
 
     // Add a notification to the visible stack, or hold it under DND. Enforces the
-    // visible cap, preferring to drop non-critical toasts.
+    // visible cap, preferring to drop non-critical toasts. Every notification is
+    // snapshotted into history first, so DND-suppressed and evicted toasts are
+    // still recoverable from the notification centre.
     function show(n) {
+        root.record(n);
         if (root.dnd && n.urgency !== NotificationUrgency.Critical) {
             let q = [n].concat(root.queued);
             // `queued` is newest-first; the oldest sit at the end. Dismiss the
@@ -74,6 +122,13 @@ QtObject {
             root.queued = q;
             return;
         }
+        root.present(n);
+    }
+
+    // Insert into the visible toast stack, enforcing the visible cap. Split from
+    // show() so the DND flush can re-present already-recorded notifications
+    // without snapshotting them into history a second time.
+    function present(n) {
         const timeout = root.timeoutMsFor(n);
         let list = [
             {
@@ -128,8 +183,9 @@ QtObject {
             const q = root.queued;
             root.queued = [];
             // Oldest first so the newest held notification ends up on top.
+            // present(), not show(): they are already in history.
             for (let i = q.length - 1; i >= 0; i--)
-                root.show(q[i]);
+                root.present(q[i]);
         }
     }
 

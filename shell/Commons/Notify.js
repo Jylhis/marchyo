@@ -49,9 +49,38 @@ function partitionExpired(entries, now) {
     };
 }
 
+// Prepend a history record (newest-first), prune entries older than the
+// retention window, and trim to the cap. History holds plain data snapshots,
+// not live Notification objects — a dismissed/expired toast is destroyed by the
+// server, so retaining the object would need a RetainableLock and risks a
+// use-after-free (impasto issue #3). A snapshot has none of that and serializes
+// to disk as-is. `maxAgeMs <= 0` disables the age window.
+function addHistory(history, record, cap, now, maxAgeMs) {
+    var list = [record].concat(history || []);
+    if (maxAgeMs > 0)
+        list = list.filter(function (e) {
+            return e && (now - e.timeMs) < maxAgeMs;
+        });
+    if (cap > 0 && list.length > cap)
+        list = list.slice(0, cap);
+    return list;
+}
+
+// Number of unread history entries (drives the bar's unread badge).
+function unreadCount(history) {
+    var n = 0;
+    var list = history || [];
+    for (var i = 0; i < list.length; i++)
+        if (list[i] && list[i].unread)
+            n++;
+    return n;
+}
+
 // Node (tests) picks these up; QML ignores the guard.
 if (typeof module !== "undefined")
     module.exports = {
         evictionIndex: evictionIndex,
-        partitionExpired: partitionExpired
+        partitionExpired: partitionExpired,
+        addHistory: addHistory,
+        unreadCount: unreadCount
     };
