@@ -44,6 +44,7 @@ ShellRoot {
     NetworkPanel {}
     PowerPanel {}
     MonitorPanel {}
+    NotificationCenter {}
 
     // Launcher: apps / emoji / clipboard surface, summoned over IPC by the
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
@@ -99,6 +100,16 @@ ShellRoot {
 
         function dismissLast(): string {
             NotificationState.dismissLast();
+            return "ok";
+        }
+
+        function toggleNotifications(): string {
+            PanelManager.toggle("notifications");
+            return "ok";
+        }
+
+        function clearHistory(): string {
+            NotificationState.clearHistory();
             return "ok";
         }
 

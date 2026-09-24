@@ -48,6 +48,9 @@ in
           (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
             hlua.exec "marchyo-shell ipc -n call -- shell clearNotifications"
           ))
+          (hlua.bindd "SUPER + N" "Notification centre (history)" (
+            hlua.exec "marchyo-shell ipc -n call -- shell toggleNotifications"
+          ))
         ]
       else
         [

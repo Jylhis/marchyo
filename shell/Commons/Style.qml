@@ -47,6 +47,8 @@ QtObject {
     readonly property int notifTimeoutLow: 5000
     readonly property int notifTimeoutNormal: 5000
     readonly property int notifTimeoutCritical: 0
+    // Notification-centre (history panel) max list height before it scrolls.
+    readonly property int notifCenterMaxHeight: 420
 
     // Whether to run the solaar HID++ fallback for peripherals battery (only
     // useful with a Logitech receiver the kernel will not bind; baked from
