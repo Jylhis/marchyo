@@ -207,6 +207,7 @@ ShellRoot {
                     KeyboardLayoutWidget {}
                     BluetoothWidget {}
                     NetworkWidget {}
+                    MicWidget {}
                     AudioWidget {}
                     CpuWidget {}
                     PowerProfileWidget {}
