@@ -22,11 +22,20 @@ let
   # Same default as waybar.nix: menus on unless explicitly disabled. Drives the
   # battery widget's click target (marchyo menu power vs vicinae toggle).
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
+  # Arm the solaar HID++ fallback in the peripherals-battery service only when
+  # Logitech support is on (Solaar + udev rules are wired by that same flag in
+  # modules/nixos/hardware.nix); otherwise the shell never polls solaar.
+  peripheralsFallback = ((osConfig.marchyo or { }).hardware or { }).logitech.enable or false;
   # Theme + scale the store package to the host at build time — declarative, no
   # activation-time file writes. Runtime theme switching is deferred.
   shellPkg = pkgs.marchyo-shell.override {
     variant = themeVariant;
-    inherit fontScale dictationIndicator menusEnabled;
+    inherit
+      fontScale
+      dictationIndicator
+      menusEnabled
+      peripheralsFallback
+      ;
   };
 in
 {
