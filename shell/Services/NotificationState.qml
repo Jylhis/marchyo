@@ -1,5 +1,7 @@
 pragma Singleton
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.Commons
 import "../Commons/Notify.js" as Notify
@@ -83,6 +85,57 @@ QtObject {
 
     function clearHistory() {
         root.history = [];
+    }
+
+    // ── Persistence ──────────────────────────────────────────────────────────
+    //
+    // History survives a shell restart by serializing to a state file. The shell
+    // is the file's only writer, so there is no need to watch it (watchChanges:
+    // false) — the never-reader / read-once pattern from plans/shell-research.md.
+    // Snapshots are plain data, so JSON round-trips without any Notification
+    // object. Saves are debounced and atomic (temp + rename).
+
+    // Gate saves until the initial disk read completes, so the empty startup
+    // state never clobbers the file before it has been loaded.
+    property bool historyLoaded: false
+
+    function loadFromDisk(text) {
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                root.history = parsed;
+                // Resume the id sequence past the highest restored id.
+                let max = 0;
+                for (let i = 0; i < parsed.length; i++)
+                    if (parsed[i] && parsed[i].id > max)
+                        max = parsed[i].id;
+                root.seq = max;
+            }
+        } catch (e) {
+            // Corrupt or empty file: start clean rather than crash.
+        }
+        root.historyLoaded = true;
+    }
+
+    onHistoryChanged: {
+        if (root.historyLoaded)
+            saveTimer.restart();
+    }
+
+    readonly property var historyFile: FileView {
+        id: historyFile
+        path: Quickshell.statePath("notification-history.json")
+        atomicWrites: true
+        watchChanges: false
+        printErrors: false
+        onLoaded: root.loadFromDisk(text())
+        onLoadFailed: root.historyLoaded = true
+    }
+
+    // Coalesce a burst of arrivals / dismissals into one write.
+    readonly property var saveTimer: Timer {
+        interval: 1000
+        onTriggered: historyFile.setText(JSON.stringify(root.history))
     }
 
     // Cap on notifications held while DND is on: a long do-not-disturb stretch
