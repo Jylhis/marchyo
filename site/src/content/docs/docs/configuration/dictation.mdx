@@ -26,6 +26,10 @@ status window. Each surface is on by default and individually opt-out.
 | `marchyo.dictation.model` | `str` | `"large-v3-turbo"` | Whisper model voxtype loads |
 | `marchyo.dictation.language` | `str` | `"auto"` | Spoken language (`"auto"` detects per utterance; pin with an ISO code like `"en"`) |
 | `marchyo.dictation.preloadModel` | `bool` | `false` | Pre-download the model at activation instead of on first recording |
+| `marchyo.dictation.onDemandModel` | `bool` | `false` | Load the model on record start and unload after transcription (frees VRAM) |
+| `marchyo.dictation.gpuIsolation` | `bool` | `false` | GPU memory isolation so a discrete GPU can sleep between recordings |
+| `marchyo.dictation.spokenPunctuation` | `bool` | `false` | Convert spoken punctuation words to symbols (say "period" → `.`) |
+| `marchyo.dictation.replacements` | `attrs` | `{}` | Case-insensitive transcript substitutions (spoken form → typed text) |
 | `marchyo.dictation.indicator` | `bool` | `true` | Show a recording-state segment on Waybar (driven by `voxtype status --follow`) |
 | `marchyo.dictation.notify` | `bool` | `true` | Desktop notifications on record start/stop and transcription |
 | `marchyo.dictation.audioFeedback` | `bool` | `true` | Start/stop sound cues |
@@ -41,8 +45,17 @@ marchyo.dictation = {
   # notify = false;            # silence desktop notifications
   # audioFeedback = false;     # silence start/stop cues
   # statusWindow = false;      # drop the Super+Shift+H window
+  # onDemandModel = true;      # unload the model between dictations (frees VRAM)
+  # gpuIsolation = true;       # let a discrete GPU sleep between recordings
+  # spokenPunctuation = true;  # say "period" to get "."
+  # replacements = { "vox type" = "voxtype"; };  # fix domain jargon
 };
 ```
+
+Push-to-talk (hold to record, release to transcribe) is already provided by the
+daemon hotkey (`marchyo.dictation.pushToTalk`). A silence gate / voice-activity
+threshold is not available — voxtype has no config knob for it, only
+`audio.max_duration_secs`.
 
 :::note
 With `preloadModel = false` (the default) the ~1.5 GB Whisper model downloads on
