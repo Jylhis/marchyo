@@ -134,3 +134,26 @@ marchyo.theme = {
   variant = "light";
 };
 ```
+
+## Shell appearance scale
+
+With the Quickshell shell (`marchyo.shell.enable = true`), a set of
+palette-independent scale axes adjust the shell's geometry, corners, animation
+speed, and contrast without touching the colour palette. Neutral defaults
+reproduce the current look.
+
+```nix
+marchyo.theme.appearance = {
+  # cornerRadiusScale = 0.0;  # square every corner (default 1.0)
+  # uiScale = 1.2;            # larger chrome without changing font size
+  # animationSpeed = 2.0;     # faster transitions (default 1.0)
+  # highContrast = true;      # thicker panel/notification borders
+};
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `cornerRadiusScale` | `float` | `1.0` | Multiplier on corner radii (`0.0` squares corners) |
+| `uiScale` | `float` | `1.0` | Geometry multiplier on top of `fontScale`, fonts unchanged |
+| `animationSpeed` | `float` | `1.0` | Animation speed (higher = faster) |
+| `highContrast` | `bool` | `false` | Thicker separators for higher-contrast chrome |

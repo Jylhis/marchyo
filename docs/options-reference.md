@@ -47,6 +47,17 @@ marchyo.theme = {
 
 Stylix `base16Scheme` is derived from the Jylhis Design System `themes/jylhis.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light), wired up in `modules/generic/stylix.nix`. To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a `base16-schemes` YAML) or override `stylix.base16Scheme` directly.
 
+### Shell appearance scale axes
+
+`marchyo.theme.appearance.*` are palette-independent scale multipliers over the base design tokens, affecting only the Quickshell shell (`marchyo.shell`). Neutral defaults reproduce the current look. Baked into `Commons/Style.qml` at build time via the `marchyo-shell` override.
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.theme.appearance.cornerRadiusScale` | `1.0` | Multiplier on shell corner radii (panels, OSD); `0.0` squares every corner |
+| `marchyo.theme.appearance.uiScale` | `1.0` | Multiplier on shell geometry (bar height, spacing, sizes) on top of `fontScale`, without changing font sizes |
+| `marchyo.theme.appearance.animationSpeed` | `1.0` | Shell animation speed (higher = faster); exposed as `Style.animationDuration` |
+| `marchyo.theme.appearance.highContrast` | `false` | Thicker panel/notification borders for higher-contrast chrome (`Style.highContrast` / `Style.borderWidth`) |
+
 ## Default Applications
 
 When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control which apps are installed and set as system defaults. Set any to `null` to skip management for that category.
