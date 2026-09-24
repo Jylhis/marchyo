@@ -25,6 +25,21 @@ assert.strictEqual(Match.score("", "a"), -1);
 assert.ok(Match.score("Nautilus", "nau") > 0);
 assert.ok(Match.score("nautilus", "NAU") > 0);
 
+// match() reports the matched character indices for highlighting.
+assert.deepStrictEqual(Match.match("Firefox", "fire").positions, [0, 1, 2, 3]);
+assert.strictEqual(Match.match("Settings", "zzz"), null);
+assert.strictEqual(Match.match("Firefox", "").score, 0);
+// A word-boundary hit is highlighted at its offset, not from zero.
+assert.deepStrictEqual(Match.match("GNU Image", "image").positions, [4, 5, 6, 7, 8]);
+// Adjacent scattered characters beat gappy ones for the same query.
+assert.ok(Match.score("cdxe", "cde") > Match.score("cxdxe", "cde"),
+    "an adjacent subsequence should outscore a gappier one");
+
+// highlight() wraps matched chars and HTML-escapes the rest.
+assert.strictEqual(Match.highlight("A&B", [0], "#ff0000"),
+    '<font color="#ff0000">A</font>&amp;B');
+assert.strictEqual(Match.highlight("ab", [], "#fff"), "ab");
+
 // EmojiData.parse: dev subset is well-formed and grouped.
 const emoji = EmojiData.parse(EmojiData.RAW);
 assert.ok(emoji.length >= 8, "dev emoji subset too small");

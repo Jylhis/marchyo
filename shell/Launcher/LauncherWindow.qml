@@ -96,6 +96,31 @@ PanelWindow {
                     clip: true
                     Keys.onEscapePressed: Launcher.close()
 
+                    // Inline autocomplete: the remaining letters of the top
+                    // app match, dimmed after the cursor. Accepted by Tab, or
+                    // by Right when the cursor is already at the end (the same
+                    // gesture shells and browsers use). Only apps mode offers
+                    // it — emoji/clipboard have no single completion.
+                    property string ghost: (Launcher.mode === "apps" && query.activeFocus && apps.suggestion.length > query.text.length) ? apps.suggestion.substring(query.text.length) : ""
+
+                    function acceptGhost() {
+                        if (query.ghost.length === 0)
+                            return false;
+                        query.text = apps.suggestion;
+                        query.cursorPosition = query.text.length;
+                        return true;
+                    }
+
+                    Text {
+                        id: ghostText
+                        x: query.contentWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: query.ghost
+                        visible: text.length > 0
+                        color: Color.textMuted
+                        font: query.font
+                    }
+
                     // Arrows/Enter are routed to the active view; each view
                     // owns its list navigation.
                     Keys.onPressed: event => {
@@ -106,6 +131,13 @@ PanelWindow {
                             } else if (event.key === Qt.Key_Up) {
                                 apps.move(-1);
                                 event.accepted = true;
+                            } else if (event.key === Qt.Key_Tab) {
+                                query.acceptGhost();
+                                event.accepted = true;
+                            } else if (event.key === Qt.Key_Right && query.cursorPosition === query.text.length) {
+                                // Only swallow Right when it accepts a ghost;
+                                // otherwise let the cursor move normally.
+                                event.accepted = query.acceptGhost();
                             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                                 apps.activate();
                                 event.accepted = true;
