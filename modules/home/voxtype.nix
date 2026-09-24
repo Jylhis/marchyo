@@ -73,6 +73,11 @@ in
         whisper = {
           inherit (cfg) model language;
           translate = false;
+          # Free VRAM/host memory between dictations rather than pinning the
+          # model resident (marchyo.dictation.onDemandModel); gpu_isolation lets
+          # a discrete GPU sleep between recordings (marchyo.dictation.gpuIsolation).
+          on_demand_loading = cfg.onDemandModel or false;
+          gpu_isolation = cfg.gpuIsolation or false;
         };
         output = {
           mode = "type";
@@ -84,6 +89,15 @@ in
             on_recording_stop = cfg.notify or true;
             on_transcription = cfg.notify or true;
           };
+        };
+      }
+      // lib.optionalAttrs (cfg.spokenPunctuation or false || (cfg.replacements or { }) != { }) {
+        # Deterministic transcript post-processing (marchyo.dictation.replacements
+        # / spokenPunctuation). Only emitted when configured, so the default
+        # config stays untouched.
+        text = {
+          spoken_punctuation = cfg.spokenPunctuation or false;
+          replacements = cfg.replacements or { };
         };
       };
     };
