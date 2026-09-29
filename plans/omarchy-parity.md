@@ -25,10 +25,15 @@ flake pins with rollback (see "N/A under NixOS" below).
 
 ## A1. Deliberate divergences (NOT gaps)
 
-- **No third-party plugin system.** marchyo rejected omarchy's
-  git-repo-into-`~/.config` plugin model; the shell is plain in-process QML
-  and all extension is Nix-declared. The imperative `omarchy plugin
-  add/update/remove` surface is intentionally absent.
+- **Build-time plugin model (not runtime discovery).** marchyo rejected
+  omarchy's git-repo-into-`~/.config` runtime plugin model, but it does have a
+  third-party plugin system: Nix-declared and baked into the store shell
+  (`marchyo.shell.plugins` / `pkgs.mkMarchyoShellPlugin`), with a `marchyo plugin
+  add/list/remove` CLI that pins a git source into the sidecar and rebuilds. A
+  compat shim (`shell/compat`) runs upstream omarchy bar widgets near-unmodified
+  (SBB and agent-activity are packaged as `pkgs.marchyo-shell-plugins`). What
+  stays absent is the *runtime* `omarchy plugin` surface (no fetch/enable without
+  a rebuild).
 - **App-launch keybind namespace.** omarchy launches on `SUPER+SHIFT+<letter>`;
   marchyo on plain `SUPER+<letter>`. The whole map is shifted, not missing.
 - **CLI shape.** omarchy's CLI drives a live Arch system; marchyo's is

@@ -127,3 +127,38 @@ marchyo plugin remove acme.weather
 validates the repo's `manifest.json` (schema version, non-reserved id, entry
 points), then writes the pinned spec and rebuilds. Pass `-n`/`--dry-run` to
 print the state change without writing or rebuilding.
+
+### omarchy plugin compatibility
+
+The shell ships a compatibility layer (`shell/compat`, exposed as the QML
+modules `qs.compat.Ui` / `qs.compat.Commons`) that provides omarchy's "Quattro"
+plugin host API — `BarWidget`, `Panel`, `KeyboardPanel`, `PluginBarApi`, the
+`Style`/`Color`/`Border` tokens, and the `omarchy-shell` / `omarchy-bar` CLIs —
+mapped onto marchyo's own bar, theme, and services. This lets an upstream
+omarchy bar widget run near-unmodified: when a plugin is baked in, its
+`import qs.Ui` / `import qs.Commons` lines are rewritten to the compat namespace,
+and the shell injects a marchyo-backed `bar` facade. The compat CLIs and the
+runtime tools omarchy plugins call by bare name (`python3`, `notify-send`,
+`curl`) are added to the shell's PATH only when plugins are declared, so
+plugin-less hosts keep a lean closure.
+
+Two omarchy plugins are packaged in this repo and can be imported directly:
+
+```nix
+marchyo.shell.plugins = [
+  pkgs.marchyo-shell-plugins.sbb            # vvkycodevv.sbb — Swiss transport
+  pkgs.marchyo-shell-plugins.agent-activity # agf.agent-activity — agent dashboard
+];
+marchyo.shell.settings.bar.layout.right = [
+  { id = "vvkycodevv.sbb"; settings = { homeStation = "Zürich HB"; }; }
+  { id = "agf.agent-activity"; }
+  # … first-party widgets …
+];
+```
+
+A plugin popup that persists a setting via `omarchy-bar set` writes marchyo's
+runtime overlay (`$XDG_STATE_HOME/marchyo/shell/plugin-settings.json`), which is
+merged over the widget's inline settings the next time it loads. Hyprland global
+shortcuts an omarchy plugin registers via `hyprctl eval` degrade gracefully:
+marchyo's Hyprland config has no omarchy `hl` Lua helper, so the widget stays
+usable by click while its shortcut registration no-ops.

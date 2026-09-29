@@ -217,6 +217,12 @@ ShellRoot {
         // and are left untouched.
         if (typeof item.moduleName === "string" && typeof item.bar !== "undefined") {
             item.moduleName = entry.id;
+            // Merge the runtime settings overlay (omarchy-bar writes) over the
+            // widget's inline layout settings, so a setting a plugin persists
+            // from its popup survives a shell restart.
+            const overlay = ShellConfig.pluginSettings ? ShellConfig.pluginSettings[entry.id] : undefined;
+            if (overlay !== undefined && typeof item.settings !== "undefined")
+                item.settings = Object.assign({}, entry.settings || {}, overlay);
             if (!item.bar)
                 item.bar = cPluginBar.createObject(item, {
                     "pluginId": entry.id,

@@ -99,6 +99,15 @@ QtObject {
     // Parsed shell.json (empty object until first read).
     property var config: ({})
 
+    // Per-plugin runtime settings overlay, keyed by plugin id, written by the
+    // omarchy-bar compat shim (packages/marchyo-shell/package.nix) into
+    // $XDG_STATE_HOME/marchyo/shell/plugin-settings.json. Kept separate from the
+    // generated (read-only) shell.json: shell.qml's applyWidget merges
+    // pluginSettings[id] over a plugin widget's inline settings at load, so an
+    // omarchy plugin that persists a setting from its popup keeps it across
+    // shell restarts. Merged at load (not live) to avoid rebuilding the bar.
+    property var pluginSettings: ({})
+
     // Effective bar layout: the file's bar.layout when present, else the
     // default. Each section falls back independently so a partial override is
     // still valid.
@@ -123,6 +132,25 @@ QtObject {
         return base + "/marchyo/shell.json";
     }
 
+    function pluginSettingsPath(): string {
+        const state = Quickshell.env("XDG_STATE_HOME");
+        const home = Quickshell.env("HOME");
+        const base = state && state !== "" ? state : (home ?? "") + "/.local/state";
+        return base + "/marchyo/shell/plugin-settings.json";
+    }
+
+    function applyPluginSettings(text: string): void {
+        let obj = null;
+        try {
+            obj = JSON.parse(text);
+        } catch (e) {
+            return; // missing/unreadable: keep the last good overlay (or {})
+        }
+        if (obj === null || typeof obj !== "object")
+            return;
+        root.pluginSettings = obj;
+    }
+
     function apply(text: string): void {
         let obj = null;
         try {
@@ -144,6 +172,18 @@ QtObject {
         onFileChanged: fileView.reload()
     }
 
+    // Plugin settings overlay reader. Watched so a save takes effect for the
+    // next widget load; no poll (writes are rare, and unlike shell.json it is
+    // updated in place by omarchy-bar, so inotify fires).
+    readonly property var pluginSettingsView: FileView {
+        id: pluginSettingsView
+        path: root.pluginSettingsPath()
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.applyPluginSettings(pluginSettingsView.text())
+        onFileChanged: pluginSettingsView.reload()
+    }
+
     // The generator writes shell.json via an atomic replace, so the watched
     // inode changes and inotify misses it — one cheap 5s poll covers that,
     // exactly as Commons/Theme.qml does for colors.json.
@@ -158,6 +198,9 @@ QtObject {
     }
 
     // Blocking initial read before the first frame: no flash of the default
-    // layout when a custom one exists.
-    Component.onCompleted: root.apply(fileView.text())
+    // layout when a custom one exists. Also seed the plugin settings overlay.
+    Component.onCompleted: {
+        root.apply(fileView.text());
+        root.applyPluginSettings(pluginSettingsView.text());
+    }
 }

@@ -23,6 +23,33 @@ final: prev:
     # fills the tool args, leaving the `{ src, id, kinds, entryPoints, ... }`
     # function as pkgs.mkMarchyoShellPlugin.
     mkMarchyoShellPlugin = final.callPackage ./packages/marchyo-shell/plugin.nix { };
+    # Imported omarchy plugins, packaged for the shell's compat shim
+    # (shell/compat). Pinned + baked; add to marchyo.shell.plugins and place by
+    # manifest id in marchyo.shell.settings.bar.layout.
+    marchyo-shell-plugins = {
+      sbb = final.mkMarchyoShellPlugin {
+        src = final.fetchgit {
+          url = "https://github.com/vvkycodevv/omarchy-sbb.git";
+          rev = "5b72fd0d5e1066d15b6d75dce311878a3ad30e6b";
+          hash = "sha256-oUI3yD2IQJUjAmwMHrpaoxCvFhwfrJhx/V+ErDEGUFM=";
+        };
+        id = "vvkycodevv.sbb";
+        name = "SBB";
+        kinds = [ "bar-widget" ];
+        entryPoints.barWidget = "BarWidget.qml";
+      };
+      agent-activity = final.mkMarchyoShellPlugin {
+        src = final.fetchgit {
+          url = "https://github.com/angusforbes/omarchy-agent-activity-visualization.git";
+          rev = "49f28ca4c96ee597e776e7f5af81fe8ba1576190";
+          hash = "sha256-AO9rO3B+VBe/80x9oMx5lFr9MrWx6hTQfCyrxsA3A9k=";
+        };
+        id = "agf.agent-activity";
+        name = "Agent Activity";
+        kinds = [ "bar-widget" ];
+        entryPoints.barWidget = "Panel.qml";
+      };
+    };
     plymouth-marchyo-theme = final.callPackage ./packages/plymouth-marchyo-theme/package.nix { };
   }
 )

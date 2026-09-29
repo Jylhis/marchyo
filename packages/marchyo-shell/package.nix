@@ -4,6 +4,7 @@
   quickshell,
   makeWrapper,
   writeText,
+  writeShellApplication,
   gawk,
   jylhis-design-src,
   # External tools the interactive widgets shell out to. Baked into a generated
@@ -28,6 +29,14 @@
   qrencode,
   uwsm,
   systemd,
+  # Runtime tools the omarchy plugin compat shim puts on the shell's PATH, but
+  # only when plugins are declared (see the wrapper below). omarchy plugins call
+  # these by bare name: python3 (agent-activity's odv.py collector), notify-send
+  # (SBB delay alerts), jq (omarchy-bar's settings encode). curl / hyprland /
+  # coreutils are already inputs.
+  python3,
+  libnotify,
+  jq,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
   # marchyo.theme.fontScale — every bar dimension derives from it via
@@ -312,6 +321,78 @@ let
         }
     }
   '';
+
+  # omarchy CLI shims the imported plugins call by bare name (added to the shell
+  # wrapper PATH only when plugins are declared). omarchy-shell forwards an IPC
+  # call to the running shell via `quickshell -p $MARCHYO_SHELL_ROOT ipc` (that
+  # env var is set by the wrapper); for `shell toggle|summon|hide <id>` it
+  # redirects to that plugin's own IPC target, since marchyo plugins own their
+  # target (=id). omarchy-bar persists a plugin's inline setting into marchyo's
+  # runtime overlay, which Commons/ShellConfig reads as pluginSettings and
+  # shell.qml's applyWidget merges into the widget at load.
+  omarchyShell = writeShellApplication {
+    name = "omarchy-shell";
+    runtimeInputs = [ quickshell ];
+    text = ''
+      # shellcheck disable=SC2154  # MARCHYO_SHELL_ROOT is set by the shell wrapper
+      quiet=0
+      if [ "''${1:-}" = "-q" ]; then
+        quiet=1
+        shift
+      fi
+      target="''${1:-}"
+      method="''${2:-}"
+      if [ "$#" -ge 2 ]; then shift 2; else shift "$#"; fi
+      if [ "$target" = "shell" ]; then
+        case "$method" in
+          toggle | summon | hide)
+            newtarget="''${1:-}"
+            if [ "$method" = "summon" ]; then method="show"; fi
+            target="$newtarget"
+            set --
+            ;;
+        esac
+      fi
+      if [ "$quiet" = 1 ]; then
+        quickshell -p "$MARCHYO_SHELL_ROOT" ipc -n call -- "$target" "$method" "$@" >/dev/null 2>&1 || exit 0
+      else
+        exec quickshell -p "$MARCHYO_SHELL_ROOT" ipc -n call -- "$target" "$method" "$@"
+      fi
+    '';
+  };
+
+  omarchyBar = writeShellApplication {
+    name = "omarchy-bar";
+    runtimeInputs = [
+      jq
+      coreutils
+    ];
+    text = ''
+      if [ "''${1:-}" != "set" ]; then
+        echo "omarchy-bar: only 'set' is supported" >&2
+        exit 2
+      fi
+      shift
+      id="''${1:?id}"
+      key="''${2:?key}"
+      value="''${3:?value}"
+      json=0
+      if [ "''${4:-}" = "--json" ]; then json=1; fi
+      state="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo/shell"
+      file="$state/plugin-settings.json"
+      mkdir -p "$state"
+      [ -f "$file" ] || echo '{}' > "$file"
+      tmp="$(mktemp "$state/.plugin-settings.XXXXXX")"
+      if [ "$json" = 1 ]; then
+        jq --arg id "$id" --arg key "$key" --argjson val "$value" \
+          '.[$id] = ((.[$id] // {}) + {($key): $val})' "$file" > "$tmp"
+      else
+        jq --arg id "$id" --arg key "$key" --arg val "$value" \
+          '.[$id] = ((.[$id] // {}) + {($key): $val})' "$file" > "$tmp"
+      fi
+      mv -f "$tmp" "$file"
+    '';
+  };
 in
 stdenvNoCC.mkDerivation {
   pname = "marchyo-shell";
@@ -411,10 +492,29 @@ stdenvNoCC.mkDerivation {
     #     Qt6 platform-theme plugin — without the override, tray and
     #     notification themed icons resolve against hicolor and fail
     #     ("Could not load icon ... from request").
+    # When plugins are declared, expose the omarchy CLI shims and the runtime
+    # tools imported omarchy plugins call by bare name (python3, notify-send,
+    # curl, coreutils, hyprctl), and point omarchy-shell at this store shell via
+    # MARCHYO_SHELL_ROOT. Gated so plugin-less hosts keep a lean closure/PATH.
     makeWrapper ${lib.getExe quickshell} "$out/bin/marchyo-shell" \
       --add-flags "-p $out/share/marchyo/shell" \
       --set-default TZDIR /etc/zoneinfo \
-      --set QT_QPA_PLATFORMTHEME gtk3
+      --set QT_QPA_PLATFORMTHEME gtk3${
+        lib.optionalString (plugins != [ ]) ''
+          \
+               --set MARCHYO_SHELL_ROOT "$out/share/marchyo/shell" \
+               --prefix PATH : "${
+                 lib.makeBinPath [
+                   omarchyShell
+                   omarchyBar
+                   python3
+                   libnotify
+                   curl
+                   coreutils
+                   hyprland
+                 ]
+               }"''
+      }
 
     # Greeter wrapper. TZDIR for the clock, like the shell; no
     # QT_QPA_PLATFORMTHEME — the greeter user has no GTK settings and no
