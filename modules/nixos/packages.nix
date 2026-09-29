@@ -77,12 +77,13 @@ in
       fzf.fuzzyCompletion = lib.mkDefault true;
     };
 
-    environment.systemPackages =
+    environment.systemPackages = lib.subtractLists cfg.defaults.excludePackages (
       shellTools
       ++ tuiTools
       ++ (lib.optionals cfg.desktop.enable desktopTools)
       ++ (lib.optionals cfg.media.enable mediaTools)
       ++ (lib.optionals cfg.office.enable officeTools)
-      ++ (lib.optionals cfg.development.enable devTools);
+      ++ (lib.optionals cfg.development.enable devTools)
+    );
   };
 }
