@@ -19,3 +19,4 @@ singleton ScreenRecording 1.0 ScreenRecording.qml
 singleton Nightlight 1.0 Nightlight.qml
 singleton Reminders 1.0 Reminders.qml
 singleton Tailscale 1.0 Tailscale.qml
+singleton Weather 1.0 Weather.qml

@@ -23,4 +23,5 @@ QtObject {
     readonly property string solaar: "solaar"
     readonly property string systemctl: "systemctl"
     readonly property string tailscale: "tailscale"
+    readonly property string curl: "curl"
 }

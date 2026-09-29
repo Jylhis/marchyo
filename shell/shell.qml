@@ -42,6 +42,7 @@ ShellRoot {
             "marchyo.nightLight": cNightLight,
             "marchyo.reminders": cReminders,
             "marchyo.tailscale": cTailscale,
+            "marchyo.weather": cWeather,
             "marchyo.tray": cTray,
             "marchyo.media": cMedia,
             "marchyo.dictation": cDictation,
@@ -90,6 +91,10 @@ ShellRoot {
     Component {
         id: cTailscale
         TailscaleWidget {}
+    }
+    Component {
+        id: cWeather
+        WeatherWidget {}
     }
     Component {
         id: cTray
