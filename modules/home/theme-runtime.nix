@@ -351,6 +351,11 @@ let
 in
 {
   config = lib.mkIf (desktopEnabled && themeEnabled) {
+    # matugen backs `marchyo theme generate <image>` (wallpaper-derived
+    # theming): the CLI shells out to it to turn an image into a base16
+    # palette, then materializes a runtime theme dir from the result.
+    home.packages = [ pkgs.matugen ];
+
     # Declarative pointer to the active variant's assets. Managed by Home
     # Manager, so every activation resets it to the build-time default —
     # marchyo-theme-toggle repoints it (ln -sfn) at runtime.

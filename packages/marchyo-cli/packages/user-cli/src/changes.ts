@@ -1,5 +1,9 @@
 import type { ChangeSpec } from "@marchyo/core";
-import { bgChangeBase, themeChangeBase } from "./commands/theme.ts";
+import {
+  bgChangeBase,
+  generateThemeChangeBase,
+  themeChangeBase,
+} from "./commands/theme.ts";
 import { fontChangeBase } from "./commands/font.ts";
 import { TOGGLES, toggleSpecFor } from "./toggles.ts";
 
@@ -15,5 +19,6 @@ export function registerChange(spec: ChangeSpec): void {
 
 registerChange(themeChangeBase);
 registerChange(bgChangeBase);
+registerChange(generateThemeChangeBase);
 registerChange(fontChangeBase);
 for (const def of TOGGLES) registerChange(toggleSpecFor(def));

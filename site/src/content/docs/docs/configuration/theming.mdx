@@ -125,6 +125,21 @@ marchyo.theme.wallpaper = {
 };
 ```
 
+## Wallpaper-derived theming (matugen)
+
+`marchyo theme generate <image>` builds a colour scheme from a wallpaper with [matugen](https://github.com/InioX/matugen) and applies it live — no rebuild:
+
+```bash
+marchyo theme generate ~/Pictures/wall.jpg          # let matugen pick the polarity
+marchyo theme generate ~/Pictures/wall.jpg --light  # force a light scheme
+marchyo theme generate ~/Pictures/wall.jpg --dark   # force a dark scheme
+marchyo theme generate --revert                     # back to the declarative theme
+```
+
+matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. It recolours the **runtime** surfaces instantly: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, and the wallpaper itself.
+
+Build-time surfaces themed through Stylix (Qt/KDE apps, `bat`, `fzf`, `starship`) keep the declarative theme until the next rebuild — the same limitation every runtime theme switch has ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
+
 ## Light mode
 
 To use the light theme:
