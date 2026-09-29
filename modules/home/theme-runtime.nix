@@ -292,9 +292,13 @@ let
         );
       }
       // lib.optionalAttrs wallpaperEnabled {
-        # No per-scheme art: reuse the Jylhis grid wallpaper of matching
-        # polarity so the desktop background at least tracks dark/light.
-        "wallpaper.png" = "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${scheme.variant}.png";
+        # A per-theme wallpaper when the entry supplies one, else reuse the
+        # Jylhis grid of matching polarity so the background tracks dark/light.
+        "wallpaper.png" =
+          if (scheme.wallpaper or null) != null then
+            scheme.wallpaper
+          else
+            "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${scheme.variant}.png";
       }
       // lib.optionalAttrs (makoText != null) {
         "mako.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-mako.conf" (
@@ -316,28 +320,38 @@ let
       "jylhis-dark"
       "jylhis-light"
     ];
+  # An entry is either a name (the Jylhis pair, or a tinted-schemes base16
+  # name) or an inline base16 theme `{ name; variant; slots; wallpaper?; }`.
+  # Inline entries share the exact shape mkSchemeThemeDir consumes (loadScheme's
+  # result plus an optional wallpaper), so they need no extra machinery — this
+  # is the catalog contract.
   resolveTheme =
-    name:
-    if name == "jylhis-dark" then
-      {
-        inherit name;
-        variant = "dark";
-        dir = themeDirs.dark;
-      }
-    else if name == "jylhis-light" then
-      {
-        inherit name;
-        variant = "light";
-        dir = themeDirs.light;
-      }
+    entry:
+    if lib.isString entry then
+      if entry == "jylhis-dark" then
+        {
+          name = entry;
+          variant = "dark";
+          dir = themeDirs.dark;
+        }
+      else if entry == "jylhis-light" then
+        {
+          name = entry;
+          variant = "light";
+          dir = themeDirs.light;
+        }
+      else
+        let
+          scheme = loadScheme entry;
+        in
+        {
+          inherit (scheme) name variant;
+          dir = mkSchemeThemeDir scheme;
+        }
     else
-      let
-        scheme = loadScheme name;
-      in
       {
-        inherit name;
-        inherit (scheme) variant;
-        dir = mkSchemeThemeDir scheme;
+        inherit (entry) name variant;
+        dir = mkSchemeThemeDir entry;
       };
   resolvedThemes = map resolveTheme themeList;
 

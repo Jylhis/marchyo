@@ -15,7 +15,7 @@ The launcher is a slightly different case, and split by shell: with `marchyo.she
 | `marchyo.theme.variant` | `"dark"` or `"light"` | `"dark"` | Theme variant preference |
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a tinted-schemes catalog name) |
 | `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
-| `marchyo.theme.themes` | `list of string` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
+| `marchyo.theme.themes` | `list of string or inline base16 theme` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
 
@@ -99,6 +99,31 @@ marchyo.theme.themes = [
   "jylhis-light"
   "nord"
   "gruvbox-dark-hard"
+];
+```
+
+### Inline catalog themes
+
+An entry can also be an **inline base16 theme** — the catalog contract — so you
+can add an arbitrary palette (an omarchy `colors.toml`, a matugen result, your
+own) without it living in any upstream catalog. Provide the sixteen
+`base00`..`base0F` slots and a polarity; every runtime surface is derived from
+them, and an optional `wallpaper` overrides the default grid:
+
+```nix
+marchyo.theme.themes = [
+  "jylhis-dark"
+  {
+    name = "kanagawa";
+    variant = "dark";
+    slots = {
+      base00 = "#1f1f28"; base01 = "#2a2a37"; base02 = "#223249"; base03 = "#727169";
+      base04 = "#c8c093"; base05 = "#dcd7ba"; base06 = "#938aa9"; base07 = "#363646";
+      base08 = "#c34043"; base09 = "#ffa066"; base0A = "#dca561"; base0B = "#98bb6c";
+      base0C = "#7fb4ca"; base0D = "#7e9cd8"; base0E = "#957fb8"; base0F = "#d27e99";
+    };
+    # wallpaper = ./kanagawa.png;  # optional; defaults to the Jylhis grid
+  }
 ];
 ```
 
