@@ -55,6 +55,45 @@ let
 
   marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
 
+  # Declarative monitor layout (marchyo.monitors) rendered into the Hyprland
+  # Lua `monitor` table list. Empty (the default) keeps the catch-all that
+  # auto-detects every output at its preferred mode, position, and scale 1.
+  monitorCfg = (osConfig.marchyo or { }).monitors or [ ];
+  renderMonitor =
+    m:
+    if !m.enable then
+      # Hyprland disables an output with the `disabled` table field; "disable"
+      # is not a valid value for `mode`, and hl.monitor takes only a table.
+      {
+        inherit (m) output;
+        disabled = true;
+      }
+    else
+      {
+        inherit (m)
+          output
+          mode
+          position
+          scale
+          ;
+      }
+      // lib.optionalAttrs (m.transform != 0) { inherit (m) transform; }
+      // lib.optionalAttrs (m.vrr != null) { inherit (m) vrr; }
+      // m.extraSettings;
+  monitorList =
+    if monitorCfg == [ ] then
+      [
+        {
+          output = "";
+          mode = "preferred";
+          position = "auto";
+          scale = 1;
+          vrr = 1;
+        }
+      ]
+    else
+      map renderMonitor monitorCfg;
+
   dictationEnabled = ((osConfig.marchyo or { }).dictation or { }).enable or false;
   dictationToggleKey = ((osConfig.marchyo or { }).dictation or { }).toggleKey or "SUPER + CTRL + X";
   dictationStatusWindow =
@@ -313,15 +352,7 @@ in
           };
         };
 
-        monitor = lib.mkAfter [
-          {
-            output = "";
-            mode = "preferred";
-            position = "auto";
-            scale = 1;
-            vrr = 1;
-          }
-        ];
+        monitor = lib.mkAfter monitorList;
 
         # Window rules. Order matters (rules are evaluated top to bottom).
         # See https://wiki.hypr.land/Configuring/Basics/Window-Rules/
