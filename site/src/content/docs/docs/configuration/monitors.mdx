@@ -1,0 +1,57 @@
+---
+title: Monitors
+description: Declaratively configure monitor outputs, resolution, position, and scale
+---
+
+`marchyo.monitors` declares your monitor layout as data. Each entry configures one output and is rendered into Hyprland's `monitor` table.
+
+When the list is empty (the default), Marchyo keeps a single catch-all rule that auto-detects every connected output at its preferred mode, position `auto`, and scale `1` — the historical behaviour. Hosts that do not care about layout need set nothing.
+
+## Options
+
+Each entry in the `marchyo.monitors` list accepts:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `output` | string | — (required) | Connector name as `hyprctl monitors` reports it, e.g. `"eDP-1"`, `"DP-1"`. `""` matches any unnamed output. |
+| `enable` | bool | `true` | When `false`, the output is disabled and all other fields are ignored. |
+| `mode` | string | `"preferred"` | `WIDTHxHEIGHT@HZ`, or `preferred` / `highres` / `highrr`. |
+| `position` | string | `"auto"` | `Xx Y` (e.g. `"1920x0"`), or `auto` / `auto-right` / `auto-left` / `auto-up` / `auto-down`. |
+| `scale` | number | `1.0` | Fractional scale (e.g. `1.5`, `2.0`). |
+| `transform` | 0–7 | `0` | Rotation/flip. `1` = 90°, `2` = 180°, `3` = 270°; `4`–`7` are the flipped variants. Emitted only when non-zero. |
+| `vrr` | 0–3 or null | `null` | Per-output adaptive sync: `0` off, `1` on, `2` fullscreen-only, `3` fullscreen-with-video. When `null`, the global `misc:vrr` applies. |
+| `extraSettings` | attrset | `{}` | Extra key/value pairs merged verbatim into the output's monitor table (e.g. `bitdepth`, `mirror`). |
+
+## Example
+
+```nix
+marchyo.monitors = [
+  {
+    output = "eDP-1";
+    mode = "2256x1504@60";
+    position = "0x0";
+    scale = 1.5;
+  }
+  {
+    output = "DP-1";
+    mode = "3840x2160@144";
+    position = "auto-right";
+    scale = 2.0;
+    vrr = 1;
+    extraSettings.bitdepth = 10;
+  }
+];
+```
+
+## Disabling an output
+
+```nix
+marchyo.monitors = [
+  { output = "eDP-1"; }          # laptop panel, defaults
+  { output = "HDMI-A-1"; enable = false; }  # ignore the TV
+];
+```
+
+## Interactive tweaks
+
+For one-off, live adjustments (drag-to-arrange, quick scale changes) use `hyprmon` from the monitor menu. Those changes apply immediately but do not persist across a rebuild; entries in `marchyo.monitors` do.
