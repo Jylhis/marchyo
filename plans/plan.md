@@ -1,15 +1,7 @@
 # Marchyo Feature Roadmap — remaining work
 
-> Derived from the omarchy↔marchyo gap analysis. The original 24-feature,
-> dependency-ordered roadmap has fully shipped: the 2026-07 parity batch
-> (PRs #104–#121), the unified runtime-first change model (runtime /
-> `--apply` / `--revert` on every mutating CLI command, backed by
-> `packages/marchyo-cli/packages/core/src/{runtime-state,apply}.ts` and
-> `marchyo runtime restore`), the full CLI command surface (toggles,
-> capture, menu/launchers, power/session, font, install/remove, webapp,
-> security enrollment), and N-theme runtime switching
-> (`marchyo.theme.themes` + `marchyo theme list/set/next` + `marchyo bg`).
-> This file now tracks only what is left.
+Tracks the feature work that is still open. Everything not listed here is
+implemented in the flake.
 
 ## F1.11 — Local AI integration (deferred)
 
@@ -28,10 +20,12 @@
 - **Share upload target.** `marchyo share` stages clipboard/file/folder
   paths on the clipboard; an actual upload backend is still an open
   decision.
-- **hyprlock live theme swap.** The runtime theme switch recolors ghostty,
-  GTK, Hyprland, and the bar at runtime, but hyprlock (plus console and
-  Plymouth) keeps the build-time theme until rebuild. A `source =` include
-  in the hyprlock config would make it runtime-swappable.
+- **hyprlock live theme swap.** With the shell on, the lock surface is now
+  the in-shell `WlSessionLock` (`shell/Lock/`), which binds `Color.*` and so
+  already follows `marchyo theme set` live. Only the shell-off path
+  (hyprlock, plus console and Plymouth) keeps the build-time theme until
+  rebuild; a `source =` include in the hyprlock config would make hyprlock
+  runtime-swappable there.
 
 ## Out of scope (Nix subsumes or low value)
 

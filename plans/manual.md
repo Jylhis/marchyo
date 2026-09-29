@@ -7,16 +7,16 @@ front-to-back, distinct from the option reference. Audience is end users, not
 contributors — no Nix internals, no module paths; voice is prose-first,
 second-person, task-oriented.
 
-**Status:** 10 of the 15 skeleton chapters are written
-(01, 02, 04, 06, 07, 08, 09, 10, 11, 12). Five remain TODO stubs:
+**Status:** 9 of the 14 chapters are written
+(01, 02, 04, 06, 07, 08, 09, 10, 11). Five remain TODO stubs:
 
 | # | Chapter | Source to adapt | Notes |
 |---|---------|-----------------|-------|
 | 03 | Coming from Other Distros | new | Arch/omarchy/mac/win switchers; the golden rule (never install imperatively) |
 | 05 | The Top Bar | shell/README.md | **Stale stub**: describes the Waybar tour — the marchyo shell (`marchyo.shell.enable`) is now the default-when-enabled bar; cover both, keyed on the flag |
-| 13 | Monitors | `configuration/graphics` + hyprmon | declarative vs TUI, scaling + the scale-cycle bind, lid behavior |
-| 14 | Networking | new | wifi/bt TUIs, tailscale default + trusted interface, localsend, firewall default |
-| 15 | Hardware Authentication | `configuration/…` | fingerprint (`marchyo.security.fingerprint.enable`), FIDO2, `marchyo security enroll` |
+| 12 | Monitors | `configuration/graphics` + hyprmon | declarative vs TUI, scaling + the scale-cycle bind, lid behavior |
+| 13 | Networking | new | wifi/bt TUIs, tailscale default + trusted interface, localsend, firewall default |
+| 14 | Hardware Authentication | `configuration/…` | fingerprint (`marchyo.security.fingerprint.enable`), FIDO2, `marchyo security enroll` |
 
 Conventions for filling them in: minimal Starlight frontmatter (`title`,
 optional `description`), kebab-case numbered files with gaps allowed,
