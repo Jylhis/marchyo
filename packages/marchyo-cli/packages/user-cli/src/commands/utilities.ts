@@ -195,7 +195,7 @@ const FFMPEG_ARGS: Record<string, string[]> = {
   gif: ["-vf", "fps=12,scale=640:-1:flags=lanczos"],
 };
 
-export type TranscodeOpts = { ascii?: boolean; to?: string };
+export type TranscodeOpts = { ascii?: boolean; imageAscii?: boolean; to?: string };
 
 export async function runTranscode(
   rt: Runtime,
@@ -218,6 +218,15 @@ export async function runTranscode(
     return runArgv(["sh", "-c", `tte beams < '${src.replace(/'/g, `'\\''`)}'`]);
   }
 
+  if (opts.imageAscii) {
+    // Render an image as ASCII/ANSI art to stdout with chafa. No output file.
+    if (!commandAvailable("chafa")) {
+      err(rt, "chafa not found in PATH");
+      return 1;
+    }
+    return runArgv(["chafa", src]);
+  }
+
   let target = opts.to ?? null;
   if (target === null) {
     const choices = [
@@ -225,11 +234,13 @@ export async function runTranscode(
       "webm",
       "gif",
       ...(commandAvailable("tte") ? ["ascii (tte)"] : []),
+      ...(commandAvailable("chafa") ? ["ascii-art (chafa)"] : []),
     ];
     target = await gumChoose("Transcode to", choices);
   }
   if (target === null) return 0;
   if (target === "ascii (tte)") return runTranscode(rt, src, { ascii: true });
+  if (target === "ascii-art (chafa)") return runTranscode(rt, src, { imageAscii: true });
   const args = FFMPEG_ARGS[target];
   if (!args) {
     return usageError(

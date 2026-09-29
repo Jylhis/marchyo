@@ -71,7 +71,7 @@ Commands:
   info <what>                           Quick-info notification (datetime,
                                         battery)
   transcode [options] [file]            Transcode media next to the source
-                                        (ffmpeg / tte)
+                                        (ffmpeg / tte / chafa)
   share [file]                          Copy content or a path to the clipboard
                                         for sharing
   font                                  Terminal font: list, current, or
