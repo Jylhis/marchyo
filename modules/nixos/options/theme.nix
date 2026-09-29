@@ -28,25 +28,69 @@ in
     };
 
     themes = mkOption {
-      type = types.listOf types.str;
+      type = types.listOf (
+        types.either types.str (
+          types.submodule {
+            options = {
+              name = mkOption {
+                type = types.str;
+                description = "Theme name (shown by `marchyo theme list`, used by `set`).";
+              };
+              variant = mkOption {
+                type = types.enum [
+                  "dark"
+                  "light"
+                ];
+                description = "Polarity, so the wallpaper and light/dark surfaces track it.";
+              };
+              slots = mkOption {
+                type = types.attrsOf types.str;
+                example = lib.literalExpression ''{ base00 = "#1d2021"; base05 = "#d4be98"; /* … base0F */ }'';
+                description = ''
+                  The 16 base16 colour slots `base00`..`base0F` as `#rrggbb`
+                  strings. This is the universal palette contract: an omarchy
+                  `colors.toml` or a matugen-generated palette both map onto it,
+                  and every runtime surface (the shell's colors.json, ghostty,
+                  Hyprland borders, mako, waybar, GTK) is derived from these.
+                '';
+              };
+              wallpaper = mkOption {
+                type = types.nullOr types.path;
+                default = null;
+                description = ''
+                  Wallpaper for this theme. Defaults to the Jylhis grid of
+                  matching polarity when unset.
+                '';
+              };
+            };
+          }
+        )
+      );
       default = [
         "jylhis-dark"
         "jylhis-light"
       ];
-      example = [
-        "jylhis-dark"
-        "jylhis-light"
-        "nord"
-        "gruvbox-dark-hard"
-      ];
+      example = lib.literalExpression ''
+        [
+          "jylhis-dark"
+          "jylhis-light"
+          "nord"
+          { name = "custom"; variant = "dark"; slots = { base00 = "#101010"; /* … */ }; }
+        ]
+      '';
       description = ''
         Themes available for runtime switching (`marchyo theme set/next`).
         Each listed theme's desktop assets are pre-built into the system
-        closure so switching is an instant symlink swap. `jylhis-dark` and
-        `jylhis-light` are the Jylhis Design System variants; any other
-        name must match a `.yaml` file in the tinted-schemes catalog's
-        `base16/` directory (e.g. "nord", "gruvbox-dark-hard"). This does not change the
-        build-time default — see `variant`/`scheme` for that.
+        closure so switching is an instant symlink swap. Entries may be:
+
+        - `"jylhis-dark"` / `"jylhis-light"` — the Jylhis Design System variants;
+        - any other string — the name of a `.yaml` in the tinted-schemes
+          catalog's `base16/` directory (e.g. `"nord"`, `"gruvbox-dark-hard"`);
+        - an inline base16 theme `{ name; variant; slots; wallpaper?; }` — the
+          catalog machinery, so an arbitrary palette (an omarchy theme, a
+          matugen result, your own) can be added without shipping it upstream.
+
+        This does not change the build-time default — see `variant`/`scheme`.
       '';
     };
 
