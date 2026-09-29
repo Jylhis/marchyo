@@ -9,7 +9,13 @@
 let
   inherit (helpers) assertTest;
 
-  plugin = pkgs.mkMarchyoShellPlugin {
+  # The test harness passes a bare nixpkgs (no marchyo overlay), so build the
+  # plugin straight from plugin.nix via callPackage rather than
+  # pkgs.mkMarchyoShellPlugin. callPackage fills the tool args and leaves the
+  # { src, id, ... } function.
+  mkPlugin = pkgs.callPackage ../../packages/marchyo-shell/plugin.nix { };
+
+  plugin = mkPlugin {
     src = ./fixtures/example-plugin;
     id = "example.hello";
     kinds = [ "bar-widget" ];
@@ -29,15 +35,13 @@ in
 
   # The marchyo.* namespace is reserved: building such a plugin must abort.
   eval-shell-plugin-reserved-ns = assertTest "shell-plugin-reserved-ns" (
-    !(builtins.tryEval (
-      pkgs.mkMarchyoShellPlugin {
-        src = ./fixtures/example-plugin;
-        id = "marchyo.hello";
-        kinds = [ "bar-widget" ];
-        entryPoints = {
-          barWidget = "BarWidget.qml";
-        };
-      }
-    )).success
+    !(builtins.tryEval (mkPlugin {
+      src = ./fixtures/example-plugin;
+      id = "marchyo.hello";
+      kinds = [ "bar-widget" ];
+      entryPoints = {
+        barWidget = "BarWidget.qml";
+      };
+    })).success
   ) "mkMarchyoShellPlugin must refuse the reserved marchyo.* id namespace";
 }
