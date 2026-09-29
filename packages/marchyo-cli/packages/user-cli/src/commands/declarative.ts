@@ -40,7 +40,7 @@ const TAKEN_SUPER_SHIFT_KEYS = new Set(
 
 export type DeclarativeOpts = { dryRun?: boolean };
 
-async function persistAndRebuild(
+export async function persistAndRebuild(
   rt: Runtime,
   patch: State,
   opts: DeclarativeOpts,

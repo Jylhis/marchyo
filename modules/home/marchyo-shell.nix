@@ -21,6 +21,24 @@ let
   # Declared shell plugins (build-time Option A), baked into the store shell.
   shellPlugins = ((osConfig.marchyo or { }).shell or { }).plugins or [ ];
 
+  # CLI-added plugins arrive as raw pinned git specs (marchyo.shell.extraPlugins,
+  # via the marchyoCliState sidecar). Turn each into a built plugin here, where
+  # pkgs is Linux and mkMarchyoShellPlugin exists, and append to the flake's own
+  # `plugins` list (never replacing it). name/version are only forwarded when set
+  # so the builder's `name ? id` / `version ? "0"` defaults still apply.
+  shellExtraPlugins = ((osConfig.marchyo or { }).shell or { }).extraPlugins or [ ];
+  builtExtraPlugins = map (
+    p:
+    pkgs.mkMarchyoShellPlugin (
+      {
+        src = pkgs.fetchgit { inherit (p) url rev hash; };
+        inherit (p) id kinds entryPoints;
+      }
+      // lib.optionalAttrs (p.name or null != null) { inherit (p) name; }
+      // lib.optionalAttrs (p.version or null != null) { inherit (p) version; }
+    )
+  ) shellExtraPlugins;
+
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
   # Same voxtypeIndicator derivation as waybar.nix: on when dictation is enabled
@@ -61,7 +79,7 @@ let
       animationSpeed
       highContrast
       ;
-    plugins = shellPlugins;
+    plugins = shellPlugins ++ builtExtraPlugins;
   };
 in
 {
