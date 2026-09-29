@@ -11,16 +11,25 @@ import {
   THEME_ALIASES,
   applyChange,
   awwwImgArgv,
+  captureArgv,
   colorSchemeGvariant,
   currentThemePointerPath,
   data,
   dconfWriteArgv,
   declarativePointerPath,
   err,
+  ghosttyConfFromBase16,
   hint,
   hyprctlEvalArgv,
   hyprlandAvailable,
+  hyprlandConfFromBase16,
   makoctlArgv,
+  matugenArgv,
+  ColorsJson as ColorsJsonSchema,
+  detectVariant,
+  generatedThemeDirPath,
+  parseMatugenBase16,
+  recolorShellColors,
   nextTheme,
   notifySendArgv,
   parseChangeFlags,
@@ -32,7 +41,8 @@ import {
   usageError,
   warn,
 } from "@marchyo/core";
-import { mkdir, symlink, rename } from "node:fs/promises";
+import type { Variant } from "@marchyo/core";
+import { mkdir, symlink, rename, writeFile } from "node:fs/promises";
 
 // Actuation helpers (absorbed from modules/home/theme-runtime.nix's
 // marchyo-theme-toggle — same commands, same || true tolerance)
@@ -375,4 +385,108 @@ export async function runBgNext(rt: Runtime): Promise<number> {
   const idx = images.indexOf(real);
   const next = images[(idx + 1) % images.length]!;
   return applyChange(rt, bgChangeBase, { mode: "runtime", value: next });
+}
+
+// Wallpaper-derived theming (`marchyo theme generate <image>`). matugen turns
+// the image into a base16 palette; we materialize a runtime theme dir from it
+// (mirroring the scheme assets modules/home/theme-runtime.nix builds) and apply
+// it live via activateThemeDir. Runtime-only, like `bg` — a rebuild resets to
+// the declarative theme. The override value is a JSON string carrying the
+// image path and the requested polarity so `runtime restore` can replay it.
+
+type GenerateValue = { image: string; variant: Variant | "auto" };
+
+function readCurrentColors(): ColorsJsonSchema {
+  const path = join(currentThemePointerPath(), "colors.json");
+  if (!existsSync(path)) {
+    throw new Error(
+      "no active theme colors.json (enable marchyo.desktop and rebuild)",
+    );
+  }
+  return ColorsJsonSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+}
+
+export const generateThemeChangeBase: ChangeSpec = {
+  key: "theme.generate",
+  runtimeApply: async (ctx) => {
+    const raw = typeof ctx.value === "string" ? ctx.value : null;
+    if (raw === null) throw new Error("theme.generate needs a value");
+    const spec = JSON.parse(raw) as GenerateValue;
+
+    const { code, stdout } = await captureArgv(matugenArgv(spec.image));
+    if (code !== 0 || stdout.trim() === "") {
+      throw new Error(
+        `matugen failed for ${spec.image} (is matugen installed and the image readable?)`,
+      );
+    }
+    const variant = spec.variant === "auto" ? detectVariant(stdout) : spec.variant;
+    const base16 = parseMatugenBase16(stdout, variant);
+
+    const dir = generatedThemeDirPath();
+    await mkdir(dir, { recursive: true });
+    const colors = recolorShellColors(
+      readCurrentColors(),
+      base16,
+      variant,
+      "generated",
+    );
+    await writeFile(join(dir, "colors.json"), `${JSON.stringify(colors)}\n`);
+    await writeFile(join(dir, "variant"), `${variant}\n`);
+    await writeFile(join(dir, "hyprland.conf"), hyprlandConfFromBase16(base16));
+    await writeFile(join(dir, "ghostty.conf"), ghosttyConfFromBase16(base16));
+    // The source image becomes the theme dir's wallpaper (activateThemeDir
+    // reads `wallpaper.png`); relinkConfig gives an atomic symlink swap.
+    await relinkConfig(spec.image, join(dir, "wallpaper.png"));
+
+    await activateThemeDir(ctx, { name: "generated", variant, dir });
+    return raw;
+  },
+  runtimeRevert: async (ctx) => {
+    const manifest = await readThemeManifest();
+    const entry = declarativeTheme(manifest) ?? manifest[0] ?? null;
+    if (entry) await activateThemeDir(ctx, entry);
+  },
+};
+
+export type ThemeGenerateOpts = {
+  light?: boolean;
+  dark?: boolean;
+  revert?: boolean;
+};
+
+export async function runThemeGenerate(
+  rt: Runtime,
+  rawPath: string,
+  opts: ThemeGenerateOpts,
+): Promise<number> {
+  if (opts.light && opts.dark) {
+    return usageError(
+      rt,
+      "--light and --dark are mutually exclusive",
+      "pass one of them (or neither to let matugen decide)",
+    );
+  }
+  const mode = parseChangeFlags(rt, { revert: opts.revert });
+  if (mode === 2) return 2;
+  if (mode !== "revert" && rawPath === "") {
+    return usageError(
+      rt,
+      "theme generate needs an image path",
+      "marchyo theme generate ~/pictures/wall.png   (or: marchyo theme generate --revert)",
+    );
+  }
+  const image = isAbsolute(rawPath) ? rawPath : resolve(rawPath);
+  if (mode !== "revert" && !existsSync(image)) {
+    err(rt, `no such image: ${image}`);
+    return 1;
+  }
+  const variant: Variant | "auto" = opts.light
+    ? "light"
+    : opts.dark
+      ? "dark"
+      : "auto";
+  return applyChange(rt, generateThemeChangeBase, {
+    mode,
+    value: JSON.stringify({ image, variant }),
+  });
 }

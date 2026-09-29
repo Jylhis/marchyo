@@ -12,6 +12,7 @@ import { runStatus } from "./commands/status.tsx";
 import {
   runBgNext,
   runBgSet,
+  runThemeGenerate,
   runThemeGet,
   runThemeList,
   runThemeNext,
@@ -222,6 +223,35 @@ Examples:
   .action(async (opts: { apply?: boolean }) => {
     process.exit(await runThemeNext(rt(), opts));
   });
+
+theme
+  .command("generate")
+  .description("Generate and apply a theme from a wallpaper image (matugen)")
+  .argument("[image]", "path to a wallpaper image")
+  .option("--light", "Force a light scheme (default: matugen decides)")
+  .option("--dark", "Force a dark scheme (default: matugen decides)")
+  .option("--revert", "Undo: back to the declarative theme")
+  .addHelpText(
+    "after",
+    `
+Runtime-only: recolors the shell, terminal, Hyprland borders, and wallpaper
+live from the image's palette. Build-time surfaces (Qt, bat, fzf) keep the
+declarative theme until the next rebuild. A rebuild resets everything.
+
+Examples:
+  $ marchyo theme generate ~/Pictures/wall.jpg
+  $ marchyo theme generate ~/Pictures/wall.jpg --light
+  $ marchyo theme generate --revert
+`,
+  )
+  .action(
+    async (
+      image: string | undefined,
+      opts: { light?: boolean; dark?: boolean; revert?: boolean },
+    ) => {
+      process.exit(await runThemeGenerate(rt(), image ?? "", opts));
+    },
+  );
 
 const bg = program
   .command("bg")

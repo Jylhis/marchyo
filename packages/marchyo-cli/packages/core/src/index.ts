@@ -9,3 +9,4 @@ export * from "./runtime-state.ts";
 export * from "./desktop.ts";
 export * from "./apply.ts";
 export * from "./theme-assets.ts";
+export * from "./matugen.ts";
