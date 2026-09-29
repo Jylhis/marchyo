@@ -30,6 +30,7 @@ let
     ouch # archive compression/extraction (replaces file-roller)
     gum # shell-script UI toolkit (prompts, spinners, styled output)
     imagemagick # image conversion/resize/manipulation CLI
+    chafa # image -> terminal/ASCII art (backs `marchyo transcode ascii`)
     inxi # full-featured system information tool (hardware/driver report)
   ];
 
@@ -58,6 +59,7 @@ let
   officeTools = with pkgs; [
     # papers # Document viewer. Slow to compile. Find lighter alternative?
     obsidian
+    xournalpp # PDF annotation + handwriting/note-taking
   ];
 
   # Development tools
