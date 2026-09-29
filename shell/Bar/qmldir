@@ -2,6 +2,7 @@ module qs.Bar
 SessionWidget 1.0 SessionWidget.qml
 ClockWidget 1.0 ClockWidget.qml
 WorkspacesWidget 1.0 WorkspacesWidget.qml
+ActiveWindowWidget 1.0 ActiveWindowWidget.qml
 BatteryWidget 1.0 BatteryWidget.qml
 PeripheralsWidget 1.0 PeripheralsWidget.qml
 AudioWidget 1.0 AudioWidget.qml

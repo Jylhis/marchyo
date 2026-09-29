@@ -36,6 +36,7 @@ ShellRoot {
     readonly property var barComponents: ({
             "marchyo.session": cSession,
             "marchyo.workspaces": cWorkspaces,
+            "marchyo.activeWindow": cActiveWindow,
             "marchyo.clock": cClock,
             "marchyo.tray": cTray,
             "marchyo.media": cMedia,
@@ -61,6 +62,10 @@ ShellRoot {
     Component {
         id: cWorkspaces
         WorkspacesWidget {}
+    }
+    Component {
+        id: cActiveWindow
+        ActiveWindowWidget {}
     }
     Component {
         id: cClock

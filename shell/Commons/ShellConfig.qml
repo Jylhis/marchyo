@@ -31,6 +31,9 @@ QtObject {
                 },
                 {
                     id: "marchyo.workspaces"
+                },
+                {
+                    id: "marchyo.activeWindow"
                 }
             ],
             center: [
