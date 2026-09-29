@@ -11,8 +11,11 @@ import qs.Services
 BarItem {
     id: root
 
+    interactive: true
     visible: Weather.available
     text: Weather.icon + "  " + Weather.tempC + "°C"
     textColor: Color.text
     tooltipText: Weather.description !== "" ? Weather.description + ", " + Weather.tempC + "°C" : "Weather"
+
+    onClicked: PanelManager.toggle("weather", root)
 }
