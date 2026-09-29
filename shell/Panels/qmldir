@@ -5,3 +5,4 @@ PowerPanel 1.0 PowerPanel.qml
 MonitorPanel 1.0 MonitorPanel.qml
 WeatherPanel 1.0 WeatherPanel.qml
 TailscalePanel 1.0 TailscalePanel.qml
+WifiQrPanel 1.0 WifiQrPanel.qml

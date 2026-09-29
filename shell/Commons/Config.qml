@@ -24,4 +24,5 @@ QtObject {
     readonly property string systemctl: "systemctl"
     readonly property string tailscale: "tailscale"
     readonly property string curl: "curl"
+    readonly property string qrencode: "qrencode"
 }
