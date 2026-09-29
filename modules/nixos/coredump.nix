@@ -8,11 +8,11 @@
   # loop cannot fill the disk. mkDefault throughout so a host can override.
   systemd.coredump = {
     enable = lib.mkDefault true;
-    extraConfig = lib.mkDefault ''
-      Storage=external
-      Compress=yes
-      MaxUse=2G
-      ProcessSizeMax=8G
-    '';
+    settings.Coredump = {
+      Storage = lib.mkDefault "external";
+      Compress = lib.mkDefault "yes";
+      MaxUse = lib.mkDefault "2G";
+      ProcessSizeMax = lib.mkDefault "8G";
+    };
   };
 }
