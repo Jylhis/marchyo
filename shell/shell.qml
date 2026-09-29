@@ -38,6 +38,8 @@ ShellRoot {
             "marchyo.workspaces": cWorkspaces,
             "marchyo.activeWindow": cActiveWindow,
             "marchyo.clock": cClock,
+            "marchyo.screenRecording": cScreenRecording,
+            "marchyo.nightLight": cNightLight,
             "marchyo.tray": cTray,
             "marchyo.media": cMedia,
             "marchyo.dictation": cDictation,
@@ -70,6 +72,14 @@ ShellRoot {
     Component {
         id: cClock
         ClockWidget {}
+    }
+    Component {
+        id: cScreenRecording
+        ScreenRecordingWidget {}
+    }
+    Component {
+        id: cNightLight
+        NightLightWidget {}
     }
     Component {
         id: cTray
