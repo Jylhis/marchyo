@@ -22,8 +22,10 @@ in
 
     # Optimises CPU governor / scheduling while a game runs (opt-in per game).
     programs.gamemode.enable = lib.mkDefault true;
-    # Gamescope micro-compositor (cap_sys_nice wrapper) for upscaling/frame limits.
-    programs.gamescope.enable = lib.mkDefault true;
+    # Gamescope micro-compositor (cap_sys_nice wrapper) for upscaling/frame
+    # limits. Normal priority so it wins over the mkDefault=false that
+    # programs.steam sets when its gamescope session is off; still overridable.
+    programs.gamescope.enable = true;
 
     # Controller/VR/Steam-Deck udev rules, and the Xbox controller driver.
     hardware.steam-hardware.enable = lib.mkDefault true;
