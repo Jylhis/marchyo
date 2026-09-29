@@ -18,6 +18,16 @@ QtObject {
     property string tempC: ""
     property string description: ""
     property string icon: ""
+    // Up to 3 upcoming days: [{ day, hi, lo, icon }]. Populated from the same
+    // wttr.in j1 response as the current conditions, for the forecast panel.
+    property var forecast: []
+
+    function dayName(dateStr): string {
+        const d = new Date(String(dateStr) + "T12:00:00");
+        if (isNaN(d.getTime()))
+            return "";
+        return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+    }
 
     // WWO weather codes (wttr.in) → nerd-font glyphs, a compact subset of
     // omarchy's iconForCode map: clear, cloud, fog, rain, snow, thunder.
@@ -54,6 +64,22 @@ QtObject {
         root.description = cur.weatherDesc && cur.weatherDesc[0] ? String(cur.weatherDesc[0].value || "") : "";
         root.icon = root.iconForCode(cur.weatherCode);
         root.available = root.tempC !== "";
+
+        // Forecast: wttr's `weather` array carries per-day hi/lo and 3-hourly
+        // slots; use the midday slot (index 4 ≈ 12:00) for the day's icon.
+        const days = data.weather || [];
+        const out = [];
+        for (var i = 0; i < days.length && out.length < 3; i++) {
+            const d = days[i] || {};
+            const mid = d.hourly && d.hourly[4] ? d.hourly[4] : (d.hourly && d.hourly[0] ? d.hourly[0] : {});
+            out.push({
+                day: root.dayName(d.date),
+                hi: String(d.maxtempC || ""),
+                lo: String(d.mintempC || ""),
+                icon: root.iconForCode(mid.weatherCode)
+            });
+        }
+        root.forecast = out;
     }
 
     readonly property var probe: Process {

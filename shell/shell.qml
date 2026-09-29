@@ -194,6 +194,7 @@ ShellRoot {
     NetworkPanel {}
     PowerPanel {}
     MonitorPanel {}
+    WeatherPanel {}
     NotificationCenter {}
 
     // Launcher: apps / emoji / clipboard surface, summoned over IPC by the
