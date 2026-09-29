@@ -17,3 +17,4 @@ singleton Lock 1.0 Lock.qml
 singleton Launcher 1.0 Launcher.qml
 singleton ScreenRecording 1.0 ScreenRecording.qml
 singleton Nightlight 1.0 Nightlight.qml
+singleton Reminders 1.0 Reminders.qml
