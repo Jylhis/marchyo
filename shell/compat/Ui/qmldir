@@ -1,0 +1,12 @@
+module qs.compat.Ui
+BarWidget 1.0 BarWidget.qml
+Panel 1.0 Panel.qml
+PanelController 1.0 PanelController.qml
+PanelKeyCatcher 1.0 PanelKeyCatcher.qml
+WidgetButton 1.0 WidgetButton.qml
+BarIconButton 1.0 BarIconButton.qml
+OpticalGlyph 1.0 OpticalGlyph.qml
+PluginBarApi 1.0 PluginBarApi.qml
+KeyboardPanel 1.0 KeyboardPanel.qml
+BorderSurface 1.0 BorderSurface.qml
+BorderOverlay 1.0 BorderOverlay.qml

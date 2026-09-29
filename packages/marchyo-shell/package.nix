@@ -343,6 +343,12 @@ stdenvNoCC.mkDerivation {
       ${lib.concatMapStringsSep "\n" (p: ''
         cp -r ${p} "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
         chmod -R u+w "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
+        # Rewrite omarchy plugin imports onto the compat host namespace
+        # (shell/compat) so vendored omarchy QML resolves marchyo's shim
+        # instead of marchyo's own qs.Ui / qs.Commons (different API). Scoped to
+        # the two omarchy module names; the plugin's source stays unmodified.
+        find "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}" -type f \( -name '*.qml' -o -name '*.js' \) -print0 \
+          | xargs -0 -r sed -i -e 's/\bimport qs\.Ui\b/import qs.compat.Ui/g' -e 's/\bimport qs\.Commons\b/import qs.compat.Commons/g'
       '') plugins}
     ''}
 

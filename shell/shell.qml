@@ -13,6 +13,9 @@ import qs.Launcher
 import qs.Notifications
 import qs.Lock
 import qs.Services
+// omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
+// Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
+import qs.compat.Ui as Plugin
 
 // A Jylhis-themed top bar plus the shell surfaces (OSD, panels, lock,
 // notifications, launcher), composed from qs.Bar widgets backed by qs.Ui
@@ -157,6 +160,39 @@ ShellRoot {
         BatteryWidget {}
     }
 
+    // Per-widget host facade handed to an omarchy-compat plugin bar widget as
+    // its `bar`. Scalars mirror marchyo's bar (colors, font, geometry); shared
+    // popout state and click-target registry delegate to Services/PluginPopout;
+    // operations route to marchyo services. Created per plugin widget in
+    // applyWidget() so `pluginId`/`moduleName` carry that widget's id.
+    Component {
+        id: cPluginBar
+        Plugin.PluginBarApi {
+            foreground: Color.text
+            barForeground: Color.text
+            background: Color.background
+            urgent: Color.statusErr
+            fontFamily: Style.fontFamily
+            position: "top"
+            vertical: false
+            barSize: Style.barHeight
+            transparent: false
+            foregroundAnimationEnabled: true
+            activePopout: PluginPopout.activePopout
+            clickTargets: PluginPopout.clickTargets
+            _showTooltip: (target, text) => Tooltip.show(text, target)
+            _hideTooltip: target => Tooltip.hide()
+            _run: command => Quickshell.execDetached(["sh", "-lc", command])
+            _requestPopout: owner => PluginPopout.requestPopout(owner)
+            _releasePopout: owner => PluginPopout.releasePopout(owner)
+            _registerClickTarget: target => PluginPopout.registerClickTarget(target)
+            _unregisterClickTarget: target => PluginPopout.unregisterClickTarget(target)
+            _switchPanelFrom: (owner, direction) => PluginPopout.switchPanelFrom(owner, direction)
+            _targetBelongsToWindow: (target, window) => PluginPopout.targetBelongsToWindow(target, window)
+            _moduleWidgets: id => PluginPopout.moduleWidgets(id)
+        }
+    }
+
     // Resolve a bar-layout id to a Component: first-party map, then plugins.
     function componentFor(id: string): Component {
         if (shell.barComponents[id])
@@ -174,6 +210,19 @@ ShellRoot {
             item.screenName = screenName;
         if (entry.settings !== undefined && typeof item.settings !== "undefined")
             item.settings = entry.settings;
+        // omarchy-compat plugin widgets expose `bar` + `moduleName` (see
+        // shell/compat/Ui/BarWidget.qml, Panel.qml). Give them their id and a
+        // freshly-created PluginBarApi facade, parented to the widget so it is
+        // torn down with it. First-party BarItem widgets have neither property
+        // and are left untouched.
+        if (typeof item.moduleName === "string" && typeof item.bar !== "undefined") {
+            item.moduleName = entry.id;
+            if (!item.bar)
+                item.bar = cPluginBar.createObject(item, {
+                    "pluginId": entry.id,
+                    "moduleName": entry.id
+                });
+        }
     }
 
     // On-screen display for volume/brightness/mic-mute (replaces SwayOSD). Reacts
