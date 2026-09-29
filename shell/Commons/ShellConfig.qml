@@ -43,6 +43,9 @@ QtObject {
             ],
             right: [
                 {
+                    id: "marchyo.screenRecording"
+                },
+                {
                     id: "marchyo.tray"
                 },
                 {

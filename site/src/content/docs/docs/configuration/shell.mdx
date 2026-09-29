@@ -42,11 +42,15 @@ marchyo.shell.settings = {
 ```
 
 First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
-`marchyo.activeWindow`, `marchyo.clock`,
-`marchyo.tray`, `marchyo.media`, `marchyo.dictation`, `marchyo.caffeine`,
-`marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`, `marchyo.bluetooth`,
-`marchyo.network`, `marchyo.mic`, `marchyo.audio`, `marchyo.cpu`,
-`marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`.
+`marchyo.activeWindow`, `marchyo.clock`, `marchyo.screenRecording`,
+`marchyo.nightLight`, `marchyo.tray`, `marchyo.media`, `marchyo.dictation`,
+`marchyo.caffeine`, `marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`,
+`marchyo.bluetooth`, `marchyo.network`, `marchyo.mic`, `marchyo.audio`,
+`marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`.
+
+`marchyo.screenRecording` is self-hiding (visible only while a recording runs)
+and ships in the default layout; `marchyo.nightLight` is a warm/neutral toggle,
+registered but not placed by default — add it to a section to show it.
 
 ## Plugins
 
