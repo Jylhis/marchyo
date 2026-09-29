@@ -24,6 +24,7 @@
   marchyo-cli,
   solaar,
   tailscale,
+  curl,
   uwsm,
   systemd,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
@@ -253,6 +254,7 @@ let
       readonly property string tailscale: "${
         if tailscaleEnabled then lib.getExe tailscale else "tailscale"
       }"
+      readonly property string curl: "${lib.getExe curl}"
     }
   '';
 

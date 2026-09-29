@@ -22,3 +22,4 @@ ScreenRecordingWidget 1.0 ScreenRecordingWidget.qml
 NightLightWidget 1.0 NightLightWidget.qml
 RemindersWidget 1.0 RemindersWidget.qml
 TailscaleWidget 1.0 TailscaleWidget.qml
+WeatherWidget 1.0 WeatherWidget.qml

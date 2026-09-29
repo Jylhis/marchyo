@@ -49,7 +49,7 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.caffeine`, `marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`,
 `marchyo.bluetooth`, `marchyo.network`, `marchyo.mic`, `marchyo.audio`,
 `marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`,
-`marchyo.tailscale`.
+`marchyo.tailscale`, `marchyo.weather`.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
 `marchyo.reminders` (visible only while `marchyo reminder` timers are pending)
@@ -58,7 +58,10 @@ warm/neutral toggle, registered but not placed by default — add it to a sectio
 to show it. `marchyo.tailscale` (a VPN status indicator) is also registered but
 not placed by default; it only works — and only appears — when
 `marchyo.services.tailscale.enable` is set, which is what bakes the tailscale
-CLI into the shell.
+CLI into the shell. `marchyo.weather` (current conditions from wttr.in,
+IP-geolocated) is registered but not placed by default; placing it is what
+starts the periodic outbound fetch, so a bar without it makes no network
+request.
 
 ## Plugins
 
