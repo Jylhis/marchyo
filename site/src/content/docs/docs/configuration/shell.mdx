@@ -48,13 +48,17 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.dictation`,
 `marchyo.caffeine`, `marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`,
 `marchyo.bluetooth`, `marchyo.network`, `marchyo.mic`, `marchyo.audio`,
-`marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`.
+`marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`,
+`marchyo.tailscale`.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
 `marchyo.reminders` (visible only while `marchyo reminder` timers are pending)
 are self-hiding and ship in the default layout; `marchyo.nightLight` is a
 warm/neutral toggle, registered but not placed by default — add it to a section
-to show it.
+to show it. `marchyo.tailscale` (a VPN status indicator) is also registered but
+not placed by default; it only works — and only appears — when
+`marchyo.services.tailscale.enable` is set, which is what bakes the tailscale
+CLI into the shell.
 
 ## Plugins
 
