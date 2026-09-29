@@ -13,6 +13,14 @@ let
   # discrete stack), so no `or true` fallback.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
+  # Runtime shell config, serialized to a generated (read-only) shell.json the
+  # shell reads live (Commons/ShellConfig). Empty by default -> no file written,
+  # so the shell uses its built-in default bar layout.
+  shellSettings = ((osConfig.marchyo or { }).shell or { }).settings or { };
+
+  # Declared shell plugins (build-time Option A), baked into the store shell.
+  shellPlugins = ((osConfig.marchyo or { }).shell or { }).plugins or [ ];
+
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
   # Same voxtypeIndicator derivation as waybar.nix: on when dictation is enabled
@@ -53,11 +61,18 @@ let
       animationSpeed
       highContrast
       ;
+    plugins = shellPlugins;
   };
 in
 {
   config = lib.mkIf (desktopEnabled && shellEnabled) {
     home.packages = [ shellPkg ];
+
+    # Generated, read-only runtime config. Only written when the host set
+    # anything, so an untouched host keeps the shell's built-in default layout.
+    xdg.configFile."marchyo/shell.json" = lib.mkIf (shellSettings != { }) {
+      text = builtins.toJSON shellSettings;
+    };
 
     # Run the shell as a user service tied to the graphical session so it
     # restarts with it (same shape as swayosd.nix).

@@ -19,6 +19,10 @@ final: prev:
 
     hyprmon = final.callPackage ./packages/hyprmon/package.nix { };
     marchyo-shell = final.callPackage ./packages/marchyo-shell/package.nix { };
+    # Builder for a Marchyo shell plugin (build-time Option A). callPackage
+    # fills the tool args, leaving the `{ src, id, kinds, entryPoints, ... }`
+    # function as pkgs.mkMarchyoShellPlugin.
+    mkMarchyoShellPlugin = final.callPackage ./packages/marchyo-shell/plugin.nix { };
     plymouth-marchyo-theme = final.callPackage ./packages/plymouth-marchyo-theme/package.nix { };
   }
 )

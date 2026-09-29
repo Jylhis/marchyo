@@ -14,9 +14,15 @@ remaining work. The authoritative surface description is
 One `quickshell -p <store-path>` process per session, launched as a
 `marchyo-shell` graphical-session systemd user service.
 
-- **Simple monolith, no plugin machinery.** The shell has no
-  `PluginRegistry`/manifest/`shell.json` system. Surfaces are plain
-  in-process QML components: the bar (`shell.qml` composes `Bar/` widgets per
+- **Monolith with a build-time plugin platform.** The shell is an in-process
+  monolith, but it now carries a build-time (Option A) plugin platform and a
+  generated runtime config — no runtime discovery, no hot-reload. Plugins are
+  Nix-declared via `pkgs.mkMarchyoShellPlugin` (`marchyo.shell.plugins`),
+  validated and baked into the store shell, and listed in a generated
+  `Commons/PluginIndex.qml`; the bar layout is data-driven from
+  `Commons/ShellConfig` (a generated, read-only `~/.config/marchyo/shell.json`
+  whose default reproduces the historical static order). First-party surfaces
+  stay plain in-process QML: the bar (`shell.qml` composes `Bar/` widgets per
   monitor inside `Variants { model: Quickshell.screens }`), the OSD
   (`Osd/Osd.qml`), summonable panels (`Panels/`), notification toasts and the
   notification centre (`Notifications/`), the lock surface (`Lock/`), and the
@@ -88,15 +94,20 @@ One `quickshell -p <store-path>` process per session, launched as a
 
 ## Design decisions
 
-- **No third-party plugins.** Surfaces are plain in-process QML; a
-  Nix-declared list can be added later if ever needed.
+- **Third-party plugins, build-time only.** Plugins are a Nix-declared list
+  (`marchyo.shell.plugins`, built by `pkgs.mkMarchyoShellPlugin`) baked into the
+  store shell — reproducible and reviewable in the flake, never fetched or
+  discovered at runtime. The manifest schema matches upstream omarchy for
+  interop; a compat shim covers simple omarchy bar widgets.
 - **The shell ships its own launcher.** Vicinae remains a strong standalone
   launcher and stays in-tree as the discrete-stack fallback, but the shell-on
   desktop uses the in-shell surface — one process, one theme runtime, no
   privileged uinput helper. Revisit frecency inside the shell if daily use
   misses it.
-- **Config bakes at build time** from `marchyo.*` options (no runtime
-  `shell.json`); revisit a runtime overlay only if runtime tweaks become
-  needed.
+- **Config is generated, read at runtime.** `marchyo.shell.settings` is
+  serialized to a generated, read-only `~/.config/marchyo/shell.json` that the
+  shell reads live (watched + polled, like `colors.json`), so a rebuild's new
+  bar layout / idle timings apply without restarting the shell. Still fully
+  build-time-generated (reproducible); it is not hand-edited.
 - **Flat TUI aesthetic and bind namespace** stay as-is (see
   [`omarchy-parity.md`](omarchy-parity.md) §A1).
