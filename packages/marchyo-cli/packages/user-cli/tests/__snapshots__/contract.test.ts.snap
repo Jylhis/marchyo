@@ -81,6 +81,8 @@ Commands:
   remove [options] <feature>            Disable a marchyo feature declaratively
                                         (state + rebuild)
   webapp                                Manage CLI-added web apps (PWA windows)
+  plugin                                Manage CLI-added shell plugins
+                                        (build-time, baked on rebuild)
   security                              Security enrollment helpers
   runtime                               Inspect or re-apply ephemeral runtime
                                         overrides

@@ -66,6 +66,11 @@ import {
   runWebappAdd,
   runWebappRm,
 } from "./commands/declarative.ts";
+import {
+  runPluginAdd,
+  runPluginList,
+  runPluginRemove,
+} from "./commands/plugin.ts";
 import { runCompletion } from "./commands/completion.ts";
 import { VERSION } from "./version.ts";
 
@@ -753,6 +758,36 @@ webapp
   .option("-n, --dry-run", "Print the state change without writing or rebuilding")
   .action(async (name: string, opts: { dryRun?: boolean }) => {
     process.exit(await runWebappRm(rt(), name, opts));
+  });
+
+const plugin = program
+  .command("plugin")
+  .description("Manage CLI-added shell plugins (build-time, baked on rebuild)");
+
+plugin
+  .command("add")
+  .description("Pin a shell plugin from a git URL and bake it in on rebuild")
+  .argument("<url>", "git URL of the plugin repository")
+  .option("--rev <rev>", "git revision to pin (default: the remote HEAD)")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (url: string, opts: { rev?: string; dryRun?: boolean }) => {
+    process.exit(await runPluginAdd(rt(), url, opts));
+  });
+
+plugin
+  .command("list")
+  .description("List CLI-added shell plugins")
+  .action(async () => {
+    process.exit(await runPluginList(rt()));
+  });
+
+plugin
+  .command("remove")
+  .description("Remove a CLI-added shell plugin")
+  .argument("<id>", "plugin manifest id")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (id: string, opts: { dryRun?: boolean }) => {
+    process.exit(await runPluginRemove(rt(), id, opts));
   });
 
 const security = program

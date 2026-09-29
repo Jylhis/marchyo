@@ -1,4 +1,51 @@
 { lib, ... }:
+let
+  inherit (lib) mkOption types;
+
+  # Raw, IFD-free spec for a CLI-added plugin: a pinned git source plus the
+  # manifest fields (mirrored at eval time, exactly as mkMarchyoShellPlugin's
+  # args are). Kept darwin-neutral — no pkgs references — because this option
+  # file is evaluated on darwin. modules/home/marchyo-shell.nix turns each spec
+  # into a built plugin via pkgs.mkMarchyoShellPlugin on Linux.
+  extraPluginType = types.submodule {
+    options = {
+      id = mkOption {
+        type = types.str;
+        description = "Plugin manifest id (must be outside the reserved marchyo.* namespace).";
+      };
+      url = mkOption {
+        type = types.str;
+        description = "Git URL the plugin is fetched from.";
+      };
+      rev = mkOption {
+        type = types.str;
+        description = "Pinned git revision.";
+      };
+      hash = mkOption {
+        type = types.str;
+        description = "fetchgit hash (SRI or sha256) pinning the source.";
+      };
+      kinds = mkOption {
+        type = types.listOf types.str;
+        description = "Manifest kinds (bar-widget|panel|overlay|menu|service).";
+      };
+      entryPoints = mkOption {
+        type = types.attrsOf types.str;
+        description = "Manifest entry points: each kind mapped to its QML file.";
+      };
+      name = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Display name (defaults to the id when null).";
+      };
+      version = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Plugin version string (defaults to \"0\" when null).";
+      };
+    };
+  };
+in
 {
   options.marchyo.shell = {
     enable = lib.mkOption {
@@ -38,6 +85,32 @@
         `Commons/PluginIndex.qml`; a bar-widget plugin becomes referenceable from
         `marchyo.shell.settings.bar.layout` by its manifest id. Changing the list
         requires a rebuild. Empty by default.
+      '';
+    };
+
+    extraPlugins = mkOption {
+      type = types.listOf extraPluginType;
+      default = [ ];
+      example = lib.literalExpression ''
+        [
+          {
+            id = "acme.weather";
+            url = "https://example.com/acme-weather.git";
+            rev = "0000000000000000000000000000000000000000";
+            hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            kinds = [ "bar-widget" ];
+            entryPoints = { barWidget = "Panel.qml"; };
+          }
+        ]
+      '';
+      description = ''
+        Additive plugin specs appended to `plugins`, built into
+        `pkgs.mkMarchyoShellPlugin` derivations on Linux (see
+        modules/home/marchyo-shell.nix). Kept separate from `plugins` — and
+        expressed as raw pinned git specs rather than derivations — so the
+        additive source (`marchyo plugin add`, which persists here through the
+        marchyoCliState sidecar at mkDefault priority) never replaces the
+        flake-declared `plugins` list. Empty by default.
       '';
     };
 

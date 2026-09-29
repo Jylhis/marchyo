@@ -61,6 +61,30 @@ export const StateSchema = z
           .optional(),
       })
       .optional(),
+    shell: z
+      .object({
+        // Additive shell-plugin specs (marchyo plugin add/remove) — maps to
+        // marchyo.shell.extraPlugins so the flake's own `plugins` list is
+        // never replaced. Raw pinned git specs mirroring the manifest; the
+        // Nix side builds them via mkMarchyoShellPlugin.
+        extraPlugins: z
+          .array(
+            z
+              .object({
+                id: z.string(),
+                url: z.string(),
+                rev: z.string(),
+                hash: z.string(),
+                kinds: z.array(z.string()),
+                entryPoints: z.record(z.string(), z.string()),
+                name: z.string().optional(),
+                version: z.string().optional(),
+              })
+              .strict(),
+          )
+          .optional(),
+      })
+      .optional(),
     _flake: z
       .object({
         path: z.string().optional(),
@@ -117,6 +141,9 @@ export function mergeState(prev: State, patch: State): State {
   }
   if (prev.webapps || patch.webapps) {
     merged.webapps = { ...prev.webapps, ...patch.webapps };
+  }
+  if (prev.shell || patch.shell) {
+    merged.shell = { ...prev.shell, ...patch.shell };
   }
   if (prev._flake || patch._flake) {
     merged._flake = { ...prev._flake, ...patch._flake };

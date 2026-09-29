@@ -15,6 +15,7 @@ from `marchyo.desktop.enable`.
 | `marchyo.shell.enable` | `false` | Enable the unified Quickshell shell |
 | `marchyo.shell.settings` | `{}` | Runtime config serialized to `~/.config/marchyo/shell.json` |
 | `marchyo.shell.plugins` | `[]` | Shell plugins baked into the store shell (build-time) |
+| `marchyo.shell.extraPlugins` | `[]` | Additive plugin specs (pinned git), managed by `marchyo plugin` |
 
 ## Runtime configuration
 
@@ -89,3 +90,24 @@ Because plugins run as ordinary QML inside the shell process, only add plugins
 you trust and have read. The build-time model means every plugin in your closure
 is pinned and reviewable in your configuration, not fetched at runtime.
 :::
+
+### Adding plugins with the CLI
+
+`marchyo plugin` is the CLI leg of the same build-time model. It pins a git
+source and persists a raw spec into the `marchyoCliState` sidecar
+(`marchyo.shell.extraPlugins`), which is appended to your flake-declared
+`marchyo.shell.plugins` at `mkDefault` priority — so a hand-written `plugins`
+list always wins. Every change is baked in by a rebuild; there is no runtime
+plugin directory.
+
+```sh
+marchyo plugin add https://example.com/acme-weather.git   # pin + bake on rebuild
+marchyo plugin add https://example.com/acme-weather.git --rev <sha>
+marchyo plugin list                                       # CLI-added plugins
+marchyo plugin remove acme.weather
+```
+
+`add` resolves the revision and hash with `nix-prefetch-git`, reads and
+validates the repo's `manifest.json` (schema version, non-reserved id, entry
+points), then writes the pinned spec and rebuilds. Pass `-n`/`--dry-run` to
+print the state change without writing or rebuilding.
