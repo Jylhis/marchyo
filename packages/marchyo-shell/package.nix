@@ -242,6 +242,7 @@ let
       readonly property string cliphist: "${lib.getExe cliphist}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
       readonly property string solaar: "${lib.getExe solaar}"
+      readonly property string systemctl: "${lib.getExe' systemd "systemctl"}"
     }
   '';
 

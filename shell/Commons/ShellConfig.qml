@@ -46,6 +46,9 @@ QtObject {
                     id: "marchyo.screenRecording"
                 },
                 {
+                    id: "marchyo.reminders"
+                },
+                {
                     id: "marchyo.tray"
                 },
                 {

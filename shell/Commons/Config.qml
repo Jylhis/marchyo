@@ -21,4 +21,5 @@ QtObject {
     readonly property string cliphist: "cliphist"
     readonly property string marchyo: "marchyo"
     readonly property string solaar: "solaar"
+    readonly property string systemctl: "systemctl"
 }
