@@ -79,8 +79,6 @@ One `quickshell -p <store-path>` process per session, launched as a
 
 ## Remaining work
 
-- **Launcher multi-monitor / IME confirmation.** Confirm open-on-focused-output
-  on a multi-monitor host and fcitx5 preedit in the query field.
 - **Wholesale removal of the discrete stack.** Vicinae, waybar, mako, and
   SwayOSD stay in-tree as the `marchyo.shell.enable = false` fallback;
   dropping them entirely is a later milestone.
