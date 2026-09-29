@@ -25,6 +25,7 @@
   solaar,
   tailscale,
   curl,
+  qrencode,
   uwsm,
   systemd,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
@@ -255,6 +256,7 @@ let
         if tailscaleEnabled then lib.getExe tailscale else "tailscale"
       }"
       readonly property string curl: "${lib.getExe curl}"
+      readonly property string qrencode: "${lib.getExe qrencode}"
     }
   '';
 

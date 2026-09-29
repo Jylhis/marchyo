@@ -54,6 +54,12 @@ Panel {
         },
         PanelButton {
             Layout.fillWidth: true
+            visible: root.wifi && NetworkStatus.ssid.length > 0
+            text: "Share (QR)"
+            onClicked: PanelManager.open("wifiqr", root)
+        },
+        PanelButton {
+            Layout.fillWidth: true
             text: "nmtui"
             onClicked: Quickshell.execDetached([Config.terminal, "--class=org.omarchy.nmtui", "-e", Config.nmtui])
         }

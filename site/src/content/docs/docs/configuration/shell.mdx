@@ -59,7 +59,12 @@ to show it. `marchyo.tailscale` (a VPN status indicator) is also registered but
 not placed by default; it only works — and only appears — when
 `marchyo.services.tailscale.enable` is set, which is what bakes the tailscale
 CLI into the shell. Clicking it opens a read-only detail panel (this device,
-exit-node status, and online tailnet peers with their addresses). `marchyo.weather` (current conditions from wttr.in,
+exit-node status, and online tailnet peers with their addresses).
+
+The Network panel gains a **Share (QR)** button on Wi-Fi networks: it opens an
+overlay with a scannable QR of the current network's credentials (rendered as a
+UTF8 text grid by `qrencode`; the PSK is read via `nmcli -s`, falling back to an
+open-network QR when it is unavailable). `marchyo.weather` (current conditions from wttr.in,
 IP-geolocated) is registered but not placed by default; placing it is what
 starts the periodic outbound fetch, so a bar without it makes no network
 request.
