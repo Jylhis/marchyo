@@ -11,6 +11,7 @@ management) by default. Some peripheral-specific support is opt-in.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.hardware.logitech.enable` | `false` | Logitech wireless device support (Solaar GUI + udev rules) |
+| `marchyo.hardware.ddc.enable` | `true` | DDC/CI external-monitor brightness (ddcutil, i2c bus + group), desktop-only |
 
 ## Logitech wireless
 
@@ -25,3 +26,16 @@ management GUI:
 
 This turns on `hardware.logitech.wireless` with the graphical Solaar tool, so
 you can pair devices and tune per-device settings.
+
+## External-monitor brightness (DDC/CI)
+
+Enabled by default with the desktop. Marchyo loads the `i2c-dev` module and its
+udev rules (`hardware.i2c`), installs `ddcutil`, and adds Marchyo users to the
+`i2c` group so brightness/contrast of external DP/HDMI/VGA displays can be set
+over the i2c bus. Laptop panels use backlight controls instead. Opt out with:
+
+```nix
+{
+  marchyo.hardware.ddc.enable = false;
+}
+```

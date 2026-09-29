@@ -28,5 +28,8 @@ in
     # over D-Bus (org.freedesktop.ColorManager); without it cupsd logs
     # "CreateProfile/CreateDevice failed ... not activatable" on every device event.
     services.colord.enable = lib.mkDefault true;
+
+    # GUI to add/manage printers (the GNOME/GTK printer configuration tool).
+    environment.systemPackages = [ pkgs.system-config-printer ];
   };
 }

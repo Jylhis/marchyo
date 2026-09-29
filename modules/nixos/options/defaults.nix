@@ -182,6 +182,25 @@ in
       '';
     };
 
+    aiAgent = mkOption {
+      type = types.nullOr (
+        types.enum [
+          "claude-code"
+          "codex"
+          "opencode"
+        ]
+      );
+      default = null;
+      example = "claude-code";
+      description = ''
+        Default AI coding-agent CLI. When set (and `marchyo.development.enable`
+        is on) the chosen CLI is installed and `$AI_AGENT` points at its command,
+        so keybinds and scripts can launch "the configured agent" without
+        hardcoding a name. Defaults to null (install none). The CLIs are unfree
+        / network tools you still have to authenticate before use.
+      '';
+    };
+
     email = mkOption {
       type = types.nullOr (
         types.enum [
