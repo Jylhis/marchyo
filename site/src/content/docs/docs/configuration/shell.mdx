@@ -1,0 +1,86 @@
+---
+title: Desktop Shell
+description: The unified Quickshell shell — runtime config and the plugin platform
+---
+
+`marchyo.shell.enable` turns on the unified Quickshell desktop shell: one
+long-running process that draws the top bar, OSD, panels, notifications, lock,
+and launcher, replacing waybar, SwayOSD, and mako. It is opt-in and not cascaded
+from `marchyo.desktop.enable`.
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.shell.enable` | `false` | Enable the unified Quickshell shell |
+| `marchyo.shell.settings` | `{}` | Runtime config serialized to `~/.config/marchyo/shell.json` |
+| `marchyo.shell.plugins` | `[]` | Shell plugins baked into the store shell (build-time) |
+
+## Runtime configuration
+
+`marchyo.shell.settings` is serialized to a generated, read-only
+`~/.config/marchyo/shell.json` that the shell reads **live** — a rebuild's new
+layout applies without restarting the shell (it is watched, with a short poll to
+catch atomic replacements). This is the build-time model: the file is generated
+from your configuration and stays reproducible, but is re-read at runtime.
+
+Recognised keys:
+
+- `bar.layout.{left,center,right}` — arrays of `{ id; settings?; }` widget
+  entries. Any section left unset falls back to the shipped default layout.
+- `idle.{screensaver,lock}` — idle thresholds in seconds.
+
+```nix
+marchyo.shell.settings = {
+  bar.layout = {
+    left = [ { id = "marchyo.session"; } { id = "marchyo.workspaces"; } ];
+    center = [ { id = "marchyo.clock"; } ];
+    right = [ { id = "marchyo.network"; } { id = "marchyo.audio"; } { id = "marchyo.battery"; } ];
+  };
+  idle = { screensaver = 150; lock = 300; };
+};
+```
+
+First-party widget ids: `marchyo.session`, `marchyo.workspaces`, `marchyo.clock`,
+`marchyo.tray`, `marchyo.media`, `marchyo.dictation`, `marchyo.caffeine`,
+`marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`, `marchyo.bluetooth`,
+`marchyo.network`, `marchyo.mic`, `marchyo.audio`, `marchyo.cpu`,
+`marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`.
+
+## Plugins
+
+The shell supports third-party plugins using the same `manifest.json` schema as
+upstream omarchy, but on a **build-time (declarative) model**: plugins are
+Nix-declared, validated, and baked into the store shell. There is no runtime
+plugin directory and no hot-reload — changing the plugin set is a rebuild.
+
+A plugin is a directory with a `manifest.json` (`schemaVersion: 1`, an `id`
+outside the reserved `marchyo.*` namespace, `kinds`, and `entryPoints`) plus its
+QML. Declare one with `pkgs.mkMarchyoShellPlugin`, which validates the manifest
+at build time (matching id, safe relative entry points, no symlinks):
+
+```nix
+marchyo.shell.plugins = [
+  (pkgs.mkMarchyoShellPlugin {
+    src = pkgs.fetchgit {
+      url = "https://example.com/acme-weather.git";
+      rev = "…";
+      hash = "…";
+    };
+    id = "acme.weather";
+    kinds = [ "bar-widget" ];
+    entryPoints = { barWidget = "Panel.qml"; };
+  })
+];
+```
+
+A declared `bar-widget` plugin becomes referenceable from
+`marchyo.shell.settings.bar.layout` by its manifest id (e.g. `acme.weather`),
+so you can place it anywhere on the bar. `kinds` may also include `panel`,
+`overlay`, `menu`, or `service`.
+
+:::note
+Because plugins run as ordinary QML inside the shell process, only add plugins
+you trust and have read. The build-time model means every plugin in your closure
+is pinned and reviewable in your configuration, not fetched at runtime.
+:::

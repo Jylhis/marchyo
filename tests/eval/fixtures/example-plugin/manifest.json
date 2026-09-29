@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "example.hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  }
+}

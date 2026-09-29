@@ -14,17 +14,137 @@ import qs.Notifications
 import qs.Lock
 import qs.Services
 
-// Phase 1: a Jylhis-themed top bar at waybar parity, built as a simple monolith
-// — shell.qml composes reusable widgets from qs.Bar (backed by qs.Ui primitives
-// and the qs.Commons Color/Style singletons). Phase 2 adds surfaces alongside it
-// (starting with the OSD) as plain in-process components — no plugin registry or
-// manifest system; native Quickshell service bindings and IpcHandler suffice.
+// A Jylhis-themed top bar plus the shell surfaces (OSD, panels, lock,
+// notifications, launcher), composed from qs.Bar widgets backed by qs.Ui
+// primitives and the qs.Commons singletons. The bar layout is data-driven from
+// Commons/ShellConfig (a generated, read-only ~/.config/marchyo/shell.json;
+// the default reproduces the historical static order). Widget ids resolve to
+// first-party Components in `barComponents` below, or to plugin bar-widgets via
+// Commons/PluginIndex — the build-time Option A plugin model (Nix-declared,
+// store-baked; no runtime discovery). A single stock IpcHandler drives runtime
+// actions; there is no custom bus. See plans/shell.md.
 ShellRoot {
     id: shell
 
     // Bar visibility, toggled over IPC (SUPER+SHIFT+SPACE). Replaces waybar's
     // SIGUSR1 show/hide; one property drives every per-screen bar below.
     property bool barVisible: true
+
+    // Widget-id -> Component map for the data-driven bar. First-party widgets
+    // live here; plugin bar-widgets are resolved separately (Commons/PluginIndex)
+    // in componentFor(). Ids mirror the default layout in Commons/ShellConfig.
+    readonly property var barComponents: ({
+            "marchyo.session": cSession,
+            "marchyo.workspaces": cWorkspaces,
+            "marchyo.clock": cClock,
+            "marchyo.tray": cTray,
+            "marchyo.media": cMedia,
+            "marchyo.dictation": cDictation,
+            "marchyo.caffeine": cCaffeine,
+            "marchyo.theme": cTheme,
+            "marchyo.dnd": cDnd,
+            "marchyo.keyboardLayout": cKeyboardLayout,
+            "marchyo.bluetooth": cBluetooth,
+            "marchyo.network": cNetwork,
+            "marchyo.mic": cMic,
+            "marchyo.audio": cAudio,
+            "marchyo.cpu": cCpu,
+            "marchyo.powerProfile": cPowerProfile,
+            "marchyo.peripherals": cPeripherals,
+            "marchyo.battery": cBattery
+        })
+
+    Component {
+        id: cSession
+        SessionWidget {}
+    }
+    Component {
+        id: cWorkspaces
+        WorkspacesWidget {}
+    }
+    Component {
+        id: cClock
+        ClockWidget {}
+    }
+    Component {
+        id: cTray
+        TrayWidget {}
+    }
+    Component {
+        id: cMedia
+        MediaWidget {}
+    }
+    Component {
+        id: cDictation
+        DictationWidget {}
+    }
+    Component {
+        id: cCaffeine
+        CaffeineWidget {}
+    }
+    Component {
+        id: cTheme
+        ThemeWidget {}
+    }
+    Component {
+        id: cDnd
+        DndWidget {}
+    }
+    Component {
+        id: cKeyboardLayout
+        KeyboardLayoutWidget {}
+    }
+    Component {
+        id: cBluetooth
+        BluetoothWidget {}
+    }
+    Component {
+        id: cNetwork
+        NetworkWidget {}
+    }
+    Component {
+        id: cMic
+        MicWidget {}
+    }
+    Component {
+        id: cAudio
+        AudioWidget {}
+    }
+    Component {
+        id: cCpu
+        CpuWidget {}
+    }
+    Component {
+        id: cPowerProfile
+        PowerProfileWidget {}
+    }
+    Component {
+        id: cPeripherals
+        PeripheralsWidget {}
+    }
+    Component {
+        id: cBattery
+        BatteryWidget {}
+    }
+
+    // Resolve a bar-layout id to a Component: first-party map, then plugins.
+    function componentFor(id: string): Component {
+        if (shell.barComponents[id])
+            return shell.barComponents[id];
+        return PluginIndex.barWidgetComponent(id);
+    }
+
+    // Apply a layout entry to a freshly-loaded widget: give per-monitor widgets
+    // their screen (only WorkspacesWidget declares screenName), and hand any
+    // widget its per-entry settings object if it accepts one.
+    function applyWidget(item, entry, screenName): void {
+        if (!item)
+            return;
+        if (typeof item.screenName === "string")
+            item.screenName = screenName;
+        if (entry.settings !== undefined && typeof item.settings !== "undefined")
+            item.settings = entry.settings;
+    }
 
     // On-screen display for volume/brightness/mic-mute (replaces SwayOSD). Reacts
     // natively to Pipewire and the backlight sysfs node — no external poke.
@@ -161,7 +281,9 @@ ShellRoot {
         model: Quickshell.screens
 
         PanelWindow {
+            id: barWin
             required property var modelData
+            readonly property string screenName: modelData.name
             screen: modelData
             visible: shell.barVisible
 
@@ -173,8 +295,10 @@ ShellRoot {
             implicitHeight: Style.barHeight
             color: Color.background
 
-            // Three anchored sections: left and right groups, an absolutely-centered
-            // clock. Simpler and more robust than fill-width spacers for centering.
+            // Three anchored sections driven by ShellConfig.bar: left and right
+            // groups, plus a centered group (the clock by default). Each entry's
+            // id resolves through componentFor(); a Loader instantiates it and
+            // applyWidget() wires per-monitor screen + per-entry settings.
             Item {
                 anchors.fill: parent
 
@@ -183,14 +307,30 @@ ShellRoot {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Style.spacing
 
-                    SessionWidget {}
-                    WorkspacesWidget {
-                        screenName: modelData.name
+                    Repeater {
+                        model: ShellConfig.bar.left
+
+                        Loader {
+                            required property var modelData
+                            sourceComponent: shell.componentFor(modelData.id)
+                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                        }
                     }
                 }
 
-                ClockWidget {
+                RowLayout {
                     anchors.centerIn: parent
+                    spacing: Style.spacing
+
+                    Repeater {
+                        model: ShellConfig.bar.center
+
+                        Loader {
+                            required property var modelData
+                            sourceComponent: shell.componentFor(modelData.id)
+                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                        }
+                    }
                 }
 
                 RowLayout {
@@ -198,21 +338,15 @@ ShellRoot {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Style.spacing
 
-                    TrayWidget {}
-                    MediaWidget {}
-                    DictationWidget {}
-                    CaffeineWidget {}
-                    ThemeWidget {}
-                    DndWidget {}
-                    KeyboardLayoutWidget {}
-                    BluetoothWidget {}
-                    NetworkWidget {}
-                    MicWidget {}
-                    AudioWidget {}
-                    CpuWidget {}
-                    PowerProfileWidget {}
-                    PeripheralsWidget {}
-                    BatteryWidget {}
+                    Repeater {
+                        model: ShellConfig.bar.right
+
+                        Loader {
+                            required property var modelData
+                            sourceComponent: shell.componentFor(modelData.id)
+                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                        }
+                    }
                 }
             }
         }
