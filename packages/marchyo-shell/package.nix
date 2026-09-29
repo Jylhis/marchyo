@@ -23,6 +23,7 @@
   unicode-emoji,
   marchyo-cli,
   solaar,
+  tailscale,
   uwsm,
   systemd,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
@@ -40,6 +41,12 @@
   # peripherals-battery service (only useful with a Logi receiver the kernel
   # will not bind); off by default so no solaar poll runs.
   peripheralsFallback ? false,
+  # marchyo.services.tailscale.enable — conditionally bakes the tailscale CLI
+  # path into Config so the store shell can drive the Tailscale status widget.
+  # When off, the bare name is baked (never forced into the closure) and the
+  # widget self-hides because the command is absent. Keeps tailscale out of the
+  # shell closure on hosts that do not use it.
+  tailscaleEnabled ? false,
   # marchyo.notifications.rules — per-sender notification rules, baked as a QML
   # array literal (JSON is valid JS). Empty by default. See Services/Notification
   # State.qml for the match/apply logic.
@@ -243,6 +250,9 @@ let
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
       readonly property string solaar: "${lib.getExe solaar}"
       readonly property string systemctl: "${lib.getExe' systemd "systemctl"}"
+      readonly property string tailscale: "${
+        if tailscaleEnabled then lib.getExe tailscale else "tailscale"
+      }"
     }
   '';
 

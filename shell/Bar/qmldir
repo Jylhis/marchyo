@@ -21,3 +21,4 @@ KeyboardLayoutWidget 1.0 KeyboardLayoutWidget.qml
 ScreenRecordingWidget 1.0 ScreenRecordingWidget.qml
 NightLightWidget 1.0 NightLightWidget.qml
 RemindersWidget 1.0 RemindersWidget.qml
+TailscaleWidget 1.0 TailscaleWidget.qml
