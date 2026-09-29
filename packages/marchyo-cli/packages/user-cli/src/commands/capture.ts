@@ -12,8 +12,8 @@ import {
   usageError,
 } from "@marchyo/core";
 
-// Stateless capture actions (F3.2): screenshot / record / ocr / color.
-// Unlike toggles these report failure — a missing tool is an error (exit 1),
+// Stateless capture actions: screenshot / record / ocr / color.
+// Unlike toggles these report failure: a missing tool is an error (exit 1),
 // not a silent no-op, since the user asked for an artifact.
 
 const TARGETS = ["area", "active", "output", "screen"] as const;
@@ -58,8 +58,6 @@ export async function runCaptureScreenshot(
   if (!require(rt, "grimblast")) return 1;
 
   if (opts.edit) {
-    // The annotation flow pipes the frozen grab into satty (same pipeline
-    // the old inline bind used).
     if (!require(rt, "satty")) return 1;
     const out = join(screenshotsDir(), `${timestamp()}_annotated.png`);
     return runArgv([
@@ -79,8 +77,8 @@ export async function runCaptureScreenshot(
 
 export type RecordOpts = { audio?: string };
 
-// Absorbed from marchyo-screenrecord-toggle: gpu-screen-recorder on a
-// slurp-selected region; a second invocation stops and finalizes the mp4.
+// gpu-screen-recorder on a slurp-selected region; a second invocation
+// stops and finalizes the mp4.
 export async function runCaptureRecord(
   rt: Runtime,
   opts: RecordOpts,

@@ -8,8 +8,7 @@ import qs.Commons
 // per-monitor, so each output's bar shows only its own). The first five
 // workspaces are persistent (mirroring waybar's persistent-workspaces 1–5):
 // they render even when they don't exist yet, and a click dispatches to them
-// (Hyprland creates the workspace on demand). Click switches; the focused
-// workspace is accented.
+// (Hyprland creates the workspace on demand).
 RowLayout {
     id: root
 

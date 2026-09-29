@@ -14,10 +14,10 @@ import {
   warn,
 } from "@marchyo/core";
 
-// Runtime terminal-font switching (F3.2). Ghostty reads an optional
-// override include (wired in modules/home/utilities.nix); writing
+// Runtime terminal-font switching. Ghostty reads an optional override
+// include (wired in modules/home/utilities.nix); writing
 // `font-family = <name>` there changes new windows without a rebuild.
-// Ephemeral like every runtime override — activation leaves the file, but
+// Ephemeral like every runtime override: activation leaves the file, but
 // `--revert` (or the declarative config, which the include merely extends)
 // is the source of truth.
 

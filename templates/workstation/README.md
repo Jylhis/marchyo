@@ -21,16 +21,12 @@ This is a full-featured developer workstation configuration with desktop environ
    - Set `marchyo.timezone` / `marchyo.defaultLocale` if the defaults (`Europe/Zurich`, `en_US.UTF-8`) don't fit
    - Development tooling is a single switch — set `marchyo.development.enable = false` if you don't want it
 
-4. **RUN VM**
-```shell
-nixos-rebuild build-vm --flake .#workstation
-./result/bin/run-workstation-vm
-```
-
 4. **Build and switch**:
    ```bash
    sudo nixos-rebuild switch --flake .#workstation
    ```
+
+   Or try it in a VM first (see [Run VM](#run-vm) below).
 
 
 ## Included Features
@@ -216,10 +212,9 @@ If you also game on this workstation:
 
 ```nix
 programs.gamemode.enable = true;
-hardware.opengl = {
+hardware.graphics = {
   enable = true;
-  driSupport = true;
-  driSupport32Bit = true;
+  enable32Bit = true;
 };
 ```
 
@@ -271,7 +266,7 @@ btop  # Modern resource monitor
 htop  # Classic resource monitor
 ```
 
-# Run VM
+## Run VM
 
 ```shell
 nixos-rebuild build-vm --flake .#workstation

@@ -4,9 +4,8 @@ import qs.Commons
 import qs.Services
 
 // Reminders indicator: a pure view over Services/Reminders, which owns the one
-// timer probe for the seat. Self-hiding when nothing is pending. Informational
-// (marchyo has no interactive reminder GUI to click into); the tooltip carries
-// the count. Ported from omarchy's Reminder indicator.
+// timer probe for the seat. Informational only (marchyo has no interactive
+// reminder GUI to click into); the tooltip carries the count.
 BarItem {
     id: root
 

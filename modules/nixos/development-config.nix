@@ -1,4 +1,3 @@
-# Automatically enables development tools and services when marchyo.development.enable is true
 {
   config,
   lib,
@@ -42,35 +41,28 @@ in
     };
 
     environment.systemPackages = with pkgs; [
-      # Version control
       git
       gh
 
-      # Build tools
       gnumake
       cmake
       gcc
       pkg-config
 
-      # Container tools
       docker-compose
       lazydocker
 
-      # Virtual machines
       virt-manager
       virt-viewer
 
-      # Database clients
       sqlite
 
-      # Network debugging
       curl
       wget
       netcat
       nmap
       tcpdump
 
-      # Development utilities
       jq
       yq
       tree

@@ -23,12 +23,12 @@ let
 
   overlayList = [ overlay ];
 
-  # Single source of truth for the per-system input set. x86_64-darwin is the
-  # last nixpkgs release supporting Intel macOS (26.11 drops it), so it rides
-  # the stable nixos-26.05 set together with the matching release-branch
-  # home-manager / nix-darwin / stylix; every other system rides unstable.
-  # This is the ONLY place the x86_64-darwin special-case is decided — both the
-  # consumer-facing builders below and `legacyPackages` flow through it.
+  # Single source of truth for the per-system input set, and the ONLY place the
+  # x86_64-darwin special-case is decided (the builders below and legacyPackages
+  # all flow through it). x86_64-darwin is the last nixpkgs release supporting
+  # Intel macOS (26.11 drops it), so it rides stable nixos-26.05 with the
+  # matching release-branch home-manager / nix-darwin / stylix; everything else
+  # rides unstable.
   inputsFor =
     system:
     if system == "x86_64-darwin" then
@@ -48,9 +48,6 @@ let
           ;
       };
 
-  # Instantiate the correct nixpkgs for a system, with marchyo's overlay applied
-  # and unfree allowed. Drives `legacyPackages`, the x86_64-darwin pkgs override
-  # in `mkDarwinSystem`, and standalone Home Manager configs.
   mkPkgs =
     system:
     import (inputsFor system).nixpkgs {
@@ -59,17 +56,13 @@ let
       config.allowUnfree = true;
     };
 
-  # Droid input stack — the nix-on-droid analog of `inputsFor`. Pinned
-  # independently of the unstable/stable selector: nix-on-droid's own
-  # (2024-era) nixpkgs paired with the HM-24.05 `home-manager-droid`. This is
-  # the single place the droid stack is chosen; `mkNixOnDroidConfiguration`
-  # flows through it.
+  # Droid input stack, pinned independently of the unstable/stable selector:
+  # nix-on-droid's own nixpkgs with HM-24.05 home-manager-droid.
   droidInputs = {
     nixpkgs = nix-on-droid.inputs.nixpkgs;
     home-manager = home-manager-droid;
   };
 
-  # Shared config used by both nixosConfigurations and mkApps VM.
   sharedNixosConfig =
     { lib, ... }:
     {
@@ -110,9 +103,6 @@ let
       services.getty.autologinUser = "developer";
     };
 
-  # Shared config for darwinConfigurations.
-  # Stylix base16 scheme + fonts come from modules/generic/stylix.nix (imported
-  # via darwinModules.default), shared with the NixOS configurations.
   sharedDarwinConfig =
     { pkgs, ... }:
     {
@@ -136,9 +126,8 @@ let
       };
     };
 
-  # Mock osConfig for standalone Home Manager configurations.
-  # Provides the minimum structure that HM modules access directly
-  # (without `or` defaults).
+  # Mock osConfig for standalone HM configs: the minimum structure HM modules
+  # access directly (without `or` defaults).
   mockOsConfig = {
     marchyo = {
       keyboard = {
@@ -176,7 +165,7 @@ let
   };
 
   # Shared config for nixOnDroidConfigurations (nix-on-droid's own module
-  # vocabulary — NOT NixOS options).
+  # vocabulary, NOT NixOS options).
   sharedNixOnDroidConfig =
     { pkgs, ... }:
     {
@@ -185,7 +174,6 @@ let
       user.shell = "${pkgs.bashInteractive}/bin/bash";
     };
 
-  # Helper to build standalone Home Manager configurations.
   mkHomeConfiguration =
     {
       system,
@@ -215,7 +203,6 @@ let
       ];
     };
 
-  # Shared home-manager settings for module outputs
   hmSharedConfig = {
     home-manager = {
       useGlobalPkgs = true;
@@ -244,11 +231,11 @@ let
         sops-nix.nixosModules.sops
         # Declares programs.vicinae.input-server: the cap_dac_override wrapper
         # the launcher needs to inject keystrokes. Upstream defaults it ON, so
-        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* —
-        # importing this module alone does not install the capability.
+        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* (so
+        # importing this module alone does not install the capability).
         vicinae.nixosModules.default
         # ncro service options; enablement is gated by marchyo.nix.router.enable
-        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service) —
+        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service),
         # deliberately absent from mkDarwinModules and hmSharedConfig.
         ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }
@@ -257,15 +244,9 @@ let
       ];
     };
     inherit (home-manager.nixosModules) home-manager;
-    # Per-machine hardware fixes: the complete nixos-hardware profile set,
-    # re-exported wholesale as a thin passthrough (profiles are lazy — unused
-    # ones cost nothing). A host imports its profile directly, e.g.:
-    #
+    # Complete nixos-hardware profile set, re-exported wholesale (profiles are
+    # lazy, so unused ones cost nothing). A host imports its profile directly:
     #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
-    #
-    # Curated examples live in templates/workstation and docs/introduction.mdx,
-    # pinned by tests/eval/hardware.nix. Full list:
-    # https://github.com/NixOS/nixos-hardware
     hardware = nixos-hardware.nixosModules;
   };
 
@@ -293,23 +274,20 @@ let
     _1password = ./modules/home/_1password.nix;
   };
 
-  # nix-on-droid module. Droid-native and minimal — no marchyo overlay, no NixOS
+  # nix-on-droid module. Droid-native and minimal: no marchyo overlay, no NixOS
   # modules, and NOT the marchyo HM modules (nix-on-droid ships HM 24.05).
   nixOnDroidModules = {
     default = ./modules/nix-on-droid/default.nix;
   };
 
-  # Batteries-included system builders. A downstream consumer that adds only
-  # `marchyo` as an input can build any system with these — the correct nixpkgs
-  # (unstable, or stable 26.05 for x86_64-darwin), home-manager, nix-darwin,
-  # stylix, overlay and marchyo modules are all selected automatically via
-  # `inputsFor`. The consumer supplies only their own config modules.
+  # Batteries-included system builders: a consumer that adds only `marchyo` as
+  # an input builds any system with these, with nixpkgs / home-manager /
+  # nix-darwin / stylix / overlay / modules selected automatically via inputsFor.
 
-  # All NixOS targets are Linux, so they always ride unstable. `nixosModules.default`
-  # already bakes in home-manager + stylix + sops + the overlay (overlayList).
-  # `overlays`/`config` let a consumer add their own on top; allowUnfree defaults
-  # on (set plainly — nixpkgs.config is a freeform attrset, so a priority wrapper
-  # like mkDefault would leak through to nixpkgs unresolved).
+  # allowUnfree is set plainly, not via a priority wrapper: nixpkgs.config is a
+  # freeform attrset, so mkDefault/mkForce would leak through to nixpkgs
+  # unresolved. `overlays`/`config` are the consumer's additions on top of
+  # marchyo's baked-in overlayList.
   mkNixosSystem =
     {
       system,
@@ -333,16 +311,15 @@ let
       ++ modules;
     };
 
-  # Darwin builder. Selects the nix-darwin builder, home-manager darwin module
-  # and stylix module matching the system's nixpkgs (release branches assume
-  # their matching nixpkgs). `overlays`/`config` are the consumer's additions on
-  # top of marchyo's overlayList / allowUnfree.
+  # Darwin builder: selects the nix-darwin / home-manager / stylix modules
+  # matching the system's nixpkgs. `overlays`/`config` are the consumer's
+  # additions on top of marchyo's overlayList / allowUnfree.
   #
   # For x86_64-darwin nix-darwin is handed an externally-built stable pkgs and
-  # the config/overlays the shared modules set are mkForce-cleared (nix-darwin
-  # rejects nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and
-  # config therefore must be baked INTO that instantiation here — setting them
-  # via a module would be silently cleared.
+  # the shared modules' config/overlays are mkForce-cleared (nix-darwin rejects
+  # nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and config
+  # therefore must be baked INTO that instantiation here; setting them via a
+  # module would be silently cleared.
   mkDarwinSystem =
     {
       system,
@@ -391,15 +368,11 @@ let
       ++ modules;
     };
 
-  # nix-on-droid builder. The droid analog of mkNixosSystem/mkDarwinSystem,
-  # fixed to aarch64-linux (the only Android target). Inputs flow through
-  # `droidInputs`; `nixOnDroidModules.default` + `sharedNixOnDroidConfig` are
-  # baked in, exactly as the NixOS/darwin builders bake in their module sets.
-  #
+  # nix-on-droid builder, fixed to aarch64-linux (the only Android target).
   # The marchyo overlay is NOT forced on (it is Linux-desktop-shaped); overlays
   # default to [] and a consumer can opt in. The droid stack stays on HM 24.05,
   # so the marchyo HM modules (modules/home/*) and the marchyo.* options
-  # namespace remain out of scope — the droid modules reuse only the
+  # namespace stay out of scope; the droid modules reuse only the
   # HM-version-agnostic generic modules.
   mkNixOnDroidConfiguration =
     {
@@ -434,8 +407,8 @@ in
     nixOnDroidModules
     ;
 
-  # Batteries-included builders for downstream consumers. System-parameterized,
-  # so this is a plain top-level output (not wrapped in forAllSystems).
+  # System-parameterized builders, so a plain top-level output (not wrapped in
+  # forAllSystems).
   lib = {
     inherit
       mkNixosSystem
@@ -457,8 +430,8 @@ in
     };
   };
 
-  # Reference configs built through the same exported builders consumers use,
-  # so they exercise the system-aware input selection end to end.
+  # Reference configs built through the exported builders, so they exercise the
+  # system-aware input selection end to end.
   nixosConfigurations = {
     x86_64 = mkNixosSystem {
       system = "x86_64-linux";
@@ -480,8 +453,6 @@ in
     };
   };
 
-  # aarch64 rides unstable; x86_64 is transparently pinned to stable nixos-26.05
-  # (with matching nix-darwin-26.05 + stable HM/stylix) by `mkDarwinSystem`.
   darwinConfigurations = {
     aarch64 = mkDarwinSystem {
       system = "aarch64-darwin";
@@ -499,9 +470,9 @@ in
     };
   };
 
-  # Standalone Home Manager configurations (Linux only — many HM modules
-  # depend on Wayland/Hyprland and are not darwin-compatible).
-  # Darwin home-manager is tested through darwinConfigurations instead.
+  # Standalone Home Manager configurations (Linux only: many HM modules depend
+  # on Wayland/Hyprland and are not darwin-compatible; darwin home-manager is
+  # tested through darwinConfigurations instead).
   homeConfigurations = {
     "x86_64-linux" = mkHomeConfiguration {
       system = "x86_64-linux";
@@ -513,24 +484,17 @@ in
     };
   };
 
-  # nix-on-droid (Android terminal), built through the same exported builder
-  # consumers use. Build with:
+  # nix-on-droid (Android terminal). Build with:
   #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
-  # Kept internally consistent on nix-on-droid's own (2024) nixpkgs + HM 24.05;
-  # the marchyo overlay is intentionally NOT applied (overlays default to []).
   nixOnDroidConfigurations = {
     aarch64 = mkNixOnDroidConfiguration { };
   };
 
-  # System-aware: x86_64-darwin → stable nixos-26.05, every other system →
-  # unstable. Always with marchyo's overlay applied and unfree allowed.
   legacyPackages = mkPkgs;
 
   mkPackages =
     { system }:
     let
-      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it) — same
-      # per-system selector as legacyPackages/the builders.
       selectedNixpkgs = (inputsFor system).nixpkgs;
       pkgs = import selectedNixpkgs {
         inherit system;
@@ -549,9 +513,9 @@ in
 
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
       # hardening audit (plus the vuls collector) inside it. Deliberately kept
-      # out of `checks` — it boots a VM (needs KVM) and is run locally on
-      # demand (`nix build .#security-vm-test` / `just security-vm`), not on the
-      # fast PR gate. See security/vm-test.nix.
+      # out of `checks`: it boots a VM (needs KVM) and is run locally on demand
+      # (`nix build .#security-vm-test` / `just security-vm`), not on the fast PR
+      # gate. See security/vm-test.nix.
       security-vm-test = import ./security/vm-test.nix {
         inherit pkgs;
         nixosModule = nixosModules.default;
@@ -580,15 +544,11 @@ in
       homeManagerModules = homeManagerModules.default;
       nixosHardwareModules = nixosModules.hardware;
     }
-    # The one non-eval check: actually build the Plymouth theme in both
-    # variants. This is the only place the light variant's asset pipeline
-    # (resvg/imagemagick + the package's installCheckPhase) is exercised —
-    # CI's toplevel build only bakes the dark one. Deliberately tiny.
-    # Also build marchyo-shell and assert its wrapper bakes the runtime-env
-    # fixes (TZDIR for Qt timezone lookup, gtk3 platform theme for themed
-    # icons) and run the shell tree's two
-    # headless suites (tests/shell/): the Format.js unit tests and the static
-    # QML contracts.
+    # The one non-eval check: build the Plymouth theme in both variants. The
+    # only place the light variant's asset pipeline (resvg/imagemagick + the
+    # package's installCheckPhase) is exercised; CI's toplevel build only bakes
+    # the dark one. Plus marchyo-shell wrapper assertions and the two headless
+    # shell suites (tests/shell/).
     // (
       let
         pkgs = mkPkgs system;
@@ -611,23 +571,18 @@ in
           grep -q "nix/store" "$greeterConfig" \
             || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
           # The generator hand-writes the sessionCommand array; without commas
-          # between the elements it is a QML parse error and the greeter fails
-          # to load, so greetd crash-loops with no login window. Assert the
-          # array is comma-separated (the checked-in dev Config.qml is, but the
-          # generated one silently drifted).
+          # between elements it is a QML parse error, the greeter fails to load,
+          # and greetd crash-loops with no login window. Assert it is
+          # comma-separated.
           grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
             || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
           touch "$out"
         '';
 
-        # The two headless suites for the Quickshell tree in shell/. Neither
-        # needs Quickshell or a Qt platform plugin, which is the whole point:
-        # `just -f shell/Justfile check` covers what only a running shell can
-        # prove, and these cover what a build machine can. See tests/shell/.
-        # Both stage only the trees they read, rather than ${./.}: the whole
-        # repo as a build input would rebuild these on every site/ or docs/
-        # edit. Each suite derives its root from its own location, so the
-        # staged layout has to mirror the repo's.
+        # Headless suites for the Quickshell tree. Both stage only the trees
+        # they read, rather than ${./.}: the whole repo as a build input would
+        # rebuild them on every site/ or docs/ edit. Each suite derives its root
+        # from its own location, so the staged layout mirrors the repo's.
         shell-format-unit =
           pkgs.runCommand "check-shell-js-unit"
             {
@@ -646,9 +601,8 @@ in
             '';
 
         # site/src/pages/search.astro's option table is hand-maintained with no
-        # generator behind it, so nothing stopped it drifting from the options
-        # tree — four of its `declared:` paths named files that do not exist and
-        # one advertised the wrong default. This is the guard.
+        # generator, so nothing stops it drifting from the options tree. This is
+        # the guard.
         site-option-paths =
           pkgs.runCommand "check-site-option-paths"
             {
@@ -690,7 +644,6 @@ in
   mkFormatter =
     { system }:
     let
-      # x86_64-darwin rides stable 26.05 (unstable 26.11 dropped it).
       pkgs = (inputsFor system).nixpkgs.legacyPackages.${system};
     in
     treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
@@ -722,10 +675,10 @@ in
         exec ${vm.config.system.build.vm}/bin/run-${vm.config.networking.hostName}-vm "$@"
       '';
 
-      # Reference system closure that the SBOM / vulnerability scanners target
-      # by default — the same build as nixosConfigurations.x86_64. Interpolated
-      # into the scanner scripts, so `nix run .#sbom` builds it first; `nix
-      # flake check` only evaluates it (already evaluated for the config).
+      # Reference system closure the SBOM / vulnerability scanners target by
+      # default (same build as nixosConfigurations.x86_64). Interpolated into the
+      # scanner scripts, so `nix run .#sbom` builds it; `nix flake check` only
+      # evaluates it.
       refToplevel =
         (mkNixosSystem {
           inherit system;

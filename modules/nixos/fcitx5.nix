@@ -1,4 +1,3 @@
-# Feature-gated: a non-empty marchyo.keyboard.layouts.
 {
   pkgs,
   lib,
@@ -10,10 +9,8 @@ let
   keyboardLib = import ../generic/keyboard-lib.nix;
   normalizedLayouts = map keyboardLib.normalizeLayout kbdCfg.layouts;
 
-  # Check if any layout requires IME
   hasIME = lib.any (l: l.ime != null) normalizedLayouts;
 
-  # Determine required fcitx5 addons based on IME usage
   requiredAddons = lib.unique (
     lib.flatten (
       map (
@@ -30,15 +27,13 @@ let
     )
   );
 
-  # Base addons always included
   baseAddons = with pkgs; [
-    fcitx5-gtk # GTK2/3/4 integration
-    fcitx5-lua # Scripting support
-    fcitx5-table-extra # Extra input tables
-    fcitx5-table-other # Additional input tables
+    fcitx5-gtk
+    fcitx5-lua
+    fcitx5-table-extra
+    fcitx5-table-other
   ];
 
-  # Generate fcitx5 input method name from layout
   generateIMName =
     layout:
     if layout.ime != null then
@@ -46,11 +41,9 @@ let
     else
       "keyboard-${layout.layout}${lib.optionalString (layout.variant != "") "-${layout.variant}"}";
 
-  # Generate fcitx5 keyboard layout spec
   generateFcitxLayout =
     layout: if layout.variant != "" then "${layout.layout}(${layout.variant})" else layout.layout;
 
-  # Generate input method items for fcitx5 profile
   inputMethodItems = lib.listToAttrs (
     lib.imap0 (
       i: layout:
@@ -71,15 +64,12 @@ in
         waylandFrontend = true;
         addons = baseAddons ++ requiredAddons;
 
-        # Generate fcitx5 configuration from marchyo.keyboard.layouts
         settings = {
-          # Input method profile
           inputMethod = {
             "Groups/0" = {
               "Name" = "Default";
-              # Empty default layout - fcitx5 manages all layouts
+              # Empty default layout: fcitx5 manages all layouts.
               "Default Layout" = "";
-              # Default to first layout
               "DefaultIM" = generateIMName (lib.head normalizedLayouts);
             };
 
@@ -97,8 +87,7 @@ in
               "ModifierOnlyKeyTimeout" = 250;
             };
 
-            # Primary trigger keys for switching between all inputs (layouts + IME)
-            # Uses Super+Space by default (from marchyo.keyboard.options)
+            # Primary trigger keys for switching between all inputs (layouts + IME).
             "Hotkey/TriggerKeys" = lib.listToAttrs [
               (lib.nameValuePair "0" "Super+Space")
             ];
@@ -134,7 +123,6 @@ in
               "OverrideXkbOption" = false;
               "CustomXkbOption" = "";
 
-              # Force enabled/disabled addons
               "EnabledAddons" = "";
               "DisabledAddons" = "";
 
@@ -149,14 +137,12 @@ in
             };
 
             "Behavior/DisabledAddons" = {
-              # Disable quick phrase editor to avoid conflicts
+              # Disable quick phrase editor to avoid conflicts.
               "0" = "quickphrase-editor";
             };
           };
 
-          # Addon-specific configurations
           addons = {
-            # Classic UI appearance settings
             classicui = {
               globalSection = {
                 "Vertical Candidate List" = false; # Horizontal layout
@@ -173,28 +159,24 @@ in
               };
             };
 
-            # Unicode character picker
             unicode = {
               globalSection = {
                 "TriggerKey" = "Super+u";
               };
             };
 
-            # Notifications
             notifications = {
               globalSection = {
                 "HiddenNotifications" = "";
               };
             };
 
-            # Wayland input method protocol
             waylandim = {
               globalSection = {
                 "UsePreEditForPassword" = false;
               };
             };
 
-            # Clipboard integration (disabled by default)
             clipboard = {
               globalSection = {
                 "TriggerKey" = "";
@@ -203,11 +185,10 @@ in
               };
             };
 
-            # Pinyin configuration (when Chinese IME is enabled)
             pinyin = lib.mkIf (lib.any (l: l.ime == "pinyin") normalizedLayouts) {
               globalSection = {
                 "PageSize" = 5;
-                # Disable cloud input for privacy
+                # Disable cloud input for privacy.
                 "CloudPinyinEnabled" = false;
                 "PredictionEnabled" = true;
                 "PredictionSize" = 10;
@@ -218,35 +199,27 @@ in
       };
     };
 
-    # Environment variables for application compatibility
     environment.variables = {
-      # XWayland support - REQUIRED for X11 apps running under Wayland
+      # Required for X11 apps running under XWayland.
       XMODIFIERS = "@im=fcitx";
 
-      # Qt 6.7+ fallback chain - tries Wayland protocol first, then fcitx, then ibus
-      # Qt 6.8.2+ has native text-input-v3 support
+      # Qt fallback chain: Wayland text-input-v3 (native since 6.8.2), then fcitx, then ibus.
       QT_IM_MODULE = "wayland;fcitx;ibus";
 
-      # Note: GTK_IM_MODULE is NOT set globally
-      # - GTK 3/4 have native text-input-v3 support on Wayland
-      # - For older GTK apps, configure via GTK settings.ini (see Home Manager module)
+      # GTK_IM_MODULE is deliberately unset: GTK 3/4 have native text-input-v3 on
+      # Wayland; older GTK apps are handled via GTK settings.ini (Home Manager module).
     };
 
-    # Install required fonts for Unicode and CJK display (when IME is used)
     fonts.packages = lib.mkIf hasIME (
       with pkgs;
       [
-        # Unicode support
         noto-fonts
         noto-fonts-color-emoji
-
-        # CJK fonts
         noto-fonts-cjk-sans
         noto-fonts-cjk-serif
       ]
     );
 
-    # Install fcitx5 and config tool at system level
     environment.systemPackages = with pkgs; [
       fcitx5
       qt6Packages.fcitx5-configtool

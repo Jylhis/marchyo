@@ -35,7 +35,7 @@ QtObject {
     // before truncation (the full title/artist stays in the tooltip).
     readonly property int mediaMaxChars: 40
 
-    // Notification-toast geometry (replaces mako). Timeouts are milliseconds.
+    // Notification-toast geometry. Timeouts are milliseconds.
     readonly property int notifWidth: 380
     readonly property int notifPad: 12
     readonly property int notifRadius: 0

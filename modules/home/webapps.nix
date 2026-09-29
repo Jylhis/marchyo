@@ -61,8 +61,6 @@ in
     xdg.desktopEntries = builtins.listToAttrs (map mkEntry apps);
     home.packages = lib.optional needsChromium pkgs.chromium;
 
-    # Merges with the bind lists from hyprland.nix / screenshot.nix (home-manager
-    # concatenates the list); order is irrelevant to Hyprland.
     wayland.windowManager.hyprland.settings.bind = map mkBind keyedApps;
   };
 }

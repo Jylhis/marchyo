@@ -13,10 +13,7 @@ let
   keyboardLib = import ../generic/keyboard-lib.nix;
   normalizedLayouts = map keyboardLib.normalizeLayout cfg.layouts;
 
-  # Extract layout codes for Hyprland compatibility
   simpleLayouts = map (l: l.layout) normalizedLayouts;
-
-  # Extract variants (empty string if no variant)
   variants = map (l: l.variant) normalizedLayouts;
 
   hasVariants = lib.any (v: v != "") variants;
@@ -27,19 +24,15 @@ in
     # directly, so mirror the layout config here for the compositor to pick up.
     home.keyboard = lib.mkMerge [
       {
-        # Concatenate layout list into comma-separated string (e.g., "us,fi,cn")
         layout = lib.concatStringsSep "," simpleLayouts;
 
-        # Apply XKB options as list (Hyprland will join with commas)
-        # Must remain a list - don't convert to string
+        # Must remain a list (Hyprland joins with commas); don't convert to string.
         options = cfg.options ++ lib.optional (cfg.composeKey != null) "compose:${cfg.composeKey}";
       }
-      # Only set variant if at least one layout has a variant
-      # This avoids issues with empty string lists
+      # Skip variant entirely unless one layout has a variant, to avoid empty-string-list issues.
       (lib.mkIf hasVariants {
-        # Provide variants as comma-separated string
-        # Note: Empty strings in the list preserve position mapping to layouts
-        # Example: "intl," means first layout has "intl" variant, second has default
+        # Empty strings preserve position mapping to layouts, e.g. "intl,"
+        # means the first layout has the "intl" variant and the second the default.
         variant = lib.concatStringsSep "," variants;
       })
     ];

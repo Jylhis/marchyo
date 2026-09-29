@@ -10,10 +10,9 @@ let
 in
 {
   config = lib.mkIf desktopEnabled {
-    # Disabled: noctalia-shell is a full Quickshell desktop shell that ships its
-    # own notification daemon (rendered as a large panel/window) and would seize
-    # org.freedesktop.Notifications, overriding mako. marchyo already covers the
-    # bar (waybar) and launcher (vicinae), so notifications go through mako.
+    # Disabled: noctalia's own notification daemon would seize
+    # org.freedesktop.Notifications and override mako. marchyo already covers the
+    # bar (waybar) and launcher (vicinae).
     programs.noctalia.enable = lib.mkDefault false;
   };
 }

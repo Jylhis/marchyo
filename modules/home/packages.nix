@@ -31,9 +31,7 @@
 
   };
 
-  # Recoverable deletes via the FreeDesktop trash (`trash`, `trash-put`,
-  # `trash-list`, `trash-restore`). Intentionally does NOT alias `rm` — silently
-  # changing rm semantics in a shared flake surprises consumers. Linux-only:
-  # trash-cli implements the FreeDesktop spec, not the macOS Trash.
+  # FreeDesktop trash CLI. Intentionally does NOT alias `rm`: changing rm
+  # semantics in a shared flake surprises consumers. Linux-only (not macOS Trash).
   home.packages = lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ pkgs.trash-cli ];
 }

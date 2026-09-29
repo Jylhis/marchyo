@@ -6,9 +6,8 @@ import "../Commons/Cliphist.js" as Cliphist
 import "../Commons/Match.js" as Match
 
 // Clipboard history over `cliphist list` (fed by the wl-paste watchers in
-// modules/home/hyprland.nix). The listing subprocess runs once per open —
-// a refresh, not a poll — and rows decode in JS (Commons/Cliphist.js).
-// Text entries only; binary/image rows are skipped by Cliphist.parseLine.
+// modules/home/hyprland.nix). Rerun per open is a refresh, not a poll; rows
+// decode in Commons/Cliphist.js. Text only; binary/image rows are skipped.
 Item {
     id: root
 
@@ -82,8 +81,6 @@ Item {
         font.pixelSize: Style.fontSizeSmall
     }
 
-    // One listing per open: rerunning the process both refreshes the rows
-    // and replaces the model, so no stale merge logic is needed.
     readonly property var listProc: Process {
         id: listProc
         command: [Config.cliphist, "list"]

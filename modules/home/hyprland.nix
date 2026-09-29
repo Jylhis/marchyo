@@ -7,9 +7,7 @@
 }:
 let
 
-  # Desktop shell modules only apply on Linux with the marchyo desktop enabled.
-  # On darwin (isLinux false) and on headless Linux hosts (desktop disabled) this
-  # whole module is inert, so consumers no longer need to `disabledModules` it.
+  # Inert on darwin and on headless Linux, so consumers never need disabledModules.
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
@@ -17,13 +15,11 @@ let
   # changes made without --apply); restore them at session start.
   cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
 
-  # GPU detection from NixOS config
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
   isPrimeOffload =
     (osConfig.marchyo.graphics.prime.enable or false)
     && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
 
-  # Theme variant for color selection
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
   isDark = themeVariant == "dark";
 
@@ -49,7 +45,7 @@ let
     exit 0
   '';
 
-  # Convert "#RRGGBB" → "rgb(RRGGBB)" / "rgba(RRGGBBAA)" for Hyprland color syntax
+  # Hyprland color syntax: "#RRGGBB" to rgb()/rgba().
   rgb = h: "rgb(${lib.removePrefix "#" h})";
   rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
 
@@ -103,10 +99,7 @@ let
   # (see the panel binds below); only wire them when the shell owns the desktop.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
-  # Launcher binds summon the in-shell launcher when the shell is on, and
-  # spawn vicinae otherwise. Gated on marchyo.launcher.enable so an opted-out
-  # host gets no dead binds (previously SUPER+R spawned a missing binary
-  # when the launcher was disabled).
+  # Gated on marchyo.launcher.enable so an opted-out host gets no dead binds.
   launcherEnabled = ((osConfig.marchyo or { }).launcher or { }).enable or false;
 
   # Lua-renderer helpers (bind/exec/env/onStart, see lib/hyprland-lua.nix).
@@ -192,10 +185,8 @@ in
     wayland.windowManager.hyprland = {
       enable = true;
       systemd.enable = false; # UWSM manages systemd integration
-      # Hyprland deprecated hyprlang in favour of Lua in 0.55; the `settings`
-      # attrset below is written for the Lua renderer. mkDefault so a consumer
-      # that still needs hyprlang can pin it back (its own settings would then
-      # have to be hyprlang-shaped too).
+      # `settings` below is written for the Lua renderer (hyprlang deprecated in 0.55).
+      # mkDefault so a consumer needing hyprlang can pin it back.
       configType = lib.mkDefault "lua";
       settings = {
 
@@ -252,7 +243,6 @@ in
                 )
                 (
                   lib.mkDefault (
-                    # Handle both list and string types for variant
                     if builtins.isList config.home.keyboard.variant then
                       lib.strings.join "," config.home.keyboard.variant
                     else
@@ -282,16 +272,13 @@ in
             focus_on_activate = true;
             background_color = lib.mkForce (rgb palette.hex.bg);
           };
-          # Layout — tmux-style TUI grid: zero gaps, single-line pane borders
+          # tmux-style TUI grid: zero gaps, single-line pane borders.
           general = {
             gaps_in = 0;
             gaps_out = 0;
             border_size = 2;
 
-            # Solid accent border on the active pane, dim border on the rest —
-            # mirrors a tmux active/inactive pane divider (no gradient). The
-            # inactive border uses the border-strong token, matching the design
-            # system's Hyprland variant files (text-faint is an ink token and
+            # Active pane accent, inactive border-strong (an ink token like text-faint
             # reads brighter than a border should on dark).
             col = {
               active_border = lib.mkForce (rgba palette.hex.accent "ff");
@@ -310,22 +297,19 @@ in
           };
 
           cursor = {
-            # Hides the cursor on any key press (shows again on mouse movement).
             # Also keeps the cursor out of screenshots: every capture bind is a
-            # keyboard bind, so the triggering key press hides it before
-            # grimblast runs.
+            # keyboard bind, so the triggering key press hides it before grimblast runs.
             hide_on_key_press = true;
           }
           // lib.optionalAttrs hasNvidia {
             no_hardware_cursors = true;
           };
 
-          # Decoration — flat TUI panes: sharp corners, no rounding/shadow/blur
+          # Flat TUI panes: sharp corners, no rounding/shadow/blur.
           decoration = {
             rounding = 0;
 
-            # No dimming — every pane stays fully readable like a terminal grid;
-            # the active pane is identified by its bright accent border instead.
+            # No dimming; the active pane is identified by its accent border instead.
             dim_inactive = false;
 
             shadow = {
@@ -337,7 +321,7 @@ in
             };
           };
 
-          # Motion — disabled for instant, terminal-multiplexer-style snapping
+          # Disabled for instant, terminal-multiplexer-style snapping.
           animations = {
             enabled = false;
           };
@@ -426,13 +410,12 @@ in
             tag = "+floating-window";
           }
 
-          # Fullscreen screensaver
           {
             match.class = "Screensaver";
             fullscreen = true;
           }
 
-          # Float Steam, fullscreen RetroArch
+          # Float Steam windows.
           {
             match.class = "steam";
             float = true;
@@ -473,7 +456,7 @@ in
             ];
           }
 
-          # 1Password - full opacity for proper rendering
+          # 1Password: keep out of screen shares, float it.
           {
             match.class = "^(1[p|P]assword)$";
             no_screen_share = true;
@@ -580,31 +563,26 @@ in
           )
         ) 10)
         ++ [
-          # Tab between workspaces
           (bindd "SUPER + TAB" "Next workspace" (dsp "focus({ workspace = \"e+1\" })"))
           (bindd "SUPER + SHIFT + TAB" "Previous workspace" (dsp "focus({ workspace = \"e-1\" })"))
           (bindd "SUPER + CTRL + TAB" "Former workspace" (dsp "focus({ workspace = \"previous\" })"))
-          # Swap active window with the one next to it with SUPER + SHIFT + arrow keys
           (bindd "SUPER + SHIFT + left" "Swap window to the left" (dsp "window.swap({ direction = \"l\" })"))
           (bindd "SUPER + SHIFT + right" "Swap window to the right" (
             dsp "window.swap({ direction = \"r\" })"
           ))
           (bindd "SUPER + SHIFT + up" "Swap window up" (dsp "window.swap({ direction = \"u\" })"))
           (bindd "SUPER + SHIFT + down" "Swap window down" (dsp "window.swap({ direction = \"d\" })"))
-          # Cycle through applications on active workspace
           (bindd "ALT + Tab" "Cycle to next window" (dsp "window.cycle_next()"))
           (bindd "ALT + SHIFT + Tab" "Cycle to prev window" (dsp "window.cycle_next({ next = false })"))
           (bindd "ALT + Tab" "Reveal active window on top" (dsp "window.alter_zorder({ mode = \"top\" })"))
           (bindd "ALT + SHIFT + Tab" "Reveal active window on top" (
             dsp "window.alter_zorder({ mode = \"top\" })"
           ))
-          # Scroll through existing workspaces with SUPER + scroll
           (bindd "SUPER + mouse_down" "Scroll active workspace forward" (
             dsp "focus({ workspace = \"e+1\" })"
           ))
           (bindd "SUPER + mouse_up" "Scroll active workspace backward" (dsp "focus({ workspace = \"e-1\" })"))
 
-          # Window grouping (tabbed/stacked windows)
           (bindd "SUPER + ALT + G" "Toggle window grouping" (dsp "group.toggle()"))
           (bindd "SUPER + ALT + SHIFT + G" "Move window out of group" (
             dsp "window.move({ out_of_group = true })"
@@ -624,10 +602,8 @@ in
           (bindd "SUPER + ALT + TAB" "Next window in group" (dsp "group.next()"))
           (bindd "SUPER + ALT + SHIFT + TAB" "Previous window in group" (dsp "group.prev()"))
 
-          # Keyboard resize (base resize is via border-drag / SUPER+RMB)
-          # Descriptions name the edge that moves, matching the vertical pair
-          # below: a negative delta shrinks, a positive one expands. These two
-          # were the wrong way round, and the cheat sheet renders them verbatim.
+          # Keyboard resize (base resize is border-drag / SUPER+RMB). Descriptions
+          # name the edge that moves; negative delta shrinks, positive expands.
           (bindd "SUPER + minus" "Shrink window left" (
             dsp "window.resize({ x = -100, y = 0, relative = true })"
           ))
@@ -673,7 +649,6 @@ in
             dsp "workspace.move({ monitor = \"d\" })"
           ))
 
-          # Monitor focus (relocated here from SUPER+comma/period)
           (bindd "CTRL + ALT + TAB" "Focus next monitor" (dsp "focus({ monitor = \"+1\" })"))
           (bindd "CTRL + ALT + SHIFT + TAB" "Focus previous monitor" (dsp "focus({ monitor = \"-1\" })"))
 
@@ -683,14 +658,12 @@ in
             exec (if shellEnabled then "marchyo-shell ipc -n call -- shell dismissLast" else "makoctl dismiss")
           ))
 
-          # Cursor zoom (screen magnifier)
           (bindd "SUPER + CTRL + Z" "Zoom in" (exec "marchyo zoom in"))
           (bindd "SUPER + CTRL + SHIFT + Z" "Zoom out" (exec "marchyo zoom out"))
           (bindd "SUPER + CTRL + ALT + Z" "Reset zoom" (exec "marchyo zoom reset"))
 
-          # System toggles (backed by modules/home/window-toggles.nix)
-          # Toggle top bar. The shell hides/shows its bar over IPC; waybar uses
-          # SIGUSR1. Guarded so the bind never targets a stood-down daemon.
+          # Toggle top bar: shell hides/shows over IPC, waybar via SIGUSR1.
+          # Guarded so the bind never targets a stood-down daemon.
           (bindd "SUPER + SHIFT + SPACE" "Toggle top bar" (
             exec (
               if shellEnabled then
@@ -727,36 +700,28 @@ in
           ))
           (bind "CTRL + ALT + Delete" (exec "systemctl poweroff"))
 
-          # Move active window to an adjacent monitor (single window).
-          # Monitor *focus* is on CTRL+ALT+Tab, comma/period drive
-          # notifications (comma) and the emoji picker (period).
+          # Move active window to an adjacent monitor (monitor focus is CTRL+ALT+Tab;
+          # comma/period drive notifications and the emoji picker).
           (bind "SUPER + SHIFT + comma" (dsp "window.move({ monitor = \"-1\" })"))
           (bind "SUPER + SHIFT + period" (dsp "window.move({ monitor = \"+1\" })"))
 
-          # Mouse bindings
           (binddOpts "SUPER + mouse:272" "Move window" (dsp "window.drag()") { mouse = true; })
           (binddOpts "SUPER + mouse:273" "Resize window" (dsp "window.resize()") { mouse = true; })
         ]
         ++ (
-          # Laptop multimedia keys for volume and LCD brightness. When SwayOSD
-          # owns the OSD they route through swayosd-client so an overlay shows the
-          # change; with the unified shell on, volume keys stay silent (the
-          # shell's OSD reacts natively to Pipewire) while the brightness keys
-          # poke the shell OSD over IPC with the resulting level — sysfs writes
-          # signal POLLPRI rather than a watchable change, so the shell's native
-          # backlight watcher is unreliable on many hosts (the poke is the
-          # primary path, the watcher stays as best-effort). `locked` keeps them
-          # working over the lock screen and `repeating` allows press-and-hold.
+          # Laptop volume/brightness keys. SwayOSD routes through swayosd-client;
+          # with the shell on, volume reacts natively to Pipewire while brightness keys
+          # poke the shell OSD over IPC (sysfs writes signal POLLPRI, not a watchable
+          # change, so the shell's backlight watcher is unreliable, poke is primary).
+          # `locked` keeps them working over the lock screen, `repeating` allows hold.
           let
             osdEnabled = (((osConfig.marchyo or { }).osd or { }).enable or true) && !shellEnabled;
             elOpts = {
               locked = true;
               repeating = true;
             };
-            # brightnessctl, then poke the shell OSD with the new percent
-            # (brightnessctl get/max are plain integers; guard max > 0 so the
-            # arithmetic expansion can never divide by zero). `exit 0` keeps
-            # press-and-hold chains alive when the poke cannot be delivered.
+            # Poke the shell OSD with the new percent (guard max > 0 to avoid divide
+            # by zero). `exit 0` keeps press-and-hold alive if the poke fails.
             brightnessPoke = delta: ''
               brightnessctl -e4 -n2 set ${delta}
               max=$(brightnessctl max)
@@ -807,10 +772,8 @@ in
             execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''
           ))
         ]
-        # Unified-shell panel summons. `marchyo-shell ipc` reaches the running
-        # shell process (the wrapper bakes its own -p, so it self-targets); the
-        # panels are the same ones the bar widgets toggle in-process. Only wired
-        # when the shell is on — the IPC target does not exist otherwise.
+        # Panel summons via `marchyo-shell ipc`. Only wired when the shell is on,
+        # since the IPC target does not exist otherwise.
         ++ lib.optionals shellEnabled [
           (bindd "SUPER + SHIFT + V" "Audio panel" (
             exec "marchyo-shell ipc -n call -- shell togglePanel audio"
@@ -825,9 +788,7 @@ in
             exec "marchyo-shell ipc -n call -- shell togglePanel monitor"
           ))
         ]
-        # Launcher binds: the in-shell launcher when the shell is on, vicinae
-        # for the discrete stack. Only present when the launcher feature is
-        # on, so an opted-out host gets no dead binds.
+        # Launcher binds: in-shell launcher when the shell is on, else vicinae.
         ++ lib.optionals launcherEnabled [
           (bindd "SUPER + CTRL + V" "Clipboard history" (
             exec (
@@ -852,7 +813,6 @@ in
           ))
         ];
 
-        # Workspace configuration
         workspace_rule = [
           {
             workspace = "1";
@@ -873,12 +833,10 @@ in
           (env "XDG_CURRENT_DESKTOP" "Hyprland")
           (env "XDG_SESSION_DESKTOP" "Hyprland")
 
-          # XDG_DATA_DIRS is deliberately NOT set here. `env` values are rendered
-          # as Lua string literals with no shell expansion, so a value containing
-          # $XDG_DATA_DIRS / $HOME is exported verbatim -- uwsm then pushes that
-          # literal into the systemd user manager, breaking .desktop and icon
-          # lookup for every user service (the launcher saw 4 apps instead of 90).
-          # NixOS already provides the full list via environment.profiles +
+          # XDG_DATA_DIRS is deliberately NOT set here: `env` values render as Lua
+          # literals with no shell expansion, so $XDG_DATA_DIRS would be exported
+          # verbatim and uwsm would push that literal into the systemd user manager,
+          # breaking .desktop and icon lookup. NixOS already provides the full list via
           # environment.profileRelativeSessionVariables.XDG_DATA_DIRS.
 
           # Use XCompose file (absolute: no tilde expansion happens here either)
@@ -902,12 +860,10 @@ in
         on = [
           (onStart (
             [
-              # Essential services
               "kanshi"
               # vicinae runs as a user service (programs.vicinae.systemd.enable)
               "fcitx5 -d --replace"
 
-              # Clipboard
               "wl-paste --type text --watch cliphist store"
               "wl-paste --type image --watch cliphist store"
 
@@ -925,11 +881,9 @@ in
       };
     };
 
-    # Additional packages for Hyprland
     home.packages =
       with pkgs;
       [
-        # Core Wayland tools
         wl-clipboard
         wl-clip-persist
         cliphist
@@ -937,25 +891,20 @@ in
 
         nwg-look
 
-        # Screen recording
         wf-recorder
 
         slurp
-        # System monitoring and control
         brightnessctl
         playerctl
         pavucontrol
         pwvucontrol
 
-        # File management
         xdg-utils
         mimeo
 
-        # Fonts
         nerd-fonts.blex-mono
         nerd-fonts.caskaydia-cove
 
-        # Utilities
         killall
         pciutils
         usbutils
@@ -963,14 +912,11 @@ in
         imv # lightweight Wayland image viewer
         gpu-screen-recorder # low-overhead GPU screen recorder (replay buffer)
 
-        # System integration
         libnotify
         kanshi
 
-        # Audio
         wireplumber
 
-        # Power management
         power-profiles-daemon
       ]
       ++ lib.optionals wallpaperEnabled [
@@ -980,9 +926,8 @@ in
 
     services.hyprpolkitagent.enable = true;
     services.hyprsunset.enable = true;
-    # Keyring is provided + PAM-unlocked by the NixOS module
-    # (gnome.gnome-keyring.enable). Running the HM user daemon too starts a
-    # second gnome-keyring-daemon -> "discover_other_daemon"/"already initialized".
+    # Keyring is provided + PAM-unlocked by the NixOS module; the HM user daemon
+    # too would start a second gnome-keyring-daemon ("already initialized").
     services.gnome-keyring.enable = false;
   };
 }

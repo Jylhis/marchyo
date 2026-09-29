@@ -19,13 +19,10 @@ final: prev:
 
     hyprmon = final.callPackage ./packages/hyprmon/package.nix { };
     marchyo-shell = final.callPackage ./packages/marchyo-shell/package.nix { };
-    # Builder for a Marchyo shell plugin (build-time Option A). callPackage
-    # fills the tool args, leaving the `{ src, id, kinds, entryPoints, ... }`
-    # function as pkgs.mkMarchyoShellPlugin.
     mkMarchyoShellPlugin = final.callPackage ./packages/marchyo-shell/plugin.nix { };
-    # Imported omarchy plugins, packaged for the shell's compat shim
-    # (shell/compat). Pinned + baked; add to marchyo.shell.plugins and place by
-    # manifest id in marchyo.shell.settings.bar.layout.
+    # Imported omarchy plugins for the shell's compat shim. Add to
+    # marchyo.shell.plugins and place by manifest id in
+    # marchyo.shell.settings.bar.layout.
     marchyo-shell-plugins = {
       sbb = final.mkMarchyoShellPlugin {
         src = final.fetchgit {
@@ -54,11 +51,10 @@ final: prev:
   }
 )
 // {
-  # Design system 3.0.0 generates platform files (ghostty themes, gtk css,
-  # bat themes, …) in-derivation; the source tree no longer commits them.
-  # The built package is the only source for those assets, so expose it on
-  # every platform (ghostty themes are installed on darwin too —
-  # modules/home/ghostty.nix). The upstream overlay is Linux-only in this
-  # tree, hence the explicit callPackage here.
+  # The design-system package generates its platform files (ghostty themes, gtk
+  # css, bat themes, …) in-derivation, so the built package is the only source
+  # for those assets: expose it on every platform (ghostty themes install on
+  # darwin too, modules/home/ghostty.nix). The upstream overlay is Linux-only in
+  # this tree, hence the explicit callPackage here.
   jylhis-themes = final.callPackage (inputs.jylhis-design + "/nix/themes.nix") { };
 }

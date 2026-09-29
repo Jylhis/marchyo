@@ -135,7 +135,7 @@ in
     xdg.mimeApps = {
       enable = true;
       defaultApplications = {
-        # Images — Loupe is always the viewer; imageEditor is install-only
+        # Loupe is always the viewer; imageEditor is install-only.
         "image/png" = [ "org.gnome.Loupe.desktop" ];
         "image/jpeg" = [ "org.gnome.Loupe.desktop" ];
         "image/gif" = [ "org.gnome.Loupe.desktop" ];
@@ -144,7 +144,6 @@ in
         "image/bmp" = [ "org.gnome.Loupe.desktop" ];
         "image/tiff" = [ "org.gnome.Loupe.desktop" ];
 
-        # Documents
         "application/pdf" = [ "org.gnome.Papers.desktop" ];
 
         # Archives are handled from the terminal (ouch / yazi); no GUI handler.

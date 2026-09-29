@@ -4,11 +4,10 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Connectivity readout. The native Networking binding gives connected/type;
-// the active SSID, signal, and IPv4 address come from the shared
-// Services/NetworkStatus nmcli poll (one poll for the widget, the network
-// panel, and the tooltip — previously widget and panel each ran their own).
-// Click opens the in-shell network panel (status + an nmtui escape hatch).
+// Connectivity readout. The native Networking binding gives connected/type; the
+// active SSID, signal, and IPv4 address come from the shared
+// Services/NetworkStatus nmcli poll, shared by the widget, the network panel, and
+// the tooltip.
 BarItem {
     id: root
 

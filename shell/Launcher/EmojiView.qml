@@ -4,10 +4,10 @@ import qs.Services
 import "../Commons/EmojiData.js" as EmojiData
 import "../Commons/Match.js" as Match
 
-// Emoji picker: a grid over Commons/EmojiData.js (the full catalog in the
-// store shell, a dev subset when running from the tree), searched by name
-// with Match.js. Activating an emoji copies it AND types it at the cursor
-// (vicinae parity) — see Services/Launcher.pasteText.
+// Emoji picker: a grid over Commons/EmojiData.js (full catalog in the store
+// shell, a dev subset from the tree), searched by name with Match.js.
+// Activating copies AND types the emoji at the cursor (vicinae parity); see
+// Services/Launcher.pasteText.
 Item {
     id: root
 

@@ -1,10 +1,6 @@
-# Desktop-only DDC/CI external-monitor brightness. Gated on the desktop and the
-# marchyo.hardware.ddc.enable opt-out sub-toggle (localsend pattern).
-#
-# hardware.i2c.enable loads i2c-dev, ships the udev rules, and creates the `i2c`
-# group; users still have to be members to talk to the bus, so add the Marchyo
-# users here (extraGroups list-merges with the base set in system.nix, same
-# idiom as modules/nixos/osd.nix).
+# hardware.i2c.enable loads i2c-dev, ships udev rules, and creates the `i2c`
+# group, but users must be members to talk to the bus, so add the Marchyo users
+# here (extraGroups list-merges with the base set in system.nix).
 {
   config,
   lib,

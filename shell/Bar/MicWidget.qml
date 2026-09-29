@@ -3,9 +3,8 @@ import qs.Commons
 import qs.Services
 
 // Microphone-in-use privacy indicator: a pure view over Services/Audio, shown
-// only while some application is capturing audio (an AudioInStream exists).
-// Lists the capturing apps in its tooltip; click opens the audio panel. This is
-// a privacy affordance more than an audio control — it makes a hot mic visible.
+// only while some application is capturing audio (an AudioInStream exists). This
+// is a privacy affordance more than an audio control: it makes a hot mic visible.
 BarItem {
     id: root
 

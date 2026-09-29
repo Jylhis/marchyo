@@ -18,11 +18,9 @@ in
     };
   };
 
-  # Top-level sidecar option: declared OUTSIDE `options.marchyo.*` on
-  # purpose. The cli-state module merges this attrset into config.marchyo.*
-  # with mkDefault priority — declaring it under `options.marchyo` would
-  # create a self-cycle because `marchyo = toMkDefault cfg` could
-  # potentially contribute to its own source path.
+  # Declared OUTSIDE `options.marchyo.*` on purpose: cli-state merges this
+  # attrset into config.marchyo.* with mkDefault priority, and declaring it
+  # under `options.marchyo` would create a self-cycle.
   options.marchyoCliState = mkOption {
     type = types.attrs;
     default = { };

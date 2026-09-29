@@ -1,4 +1,3 @@
-# Global (headless-safe): console and X keymap from marchyo.keyboard.
 {
   lib,
   config,
@@ -9,10 +8,8 @@ let
   keyboardLib = import ../generic/keyboard-lib.nix;
   normalizedLayouts = map keyboardLib.normalizeLayout cfg.layouts;
 
-  # Extract layout codes for XKB configuration
   simpleLayouts = map (l: l.layout) normalizedLayouts;
 
-  # Extract variants for XKB configuration
   # The deprecated cfg.variant, when set, takes precedence on the first layout
   # so existing configs that only set the legacy option keep working even when
   # the default first layout now ships with its own variant (e.g. altgr-intl).
@@ -32,10 +29,8 @@ in
     warnings = lib.optionals (cfg.variant != "") [
       "marchyo.keyboard.variant is deprecated. Use { layout = \"us\"; variant = \"intl\"; } in marchyo.keyboard.layouts instead."
     ];
-    # XKB fallback configuration for TTY/console and login screen
-    # fcitx5 manages input in the desktop environment, but TTY needs XKB
+    # fcitx5 manages input in the desktop environment, but TTY/console needs XKB.
     services.xserver.xkb = {
-      # Configure all layouts (including those with IME) for basic TTY support
       layout = lib.mkDefault (lib.concatStringsSep "," simpleLayouts);
 
       variant = lib.mkDefault (lib.concatStringsSep "," variants);

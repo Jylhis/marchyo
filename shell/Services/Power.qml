@@ -34,10 +34,10 @@ QtObject {
         return "󰁹 " + pct;
     }
 
-    // Percentage tint as a continuous gradient between theme tokens (logibar's
-    // idea) rather than switching colour at 10%/20% thresholds: the value reads
-    // as a ramp. 0% = statusErr, 50% = statusWarn, 100% = statusOk. Shared by
-    // the bar widget and the power panel so the two never disagree.
+    // Percentage tint as a continuous gradient between theme tokens rather than
+    // switching colour at 10%/20% thresholds: the value reads as a ramp. 0% =
+    // statusErr, 50% = statusWarn, 100% = statusOk. Shared by the bar widget and
+    // the power panel so the two never disagree.
     function lerpColor(a, b, t) {
         return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
     }

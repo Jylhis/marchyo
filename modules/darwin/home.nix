@@ -20,7 +20,6 @@ in
 
     home-manager.users = lib.mapAttrs (_name: _user: {
       imports = [
-        # Curated darwin-safe subset of ../home
         ../home/shell.nix
         ../home/packages.nix
         ../home/fzf.nix

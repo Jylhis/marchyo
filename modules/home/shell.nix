@@ -22,32 +22,26 @@
         "cat"
       ];
       shellOptions = [
-        # Default
-        "checkwinsize" # Checks window size after each command.
+        "checkwinsize"
         "complete_fullquote"
         "expand_aliases"
-
-        # Default from home manager
         "checkjobs"
         "extglob"
         "globstar"
         "histappend"
-
-        # Other
-        "cdspell" # Tries to fix minor errors in the directory spellings
+        "cdspell" # Fix minor errors in directory spellings
         "dirspell"
         "shift_verbose"
-        "cmdhist" # Save multi-line commands as one command
+        "cmdhist" # Save multi-line commands as one history entry
       ];
       initExtra = ''
-        # Enable history expansion with space
-        # E.g. typing !!<space> will replace the !! with your last command
+        # magic-space: expand history inline (e.g. !!<space> becomes your last command).
         bind Space:magic-space
       '';
     };
     readline = {
       bindings = {
-        # Up and down arrows search through the history for the characters before the cursor
+        # Up/down arrows search history for the characters before the cursor.
         "\\e[A" = "history-search-backward";
         "\\e[B" = "history-search-forward";
       };

@@ -1,7 +1,7 @@
-# Backing scripts for the omarchy-style window/system toggle keybinds wired in
-# modules/home/hyprland.nix. omarchy drives these from `omarchy-*` shell
-# scripts that do not exist here, so marchyo ships its own small wrappers
-# (mirroring how the media keys were translated to direct commands).
+# Notification/DND and screen-recording toggle binds (wired in
+# modules/home/hyprland.nix) plus the recorder/notify tools the marchyo CLI
+# drives. omarchy's `omarchy-*` scripts do not exist here, so marchyo routes
+# these through the CLI (`marchyo toggle …` / `marchyo capture record`).
 {
   lib,
   pkgs,
@@ -15,13 +15,6 @@ let
   # When the unified shell owns notifications, DND is in-shell state and mako is
   # gone, so these binds reach the shell over IPC instead of the CLI/makoctl.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
-
-  # Cursor zoom moved to `marchyo zoom in|out|reset` (commands/launch.ts).
-  # Nightlight, idle-lock, notification-DND, and screen-recording toggles
-  # were absorbed into the marchyo CLI (`marchyo toggle …` /
-  # `marchyo capture record`, packages/marchyo-cli) — same actuation
-  # commands, state now tracked as CLI runtime overrides / live probes.
-  # The recorder/notify tools the CLI drives stay installed here.
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -33,12 +26,6 @@ in
       pkgs.procps
     ];
 
-    # Merges with the bind lists from hyprland.nix / screenshot.nix /
-    # webapps.nix (home-manager concatenates the lists; order is irrelevant
-    # to Hyprland). Dismiss-all moved here from SUPER CTRL, comma in
-    # hyprland.nix, which now belongs to the DND toggle (omarchy parity).
-    # With the shell on, DND is in-shell state and mako is retired, so both
-    # binds reach the running shell over IPC; otherwise they drive the CLI/mako.
     wayland.windowManager.hyprland.settings.bind =
       if shellEnabled then
         [

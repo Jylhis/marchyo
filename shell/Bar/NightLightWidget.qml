@@ -5,8 +5,7 @@ import qs.Services
 
 // Night-light toggle: a pure view over Services/Nightlight, which owns the one
 // temperature probe/toggle pair for the seat (the widget is instantiated once
-// per monitor). Ported from omarchy's NightLight indicator; marchyo previously
-// exposed hyprsunset only at the compositor/CLI level.
+// per monitor).
 BarItem {
     id: root
 

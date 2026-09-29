@@ -2,11 +2,9 @@
 let
   inherit (lib) mkOption types;
 
-  # Raw, IFD-free spec for a CLI-added plugin: a pinned git source plus the
-  # manifest fields (mirrored at eval time, exactly as mkMarchyoShellPlugin's
-  # args are). Kept darwin-neutral — no pkgs references — because this option
-  # file is evaluated on darwin. modules/home/marchyo-shell.nix turns each spec
-  # into a built plugin via pkgs.mkMarchyoShellPlugin on Linux.
+  # Raw, IFD-free spec for a CLI-added plugin: pinned git source plus manifest
+  # fields. No pkgs references, per the darwin eval gate; marchyo-shell.nix
+  # turns each spec into a built plugin via mkMarchyoShellPlugin on Linux.
   extraPluginType = types.submodule {
     options = {
       id = mkOption {

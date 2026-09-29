@@ -1,13 +1,10 @@
 pragma Singleton
 import QtQuick
 
-// Seat-global popout coordinator for omarchy-compat plugin bar widgets. omarchy
-// keeps one open popout per bar and hands off when the user clicks a different
-// bar icon; marchyo already runs a single-open model for first-party panels
-// (Services/PanelManager), so this mirrors that for compat KeyboardPanels: at
-// most one plugin popout open at a time. Each plugin widget's PluginBarApi
-// facade (shell/compat/Ui/PluginBarApi.qml, instantiated in shell.qml) delegates
-// its shared popout state and click-target registry here.
+// Seat-global popout coordinator for omarchy-compat plugin bar widgets: at most
+// one plugin popout open at a time, mirroring PanelManager's single-open model
+// for compat KeyboardPanels. Each widget's PluginBarApi facade delegates its
+// shared popout state and click-target registry here.
 QtObject {
     id: root
 

@@ -11,7 +11,7 @@ import QtQuick
 // any host with no declared plugins behave exactly as before. shell.qml calls
 // barWidgetComponent() to resolve a bar-layout id the first-party map did not
 // claim; service/panel/overlay kinds are instantiated by shell.qml from the
-// same list (see Phase 4).
+// same list.
 QtObject {
     id: root
 

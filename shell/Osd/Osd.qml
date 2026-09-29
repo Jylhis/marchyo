@@ -6,13 +6,12 @@ import qs.Commons
 import qs.Services
 
 // The shell's on-screen display: a small bottom-centred overlay that flashes the
-// current volume, mic-mute, or backlight level whenever it changes. It replaces
-// SwayOSD (retired by the marchyo.shell cutover). Triggers are native and
-// pull-based — no external poke, matching the bar's philosophy:
-//   * volume / mic mute -> Quickshell Pipewire bindings (a real reactive service,
-//     shared with the bar and the audio panel via Services/Audio)
+// current volume, mic-mute, or backlight level whenever it changes. Triggers are
+// native and pull-based, matching the bar's philosophy:
+//   * volume / mic mute -> Quickshell Pipewire bindings (shared with the bar and
+//     the audio panel via Services/Audio)
 //   * brightness        -> a watched /sys/class/backlight/<dev> node, with the
-//     brightness-key IPC poke (shell osdShow) as the reliable primary path —
+//     brightness-key IPC poke (shell osdShow) as the reliable primary path:
 //     sysfs attribute writes signal POLLPRI, which FileView's watcher misses on
 //     many hosts (see README "brightness" note).
 // The renderer is deliberately dumb: show(label, percent, hasBar) fills the card
@@ -20,9 +19,8 @@ import qs.Services
 Scope {
     id: root
 
-    // Current card contents. Volume may read up to 150 (Pipewire allows the
-    // same 150% ceiling as the bar's scroll and the audio panel); brightness
-    // stays within 0–100 but the clamp simply doesn't bite.
+    // Volume may read up to 150 (Pipewire's 150% ceiling, as in the bar scroll
+    // and audio panel); brightness stays 0–100 so the clamp doesn't bite.
     property string label: ""
     property int percent: 0
     property bool hasBar: true
@@ -52,7 +50,6 @@ Scope {
         onTriggered: root.shown = false
     }
 
-    // --- Volume + mic mute (native Pipewire, shared via Services/Audio) ---
     readonly property var sinkAudio: Audio.sinkAudio
     readonly property var sourceAudio: Audio.sourceAudio
 
@@ -80,7 +77,7 @@ Scope {
         function onMutedChanged() {
             if (!root.primed || !root.sourceAudio)
                 return;
-            // Show the mic's level while live (a bar), a plain card when muted —
+            // Show the mic's level while live (a bar), a plain card when muted,
             // mirroring the sink case instead of an empty unmute card.
             if (root.sourceAudio.muted)
                 root.show("MIC MUTE", 0, false);
@@ -89,7 +86,6 @@ Scope {
         }
     }
 
-    // --- Brightness (watched sysfs backlight node) ---
     property string backlightDir: ""
     property int brightnessMax: 1
 
@@ -129,13 +125,11 @@ Scope {
         }
     }
 
-    // --- Surface: a passive, click-through, bottom-centred overlay ---
     PanelWindow {
         visible: root.shown
-        // One OSD for the seat, shown on the focused output. Nothing "summons"
-        // it from a particular bar (volume/backlight watchers and the osdShow
-        // IPC drive it), so the focused monitor is the meaningful screen;
-        // without a binding it always appeared on the default output.
+        // One OSD for the seat, shown on the focused output. Nothing summons it
+        // from a particular bar (the watchers and the osdShow IPC drive it), so
+        // the focused monitor is the meaningful screen.
         screen: Screens.focused
         color: "transparent"
         exclusiveZone: 0
@@ -143,7 +137,7 @@ Scope {
         anchors.bottom: true
         margins.bottom: Style.osdMargin
 
-        // Never intercept clicks — the OSD is a readout, not a control.
+        // Never intercept clicks: the OSD is a readout, not a control.
         mask: Region {}
 
         implicitWidth: card.implicitWidth

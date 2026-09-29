@@ -6,13 +6,9 @@ import qs.Ui
 import qs.Services
 import qs.Commons
 
-// One themed toast card: presentational plus its own lifecycle. Reads a live
-// Notification, auto-expires on the sender's timeout (or a per-urgency default),
-// dismisses on click, and removes itself from the shared stack when the
-// notification is closed anywhere. Sharp corners + a 2px urgency-coloured border
-// keep mako's TUI aesthetic. Sized by the stack (a Column, not a Layout; its
-// add/move transitions need a positioner), so width comes from the parent
-// rather than Layout.fillWidth.
+// One themed toast card. Reads a live Notification, dismisses on click, and removes
+// itself from the shared stack when the notification is closed anywhere. Width comes
+// from the parent, not Layout.fillWidth, because the stack is a Column positioner.
 Rectangle {
     id: root
 
@@ -33,14 +29,11 @@ Rectangle {
 
     implicitHeight: layout.implicitHeight + Style.notifPad * 2
 
-    // No expiry Timer here on purpose. This delegate is destroyed and rebuilt
-    // every time any notification is added or removed (the stack is a value
-    // model), so a per-delegate countdown restarted on every arrival and older
-    // toasts never expired. NotificationState owns the deadlines and sweeps
-    // them; see the comment at the top of Services/NotificationState.qml.
+    // No expiry Timer here on purpose: this delegate is destroyed and rebuilt
+    // whenever any notification is added or removed (the stack is a value model),
+    // so a per-delegate countdown would restart on every arrival and older toasts
+    // would never expire. NotificationState owns the deadlines and sweeps them.
 
-    // Drop the card if the notification is closed elsewhere (app-closed, replaced,
-    // or dismissed via clearAll).
     Connections {
         target: root.notif
         function onClosed(reason) {
@@ -48,9 +41,9 @@ Rectangle {
         }
     }
 
-    // Dismiss area, declared first so the content (and its action buttons) render
-    // above it and take their own clicks; a click on empty card area falls through
-    // to here. Left-click fires the notification's "default" action if it has one.
+    // Declared before the content so the action buttons stack above it and take their
+    // own clicks; clicks on empty card area fall through here (left-click also fires
+    // the default action, if any).
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -94,8 +87,8 @@ Rectangle {
                         return "file://" + ai;
                     if (ai.indexOf("file://") === 0 || ai.indexOf("image://") === 0)
                         return ai;
-                    // Resolve a themed icon name; the second arg checks existence so a
-                    // missing icon yields "" rather than Qt's broken-texture placeholder.
+                    // Second arg checks existence, so a missing icon yields "" instead
+                    // of Qt's broken-texture placeholder.
                     return Quickshell.iconPath(ai, true);
                 }
                 return "";
@@ -132,8 +125,7 @@ Rectangle {
                 elide: Text.ElideRight
             }
 
-            // Action buttons. Skip the implicit "default" action (invoked on body
-            // click instead) so the row stays clean.
+            // Skip the implicit "default" action (invoked on body click) so the row stays clean.
             RowLayout {
                 Layout.fillWidth: true
                 Layout.topMargin: Math.round(Style.spacing / 2)

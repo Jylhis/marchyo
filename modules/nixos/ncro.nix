@@ -1,4 +1,3 @@
-# Feature-gated: marchyo.router.enable.
 { config, lib, ... }:
 let
   cfg = config.marchyo.nix;
@@ -16,11 +15,9 @@ in
       settings = {
         server.listen = ":${toString cfg.router.port}";
         upstreams =
-          # marchyo caches, carrying their public_key when signed.
           map (
             c: { inherit (c) url; } // lib.optionalAttrs (c.publicKey != null) { public_key = c.publicKey; }
           ) cfg.caches
-          # plus extra upstreams (default: cache.nixos.org).
           ++ map (u: { url = u; }) cfg.router.extraUpstreams;
       };
     };

@@ -4,12 +4,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from TailscaleWidget. A read-only detail view over the shared
-// Services/Tailscale poll: this device, exit-node status, and the online
-// tailnet peers with their addresses. Trimmed from omarchy's tailscale panel —
-// no connect/disconnect or exit-node picker, since those need the tailscale
-// operator privilege marchyo does not grant a session by default (they would
-// fail silently). Peer IPs are copyable targets for ssh/scp by eye.
+// Read-only view over the shared Services/Tailscale poll. No connect/disconnect or
+// exit-node picker: those need the tailscale operator privilege marchyo does not
+// grant a session by default, so they would fail silently.
 Panel {
     id: root
     panelId: "tailscale"

@@ -1,12 +1,8 @@
-# fzf with Jylhis design colors.
+# fzf with Jylhis design colors, set via programs.fzf.colors.
 #
-# Colors are set via programs.fzf.colors (merged into FZF_DEFAULT_OPTS
-# alongside defaultOptions) from the Jylhis palette, mirroring the canonical
-# generated set in ${jylhis-design-src}/platforms/shell/fzf-{dark,light}.sh.
-# The upstream Jylhis HM module's fzf target stays disabled in
-# modules/home/jylhis-theme.nix: it mkForce-overwrites FZF_DEFAULT_OPTS (which
-# would drop the layout options below), ships fewer color keys than the
-# canonical shell files, and is Linux-gated — this works on darwin too.
+# The upstream Jylhis HM fzf target stays disabled in modules/home/jylhis-theme.nix:
+# it mkForce-overwrites FZF_DEFAULT_OPTS (dropping the layout options below), ships
+# fewer color keys, and is Linux-gated, whereas this works on darwin too.
 {
   lib,
   pkgs,
@@ -23,12 +19,10 @@ let
     variant = themeVariant;
   };
 
-  # home-manager master nests the fzf widget options under
-  # programs.fzf.{fileWidget,changeDirWidget,historyWidget}, deprecating the
-  # flat *WidgetCommand/*WidgetOptions form. The release-26.05 Home Manager
-  # (used by darwinConfigurations.x86_64 / the stable-darwin checks) still only
-  # declares the flat options. Pick whichever shape the active HM declares so
-  # the module stays warning-free on master and valid on stable.
+  # HM master nests the widget options under programs.fzf.{fileWidget,...},
+  # deprecating the flat *WidgetCommand/*WidgetOptions form that release-26.05 HM
+  # (darwinConfigurations.x86_64 / stable-darwin checks) still declares. Pick the
+  # shape the active HM declares so this stays warning-free on master and valid on stable.
   hasNestedWidgets = options.programs.fzf ? changeDirWidget;
 
   fileWidgetOptions = [

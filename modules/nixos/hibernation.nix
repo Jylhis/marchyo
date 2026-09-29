@@ -1,6 +1,5 @@
-# Hibernation (suspend-to-disk). Gated on marchyo.power.hibernation.enable;
-# the resume device must be a swap device large enough to hold the RAM image
-# (swap >= RAM). See disko/luks-btrfs.nix for partitioning notes.
+# Hibernation (suspend-to-disk): the resume device must be a swap device large
+# enough to hold the RAM image (swap >= RAM). See disko/luks-btrfs.nix.
 { config, lib, ... }:
 let
   cfg = config.marchyo.power.hibernation;
@@ -26,7 +25,6 @@ in
       }
 
       (lib.mkIf cfg.suspendThenHibernate {
-        # Suspend first, hibernate after 45 minutes asleep.
         systemd.sleep.settings.Sleep.HibernateDelaySec = lib.mkDefault "45min";
         services.logind.settings.Login.HandleLidSwitch = lib.mkDefault "suspend-then-hibernate";
       })

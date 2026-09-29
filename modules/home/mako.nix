@@ -1,12 +1,6 @@
-# Mako notification daemon — marchyo-owned config.
-#
-# Uses home-manager's services.mako, which installs the mako package AND
-# starts the mako.service user unit (bound to graphical-session.target) so
-# notifications actually appear as small corner toasts. Replaces the upstream
-# Jylhis design mako config (disabled in modules/home/jylhis-theme.nix) so we
-# can enforce the TUI aesthetic (sharp corners, single-line border) while
-# keeping every color sourced from the Jylhis design tokens via
-# modules/generic/jylhis-palette.nix.
+# Mako notification daemon, marchyo-owned config. Replaces the upstream Jylhis
+# design mako config (disabled in modules/home/jylhis-theme.nix) to enforce the
+# TUI aesthetic while sourcing colors from modules/generic/jylhis-palette.nix.
 {
   lib,
   pkgs,
@@ -16,10 +10,9 @@
 let
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  # The unified shell owns org.freedesktop.Notifications and draws its own toasts
-  # (shell/Notifications), so mako stands down when the shell is on — the same
-  # mutual-exclusion cutover as waybar.nix / swayosd.nix. The two daemons never
-  # both bind the notification bus.
+  # The unified shell owns org.freedesktop.Notifications, so mako stands down
+  # when the shell is on (same mutual exclusion as waybar.nix / swayosd.nix);
+  # the two daemons never both bind the notification bus.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
 
@@ -51,8 +44,7 @@ in
         background-color = palette.hex.bg;
         text-color = palette.hex.text;
         border-color = palette.hex.accent;
-        # Accent progress, as in the upstream mako config — surface-on-bg was
-        # too low-contrast to read as a progress bar.
+        # Accent progress: surface-on-bg was too low-contrast to read as a bar.
         progress-color = "over ${palette.hex.accent}";
 
         "urgency=low".border-color = palette.hex."text-faint";
@@ -62,11 +54,8 @@ in
           default-timeout = 0;
         };
 
-        # Do-not-disturb: while this mode is active every notification is
-        # hidden (they still queue and reappear when the mode is left).
-        # Toggled by `marchyo-dnd-toggle` (modules/home/window-toggles.nix)
-        # via `makoctl mode -t do-not-disturb`; indicated by the waybar
-        # custom/dnd segment (modules/home/waybar.nix).
+        # While active, notifications are hidden but still queue and reappear
+        # when the mode is left. Toggled from window-toggles.nix.
         "mode=do-not-disturb".invisible = 1;
       };
     };

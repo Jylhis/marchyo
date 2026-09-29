@@ -1,8 +1,7 @@
 # Pure-eval loader for a base16 scheme YAML (tinted-theming format).
-#
-# The files are uniform enough for a line-based parse — no YAML engine (and
-# no import-from-derivation: the catalog is read from the already-fetched
-# tinted-schemes source input, not the built pkgs.base16-schemes package):
+# Line-based parse, no YAML engine and no import-from-derivation: the catalog
+# is read from the already-fetched tinted-schemes source input, not the built
+# pkgs.base16-schemes package. Sample:
 #
 #   system: "base16"
 #   name: "Nord"
@@ -10,10 +9,9 @@
 #   palette:
 #     base00: "#2E3440"      # optional trailing comment
 #
-# Returns { name; slots; variant; } where slots is base00..base0F →
-# "#rrggbb" (lowercase, "#"-prefixed) and variant is "dark"|"light" — from
-# the file's variant field when present, else a relative-luminance estimate
-# of base00.
+# Returns { name; slots; variant; }: slots is base00..base0F -> "#rrggbb"
+# (lowercase), variant is "dark"/"light" from the file's variant field when
+# present, else a relative-luminance estimate of base00.
 { schemes, lib }:
 schemeName:
 let

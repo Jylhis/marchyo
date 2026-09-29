@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { mkdir, rename } from "node:fs/promises";
 
-// Ephemeral runtime overrides (the F3.0 change model's "default = runtime"
+// Ephemeral runtime overrides (the change model's "default = runtime"
 // leg). Overrides survive `hyprctl reload` via `marchyo runtime restore`
 // but deliberately NOT nixos-rebuild activation: activation rewrites the
 // Home-Manager-managed surfaces (the theme-runtime contract), after which

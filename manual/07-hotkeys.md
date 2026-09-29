@@ -136,6 +136,7 @@ Screenshots land in `~/Pictures/Screenshots`.
 | `Super + Escape` | Power/session menu (lock, suspend, hibernate, reboot, shutdown) |
 | `Super + Alt + Space` | Central system menu |
 | `Super + K` | Keybindings cheat sheet (searchable, from your live config) |
+| `Super + Shift + L` | Cycle to the next theme |
 | `Super + Ctrl + comma` | Toggle notification do-not-disturb |
 | `Super + Ctrl + Shift + comma` | Dismiss all notifications |
 | `Super + Ctrl + R` | Set a reminder |
@@ -171,7 +172,8 @@ Dictation needs `marchyo.dictation.enable`. Once it's on:
 | `Ctrl + Alt + Delete` | Power off |
 | `Super + Shift + Space` | Toggle the top bar (Waybar) |
 | `Super + ,` | Dismiss last notification |
-| `Super + Ctrl + I` | Toggle idle lock (keep-awake) |
+| `Super + Ctrl + I` | Toggle idle lock (lock/sleep on idle) |
+| `Super + Ctrl + K` | Toggle caffeine (keep awake, block suspend) |
 | `Super + Ctrl + N` | Toggle night light |
 | `Super + Alt + Print` | Toggle screen recording |
 | `Super + Ctrl + Z` / `Shift + Z` / `Alt + Z` | Zoom in / out / reset (magnifier) |

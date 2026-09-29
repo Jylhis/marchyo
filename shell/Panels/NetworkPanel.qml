@@ -6,10 +6,8 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from NetworkWidget. Connection status from the native Networking
-// binding, enriched with the active SSID/signal/IP from the shared
-// Services/NetworkStatus poll (the same one the bar widget reads). "nmtui"
-// opens the full text UI for connecting, forgetting, and editing profiles.
+// Connection status from the native Networking binding, enriched with SSID, signal,
+// and IP from the shared Services/NetworkStatus poll. nmtui opens the full text UI.
 Panel {
     id: root
     panelId: "network"

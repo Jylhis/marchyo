@@ -16,26 +16,22 @@ in
   config = lib.mkIf (cfg.desktop.enable && cfg.gaming.enable) {
     programs.steam = {
       enable = true;
-      # Remote Play streaming ports on the LAN.
       remotePlay.openFirewall = lib.mkDefault true;
     };
 
-    # Optimises CPU governor / scheduling while a game runs (opt-in per game).
     programs.gamemode.enable = lib.mkDefault true;
-    # Gamescope micro-compositor (cap_sys_nice wrapper) for upscaling/frame
-    # limits. Normal priority so it wins over the mkDefault=false that
+    # Normal priority (not mkDefault) so it wins over the mkDefault=false that
     # programs.steam sets when its gamescope session is off; still overridable.
     programs.gamescope.enable = true;
 
-    # Controller/VR/Steam-Deck udev rules, and the Xbox controller driver.
     hardware.steam-hardware.enable = lib.mkDefault true;
     hardware.xpadneo.enable = lib.mkDefault true;
 
     environment.systemPackages = with pkgs; [
-      lutris # Wine/Proton game launcher
-      heroic # Epic / GOG / Amazon launcher
-      mangohud # in-game performance overlay
-      protonup-qt # manage GE-Proton / Wine-GE versions
+      lutris
+      heroic
+      mangohud
+      protonup-qt
     ];
   };
 }

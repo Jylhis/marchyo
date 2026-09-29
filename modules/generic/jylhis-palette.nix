@@ -1,27 +1,17 @@
-# Jylhis Design System — palette helper.
-#
-# Reads themes/jylhis.json from the upstream design system and exposes:
-#   - base16   : { scheme, author, base00..base0F } for Stylix
-#   - ansi16   : 16-element list of 6-digit hex strings — ANSI escape palette
-#                tuned for terminal apps that paint their own bg (Ghostty etc.)
-#   - tty16    : 16-element list — kernel-TTY palette. Same as ansi16 except
-#                slots 0/7/15 come from semantic tokens (bg/text/text-heading)
-#                so the bare TTY (slot 0 = actual background) and any greeter
-#                inheriting it stay readable in both light and dark variants.
-#                Mirrors the override done in the upstream design generator
-#                (scripts/generate.mjs) for jylhis-{sheet,field}.nix.
-#  - hex      : token-name → "#RRGGBB" attrset for CSS / Hyprland use.
-#                Merges palette + status + syntax, so every token the design
-#                system adds shows up here without a change to this file —
-#                e.g. v2's `contour` (structural blue linework, never used for
-#                interaction) is reachable as `palette.hex.contour`.
-#  - ansi     : ANSI name → "#RRGGBB" (e.g. ansi.yellow)
-#
-# Source of truth: ${pkgs.jylhis-design-src}/themes/jylhis.json (tracked via
-# flake.lock). Design system 3.0.0 is single-theme: one `jylhis` theme with
-# two first-class modes (light "Print", dark "Negative" — cool grounds, a
-# bronze interactive `accent`, a benchmark-vermilion `brand` mark). The theme
-# file exposes palette/status/syntax/ansi with per-mode light/dark values.
+# Jylhis Design System palette helper. Reads themes/jylhis.json (from
+# pkgs.jylhis-design-src, tracked via flake.lock) and exposes:
+#   - base16 : { scheme, author, base00..base0F } for Stylix
+#   - ansi16 : 16 hex strings, ANSI escape palette for terminals that paint
+#              their own background (Ghostty etc.)
+#   - tty16  : 16 hex strings for the kernel TTY. Slots 0/7/15 come from
+#              semantic tokens (bg/text/text-heading) so the bare TTY and any
+#              greeter inheriting it stay readable in light and dark. Mirrors
+#              the override in the upstream generator (scripts/generate.mjs).
+#   - hex    : token-name -> "#RRGGBB", merges palette + status + syntax so
+#              new tokens appear here without editing this file.
+#   - ansi   : ANSI name -> "#RRGGBB".
+# Design system 3.0.0 is single-theme: one `jylhis` theme with light and dark
+# modes, per-mode values under palette/status/syntax/ansi.
 {
   pkgs,
   lib,

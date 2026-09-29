@@ -14,9 +14,9 @@ import {
 } from "@marchyo/core";
 import { gumChoose, gumFile, gumInput } from "./menu.ts";
 
-// Utilities (F3.2): reminders (transient systemd user timers), quick-info
-// notifications, media transcode, and share — absorbed from the seven
-// utilities.nix scripts. gum presentation stays; logic lives here.
+// Utilities: reminders (transient systemd user timers), quick-info
+// notifications, media transcode, and share. gum presentation stays; logic
+// lives here.
 
 function stateDir(): string {
   const xdg = process.env.XDG_STATE_HOME;
@@ -31,8 +31,6 @@ async function notify(
 ): Promise<void> {
   await runArgv(notifySendArgv(summary, body, { urgency })).catch(() => 0);
 }
-
-// -- reminders -------------------------------------------------------------
 
 export async function runReminderSet(
   rt: Runtime,
@@ -129,8 +127,6 @@ export async function runReminderClear(rt: Runtime): Promise<number> {
   return 0;
 }
 
-// -- quick info ------------------------------------------------------------
-
 export async function runInfo(rt: Runtime, what: string): Promise<number> {
   switch (what) {
     case "datetime": {
@@ -186,8 +182,6 @@ export async function runInfo(rt: Runtime, what: string): Promise<number> {
       );
   }
 }
-
-// -- transcode -------------------------------------------------------------
 
 const FFMPEG_ARGS: Record<string, string[]> = {
   mp4: ["-c:v", "libx264", "-preset", "fast", "-crf", "23", "-c:a", "aac"],
@@ -270,8 +264,6 @@ export async function runTranscode(
   ok(rt, `saved ${out}`);
   return 0;
 }
-
-// -- share -----------------------------------------------------------------
 
 // Copies the chosen content/path to the clipboard; an actual upload target
 // is deferred (follow-up decision per OMARCHY_PARITY.md).

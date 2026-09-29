@@ -3,13 +3,13 @@ let
   inherit (pkgs) lib;
   # qmllint over the shell and greeter trees, wired as a treefmt check. Both
   # resolve their `import qs.*` (per-directory qmldirs) through a temporary
-  # `qs -> <tree>` alias root — the trees each own their qs.* namespace, so
-  # they get one alias root per tree — plus Quickshell's and QtQuick's own
-  # qml modules, the CI/treefmt analogue of the QML_IMPORT_PATH devenv.nix
-  # sets for the editor. Category tuning and the MaxWarnings=0 threshold live
-  # in each tree's .qmllint.ini (qmllint auto-discovers it by walking up from
-  # each file). treefmt runs formatters from the project root, so $PWD/shell
-  # and $PWD/greeter are the trees.
+  # `qs -> <tree>` alias root (the trees each own their qs.* namespace, so they
+  # get one alias root per tree), plus Quickshell's and QtQuick's own qml
+  # modules, the CI/treefmt analogue of the QML_IMPORT_PATH devenv.nix sets for
+  # the editor. Category tuning and the MaxWarnings=0 threshold live in each
+  # tree's .qmllint.ini (qmllint auto-discovers it by walking up from each
+  # file). treefmt runs formatters from the project root, so $PWD/shell and
+  # $PWD/greeter are the trees.
   qmllint = pkgs.writeShellApplication {
     name = "marchyo-qmllint";
     runtimeInputs = [ pkgs.qt6.qtdeclarative ];
@@ -71,9 +71,8 @@ in
       "devenv.lock"
       "site/bun.lock"
     ];
-    # QML formatting via qmlformat (from Qt's qtdeclarative). Edits in place
-    # (-i); treefmt passes the matched file list. Absolute command path so it
-    # needs no PATH entry and works both in the devenv shell and in CI.
+    # qmlformat (from Qt's qtdeclarative), edits in place (-i). Absolute command
+    # path so it needs no PATH entry in the devenv shell or CI.
     qmlformat = {
       command = "${pkgs.qt6.qtdeclarative}/bin/qmlformat";
       options = [ "-i" ];
@@ -92,9 +91,9 @@ in
       command = "${qmllint}/bin/marchyo-qmllint";
       includes = [ "*.qml" ];
       # qmllint only roots the shell/ and greeter/ trees (each owns its qs.*
-      # namespace). QML test fixtures live outside both trees — e.g. a shell
+      # namespace). QML test fixtures live outside both trees (e.g. a shell
       # plugin bar-widget under tests/eval/fixtures/ resolves qs.* only once
-      # loaded into the shell config root at runtime — so exclude them.
+      # loaded into the shell config root at runtime), so exclude them.
       excludes = [ "tests/**" ];
     };
   };

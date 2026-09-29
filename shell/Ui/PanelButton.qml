@@ -1,9 +1,8 @@
 import QtQuick
 import qs.Commons
 
-// A small labelled control for panel bodies: a rounded pill with hover feedback
-// and an optional active (selected) state. Emits clicked. The one interactive
-// primitive panels compose from, the way bar widgets compose from BarItem.
+// Panel-body counterpart to BarItem: the interactive pill primitive that panels
+// compose from, with an optional active (selected) state.
 Rectangle {
     id: root
 

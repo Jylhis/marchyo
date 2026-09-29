@@ -6,10 +6,9 @@ import qs.Services
 import qs.Launcher
 
 // The launcher surface: a full-screen transparent layer-shell overlay (the
-// Ui/Panel dismiss idiom) whose centered card hosts one mode view. While
-// open the surface takes EXCLUSIVE keyboard focus — the compositor routes
-// all input here — and releases it when closed. Opens on the focused
-// output: the IPC summon carries no bar item, like PanelManager's fallback.
+// Ui/Panel dismiss idiom) whose centered card hosts one mode view. While open
+// it takes EXCLUSIVE keyboard focus and releases it when closed. Opens on the
+// focused output, like PanelManager's fallback.
 PanelWindow {
     id: root
 
@@ -28,23 +27,20 @@ PanelWindow {
         bottom: true
     }
 
-    // Dismissal is covered by Escape (Keys.onEscapePressed), the outside-click
-    // MouseArea below, and item activation. There is no window-level focus
-    // signal to hang an auto-close on: Quickshell's PanelWindow exposes no
-    // `active` property, and the Exclusive keyboard grab (WlrKeyboardFocus above)
-    // means the compositor cannot silently route focus elsewhere while open.
+    // No window-level focus signal to auto-close on: PanelWindow exposes no
+    // `active`, and the Exclusive keyboard grab means the compositor can't
+    // silently route focus elsewhere while open. Dismissal is Escape, the
+    // outside-click MouseArea below, and item activation.
 
-    // Reset the query whenever the launcher (re)opens, and take focus once
-    // the surface has actually mapped (the second call is the one that
-    // sticks on some compositors).
+    // Take focus once the surface has mapped; the focusRetry call is the one
+    // that sticks on some compositors.
     onVisibleChanged: if (visible) {
         query.text = "";
         query.forceActiveFocus();
         focusRetry.restart();
     }
 
-    // Outside click dismisses. Declared first so the card sits on top of it
-    // (same ordering trick as Ui/Panel.qml).
+    // Declared first so the card sits on top of it (Ui/Panel.qml ordering trick).
     MouseArea {
         anchors.fill: parent
         onClicked: Launcher.close()
@@ -72,9 +68,7 @@ PanelWindow {
             anchors.right: parent.right
             spacing: Style.spacing
 
-            // The one query field, shared by every mode. Marchyo flat
-            // aesthetic: bg-subtle input row with a hairline border, the
-            // focused border in accent (the vicinae theme's input mapping).
+            // The one query field, shared by every mode.
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -96,11 +90,9 @@ PanelWindow {
                     clip: true
                     Keys.onEscapePressed: Launcher.close()
 
-                    // Inline autocomplete: the remaining letters of the top
-                    // app match, dimmed after the cursor. Accepted by Tab, or
-                    // by Right when the cursor is already at the end (the same
-                    // gesture shells and browsers use). Only apps mode offers
-                    // it — emoji/clipboard have no single completion.
+                    // Inline autocomplete: remaining letters of the top app
+                    // match, dimmed after the cursor. Only apps mode offers it;
+                    // emoji/clipboard have no single completion.
                     property string ghost: (Launcher.mode === "apps" && query.activeFocus && apps.suggestion.length > query.text.length) ? apps.suggestion.substring(query.text.length) : ""
 
                     function acceptGhost() {
@@ -201,9 +193,8 @@ PanelWindow {
         }
     }
 
-    // Map-then-focus retry: on some compositors forceActiveFocus() during
-    // the visible-change handler lands before the surface accepts keyboard
-    // focus; one short retry after mapping covers it.
+    // Map-then-focus retry: on some compositors forceActiveFocus() in the
+    // visible-change handler lands before the surface accepts keyboard focus.
     Timer {
         id: focusRetry
         interval: 50

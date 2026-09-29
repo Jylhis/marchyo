@@ -5,8 +5,7 @@ import qs.Services
 
 // Screen-recording indicator: a pure view over Services/ScreenRecording, which
 // owns the one probe/toggle pair for the seat (the widget is instantiated once
-// per monitor). Hidden unless a recording is running; clicking it stops and
-// saves. Ported from omarchy's ScreenRecording indicator.
+// per monitor).
 BarItem {
     id: root
 

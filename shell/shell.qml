@@ -29,8 +29,8 @@ import qs.compat.Ui as Plugin
 ShellRoot {
     id: shell
 
-    // Bar visibility, toggled over IPC (SUPER+SHIFT+SPACE). Replaces waybar's
-    // SIGUSR1 show/hide; one property drives every per-screen bar below.
+    // Bar visibility, toggled over IPC (SUPER+SHIFT+SPACE). One property drives
+    // every per-screen bar below.
     property bool barVisible: true
 
     // Widget-id -> Component map for the data-driven bar. First-party widgets
@@ -193,7 +193,6 @@ ShellRoot {
         }
     }
 
-    // Resolve a bar-layout id to a Component: first-party map, then plugins.
     function componentFor(id: string): Component {
         if (shell.barComponents[id])
             return shell.barComponents[id];
@@ -231,15 +230,15 @@ ShellRoot {
         }
     }
 
-    // On-screen display for volume/brightness/mic-mute (replaces SwayOSD). Reacts
-    // natively to Pipewire and the backlight sysfs node — no external poke.
+    // On-screen display for volume/brightness/mic-mute. Reacts natively to
+    // Pipewire and the backlight sysfs node, no external poke.
     Osd {
         id: osd
     }
 
-    // The lock surface (Phase 4): Services/Lock owns the PAM state machine;
-    // this is the seat's one compositor-level WlSessionLock. A static child,
-    // never a Loader — see Lock/LockScreen.qml for the protocol hazard.
+    // The lock surface: Services/Lock owns the PAM state machine; this is the
+    // seat's one compositor-level WlSessionLock. A static child, never a Loader,
+    // see Lock/LockScreen.qml for the protocol hazard.
     LockScreen {}
 
     // Summonable panels: toggled in-process from their bar widgets via the shared
@@ -258,9 +257,9 @@ ShellRoot {
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
     LauncherWindow {}
 
-    // Notifications: owns org.freedesktop.Notifications (replaces mako) and draws
-    // its own top-right toast stack. DND lives in the shared NotificationState
-    // singleton, toggled by the bar's DndWidget and the IPC below.
+    // Notifications: owns org.freedesktop.Notifications and draws its own
+    // top-right toast stack. DND lives in the shared NotificationState singleton,
+    // toggled by the bar's DndWidget and the IPC below.
     NotificationDaemon {}
 
     // The one tooltip surface: hover text from any BarItem / tray icon, rendered
@@ -269,8 +268,8 @@ ShellRoot {
 
     // Keybind bridge: Hyprland binds reach the already-running shell through
     // `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper bakes its own
-    // -p, so it self-targets the running instance). A single stock IpcHandler — no
-    // custom bus, no plugin registry (see plans/shell.md). Panel summons mirror the
+    // -p, so it self-targets the running instance). A single stock IpcHandler, no
+    // custom bus, no plugin registry. Panel summons mirror the
     // in-process bar-widget clicks; the OSD poke is a fallback for the brightness
     // case the native watcher can't cover on some hosts.
     IpcHandler {

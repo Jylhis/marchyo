@@ -51,13 +51,10 @@ let
     "f11=toggle_fullscreen"
   ];
 
-  # Set the tab/window title to the last two path segments (e.g.
-  # "jylhis/marchyo") when idle, and "<short-path>: <command>" while a command
-  # runs. Ghostty's own "title" shell-integration feature is disabled below
-  # (it hardcodes the full `\w` path); this replaces it. Registered via the
-  # precmd/preexec arrays, which bash gets from bash-preexec, loaded explicitly
-  # below (see bashTitleHooks). Sharing these arrays is what lets the title
-  # hooks coexist with starship's own precmd hook.
+  # Set the title to the last two path segments when idle, "<short-path>: <command>"
+  # while a command runs. Replaces Ghostty's own title feature (disabled below, it
+  # hardcodes the full `\w` path). Uses the precmd/preexec arrays so the hooks coexist
+  # with starship's own precmd hook.
   titleHooks = ''
     __marchyo_short_pwd() {
       local p=''${PWD/#$HOME/\~}
@@ -78,11 +75,10 @@ let
     preexec_functions+=(__marchyo_title_preexec)
   '';
 
-  # Bash-only prelude. Modern Ghostty (bash >= 4.4) drives its shell integration
-  # through PS0 and does NOT source bash-preexec, so precmd_functions/preexec_functions
-  # would never be iterated. Their mere presence also makes starship register
-  # starship_precmd into precmd_functions instead of PROMPT_COMMAND, so the starship
-  # prompt silently stops rendering. Load bash-preexec first so both fire.
+  # Modern Ghostty drives bash shell integration through PS0 and does NOT source
+  # bash-preexec, so precmd_functions/preexec_functions never fire. Worse, their mere
+  # presence makes starship register into precmd_functions instead of PROMPT_COMMAND,
+  # silently stopping the prompt. Load bash-preexec first so both fire.
   bashTitleHooks = ''
     if [ -z "''${bash_preexec_imported:-}''${__bp_imported:-}" ]; then
       source ${pkgs.bash-preexec}/share/bash/bash-preexec.sh
@@ -91,14 +87,10 @@ let
   + titleHooks;
 in
 {
-  # Install the upstream Jylhis Ghostty themes (both variants, active one set
-  # in programs.ghostty.settings.theme). Done here rather than through the
-  # upstream HM module (disabled in modules/home/jylhis-theme.nix) so the
-  # themes are also installed on darwin, where that module is Linux-gated.
-  # Design system 3.0.0 generates the theme files in-derivation (the source
-  # tree no longer commits them), so they come from the built jylhis-themes
-  # package — a path reference, not an eval-time read (no import-from-
-  # derivation).
+  # Install both Jylhis Ghostty themes here rather than via the upstream HM module
+  # (disabled in modules/home/jylhis-theme.nix, Linux-gated) so darwin gets them too.
+  # Path reference into the built jylhis-themes package, not an eval-time read, to stay
+  # import-from-derivation-free.
   xdg.configFile."ghostty/themes/jylhis-dark".source =
     "${pkgs.jylhis-themes}/share/jylhis/ghostty/jylhis-dark";
   xdg.configFile."ghostty/themes/jylhis-light".source =
@@ -126,12 +118,9 @@ in
       cursor-style = "block";
       cursor-style-blink = false;
       confirm-close-surface = false;
-      # Disable ghostty's built-in full-path title feature; titleHooks below
-      # sets a shorter last-two-segments title instead. ssh-env and
-      # ssh-terminfo are OPT-IN upstream (disabled by default): ssh-terminfo
-      # installs xterm-ghostty on the remote host via infocmp/tic on first
-      # connect, and ssh-env falls back to TERM=xterm-256color when that isn't
-      # possible — without them, remote TUI apps break on unknown terminfo.
+      # no-title: titleHooks sets the shorter title instead. ssh-env / ssh-terminfo
+      # are opt-in upstream and needed here: they install xterm-ghostty on the remote
+      # (or fall back to TERM=xterm-256color), else remote TUIs break on unknown terminfo.
       shell-integration-features = "no-title,ssh-env,ssh-terminfo";
       unfocused-split-opacity = mkDefault 0.7;
       keybind = if isDarwin then darwinKeybinds else linuxKeybinds;
@@ -139,12 +128,10 @@ in
     // optionalAttrs (!isDarwin) {
       window-decoration = false;
       gtk-single-instance = true;
-      # Derive the GTK window chrome (tab bar) from the configured terminal
-      # background/foreground instead of the GTK theme. The injected jylhis
-      # gtk.css overrides Adwaita-dark's colors (see modules/home/jylhis-theme.nix),
-      # so `window-theme = dark` still left the tab bar light; `ghostty` reads
-      # the theme's bg/fg directly and also tracks the runtime theme pair
-      # include (modules/home/theme-runtime.nix) live.
+      # Derive the tab-bar chrome from the terminal bg/fg, not the GTK theme: the
+      # injected jylhis gtk.css overrides Adwaita-dark, so `window-theme = dark` left
+      # the tab bar light. `ghostty` also tracks the runtime theme include
+      # (modules/home/theme-runtime.nix) live.
       window-theme = "ghostty";
     }
     // optionalAttrs isDarwin {
@@ -155,8 +142,6 @@ in
     };
   };
 
-  # Register the short-path title hook in bash. mkAfter places it after
-  # ghostty's own integration snippet; bash additionally loads bash-preexec
-  # (see bashTitleHooks).
+  # mkAfter so this lands after ghostty's own integration snippet.
   programs.bash.initExtra = mkIf config.programs.bash.enable (mkAfter bashTitleHooks);
 }

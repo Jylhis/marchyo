@@ -6,7 +6,7 @@ import qs.Commons as M
 // Commons/Style API that the vendored Quattro Ui components and the imported
 // omarchy plugins read, mapped onto marchyo's own Commons/Style + Theme tokens
 // so plugins pick up the active marchyo theme and font scale. Not a port of
-// omarchy's scaling engine — just the surface the shim needs.
+// omarchy's scaling engine, just the surface the shim needs.
 QtObject {
     id: root
 

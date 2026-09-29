@@ -10,8 +10,8 @@ QtObject {
     id: root
 
     property string text: ""
-    // Scene-x of the hovered item's center — screen-local for the top bar (its
-    // layer surface spans the output from the top-left). Recomputed at hover time.
+    // Scene-x of the hovered item's center, screen-local for the top bar (its
+    // layer surface spans the output from the top-left).
     property real anchorX: 0
     // Name of the screen the hovered item lives on (QScreen.name via the
     // attached Window.window, which matches QsScreen.name for the lookup).

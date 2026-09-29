@@ -1,8 +1,5 @@
-# AI coding-agent CLI, selected by marchyo.defaults.aiAgent. Dev-oriented, so
-# gated on marchyo.development.enable (not the desktop). Installs only the
-# chosen agent and points $AI_AGENT at its command, so binds/scripts can launch
-# "the configured agent" without hardcoding a name. Default is null (install
-# none), so this stays inert unless a host opts in.
+# Points $AI_AGENT at the chosen agent's command so binds/scripts can launch the
+# configured agent without hardcoding a name. Default null installs none.
 {
   config,
   lib,
@@ -19,7 +16,6 @@ let
     inherit (pkgs) opencode;
   };
 
-  # The command each package exposes ($AI_AGENT / launcher target).
   agentCommands = {
     claude-code = "claude";
     codex = "codex";

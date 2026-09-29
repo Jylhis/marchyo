@@ -1,7 +1,5 @@
-# Jujutsu (jj) config, wired to the marchyo user model the same way git is
-# (modules/home/git.nix): identity comes from marchyo.users.<username>, so a
-# consumer that sets `marchyo.users.<name>` gets a configured jj without
-# repeating name/email. Cross-platform (no Linux-only assumptions).
+# jj config wired to the marchyo user model like git (modules/home/git.nix):
+# identity comes from marchyo.users.<username>. Cross-platform.
 {
   osConfig ? { },
   config,
@@ -39,8 +37,7 @@ in
       };
       aliases = lib.mkDefault {
         l = [ "log" ];
-        # Advance the closest bookmark to the parent of the working copy —
-        # the standard jj "push my branch forward" idiom.
+        # Advance the closest bookmark to the parent of the working copy (the jj "push my branch forward" idiom).
         tug = [
           "bookmark"
           "move"

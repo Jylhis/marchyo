@@ -1,4 +1,3 @@
-# Supports Intel, AMD, NVIDIA, and hybrid graphics (PRIME)
 {
   config,
   pkgs,
@@ -14,10 +13,9 @@ let
   isHybrid = cfg.prime.enable && (hasIntel || hasAmd) && hasNvidia;
   isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 
-  # Backward compatibility: if vendors empty on x86, default to Intel behavior
+  # Backward compatibility: empty vendors on x86 defaults to Intel behavior.
   legacyIntel = cfg.vendors == [ ] && isX86;
 
-  # Any GPU vendor configured (or the legacy x86 Intel fallback active).
   hasAnyGpu = hasIntel || hasAmd || hasNvidia || legacyIntel;
 in
 {
@@ -42,9 +40,9 @@ in
 
     (lib.mkIf (hasIntel || legacyIntel) {
       hardware.graphics.extraPackages = with pkgs; [
-        intel-media-driver # iHD driver for modern Intel (Broadwell+)
-        vpl-gpu-rt # oneVPL runtime for hardware video (Quick Sync)
-        intel-compute-runtime # OpenCL support
+        intel-media-driver
+        vpl-gpu-rt
+        intel-compute-runtime
       ];
 
       environment.sessionVariables = {
@@ -58,12 +56,11 @@ in
         opencl.enable = lib.mkDefault true;
       };
 
-      # ROCm for OpenCL compute (Mesa handles VA-API/Vulkan natively)
+      # Only ROCm/OpenCL is needed here; Mesa handles VA-API/Vulkan natively.
       hardware.graphics.extraPackages = with pkgs; [
         rocmPackages.clr.icd
       ];
 
-      # ROCm device diagnostics (rocminfo)
       environment.systemPackages = with pkgs; [
         rocmPackages.rocminfo
       ];
@@ -84,20 +81,19 @@ in
         powerManagement.enable = lib.mkDefault cfg.nvidia.powerManagement;
       };
 
-      # nvidia-vaapi-driver for VA-API support under Wayland
       hardware.graphics.extraPackages = with pkgs; [
         nvidia-vaapi-driver
       ];
 
       environment.sessionVariables = {
         __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
-        # Use direct backend for nvidia-vaapi-driver (better performance)
+        # Direct backend performs better for nvidia-vaapi-driver.
         NVD_BACKEND = lib.mkDefault "direct";
-        # GBM backend (needed for Wayland compositors)
+        # nvidia-drm GBM backend is needed for Wayland compositors.
         GBM_BACKEND = lib.mkDefault "nvidia-drm";
       };
 
-      # Early kernel module loading prevents race conditions with display manager
+      # Early kernel module loading prevents race conditions with display manager.
       boot.initrd.kernelModules = [
         "nvidia"
         "nvidia_modeset"
@@ -113,7 +109,6 @@ in
       };
     })
 
-    # NVIDIA PRIME hybrid graphics configuration
     (lib.mkIf isHybrid {
       hardware.nvidia.prime = lib.mkMerge [
         (lib.mkIf hasIntel {
@@ -134,7 +129,7 @@ in
             # an equal-priority conflict rather than an override. The consumer
             # knob is marchyo.graphics.prime.mode.
             enable = true;
-            enableOffloadCmd = true; # Provides `nvidia-offload` command
+            enableOffloadCmd = true;
           };
         })
 

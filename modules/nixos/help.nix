@@ -1,4 +1,3 @@
-# Global (headless-safe): man/info/doc pages.
 { pkgs, lib, ... }:
 {
   documentation = {

@@ -1,8 +1,5 @@
-# Per-user ncspot (TUI Spotify client).
-#
-# Enabled via Home-Manager's programs.ncspot when it is the selected
-# marchyo.defaults.musicPlayer and desktop is enabled. The Hyprland Super+M
-# keybind (modules/home/hyprland.nix) launches it in a floating terminal.
+# Per-user ncspot (TUI Spotify client), enabled when it is the selected
+# marchyo.defaults.musicPlayer. Launched by the Super+M keybind (hyprland.nix).
 {
   osConfig ? { },
   lib,

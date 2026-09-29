@@ -1,4 +1,3 @@
-# Desktop-only: the Hyprland compositor and its XDG portals.
 {
   config,
   pkgs,
@@ -41,9 +40,8 @@ in
       };
     };
 
-    # NVIDIA-specific Hyprland settings
     environment.sessionVariables = lib.mkIf hasNvidia {
-      # Help Hyprland find the right GPU (dGPU typically card1, iGPU card0)
+      # Point Hyprland at the right GPU (dGPU is typically card1, iGPU card0).
       WLR_DRM_DEVICES = lib.mkDefault "/dev/dri/card1:/dev/dri/card0";
     };
   };

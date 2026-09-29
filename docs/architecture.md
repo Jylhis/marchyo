@@ -26,7 +26,7 @@ flake.nix           # Flake entry point — imports outputs.nix, wraps per-syste
 flake.lock          # Single source of truth for all pinned inputs (nixpkgs, home-manager, etc.)
 outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
 default.nix         # Flake-compat shim — exposes flake outputs to non-flake consumers
-overlay.nix         # Nixpkgs overlay (vicinae, noctalia, hyprmon, plymouth-marchyo-theme, plus jylhis-design)
+overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, vicinae, noctalia, hyprmon, plymouth-marchyo-theme, wallpapper, plus jylhis-design)
 treefmt.nix         # Formatter config for treefmt-nix
 devenv.nix          # Development shell configuration
 devenv.yaml         # devenv inputs (nixpkgs pinned to same rev as flake.lock)
@@ -36,12 +36,12 @@ docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)
 plans/              # Design RFCs for in-progress and proposed work
 shell/              # Custom Quickshell shell QML tree (bar, OSD, panels, notifications; see plans/shell.md)
-modules/nixos/      # NixOS system-level modules (~31 modules)
+modules/nixos/      # NixOS system-level modules (auto-discovered)
 modules/darwin/     # nix-darwin modules (imports shared options + generic modules)
 modules/nix-on-droid/  # nix-on-droid (Android terminal): built via lib.mkNixOnDroidConfiguration; reuses generic git/shell modules; HM 24.05
-modules/home/       # Home Manager user-level modules (~30 modules)
+modules/home/       # Home Manager user-level modules (auto-discovered)
 modules/generic/    # Shared modules imported by nixos, darwin, and home default.nix
-packages/           # Custom Nix packages (hyprmon, plymouth-marchyo-theme)
+packages/           # Custom Nix packages (marchyo-cli, marchyo-shell, hyprmon, plymouth-marchyo-theme, marchyo-wallpapers, wallpapper)
 tests/              # Evaluation-based test suite (no builds required)
 site/               # Astro + Starlight website (landing page + docs, marchyo.org)
 disko/              # Disk partitioning configurations (not wired into flake outputs)
@@ -58,8 +58,9 @@ templates/workstation/  # Developer workstation template
 - `homeManagerModules.default` — Home Manager module only
 - `homeManagerModules._1password` — 1Password Home Manager module
 - `overlays.default` — Nixpkgs overlay (darwin-safe: Linux packages wrapped in `optionalAttrs`)
-- `packages.{linux}.hyprmon` — Hyprland monitor management tool
-- `packages.{linux}.plymouth-marchyo-theme` — Plymouth boot splash theme
+- `packages.{system}.{marchyo-cli,marchyo-wallpapers}` — cross-platform packages
+- `packages.{linux}.{hyprmon,marchyo-shell,plymouth-marchyo-theme}` — Linux-only (monitor tool, Quickshell shell, Plymouth boot splash)
+- `packages.{darwin}.wallpapper` — macOS wallpaper tool
 - `legacyPackages.{system}` — Full nixpkgs with overlay applied, **system-aware** (x86_64-darwin → stable nixos-26.05, every other system → unstable; via `inputsFor`/`mkPkgs`)
 - `templates.workstation` — Starter workstation template (uses nixpkgs passthrough)
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
@@ -79,10 +80,10 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, 
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, stylix, etc.). `devenv.lock` syncs to this via `just update`.
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`/`mkDarwinSystem` via the `inputsFor` per-system selector + `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
 - `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
-- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. All packages are Linux-only (wrapped in `lib.optionalAttrs stdenv.isLinux`).
+- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux` and `wallpapper` in the `isDarwin` branch.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `{ linux, darwin, all }` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.
-- `modules/nixos/options/` — `marchyo.*` option declarations split by namespace (users, defaults, feature-flags, performance, graphics, localization, theme, keyboard, deprecated). The directory's `default.nix` auto-imports every file.
+- `modules/nixos/options/` — `marchyo.*` option declarations, one file per namespace (feature-flags, users, localization, theme, keyboard, graphics, defaults, and many more). The directory's `default.nix` auto-imports every file, so adding a namespace is a one-file change.
 - `modules/nixos/default.nix` — Auto-discovers every NixOS module via `lib/discover-modules.nix`. Module merging is order-independent at the option/config layer; use `mkBefore`/`mkAfter`/priorities if a specific merge order matters.
 - `modules/darwin/default.nix` — **Manual** import list for nix-darwin modules. Curated subset (Wayland/systemd/desktop modules are NixOS-only and intentionally excluded). Imports `../nixos/options` for the shared option namespace.
 - `modules/home/default.nix` — Auto-discovers every Home Manager module via `lib/discover-modules.nix`.

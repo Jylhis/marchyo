@@ -1,8 +1,6 @@
-# Global (headless-safe): mDNS/DNS-SD service discovery.
 { lib, ... }:
 {
-  # mDNS / DNS-SD: resolve <host>.local and discover LAN services (printers,
-  # LocalSend, Chromecast, SSH-by-hostname). All mkDefault so a host can opt out.
+  # All mkDefault so a host can opt out.
   services.avahi = {
     enable = lib.mkDefault true;
     nssmdns4 = lib.mkDefault true;

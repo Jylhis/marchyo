@@ -2,11 +2,9 @@ pragma Singleton
 import QtQuick
 import Quickshell.Services.Pipewire
 
-// Shared Pipewire bindings: the default sink/source and their audio objects,
-// tracked by one PwObjectTracker. The bar's AudioWidget, the audio panel, and
-// the OSD all read these — without the shared tracker each consumer would need
-// its own (the audio properties never bind/update otherwise). Same shape as
-// SystemStats: a plain qs.Services singleton, the single source of truth.
+// Shared Pipewire bindings for AudioWidget, the audio panel, and the OSD. One
+// PwObjectTracker keeps every tracked node live: the audio properties never
+// bind/update without a tracker.
 QtObject {
     id: root
 
@@ -15,9 +13,7 @@ QtObject {
     readonly property var source: Pipewire.defaultAudioSource
     readonly property var sourceAudio: source ? source.audio : null
 
-    // Per-application playback streams (apps producing audio), for the audio
-    // panel's per-app volume + live meters. AudioOutStream is a playback stream;
-    // AudioInStream (below) is a capture stream.
+    // Per-app playback streams for the panel's per-app volume + meters.
     readonly property var appStreams: {
         const out = [];
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
@@ -29,8 +25,7 @@ QtObject {
         return out;
     }
 
-    // Applications currently capturing audio (recording streams). Drives the
-    // microphone-in-use privacy indicator.
+    // Apps capturing audio; drives the microphone-in-use privacy indicator.
     readonly property var captureStreams: {
         const out = [];
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
@@ -44,7 +39,6 @@ QtObject {
 
     readonly property bool micInUse: captureStreams.length > 0
 
-    // Human label for a stream node (the app name, falling back to node fields).
     function streamLabel(n) {
         if (!n)
             return "";
@@ -52,9 +46,6 @@ QtObject {
         return p["application.name"] || n.description || n.nickname || n.name || "app";
     }
 
-    // Without an object tracker the nodes' audio properties never bind/update.
-    // Track the default sink/source and every app/capture stream so per-app
-    // volume and mute stay live in the panel.
     readonly property var tracker: PwObjectTracker {
         objects: {
             const list = [];

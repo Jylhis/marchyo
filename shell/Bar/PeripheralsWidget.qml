@@ -4,9 +4,7 @@ import qs.Services
 
 // Wireless-peripheral battery readout: a pure view over Services/Peripherals,
 // which aggregates UPower.devices (plus the optional solaar fallback) for the
-// seat. Shows the lowest-charged device's glyph + percentage; the full list is
-// in the tooltip. Hidden when no peripheral reports a battery. Warning/critical
-// thresholds mirror the main BatteryWidget (20% / 10%).
+// seat. Warning/critical thresholds mirror the main BatteryWidget (20% / 10%).
 BarItem {
     id: root
 

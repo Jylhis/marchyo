@@ -3,17 +3,12 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared night-light state: ONE probe of the hyprsunset colour temperature for
-// the whole seat.
-//
-// hyprsunset runs at the compositor level (services.hyprsunset in
-// modules/home/hyprland.nix) and exposes the live temperature over
-// `hyprctl hyprsunset temperature`. Below the identity point (6000K) the screen
-// is warmed, i.e. night light is on. Actuation goes through the marchyo CLI's
-// `toggle nightlight` (4000K warm / 6500K neutral), the same command the
-// Hyprland bind and waybar used, so the shell, keybinds, and CLI stay one
-// source of truth. Singleton for the usual reason: the widget is a pure
-// per-monitor view and this state is seat-global.
+// Shared night-light state: ONE seat-wide probe of the hyprsunset colour
+// temperature (`hyprctl hyprsunset temperature`). Below the identity point
+// (6000K) the screen is warmed, i.e. night light is on. Actuation goes through
+// `marchyo toggle nightlight` (4000K warm / 6500K neutral) so shell, keybinds,
+// and CLI share one source of truth. A singleton: the widget is a per-monitor
+// view, this state is seat-global.
 QtObject {
     id: root
 

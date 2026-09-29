@@ -17,8 +17,8 @@ installed and wired up as the handler for its file types.
 | Category | Default | Other choices |
 |----------|---------|---------------|
 | `browser` | `google-chrome` | `brave`, `firefox`, `chromium` |
-| `editor` | `emacs` | `emacs`, `vscode`, `vscodium`, `zed` |
-| `terminalEditor` | `emacs` | `emacs`, `neovim`, `helix`, `nano` |
+| `editor` | `emacs` | `vscode`, `vscodium`, `zed` |
+| `terminalEditor` | `emacs` | `neovim`, `helix`, `nano` |
 | `videoPlayer` | `mpv` | `vlc`, `celluloid` |
 | `audioPlayer` | `mpv` | `cmus`, `vlc`, `amberol` |
 | `musicPlayer` | `spotify-player` | `ncspot`, `spotify` |

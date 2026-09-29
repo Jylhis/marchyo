@@ -1,4 +1,3 @@
-# Automatically enables desktop-related services and settings when marchyo.desktop.enable is true
 {
   config,
   lib,
@@ -10,8 +9,6 @@ let
 in
 {
   config = lib.mkIf cfg.desktop.enable {
-    # Automatically enable office, media, web apps and the launcher by default
-    # when desktop is enabled
     marchyo.office.enable = lib.mkDefault true;
     marchyo.media.enable = lib.mkDefault true;
     marchyo.webapps.enable = lib.mkDefault true;
@@ -20,7 +17,6 @@ in
     # dconf is required for GTK apps to read settings (icon theme, font, etc.)
     programs.dconf.enable = lib.mkDefault true;
 
-    # XDG icon and MIME infrastructure for proper icon/file-type discovery
     xdg.icons.enable = lib.mkDefault true;
     xdg.mime.enable = lib.mkDefault true;
 
@@ -62,8 +58,8 @@ in
       wireplumber.enable = lib.mkDefault true;
     };
 
-    # Fonts — defaultFonts are set in modules/generic/fontconfig.nix and
-    # overridden by Stylix in modules/nixos/default.nix.
+    # defaultFonts are set in modules/generic/fontconfig.nix and overridden by
+    # Stylix in modules/nixos/default.nix.
     fonts = {
       enableDefaultPackages = lib.mkDefault true;
       fontconfig.enable = lib.mkDefault true;

@@ -5,19 +5,15 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// The notification centre: a summonable history panel (panelId "notifications")
-// over the retained NotificationState.history. Reuses Ui/Panel's chrome and the
-// shared PanelManager, so it registers the same way every other panel does (one
-// shared string, no manifest). Opening it marks the history read. Each row can
-// be dismissed individually; a header button clears the lot. History holds data
-// snapshots, so this renders plain fields, not live Notification objects.
+// Summonable history panel over the retained NotificationState.history. Opening
+// it marks the history read. History holds data snapshots, so this renders plain
+// fields, not live Notification objects.
 Panel {
     id: root
 
     panelId: "notifications"
     title: "Notifications"
 
-    // Opening the centre clears the unread badge.
     onVisibleChanged: {
         if (visible)
             NotificationState.markAllRead();
@@ -72,7 +68,6 @@ Panel {
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    // Either button dismisses the row from history.
                     onClicked: NotificationState.removeHistory(modelData.id)
                 }
 

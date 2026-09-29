@@ -2,19 +2,15 @@ pragma Singleton
 import QtQuick
 import Quickshell.Io
 
-// Shared system-resource sampler: CPU busy-fraction (from /proc/stat) and memory
-// use (from /proc/meminfo), polled once on a single timer so the bar's CpuWidget
-// and the summonable MonitorPanel read one source of truth instead of each
-// running its own drifting sampler. Cheap sysfs reads, so it runs always-on (like
-// the bar's other native bindings); disk/temperature stay in the panel, polled
-// only while it is open. No IPC, no manifest — a plain qs.Services singleton, the
-// same shape as PanelManager.
+// Shared system-resource sampler: CPU busy-fraction (/proc/stat) and memory use
+// (/proc/meminfo) on one timer, so CpuWidget and MonitorPanel read one source of
+// truth instead of each running its own drifting sampler. Cheap reads, so it
+// runs always-on; disk/temperature stay in the panel, polled only while open.
 QtObject {
     id: root
 
     // CPU busy percentage between the last two samples (0 on the priming tick).
     property int cpuUsage: 0
-    // Memory in kB, plus the derived percentage.
     property real memUsedKb: 0
     property real memTotalKb: 0
     readonly property int memPercent: memTotalKb > 0 ? Math.round(100 * memUsedKb / memTotalKb) : 0
@@ -55,8 +51,8 @@ QtObject {
                     root.cpuUsage = Math.round(100 * (dTotal - dIdle) / dTotal);
             }
 
-            // Memory: MemAvailable is the kernel's own "usable without swapping"
-            // figure (present since 3.14) — more accurate than total-free-buffers-cached.
+            // MemAvailable is the kernel's own "usable without swapping" figure,
+            // more accurate than total-free-buffers-cached.
             memView.reload();
             const m = {};
             memView.text().split("\n").forEach(l => {

@@ -3,14 +3,10 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared reminder state: ONE poll of the pending `marchyo reminder` timers for
-// the whole seat.
-//
-// The marchyo CLI schedules reminders as transient systemd user timers named
-// `marchyo-reminder-*` (commands/utilities.ts). Counting the live timers is the
-// same source of truth `marchyo reminder show` reads, so the bar and CLI never
-// disagree. Singleton for the usual reason: the widget is a pure per-monitor
-// view and this count is seat-global.
+// Shared reminder state: ONE seat-wide poll of the pending `marchyo reminder`
+// timers. The CLI schedules them as transient systemd user timers named
+// `marchyo-reminder-*`, so counting live timers is the same source of truth
+// `marchyo reminder show` reads. A singleton; the count is seat-global.
 QtObject {
     id: root
 

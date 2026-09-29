@@ -22,9 +22,8 @@ export function ok(rt: Runtime, msg: string): void {
 }
 
 export function err(rt: Runtime, msg: string): void {
-  // Single signal per the spec: glyph or word, never both. Drop the
-  // historical "Error: " literal so plain mode reads "error: msg" not
-  // "error: Error: msg".
+  // Single signal per the spec: glyph or word, never both. No "Error: "
+  // literal, so plain mode reads "error: msg" not "error: Error: msg".
   writeStderr(`${prefix(rt, GLYPH_ERR, "error")}${msg}`);
 }
 

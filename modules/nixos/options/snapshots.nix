@@ -26,11 +26,10 @@ in
       description = "Subvolume snapper takes timeline snapshots of.";
     };
 
-    # A submodule, deliberately not `attrsOf int`: with an attrset default, one
-    # `timelineLimits = { hourly = 24; }` replaces the whole default and every
-    # other horizon becomes 0 while TIMELINE_CLEANUP stays on — snapper then
-    # deletes the daily and longer-horizon snapshots. Per-field defaults make a
-    # partial definition merge instead of destroying retention.
+    # A submodule, deliberately not `attrsOf int`: with an attrset default,
+    # one `timelineLimits = { hourly = 24; }` would replace the whole default,
+    # zeroing every other horizon while TIMELINE_CLEANUP stays on (snapper then
+    # deletes daily and longer snapshots). Per-field defaults merge instead.
     timelineLimits = mkOption {
       type = types.submodule {
         options = {

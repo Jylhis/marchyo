@@ -8,7 +8,6 @@ in
     services.tailscale.enable = lib.mkDefault true;
 
     networking.firewall = {
-      # Trust traffic arriving over the tailnet interface.
       trustedInterfaces = [ "tailscale0" ];
       # Tailscale routes packets asymmetrically; strict reverse-path
       # filtering would drop them.

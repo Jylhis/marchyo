@@ -4,10 +4,10 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Services
 
-// The one tooltip surface: a click-through overlay layer anchored just below
-// the top bar, centered under the hovered bar item (clamped to the screen).
-// Driven entirely by the shared Services/Tooltip singleton — every BarItem and
-// tray icon writes there; this window is instantiated once from shell.qml.
+// The one tooltip surface: a click-through overlay layer just below the top bar,
+// centered under the hovered bar item (clamped to the screen). Driven by the
+// shared Services/Tooltip singleton; every BarItem and tray icon writes there,
+// and this window is instantiated once from shell.qml.
 PanelWindow {
     id: root
 
@@ -43,15 +43,14 @@ PanelWindow {
     implicitWidth: card.implicitWidth
     implicitHeight: card.implicitHeight
 
-    // Never intercept clicks — tooltips are read-only.
+    // Never intercept clicks: tooltips are read-only.
     mask: Region {}
 
     Rectangle {
         id: card
-        // Fade the card in when the tooltip shows. Opacity lives on the content
-        // item, not the window: Quickshell's PanelWindow has no opacity property
-        // (anchors/margins/exclusiveZone/color/mask only), so a window-level
-        // opacity assignment fails to load.
+        // Opacity lives on the content item, not the window: Quickshell's
+        // PanelWindow has no opacity property, so a window-level opacity
+        // assignment fails to load.
         opacity: root.visible ? 1.0 : 0.0
         Behavior on opacity {
             NumberAnimation {

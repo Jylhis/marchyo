@@ -1,7 +1,6 @@
 # macOS system defaults: keyboard/input parity with marchyo's Linux config.
 _: {
   system.defaults = {
-    # Fn key: Change Input Source
     hitoolbox.AppleFnUsageType = "Change Input Source";
 
     # Disable input source keyboard shortcuts (Ctrl+Space / Ctrl+Option+Space)

@@ -3,15 +3,15 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Services
 
-// The Phase 4 lock surface: a compositor-level ext-session-lock-v1 lock with
-// in-process PAM auth (Services/Lock owns the state machine). Instantiated
-// exactly once, as a static child of ShellRoot in shell.qml — NEVER inside a
-// Loader: destroying a WlSessionLock while locked leaves the compositor
-// showing a solid color with no way back in through the shell.
+// The lock surface: a compositor-level ext-session-lock-v1 lock with in-process
+// PAM auth (Services/Lock owns the state machine). Instantiated exactly once, as
+// a static child of ShellRoot in shell.qml, NEVER inside a Loader: destroying a
+// WlSessionLock while locked leaves the compositor showing a solid color with no
+// way back in through the shell.
 //
-// One WlSessionLockSurface is instantiated per screen automatically (no
-// Variants needed); each renders the clock + password card, and the field on
-// the focused output (Services/Screens) takes keyboard focus.
+// One WlSessionLockSurface is instantiated per screen automatically; each renders
+// the clock + password card, and the field on the focused output
+// (Services/Screens) takes keyboard focus.
 WlSessionLock {
     id: lockRoot
 
@@ -30,8 +30,8 @@ WlSessionLock {
     WlSessionLockSurface {
         id: surface
 
-        // Opaque by construction: the surface color is what the compositor
-        // shows if the QML scene fails — never bind a translucent value.
+        // Opaque by construction: the surface color is what the compositor shows
+        // if the QML scene fails, never bind a translucent value.
         color: Color.bg
 
         Rectangle {

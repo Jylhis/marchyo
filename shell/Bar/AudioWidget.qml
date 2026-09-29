@@ -3,9 +3,7 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Default-sink volume. Scroll to adjust, right-click to mute, left-click opens the
-// in-shell audio panel (output picker + volume/mute, with a wiremix escape hatch).
-// Scroll-step 5, max-volume 150, matching waybar's wireplumber widget. The
+// Scroll-step 5%, max-volume 150%, matching waybar's wireplumber widget. The
 // default sink is shared with the panel and the OSD via Services/Audio.
 BarItem {
     id: root
@@ -16,7 +14,6 @@ BarItem {
     interactive: true
     text: audio ? (audio.muted ? "󰝟" : "󰕾 " + Math.round(audio.volume * 100)) : "󰕾"
     textColor: (audio && audio.muted) ? Color.textFaint : Color.text
-    // Waybar parity ("Playing at N%") plus the sink name for context.
     tooltipText: {
         if (!sink)
             return "";

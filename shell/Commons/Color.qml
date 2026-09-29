@@ -31,7 +31,7 @@ QtObject {
     readonly property color statusOk: Theme.palette.statusOk
     readonly property color statusInfo: Theme.palette.statusInfo
 
-    // Back-compat aliases for the Phase 0 property names.
+    // Back-compat aliases.
     readonly property color background: bg
     readonly property color foreground: text
 }

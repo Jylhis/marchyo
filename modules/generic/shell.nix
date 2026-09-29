@@ -5,9 +5,8 @@
   ...
 }:
 let
-  # Shared aliases for bash. Both NixOS and Home Manager expose
-  # programs.bash.shellAliases, so this file stays platform-agnostic.
-  # nix-darwin does not have these options, so we guard with option checks.
+  # Guarded with option checks because nix-darwin has no
+  # programs.bash.shellAliases.
   baseAliases = {
     ls = "eza -lh --group-directories-first --icons=auto";
     lsa = "ls -a";
@@ -24,9 +23,8 @@ let
     gcam = "git commit -a -m";
     gcad = "git commit -a --amend";
   };
-  # Always prefer copy-on-write (reflink) copies where the filesystem supports
-  # them (btrfs, xfs, ...); `=auto` falls back to a full copy elsewhere, so it
-  # is always safe. GNU coreutils only — macOS ships BSD cp (no --reflink).
+  # Copy-on-write (reflink) where the filesystem supports it; `=auto` falls
+  # back to a full copy elsewhere. GNU coreutils only; macOS ships BSD cp.
   cpAlias = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     cp = "cp --reflink=auto";
   };

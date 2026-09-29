@@ -9,31 +9,12 @@ import QtQuick
 // (focusSection, selectedIndex, action rules) while the boilerplate
 // key handling lives here.
 //
-// Usage:
-//   Common.KeyboardPanel {
-//     ...
-//     PanelKeyCatcher {
-//       anchors.fill: parent
-//       onMoveRequested: function(dx, dy) { root.moveCursor(dx, dy) }
-//       onActivateRequested: root.activateCursor()
-//       onCloseRequested: root.close()
-//       onDeleteRequested: root.deleteSelected()
-//       onTextKey: function(t, modifiers) { if (t === "r") root.refresh() }
-//
-//       Column { ... panel content ... }
-//     }
-//   }
-//
 // Keys.priority: Keys.BeforeItem means this handler gets keys first,
 // even when a descendant has activeFocus. That's what lets Up/Down
 // arrows drive the cursor instead of being consumed by an inner
 // Flickable's built-in scroll handling. When a panel has an inline
-// editor (wifi passphrase, gallery TextField demo) the panel must
-// set `blocked: editor.activeFocus` so this handler short-circuits
-// and the editor receives keys normally.
-//
-// blocked: when true, ALL keys are forwarded to descendants without
-// triggering signals.
+// editor the panel must set `blocked: editor.activeFocus` so this
+// handler short-circuits and the editor receives keys normally.
 Item {
     id: root
 

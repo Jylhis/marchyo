@@ -1,15 +1,10 @@
-# Per-user aerc (TUI mail client).
+# Per-user aerc (TUI mail client). Account/credential setup is left to the consumer.
 #
-# Enabled via Home-Manager's programs.aerc when it is the selected
-# marchyo.defaults.email and desktop is enabled. xdg.nix routes mailto: links
-# to aerc.desktop. Account/credential setup (accounts.email.accounts.<name>)
-# is left to the consumer.
-#
-# Theming: the Stylix aerc target is disabled in modules/generic/theme.nix
-# (upstream uses base07 — a base16 *background* slot — as a foreground, which is
-# white-on-white in the light variant). We ship a "marchyo" styleset built
-# from the Jylhis palette's semantic tokens instead, so every foreground
-# contrasts against its surface in both variants.
+# Theming is marchyo's, not Stylix's (aerc target disabled in
+# modules/generic/theme.nix): upstream uses base07, a base16 background slot, as
+# a foreground, which is white-on-white in the light variant. The "marchyo"
+# styleset built from Jylhis semantic tokens contrasts against its surface in both
+# variants.
 {
   osConfig ? { },
   pkgs,
@@ -34,8 +29,7 @@ in
 
       extraConfig.ui.styleset-name = "marchyo";
 
-      # Styling options documented in aerc-stylesets(7). Colors carry the leading
-      # "#" (palette.hex format), which is what aerc expects.
+      # See aerc-stylesets(7). Colors carry the leading "#" (palette.hex format).
       stylesets.marchyo = {
         global = {
           "*.default" = true;
@@ -47,9 +41,7 @@ in
           "warning.fg" = hex."status-warn";
           "success.fg" = hex."status-ok";
 
-          # Heading ink on a subtle raised surface — readable in both variants.
-          # Never surface-raised (base07) as a foreground: it is near-white in
-          # the light variant.
+          # Never surface-raised (base07) as a foreground: near-white in the light variant.
           "title.fg" = hex."text-heading";
           "title.bg" = hex.surface;
           "title.bold" = true;

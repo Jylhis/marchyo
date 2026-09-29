@@ -7,13 +7,8 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// StatusNotifier system tray, grouped behind a "·" expander (waybar parity): a
-// click reveals or hides the icons, so the bar stays compact when the tray is
-// idle. The expander only shows while there is at least one item. Left-click an
-// icon activates it (or opens its menu for menu-only items); right-click opens
-// the item's SNI menu when it has one (rendered by the stock QsMenuAnchor) and
-// falls back to its secondary action otherwise. Hovering an icon shows its
-// tooltip (title + description) through the shared tooltip surface.
+// StatusNotifier system tray, grouped behind a "·" expander (waybar parity) so
+// the bar stays compact when the tray is idle.
 RowLayout {
     id: root
 
@@ -41,12 +36,10 @@ RowLayout {
             implicitWidth: root.expanded ? Style.fontSize + 4 : 0
             implicitHeight: Style.fontSize + 4
 
-            // The item's SNI menu (DBusMenu), if it exposes one.
             QsMenuAnchor {
                 id: menuAnchor
                 menu: trayItem.modelData && trayItem.modelData.hasMenu ? trayItem.modelData.menu : null
                 anchor.item: trayItem
-                // Pop out below the icon, right-aligned to it.
                 anchor.edges: Edges.Bottom | Edges.Left
                 anchor.gravity: Edges.Top | Edges.Right
             }

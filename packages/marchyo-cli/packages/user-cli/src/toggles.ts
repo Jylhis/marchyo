@@ -16,7 +16,7 @@ import {
   systemctlUserArgv,
 } from "@marchyo/core";
 
-// The F3.2 runtime toggles. Each entry provides: a live-state probe (used
+// The runtime toggles. Each entry provides: a live-state probe (used
 // by `toggle <name> --status` and flip-with-no-argument), on/off actuation
 // (the ChangeSpec's runtimeApply, value = boolean "feature on"), and a
 // revert to the declarative default. Probe seams (capture) are injectable
@@ -57,8 +57,6 @@ async function notify(
 ): Promise<void> {
   await safeExec(ctx, notifySendArgv(summary, body));
 }
-
-// -- probes ----------------------------------------------------------------
 
 async function unitActive(capture: Capture, unit: string): Promise<boolean> {
   const r = await capture(["systemctl", "--user", "is-active", "--quiet", unit]);
@@ -142,8 +140,6 @@ const pickTouchpad = (section: "mice" | "touch", name: string): boolean =>
 const pickTouchscreen = (section: "mice" | "touch", _name: string): boolean =>
   section === "touch";
 
-// -- definitions -----------------------------------------------------------
-
 export const TOGGLES: ToggleDef[] = [
   {
     // "on" = spaced tiles (omarchy look); marchyo's declarative default is
@@ -197,9 +193,8 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
-    // Absorbed from marchyo-nightlight-toggle: hyprsunset runtime override,
-    // 4000K warm / 6500K neutral. No query interface — state rides the
-    // override (marker file dropped).
+    // hyprsunset runtime override, 4000K warm / 6500K neutral. No query
+    // interface, so state rides the recorded override.
     name: "nightlight",
     defaultOn: false,
     probe: async () => null,
@@ -246,7 +241,6 @@ export const TOGGLES: ToggleDef[] = [
     revert: (ctx) => setDevicesEnabled(ctx, pickTouchscreen, true),
   },
   {
-    // Absorbed from marchyo-idle-toggle.
     name: "idle",
     defaultOn: true,
     probe: (capture) => unitActive(capture, "hypridle.service"),
@@ -279,8 +273,8 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
-    // Absorbed from marchyo-dnd-toggle: "off" = do-not-disturb (mako mode
-    // from modules/home/mako.nix) + waybar indicator poke (SIGRTMIN+9).
+    // "off" = do-not-disturb (mako mode from modules/home/mako.nix) + waybar
+    // indicator poke (SIGRTMIN+9).
     name: "notifications",
     defaultOn: true,
     probe: async (capture) => {

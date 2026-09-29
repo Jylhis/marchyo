@@ -3,14 +3,10 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared Tailscale state: ONE `tailscale status --json` poll for the whole seat.
-//
-// A trimmed port of omarchy's tailscale panel Service — an indicator, not the
-// full exit-node/Taildrop/accounts panel. The tailscale CLI is only baked into
-// Config when marchyo.services.tailscale.enable is set (see package.nix); on
+// Shared Tailscale state: ONE seat-wide `tailscale status --json` poll. The CLI
+// is only baked into Config when marchyo.services.tailscale.enable is set; on
 // other hosts the bare name is baked, the probe fails, and `installed` stays
-// false so the widget self-hides. Singleton for the usual reason: the widget is
-// a pure per-monitor view and this state is seat-global.
+// false so the widget self-hides. A singleton; this state is seat-global.
 QtObject {
     id: root
 

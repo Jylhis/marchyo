@@ -8,9 +8,8 @@ import {
   usageError,
 } from "@marchyo/core";
 
-// Power/session commands (F3.2), absorbed from marchyo-power-menu's action
-// arms. The gum menu presentation lives in commands/menu.ts and dispatches
-// here.
+// Power/session commands. The gum menu presentation lives in
+// commands/menu.ts and dispatches here.
 
 function detach(argv: string[]): boolean {
   try {

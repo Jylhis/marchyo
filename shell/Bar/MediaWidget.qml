@@ -4,10 +4,7 @@ import qs.Services
 
 // Media (MPRIS) indicator: a pure view over Services/Mpris, which owns the one
 // active-player lookup for the seat (the widget is instantiated once per
-// monitor). Shows a note glyph + the current track title; left-click toggles
-// play/pause, right-click skips to the next track, scroll goes prev/next.
-// Hidden when no player is on the bus. No subprocess, no poll — native
-// Quickshell.Services.Mpris drives it.
+// monitor). No subprocess, no poll: native Quickshell.Services.Mpris drives it.
 BarItem {
     id: root
 
