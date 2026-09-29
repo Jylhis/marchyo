@@ -98,7 +98,11 @@ One `quickshell -p <store-path>` process per session, launched as a
   (`marchyo.shell.plugins`, built by `pkgs.mkMarchyoShellPlugin`) baked into the
   store shell — reproducible and reviewable in the flake, never fetched or
   discovered at runtime. The manifest schema matches upstream omarchy for
-  interop; a compat shim covers simple omarchy bar widgets.
+  interop; the compat shim (`shell/compat`, `qs.compat.Ui` / `qs.compat.Commons`,
+  plus the `omarchy-shell` / `omarchy-bar` CLIs) covers omarchy bar widgets,
+  including panel/keyboard-driven ones. The SBB and agent-activity omarchy
+  plugins are packaged in `overlay.nix` (`pkgs.marchyo-shell-plugins`) as the
+  reference imports.
 - **The shell ships its own launcher.** Vicinae remains a strong standalone
   launcher and stays in-tree as the discrete-stack fallback, but the shell-on
   desktop uses the in-shell surface — one process, one theme runtime, no

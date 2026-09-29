@@ -14,10 +14,14 @@ and the `Commons/` design-token singletons). Phases 2 and 3 add surfaces
 **alongside** the bar as plain in-process components — the **OSD** (`Osd/`), the
 summonable **panels** (`Panels/`, toggled from their bar widgets through the
 `Services/` `PanelManager` singleton), and the **notification** toasts
-(`Notifications/`, owning `org.freedesktop.Notifications`). There is deliberately
-**no plugin registry or manifest system**: marchyo rejected the
-third-party-plugin story (see `plans/shell.md`), so native Quickshell service
-bindings plus (where a keybind must reach in) a stock `IpcHandler` suffice.
+(`Notifications/`, owning `org.freedesktop.Notifications`). Extension is
+**build-time, Nix-declared** (the Option A plugin platform): plugins are baked
+into the store shell via `pkgs.mkMarchyoShellPlugin` and never discovered at
+runtime — there is no runtime plugin directory or hot-reload. Native Quickshell
+service bindings plus a stock `IpcHandler` cover everything the shell itself
+needs. `shell/compat/` additionally provides an omarchy plugin host API
+(`qs.compat.Ui` / `qs.compat.Commons`) so upstream omarchy bar widgets run
+near-unmodified; see the "Plugins" docs and `plans/shell.md`.
 
 A hardening pass added **tooltips** (one shared hover surface under the bar),
 **SNI tray menus** on right-click, **per-monitor workspaces** with waybar's
