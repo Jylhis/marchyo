@@ -91,6 +91,11 @@ in
     qmllint = {
       command = "${qmllint}/bin/marchyo-qmllint";
       includes = [ "*.qml" ];
+      # qmllint only roots the shell/ and greeter/ trees (each owns its qs.*
+      # namespace). QML test fixtures live outside both trees — e.g. a shell
+      # plugin bar-widget under tests/eval/fixtures/ resolves qs.* only once
+      # loaded into the shell config root at runtime — so exclude them.
+      excludes = [ "tests/**" ];
     };
   };
 }
