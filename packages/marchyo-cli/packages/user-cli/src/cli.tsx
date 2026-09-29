@@ -649,12 +649,16 @@ program
 
 program
   .command("transcode")
-  .description("Transcode media next to the source (ffmpeg / tte)")
+  .description("Transcode media next to the source (ffmpeg / tte / chafa)")
   .argument("[file]", "source file (gum picker when omitted)")
   .option("--to <fmt>", "mp4 | webm | gif (gum prompt when omitted)")
   .option("--ascii", "Animate the file's text with tte instead")
+  .option("--image-ascii", "Render an image as ASCII/ANSI art with chafa")
   .action(
-    async (file: string | undefined, opts: { to?: string; ascii?: boolean }) => {
+    async (
+      file: string | undefined,
+      opts: { to?: string; ascii?: boolean; imageAscii?: boolean },
+    ) => {
       process.exit(await runTranscode(rt(), file, opts));
     },
   )
@@ -664,6 +668,7 @@ program
 Examples:
   $ marchyo transcode video.mov --to mp4
   $ marchyo transcode notes.txt --ascii
+  $ marchyo transcode photo.jpg --image-ascii
 `,
   );
 
