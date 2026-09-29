@@ -52,6 +52,19 @@ marchyo.defaults = {
 };
 ```
 
+## Removing default packages
+
+`marchyo.defaults.excludePackages` drops individual packages from Marchyo's default bundles (the shell, TUI, desktop, media, office, and development tool sets) without turning off a whole feature flag. It mirrors NixOS's own `*.excludePackages` options: it subtracts only from what Marchyo adds by default, not from packages pulled in by other modules or your own `environment.systemPackages`.
+
+```nix
+marchyo.defaults.excludePackages = with pkgs; [
+  signal-desktop  # drop the bundled desktop messenger
+  obsidian        # drop the bundled note-taking app
+];
+```
+
+Each entry must be the same package value Marchyo installs (from the configuration's `pkgs`).
+
 ## Externally managed applications
 
 Some choices are "externally managed" — Marchyo does not install a package for them:

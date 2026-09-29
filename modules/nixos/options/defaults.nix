@@ -4,6 +4,24 @@ let
 in
 {
   options.marchyo.defaults = {
+    excludePackages = mkOption {
+      type = types.listOf types.package;
+      default = [ ];
+      example = lib.literalExpression "[ pkgs.signal-desktop pkgs.obsidian ]";
+      description = ''
+        Packages to drop from marchyo's default package bundles (the shell,
+        TUI, desktop, media, office, and development tool sets declared in
+        modules/nixos/packages.nix). Mirrors the semantics of NixOS's own
+        `*.excludePackages` options: it subtracts only from the packages
+        marchyo adds by default, not from packages pulled in by other modules
+        or by your own `environment.systemPackages`. Use it to remove a single
+        default you do not want without turning off a whole feature flag.
+
+        Each entry must be the same package value marchyo installs (from the
+        configuration's `pkgs`), e.g. `pkgs.obsidian`.
+      '';
+    };
+
     browser = mkOption {
       type = types.nullOr (
         types.enum [

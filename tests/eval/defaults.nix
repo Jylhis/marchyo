@@ -113,6 +113,28 @@ in
         # editor/terminalEditor left at their "emacs" defaults.
       });
 
+  # excludePackages subtracts from marchyo's default bundles: eza (always in
+  # shellTools) drops out while ripgrep (also shellTools, not excluded) stays.
+  # The config module takes `pkgs` so the excluded value is pointer-identical
+  # to the one packages.nix installs; the predicate matches by pname so it does
+  # not depend on cross-instance derivation equality.
+  eval-defaults-exclude-packages =
+    testNixOSCheck "defaults-exclude-packages"
+      (
+        config:
+        let
+          names = map (p: p.pname or "") config.environment.systemPackages;
+        in
+        !(builtins.elem "eza" names) && builtins.elem "ripgrep" names
+      )
+      (
+        { pkgs, ... }:
+        withTestUser {
+          marchyo.desktop.enable = true;
+          marchyo.defaults.excludePackages = [ pkgs.eza ];
+        }
+      );
+
   # Mixed case: emacs GUI editor + neovim terminal editor resolve independently.
   eval-defaults-emacs-mixed =
     testNixOSCheck "defaults-emacs-mixed"
