@@ -15,7 +15,6 @@ export function formatArgv(argv: string[]): string {
     .join(" ");
 }
 
-// `nix flake update` run against the detected flake directory.
 export function flakeUpdateArgv(flakePath: string): string[] {
   return ["nix", "flake", "update", "--flake", flakePath];
 }
@@ -33,7 +32,6 @@ export function sudoWrap(
   return { argv: ["sudo", ...inner], needsSudo: true };
 }
 
-// `nixos-rebuild switch --rollback`, sudo-wrapped like flake.ts:rebuildArgv.
 export function rollbackArgv(
   opts: { noInput?: boolean } = {},
   isRoot: boolean = userInfo().uid === 0,

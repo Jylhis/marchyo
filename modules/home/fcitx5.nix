@@ -11,8 +11,7 @@ let
 in
 {
   config = lib.mkIf (desktopEnabled && kbdCfg.layouts != [ ]) {
-    # GTK settings for older GTK apps that don't support Wayland text-input-v3
-    # Modern GTK 3/4 apps on Wayland use text-input-v3 protocol, but some older apps need this
+    # For older GTK apps that predate Wayland text-input-v3; modern GTK 3/4 use it natively.
     xdg.configFile = {
       "gtk-3.0/settings.ini".text = ''
         [Settings]

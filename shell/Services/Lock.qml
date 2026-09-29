@@ -2,15 +2,14 @@ pragma Singleton
 import QtQuick
 import Quickshell.Services.Pam
 
-// Seat-global lock state + the PAM auth machine for the Phase 4 lock surface
-// (Lock/LockScreen.qml renders it; shell.qml exposes `shell lock` / `shell
-// lockState` over IPC for the SUPER+L bind and hypridle's lock points).
+// Seat-global lock state + PAM auth machine for the lock surface (rendered by
+// Lock/LockScreen.qml; driven over IPC from shell.qml).
 //
 // Safety (ext-session-lock-v1): if the shell dies or this lock is destroyed
 // while locked, the compositor keeps the session locked with a solid color.
-// `locked = false` is therefore set in exactly ONE place — PamResult.Success
-// below — and LockScreen must never live inside a Loader or anything else
-// that could tear it down mid-lock.
+// So `locked = false` is set in exactly ONE place (PamResult.Success below), and
+// LockScreen must never live inside a Loader or anything that could tear it down
+// mid-lock.
 QtObject {
     id: root
 
@@ -41,9 +40,8 @@ QtObject {
         root.locked = true;
     }
 
-    // LockScreen calls this once the compositor confirms every screen is
-    // covered (WlSessionLock.secure) — the gate before the PAM conversation
-    // starts and the password field is focused.
+    // LockScreen calls this once every screen is covered (WlSessionLock.secure),
+    // the gate before the PAM conversation starts and the field is focused.
     function onSecure() {
         if (!pam.active)
             pam.start();

@@ -4,10 +4,7 @@ import qs.Commons
 import qs.Services
 
 // Battery readout via UPower's composite display device, shared with the power
-// panel through Services/Power. Hidden on desktops (no laptop battery). Bar text
-// keeps waybar's bat/chg/pwr/bat-full forms; warning/critical thresholds match
-// waybar (20% / 10%). Click opens the in-shell power panel (battery detail +
-// profile selector, with a power-menu escape hatch).
+// panel through Services/Power. Hidden on desktops (no laptop battery).
 BarItem {
     id: root
 
@@ -17,7 +14,7 @@ BarItem {
     visible: Power.hasBattery
     interactive: true
     text: Power.barText
-    // Continuous gradient tint (Power.barColor) instead of discrete thresholds.
+    // Continuous gradient tint instead of discrete thresholds.
     textColor: Power.barColor
     tooltipText: Power.tooltipText
 

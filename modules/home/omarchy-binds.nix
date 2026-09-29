@@ -1,10 +1,6 @@
-# Omarchy-parity keybinds (plans/omarchy-parity.md): monitor-control
-# helpers, connectivity TUIs in floating terminals, and app-launch binds.
-# Scripts follow the modules/home/window-toggles.nix writeShellApplication
-# pattern; binds merge into the bind list the same way
-# modules/home/webapps.nix does (home-manager concatenates the lists, order
-# is irrelevant to Hyprland). The `terminal` Lua local and the org.omarchy.* floating
-# window classes are defined in modules/home/hyprland.nix.
+# Omarchy-parity keybinds: monitor-control helpers, connectivity TUIs in
+# floating terminals, and app-launch binds. The `terminal` Lua local and the
+# org.omarchy.* floating window classes are defined in modules/home/hyprland.nix.
 {
   lib,
   pkgs,
@@ -17,8 +13,7 @@ let
   desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
   devEnabled = marchyoCfg.development.enable or false;
 
-  # Same resolution as the fileManager Lua local in modules/home/hyprland.nix: follow
-  # marchyo.defaults.fileManager, fall back to xdg-open when unmanaged (null).
+  # Follow marchyo.defaults.fileManager, falling back to xdg-open when null.
   fileManagerPackages = {
     inherit (pkgs) nautilus;
     inherit (pkgs.xfce) thunar;
@@ -27,25 +22,19 @@ let
   fileManagerDeps =
     if fileManagerName == null then [ pkgs.xdg-utils ] else [ fileManagerPackages.${fileManagerName} ];
 
-  # The monitor-scale cycle, laptop-panel toggle, and file-manager-at-cwd
-  # helpers were absorbed into the marchyo CLI (`marchyo monitor
-  # scale-cycle|laptop-toggle`, `marchyo launch file-manager` — same
-  # hyprctl/procfs logic, packages/marchyo-cli commands/launch.ts). The
-  # file-manager dependency stays installed for xdg-open to resolve.
+  # The file-manager dependency stays installed for xdg-open to resolve.
 in
 {
   config = lib.mkIf desktopEnabled {
     home.packages = [
       # Backs the SUPER+ALT+Return work-session bind; not installed elsewhere.
       pkgs.tmux
-      # xdg-open resolution for `marchyo launch file-manager` plus the
-      # configured file manager itself.
+      # xdg-open resolution for `marchyo launch file-manager`.
       pkgs.xdg-utils
     ]
     ++ fileManagerDeps;
 
     wayland.windowManager.hyprland.settings.bind = [
-      # Monitor controls
       # SUPER+/ (slash) is the password manager, so the scale cycle sits on the
       # adjacent backslash.
       (hlua.bindd "SUPER + backslash" "Cycle monitor scale" (hlua.exec "marchyo monitor scale-cycle"))
@@ -53,12 +42,8 @@ in
         hlua.exec "marchyo monitor laptop-toggle"
       ))
 
-      # Connectivity TUIs (floating, omarchy setup-menu parity)
-      # Same TUIs waybar's segments launch (wiremix/nmtui/bluetui); the
-      # org.omarchy.* classes are matched by the floating-window tag rule in
-      # modules/home/hyprland.nix. nmtui ships with the networkmanager package
-      # (see modules/nixos/network.nix — Wi-Fi is on the wpa_supplicant
-      # backend, not iwd; docs/known-issues.md).
+      # Connectivity TUIs in floating terminals; the org.omarchy.* classes are
+      # matched by the floating-window tag rule in modules/home/hyprland.nix.
       (hlua.bindd "SUPER + CTRL + A" "Audio mixer" (
         hlua.execInTerminalAs "org.omarchy.wiremix" "wiremix"
       ))
@@ -67,7 +52,6 @@ in
       ))
       (hlua.bindd "SUPER + CTRL + W" "Wi-Fi manager" (hlua.execInTerminalAs "org.omarchy.nmtui" "nmtui"))
 
-      # App launches
       (hlua.bindd "SUPER + ALT + return" "tmux Work session" (
         hlua.execInPlainTerminal "tmux new -A -s Work"
       ))
@@ -76,8 +60,8 @@ in
       ))
     ]
     ++ lib.optionals devEnabled [
-      # lazydocker is system-side via marchyo.development.enable (devTools in
-      # modules/nixos/packages.nix), so the bind follows the same gate.
+      # lazydocker is installed system-side via marchyo.development.enable, so
+      # the bind follows the same gate.
       (hlua.bindd "SUPER + ALT + D" "Docker TUI" (hlua.execInTerminal "lazydocker"))
     ];
   };

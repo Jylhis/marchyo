@@ -120,10 +120,8 @@ in
       '';
     };
 
-    # Shell appearance scale axes, independent of the palette (Caelestia's
-    # split: scale multipliers over the base design tokens). These affect only
-    # the Quickshell shell (marchyo.shell); the palette stays generated from the
-    # Jylhis design system. Neutral defaults reproduce the current look.
+    # Shell appearance scale axes, independent of the palette. Affect only the
+    # Quickshell shell (marchyo.shell); neutral defaults reproduce the current look.
     appearance = {
       cornerRadiusScale = mkOption {
         type = types.numbers.between 0.0 4.0;

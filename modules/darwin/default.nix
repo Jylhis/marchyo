@@ -1,6 +1,5 @@
-# nix-darwin module for Marchyo
-# Imports platform-agnostic options, nix settings, and generic modules.
-# Desktop/Wayland/systemd modules are NixOS-only and not imported here.
+# Hand-curated import list: desktop/Wayland/systemd modules are NixOS-only and
+# must not be imported here.
 {
   imports = [
     ../nixos/options

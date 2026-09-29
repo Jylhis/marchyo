@@ -16,10 +16,9 @@ let
     else
       "systemctl suspend";
 
-  # Phase 4: with the unified shell on, the in-shell WlSessionLock replaces
-  # hyprlock / loginctl as the lock actuation. hypridle remains the single
-  # idle authority (screensaver/dim/dpms/sleep timing) so `marchyo toggle
-  # idle` — which stops this very service — keeps disabling idle lock.
+  # With the unified shell on, the in-shell WlSessionLock replaces hyprlock/loginctl
+  # as the lock actuation. hypridle stays the single idle authority so `marchyo toggle
+  # idle` (which stops this service) keeps disabling idle lock.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 in
 {
@@ -37,11 +36,10 @@ in
         };
 
         listener =
-          # Terminal screensaver (modules/home/screensaver.nix). Omarchy fires
-          # it at ~150s, but marchyo dims at exactly 150s — slot it just ahead
-          # so the animation starts on a fully lit screen. on-resume dismisses
-          # it on any input (the script also exits on keypresses it receives
-          # directly, but mouse motion only reaches hypridle).
+          # Terminal screensaver (modules/home/screensaver.nix), slotted just before
+          # the 150s dim so the animation starts on a fully lit screen. on-resume
+          # dismisses it (the script also exits on keypresses, but mouse motion only
+          # reaches hypridle).
           lib.optionals screensaverEnabled [
             {
               timeout = 120;
@@ -66,9 +64,7 @@ in
               on-resume = "hyprctl dispatch dpms on";
             }
           ]
-          # Sleep on long idle only when the host opted into hibernation —
-          # suspend-then-hibernate (or plain suspend when suspendThenHibernate
-          # is off) after 30 minutes.
+          # Sleep after 30 min idle, only when the host opted into hibernation.
           ++ lib.optionals hibernationEnabled [
             {
               timeout = 1800;

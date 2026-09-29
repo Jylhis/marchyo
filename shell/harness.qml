@@ -23,7 +23,6 @@ ShellRoot {
         // WlSessionLock surface itself needs a compositor, like the panels).
         readonly property var lockService: Lock
 
-        // Ui primitives.
         BarItem {
             x: 0
             text: "harness"

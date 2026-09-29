@@ -1,11 +1,8 @@
-# tte-based terminal screensaver (omarchy parity). `marchyo-screensaver` plays
-# random terminaltexteffects animations over a "marchyo" ASCII banner until any
-# key is pressed; `marchyo-screensaver-launch` is the hypridle idle hook
-# (modules/home/hypridle.nix) that opens it in a fullscreen ghostty window
+# tte-based terminal screensaver. `marchyo-screensaver-launch` is the hypridle
+# idle hook (modules/home/hypridle.nix), opening a fullscreen ghostty window
 # unless hyprlock owns the display. The window uses the org.omarchy.screensaver
-# class (a valid GTK app id — ghostty rejects dotless --class values and would
-# fall back to its default class) and this module contributes the matching
-# fullscreen window rule via the usual Hyprland settings list-merge.
+# class because ghostty rejects dotless --class values (falling back to its
+# default class); this module contributes the matching fullscreen window rule.
 {
   lib,
   pkgs,
@@ -17,8 +14,8 @@ let
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screensaverEnabled = (osConfig.marchyo or { }).screensaver.enable or true;
 
-  # Phase 4: with the unified shell on, its in-shell lock replaces hyprlock —
-  # the launcher's "never draw over the lock screen" guard must ask the shell.
+  # With the unified shell on, its in-shell lock replaces hyprlock, so the
+  # "never draw over the lock screen" guard must ask the shell.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
   marchyo-screensaver = pkgs.writeShellApplication {
@@ -55,16 +52,14 @@ let
                 --canvas-width 0 --canvas-height 0 --anchor-canvas c --anchor-text c \
                 "$effect" &
               tte_pid=$!
-              # tte has no exit-on-input flag, so watch stdin ourselves and stop the
-              # whole show (closing the ghostty window) on any keypress.
+              # tte has no exit-on-input flag, so watch stdin ourselves and exit on any keypress.
               while kill -0 "$tte_pid" 2>/dev/null; do
                 if read -rs -n 1 -t 0.2; then
                   exit 0
                 fi
               done
               tte_pid=""
-              # Hold the finished frame briefly before the next effect; a keypress
-              # during the pause exits too.
+              # Hold the finished frame briefly; a keypress during the pause exits too.
               if read -rs -n 1 -t 3; then
                 exit 0
               fi
@@ -80,21 +75,17 @@ let
     ]
     ++ lib.optionals shellEnabled [ pkgs.marchyo-shell ];
     text = ''
-      # `marchyo toggle screensaver off` drops this marker; honor it here so
-      # the idle hook stays inert while the toggle is off.
+      # `marchyo toggle screensaver off` drops this marker; stay inert while off.
       if [ -e "''${XDG_RUNTIME_DIR:-/tmp}/marchyo-screensaver.off" ]; then
         exit 0
       fi
-      # Never draw over the lock screen (hyprlock renders above anyway and the
-      # screensaver would keep running underneath), and never stack a second
-      # instance on top of a running one.
+      # Never draw over the lock screen, and never stack a second instance.
       if pgrep -x hyprlock >/dev/null; then
         exit 0
       fi
       ${lib.optionalString shellEnabled ''
-        # The unified shell's in-shell lock (Phase 4): same rule as hyprlock —
-        # never animate underneath a locked session. An IPC failure means no
-        # shell is running; treat that as unlocked.
+        # In-shell lock: never animate underneath a locked session. An IPC
+        # failure means no shell is running; treat that as unlocked.
         if [ "$(marchyo-shell ipc -n call -- shell lockState 2>/dev/null || true)" = "locked" ]; then
           exit 0
         fi
@@ -116,8 +107,6 @@ in
       marchyo-screensaver-launch
     ];
 
-    # Fullscreen the screensaver window (same list-merge pattern the webapps
-    # and screenshot modules use to contribute Hyprland settings).
     wayland.windowManager.hyprland.settings.window_rule = [
       {
         match.class = "org.omarchy.screensaver";

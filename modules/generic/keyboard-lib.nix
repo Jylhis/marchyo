@@ -61,11 +61,8 @@
         label = null;
       }
     else
-      # Fill in the optional fields rather than returning the attrset as given.
-      # A bare passthrough here contradicted the documented example above and
-      # the promise that the result always carries all four keys: a caller
-      # passing `{ layout = "cn"; ime = "pinyin"; }` got no `variant` or
-      # `label`, so every consumer had to guard with `or` anyway.
+      # Fill in optional fields so the result always carries all four keys;
+      # a bare passthrough would force every consumer to guard with `or`.
       {
         variant = "";
         ime = null;

@@ -108,7 +108,7 @@ in
 
     options = mkOption {
       type = types.listOf types.str;
-      default = [ "grp:win_space_toggle" ]; # Note: "Win" = Super key in XKB terminology
+      default = [ "grp:win_space_toggle" ];
       example = [
         "grp:win_space_toggle"
         "ctrl:swapcaps"

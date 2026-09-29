@@ -1,16 +1,8 @@
-# Linux virtual console (TTY) theming.
-#
-# Sets the 16-color console palette from the Jylhis Design System themes/jylhis.json
-# so that any visible TTY (Ctrl+Alt+F2..F6) uses the brand palette.
-#
-# We use `palette.tty16` rather than `palette.ansi16`: slots 0/7/15 are taken
-# from the semantic palette (bg / text / text-heading) instead of the raw
-# `tokens.ansi` array, because the kernel virtual console uses slot 0 as the
-# actual screen background — the `ansi.black`/`ansi.white`/`ansi.bright-white`
-# slots are tuned for terminal apps that paint their own light bg, and would
-# leave the light variant TTY unreadable.
-#
-# `earlySetup = true` applies the palette before any login prompt renders.
+# Uses `palette.tty16` not `palette.ansi16`: the kernel virtual console uses slot
+# 0 as the actual screen background, so slots 0/7/15 come from the semantic
+# palette (bg/text/text-heading). The raw ansi black/white slots are tuned for
+# terminal apps that paint their own light bg and would leave the light-variant
+# TTY unreadable. earlySetup applies the palette before any login prompt renders.
 {
   config,
   pkgs,

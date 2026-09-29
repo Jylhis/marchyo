@@ -153,7 +153,7 @@ in
       '';
     };
 
-    # UI surfaces — on by default when dictation is enabled, each opt-out.
+    # UI surfaces, on by default when dictation is enabled, each an opt-out.
     indicator = mkOption {
       type = types.bool;
       default = true;

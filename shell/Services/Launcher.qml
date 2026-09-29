@@ -3,12 +3,9 @@ import QtQuick
 import Quickshell
 import qs.Commons
 
-// Shared launcher state: which mode is open ("" = closed). The Hyprland
-// keybinds reach this through the shell IPC target (toggleLauncher /
-// openLauncher / closeLauncher in shell.qml); LauncherWindow binds its
-// visibility and the mode views bind their `visible` to `mode`. A
-// singleton, so seat-global by construction — the same shape PanelManager
-// has for the panels.
+// Shared launcher state: which mode is open ("" = closed). Reached from the
+// Hyprland keybinds via the shell IPC target; LauncherWindow and the mode views
+// bind to `mode`. A singleton, so seat-global like PanelManager.
 QtObject {
     id: root
 
@@ -29,14 +26,10 @@ QtObject {
         root.mode = "";
     }
 
-    // Copy `text` to the clipboard and type it at the cursor, vicinae-style.
-    //
-    // wtype delivers to whichever surface holds keyboard focus — which is
-    // the launcher while it is open — so callers close FIRST; the sleep
-    // gives the compositor a beat to restore focus to the previous window
-    // (see docs/gotchas.md). The text travels as $1 through argv, never
-    // interpolated into the script, so clipboard content cannot be
-    // interpreted by sh.
+    // Copy `text` and type it at the cursor. wtype targets the focused surface,
+    // so callers close FIRST and the sleep lets the compositor restore focus to
+    // the previous window (docs/gotchas.md). Text travels as $1 through argv, never
+    // interpolated into the script, so clipboard content is not interpreted by sh.
     function pasteText(text) {
         Quickshell.clipboardText = text;
         Quickshell.execDetached(["sh", "-c", "sleep 0.25; exec \"$0\" \"$1\"", Config.wtype, text]);

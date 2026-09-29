@@ -2,12 +2,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Notification do-not-disturb indicator + unread badge. DND is in-shell state
-// (the shell owns notifications, mako is retired), so this binds straight to the
-// shared NotificationState singleton and toggles it in-process. No makoctl
-// probe, no marchyo subprocess, no poll timer. Left-click toggles DND;
-// right-click opens the notification centre (history). A trailing count shows
-// unread history entries.
+// Notification do-not-disturb indicator + unread badge. The shell owns
+// notifications in-process, so this binds straight to the shared
+// NotificationState singleton: no external probe, subprocess, or poll timer.
 BarItem {
     id: root
 

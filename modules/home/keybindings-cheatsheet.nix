@@ -12,11 +12,9 @@ let
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
-  # The cheatsheet logic (hyprctl binds -j → modmask decode → fzf overlay)
-  # lives in the marchyo CLI (`marchyo keybindings`, absorbed from the old
-  # marchyo-keybindings script). Reading the binds at runtime means the
-  # sheet always reflects the actual running config, including any binds
-  # added by downstream consumers. fzf is the CLI's presentation dependency.
+  # Cheatsheet logic lives in the marchyo CLI (`marchyo keybindings`); reading
+  # binds at runtime keeps the sheet in sync with the actual running config,
+  # including downstream-added binds. fzf is the CLI's presentation dependency.
 in
 {
   options.marchyo.keybindingsHelp = {

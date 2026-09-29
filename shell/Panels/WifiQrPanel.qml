@@ -4,11 +4,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Wi-Fi QR share overlay, opened from the Network panel's "Share (QR)" button.
-// Regenerates the QR each time it opens (the network may have changed). The QR
-// is a UTF8 half-block text grid from qrencode; rendering it needs a monospace
-// font (Style.fontFamily is BlexMono) and a tight line height so the half-block
-// rows stack into a square, scannable code.
+// Wi-Fi QR share overlay. Regenerates the QR each time it opens (the network may
+// have changed). qrencode emits a UTF8 half-block text grid, so rendering needs a
+// monospace font and a tight line height to stack into a square, scannable code.
 Panel {
     id: root
     panelId: "wifiqr"
@@ -44,8 +42,8 @@ Panel {
             color: Color.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
-            // Half-block rows are two cells tall; collapse the line box so the
-            // code renders as a square rather than a tall rectangle.
+            // Half-block rows are two cells tall; collapse the line box so the code is
+            // square, not a tall rectangle.
             lineHeight: 0.5
             lineHeightMode: Text.ProportionalHeight
             textFormat: Text.PlainText

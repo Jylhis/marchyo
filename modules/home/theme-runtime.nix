@@ -1,37 +1,18 @@
-# Runtime theme switching — build-time asset layer.
+# Runtime theme switching, build-time asset layer.
 #
 # The declarative build-time variant (marchyo.theme.variant) stays the source
-# of truth: this module additionally materializes every theme listed in
+# of truth; this module additionally materializes every theme in
 # marchyo.theme.themes as runtime-swappable asset dirs plus a manifest the
-# `marchyo theme` CLI reads (`theme list/set/next` — the switching logic
-# lives in packages/marchyo-cli, which absorbed the old
-# marchyo-theme-toggle script). The switch is an ephemeral overlay: the
-# next home-manager/NixOS activation resets every surface (and the
-# ~/.config/marchyo/current-theme pointer) back to the declarative default.
+# `marchyo theme` CLI reads. The switch is an ephemeral overlay: the next
+# activation resets every surface (and ~/.config/marchyo/current-theme) back
+# to the declarative default. Qt (via Stylix), bat, fzf, starship, hyprlock,
+# console and plymouth stay on the build-time default until rebuild.
 #
-# Live-swapped surfaces: wallpaper (awww), mako, waybar, Hyprland
-# border/background colors, ghostty (live for the Jylhis pair — the
-# `?…/current-theme/ghostty.conf` include below is optional and, per
-# ghostty's config-file semantics, processed after the main file so its
-# `theme` wins; it names both Jylhis themes as a ghostty light/dark pair,
-# which ghostty resolves from the system color-scheme and restyles open
-# windows with when `marchyo theme set` flips the dconf key. Scheme themes
-# pin inline colors instead, so those still reach new windows / config
-# reload only), GTK CSS + the dconf color-scheme (newly launched GTK
-# apps; libadwaita apps restyle live), and the shell bar (reads
-# colors.json). Everything else (Qt via Stylix, bat, fzf, starship,
-# hyprlock, console, plymouth) stays on the build-time default until rebuild.
-#
-# The dual-variant mako config and waybar CSS are derived from the *resolved*
-# Home Manager config by translating the build variant's semantic-token hexes
-# to the other variant's (both palettes come from
-# modules/generic/jylhis-palette.nix, i.e. the same theme file). This avoids
-# duplicating the mako/waybar settings here — future edits to those modules
-# flow into both variants automatically. The mapping is well-defined: within
-# the semantic tokens (palette/status/syntax) the only shared hex is
-# accent == cursor, and those two agree in both variants. The ANSI hexes are
-# deliberately excluded from the mapping (several collide with semantic
-# tokens while mapping differently, and they don't appear in these surfaces).
+# The dual-variant mako/waybar/gtk sources are derived from the resolved Home
+# Manager config by translating the build variant's semantic-token hexes to
+# the other variant's, so edits to those modules flow into both variants
+# automatically. ANSI hexes are excluded (several collide with semantic tokens
+# but map differently, and don't appear in these surfaces).
 {
   config,
   lib,
@@ -58,10 +39,10 @@ let
   hexesFor = v: map (n: palettes.${v}.hex.${n}) tokenNames;
   swapToOther = builtins.replaceStrings (hexesFor buildVariant) (hexesFor otherVariant);
 
-  # The generated gtk css expresses shade_color as rgba(<text token>, 0.08)
-  # — a decimal-literal form the hex swap above cannot translate. It is the
-  # only such literal in any swapped surface (audited: mako/waybar carry
-  # none), so translate it alongside.
+  # The generated gtk css expresses shade_color as rgba(<text token>, 0.08), a
+  # decimal-literal form the hex swap above cannot translate. It is the only
+  # such literal in any swapped surface (mako/waybar carry none), so translate
+  # it alongside.
   hexDigit =
     c:
     lib.lists.findFirstIndex (x: x == lib.toLower c) (throw "invalid hex digit '${c}'") (
@@ -128,12 +109,10 @@ let
 
   ghosttyThemeFor = v: if v == "dark" then "jylhis-dark" else "jylhis-light";
 
-  # Ghostty theme pair. The jylhis include names BOTH Jylhis themes as a
-  # ghostty light/dark pair (`theme = dark:…,light:…`): ghostty subscribes
-  # to the system color-scheme via the xdg-desktop-portal and restyles open
-  # windows live when the CLI flips the dconf key. Both themes are always
-  # installed (modules/home/ghostty.nix), and the main config keeps the
-  # build-time theme as the fallback when this optional include is absent.
+  # Ghostty theme pair (`theme = dark:…,light:…`): ghostty subscribes to the
+  # system color-scheme via the xdg-desktop-portal and restyles open windows
+  # live when the CLI flips the dconf key. Both themes are always installed
+  # (modules/home/ghostty.nix).
   ghosttyThemePair = "dark:${ghosttyThemeFor "dark"},light:${ghosttyThemeFor "light"}";
 
   themeDirFor =
@@ -169,13 +148,10 @@ let
     light = themeDirFor "light";
   };
 
-  # N-theme layer (marchyo.theme.themes)
-  # Beyond the always-built Jylhis pair, any scheme from the tinted-schemes
-  # catalog can be
-  # listed for runtime switching. Its assets are derived by translating the
-  # build variant's resolved surfaces from semantic-token hexes to the
-  # scheme's base16 slots via the same token→slot correspondence
-  # jylhis-palette.nix uses to export the Jylhis palette to Stylix.
+  # Beyond the always-built Jylhis pair, any tinted-schemes catalog scheme can
+  # be listed for runtime switching. Its assets translate the build variant's
+  # resolved surfaces from semantic-token hexes to the scheme's base16 slots,
+  # via the same token/slot correspondence jylhis-palette.nix uses for Stylix.
   loadScheme = import ../generic/base16-scheme.nix {
     schemes = pkgs.tinted-schemes-src;
     inherit lib;
@@ -322,9 +298,8 @@ let
     ];
   # An entry is either a name (the Jylhis pair, or a tinted-schemes base16
   # name) or an inline base16 theme `{ name; variant; slots; wallpaper?; }`.
-  # Inline entries share the exact shape mkSchemeThemeDir consumes (loadScheme's
-  # result plus an optional wallpaper), so they need no extra machinery — this
-  # is the catalog contract.
+  # Inline entries share the exact shape mkSchemeThemeDir consumes, so they
+  # need no extra machinery.
   resolveTheme =
     entry:
     if lib.isString entry then
@@ -365,26 +340,19 @@ let
 in
 {
   config = lib.mkIf (desktopEnabled && themeEnabled) {
-    # matugen backs `marchyo theme generate <image>` (wallpaper-derived
-    # theming): the CLI shells out to it to turn an image into a base16
-    # palette, then materializes a runtime theme dir from the result.
+    # matugen backs `marchyo theme generate <image>`: turns an image into a
+    # base16 palette, then materializes a runtime theme dir from the result.
     home.packages = [ pkgs.matugen ];
 
-    # Declarative pointer to the active variant's assets. Managed by Home
-    # Manager, so every activation resets it to the build-time default —
-    # marchyo-theme-toggle repoints it (ln -sfn) at runtime.
+    # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
     xdg.configFile."marchyo/current-theme".source = themeDirs.${buildVariant};
 
-    # Manifest of every switchable theme (marchyo.theme.themes) for the CLI:
-    # `marchyo theme list/set/next` read names + polarity + asset dirs here.
-    # Listing the dirs also roots them in the profile closure, so switching
-    # stays an instant symlink swap.
+    # Manifest for the CLI (`marchyo theme list/set/next`). Listing the dirs
+    # also roots them in the profile closure, so switching stays a symlink swap.
     xdg.dataFile."marchyo/themes/manifest.json".text = manifest;
 
-    # Optional (`?`) include read through the pointer. Ghostty processes
-    # config-file includes after the main file, so the included `theme`
-    # overrides the build-time one from modules/home/ghostty.nix; both
-    # variants' theme files are always installed by that module.
+    # Optional (`?`) include: ghostty processes config-file includes after the
+    # main file, so this `theme` overrides the build-time one (ghostty.nix).
     programs.ghostty.settings.config-file = "?${config.xdg.configHome}/marchyo/current-theme/ghostty.conf";
   };
 }

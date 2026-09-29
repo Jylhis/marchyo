@@ -6,10 +6,8 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from AudioWidget. Default-sink volume/mute plus an output-device
-// picker, all on native Pipewire bindings (the same Services/Audio the bar
-// widget and OSD use). "wiremix" opens the full mixer TUI for anything this
-// doesn't cover.
+// Default-sink volume/mute, an output-device picker, and per-app streams on the
+// shared Services/Audio Pipewire bindings. wiremix opens the full mixer TUI.
 Panel {
     id: root
     panelId: "audio"
@@ -18,7 +16,6 @@ Panel {
     readonly property var sink: Audio.sink
     readonly property var audio: Audio.sinkAudio
 
-    // Real output sinks, excluding per-application stream nodes.
     readonly property var sinks: {
         const out = [];
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
@@ -95,8 +92,6 @@ Panel {
                 onClicked: Pipewire.preferredDefaultAudioSink = modelData
             }
         },
-
-        // Per-application playback streams: name, live meter, volume, mute.
         Text {
             Layout.fillWidth: true
             Layout.topMargin: Style.spacing
@@ -116,8 +111,6 @@ Panel {
                 Layout.fillWidth: true
                 spacing: 2
 
-                // Live per-stream peak meter (v0.3.0 PwNodePeakMonitor); only
-                // sampled while the panel is open.
                 PwNodePeakMonitor {
                     id: mon
                     node: appRow.modelData
@@ -180,8 +173,6 @@ Panel {
                 }
             }
         },
-
-        // Microphone-in-use privacy indicator: which applications are capturing.
         Text {
             Layout.fillWidth: true
             Layout.topMargin: Style.spacing

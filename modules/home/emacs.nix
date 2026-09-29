@@ -203,11 +203,8 @@ let
       emacsPkg
     ];
     text = ''
-      # Ask the Emacs daemon whether the named frame already exists, and only
-      # spawn one if not. Querying the frame list directly is more reliable
-      # than parsing `hyprctl clients` because the user can change the
-      # scratchpad buffer (and therefore the window title) without Emacs
-      # renaming the frame.
+      # Query the daemon's frame list rather than `hyprctl clients`: the user can
+      # change the scratchpad buffer (and window title) without Emacs renaming the frame.
       have_frame=$(emacsclient -e \
         "(if (member \"emacs-scratchpad\" (mapcar (lambda (f) (frame-parameter f 'name)) (frame-list))) t nil)" \
         2>/dev/null || echo nil)
@@ -287,11 +284,9 @@ let
       ))
     ]
     ++ lib.optionals orgProtocolEnabled [
-      # T, not C: SUPER+SHIFT+C is the colour picker in modules/home/hyprland.nix,
-      # and both binds land in the same Hyprland bind list (these arrive via
-      # `bind = lib.mkAfter hyprBinds`), so enabling marchyo.emacs emitted two
-      # binds for one chord. The taken-key ledger lives in
-      # modules/nixos/options/webapps.nix.
+      # T, not C: SUPER+SHIFT+C is the colour picker (modules/home/hyprland.nix) and
+      # both land in the same bind list, so C would double-bind the chord.
+      # Taken-key ledger: modules/nixos/options/webapps.nix.
       (hlua.bindd "SUPER + SHIFT + T" "Org capture (task)" (
         hlua.exec "emacsclient -c -n -e '(org-capture)'"
       ))
@@ -302,9 +297,8 @@ in
     programs.emacs = {
       enable = true;
       package = emacsPkg;
-      # Ship the integration as a real Emacs package so the autoload cookies
-      # on `marchyo/windmove-or-hypr` & co. are registered at daemon
-      # startup — no manual `(require)` from the user's init.el needed.
+      # A real Emacs package so its autoload cookies register at daemon startup,
+      # with no manual `(require)` from the user's init.el.
       extraPackages =
         epkgs:
         let

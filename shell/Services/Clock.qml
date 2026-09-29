@@ -3,12 +3,8 @@ import QtQuick
 import Quickshell
 
 // Seat-global clock: one SystemClock and one format toggle for the whole seat.
-//
-// Bar widgets are instantiated once per monitor (shell.qml's Variants loop), so
-// when Bar/ClockWidget owned these itself every output got its own clock object
-// and its own `showAlt`, and clicking the clock on one monitor left the others
-// showing the old format. Same rule the contracts test enforces for
-// Process/Timer/Connections in Bar/: shared state belongs in a singleton.
+// A singleton so toggling the format on one monitor's bar updates every output
+// (bar widgets are instantiated once per monitor).
 QtObject {
     id: root
 
@@ -19,7 +15,7 @@ QtObject {
     readonly property date date: root.clock.date
 
     // false = compact ("Sat 22 Aug · 14:30"), true = long form with ISO week
-    // ("22 August W34 2025"). Mirrors waybar's clock format / format-alt pair.
+    // ("22 August W34 2025").
     property bool showAlt: false
 
     function toggleFormat() {
@@ -38,7 +34,6 @@ QtObject {
         return 1 + Math.round((t - firstThu) / 604800000);
     }
 
-    // The bar label, computed once for every output.
     // Qt.formatDateTime is a valid QML global; qmllint's Qt type model omits it.
     // qmllint disable missing-property
     readonly property string barText: root.showAlt ? (Qt.formatDateTime(root.date, "d MMMM") + " W" + root.isoWeek(root.date) + " " + Qt.formatDateTime(root.date, "yyyy")) : Qt.formatDateTime(root.date, "ddd d MMM · HH:mm")

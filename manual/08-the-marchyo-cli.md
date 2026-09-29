@@ -46,13 +46,16 @@ marchyo bg next              # cycle wallpapers
 
 `marchyo toggle <name>` flips a desktop feature on or off, live. The switches include
 `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
-`screensaver`, `notifications`, and `suspend`. Add `--status` to check one, or
-`--apply` to make it permanent:
+`screensaver`, `notifications`, `suspend`, and `caffeine` (keep the machine awake).
+Add `--status` to check one, or `--apply` to make it permanent:
 
 ```bash
 marchyo toggle nightlight            # on/off now
 marchyo toggle gaps off --apply      # and keep it that way
 ```
+
+One more switch, `hybrid-gpu`, changes hardware configuration and has no live mode, so
+it only works with `--apply` (for example `marchyo toggle hybrid-gpu on --apply`).
 
 ### Capture
 
@@ -70,7 +73,7 @@ marchyo menu [power]         # the central system menu, or the power menu
 marchyo keybindings          # searchable cheat sheet
 marchyo launch <app>         # launch an app detached from the terminal
 marchyo lock                 # also: logout, suspend, hibernate, reboot, shutdown
-marchyo powerprofile set <p> # eco / balanced / performance
+marchyo powerprofile set <p> # power-saver / balanced / performance
 ```
 
 ### Utilities

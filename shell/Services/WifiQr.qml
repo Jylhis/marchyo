@@ -4,14 +4,13 @@ import Quickshell.Io
 import qs.Commons
 
 // On-demand Wi-Fi QR for the current network. generate() runs a short chain:
-// find the active SSID, read its PSK (nmcli -s, authorized for the active
-// session by NetworkManager's default polkit), then render a scannable QR as a
-// UTF8 half-block text grid with qrencode — no temp files, no image plumbing.
-// Falls back to an open-network (no-password) QR when the PSK is unavailable.
+// find the active SSID, read its PSK (nmcli -s, authorized for the session by
+// NetworkManager's default polkit), then render a QR as a UTF8 half-block text
+// grid with qrencode (no temp files, no image plumbing). Falls back to an
+// open-network QR when the PSK is unavailable.
 //
-// Ported from omarchy's wifiqr panel. Not a seat-global status like the other
-// singletons; it holds the last generated QR so the panel can bind to it, and
-// only runs when the panel asks it to.
+// Not a seat-global status like the other singletons; it holds the last
+// generated QR for the panel to bind to, and only runs when the panel asks.
 QtObject {
     id: root
 
@@ -21,7 +20,7 @@ QtObject {
 
     property string _psk: ""
 
-    // WIFI: URI escaping — backslash-escape \ ; , : and " (MECARD grammar).
+    // WIFI: URI escaping: backslash-escape \ ; , : and " (MECARD grammar).
     function esc(s): string {
         return String(s || "").replace(/([\\;,:"])/g, "\\$1");
     }
@@ -79,7 +78,6 @@ QtObject {
         onExited: root.buildAndRender()
     }
 
-    // 3) Render the QR to a UTF8 text grid.
     readonly property var qrProc: Process {
         id: qrProc
         command: []

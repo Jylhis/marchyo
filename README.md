@@ -117,7 +117,7 @@ Contributions are highly welcome! To ensure a smooth process, please make sure t
 
 ## License
 
-This project is not yet licensed. Please choose a license that suits your needs. The MIT license is a good default choice for open-source projects.
+Released under the [MIT License](LICENSE).
 
 ## Acknowledgments
 

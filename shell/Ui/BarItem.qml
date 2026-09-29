@@ -2,9 +2,8 @@ import QtQuick
 import qs.Commons
 import qs.Services
 
-// A single bar segment: a horizontally-padded, vertically-centered text label
-// with optional hover feedback, click/scroll signals, and a hover tooltip
-// (rendered by the shared Ui/TooltipWindow via the Services/Tooltip singleton).
+// A single bar segment: text label with optional hover feedback, click/scroll
+// signals, and a hover tooltip (via the shared Services/Tooltip singleton).
 // Every simple widget is a BarItem with `text` bound to a service and, if
 // interactive, `interactive: true` plus the relevant signal handler.
 Rectangle {
@@ -12,10 +11,9 @@ Rectangle {
 
     property alias text: label.text
     property color textColor: Color.text
-    // Enables the hover highlight and pointer cursor. Set on clickable/scrollable
-    // widgets; leave false for passive readouts (clock, session label).
+    // Hover highlight + pointer cursor; leave false for passive readouts.
     property bool interactive: false
-    // Tooltip text shown after a short hover; empty = no tooltip.
+    // Empty = no tooltip.
     property string tooltipText: ""
 
     signal clicked
@@ -56,7 +54,6 @@ Rectangle {
         }
     }
 
-    // Waybar shows tooltips on hover with a small delay; 350ms feels right.
     Timer {
         id: hoverDelay
         interval: 350

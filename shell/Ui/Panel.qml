@@ -5,16 +5,14 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Services
 
-// Base for a summonable panel: a full-screen, transparent layer-shell overlay
-// that catches the next outside click to dismiss, with a titled card anchored
-// under the top bar at the right. Panel authors set `panelId` + `title` and pass
-// the card's stacked contents as `body: [ ... ]`. `body` is a *named* alias, not
-// the default property, so this base's own chrome (dismiss area, card) stays the
-// real default children — a default alias would route them into the nested body
-// container and cycle. Non-visual helpers a panel declares (service trackers,
-// polls) likewise stay ordinary children. Visibility is driven entirely by the
-// shared PanelManager (mutual exclusion): a bar widget's click calls
-// PanelManager.toggle(panelId).
+// Base for a summonable panel: a full-screen transparent layer-shell overlay
+// that catches the next outside click to dismiss, with a titled card under the
+// top bar at the right. Authors set `panelId` + `title` and pass the card's
+// stacked contents as `body: [ ... ]`. `body` is a *named* alias, not the
+// default property, so this base's own chrome (dismiss area, card) stays the
+// real default children; a default alias would route them into the nested body
+// container and cycle. Visibility is driven by the shared PanelManager (mutual
+// exclusion): a bar widget's click calls PanelManager.toggle(panelId).
 PanelWindow {
     id: root
 
@@ -23,9 +21,8 @@ PanelWindow {
     property alias body: bodyColumn.data
 
     visible: PanelManager.openId === root.panelId
-    // Open on the output whose bar was clicked, not on whichever screen
-    // happens to be Quickshell's default. Falls back to the default screen for
-    // an IPC summon, which carries no bar item. Same pattern as
+    // Open on the output whose bar was clicked, not Quickshell's default screen.
+    // Falls back to the default for an IPC summon (no bar item). Same pattern as
     // Ui/TooltipWindow.
     screen: Screens.byName(PanelManager.screenName)
     color: "transparent"

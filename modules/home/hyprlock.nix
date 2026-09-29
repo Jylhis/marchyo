@@ -48,10 +48,8 @@ in
           enabled = true;
         };
 
-        # Gate fingerprint auth on the host actually running fprintd. hyprlock's
-        # fprintd D-Bus backend aborts the process when the service is missing,
-        # so hardcoding this on breaks the lock screen on every desktop without
-        # a fingerprint reader (marchyo never enables services.fprintd itself).
+        # Gate on the host running fprintd: hyprlock's fprintd backend aborts when
+        # the service is missing, breaking the lock screen on readerless desktops.
         auth = {
           "fingerprint:enabled" = osConfig.services.fprintd.enable or false;
         };

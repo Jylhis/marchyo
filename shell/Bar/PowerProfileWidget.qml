@@ -2,8 +2,7 @@ import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
 
-// Power profile indicator. Left-click cycles saver → balanced → performance,
-// mirroring waybar's power-profiles-daemon widget (native cycle on click).
+// Power profile indicator, mirroring waybar's power-profiles-daemon widget.
 BarItem {
     interactive: true
     text: {

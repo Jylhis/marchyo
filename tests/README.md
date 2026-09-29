@@ -21,16 +21,11 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames
 
 ### Module Tests
 
-Verify NixOS modules evaluate without errors:
-
-| File | Tests |
-|------|-------|
-| `eval/feature-flags.nix` | `eval-minimal`, `eval-desktop`, `eval-development`, `eval-all-features` |
-| `eval/themes.nix` | `eval-themes`, `eval-themes-light`, `eval-themes-sheet` |
-| `eval/keyboard.nix` | `eval-keyboard`, `eval-keyboard-no-compose` |
-| `eval/graphics.nix` | `eval-graphics-{intel,amd,nvidia,prime-offload,prime-sync,legacy}` |
-| `eval/defaults.nix` | `eval-defaults-{browser,editor,null,all,tui,tui-alt,aerc-styleset,emacs-defaults,emacs-mixed}` |
-| `eval/hyprland.nix` | `check-home-hyprland-config` (verifies generated `hyprland.conf` parses) |
+`eval/` holds one file per feature (`feature-flags.nix`, `themes.nix`,
+`keyboard.nix`, `graphics.nix`, `defaults.nix`, `hyprland.nix`, and many more),
+each returning an attrset of named tests that assert a NixOS config evaluates
+without errors for a given feature combination. All are auto-discovered. Use the
+`nix eval … builtins.attrNames` command above to list the current test names.
 
 ### Library Tests
 

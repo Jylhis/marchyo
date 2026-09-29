@@ -24,8 +24,7 @@ let
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # The unified Quickshell shell (modules/home/marchyo-shell.nix) renders its own
-  # bar, so waybar stands down when it is enabled — the two bars are mutually
-  # exclusive. mako/swayosd stay until the shell reaches their parity (Phases 2–3).
+  # bar, so waybar stands down when it is enabled; the two bars are mutually exclusive.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   dictation = (osConfig.marchyo or { }).dictation or { };
@@ -88,7 +87,6 @@ let
   upstreamFile = if isDark then "style.css" else "style-sheet.css";
   upstreamCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/_reference/waybar/${upstreamFile}";
 
-  # marchyo additions — selectors and tweaks not in upstream design
   marchyoCss = ''
 
     /* marchyo additions — selectors not in upstream Jylhis design */

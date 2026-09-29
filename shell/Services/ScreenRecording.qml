@@ -3,13 +3,9 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared screen-recording state: ONE 5s `pgrep` probe for the whole seat.
-//
-// shell.qml builds the bar once per screen (`Variants { model: Quickshell
-// .screens }`), so a Timer + Process inside the widget would poll once per
-// monitor — a three-monitor host would fork three pgreps every five seconds to
-// answer one seat-global question. Same reasoning as Caffeine: the widget is a
-// pure view and the probe/toggle live here.
+// Shared screen-recording state: ONE 5s pgrep probe for the whole seat. A
+// singleton (like Caffeine) so a Timer + Process in the widget does not poll
+// once per monitor for one seat-global answer.
 QtObject {
     id: root
 
@@ -19,18 +15,14 @@ QtObject {
         toggleProc.running = true;
     }
 
-    // One-shot probe. The kernel truncates comm to 15 chars
-    // ("gpu-screen-reco"), so `pgrep -x` on the full name never matches — the
-    // marchyo CLI's `capture record` matches the full command line the same
-    // way (commands/capture.ts).
+    // The kernel truncates comm to 15 chars ("gpu-screen-reco"), so `pgrep -x`
+    // on the full name never matches; match the full command line with -f.
     readonly property var probe: Process {
         id: probe
         command: [Config.pgrep, "-f", "gpu-screen-recorder"]
         onExited: code => root.recording = (code === 0)
     }
 
-    // `marchyo capture record` toggles: if a recording is running it stops and
-    // finalizes the mp4, otherwise it slurp-selects a region and starts one.
     // Re-probe on exit rather than guessing (a cancelled selection leaves the
     // state unchanged).
     readonly property var toggleProc: Process {

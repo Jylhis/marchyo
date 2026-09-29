@@ -1,8 +1,6 @@
-# Per-user spotify-player (TUI Spotify client).
-#
-# Enabled via Home-Manager's programs.spotify-player when it is the selected
-# marchyo.defaults.musicPlayer and desktop is enabled. The Hyprland Super+M
-# keybind (modules/home/hyprland.nix) launches it in a floating terminal.
+# Per-user spotify-player (TUI Spotify client). Active as the selected
+# marchyo.defaults.musicPlayer; the Super+M bind (hyprland.nix) launches it
+# in a floating terminal.
 {
   osConfig ? { },
   lib,

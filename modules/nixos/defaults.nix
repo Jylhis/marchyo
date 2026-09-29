@@ -1,4 +1,3 @@
-# Installs configured default apps and sets BROWSER/VISUAL/EDITOR env vars
 {
   config,
   lib,
@@ -30,7 +29,6 @@ let
     zed = pkgs.zed-editor;
   };
 
-  # $VISUAL command for graphical editors.
   editorVisualCommands = {
     emacs = "emacsclient -c -a emacs";
     vscode = "code";
@@ -45,7 +43,6 @@ let
     inherit (pkgs) nano;
   };
 
-  # $EDITOR command for terminal editors.
   terminalEditorCommands = {
     emacs = "emacsclient -t -a 'emacs -nw'";
     neovim = "nvim";

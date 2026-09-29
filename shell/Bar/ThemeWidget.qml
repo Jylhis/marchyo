@@ -2,9 +2,9 @@ import qs.Ui
 import qs.Commons
 
 // Runtime theme indicator + cycler. Commons/Theme owns the one colors.json
-// read behind the current-theme pointer and the `marchyo theme next`
-// toggle; the widget is a pure view (moon = dark active, sun = light).
-// Hidden while no reading exists (no marchyo desktop / theme manifest).
+// read behind the current-theme pointer and the `marchyo theme next` toggle;
+// the widget is a pure view. Hidden while no reading exists (no marchyo desktop
+// or theme manifest).
 BarItem {
     id: root
 

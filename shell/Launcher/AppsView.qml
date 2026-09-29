@@ -4,18 +4,11 @@ import qs.Commons
 import qs.Services
 import "../Commons/Match.js" as Match
 
-// App search over Quickshell's DesktopEntries model (the same source of
-// truth the app grid uses; marchyo's xdg.desktopEntries webapps flow in
-// automatically). Pure view: the entry list is seat-global, scoring is the
-// Node-tested Match.js, launching is DesktopEntry.execute().
-//
-// A query is matched against several desktop fields (name, generic name,
-// keywords, comment, exec) with per-field penalties so a name hit always
-// outranks a comment hit — the QsFlow / vicinae behaviour. Each desktop
-// action (e.g. Firefox "New Private Window") is indexed as its own row while
-// a query is present. Matched characters in the app name are highlighted, and
-// `suggestion` exposes the top prefix match for the ghost-text autocomplete
-// in LauncherWindow.
+// App search over Quickshell's DesktopEntries (seat-global; webapps flow in
+// via xdg.desktopEntries). Scoring is the Node-tested Match.js: several
+// desktop fields matched with per-field penalties so a name hit outranks a
+// comment hit (vicinae behaviour). Desktop actions are indexed as their own
+// rows while a query is present; `suggestion` feeds LauncherWindow ghost text.
 Item {
     id: root
 
@@ -34,8 +27,6 @@ Item {
     readonly property int execPenalty: 250
     readonly property int actionAppPenalty: 100
 
-    // Best score across an entry's fields, plus the name-match positions (for
-    // highlighting) when the name itself matched. Returns null on no match.
     function scoreEntry(entry, q) {
         const nameMatch = Match.match(entry.name, q);
         let best = nameMatch ? nameMatch.score : -1;
@@ -71,9 +62,6 @@ Item {
         };
     }
 
-    // Recomputed on query or entry-set change. noDisplay entries (hidden by
-    // their own file) never show; an empty query lists names A→Z; a non-empty
-    // query also folds in matching desktop actions.
     readonly property var matches: {
         const q = root.query.trim();
         const out = [];
@@ -115,9 +103,8 @@ Item {
         return out.slice(0, root.maxResults);
     }
 
-    // The top result's full name when the current query is a prefix of it —
-    // the completion LauncherWindow renders as dimmed ghost text and accepts
-    // on Tab / Right. Empty for action rows and non-prefix matches.
+    // Top result's full name when the query is a prefix of it: the ghost-text
+    // completion LauncherWindow accepts on Tab / Right. Empty otherwise.
     readonly property string suggestion: {
         const q = root.query.trim();
         if (q.length === 0 || root.matches.length === 0)
@@ -170,8 +157,6 @@ Item {
                     visible: source.toString().length > 0
                 }
 
-                // App name with the matched characters coloured, followed by a
-                // muted action label for action rows.
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     textFormat: Text.StyledText

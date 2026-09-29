@@ -19,8 +19,8 @@ in
   };
 
   environment.systemPackages = with pkgs; [
-    sysz # systemctl tui
-    lazyjournal # journald and logs
+    sysz
+    lazyjournal
     # xterm-ghostty terminfo so inbound SSH sessions from Ghostty clients get
     # working TUI applications (colors, keys) instead of a missing-terminfo TERM.
     ghostty.terminfo
@@ -31,7 +31,6 @@ in
   # choice is declared rather than inherited, and overridable per consumer.
   users.defaultUserShell = lib.mkDefault pkgs.bashInteractive;
 
-  # Backup existing files with this extension when home-manager overwrites them
   home-manager.backupFileExtension = "backup";
 
   home-manager.users = forMarchyoUsers (

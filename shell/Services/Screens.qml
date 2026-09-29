@@ -4,13 +4,10 @@ import QtQuick.Window
 import Quickshell
 import Quickshell.Hyprland
 
-// Screen lookup for the seat-global windows (panels, OSD, toast stack).
-//
-// Those surfaces are instantiated once, outside shell.qml's per-screen Variants
-// loop, so without an explicit `screen:` binding they all land on Quickshell's
-// default output — a panel summoned from the second monitor's bar opened on the
-// first, and its dismiss area with it. Ui/TooltipWindow already does this
-// resolution inline; this singleton is the shared version for the rest.
+// Screen lookup for the seat-global windows (panels, OSD, toast stack). Those
+// surfaces are instantiated once, outside shell.qml's per-screen Variants loop,
+// so without an explicit `screen:` binding they all land on the default output.
+// This singleton resolves the right output for them.
 QtObject {
     id: root
 

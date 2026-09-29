@@ -1,4 +1,3 @@
-# Feature-gated: marchyo.autoTimezone.enable.
 { lib, config, ... }:
 let
   cfg = config.marchyo;
@@ -13,7 +12,7 @@ in
     services.geoclue2.enable = lib.mkDefault true;
 
     # Setting a non-default marchyo.timezone alongside autoTimezone is
-    # contradictory — the daemon wins. Surface that rather than silently ignoring.
+    # contradictory (the daemon wins), so surface it rather than silently ignore.
     warnings = lib.optional (cfg.timezone != "Europe/Zurich") ''
       marchyo.autoTimezone.enable is on, so marchyo.timezone ("${cfg.timezone}")
       is ignored — the timezone is set automatically from your location.

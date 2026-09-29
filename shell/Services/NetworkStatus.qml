@@ -5,14 +5,12 @@ import Quickshell.Networking
 import qs.Commons
 import "../Commons/Format.js" as Format
 
-// Shared network status: the active device from the native Networking binding
-// plus the bits it does not expose — the Wi-Fi SSID/signal and the IPv4 address
-// — from one nmcli poll shared by the bar widget, the network panel, and the
-// bar tooltips. Previously widget and panel each ran their own poll.
+// Shared network status: the active device from the native Networking binding,
+// plus the bits it does not expose (Wi-Fi SSID/signal and the IPv4 address) from
+// one nmcli poll shared by the bar widget, the network panel, and the tooltips.
 QtObject {
     id: root
 
-    // The first connected device from the native Networking service.
     readonly property var activeDevice: {
         const devs = Networking.devices ? Networking.devices.values : [];
         for (let i = 0; i < devs.length; i++)
@@ -81,8 +79,8 @@ QtObject {
         }
     }
 
-    // One poll drives both probes (cheap, always-on like the other bar bindings,
-    // so the tooltip's address is always current even while the panel is closed).
+    // One always-on poll drives both probes so the tooltip's address stays
+    // current even while the panel is closed.
     readonly property var pollTimer: Timer {
         interval: 5000
         running: true

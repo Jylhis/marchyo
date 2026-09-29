@@ -22,8 +22,8 @@ in
         # BBR needs its module loaded before the sysctl takes effect.
         boot.kernelModules = [ "tcp_bbr" ];
         boot.kernel.sysctl = {
-          "net.core.rmem_max" = lib.mkDefault 20971520; # 20 MiB max receive buffer
-          "net.core.wmem_max" = lib.mkDefault 20971520; # 20 MiB max send buffer
+          "net.core.rmem_max" = lib.mkDefault 20971520; # 20 MiB
+          "net.core.wmem_max" = lib.mkDefault 20971520; # 20 MiB
           "net.core.netdev_max_backlog" = lib.mkDefault 5000;
           "net.core.somaxconn" = lib.mkDefault 4096;
           "net.ipv4.tcp_fastopen" = lib.mkDefault 3; # client + server

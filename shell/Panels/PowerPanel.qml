@@ -6,12 +6,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from BatteryWidget. Battery status from UPower's composite display
-// device (shared with the bar widget via Services/Power) and a power-profile
-// selector on PowerProfiles — the same services the battery and power-profile
-// bar widgets read. "power menu" reaches marchyo's session actions (or the
-// launcher when menus are disabled), the action the battery widget used to
-// trigger directly.
+// Battery status from UPower's composite display device and a power-profile selector
+// on PowerProfiles, both from the shared Services/Power. power menu reaches marchyo's
+// session actions, or the launcher when menus are disabled.
 Panel {
     id: root
     panelId: "power"
@@ -42,7 +39,6 @@ Panel {
             const t = fmtTime(Power.pctLeft);
             s += t.length > 0 ? (" (" + t + " left)") : " on battery";
         }
-        // Append the live power draw when the battery reports one.
         const r = Math.abs(Power.rate);
         if (r > 0.05)
             s += "  ·  " + r.toFixed(1) + "W" + (Power.charging ? "↑" : "↓");

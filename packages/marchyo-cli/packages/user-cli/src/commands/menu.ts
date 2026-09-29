@@ -21,10 +21,9 @@ import {
 import { runCaptureColor, runCaptureRecord, runCaptureScreenshot } from "./capture.ts";
 import { runThemeSet } from "./theme.ts";
 
-// The gum-TUI menus (absorbed from marchyo-menu / marchyo-power-menu) and
-// the fzf keybindings cheatsheet (absorbed from marchyo-keybindings). The
-// presentation stays gum/fzf in a floating ghostty; every dispatched action
-// is a marchyo command.
+// The gum-TUI menus and the fzf keybindings cheatsheet. The presentation
+// stays gum/fzf in a floating ghostty; every dispatched action is a marchyo
+// command.
 
 // gum renders its UI on the tty (stderr) and prints the selection to
 // stdout — so pipe stdout only. A cancelled prompt exits non-zero.
@@ -98,7 +97,7 @@ export async function gumStyle(message: string, seconds = 2): Promise<void> {
 }
 
 // Detached with a short delay so the floating menu window is gone before
-// any region selection starts (the old menu's `detach` helper).
+// any region selection starts.
 function detachDelayed(argv: string[]): void {
   try {
     const proc = Bun.spawn(
@@ -250,8 +249,7 @@ export async function runMenu(rt: Runtime, submenu?: string): Promise<number> {
   }
 }
 
-// Modifier bitmask → readable names (the jq decode from the absorbed
-// marchyo-keybindings script).
+// Modifier bitmask to readable names.
 function decodeMods(modmask: number): string {
   const mods: string[] = [];
   if (modmask & 64) mods.push("SUPER");

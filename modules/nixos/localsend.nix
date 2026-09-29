@@ -1,7 +1,3 @@
-# LocalSend: LAN file sharing shipped with the desktop.
-# Installs the app and opens its discovery/transfer port, gated on the
-# marchyo.services.localsend.enable sub-toggle (dictation UI-suboption pattern:
-# on by default, only active when the desktop is enabled).
 {
   config,
   lib,

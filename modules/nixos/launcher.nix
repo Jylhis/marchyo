@@ -7,7 +7,7 @@
 # (`vicinae.nixosModules.default`, imported in outputs.nix) that installs
 # /run/wrappers/bin/vicinae-input-server with cap_dac_override+ep. That option
 # defaults to `true` upstream, hence the mkDefault gate here: without it every
-# marchyo NixOS host — headless ones included — would grow the wrapper.
+# marchyo NixOS host (headless ones included) would grow the wrapper.
 #
 # The wrapper alone is not enough: the daemon locates helpers with
 # findHelperProgram(), which only searches store-relative paths and never

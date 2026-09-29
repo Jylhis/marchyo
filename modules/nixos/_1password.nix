@@ -1,4 +1,3 @@
-# Desktop-only: 1Password's GUI application and its browser-integration group.
 { config, lib, ... }:
 let
   cfg = config.marchyo;

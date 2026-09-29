@@ -4,21 +4,15 @@ import Quickshell.Wayland
 import qs.Services
 import qs.Commons
 
-// The on-screen toast stack: a transparent layer-shell surface anchored top-right
-// under the bar, rendering NotificationState.popups newest-first. Sized to its
-// content so only the cards take clicks (the rest of the screen stays free), and
-// only materialised while there is something to show. A Column (positioner, not
-// a layout) so the toasts animate: fade+slide in on add, and the stack smoothly
-// reshuffles via the move transition (mako's toast feel). Positioners expose
-// only add/move/populate, with no remove transition, so a dismissed toast drops
-// immediately (the delegate is filtered out of the model at once); the remaining
-// cards then slide up via move.
+// On-screen toast stack: a transparent, content-sized layer-shell surface anchored
+// top-right under the bar, so only the cards take clicks. A Column positioner (not a
+// Layout) drives the add/move animations; there is deliberately no remove transition,
+// so a dismissed toast drops immediately and the rest slide up via move.
 PanelWindow {
     id: root
 
     visible: NotificationState.popups.length > 0
-    // Toasts follow the focused output rather than always stacking on
-    // Quickshell's default screen.
+    // Follow the focused output, not Quickshell's default screen.
     screen: Screens.focused
     color: "transparent"
     exclusiveZone: 0
@@ -38,8 +32,8 @@ PanelWindow {
     Column {
         id: column
 
-        // Top/left/right anchors (not fill) so height stays driven by the content,
-        // avoiding a loop with the window's implicitHeight.
+        // Top/left/right (not fill) so height follows content and avoids a loop with
+        // the window's implicitHeight.
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right

@@ -1,22 +1,17 @@
-# Vicinae application launcher — marchyo-owned config.
+# Vicinae application launcher, marchyo-owned config.
 #
-# Configures the upstream home-manager module (wired into
-# home-manager.sharedModules by outputs.nix). Everything under `settings` is
-# written to a store JSON that reaches the daemon through VICINAE_OVERRIDES;
-# every leaf is mkDefault so `marchyo.launcher.settings` (or a consumer's own
+# Configures the upstream home-manager module. Every leaf under `settings` is
+# mkDefault so `marchyo.launcher.settings` (or a consumer's own
 # programs.vicinae.settings) can override it.
 #
 # Two upstream key names are easy to get wrong, and the daemon ignores unknown
-# keys silently rather than failing:
+# keys silently rather than failing (tests/eval/launcher.nix asserts both):
 #   * the window block is `launcher_window`, NOT `window`
 #   * the font size is `font.normal.size`, NOT `font.size`
-# tests/eval/launcher.nix asserts both, because marchyo shipped the wrong pair
-# for a while and nothing caught it.
 #
 # Theming is marchyo's, not Stylix's (the vicinae target is disabled in
 # modules/generic/theme.nix): both variants are registered as real Vicinae TOML
-# themes derived from the Jylhis design tokens via
-# modules/generic/jylhis-palette.nix.
+# themes derived from the Jylhis design tokens.
 {
   lib,
   pkgs,
@@ -77,7 +72,7 @@ let
 
         shortcut.border = c."border-strong";
 
-        # `contour` is v2's structural linework token — never interaction, which
+        # `contour` is v2's structural linework token (never interaction), which
         # is exactly what a window chrome border is.
         main_window = {
           border = c.contour;
@@ -192,9 +187,9 @@ let
   declutterProviders = {
     theme.enabled = false;
     vicinae.entrypoints = {
-      sponsor.enabled = false; # "Donate to Vicinae"
-      report-bug.enabled = false; # "Report a Bug"
-      about.enabled = false; # "About"
+      sponsor.enabled = false;
+      report-bug.enabled = false;
+      about.enabled = false;
     };
   };
 in
@@ -203,7 +198,6 @@ in
     programs.vicinae = {
       enable = true;
       systemd = {
-        # Run the daemon as a user service (Restart=always, WantedBy=graphical-session.target).
         enable = true;
 
         # The daemon resolves helper binaries store-relative only and never looks
@@ -234,7 +228,6 @@ in
             light.name = lib.mkDefault activeTheme;
           };
 
-          # TUI aesthetic — opaque, square corners, hairline border.
           launcher_window = {
             opacity = lib.mkDefault 1.0;
             rounding = lib.mkDefault 0;

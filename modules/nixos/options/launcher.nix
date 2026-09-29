@@ -1,9 +1,6 @@
-# Application launcher (Vicinae) options.
-#
-# Platform-neutral declarations only — this directory is imported by
-# modules/darwin/default.nix and evaluated on darwin in CI, so no `pkgs`
-# references and no Linux-only types here. The implementation lives in
-# modules/nixos/launcher.nix (input-server wrapper) and
+# Application launcher (Vicinae) options. Platform-neutral declarations only
+# (this namespace is evaluated on darwin in CI, so no `pkgs` and no Linux-only
+# types). Implementation: modules/nixos/launcher.nix (input-server wrapper) and
 # modules/home/vicinae.nix (settings + themes).
 { lib, ... }:
 let

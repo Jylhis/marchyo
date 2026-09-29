@@ -1,9 +1,5 @@
-# Per-user cmus (TUI library audio player).
-#
-# Enabled via Home-Manager's programs.cmus when it is the selected
-# marchyo.defaults.audioPlayer and desktop is enabled. cmus has no single-file
-# MIME handler, so xdg.nix registers no audio association for it; it is
-# launched manually.
+# Per-user cmus (TUI library audio player). cmus has no single-file MIME handler,
+# so xdg.nix registers no audio association for it; it is launched manually.
 {
   osConfig ? { },
   lib,

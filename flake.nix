@@ -2,8 +2,8 @@
   description = "Marchyo";
 
   inputs = {
-    # Primary nixpkgs: unstable. Most outputs ride this. The stable 26.05 set
-    # below is used only by darwinConfigurations.x86_64.
+    # Primary nixpkgs: unstable. The stable 26.05 set below is used only by
+    # darwinConfigurations.x86_64.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     nixos-hardware = {
@@ -16,8 +16,8 @@
     };
     # nix-darwin / home-manager / stylix track master so they pair with the
     # unstable primary nixpkgs (release branches assume their matching nixpkgs).
-    # darwinConfigurations.x86_64 instead pins its package set to nixos-26.05,
-    # so it uses the matching *-stable release-branch inputs below — nix-darwin
+    # darwinConfigurations.x86_64 instead pins its package set to nixos-26.05, so
+    # it uses the matching *-stable release-branch inputs below; nix-darwin
     # enforces this with a hard build assertion, home-manager with a warning.
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
@@ -37,10 +37,9 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Stable home-manager (release-26.05) to pair with nixpkgs-stable. Used only
-    # by darwinConfigurations.x86_64, which pins its package set to nixos-26.05
-    # (the last nixpkgs release supporting x86_64-darwin). Must NOT follow the
-    # unstable primary — release branches assume their matching nixpkgs.
+    # Stable home-manager (release-26.05) to pair with nixpkgs-stable, used only
+    # by darwinConfigurations.x86_64. Must NOT follow the unstable primary
+    # (release branches assume their matching nixpkgs).
     home-manager-stable = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs-stable";
@@ -57,8 +56,8 @@
     };
     # nix-on-droid (Android terminal). Pinned to the latest prerelease with a
     # dedicated home-manager input matching it (the prerelease expects HM 24.05).
-    # Kept internally consistent on its own bundled nixpkgs — NOT following the
-    # unstable primary — so the droid HM config stays on HM-24.05 semantics.
+    # Kept internally consistent on its own bundled nixpkgs (NOT following the
+    # unstable primary), so the droid HM config stays on HM-24.05 semantics.
     nix-on-droid = {
       url = "github:nix-community/nix-on-droid/prerelease-25.11";
       inputs.home-manager.follows = "home-manager-droid";
@@ -79,9 +78,9 @@
       url = "github:vicinaehq/vicinae";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # ncro (Nix Cache Route Optimizer): a local HTTP proxy that routes binary-cache
-    # requests to the fastest reachable upstream. Wired into every NixOS system via
-    # nixosModules.default and gated behind marchyo.nix.router.enable.
+    # ncro (Nix Cache Route Optimizer): local HTTP proxy routing binary-cache
+    # requests to the fastest reachable upstream. Gated behind
+    # marchyo.nix.router.enable.
     ncro = {
       url = "github:manic-systems/ncro";
       inputs.nixpkgs.follows = "nixpkgs";

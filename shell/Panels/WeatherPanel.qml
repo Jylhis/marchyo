@@ -4,10 +4,8 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from WeatherWidget. Current conditions plus up to a 3-day forecast,
-// all from the shared Services/Weather poll (the same wttr.in fetch the bar
-// widget reads). Ported from omarchy's weather panel, trimmed to the forecast
-// view (no location picker / unit toggle).
+// Current conditions plus up to a 3-day forecast from the shared Services/Weather
+// (wttr.in) poll.
 Panel {
     id: root
     panelId: "weather"

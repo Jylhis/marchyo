@@ -4,14 +4,8 @@ let
 in
 {
   options.marchyo.notifications = {
-    # Per-sender notification rules for the Quickshell shell's notification
-    # daemon (marchyo.shell). Matched on the freedesktop appName / desktopEntry
-    # keys; a partial rule only overrides the field it names. Baked into the
-    # shell at build time (there is no runtime shell config yet). Ignored when
-    # the shell is off (mako owns notifications then).
-    #
-    # Kept platform-neutral (plain str/bool/int) so the shared options namespace
-    # still evaluates under nix-darwin, per the darwin eval gate.
+    # Baked into the shell at build time; ignored when the shell is off (mako
+    # owns notifications then). Plain str/bool/int only, per the darwin eval gate.
     rules = mkOption {
       default = [ ];
       example = [

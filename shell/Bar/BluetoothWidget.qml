@@ -3,10 +3,7 @@ import Quickshell.Bluetooth
 import qs.Ui
 import qs.Commons
 
-// Bluetooth status via the native BlueZ binding. "bt off" when the adapter is
-// disabled, "bt N" with a connected count, else "bt". Matches waybar's format.
-// Click opens bluetui in a floating terminal; the tooltip lists the connected
-// devices ("Devices connected: N", waybar parity, plus their names).
+// Bluetooth status via the native BlueZ binding, formatted to match waybar.
 BarItem {
     id: root
 

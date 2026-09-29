@@ -4,9 +4,8 @@ import qs.Commons
 import qs.Services
 
 // Caffeine (keep-awake) indicator: a pure view over Services/Caffeine, which owns
-// the one probe/toggle pair for the seat (the widget itself is instantiated once
-// per monitor). Mirrors waybar's custom/caffeine: "on" when the tagged
-// `marchyo-caffeine-inhibit` systemd-inhibit process is present.
+// the one probe/toggle pair for the seat (the widget is instantiated once per
+// monitor).
 BarItem {
     id: root
 

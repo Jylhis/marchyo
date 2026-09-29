@@ -1,10 +1,7 @@
-# Omarchy-style power/session menu (SUPER+Escape) and central system menu
-# (SUPER+ALT+Space). The gum TUI logic lives in the marchyo CLI
-# (`marchyo menu [power]`, packages/marchyo-cli commands/menu.ts — absorbed
-# from the old marchyo-menu/marchyo-power-menu scripts); this module keeps
-# the tool closure installed and binds the floating ghostty windows, reusing
-# the org.omarchy.terminal class so the centered floating-window rule from
-# hyprland.nix applies (same pattern as keybindings-cheatsheet.nix).
+# Power/session menu (SUPER+Escape) and system menu (SUPER+ALT+Space). The gum
+# TUI logic lives in the marchyo CLI (`marchyo menu [power]`); this module keeps
+# the tool closure installed and binds floating ghostty windows, reusing the
+# org.omarchy.terminal class so hyprland.nix's centered floating-window rule applies.
 {
   lib,
   pkgs,
@@ -19,9 +16,8 @@ let
 in
 {
   config = mkIf enabled {
-    # Tools the CLI menus shell out to (gum prompts, setup TUIs, power
-    # profile control). grimblast/hyprpicker for the Trigger entries come
-    # from screenshot.nix / hyprland.nix.
+    # Tools the CLI menus shell out to; grimblast/hyprpicker come from
+    # screenshot.nix / hyprland.nix.
     home.packages = with pkgs; [
       gum
       wiremix
@@ -31,9 +27,7 @@ in
       power-profiles-daemon # powerprofilesctl
     ];
 
-    # Merges with the bind lists from hyprland.nix / screenshot.nix /
-    # webapps.nix (home-manager concatenates the lists). Both combos were
-    # verified free in hyprland.nix.
+    # Merges with the bind lists from other home modules; both combos verified free.
     wayland.windowManager.hyprland.settings.bind = [
       (hlua.bindd "SUPER + Escape" "Power menu" (hlua.execInTerminal "marchyo menu power"))
       (hlua.bindd "SUPER + ALT + Space" "System menu" (hlua.execInTerminal "marchyo menu"))

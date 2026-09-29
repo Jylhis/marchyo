@@ -65,12 +65,18 @@ shell/
                        in the Nix build)
     Config.qml         resolved external-tool paths; the Nix build regenerates it
                        with absolute /nix/store paths (dev default = PATH names)
+    ShellConfig.qml    singleton reading ~/.config/marchyo/shell.json (the live
+                       marchyo.shell.* config, materialized by the Nix build)
+    PluginIndex.qml    singleton listing the plugins baked into this store shell
+                       (build-time Option A model; no runtime discovery)
     Format.js          pure parsing helpers (keymap short codes, nmcli records);
                        plain JS with a CommonJS guard so Node can unit-test it
     Match.js           pure fuzzy scoring (launcher: apps / emoji / clipboard)
     EmojiData.js       emoji catalog rows + parse; the Nix build regenerates the
                        rows from pkgs.unicode-emoji (dev subset checked in)
     Cliphist.js        pure cliphist helpers (quoted-printable payload decode)
+    Notify.js          pure notification match/eviction helpers
+    Peripherals.js     pure `solaar show` parser (Logitech battery)
   Ui/
     qmldir             declares module qs.Ui
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
@@ -420,11 +426,13 @@ Three layers, split by what each can reach:
 | Suite | Runs where | Covers |
 | --- | --- | --- |
 | `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
+| `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS — `Match.js` scoring, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
+| `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
 | `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
-The first three are the reason `Commons/*.js` files are plain `.js` modules with a
+The JS suites are the reason `Commons/*.js` files are plain `.js` modules with a
 CommonJS guard at the bottom rather than QML functions: QML logic needs Quickshell
 and a Qt platform plugin to run at all, so none of it is reachable from
 `nix flake check`, while a JavaScript module is imported unchanged by QML *and*

@@ -3,12 +3,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 
-// Shared MPRIS bindings: the one "active" media player for the seat, plus the
-// resolved track metadata and playback controls the bar's MediaWidget reads.
-// Like Audio/Power/NetworkStatus this is a plain qs.Services singleton — the
-// widget is instantiated once per monitor, so the player lookup lives here once
-// rather than re-deriving on every bar. Native Quickshell.Services.Mpris auto-
-// discovers every org.mpris.MediaPlayer2* on the bus; no external tool.
+// Shared MPRIS bindings: the one "active" media player for the seat plus its
+// resolved metadata and controls, for MediaWidget. A singleton so the player
+// lookup runs once, not once per monitor. Native Quickshell.Services.Mpris
+// auto-discovers every org.mpris.MediaPlayer2* on the bus.
 QtObject {
     id: root
 
@@ -51,9 +49,8 @@ QtObject {
             player.previous();
     }
 
-    // Nudge `rev` when the set of players changes so `player` re-picks. The
-    // per-player isPlayingChanged is harder to wire without a Repeater, so we
-    // also re-pick when the current player stops (covered by playbackState below).
+    // Nudge `rev` so `player` re-picks when the player set changes; stateConn
+    // below does the same when the current player's playback state changes.
     readonly property var conn: Connections {
         target: Mpris.players
         function onValuesChanged() {

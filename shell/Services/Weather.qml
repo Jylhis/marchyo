@@ -3,14 +3,9 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared weather state: ONE wttr.in fetch for the whole seat.
-//
-// Trimmed port of omarchy's weather plugin — the bar widget's current
-// conditions, not the location-picker/forecast panel (that lands with the Ui
-// primitive harvest). Location is IP-geolocated by wttr.in. This singleton is
-// only instantiated when a weather widget is placed in the bar layout, so a
-// host that never adds the widget makes no outbound request. Singleton for the
-// usual reason: the widget is a pure per-monitor view and this is seat-global.
+// Shared weather state: ONE seat-wide wttr.in fetch (location IP-geolocated by
+// wttr.in). Only instantiated when a weather widget is placed in the bar, so a
+// host without the widget makes no outbound request. A singleton; seat-global.
 QtObject {
     id: root
 
@@ -29,8 +24,8 @@ QtObject {
         return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
     }
 
-    // WWO weather codes (wttr.in) → nerd-font glyphs, a compact subset of
-    // omarchy's iconForCode map: clear, cloud, fog, rain, snow, thunder.
+    // WWO weather codes (wttr.in) to nerd-font glyphs: clear, cloud, fog, rain,
+    // snow, thunder.
     function iconForCode(code): string {
         const c = parseInt(String(code || "0"), 10);
         if (c === 113)
@@ -65,8 +60,8 @@ QtObject {
         root.icon = root.iconForCode(cur.weatherCode);
         root.available = root.tempC !== "";
 
-        // Forecast: wttr's `weather` array carries per-day hi/lo and 3-hourly
-        // slots; use the midday slot (index 4 ≈ 12:00) for the day's icon.
+        // wttr's `weather` array carries per-day hi/lo and 3-hourly slots; use
+        // the midday slot (index 4, ~12:00) for the day's icon.
         const days = data.weather || [];
         const out = [];
         for (var i = 0; i < days.length && out.length < 3; i++) {

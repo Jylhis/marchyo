@@ -50,9 +50,6 @@ export async function runScaffoldModule(
   const modulePath = join(repoPath, "modules", "nixos", `${name}.nix`);
   const testPath = join(repoPath, "tests", "eval", `${name}.nix`);
   // Checkout markers, both of which are also the directories written into.
-  // Deliberately not tests/module-tests.nix, which this used to require and
-  // which has never existed in this layout: the command aborted against every
-  // real checkout with a misleading "pass --repo" hint.
   const modulesDir = join(repoPath, "modules", "nixos");
   const testsDir = join(repoPath, "tests", "eval");
 
@@ -66,9 +63,8 @@ export async function runScaffoldModule(
     }
   }
 
-  // Every check before the first write. The previous version wrote the module
-  // and only then discovered it could not edit modules/nixos/default.nix,
-  // leaving a stray auto-discovered module behind on a reported failure.
+  // Every check before the first write, so a reported failure never leaves a
+  // stray auto-discovered module behind.
   for (const path of [modulePath, testPath]) {
     if (existsSync(path)) {
       return usageError(rt, `${path} already exists`);
@@ -95,8 +91,7 @@ export async function runScaffoldModule(
 
   // No edit to modules/nixos/default.nix: lib/discover-modules.nix imports
   // every .nix directly under modules/nixos/, and tests/default.nix does the
-  // same for tests/eval/, so both files are already wired up. The old
-  // regex-based import edit could not match the current default.nix anyway.
+  // same for tests/eval/, so both files are already wired up.
   info(rt, `both files are auto-discovered; no import list to update.`);
   info(rt, `next: implement ${modulePath}, then run 'just check' to validate.`);
 

@@ -6,22 +6,17 @@ import Quickshell.Services.Notifications
 import qs.Commons
 import "../Commons/Notify.js" as Notify
 
-// Shared notification state: the single source of truth for do-not-disturb and
-// the live on-screen toast list. Both the bar's DndWidget and the notification
-// server read/write this, so DND is in-process state (no makoctl, no poll) and
-// the server, the popup stack, and the keybind IPC all agree. Kept in qs.Services
-// like PanelManager, and deliberately separate from the Quickshell
-// NotificationServer object (which lives in qs.Notifications) to avoid a
-// qs.Bar -> qs.Notifications import cycle.
+// Shared notification state: single source of truth for do-not-disturb and the
+// live toast list. DndWidget and the notification server both read/write this,
+// so DND is in-process (no makoctl, no poll). Kept in qs.Services, deliberately
+// separate from the Quickshell NotificationServer object (in qs.Notifications)
+// to avoid a qs.Bar -> qs.Notifications import cycle.
 //
-// Expiry lives here, not in the toast delegate. `popups` is a value model, so
-// every add and remove makes the Repeater in Notifications/NotificationList.qml
-// destroy and rebuild all of its delegates. When each delegate owned its own
-// expiry Timer, that rebuild restarted the countdown: a toast shown at t=0 with
-// a 5s timeout was rebuilt when the next one arrived at t=4s and then expired at
-// t=9s, and again on the next arrival, so under a steady trickle older toasts
-// never expired at all. One sweep timer over deadlines recorded at admission
-// time is immune to how often the view is rebuilt.
+// Expiry lives here, not in the toast delegate: `popups` is a value model, so
+// every add/remove rebuilds all Repeater delegates in NotificationList.qml. A
+// per-delegate expiry Timer would restart its countdown on each rebuild, so
+// under a steady trickle older toasts never expired. One sweep timer over
+// deadlines recorded at admission time is immune to view rebuilds.
 QtObject {
     id: root
 
@@ -35,25 +30,24 @@ QtObject {
     // Style.notifTimeoutCritical).
     property var entries: []
 
-    // The Notification objects themselves, for the view. Derived so `entries`
-    // stays the only thing that is written.
+    // Notification objects for the view. Derived so `entries` is the only writer.
     readonly property var popups: root.entries.map(e => e.n)
 
     // Notifications held back by DND. Plain JS array of Notification objects.
     property var queued: []
 
-    // Persistent notification history: immutable data snapshots (not live
-    // Notification objects — see Notify.addHistory for why). Newest-first. Every
-    // received notification is snapshotted here on arrival, so a toast dismissed
-    // or missed under DND is still recoverable from the notification centre.
+    // Persistent history: immutable data snapshots (not live Notification
+    // objects, see Notify.addHistory), newest-first. Every notification is
+    // snapshotted on arrival, so a dismissed or DND-missed toast stays
+    // recoverable from the notification centre.
     property var history: []
     property int seq: 0
     readonly property int historyCap: 100
     // Retention window: entries older than this are pruned on the next arrival.
     readonly property int historyMaxAgeMs: 7 * 24 * 3600 * 1000
 
-    // Unread count for the bar's badge; dismissing a toast does not mark it read
-    // — only opening the notification centre (markAllRead) does.
+    // Unread count for the bar's badge; only opening the notification centre
+    // (markAllRead) marks entries read, not dismissing a toast.
     readonly property int unreadCount: Notify.unreadCount(root.history)
 
     // Snapshot a notification into history on arrival. Kept as plain data so it
@@ -87,13 +81,9 @@ QtObject {
         root.history = [];
     }
 
-    // ── Persistence ──────────────────────────────────────────────────────────
-    //
-    // History survives a shell restart by serializing to a state file. The shell
-    // is the file's only writer, so there is no need to watch it (watchChanges:
-    // false) — the never-reader / read-once pattern from plans/shell-research.md.
-    // Snapshots are plain data, so JSON round-trips without any Notification
-    // object. Saves are debounced and atomic (temp + rename).
+    // Persistence: history serializes to a state file across restarts. The shell
+    // is the file's only writer, so watchChanges is false (read-once pattern).
+    // Saves are debounced and atomic.
 
     // Gate saves until the initial disk read completes, so the empty startup
     // state never clobbers the file before it has been loaded.
@@ -138,10 +128,9 @@ QtObject {
         onTriggered: historyFile.setText(JSON.stringify(root.history))
     }
 
-    // Cap on notifications held while DND is on: a long do-not-disturb stretch
-    // must not accumulate an unbounded pile of tracked notifications (memory,
-    // plus a toast flood the moment DND clears). Oldest beyond the cap are
-    // dismissed outright — mako's behaviour is to simply not show them.
+    // Cap on notifications held while DND is on, bounding memory and the flood
+    // when DND clears. Oldest beyond the cap are dismissed outright (mako simply
+    // never shows them).
     readonly property int maxQueued: 20
 
     // Honour the sender's timeout when positive (expireTimeout is in seconds),

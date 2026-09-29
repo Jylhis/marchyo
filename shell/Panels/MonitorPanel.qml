@@ -6,18 +6,16 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Summoned from CpuWidget. A read-only system-resource card: CPU and memory come
-// from the shared SystemStats singleton (the same sampler the bar's CpuWidget
-// reads), while disk-use and CPU temperature are polled here only while the panel
-// is open. "btop" opens the full monitor TUI — the action CpuWidget used to
-// trigger directly. Native/sysfs data throughout; the one external tool is `df`
-// (no statvfs binding exists), its path baked into Config like the others.
+// Read-only system-resource card. CPU and memory come from the shared SystemStats
+// singleton; disk use and CPU temperature are polled here only while the panel is
+// open. The one external tool is df (no statvfs binding exists), its path baked into
+// Config; btop opens the full monitor TUI.
 Panel {
     id: root
     panelId: "monitor"
     title: "System"
 
-    // Disk use of / (df -kP: one line, 1K blocks). Polled only while open.
+    // Disk use of / (df -kP: 1K blocks).
     property real diskUsedKb: 0
     property real diskTotalKb: 0
     property int diskPercent: 0
@@ -50,10 +48,10 @@ Panel {
         }
     }
 
-    // Discover the CPU temperature sensor once: scan /sys/class/hwmon (via the baked
-    // `ls`, no PATH reliance) and pick the first entry whose `name` is a known CPU
-    // sensor (Intel coretemp, AMD k10temp/zenpower, ARM cpu_thermal). thermal_zone0
-    // is unreliable (often the motherboard acpitz), so match by hwmon name instead.
+    // Discover the CPU temperature sensor once by scanning /sys/class/hwmon and picking
+    // the first entry whose name is a known CPU sensor (Intel coretemp, AMD
+    // k10temp/zenpower, ARM cpu_thermal). thermal_zone0 is unreliable (often the
+    // motherboard acpitz), so match by hwmon name instead.
     property var hwmonDirs: []
 
     Process {
@@ -86,7 +84,6 @@ Panel {
         blockLoading: true
     }
 
-    // Poll disk + temperature only while the panel is open.
     Timer {
         interval: 5000
         running: root.visible

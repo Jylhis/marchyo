@@ -1,4 +1,3 @@
-# Global (headless-safe): locale and time zone.
 { lib, config, ... }:
 {
   time.timeZone = lib.mkDefault config.marchyo.timezone;

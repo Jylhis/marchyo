@@ -17,7 +17,7 @@ import { runArgv } from "./system.ts";
 import { detectFlake, nixosRebuild } from "./flake.ts";
 import { err, hint, info, ok, usageError, warn } from "./output.ts";
 
-// The F3.0 three-mode contract every mutating desktop command follows:
+// The three-mode contract every mutating desktop command follows:
 //   default (runtime) — apply live + persist an ephemeral override
 //   --apply           — additionally persist to cli-state.json + rebuild
 //   --revert          — undo: drop the override, restore the declarative
@@ -150,7 +150,7 @@ export async function applyChange(
       warn(rt, "rebuild failed; the persisted value applies on next rebuild");
       return code;
     }
-    // Declarative value now matches — the override would only go stale.
+    // Declarative value now matches, so the override would only go stale.
     await clearOverride(spec.key, runtimePath);
     return 0;
   }

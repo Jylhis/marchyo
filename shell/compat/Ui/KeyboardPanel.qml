@@ -13,8 +13,8 @@ import qs.compat.Commons
 // Built on PanelWindow with a brief WlrKeyboardFocus.Exclusive prime followed
 // by OnDemand rather than PopupWindow (xdg-popup). The prime acquires focus
 // both when the surface maps and when it reopens while still mapped for its
-// fade-out. xdg-popups don't get that — they only receive keys after a
-// click/hover routes focus through their parent surface — so keyboard-summoned
+// fade-out. xdg-popups don't get that (they only receive keys after a
+// click/hover routes focus through their parent surface), so keyboard-summoned
 // popups fell flat without it.
 //
 // Exclusive would also grant map-time focus, but it makes Hyprland route
@@ -82,8 +82,6 @@ PanelWindow {
             focusPrimeTimer.restart();
     }
 
-    // --- screen + lifetime ---------------------------------------------------
-
     screen: anchorWindow ? anchorWindow.screen : null
     visible: open || card.opacity > 0 || popoutSwitching
     color: "transparent"
@@ -94,7 +92,7 @@ PanelWindow {
     // Keyboard focus follows `open` (NOT `visible`). The window remains
     // mapped during the fade-out so the opacity animation has something to
     // animate, but keyboard/click ownership must release the moment the
-    // logical close fires — otherwise the user is locked out for 140ms.
+    // logical close fires, otherwise the user is locked out for 140ms.
     //
     // Prime with Exclusive on every open, then settle on OnDemand. Hyprland
     // focuses OnDemand when a surface first maps, but not when an already-mapped
@@ -135,7 +133,7 @@ PanelWindow {
     // Track every layout change between the bar's contentItem and the
     // anchor item. `transform` updates whenever any item in that chain
     // moves/resizes, which is what makes the position binding below
-    // actually reactive — mapToItem on its own is a one-shot.
+    // actually reactive (mapToItem on its own is a one-shot).
     TransformWatcher {
         id: anchorWatcher
         a: anchorWindow ? anchorWindow.contentItem : null
@@ -185,7 +183,7 @@ PanelWindow {
 
     // Desired top-left of the card in screen coordinates. For the
     // perpendicular axis (away-from-bar) we anchor to the bar window's edge
-    // directly — not the anchor item's y/x — because mapToItem(barContent)
+    // directly, not the anchor item's y/x, because mapToItem(barContent)
     // returns coordinates in the bar's content space, which can be offset
     // from the bar surface's screen-anchored corner by internal layout
     // (centering wrappers, padding). The bar's surface IS aligned to its
@@ -223,8 +221,6 @@ PanelWindow {
         y = Math.max(margin, Math.min(y, screenH - contentHeight - margin));
         return Qt.point(Math.round(x), Math.round(y));
     }
-
-    // --- popout coordination (same-bar single-popout model) -----------------
 
     // Coordinate on `open`, not `visible`. `visible` lags into the fade-out
     // animation, which made ownership transfer to a sibling popup race.
@@ -281,8 +277,6 @@ PanelWindow {
         interval: 1
         onTriggered: root.popoutSwitchClosing = false
     }
-
-    // --- outside-click dismissal --------------------------------------------
 
     // Catches clicks anywhere in the clickable region (i.e. everywhere on
     // screen except the bar strip, which is masked out). The card has its
@@ -399,8 +393,6 @@ PanelWindow {
             }
         }
     }
-
-    // --- card ----------------------------------------------------------------
 
     BorderSurface {
         id: card

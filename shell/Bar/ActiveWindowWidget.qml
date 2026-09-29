@@ -2,9 +2,8 @@ import Quickshell.Wayland
 import qs.Ui
 import qs.Commons
 
-// Focused-window title (ported from omarchy's ActiveWindow). Pure native
-// binding on ToplevelManager.activeToplevel — no process, no timer, so it stays
-// a per-monitor view per the Bar/ contract. Hidden when nothing is focused.
+// Pure native binding on ToplevelManager.activeToplevel (no process, no timer),
+// so it stays a safe per-monitor view per the Bar/ contract.
 BarItem {
     id: root
 

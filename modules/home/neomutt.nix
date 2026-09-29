@@ -1,9 +1,6 @@
-# Per-user NeoMutt (TUI mail client).
-#
-# Enabled via Home-Manager's programs.neomutt when it is the selected
-# marchyo.defaults.email and desktop is enabled. xdg.nix routes mailto: links
-# to neomutt.desktop. Account/credential setup (accounts.email.accounts.<name>)
-# is left to the consumer.
+# Per-user NeoMutt (TUI mail client), enabled when it is the selected
+# marchyo.defaults.email. xdg.nix routes mailto: links to neomutt.desktop;
+# account/credential setup is left to the consumer.
 {
   osConfig ? { },
   lib,

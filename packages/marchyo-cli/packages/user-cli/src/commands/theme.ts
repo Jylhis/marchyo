@@ -44,8 +44,8 @@ import {
 import type { Variant } from "@marchyo/core";
 import { mkdir, symlink, rename, writeFile } from "node:fs/promises";
 
-// Actuation helpers (absorbed from modules/home/theme-runtime.nix's
-// marchyo-theme-toggle — same commands, same || true tolerance)
+// Actuation helpers mirroring modules/home/theme-runtime.nix: same commands,
+// same || true tolerance.
 
 async function safeExec(
   ctx: ChangeContext,
@@ -110,7 +110,7 @@ export function hyprlandConfigLua(
 }
 
 // Apply a theme dir's assets live. The reload vocabulary deliberately
-// matches the absorbed shell script: awww for wallpaper, mako via symlink +
+// matches theme-runtime.nix's shell script: awww for wallpaper, mako via symlink +
 // makoctl reload, waybar via symlink + user-unit try-restart, Hyprland via
 // `hyprctl eval hl.config(...)` (never `hyprctl keyword`, a no-op under
 // non-legacy parsers, nor `hyprctl reload`, which re-reads the build-time
@@ -213,8 +213,6 @@ function themeSpecFor(entry: ThemeManifestEntry): ChangeSpec {
   };
 }
 
-// Commands
-
 export async function runThemeList(rt: Runtime): Promise<number> {
   const manifest = await readThemeManifest(undefined, (m) => warn(rt, m));
   if (manifest.length === 0) {
@@ -251,7 +249,7 @@ export async function runThemeGet(rt: Runtime): Promise<number> {
     );
     return 0;
   }
-  // Pre-manifest fallback: the persisted CLI state (old behavior).
+  // Pre-manifest fallback: the persisted CLI state.
   const state = await readState().catch(() => ({}) as State);
   const variant = state.theme?.variant ?? null;
   data(rt, { theme: { name: null, variant } }, () =>
