@@ -20,6 +20,8 @@ QtObject {
     property string exitNodeName: ""
     property string selfName: ""
     property string selfIp: ""
+    // Online tailnet peers for the detail panel: [{ name, ip, os, online }].
+    property var peers: []
 
     function first100(ips): string {
         if (!ips)
@@ -48,15 +50,25 @@ QtObject {
         root.selfIp = root.first100(self.TailscaleIPs || data.TailscaleIPs || []);
         // An active exit node shows up as a peer with ExitNode === true.
         let en = "";
-        const peers = data.Peer || {};
-        for (var id in peers) {
-            const p = peers[id] || {};
-            if (p.ExitNode === true) {
-                const pdns = String(p.DNSName || "");
-                en = (p.HostName && String(p.HostName)) || (pdns.charAt(pdns.length - 1) === "." ? pdns.slice(0, -1) : pdns);
-                break;
+        const rawPeers = data.Peer || {};
+        const list = [];
+        for (var id in rawPeers) {
+            const p = rawPeers[id] || {};
+            const pdns = String(p.DNSName || "");
+            const nm = (p.HostName && String(p.HostName)) || (pdns.charAt(pdns.length - 1) === "." ? pdns.slice(0, -1) : pdns);
+            if (p.ExitNode === true && en === "")
+                en = nm;
+            if (p.Online === true) {
+                list.push({
+                    name: nm,
+                    ip: root.first100(p.TailscaleIPs || []),
+                    os: String(p.OS || ""),
+                    online: true
+                });
             }
         }
+        list.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+        root.peers = list;
         root.exitNodeName = en;
         root.exitNodeActive = en !== "";
     }
