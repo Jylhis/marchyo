@@ -3,6 +3,9 @@
 #
 # Steam sets hardware.graphics.enable32Bit itself; the desktop already enables
 # 32-bit graphics on x86 (modules/nixos/desktop-config.nix), so no extra wiring.
+# That unconditional enable32Bit is also why the bundle is gated on x86_64:
+# nixpkgs asserts against 32-bit graphics on other architectures, and Steam
+# has no non-x86 build anyway.
 {
   config,
   lib,
@@ -11,9 +14,10 @@
 }:
 let
   cfg = config.marchyo;
+  isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 in
 {
-  config = lib.mkIf (cfg.desktop.enable && cfg.gaming.enable) {
+  config = lib.mkIf (cfg.desktop.enable && cfg.gaming.enable && isX86) {
     programs.steam = {
       enable = true;
       remotePlay.openFirewall = lib.mkDefault true;
