@@ -143,15 +143,24 @@ while read -r method; do
 done < <(grep -rhoE "ipc -n call -- shell [a-zA-Z]+" "$ROOT/modules/home" | awk '{ print $NF }' | sort -u)
 check "every IPC method the Hyprland binds call exists in shell.qml" "$missing_ipc"
 
-# One target, one handler: two IpcHandlers on the same target make which one
-# answers a call undefined (see plans/shell.md — there is deliberately no bus).
+# One target, one handler: two handlers on the same target make which one
+# answers a call undefined. Every Hyprland bind calls target "shell" (see
+# plans/shell.md), so that name is shell.qml's alone, and shell.qml keeps a
+# single stock handler rather than a bus. The compat shim's handlers are not
+# competitors: compat/Commons/ShellIpc.qml is a base type with no target of its
+# own, compat/Commons/IpcRegistry.qml holds a permanently disabled reflection
+# probe, and compat/Ui/Panel.qml binds whatever target its omarchy plugin asks
+# for. Only claiming the literal "shell" would collide.
 ipc_handlers=$(grep -c "IpcHandler {" "$shell_qml")
-extra_handlers=$(grep -rl --include="*.qml" "IpcHandler {" "$SHELL_DIR" | grep -v "/shell\.qml$")
-if [[ $ipc_handlers == 1 && -z $extra_handlers ]]; then
-  ok "shell.qml declares the tree's only IpcHandler"
+if [[ $ipc_handlers == 1 ]]; then
+  ok "shell.qml declares exactly one IpcHandler"
 else
-  no "shell.qml declares the tree's only IpcHandler" "found $ipc_handlers in shell.qml; also in: ${extra_handlers:-none}"
+  no "shell.qml declares exactly one IpcHandler" "found $ipc_handlers"
 fi
+
+rival_shell_target=$(grep -rn --include="*.qml" 'target: *"shell"' "$SHELL_DIR" |
+  grep -v "^$shell_qml:" | sed "s|^$ROOT/||")
+check 'only shell.qml claims the IPC target "shell"' "$rival_shell_target"
 
 # ── Commons/*.js dual citizenship ────────────────────────────────────────────
 #
