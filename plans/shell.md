@@ -37,7 +37,9 @@ One `quickshell -p <store-path>` process per session, launched as a
   `shell.qml` (panel toggles, DND/notification controls, bar toggle, OSD,
   lock/`lockState`, launcher toggles, `ping`). Hyprland binds reach it via the
   wrapper (`marchyo-shell ipc -n call -- shell …`, self-targeting because the
-  wrapper bakes `-p`). No custom bus.
+  wrapper bakes `-p`). No custom bus. The only other handlers live in the
+  omarchy compat shim (`shell/compat/`), each on a per-plugin target, so
+  `shell` stays unambiguous.
 - **Theming bridge:** `Commons/Color.qml` delegates its tokens to
   `Commons/Theme.qml`, a runtime reader that watches the `colors.json` behind
   the `~/.config/marchyo/current-theme` pointer; `marchyo theme set/next`
