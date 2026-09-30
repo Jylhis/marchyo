@@ -15,7 +15,7 @@ in
         Only takes effect together with `marchyo.desktop.enable`; unlike office
         and media it is not auto-enabled by the desktop, so a plain desktop
         stays lean unless you opt in. Steam pulls in 32-bit graphics and is
-        x86_64-only.
+        x86_64-only, so the bundle is a no-op on other architectures.
       '';
     };
   };
