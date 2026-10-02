@@ -83,16 +83,10 @@ test("every declared: path really declares the option's namespace", () => {
   assert.deepEqual(wrong, [], `misattributed options:\n  ${wrong.join("\n  ")}`);
 });
 
-test("marchyo.defaults.browser advertises its real default", () => {
-  const declared = fs.readFileSync(
-    path.join(root, "modules", "nixos", "options", "defaults.nix"),
-    "utf8",
-  );
-  const real = declared.match(/browser\s*=\s*mkOption\s*\{[\s\S]*?default\s*=\s*"([^"]+)"/);
-  assert.ok(real, "could not read the real default of marchyo.defaults.browser");
-  const row = source.match(/name:\s*'marchyo\.defaults\.browser'[^}]*?default:\s*'"([^"]+)"'/);
-  assert.ok(row, "could not read the advertised default of marchyo.defaults.browser");
-  assert.equal(row[1], real[1]);
-});
+// Advertised `default:` values are checked by tests/eval/site-option-defaults.nix
+// instead of here: it reads them from the evaluated option tree, so it covers
+// every resolvable row rather than just marchyo.defaults.browser, and it needs
+// no regex over Nix source (modules/nixos/options/theme.nix declares
+// `variant = mkOption` twice, which a source-level match cannot tell apart).
 
 console.log("# " + passed + " passed");
