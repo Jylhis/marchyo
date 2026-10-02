@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type ColorsJson,
   detectVariant,
+  fzfOptsFromBase16,
   ghosttyConfFromBase16,
   hyprlandConfFromBase16,
   matugenArgv,
@@ -151,5 +152,26 @@ describe("ghosttyConfFromBase16", () => {
     expect(palette[0]).toBe("palette = 0=#100000"); // base00
     expect(palette[1]).toBe("palette = 1=#100008"); // base08
     expect(palette[15]).toBe("palette = 15=#100007"); // base07
+  });
+});
+
+describe("fzfOptsFromBase16", () => {
+  const b = parseMatugenBase16(matugenFixture(), "dark");
+  const opts = fzfOptsFromBase16(b);
+
+  test("emits a single --color line with trailing newline", () => {
+    expect(opts.startsWith("--color=")).toBe(true);
+    expect(opts.endsWith("\n")).toBe(true);
+    expect(opts.trim().split("\n")).toHaveLength(1);
+  });
+  test("maps roles through the same slot mapping as theme-runtime.nix", () => {
+    expect(opts).toContain("fg:#100005"); // text -> base05
+    expect(opts).toContain("bg:#100000"); // bg -> base00
+    expect(opts).toContain("hl:#100009"); // accent -> base09
+    expect(opts).toContain("fg+:#100006"); // text-heading -> base06
+    expect(opts).toContain("bg+:#100001"); // accent-subtle -> base01
+    expect(opts).toContain("marker:#10000b"); // green -> base0B
+    expect(opts).toContain("border:#100003"); // border -> base03
+    expect(opts).toContain("gutter:#100000"); // bg -> base00
   });
 });

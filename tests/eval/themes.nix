@@ -166,6 +166,31 @@ in
         ];
       });
 
+  # Runtime fzf theming: on a desktop the runtime layer sets
+  # FZF_DEFAULT_OPTS_FILE (read live) and fzf.nix drops its build-time
+  # `programs.fzf.colors` so the file wins.
+  eval-themes-fzf-runtime =
+    testNixOSCheck "themes-fzf-runtime"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+        in
+        lib.hasInfix "current-theme/fzf.opts" (hm.home.sessionVariables.FZF_DEFAULT_OPTS_FILE or "")
+        && (hm.programs.fzf.colors or { }) == { }
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
+  # Off the desktop (no runtime layer) fzf keeps its build-time colours.
+  eval-themes-fzf-nondesktop-colors =
+    testNixOSCheck "themes-fzf-nondesktop-colors"
+      (cfg: (cfg.home-manager.users.testuser.programs.fzf.colors or { }) != { })
+      (withTestUser {
+        marchyo.theme.enable = true;
+      });
+
   # Unknown names must fail eval (the base16-scheme loader throws with a
   # marchyo.theme.themes hint).
   eval-themes-unknown-name = assertTest "themes-unknown-name" (

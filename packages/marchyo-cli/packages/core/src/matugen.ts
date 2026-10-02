@@ -96,6 +96,7 @@ export const TOKEN_SLOTS: Record<string, string> = {
   textHeading: "base06",
   statusErr: "base08",
   accent: "base09",
+  cursor: "base09",
   statusWarn: "base0A",
   synString: "base0B",
   synType: "base0C",
@@ -179,6 +180,34 @@ export function ghosttyConfFromBase16(b: Base16): string {
       `selection-foreground = ${b.base05}`,
     ].join("\n") + "\n";
   return head + ansi.map((c, i) => `palette = ${i}=${c}`).join("\n") + "\n";
+}
+
+// fzf `--color` string, matching theme-runtime.nix's fzfOptsText role map and
+// its schemeHexForToken slot mapping. Emitted as `fzf.opts` so a generated
+// theme's dir (which current-theme/FZF_DEFAULT_OPTS_FILE points at) carries the
+// file like every manifest theme does.
+export function fzfOptsFromBase16(b: Base16): string {
+  return (
+    "--color=" +
+    [
+      `fg:${b.base05}`,
+      `bg:${b.base00}`,
+      `hl:${b.base09}`,
+      `fg+:${b.base06}`,
+      `bg+:${b.base01}`,
+      `hl+:${b.base09}`,
+      `info:${b.base04}`,
+      `marker:${b.base0B}`,
+      `prompt:${b.base09}`,
+      `spinner:${b.base09}`,
+      `pointer:${b.base09}`,
+      `header:${b.base04}`,
+      `border:${b.base03}`,
+      `separator:${b.base03}`,
+      `gutter:${b.base00}`,
+    ].join(",") +
+    "\n"
+  );
 }
 
 // Writable runtime location for the generated theme dir (the manifest themes
