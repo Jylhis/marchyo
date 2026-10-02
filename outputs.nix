@@ -624,6 +624,26 @@ in
               touch "$out"
             '';
 
+        # theme-runtime.nix's activation reset and the CLI's relink targets are
+        # hand-maintained on opposite sides of a language boundary; a CLI target
+        # missing from the Nix list breaks the next activation.
+        cli-theme-surfaces =
+          pkgs.runCommand "check-cli-theme-surfaces"
+            {
+              nativeBuildInputs = [ pkgs.nodejs ];
+            }
+            ''
+              # Only the parents: `cp -r dir target` nests when target exists.
+              mkdir -p src/tests src/modules src/packages/marchyo-cli/packages/user-cli/src
+              cp -r ${./tests/cli} src/tests/cli
+              cp -r ${./modules/home} src/modules/home
+              cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
+                src/packages/marchyo-cli/packages/user-cli/src/commands
+              cd src
+              node tests/cli/theme-surfaces-test.js
+              touch "$out"
+            '';
+
         shell-contracts =
           pkgs.runCommand "check-shell-contracts"
             {
