@@ -12,6 +12,10 @@ surface is a pure view — the same rule the bar follows (`../shell/README.md`).
 The surface is a `FloatingWindow` (a plain xdg-toplevel) that cage fullscreens,
 not a layer-shell `PanelWindow`: cage has no wlr-layer-shell support, so a layer
 surface never maps and the screen stays black (the regreet-under-cage shape).
+Under multi-monitor cage (`-m extend`) the window spans the union of outputs;
+the clock/card column and the power buttons are positioned against the primary
+(first) output's geometry so the login card sits centered on one monitor
+instead of straddling the bezel gap.
 `Commons/` holds dev-default singletons
 (palette copies from `../shell/Commons/` plus a greeter `Config.qml`); the Nix
 build (`../packages/marchyo-shell/package.nix`) regenerates them with the
