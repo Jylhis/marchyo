@@ -115,7 +115,10 @@ Item {
         return top.entry.name.toLowerCase().startsWith(q.toLowerCase()) ? top.entry.name : "";
     }
 
-    implicitHeight: list.count > 0 ? list.implicitHeight : rowHeight
+    // ListView.implicitHeight is 0 even with delegates (verified offscreen),
+    // so size from contentHeight capped at the max rows; the ListView itself
+    // anchors to this item's height.
+    implicitHeight: list.count > 0 ? Math.min(list.contentHeight, rowHeight * maxResults + Style.spacing * (maxResults - 1)) : rowHeight
 
     ListView {
         id: list
