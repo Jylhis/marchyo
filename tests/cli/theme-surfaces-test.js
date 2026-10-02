@@ -7,7 +7,7 @@
 // lists are hand-maintained on opposite sides of a language boundary with no
 // type system spanning them: add a fifth relink target in the CLI, forget the
 // Nix list, and the next `home-manager switch` fails with "would be clobbered"
-// — the bug 447aec5 fixed. This is the guard.
+// (the bug 447aec5 fixed). This is the guard.
 //
 // Direction matters: the CLI's set must be a SUBSET of the Nix list. Nix may
 // list more (the marchyo/current-theme pointer is repointed through a different

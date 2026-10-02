@@ -7,7 +7,7 @@ import { existsSync, rmSync } from "node:fs";
 // running unprivileged with our XDG override they go under /tmp.
 //
 // Unprivileged, /etc/marchyo is either absent (nothing to do) or a root-owned
-// directory this process must not touch — rmSync would throw EACCES and fail
+// directory this process must not touch, so rmSync would throw EACCES and fail
 // the whole file. Only reclaim what we could have created.
 afterAll(() => {
   try {

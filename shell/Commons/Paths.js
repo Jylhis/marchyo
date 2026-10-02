@@ -4,7 +4,7 @@
 //
 // Same dual-citizenship arrangement as Format.js (see its header): QML imports
 // this directly and ignores the CommonJS guard at the bottom. Must stay pure:
-// no Qt types, no globals, no I/O — the caller passes the env values in, since
+// no Qt types, no globals, no I/O: the caller passes the env values in, since
 // Quickshell.env is not available to Node.
 
 // $XDG_<X>_HOME if set, else `fallback` under $HOME. Per the basedir spec an
