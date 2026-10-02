@@ -152,6 +152,14 @@ ShellRoot {
 
         color: Color.bg
 
+        // Multi-monitor cage (-m extend) fullscreens this window across the
+        // union of outputs; centering on the window would straddle the bezel
+        // gap. Center on the primary (first) output's portion instead. On a
+        // single-monitor host primary.width == surface.width (no change).
+        readonly property var primary: Quickshell.screens.values.length > 0 ? Quickshell.screens.values[0] : null
+        readonly property real primaryW: primary ? primary.width : surface.width
+        readonly property real primaryH: primary ? primary.height : surface.height
+
         Component.onCompleted: userField.forceActiveFocus()
 
         // Focus follows the protocol: a fresh prompt focuses the secret
@@ -168,7 +176,10 @@ ShellRoot {
         }
 
         Column {
-            anchors.centerIn: parent
+            id: clockColumn
+
+            x: surface.primaryW / 2 - implicitWidth / 2
+            y: surface.primaryH / 2 - implicitHeight / 2
             spacing: Style.spacing * 4
 
             // Qt.formatDateTime is a valid QML global; qmllint's Qt type
@@ -325,9 +336,8 @@ ShellRoot {
         }
 
         Row {
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: Style.panelGap * 2
+            x: surface.primaryW - width - Style.panelGap * 2
+            y: surface.primaryH - height - Style.panelGap * 2
             spacing: Style.spacing * 2
 
             PowerButton {
