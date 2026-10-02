@@ -17,6 +17,8 @@ Rectangle {
     // wide capsules next to text widgets.
     property bool compact: false
     readonly property int padH: root.compact ? Math.ceil(Style.paddingH / 2) : Style.paddingH
+    // Clip + ElideRight when a layout cap makes us narrower than the text.
+    property bool elide: false
     // Empty = no tooltip.
     property string tooltipText: ""
 
@@ -32,6 +34,9 @@ Rectangle {
     Text {
         id: label
         anchors.centerIn: parent
+        width: root.elide ? Math.min(implicitWidth, parent.width - root.padH * 2) : implicitWidth
+        elide: root.elide ? Text.ElideRight : Text.ElideNone
+        clip: root.elide
         color: root.textColor
         font.family: Style.fontFamily
         font.pixelSize: Style.fontSize

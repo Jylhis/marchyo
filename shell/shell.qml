@@ -407,6 +407,10 @@ ShellRoot {
                             sourceComponent: shell.componentFor(modelData.id)
                             onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
                             Layout.alignment: Qt.AlignVCenter
+                            // The active-window title is the only unbounded
+                            // left widget; cap it at a quarter of the output so
+                            // it can never reach the centered clock.
+                            Layout.maximumWidth: modelData.id === "marchyo.activeWindow" ? barWin.width * 0.25 : -1
                         }
                     }
                 }
