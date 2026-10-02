@@ -30,9 +30,23 @@ WlSessionLock {
     WlSessionLockSurface {
         id: surface
 
+        // The output that owns the interactive card. Every output stays locked
+        // (protocol), but only one shows the password field.
+        readonly property bool isFocused: Lock.focusScreen.length === 0 || surface.screen.name === Lock.focusScreen
+
         // Opaque by construction: the surface color is what the compositor shows
         // if the QML scene fails, never bind a translucent value.
         color: Color.bg
+
+        // Clicking a non-focused output moves the card there. Declared before
+        // the Column so the card (and its own field MouseArea) draws on top.
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                Lock.focusScreen = surface.screen.name;
+                input.forceActiveFocus();
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -64,7 +78,7 @@ WlSessionLock {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible: Lock.message.length > 0
+                    visible: surface.isFocused && Lock.message.length > 0
                     text: Lock.message
                     color: Lock.messageIsError ? Color.statusErr : Color.textMuted
                     font.family: Style.fontFamily
@@ -75,6 +89,7 @@ WlSessionLock {
                     id: field
 
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible: surface.isFocused
                     width: Style.fontSize * 24
                     height: Style.fontSize * 2.5
                     color: Color.surface
