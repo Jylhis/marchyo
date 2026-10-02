@@ -1,0 +1,5 @@
+# typos (run via treefmt, see treefmt.nix) false-positive allow-list.
+# Keep this minimal: only genuine terms typos misreads as misspellings.
+[default.extend-words]
+# "AGS" = Aylur's GTK Shell (named in the roadmap's source-repo list).
+AGS = "AGS"
