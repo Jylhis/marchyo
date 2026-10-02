@@ -344,6 +344,38 @@ in
     # base16 palette, then materializes a runtime theme dir from the result.
     home.packages = [ pkgs.matugen ];
 
+    # `marchyo theme set/next` repoints HM-managed symlinks at theme dirs
+    # (activateThemeDir in the CLI), and `theme generate` points the pointer
+    # at the CLI-owned matugen dir in state. HM's collision check treats any
+    # such link as foreign, and neither backupFileExtension nor backupCommand
+    # applies (both require a regular file), so activation fails with "would
+    # be clobbered" until the links are removed by hand. Restore them to
+    # unmanaged state just before the collision check; linkGeneration below
+    # then re-creates them declaratively — exactly the ephemeral-overlay
+    # reset documented at the top of this module. Only links whose readlink
+    # target is a marchyo theme location are touched; real files fall
+    # through to the regular backup path.
+    home.activation.resetThemeRuntimeSurfaces = lib.hm.dag.entryBefore [ "checkLinkTargets" ] (
+      let
+        runtimeSurfaces = [
+          "${config.xdg.configHome}/gtk-3.0/gtk.css"
+          "${config.xdg.configHome}/gtk-4.0/gtk.css"
+          "${config.xdg.configHome}/mako/config"
+          "${config.xdg.configHome}/waybar/style.css"
+          "${config.xdg.configHome}/marchyo/current-theme"
+        ];
+      in
+      ''
+        for p in ${lib.concatStringsSep " " (map lib.escapeShellArg runtimeSurfaces)}; do
+          if [ -L "$p" ]; then
+            case "$(readlink "$p")" in
+              *-marchyo-theme-*|${lib.escapeShellArg "${config.xdg.stateHome}/marchyo/generated-theme"}*) rm -f -- "$p" ;;
+            esac
+          fi
+        done
+      ''
+    );
+
     # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
     xdg.configFile."marchyo/current-theme".source = themeDirs.${buildVariant};
 
