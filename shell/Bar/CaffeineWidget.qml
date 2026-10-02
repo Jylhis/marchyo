@@ -10,6 +10,7 @@ BarItem {
     id: root
 
     interactive: true
+    compact: true
     text: Caffeine.active ? "󰅶" : "󰾪"
     textColor: Caffeine.active ? Color.accent : Color.textMuted
     tooltipText: Caffeine.active ? "Caffeine on — screen stays awake" : "Caffeine off"

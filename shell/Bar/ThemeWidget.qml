@@ -10,6 +10,7 @@ BarItem {
 
     interactive: true
     visible: Theme.known
+    compact: true
     text: Theme.variant === "light" ? "󰖙" : "󰖔"
     textColor: Color.textMuted
     tooltipText: Theme.name.length > 0 ? "Theme: " + Theme.name + " — click to cycle" : "Cycle theme"

@@ -5,6 +5,7 @@ import qs.Commons
 // Power profile indicator, mirroring waybar's power-profiles-daemon widget.
 BarItem {
     interactive: true
+    compact: true
     text: {
         switch (PowerProfiles.profile) {
         case PowerProfile.PowerSaver:

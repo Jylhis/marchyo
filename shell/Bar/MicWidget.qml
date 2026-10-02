@@ -10,6 +10,7 @@ BarItem {
 
     visible: Audio.micInUse
     interactive: true
+    compact: true
     text: "󰍬"
     textColor: Color.statusWarn
     tooltipText: {

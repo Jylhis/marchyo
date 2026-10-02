@@ -13,6 +13,10 @@ Rectangle {
     property color textColor: Color.text
     // Hover highlight + pointer cursor; leave false for passive readouts.
     property bool interactive: false
+    // Glyph-only widgets take half padding so single icons don't render as
+    // wide capsules next to text widgets.
+    property bool compact: false
+    readonly property int padH: root.compact ? Math.ceil(Style.paddingH / 2) : Style.paddingH
     // Empty = no tooltip.
     property string tooltipText: ""
 
@@ -21,7 +25,7 @@ Rectangle {
     // Mouse-wheel delta (QWheelEvent.angleDelta.y): > 0 up, < 0 down.
     signal wheel(int delta)
 
-    implicitWidth: label.implicitWidth + Style.paddingH * 2
+    implicitWidth: label.implicitWidth + root.padH * 2
     implicitHeight: Style.barHeight
     color: (root.interactive && mouse.containsMouse) ? Color.surface : "transparent"
 
