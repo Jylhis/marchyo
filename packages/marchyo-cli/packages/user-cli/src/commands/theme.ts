@@ -18,6 +18,7 @@ import {
   dconfWriteArgv,
   declarativePointerPath,
   err,
+  fzfOptsFromBase16,
   ghosttyConfFromBase16,
   hint,
   hyprctlEvalArgv,
@@ -442,10 +443,19 @@ export const generateThemeChangeBase: ChangeSpec = {
     await writeFile(join(dir, "variant"), `${variant}\n`);
     await writeFile(join(dir, "hyprland.conf"), hyprlandConfFromBase16(base16));
     await writeFile(join(dir, "ghostty.conf"), ghosttyConfFromBase16(base16));
+    await writeFile(join(dir, "fzf.opts"), fzfOptsFromBase16(base16));
     // The source image becomes the theme dir's wallpaper (activateThemeDir
     // reads `wallpaper.png`); relinkConfig gives an atomic symlink swap.
     await relinkConfig(spec.image, join(dir, "wallpaper.png"));
 
+    // Known limitation: unlike a manifest `theme set`, generate does NOT emit
+    // mako.conf / waybar.css / gtk.css, so those surfaces keep the previously
+    // active theme. Faithfully recolouring them would need the current theme's
+    // *full* token→hex (incl. the syn-* tokens waybar/gtk use), but colors.json
+    // is deliberately the shell subset (no syn-*), so the data is not available
+    // at runtime. The build-time path (mkSchemeThemeDir in theme-runtime.nix)
+    // has the full palette and does recolour them; a wallpaper theme that needs
+    // those surfaces should be added to marchyo.theme.themes instead.
     await activateThemeDir(ctx, { name: "generated", variant, dir });
     return raw;
   },

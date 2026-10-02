@@ -197,6 +197,36 @@ let
   # (modules/home/ghostty.nix).
   ghosttyThemePair = "dark:${ghosttyThemeFor "dark"},light:${ghosttyThemeFor "light"}";
 
+  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix.
+  # Emitted per theme as `fzf.opts` and read live via FZF_DEFAULT_OPTS_FILE
+  # (set in the config block): fzf reads the file before FZF_DEFAULT_OPTS, and
+  # the pointer path is stable, so repointing current-theme recolours every new
+  # fzf launch (including from already-open shells) with no re-login.
+  # `resolve` maps a semantic-token name to a hex; `green` is the ANSI green the
+  # `marker` role uses.
+  fzfOptsText =
+    resolve: green:
+    "--color="
+    + lib.concatStringsSep "," [
+      "fg:${resolve "text"}"
+      "bg:${resolve "bg"}"
+      "hl:${resolve "accent"}"
+      "fg+:${resolve "text-heading"}"
+      "bg+:${resolve "accent-subtle"}"
+      "hl+:${resolve "accent-hover"}"
+      "info:${resolve "text-muted"}"
+      "marker:${green}"
+      "prompt:${resolve "accent"}"
+      "spinner:${resolve "accent"}"
+      "pointer:${resolve "accent"}"
+      "header:${resolve "text-muted"}"
+      "border:${resolve "border"}"
+      "separator:${resolve "border"}"
+      "gutter:${resolve "bg"}"
+    ]
+    + "\n";
+  fzfOptsForJylhis = v: fzfOptsText (t: palettes.${v}.hex.${t}) palettes.${v}.ansi.green;
+
   themeDirFor =
     v:
     pkgs.linkFarm "marchyo-theme-${v}" (
@@ -225,6 +255,9 @@ let
       }
       // lib.optionalAttrs (batConfig != null) {
         "bat.conf" = pkgs.writeText "marchyo-theme-${v}-bat.conf" (batConfigWithTheme "jylhis-${v}");
+      }
+      // {
+        "fzf.opts" = pkgs.writeText "marchyo-theme-${v}-fzf.opts" (fzfOptsForJylhis v);
       }
     );
 
@@ -304,6 +337,8 @@ let
     scheme: recolorWith "scheme ${scheme.name}" (map (schemeHexForToken scheme) tokenNames);
   # gtk also carries the shade literal; map it to the scheme's text (base05).
   swapGtkToScheme = scheme: text: swapShade scheme.slots.base05 (swapToScheme scheme text);
+
+  fzfOptsForScheme = scheme: fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
 
   schemeHyprlandKeywords = scheme: ''
     misc:background_color ${rgb scheme.slots.base00}
@@ -387,6 +422,9 @@ let
           batConfigWithTheme scheme.name
         );
       }
+      // {
+        "fzf.opts" = pkgs.writeText "marchyo-theme-${scheme.name}-fzf.opts" (fzfOptsForScheme scheme);
+      }
     );
 
   themeList =
@@ -469,6 +507,13 @@ in
     # compiles them into the theme cache; the per-theme bat.conf then selects
     # one by name at runtime (relinked into ~/.config/bat/config, below).
     programs.bat.themes = schemeBatThemes;
+
+    # fzf reads its `--color` from this file (before FZF_DEFAULT_OPTS) at every
+    # launch. The path is the stable current-theme pointer, so `marchyo theme
+    # set/next` recolours new fzf runs live with no re-login; fzf.nix drops its
+    # build-time `programs.fzf.colors` on desktop so this file wins. The theme
+    # dir always ships fzf.opts, so the file is never missing.
+    home.sessionVariables.FZF_DEFAULT_OPTS_FILE = "${config.xdg.configHome}/marchyo/current-theme/fzf.opts";
 
     # `marchyo theme set/next` repoints HM-managed symlinks at theme dirs
     # (activateThemeDir in the CLI), and `theme generate` points the pointer
