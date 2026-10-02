@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   osConfig ? { },
@@ -15,26 +16,26 @@ let
   hasOsConfig = osConfig != { } && osConfig ? marchyo;
   cfg = if hasOsConfig then osConfig.marchyo.theme else null;
 
-  themeVariant = if cfg != null then cfg.variant else "dark";
-  palette = import ../generic/jylhis-palette.nix {
-    inherit pkgs lib;
-    variant = themeVariant;
-  };
-
   fontScale = if cfg != null then cfg.fontScale else 1.0;
   fs = import ../../lib/font-scale.nix {
     inherit lib;
     scale = fontScale;
   };
 
-  hexNoHash = lib.removePrefix "#";
-  rgba = h: a: "rgba(${hexNoHash h}${a})";
+  # Colours come from the runtime theme layer's per-theme include (hyprlang
+  # `$bg`/`$text`/… vars), sourced first so `marchyo theme set/next` restyles the
+  # next lock with no rebuild. See modules/home/theme-runtime.nix
+  # (hyprlockColorsFor). Only geometry/fontScale stay build-time here.
+  colorsInclude = "${config.xdg.configHome}/marchyo/current-theme/hyprlock-colors.conf";
 in
 {
   config = mkIf (desktopEnabled && !shellEnabled) {
     programs.hyprlock = {
       enable = true;
+      sourceFirst = true;
       settings = mkIf (cfg != null && cfg.enable) {
+        source = colorsInclude;
+
         general = {
           disable_loading_bar = true;
           grace = 10;
@@ -57,7 +58,7 @@ in
         background = [
           {
             monitor = "";
-            color = rgba palette.hex.bg "ff";
+            color = "$bg";
           }
         ];
 
@@ -65,7 +66,7 @@ in
           monitor = "";
           text = "$FPRINTPROMPT";
           text_align = "center";
-          color = rgba palette.hex.text "ff";
+          color = "$text";
           font_size = fs.round 24;
           font_family = "BlexMono Nerd Font";
           position = "0, -100";
@@ -81,11 +82,11 @@ in
           valign = "center";
 
           outline_thickness = 2;
-          outer_color = rgba palette.hex."border-strong" "ff";
-          inner_color = rgba palette.hex.surface "ff";
-          font_color = rgba palette.hex.text "ff";
-          check_color = rgba palette.hex.accent "ff";
-          fail_color = rgba palette.hex."status-err" "ff";
+          outer_color = "$borderStrong";
+          inner_color = "$surface";
+          font_color = "$text";
+          check_color = "$accent";
+          fail_color = "$statusErr";
 
           font_family = "BlexMono Nerd Font";
           font_size = fs.round 32;

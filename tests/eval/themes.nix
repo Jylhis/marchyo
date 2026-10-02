@@ -183,6 +183,23 @@ in
         marchyo.desktop.enable = true;
       });
 
+  # Runtime hyprlock theming: colours come from the current-theme include,
+  # sourced first, and the lock config references the hyprlang vars.
+  eval-themes-hyprlock-runtime =
+    testNixOSCheck "themes-hyprlock-runtime"
+      (
+        cfg:
+        let
+          hl = cfg.home-manager.users.testuser.programs.hyprlock;
+        in
+        hl.sourceFirst == true
+        && lib.hasInfix "current-theme/hyprlock-colors.conf" (hl.settings.source or "")
+        && (builtins.elemAt hl.settings.background 0).color == "$bg"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
   # Off the desktop (no runtime layer) fzf keeps its build-time colours.
   eval-themes-fzf-nondesktop-colors =
     testNixOSCheck "themes-fzf-nondesktop-colors"
