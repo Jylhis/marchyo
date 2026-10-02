@@ -143,6 +143,27 @@ in
         ];
       });
 
+  # Runtime bat theming: a base16 scheme in marchyo.theme.themes registers a
+  # generated tmTheme via programs.bat.themes so bat.nix's `bat cache --build`
+  # compiles it; the Jylhis pair ships its own tmThemes and adds none here.
+  eval-themes-bat-scheme =
+    testNixOSCheck "themes-bat-scheme"
+      (
+        cfg:
+        let
+          themes = cfg.home-manager.users.testuser.programs.bat.themes;
+        in
+        themes ? nord && !(themes ? jylhis-dark)
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.themes = [
+          "jylhis-dark"
+          "jylhis-light"
+          "nord"
+        ];
+      });
+
   # Unknown names must fail eval (the base16-scheme loader throws with a
   # marchyo.theme.themes hint).
   eval-themes-unknown-name = assertTest "themes-unknown-name" (

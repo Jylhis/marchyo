@@ -34,15 +34,16 @@ let
     light = mkPalette "light";
   };
 
-  # Semantic-token hex translation: build variant → other variant.
+  # Semantic-token hex translation: build variant → other variant (and, below,
+  # → each base16 scheme). tokenNames is the stable `from` order for every swap.
   tokenNames = lib.attrNames palettes.dark.hex;
   hexesFor = v: map (n: palettes.${v}.hex.${n}) tokenNames;
-  swapToOther = builtins.replaceStrings (hexesFor buildVariant) (hexesFor otherVariant);
+  buildHexes = hexesFor buildVariant;
 
-  # The generated gtk css expresses shade_color as rgba(<text token>, 0.08), a
-  # decimal-literal form the hex swap above cannot translate. It is the only
-  # such literal in any swapped surface (mako/waybar carry none), so translate
-  # it alongside.
+  # shade_color is the one decimal-literal colour the hex swap cannot reach: the
+  # generated gtk css carries `rgba(<text rgb>, 0.08)` (mako/waybar carry none).
+  # Translate it to the target palette's text rgb alongside the hex swap — for
+  # the jylhis other variant (textFor) and every base16 scheme (swapGtkToScheme).
   hexByte = import ../../lib/hex-byte.nix { inherit lib; };
   rgbTriple =
     h:
@@ -51,14 +52,78 @@ let
       2
       4
     ];
-  textRgbaFor = v: "rgba(${lib.concatStringsSep ", " (rgbTriple palettes.${v}.hex.text)}, 0.08)";
-  swapShadeRgba =
-    if buildVariant == "dark" then
-      builtins.replaceStrings [ (textRgbaFor "dark") ] [ (textRgbaFor "light") ]
-    else
-      builtins.replaceStrings [ (textRgbaFor "light") ] [ (textRgbaFor "dark") ];
+  shadeRgba = h: "rgba(${lib.concatStringsSep ", " (rgbTriple h)}, 0.08)";
+  swapShade =
+    targetTextHex:
+    builtins.replaceStrings
+      [ (shadeRgba palettes.${buildVariant}.hex.text) ]
+      [ (shadeRgba targetTextHex) ];
 
-  textFor = v: text: if v == buildVariant then text else swapShadeRgba (swapToOther text);
+  # Guard the textual hex swap. `builtins.replaceStrings` applies the first
+  # matching `from`, so two tokens that share a build-variant hex but diverge in
+  # the target silently mis-colour the loser (e.g. status-info and syn-variable
+  # are both #005e8a in light); and a colour literal that is not a build-variant
+  # token hex (a hardcoded colour, an uppercase/shorthand/8-digit hex, an
+  # ANSI-only value) would ship untranslated. Both fail the build here. Scoped
+  # to the hexes a surface actually carries, so an unused collision elsewhere in
+  # the palette is never a false positive.
+  #
+  # A colour literal is a `#` hex run whose following char is not an identifier
+  # char, so a waybar CSS id selector (`#cpu`, `#battery`) — a `#` run butting
+  # straight into more letters — is not mistaken for a colour. A shorthand or
+  # 8-digit hex colour therefore still counts and, not being a 6-digit token
+  # hex, is reported as unswappable.
+  isIdentChar = c: builtins.match "[0-9A-Za-z_-]" c != null;
+  hexRunsIn =
+    text:
+    let
+      parts = builtins.split "#([0-9a-fA-F]+)" text;
+      n = builtins.length parts;
+      colorAt =
+        i:
+        let
+          after = if i + 1 < n then builtins.elemAt parts (i + 1) else "";
+        in
+        lib.optional (after == "" || !(isIdentChar (builtins.substring 0 1 after))) (
+          "#" + builtins.head (builtins.elemAt parts i)
+        );
+    in
+    lib.concatMap (i: if builtins.isList (builtins.elemAt parts i) then colorAt i else [ ]) (
+      lib.range 0 (n - 1)
+    );
+  targetsForHex =
+    tos: hx:
+    lib.unique (
+      lib.concatMap (i: lib.optional (builtins.elemAt buildHexes i == hx) (builtins.elemAt tos i)) (
+        lib.range 0 (builtins.length buildHexes - 1)
+      )
+    );
+  assertRecolorable =
+    label: tos: text:
+    let
+      present = lib.unique (hexRunsIn text);
+      unswappable = lib.filter (hx: !(builtins.elem hx buildHexes)) present;
+      ambiguous = lib.filter (hx: builtins.length (targetsForHex tos hx) > 1) present;
+    in
+    if unswappable != [ ] then
+      throw "theme-runtime (${label}): ${toString unswappable} not build-variant token hex(es); surface would ship untranslated"
+    else if ambiguous != [ ] then
+      throw "theme-runtime (${label}): ${toString ambiguous} map to >1 target hex; surface hex swap is ambiguous"
+    else
+      text;
+
+  # A checked textual recolour: assert, then replaceStrings.
+  recolorWith =
+    label: tos: text:
+    builtins.replaceStrings buildHexes tos (assertRecolorable label tos text);
+
+  swapToOther = recolorWith "jylhis ${buildVariant}->${otherVariant}" (hexesFor otherVariant);
+
+  # Applied to mako/waybar/gtk; swapShade is a no-op on the first two (they
+  # carry no shade literal), so a uniform path is safe.
+  textFor =
+    v: text:
+    if v == buildVariant then text else swapShade palettes.${otherVariant}.hex.text (swapToOther text);
 
   # Resolved single-variant sources to translate. Both are marchyo-owned
   # (Stylix targets disabled in modules/generic/theme.nix), so every color in
@@ -86,6 +151,28 @@ let
       config.xdg.configFile."gtk-3.0/gtk.css".text
     else
       null;
+
+  # Resolved bat config (modules/home/bat.nix writes `--theme=jylhis-<variant>`
+  # plus non-theme lines like --map-syntax). bat resolves a theme by its cache
+  # entry's filename stem, so a runtime switch is a `--theme=` line swap: take
+  # the build config text and repoint only that line per target theme, leaving
+  # every other line intact. The two possible build values are the Jylhis pair,
+  # so swapping both covers either build variant. Each theme's tmTheme must be
+  # in bat's cache: the Jylhis pair ships in pkgs.jylhis-themes (installed by
+  # bat.nix); scheme/inline tmThemes are generated and registered via
+  # programs.bat.themes below so `bat cache --build` picks them up at activation.
+  batConfig =
+    if config.programs.bat.enable or false && config.xdg.configFile ? "bat/config" then
+      config.xdg.configFile."bat/config".text
+    else
+      null;
+  batConfigWithTheme =
+    themeName:
+    builtins.replaceStrings
+      [ "--theme=jylhis-dark" "--theme=jylhis-light" ]
+      [ "--theme=${themeName}" "--theme=${themeName}" ]
+      batConfig;
+  batTmTheme = import ../../lib/base16-tmtheme.nix { inherit lib; };
 
   wallpaperCfg = themeCfg.wallpaper or { };
   wallpaperEnabled = wallpaperCfg.enable or true;
@@ -136,6 +223,9 @@ let
       // lib.optionalAttrs (gtkCss != null) {
         "gtk.css" = pkgs.writeText "marchyo-theme-${v}-gtk.css" (textFor v gtkCss);
       }
+      // lib.optionalAttrs (batConfig != null) {
+        "bat.conf" = pkgs.writeText "marchyo-theme-${v}-bat.conf" (batConfigWithTheme "jylhis-${v}");
+      }
     );
 
   themeDirs = {
@@ -172,10 +262,15 @@ let
     builtins.toJSON { inherit name variant colors; };
 
   # Token → base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
-  # base16 attrset; the extras (border/hover/subtle/ok/comment) get the
-  # closest slot by role. Tokens absent from this table translate to their
-  # build-variant hex (identity) — they don't appear in the swapped
-  # surfaces (mako/waybar/hyprland keywords, see the grep-audited list).
+  # base16 attrset; the extras get the closest slot by role, which for a tinted
+  # scheme is lossy (border/syn-comment collapse onto text-faint's base03,
+  # accent-hover onto accent's base09, accent-subtle onto bg-subtle's base01).
+  # The jylhis light/dark swap never uses this table — swapToOther is exact per
+  # token. `cursor` must share accent's slot: it is the same hex as accent, so
+  # without it the (unused) cursor token would map a shared surface hex (#f5a351
+  # / #693900) to two targets and trip assertRecolorable. Any token still absent
+  # from this table keeps its build-variant hex (identity); keep this in lockstep
+  # with TOKEN_SLOTS in packages/marchyo-cli/packages/core/src/matugen.ts.
   tokenSlots = {
     bg = "base00";
     "bg-subtle" = "base01";
@@ -187,6 +282,7 @@ let
     "text-heading" = "base06";
     "status-err" = "base08";
     accent = "base09";
+    cursor = "base09";
     "status-warn" = "base0A";
     "syn-string" = "base0B";
     "syn-type" = "base0C";
@@ -205,7 +301,9 @@ let
     scheme: n:
     if tokenSlots ? ${n} then scheme.slots.${tokenSlots.${n}} else palettes.${buildVariant}.hex.${n};
   swapToScheme =
-    scheme: builtins.replaceStrings (hexesFor buildVariant) (map (schemeHexForToken scheme) tokenNames);
+    scheme: recolorWith "scheme ${scheme.name}" (map (schemeHexForToken scheme) tokenNames);
+  # gtk also carries the shade literal; map it to the scheme's text (base05).
+  swapGtkToScheme = scheme: text: swapShade scheme.slots.base05 (swapToScheme scheme text);
 
   schemeHyprlandKeywords = scheme: ''
     misc:background_color ${rgb scheme.slots.base00}
@@ -282,7 +380,12 @@ let
         );
       }
       // lib.optionalAttrs (gtkCss != null) {
-        "gtk.css" = pkgs.writeText "marchyo-theme-${scheme.name}-gtk.css" (swapToScheme scheme gtkCss);
+        "gtk.css" = pkgs.writeText "marchyo-theme-${scheme.name}-gtk.css" (swapGtkToScheme scheme gtkCss);
+      }
+      // lib.optionalAttrs (batConfig != null) {
+        "bat.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-bat.conf" (
+          batConfigWithTheme scheme.name
+        );
       }
     );
 
@@ -303,12 +406,14 @@ let
           name = entry;
           variant = "dark";
           dir = themeDirs.dark;
+          scheme = null;
         }
       else if entry == "jylhis-light" then
         {
           name = entry;
           variant = "light";
           dir = themeDirs.light;
+          scheme = null;
         }
       else
         let
@@ -317,13 +422,34 @@ let
         {
           inherit (scheme) name variant;
           dir = mkSchemeThemeDir scheme;
+          inherit scheme;
         }
     else
       {
         inherit (entry) name variant;
         dir = mkSchemeThemeDir entry;
+        scheme = entry;
       };
   resolvedThemes = map resolveTheme themeList;
+
+  # base16 scheme/inline themes have no shipped bat tmTheme; generate one per
+  # scheme and register it so bat.nix's activation `bat cache --build` compiles
+  # it into the theme cache. The Jylhis pair (scheme == null) already ships its
+  # tmThemes via bat.nix. Keyed by theme name = bat filename stem = the
+  # `--theme=` value each scheme dir's bat.conf points at.
+  schemeBatThemes = lib.listToAttrs (
+    map (
+      t:
+      lib.nameValuePair t.name {
+        # The HM bat `themes` submodule takes { src; file?; }: a bare src file
+        # installs verbatim (file defaults to null). Generate the tmTheme to a
+        # store file rather than passing the deprecated string form.
+        src = pkgs.writeText "${t.name}.tmTheme" (batTmTheme {
+          inherit (t.scheme) name slots;
+        });
+      }
+    ) (lib.filter (t: t.scheme != null) resolvedThemes)
+  );
 
   manifest = builtins.toJSON (
     map (t: {
@@ -339,6 +465,11 @@ in
     # base16 palette, then materializes a runtime theme dir from the result.
     home.packages = [ pkgs.matugen ];
 
+    # Register generated base16 tmThemes so bat.nix's `bat cache --build`
+    # compiles them into the theme cache; the per-theme bat.conf then selects
+    # one by name at runtime (relinked into ~/.config/bat/config, below).
+    programs.bat.themes = schemeBatThemes;
+
     # `marchyo theme set/next` repoints HM-managed symlinks at theme dirs
     # (activateThemeDir in the CLI), and `theme generate` points the pointer
     # at the CLI-owned matugen dir in state. HM's collision check treats any
@@ -349,7 +480,11 @@ in
     # then re-creates them declaratively — exactly the ephemeral-overlay
     # reset documented at the top of this module. Only links whose readlink
     # target is a marchyo theme location are touched; real files fall
-    # through to the regular backup path.
+    # through to the regular backup path. A *foreign* symlink on one of these
+    # paths (target matching neither pattern — e.g. one a user or another tool
+    # created) is deliberately left in place, so activation then aborts with
+    # "would be clobbered" until it is removed by hand; we do not delete links
+    # we did not create.
     home.activation.resetThemeRuntimeSurfaces = lib.hm.dag.entryBefore [ "checkLinkTargets" ] (
       let
         runtimeSurfaces = [
@@ -357,6 +492,7 @@ in
           "${config.xdg.configHome}/gtk-4.0/gtk.css"
           "${config.xdg.configHome}/mako/config"
           "${config.xdg.configHome}/waybar/style.css"
+          "${config.xdg.configHome}/bat/config"
           "${config.xdg.configHome}/marchyo/current-theme"
         ];
       in
