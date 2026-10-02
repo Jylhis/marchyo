@@ -5,9 +5,17 @@ import { existsSync, rmSync } from "node:fs";
 // Clean up any state file the smoke tests below may have written.
 // Running as root (e.g. in a CI sandbox) writes go to /etc/marchyo;
 // running unprivileged with our XDG override they go under /tmp.
+//
+// Unprivileged, /etc/marchyo is either absent (nothing to do) or a root-owned
+// directory this process must not touch — rmSync would throw EACCES and fail
+// the whole file. Only reclaim what we could have created.
 afterAll(() => {
-  rmSync("/etc/marchyo/cli-state.json", { force: true });
-  rmSync("/etc/marchyo", { recursive: true, force: true });
+  try {
+    rmSync("/etc/marchyo/cli-state.json", { force: true });
+    rmSync("/etc/marchyo", { recursive: true, force: true });
+  } catch {
+    // Not ours to remove; the sandbox run that created it cleans up its own.
+  }
 });
 
 const REPO = join(import.meta.dir, "..", "..", "..");
@@ -18,7 +26,9 @@ async function run(
   env: Record<string, string> = {},
   cwd?: string,
 ): Promise<{ code: number; stdout: string; stderr: string }> {
-  const proc = Bun.spawn(["bun", CLI, ...args], {
+  // process.execPath, not "bun": a test that neutralizes PATH (to assert a
+  // tool-missing path) must still be able to launch the interpreter.
+  const proc = Bun.spawn([process.execPath, CLI, ...args], {
     cwd,
     stdout: "pipe",
     stderr: "pipe",
@@ -513,22 +523,20 @@ test("capture record with an invalid audio source exits 2", async () => {
   expect(r.stderr).toContain("invalid audio source");
 });
 
+// PATH="" is what makes these two assertions unconditional: commandAvailable
+// walks $PATH, so an empty one guarantees the tool-missing branch. Without it
+// a developer host that actually has grimblast launches an interactive area
+// selection and the test hangs until the 5s timeout instead of asserting.
 test("capture screenshot without grimblast fails cleanly", async () => {
-  // The sandbox has no desktop tools; the command must error (exit 1),
-  // not crash, and name the missing tool.
-  const r = await run(["capture", "screenshot"]);
-  if (r.code !== 0) {
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("grimblast");
-  }
+  const r = await run(["capture", "screenshot"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("grimblast");
 });
 
 test("capture color without hyprpicker fails cleanly", async () => {
-  const r = await run(["capture", "color"]);
-  if (r.code !== 0) {
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("hyprpicker");
-  }
+  const r = await run(["capture", "color"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("hyprpicker");
 });
 
 test("zoom with a bad direction exits 2", async () => {
@@ -558,7 +566,10 @@ test("launch with a missing app fails cleanly", async () => {
 });
 
 test("keybindings outside Hyprland fails cleanly", async () => {
-  const r = await run(["keybindings"]);
+  // Empty, not absent: hyprlandAvailable treats "" as no session, and an
+  // inherited signature from the developer's own Hyprland would make this
+  // succeed and assert nothing.
+  const r = await run(["keybindings"], { HYPRLAND_INSTANCE_SIGNATURE: "" });
   expect(r.code).toBe(1);
   expect(r.stderr.length).toBeGreaterThan(0);
 });
