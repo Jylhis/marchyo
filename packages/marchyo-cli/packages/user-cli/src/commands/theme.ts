@@ -160,6 +160,16 @@ export async function activateThemeDir(
     );
   }
 
+  // bat: relink the per-theme config (a `--theme=<name>` line swap, see
+  // theme-runtime.nix). No reload signal: bat is a fresh process per run, so
+  // the next invocation reads the swapped config. The theme's tmTheme is
+  // already in bat's build-time cache (the Jylhis pair ships it; scheme themes
+  // are registered via programs.bat.themes), so this is a pure name swap.
+  const bat = join(entry.dir, "bat.conf");
+  if (existsSync(bat)) {
+    await relinkConfig(bat, join(configHome(), "bat", "config"));
+  }
+
   await safeExec(
     ctx,
     notifySendArgv("Theme", `Switched to ${entry.name}`),
