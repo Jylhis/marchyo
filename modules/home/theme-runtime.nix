@@ -227,6 +227,22 @@ let
     + "\n";
   fzfOptsForJylhis = v: fzfOptsText (t: palettes.${v}.hex.${t}) palettes.${v}.ansi.green;
 
+  # hyprlock colour include: hyprlang `$var` definitions the lock config sources
+  # (modules/home/hyprlock.nix, sourceFirst). hyprlock reads its config afresh at
+  # each lock and the source path is the stable current-theme pointer, so the
+  # next lock uses the current theme with no reload. Geometry/fontScale stay
+  # build-time in hyprlock.nix; only colours move here. `resolve` maps a
+  # semantic token to a hex.
+  hyprlockVarsFor = resolve: ''
+    $bg = ${rgba (resolve "bg") "ff"}
+    $text = ${rgba (resolve "text") "ff"}
+    $borderStrong = ${rgba (resolve "border-strong") "ff"}
+    $surface = ${rgba (resolve "surface") "ff"}
+    $accent = ${rgba (resolve "accent") "ff"}
+    $statusErr = ${rgba (resolve "status-err") "ff"}
+  '';
+  hyprlockColorsFor = v: hyprlockVarsFor (t: palettes.${v}.hex.${t});
+
   themeDirFor =
     v:
     pkgs.linkFarm "marchyo-theme-${v}" (
@@ -258,6 +274,11 @@ let
       }
       // {
         "fzf.opts" = pkgs.writeText "marchyo-theme-${v}-fzf.opts" (fzfOptsForJylhis v);
+      }
+      // {
+        "hyprlock-colors.conf" = pkgs.writeText "marchyo-theme-${v}-hyprlock-colors.conf" (
+          hyprlockColorsFor v
+        );
       }
     );
 
@@ -339,6 +360,7 @@ let
   swapGtkToScheme = scheme: text: swapShade scheme.slots.base05 (swapToScheme scheme text);
 
   fzfOptsForScheme = scheme: fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
+  hyprlockColorsForScheme = scheme: hyprlockVarsFor (schemeHexForToken scheme);
 
   schemeHyprlandKeywords = scheme: ''
     misc:background_color ${rgb scheme.slots.base00}
@@ -424,6 +446,11 @@ let
       }
       // {
         "fzf.opts" = pkgs.writeText "marchyo-theme-${scheme.name}-fzf.opts" (fzfOptsForScheme scheme);
+      }
+      // {
+        "hyprlock-colors.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-hyprlock-colors.conf" (
+          hyprlockColorsForScheme scheme
+        );
       }
     );
 
