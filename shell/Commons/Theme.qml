@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "Paths.js" as Paths
 
 // Runtime theme state: the one colors.json read for the whole seat.
 //
@@ -58,10 +59,7 @@ QtObject {
     readonly property bool known: variant !== ""
 
     function themePath(): string {
-        const config = Quickshell.env("XDG_CONFIG_HOME");
-        const home = Quickshell.env("HOME");
-        const base = config && config !== "" ? config : (home ?? "") + "/.config";
-        return base + "/marchyo/current-theme/colors.json";
+        return Paths.xdgDir(Quickshell.env("XDG_CONFIG_HOME"), Quickshell.env("HOME"), "/.config") + "/marchyo/current-theme/colors.json";
     }
 
     function apply(text: string): void {
