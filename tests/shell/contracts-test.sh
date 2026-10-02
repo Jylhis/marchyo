@@ -180,6 +180,20 @@ done
 check "every Commons/*.js keeps its CommonJS export guard" "$missing_exports"
 check "no Commons/*.js has a .pragma directive (Node cannot parse one)" "$has_pragma"
 
+# ── default bar layout ids resolve ───────────────────────────────────────────
+#
+# ShellConfig.defaultBar's ids resolve through shell.qml's barComponents map at
+# RUNTIME (a miss loads nothing and silently shrinks the bar). Defaults are all
+# first-party ids, so each must appear as a key in the barComponents map.
+
+unresolved_ids=""
+while read -r id; do
+  [[ -n $id ]] || continue
+  grep -q "\"$id\":" "$shell_qml" ||
+    unresolved_ids+="$id is in ShellConfig.defaultBar but not in shell.qml barComponents"$'\n'
+done < <(grep -oE 'id: "marchyo\.[a-zA-Z]+"' "$SHELL_DIR/Commons/ShellConfig.qml" | sed 's/id: "//;s/"//')
+check "every default bar layout id resolves in shell.qml barComponents" "$unresolved_ids"
+
 echo "----"
 echo "$pass passed, $fail failed"
 [[ $fail == 0 ]]
