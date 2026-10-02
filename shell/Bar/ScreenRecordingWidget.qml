@@ -11,6 +11,7 @@ BarItem {
 
     interactive: true
     visible: ScreenRecording.recording
+    compact: true
     text: "󰻂"
     textColor: Color.statusErr
     tooltipText: "Recording — click to stop"

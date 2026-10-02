@@ -19,6 +19,7 @@ BarItem {
 
     visible: adapter !== null
     interactive: true
+    compact: true
     text: !adapter || !adapter.enabled ? "󰂲" : (connected.length > 0 ? "󰂯 " + connected.length : "󰂯")
     textColor: (adapter && adapter.enabled) ? Color.text : Color.textFaint
     tooltipText: {

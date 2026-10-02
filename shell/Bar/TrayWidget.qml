@@ -19,6 +19,7 @@ RowLayout {
 
     BarItem {
         interactive: true
+        compact: true
         visible: root.itemCount > 0
         text: "·"
         tooltipText: root.expanded ? "Hide tray icons" : "Show tray icons"

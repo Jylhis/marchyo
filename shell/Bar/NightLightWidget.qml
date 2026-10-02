@@ -10,6 +10,7 @@ BarItem {
     id: root
 
     interactive: true
+    compact: true
     text: "󰔎"
     textColor: Nightlight.enabled ? Color.accent : Color.textMuted
     tooltipText: Nightlight.enabled ? "Night light on (warm)" : "Night light off"

@@ -12,6 +12,7 @@ BarItem {
 
     visible: Style.dictationIndicator
     interactive: true
+    compact: true
     // Falls back to a microphone glyph until the first status line arrives.
     text: Dictation.glyph.length > 0 ? Dictation.glyph : "󰍬"
     textColor: Dictation.state === "recording" ? Color.statusErr : (Dictation.state === "transcribing" ? Color.accent : Color.textMuted)
