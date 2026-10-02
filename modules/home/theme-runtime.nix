@@ -43,12 +43,7 @@ let
   # decimal-literal form the hex swap above cannot translate. It is the only
   # such literal in any swapped surface (mako/waybar carry none), so translate
   # it alongside.
-  hexDigit =
-    c:
-    lib.lists.findFirstIndex (x: x == lib.toLower c) (throw "invalid hex digit '${c}'") (
-      lib.stringToCharacters "0123456789abcdef"
-    );
-  hexByte = s: 16 * hexDigit (builtins.substring 0 1 s) + hexDigit (builtins.substring 1 1 s);
+  hexByte = import ../../lib/hex-byte.nix { inherit lib; };
   rgbTriple =
     h:
     map (o: toString (hexByte (builtins.substring o 2 (lib.removePrefix "#" h)))) [
