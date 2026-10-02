@@ -37,6 +37,7 @@ ShellRoot {
     // live here; plugin bar-widgets are resolved separately (Commons/PluginIndex)
     // in componentFor(). Ids mirror the default layout in Commons/ShellConfig.
     readonly property var barComponents: ({
+            "marchyo.separator": cSeparator,
             "marchyo.session": cSession,
             "marchyo.workspaces": cWorkspaces,
             "marchyo.activeWindow": cActiveWindow,
@@ -63,6 +64,10 @@ ShellRoot {
             "marchyo.battery": cBattery
         })
 
+    Component {
+        id: cSeparator
+        BarSeparator {}
+    }
     Component {
         id: cSession
         SessionWidget {}
@@ -401,6 +406,7 @@ ShellRoot {
                             required property var modelData
                             sourceComponent: shell.componentFor(modelData.id)
                             onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
                 }
@@ -416,6 +422,7 @@ ShellRoot {
                             required property var modelData
                             sourceComponent: shell.componentFor(modelData.id)
                             onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
                 }
@@ -432,6 +439,7 @@ ShellRoot {
                             required property var modelData
                             sourceComponent: shell.componentFor(modelData.id)
                             onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
+                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
                 }
