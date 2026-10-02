@@ -45,19 +45,34 @@ let
 
   # One check per build-time variant: the manifest instantiates (i.e. every
   # listed theme's assets evaluate), the current-theme pointer targets the
-  # build variant's assets, and ghostty reads the runtime include through it.
+  # build variant's assets, ghostty reads the runtime include through it, and
+  # the activation that restores runtime-repointed symlinks is ordered before
+  # HM's collision check (without it, a `marchyo theme set` followed by an
+  # activation fails with "would be clobbered": HM can back up foreign files
+  # but not foreign symlinks).
   checkVariant =
     variant:
     let
       hm = hmFor { marchyo.theme.variant = variant; };
       manifest = manifestText hm;
       pointer = hm.xdg.configFile."marchyo/current-theme" or null;
+      reset = hm.home.activation.resetThemeRuntimeSurfaces or null;
     in
     pkgs.writeText "eval-theme-runtime-${variant}" (
       if manifest == null then
         throw "FAIL: theme-runtime (${variant}): theme manifest not generated"
       else if pointer == null || !(lib.hasInfix "marchyo-theme-${variant}" (toString pointer.source)) then
         throw "FAIL: theme-runtime (${variant}): pointer missing or not targeting ${variant} assets"
+      else if reset == null then
+        throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces activation missing"
+      else if !(lib.elem "checkLinkTargets" reset.before) then
+        throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces not before checkLinkTargets"
+      else if !(lib.hasInfix "marchyo/current-theme" (toString reset.data)) then
+        throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces does not cover the pointer"
+      else if !(lib.hasInfix "marchyo-theme-" (toString reset.data)) then
+        throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces does not match manifest theme dirs"
+      else if !(lib.hasInfix "generated-theme" (toString reset.data)) then
+        throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces does not match the matugen generated-theme dir"
       else if
         !(lib.any (s: lib.hasSuffix "marchyo/current-theme/ghostty.conf" s) (ghosttyIncludes hm))
       then
@@ -70,8 +85,9 @@ in
   eval-theme-runtime-dark = checkVariant "dark";
   eval-theme-runtime-light = checkVariant "light";
 
-  # Without the desktop, the module is inert: no manifest, no pointer, and no
-  # ghostty include leaks into the (still evaluated) ghostty settings.
+  # Without the desktop, the module is inert: no manifest, no pointer, no
+  # ghostty include leaks into the (still evaluated) ghostty settings, and
+  # no surface-reset activation runs.
   eval-theme-runtime-headless =
     let
       hm = hmFor { marchyo.desktop.enable = false; };
@@ -81,10 +97,11 @@ in
         manifestText hm == null
         && !(hm.xdg.configFile ? "marchyo/current-theme")
         && !(hm.programs.ghostty.settings ? config-file)
+        && !(hm.home.activation ? resetThemeRuntimeSurfaces)
       then
         "pass"
       else
-        throw "FAIL: theme-runtime leaked the manifest, pointer, or ghostty include without a desktop"
+        throw "FAIL: theme-runtime leaked the manifest, pointer, ghostty include, or surface reset without a desktop"
     );
 
   # Build check (not eval-only): materialize both Jylhis theme dirs and
