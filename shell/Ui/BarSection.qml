@@ -10,10 +10,18 @@ import "../Commons/BarLayout.js" as BarLayout
 // `visible: false` (media with no player, idle mic, desktop battery, ...), but
 // a Loader whose item is hidden still occupies its cell: the layout sizes the
 // cell from the Loader, and the Loader — not its item — is the layout child
-// that is visible. Binding the Loader's own visibility to its item's makes
-// the layout skip the cell entirely, spacing included, exactly as it skips a
-// directly hidden child. Without this the bar shows a dead gap the width of
-// every hidden widget.
+// that is visible. Hiding the Loader as well makes the layout skip the cell
+// entirely, spacing included, exactly as it skips a directly hidden child.
+// Without this the bar shows a dead gap the width of every hidden widget.
+//
+// The collapse binding is attached in onLoaded, NEVER declared on the Loader:
+// QQuickLoader imperatively writes item.visible from its own visibility as
+// the item is created, overwriting the item's own binding. A Loader that is
+// already hidden at the load instant poisons every loaded widget invisible,
+// permanently (even item.visible = true reads back false — verified against
+// Qt 6.11 offscreen), which is how a declarative `visible: itemShown(item)`
+// binding here once rendered the whole bar empty. Attaching the binding only
+// after the item exists leaves the item's own visible logic intact.
 //
 // Separators are cluster-aware: a rule renders only between two clusters that
 // both have visible content, and the rules around an empty cluster collapse
@@ -62,9 +70,18 @@ RowLayout {
         return w ? w.visible === true : false;
     }
 
-    // The loaded item's visibility, for the Loader's own collapse binding.
+    // The loaded item's visibility, for the Loader's collapse binding.
     function itemShown(w): bool {
         return w ? w.visible === true : false;
+    }
+
+    // Attach a slot's collapse binding AFTER its item exists (see the file
+    // comment for why the Loader's own visible must not be bound earlier):
+    // Loader visible exactly while its widget is. Runs through an untyped
+    // parameter for the same qmllint reason as slotShown.
+    function bindCollapse(loader): void {
+        if (loader)
+            loader.visible = Qt.binding(() => root.itemShown(loader.item));
     }
 
     // Point a freshly loaded separator at its sepShown cell. Called from
@@ -72,7 +89,7 @@ RowLayout {
     // behind an untyped parameter for the same qmllint reason as above.
     function bindSeparator(loader, index): void {
         if (loader)
-            loader.item.visible = Qt.binding(() => root.sepShown[index]);
+            loader.visible = Qt.binding(() => root.sepShown[index]);
     }
 
     // Per-entry separator render decision (true = draw the rule). Reading
@@ -99,17 +116,19 @@ RowLayout {
             required property var modelData
             required property int index
 
-            // Collapse with the widget; see the file comment.
-            visible: root.itemShown(item)
+            // No visible binding here; bindCollapse() attaches it on load.
             sourceComponent: root.resolve ? root.resolve(modelData.id) : null
             Layout.alignment: Qt.AlignVCenter
             Layout.maximumWidth: modelData.id === root.capId && root.capFraction > 0 ? root.barWidth * root.capFraction : -1
 
             onLoaded: {
-                if (modelData.id === BarLayout.SEPARATOR_ID)
+                if (modelData.id === BarLayout.SEPARATOR_ID) {
                     root.bindSeparator(slot, slot.index);
-                else if (root.configure)
-                    root.configure(item, modelData);
+                } else {
+                    if (root.configure)
+                        root.configure(item, modelData);
+                    root.bindCollapse(slot);
+                }
             }
         }
     }
