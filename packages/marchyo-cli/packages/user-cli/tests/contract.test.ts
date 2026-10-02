@@ -93,8 +93,43 @@ test("json contract: toggle --status shape", async () => {
   ).toMatchSnapshot();
 });
 
+// `debug`'s host probes are best-effort by contract (DebugBundle declares
+// nixosVersion/generation/generationDate as `T | null`), and two of them read
+// /nix/var/nix/profiles/system directly, so no env override can neutralize
+// them. shapeOf infers the type from one sample, so a NixOS host snapshots
+// `number`/`string` where a sandbox snapshots `null` — the schema is stable,
+// only the host is not. Pin the nullable probes to null for the shape, and
+// assert their populated types separately so the contract is still covered.
+const BEST_EFFORT_PROBES = [
+  "nixosVersion",
+  "generation",
+  "generationDate",
+] as const;
+
+const PROBE_TYPES: Record<
+  (typeof BEST_EFFORT_PROBES)[number],
+  "string" | "number"
+> = {
+  nixosVersion: "string",
+  generation: "number",
+  generationDate: "string",
+};
+
 test("json contract: debug shape", async () => {
-  expect(shapeOf(await jsonOf(["debug"]))).toMatchSnapshot();
+  const bundle = (await jsonOf(["debug"])) as Record<string, unknown>;
+  for (const key of BEST_EFFORT_PROBES) {
+    expect(bundle).toHaveProperty(key);
+  }
+  expect(shapeOf({ ...bundle, nixosVersion: null, generation: null, generationDate: null })).toMatchSnapshot();
+});
+
+test("json contract: debug probes are their declared type when populated", async () => {
+  const bundle = (await jsonOf(["debug"])) as Record<string, unknown>;
+  for (const key of BEST_EFFORT_PROBES) {
+    const value = bundle[key];
+    if (value === null) continue; // non-NixOS host: null is in the contract
+    expect(typeof value).toBe(PROBE_TYPES[key]);
+  }
 });
 
 test("exit-code contract", async () => {

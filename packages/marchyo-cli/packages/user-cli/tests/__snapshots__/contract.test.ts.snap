@@ -109,14 +109,16 @@ exports[`help contract: marchyo theme 1`] = `
 Inspect and switch Marchyo themes at runtime
 
 Options:
-  -h, --help            display help for command
+  -h, --help                  display help for command
 
 Commands:
-  list                  List switchable themes (marchyo.theme.themes)
-  get                   Print the active theme
-  set [options] <name>  Switch the theme live (persist with --apply)
-  next [options]        Cycle to the next theme in the manifest
-  help [command]        display help for command
+  list                        List switchable themes (marchyo.theme.themes)
+  get                         Print the active theme
+  set [options] <name>        Switch the theme live (persist with --apply)
+  next [options]              Cycle to the next theme in the manifest
+  generate [options] [image]  Generate and apply a theme from a wallpaper image
+                              (matugen)
+  help [command]              display help for command
 "
 `;
 
