@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "Paths.js" as Paths
 
 // Runtime shell configuration: the one shell.json read for the whole seat.
 //
@@ -138,17 +139,11 @@ QtObject {
     readonly property int idleLock: root.config.idle && root.config.idle.lock ? root.config.idle.lock : 300
 
     function configPath(): string {
-        const config = Quickshell.env("XDG_CONFIG_HOME");
-        const home = Quickshell.env("HOME");
-        const base = config && config !== "" ? config : (home ?? "") + "/.config";
-        return base + "/marchyo/shell.json";
+        return Paths.xdgDir(Quickshell.env("XDG_CONFIG_HOME"), Quickshell.env("HOME"), "/.config") + "/marchyo/shell.json";
     }
 
     function pluginSettingsPath(): string {
-        const state = Quickshell.env("XDG_STATE_HOME");
-        const home = Quickshell.env("HOME");
-        const base = state && state !== "" ? state : (home ?? "") + "/.local/state";
-        return base + "/marchyo/shell/plugin-settings.json";
+        return Paths.xdgDir(Quickshell.env("XDG_STATE_HOME"), Quickshell.env("HOME"), "/.local/state") + "/marchyo/shell/plugin-settings.json";
     }
 
     function applyPluginSettings(text: string): void {
