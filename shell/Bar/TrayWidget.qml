@@ -17,6 +17,11 @@ RowLayout {
     property bool expanded: false
     readonly property int itemCount: SystemTray.items ? SystemTray.items.values.length : 0
 
+    // Hide the whole widget, not just the expander, when the tray is empty:
+    // a visible root with only hidden children still leaks its slot's spacing
+    // (see Ui/BarSection.qml).
+    visible: root.itemCount > 0
+
     BarItem {
         interactive: true
         compact: true

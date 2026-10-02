@@ -194,6 +194,22 @@ while read -r id; do
 done < <(grep -oE 'id: "marchyo\.[a-zA-Z]+"' "$SHELL_DIR/Commons/ShellConfig.qml" | sed 's/id: "//;s/"//')
 check "every default bar layout id resolves in shell.qml barComponents" "$unresolved_ids"
 
+# ── separator id agrees across the layout data and the collapse logic ────────
+#
+# Commons/BarLayout.js decides which separators render by matching the literal
+# entry id "marchyo.separator" (SEPARATOR_ID). ShellConfig's default layout and
+# the Nix layout generator both spell that id too; a rename on one side only
+# (layout data without the constant, or the constant without the data) leaves
+# every rule permanently visible or permanently hidden at runtime.
+
+sep_const="marchyo.separator"
+sep_mismatches=""
+grep -q "var SEPARATOR_ID = \"$sep_const\"" "$SHELL_DIR/Commons/BarLayout.js" ||
+  sep_mismatches+="BarLayout.js SEPARATOR_ID is not \"$sep_const\""$'\n'
+grep -q "id: \"$sep_const\"" "$SHELL_DIR/Commons/ShellConfig.qml" ||
+  sep_mismatches+="ShellConfig.qml default layout no longer uses \"$sep_const\""$'\n'
+check "the separator entry id matches BarLayout.SEPARATOR_ID everywhere" "$sep_mismatches"
+
 echo "----"
 echo "$pass passed, $fail failed"
 [[ $fail == 0 ]]

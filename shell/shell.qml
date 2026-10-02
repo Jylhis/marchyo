@@ -1,7 +1,5 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
 
 import qs.Commons
@@ -388,64 +386,36 @@ ShellRoot {
             color: Color.background
 
             // Three anchored sections driven by ShellConfig.bar: left and right
-            // groups, plus a centered group (the clock by default). Each entry's
-            // id resolves through componentFor(); a Loader instantiates it and
-            // applyWidget() wires per-monitor screen + per-entry settings.
+            // groups, plus a centered group (the clock by default). Ui/
+            // BarSection owns the per-entry Loaders, slot collapse (a hidden
+            // widget leaves no gap), and cluster-aware separators.
             Item {
                 anchors.fill: parent
 
-                RowLayout {
+                BarSection {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: Style.spacing
-
-                    Repeater {
-                        model: ShellConfig.bar.left
-
-                        Loader {
-                            required property var modelData
-                            sourceComponent: shell.componentFor(modelData.id)
-                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
-                            Layout.alignment: Qt.AlignVCenter
-                            // The active-window title is the only unbounded
-                            // left widget; cap it at a quarter of the output so
-                            // it can never reach the centered clock.
-                            Layout.maximumWidth: modelData.id === "marchyo.activeWindow" ? barWin.width * 0.25 : -1
-                        }
-                    }
+                    section: "left"
+                    resolve: shell.componentFor
+                    configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
+                    capId: "marchyo.activeWindow"
+                    capFraction: 0.25
+                    barWidth: barWin.width
                 }
 
-                RowLayout {
+                BarSection {
                     anchors.centerIn: parent
-                    spacing: Style.spacing
-
-                    Repeater {
-                        model: ShellConfig.bar.center
-
-                        Loader {
-                            required property var modelData
-                            sourceComponent: shell.componentFor(modelData.id)
-                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-                    }
+                    section: "center"
+                    resolve: shell.componentFor
+                    configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
                 }
 
-                RowLayout {
+                BarSection {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: Style.spacing
-
-                    Repeater {
-                        model: ShellConfig.bar.right
-
-                        Loader {
-                            required property var modelData
-                            sourceComponent: shell.componentFor(modelData.id)
-                            onLoaded: shell.applyWidget(item, modelData, barWin.screenName)
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-                    }
+                    section: "right"
+                    resolve: shell.componentFor
+                    configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
                 }
             }
         }

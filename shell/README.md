@@ -76,10 +76,12 @@ shell/
                        rows from pkgs.unicode-emoji (dev subset checked in)
     Cliphist.js        pure cliphist helpers (quoted-printable payload decode)
     Notify.js          pure notification match/eviction helpers
+    BarLayout.js       pure bar-separator decisions (cluster-aware rules)
     Peripherals.js     pure `solaar show` parser (Logitech battery)
   Ui/
     qmldir             declares module qs.Ui
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
+    BarSection.qml     one anchored bar group; collapsing slots + cluster-aware rules
     BarSeparator.qml   thin vertical rule between bar clusters
     Panel.qml          summonable-panel base (layer-shell card + dismiss)
     PanelButton.qml    labelled pill control for panel bodies
@@ -371,6 +373,14 @@ expander) set `BarItem.compact` for half horizontal padding so single icons
 don't render as wide capsules next to text widgets. The active-window title
 elides (`BarItem.elide`) against a layout cap of a quarter of the output width,
 so a very long title can never reach the centered clock.
+
+Conditional widgets (media with no player, idle mic, desktop battery, empty
+reminders, ...) hide with `visible: false`, and the bar collapses with them:
+`Ui/BarSection` binds each slot Loader's visibility to its widget's, so a
+hidden widget leaves no gap (a visible Loader around a hidden item would keep
+its cell). Separators render only between two clusters that both have visible
+content — the rules around an empty cluster collapse to one — decided by the
+pure, node-tested `Commons/BarLayout.js` (`tests/shell/bar-layout-test.js`).
 
 ## Development
 

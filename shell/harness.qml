@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.Ui
 import qs.Bar
 import qs.Services
@@ -16,6 +15,7 @@ import qs.Services
 // socket, missing external tools) are expected offscreen and ignored.
 ShellRoot {
     Item {
+        id: harnessRoot
         width: 1280
         height: 64
 
@@ -30,6 +30,66 @@ ShellRoot {
         }
         BarSeparator {
             x: 180
+        }
+        // One real section driven by inline components: a visible item, a
+        // hidden one (collapse binding), and separators (cluster-aware
+        // visibility). Exercises Ui/BarSection's slot Loaders offscreen
+        // against the same logic the live bar uses.
+        readonly property var harnessResolve: ({
+                "marchyo.session": cHarnessVisible,
+                "marchyo.workspaces": cHarnessHidden,
+                "marchyo.activeWindow": cHarnessVisible,
+                "marchyo.clock": cHarnessVisible,
+                "marchyo.media": cHarnessHidden,
+                "marchyo.mic": cHarnessHidden,
+                "marchyo.audio": cHarnessVisible,
+                "marchyo.battery": cHarnessHidden
+            })
+        Component {
+            id: cHarnessVisible
+            BarItem {
+                text: "harness"
+            }
+        }
+        Component {
+            id: cHarnessHidden
+            BarItem {
+                text: "hidden"
+                visible: false
+            }
+        }
+        BarSection {
+            x: 200
+            section: "right"
+            // Right-group-shaped: hidden alerts cluster, hidden media, hidden
+            // mic, visible audio, hidden battery — plus the separators between
+            // them, so the collapse and cluster rules both run offscreen.
+            entriesOverride: [
+                {
+                    id: "marchyo.clock"
+                },
+                {
+                    id: "marchyo.media"
+                },
+                {
+                    id: "marchyo.separator"
+                },
+                {
+                    id: "marchyo.mic"
+                },
+                {
+                    id: "marchyo.audio"
+                },
+                {
+                    id: "marchyo.separator"
+                },
+                {
+                    id: "marchyo.battery"
+                }
+            ]
+            resolve: id => harnessRoot.harnessResolve[id] || null
+            configure: (item, entry) => {}
+            barWidth: 1280
         }
         PanelButton {
             x: 200
