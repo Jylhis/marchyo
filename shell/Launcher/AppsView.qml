@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Widgets
 import qs.Commons
 import qs.Services
 import "../Commons/Match.js" as Match
@@ -152,12 +153,10 @@ Item {
                 anchors.margins: Style.paddingH
                 spacing: Style.spacing
 
-                Image {
+                IconImage {
                     anchors.verticalCenter: parent.verticalCenter
-                    source: Quickshell.iconPath(delegate.modelData.entry.icon)
-                    sourceSize.width: Style.fontSize + 8
-                    sourceSize.height: Style.fontSize + 8
-                    visible: source.toString().length > 0
+                    source: Quickshell.iconPath(delegate.modelData.entry.icon, "application-x-executable")
+                    implicitSize: Style.fontSize + 8
                 }
 
                 Text {
