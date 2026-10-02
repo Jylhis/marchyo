@@ -5,6 +5,31 @@ import Quickshell.Services.Pipewire
 // Shared Pipewire bindings for AudioWidget, the audio panel, and the OSD. One
 // PwObjectTracker keeps every tracked node live: the audio properties never
 // bind/update without a tracker.
+//
+// Two traps are pinned by the design below, both shipped as the flickering
+// audio panel:
+//
+// 1. Node-type checks are EQUALITY, never bitmask. PwNodeType's values are
+//    dense enum constants, not flags (AudioOutStream 21 = 0b10101,
+//    AudioInStream 13 = 0b01101; 13 & 21 = 5), so `type & AudioOutStream`
+//    also matched every input stream. Each PwNodePeakMonitor row creates a
+//    "Quickshell Peak Detect" capture tap (Stream/Input/Audio); with the
+//    bitmask check each tap entered the out-stream list, spawned another
+//    row+monitor, whose tap entered again: a self-amplifying storm that
+//    reset the panel's Repeaters continuously (flicker, buttons destroyed
+//    mid-click, Pipewire "-116 no global" bursts from monitors resubscribing
+//    to torn-down taps).
+//
+// 2. The stream lists are recomputed imperatively from the nodes model's
+//    values/insert/remove signals — never as a binding over
+//    Pipewire.nodes.values. A binding re-evaluates on EVERY node property
+//    change and hands the Repeaters a fresh array identity each time (JS
+//    arrays cannot be diffed), fully resetting them. The membership guard
+//    below keeps the assigned arrays stable through peak traffic.
+//
+// Filters read only properties available on unbound nodes (isStream, isSink,
+// type) — never tracker-bound ones like n.audio, which materialize only
+// while a node is bound and would feed the churn from the other side.
 QtObject {
     id: root
 
@@ -14,7 +39,35 @@ QtObject {
     readonly property var sourceAudio: source ? source.audio : null
 
     // Selectable output devices for the panel's sink picker.
-    readonly property var sinks: {
+    property var sinks: []
+
+    // Per-app playback streams for the panel's per-app volume + meters.
+    property var appStreams: []
+
+    // Apps capturing audio; drives the microphone-in-use privacy indicator.
+    property var captureStreams: []
+
+    readonly property bool micInUse: captureStreams.length > 0
+
+    function collectStreams(want): var {
+        const out = [];
+        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (!n || !n.isStream || n.type !== want)
+                continue;
+            // Skip this shell's own PwNodePeakMonitor taps ("Quickshell Peak
+            // Detect" capture streams, node.name ".quickshell-wrapped"):
+            // meters running must never read as a hot microphone.
+            const p = n.properties || {};
+            if (p["application.name"] === "Quickshell Peak Detect")
+                continue;
+            out.push(n);
+        }
+        return out;
+    }
+
+    function collectSinks(): var {
         const out = [];
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
         for (let i = 0; i < nodes.length; i++) {
@@ -25,31 +78,44 @@ QtObject {
         return out;
     }
 
-    // Per-app playback streams for the panel's per-app volume + meters.
-    readonly property var appStreams: {
-        const out = [];
-        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && n.isStream && n.audio && (n.type & PwNodeType.AudioOutStream))
-                out.push(n);
+    // Same membership check (same objects, same order) as a cheap change
+    // guard: assigning an equal array to a var property still emits, so the
+    // comparison decides whether to assign at all.
+    function sameMembers(a, b): bool {
+        if (!a || a.length !== b.length)
+            return false;
+        for (let i = 0; i < b.length; i++) {
+            if (a[i] !== b[i])
+                return false;
         }
-        return out;
+        return true;
     }
 
-    // Apps capturing audio; drives the microphone-in-use privacy indicator.
-    readonly property var captureStreams: {
-        const out = [];
-        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && n.isStream && (n.type & PwNodeType.AudioInStream))
-                out.push(n);
-        }
-        return out;
+    function refresh(): void {
+        const s = root.collectSinks();
+        if (!root.sameMembers(root.sinks, s))
+            root.sinks = s;
+        const o = root.collectStreams(PwNodeType.AudioOutStream);
+        if (!root.sameMembers(root.appStreams, o))
+            root.appStreams = o;
+        const c = root.collectStreams(PwNodeType.AudioInStream);
+        if (!root.sameMembers(root.captureStreams, c))
+            root.captureStreams = c;
     }
 
-    readonly property bool micInUse: captureStreams.length > 0
+    Component.onCompleted: root.refresh()
+
+    // The nodes model signal that can change set membership (ObjectModel
+    // rebuilds its values on inserts and removes alike, so one handler
+    // covers both). dataChanged (peak/volume updates) is deliberately not
+    // followed: it cannot add or remove a node, and reacting to it is
+    // exactly the churn this layout exists to prevent.
+    readonly property var nodesConn: Connections {
+        target: Pipewire.nodes
+        function onValuesChanged(): void {
+            root.refresh();
+        }
+    }
 
     function streamLabel(n) {
         if (!n)
