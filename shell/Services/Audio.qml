@@ -13,6 +13,18 @@ QtObject {
     readonly property var source: Pipewire.defaultAudioSource
     readonly property var sourceAudio: source ? source.audio : null
 
+    // Selectable output devices for the panel's sink picker.
+    readonly property var sinks: {
+        const out = [];
+        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (n && n.isSink && !n.isStream)
+                out.push(n);
+        }
+        return out;
+    }
+
     // Per-app playback streams for the panel's per-app volume + meters.
     readonly property var appStreams: {
         const out = [];

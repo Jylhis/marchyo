@@ -16,16 +16,7 @@ Panel {
     readonly property var sink: Audio.sink
     readonly property var audio: Audio.sinkAudio
 
-    readonly property var sinks: {
-        const out = [];
-        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && n.isSink && !n.isStream)
-                out.push(n);
-        }
-        return out;
-    }
+    readonly property var sinks: Audio.sinks
 
     function sinkLabel(n) {
         return n ? (n.description || n.nickname || n.name) : "No output";
