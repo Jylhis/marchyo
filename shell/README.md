@@ -80,6 +80,7 @@ shell/
   Ui/
     qmldir             declares module qs.Ui
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
+    BarSeparator.qml   thin vertical rule between bar clusters
     Panel.qml          summonable-panel base (layer-shell card + dismiss)
     PanelButton.qml    labelled pill control for panel bodies
     TooltipWindow.qml  the one tooltip surface (hover text below the bar)
@@ -306,10 +307,12 @@ place — a successful authentication. Trigger paths:
 - The idle screensaver asks `shell lockState` before launching — the same
   guard it had for a running hyprlock.
 
-Each screen gets one `WlSessionLockSurface` (clock + password card, Jylhis
-tokens); the focused output's field takes keyboard focus, any field can be
-clicked to claim it. Focus and `pam.start()` are gated on `secure`
-(compositor-confirmed coverage), per the upstream docs.
+Each screen gets one `WlSessionLockSurface` (clock on every output); the
+focused output additionally renders the password card and the PAM messages
+(focus follows the seat's focused monitor at lock time; clicking another
+output moves the card there). The session is locked on ALL outputs either way —
+ext-session-lock-v1 demands a surface per output. Focus and `pam.start()` are
+gated on `secure` (compositor-confirmed coverage), per the upstream docs.
 
 > **Testing warning:** destroying the shell (crash, or a hot-reload from the
 > dev loop) while locked leaves a conformant compositor showing a solid
@@ -328,7 +331,7 @@ outside click, or focus loss.
 
 | Mode | Bind | Backing | Activate |
 | --- | --- | --- | --- |
-| apps | `SUPER+R` | `Quickshell.DesktopEntries` (webapps' `xdg.desktopEntries` flow in) | `DesktopEntry.execute()` |
+| apps | `SUPER+R` | `Quickshell.DesktopEntries` (webapps' `xdg.desktopEntries` flow in) | `DesktopEntry.execute()` — results list (8 rows, app icons via `IconImage` with an `application-x-executable` fallback), inline ghost-text completion on Tab/Right |
 | emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
 | clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js` | copy + type |
 
@@ -359,7 +362,15 @@ labels (e.g. `󰕾 100`, `󰁹 87`, `󰓅 45`, `󰤨 72`), rendered in `BlexMono
 (the `fontFamily` in `Commons/Style.qml`, installed system-wide via
 `modules/nixos/fonts.nix`). This keeps the right group narrow enough to clear the
 screen-centered clock on small outputs; the verbose text (`Volume 100%`,
-`CPU 45%`, SSID/signal, …) lives in each widget's hover tooltip.
+`CPU 45%`, SSID/signal, …) lives in each widget's hover tooltip. The default
+right group is organized into clusters separated by the `marchyo.separator`
+widget (a thin `Ui/BarSeparator` rule): alerts · tray + media · toggles ·
+connectivity/audio · system. Glyph-only widgets (dictation, caffeine, theme,
+dnd, bluetooth, mic, power-profile, night-light, screen-recording, the tray
+expander) set `BarItem.compact` for half horizontal padding so single icons
+don't render as wide capsules next to text widgets. The active-window title
+elides (`BarItem.elide`) against a layout cap of a quarter of the output width,
+so a very long title can never reach the centered clock.
 
 ## Development
 
