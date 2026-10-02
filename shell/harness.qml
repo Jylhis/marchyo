@@ -43,7 +43,8 @@ ShellRoot {
                 "marchyo.media": cHarnessHidden,
                 "marchyo.mic": cHarnessHidden,
                 "marchyo.audio": cHarnessVisible,
-                "marchyo.battery": cHarnessHidden
+                "marchyo.battery": cHarnessHidden,
+                "marchyo.separator": cHarnessSeparator
             })
         Component {
             id: cHarnessVisible
@@ -58,7 +59,12 @@ ShellRoot {
                 visible: false
             }
         }
+        Component {
+            id: cHarnessSeparator
+            BarSeparator {}
+        }
         BarSection {
+            id: sectionSlots
             x: 200
             section: "right"
             // Right-group-shaped: hidden alerts cluster, hidden media, hidden
@@ -90,6 +96,55 @@ ShellRoot {
             resolve: id => harnessRoot.harnessResolve[id] || null
             configure: (item, entry) => {}
             barWidth: 1280
+        }
+
+        // Assertions over the section above: widgets must actually RENDER,
+        // not just load (the empty-bar regression: Loader's load-time
+        // visibility write once poisoned every widget invisible while the
+        // tree still parsed and bound cleanly). The Justfile check fails on
+        // any ASSERT-FAIL line.
+        Timer {
+            interval: 1200
+            running: true
+            onTriggered: {
+                const fail = msg => console.log("ASSERT-FAIL " + msg);
+                const kids = sectionSlots.children;
+                // children: [loader x7, Repeater] — Loaders in model order.
+                let loaders = [];
+                for (let i = 0; i < kids.length; i++)
+                    if (kids[i].toString().indexOf("QQuickLoader") >= 0)
+                        loaders.push(kids[i]);
+                if (loaders.length !== 7)
+                    fail("expected 7 slot Loaders, got " + loaders.length);
+                // clock: visible widget -> slot visible, item visible
+                if (!loaders[0] || !loaders[0].visible || !loaders[0].item.visible)
+                    fail("visible widget collapsed: clock slot visible=" + loaders[0].visible + " item=" + loaders[0].item.visible);
+                // media (hidden): slot must be collapsed
+                if (loaders[1].visible)
+                    fail("hidden widget did not collapse its slot: media");
+                // separator 1 (idx 2): clock and audio flank the hidden
+                // media+mic run, so exactly this one rule renders
+                if (!loaders[2].visible)
+                    fail("separator between two populated clusters hidden (idx 2)");
+                // mic (hidden): collapsed
+                if (loaders[3].visible)
+                    fail("hidden widget did not collapse its slot: mic");
+                // audio: visible
+                if (!loaders[4].visible || !loaders[4].item.visible)
+                    fail("audio slot collapsed though visible");
+                // separator 2 (idx 5): battery hidden -> trailing cluster
+                // empty -> rule hidden
+                if (loaders[5].visible)
+                    fail("trailing separator visible before collapsed battery");
+                // battery (hidden): collapsed
+                if (loaders[6].visible)
+                    fail("hidden widget did not collapse its slot: battery");
+                for (let i = 0; i < loaders.length; i++) {
+                    const md = loaders[i].modelData;
+                    console.log("ASSERT-INFO idx=" + i + " id=" + (md ? md.id : "?") + " loader.visible=" + loaders[i].visible + " item.visible=" + (loaders[i].item ? loaders[i].item.visible : "null"));
+                }
+                console.log("ASSERT-DONE");
+            }
         }
         PanelButton {
             x: 200

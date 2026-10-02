@@ -36,6 +36,15 @@ check:
         echo "check: harness never reached 'Configuration Loaded'" >&2
         exit 1
     fi
+    if grep -q "ASSERT-FAIL" "$log"; then
+        echo "check: harness render assertions failed" >&2
+        grep "ASSERT-FAIL" "$log" >&2
+        exit 1
+    fi
+    if ! grep -q "ASSERT-DONE" "$log"; then
+        echo "check: harness assertions never ran" >&2
+        exit 1
+    fi
     if grep -E "(WARN|ERROR).*(qml\[|/shell/)" "$log" | grep -v "offscreen"; then
         echo "check: QML warnings/errors from the shell tree" >&2
         exit 1
