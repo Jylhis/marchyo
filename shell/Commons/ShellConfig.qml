@@ -49,10 +49,16 @@ QtObject {
                     id: "marchyo.reminders"
                 },
                 {
+                    id: "marchyo.separator"
+                },
+                {
                     id: "marchyo.tray"
                 },
                 {
                     id: "marchyo.media"
+                },
+                {
+                    id: "marchyo.separator"
                 },
                 {
                     id: "marchyo.dictation"
@@ -65,6 +71,9 @@ QtObject {
                 },
                 {
                     id: "marchyo.dnd"
+                },
+                {
+                    id: "marchyo.separator"
                 },
                 {
                     id: "marchyo.keyboardLayout"
@@ -80,6 +89,9 @@ QtObject {
                 },
                 {
                     id: "marchyo.audio"
+                },
+                {
+                    id: "marchyo.separator"
                 },
                 {
                     id: "marchyo.cpu"

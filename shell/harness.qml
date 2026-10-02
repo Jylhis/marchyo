@@ -28,6 +28,9 @@ ShellRoot {
             text: "harness"
             tooltipText: "harness tooltip"
         }
+        BarSeparator {
+            x: 180
+        }
         PanelButton {
             x: 200
             text: "harness"
