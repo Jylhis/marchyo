@@ -97,7 +97,7 @@ test("json contract: toggle --status shape", async () => {
 // nixosVersion/generation/generationDate as `T | null`), and two of them read
 // /nix/var/nix/profiles/system directly, so no env override can neutralize
 // them. shapeOf infers the type from one sample, so a NixOS host snapshots
-// `number`/`string` where a sandbox snapshots `null` — the schema is stable,
+// `number`/`string` where a sandbox snapshots `null`: the schema is stable,
 // only the host is not. Pin the nullable probes to null for the shape, and
 // assert their populated types separately so the contract is still covered.
 const BEST_EFFORT_PROBES = [
