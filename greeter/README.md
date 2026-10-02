@@ -28,6 +28,25 @@ password masking, power controls (reboot / power off). Deliberately not
 ported: the user menu (marchyo hosts are single-user; the prefill covers it)
 and session picking (the session was already forced to Hyprland via uwsm).
 
+UX patterns (adopted from the Cozytile SDDM greeter,
+github.com/Darkkal44/Cozytile, reimplemented — nothing vendored; that repo
+has no license):
+
+- Scale-factor layout: all greeter geometry derives from `s = height / 1080`,
+  so the card renders correctly on HiDPI/4K cage outputs instead of assuming
+  1080p pixels. The geometry lives on the `FloatingWindow` (the one object
+  that knows the real output size), not in `Commons/Style.qml` (bar geometry
+  there is fontScale-scaled and would double-scale).
+- Entrance: the clock/card column fades and rises in once when the window
+  maps (a one-shot `NumberAnimation`, never a binding, so it cannot
+  re-trigger on resize).
+- Failed-auth shake: `onAuthFailure` nudges the card horizontally via a
+  `Translate` transform — a transform, not `x`, so the card keeps its
+  `horizontalCenter` anchor and the animation never fights it.
+- Accent caret: the secret field's native cursor is hidden and a blinking
+  accent-colored bar tracks `cursorRectangle`, so the caret carries the
+  theme accent.
+
 Dev run (on a Wayland desktop, outside greetd the UI shows
 "greetd socket unavailable"):
 

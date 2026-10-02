@@ -153,7 +153,9 @@ in
         let
           themes = cfg.home-manager.users.testuser.programs.bat.themes;
         in
-        themes ? nord && !(themes ? jylhis-dark)
+        # nord's generated tmTheme is registered alongside bat.nix's shipped
+        # Jylhis pair (both land in bat's cache).
+        themes ? nord && themes ? "jylhis-dark"
       )
       (withTestUser {
         marchyo.desktop.enable = true;
