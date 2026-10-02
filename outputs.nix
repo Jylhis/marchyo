@@ -593,10 +593,15 @@ in
               cp -r ${./shell/Commons} src/shell/Commons
               cp -r ${./tests/shell} src/tests/shell
               cd src
-              node tests/shell/format-test.js
-              node tests/shell/notify-test.js
-              node tests/shell/launcher-test.js
-              node tests/shell/peripherals-test.js
+              # Globbed, not listed: a new *-test.js must not be able to sit in
+              # the tree unrun. The count assertion keeps a rename from turning
+              # the glob into a vacuous pass.
+              count=0
+              for t in tests/shell/*-test.js; do
+                node "$t"
+                count=$((count + 1))
+              done
+              [ "$count" -gt 0 ] || { echo "FAIL: no tests/shell/*-test.js found"; exit 1; }
               touch "$out"
             '';
 
