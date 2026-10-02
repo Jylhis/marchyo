@@ -33,5 +33,5 @@ let
     options ? programs && options.programs ? bash && options.programs.bash ? shellAliases;
 in
 {
-  programs = if hasBashAliases then { bash = { inherit shellAliases; }; } else { };
+  programs = lib.optionalAttrs hasBashAliases { bash = { inherit shellAliases; }; };
 }
