@@ -20,15 +20,6 @@ import qs.Commons
 ShellRoot {
     id: root
 
-    // Greeter-local geometry. Deliberately NOT added to Commons/Style.qml —
-    // the bar/OSD/panel dimensions there are scaled by fontScale; a greeter
-    // card is a fixed layout.
-    readonly property int clockSize: 56
-    readonly property int fieldWidth: 320
-    readonly property int fieldHeight: 36
-    readonly property int cardPad: 24
-    readonly property int fieldFont: 16
-
     // ── session state ────────────────────────────────────────────────────────
     property string username: "" // two-way with the user field
     property string error: "" // sticky failure text, kept across PAM retries
@@ -112,6 +103,9 @@ ShellRoot {
             root.awaitingResponse = false;
             root.prompt = "";
             root.error = message !== "" ? message : "authentication failed";
+            // Physical feedback before the text: shake the card (the
+            // animation is keyed to the surface; ids are document-scoped).
+            shakeAnim.start();
             // greetd tore the failed session down; start a fresh one so the
             // next password attempt has a live session. After three straight
             // failures stop auto-retrying (an unknown user fails here too,
@@ -152,6 +146,67 @@ ShellRoot {
 
         color: Color.bg
 
+        // Greeter-local geometry. Deliberately NOT added to Commons/Style.qml —
+        // the bar/OSD/panel dimensions there are scaled by fontScale; the
+        // greeter bakes its own fixed layout, scaled against a 1080p reference
+        // (Cozytile sddm-themes pattern: every dimension * s, so a 4K cage
+        // output does not render a business card). On a single-monitor host
+        // this window's height IS the output height.
+        readonly property real s: height / 1080
+        readonly property int clockSize: 84 * s
+        readonly property int fieldWidth: 360 * s
+        readonly property int fieldHeight: 44 * s
+        readonly property int cardPad: 32 * s
+        readonly property int fieldFont: 15 * s
+
+        // Entrance: the card column fades/rises in once on map (Cozytile
+        // greeter pattern). Runs from Component.onCompleted, not a binding,
+        // so it plays exactly once and never re-triggers on resize.
+        property real intro: 0
+        onHeightChanged: if (intro === 0 && height > 0)
+            introAnim.start()
+        NumberAnimation {
+            id: introAnim
+            target: surface
+            property: "intro"
+            from: 0
+            to: 1
+            duration: 600
+            easing.type: Easing.OutCubic
+        }
+
+        // Failed-auth shake: nudge the card horizontally (3 quick steps). The
+        // Cozytile greeter animates anchors.leftMargin; here the card is
+        // centered by x-binding, so this offsets from that position.
+        property real shakeOffset: 0
+        SequentialAnimation {
+            id: shakeAnim
+            NumberAnimation {
+                target: surface
+                property: "shakeOffset"
+                to: 10 * surface.s
+                duration: 60
+            }
+            NumberAnimation {
+                target: surface
+                property: "shakeOffset"
+                to: -10 * surface.s
+                duration: 60
+            }
+            NumberAnimation {
+                target: surface
+                property: "shakeOffset"
+                to: 6 * surface.s
+                duration: 60
+            }
+            NumberAnimation {
+                target: surface
+                property: "shakeOffset"
+                to: 0
+                duration: 60
+            }
+        }
+
         // Multi-monitor cage (-m extend) fullscreens this window across the
         // union of outputs; centering on the window would straddle the bezel
         // gap. Center on the primary (first) output's portion instead. On a
@@ -179,8 +234,9 @@ ShellRoot {
             id: clockColumn
 
             x: surface.primaryW / 2 - implicitWidth / 2
-            y: surface.primaryH / 2 - implicitHeight / 2
+            y: surface.primaryH / 2 - implicitHeight / 2 + (1 - surface.intro) * 24 * surface.s
             spacing: Style.spacing * 4
+            opacity: surface.intro
 
             // Qt.formatDateTime is a valid QML global; qmllint's Qt type
             // model omits it (same guard as Services/Clock.qml).
@@ -190,7 +246,7 @@ ShellRoot {
                 text: Qt.formatDateTime(root.clock.date, "HH:mm")
                 color: Color.textHeading
                 font.family: Style.fontFamily
-                font.pixelSize: root.clockSize
+                font.pixelSize: surface.clockSize
             }
 
             Text {
@@ -205,8 +261,13 @@ ShellRoot {
             Rectangle {
                 id: card
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: root.fieldWidth + root.cardPad * 2
-                height: cardColumn.implicitHeight + root.cardPad * 2
+                // Shake rides a transform, not x: the card keeps its
+                // horizontalCenter anchor and the animation never fights it.
+                transform: Translate {
+                    x: surface.shakeOffset
+                }
+                width: surface.fieldWidth + surface.cardPad * 2
+                height: cardColumn.implicitHeight + surface.cardPad * 2
                 radius: Style.panelRadius
                 color: Color.surface
                 border.color: Color.border
@@ -214,9 +275,9 @@ ShellRoot {
 
                 Column {
                     id: cardColumn
-                    x: root.cardPad
-                    y: root.cardPad
-                    width: root.fieldWidth
+                    x: surface.cardPad
+                    y: surface.cardPad
+                    width: surface.fieldWidth
                     spacing: Style.spacing * 2
 
                     Text {
@@ -229,8 +290,8 @@ ShellRoot {
                     // Username entry (idle state).
                     Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.fieldWidth
-                        height: root.fieldHeight
+                        width: surface.fieldWidth
+                        height: surface.fieldHeight
                         radius: Style.panelRadius
                         color: Color.bgSubtle
                         border.color: userField.activeFocus ? Color.accent : Color.borderStrong
@@ -246,7 +307,7 @@ ShellRoot {
                             color: Color.text
                             selectionColor: Color.selectionBg
                             font.family: Style.fontFamily
-                            font.pixelSize: root.fieldFont
+                            font.pixelSize: surface.fieldFont
                             text: root.username
                             onTextChanged: root.username = text
                             onAccepted: root.beginLogin()
@@ -262,7 +323,7 @@ ShellRoot {
                     // fight); onAccepted hands it straight to the protocol.
                     Column {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.fieldWidth
+                        width: surface.fieldWidth
                         spacing: Style.spacing
                         visible: root.awaitingResponse
 
@@ -276,8 +337,8 @@ ShellRoot {
                         }
 
                         Rectangle {
-                            width: root.fieldWidth
-                            height: root.fieldHeight
+                            width: surface.fieldWidth
+                            height: surface.fieldHeight
                             radius: Style.panelRadius
                             color: Color.bgSubtle
                             border.color: secretField.activeFocus ? Color.accent : Color.borderStrong
@@ -292,13 +353,52 @@ ShellRoot {
                                 color: Color.text
                                 selectionColor: Color.selectionBg
                                 font.family: Style.fontFamily
-                                font.pixelSize: root.fieldFont
+                                font.pixelSize: surface.fieldFont
                                 echoMode: root.echoResponse ? TextInput.Normal : TextInput.Password
                                 onAccepted: {
                                     root.submit(text);
                                     clear();
                                 }
                                 Keys.onEscapePressed: root.cancel()
+
+                                // Custom accent caret (Cozytile pattern): the
+                                // native cursor is hidden and a blinking
+                                // accent bar rides the cursorRectangle, so the
+                                // caret matches the theme.
+                                cursorVisible: false
+                                cursorDelegate: Item {
+                                    width: 0
+                                    height: 0
+                                }
+
+                                Rectangle {
+                                    id: caret
+                                    width: 2 * surface.s
+                                    height: secretField.cursorRectangle.height > 0 ? secretField.cursorRectangle.height : 18 * surface.s
+                                    color: Color.accent
+                                    x: secretField.cursorRectangle.x
+                                    y: secretField.cursorRectangle.y
+                                    visible: secretField.activeFocus
+
+                                    SequentialAnimation {
+                                        loops: Animation.Infinite
+                                        running: caret.visible
+                                        NumberAnimation {
+                                            target: caret
+                                            property: "opacity"
+                                            from: 1
+                                            to: 0.05
+                                            duration: 450
+                                        }
+                                        NumberAnimation {
+                                            target: caret
+                                            property: "opacity"
+                                            from: 0.05
+                                            to: 1
+                                            duration: 450
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -314,7 +414,7 @@ ShellRoot {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.fieldWidth
+                        width: surface.fieldWidth
                         visible: root.error !== ""
                         text: root.error
                         color: Color.statusErr
@@ -358,7 +458,7 @@ ShellRoot {
         signal clicked
 
         width: pbLabel.implicitWidth + Style.paddingH * 4
-        height: root.fieldHeight
+        height: surface.fieldHeight
         radius: Style.panelRadius
         color: pbMouse.containsMouse ? Color.surfaceRaised : Color.bgSubtle
         border.color: Color.border

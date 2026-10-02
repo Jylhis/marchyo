@@ -102,6 +102,7 @@ live for that app); **next-event** = applies at the next natural occurrence
 | waybar | runtime | `waybar/style.css` | live (symlink + `systemctl --user try-restart`) | done |
 | Hyprland colors | runtime | `section:subkey value` keywords | live (`hyprctl eval hl.config`) | done |
 | Wallpaper | runtime | image file | live (`awww img`) | done |
+| **greetd greeter** | build-time (by structure) | `greeter/Commons/Theme.qml` static fallback + package variant-swap generator | next-boot (greeter runs before any user session) | **None needed.** No user session exists under greetd: no current-theme pointer, no marchyo CLI, no dconf — so the greeter is build-time **by structure**, not by omission (pipeline.md "Session-less surfaces"). The variant arrives through `packages/marchyo-shell/package.nix`'s `themeQmlFor ../../greeter/Commons/Theme.qml` generator. Runtime follow-the-session would need the CLI to write a world-readable theme marker the greeter reads at start; flag as optional polish, not a gap. Cozytile (github.com/Darkkal44/Cozytile) proves the demand for greeter-follows-theme (their sudoers-tee SDDM hack) without the declarative machinery. |
 | **bat** | build-time | `.tmTheme` + `config.theme` / `BAT_THEME` | next-instance (fresh process each run) | Emit per-theme `.tmTheme` into the theme dir from the palette (16 ANSI + fg/bg/selection), set `BAT_THEME` / point `BAT_CONFIG_PATH` at the theme dir's `bat.conf`. For the Jylhis pair reuse the shipped `pkgs.jylhis-themes` tmThemes; generate a tmTheme for base16/matugen schemes. Fresh process per invocation, so next-instance is effectively live. |
 | **fzf** | build-time | `FZF_DEFAULT_OPTS` `--color=` (shell init env) | live if `FZF_DEFAULT_OPTS_FILE` (fzf 0.48+), else next-shell | Emit `fzf.opts` (`--color=...` line) into the theme dir; set `FZF_DEFAULT_OPTS_FILE=$XDG_CONFIG_HOME/marchyo/current-theme/fzf.opts` once in shell init. Every new fzf launch then reads the current theme live. Keep layout opts in `FZF_DEFAULT_OPTS` (merged). |
 | **starship** | **already runtime** (verified) | `starship.toml` using ANSI slot names, no hex | live (follows the terminal's ANSI palette) | No emitter needed. The design `starship.toml` (`jylhis-design-src/platforms/shell/starship.toml`) has zero hardcoded hexes and styles via ANSI names, which the terminal resolves; Ghostty already swaps its 16-entry ANSI palette live for the Jylhis pair and base16 schemes, so the prompt recolors with it. Only a doc note at stylix retirement. |
@@ -263,6 +264,40 @@ flickowoa yorha branch.
   draw frames. Fits marchyo's "QML owns the look" model.
 - Snappy `popin` bezier for window open; optional CRT/scanline `screen_shader`
   (`gridlines.frag`) if a retro theme is ever wanted.
+
+---
+
+## Workstream 8 — Segmented bar aesthetic (optional, visual only)
+
+**Goal:** an alternative bar look: alternating two-tone segments joined by
+curved transitions, instead of the current flat monochrome bar background.
+Reference: Cozytile (github.com/Darkkal44/Cozytile) `.config/qtile/config.py`
+bar — alternating `#282738`/`#353446` segments with 500x500 PNG separator
+images between them (Assets/1-6.png). The look, done the marchyo way:
+
+- Pure QML, zero image assets: each bar section is a `Rectangle` whose left
+  and right edges carry concave/convex `Shape` arcs (QtQuick.Shapes) or, for
+  the flat variant, simply `radius` — no committed ONGs, no per-theme image
+  regeneration. Cozytile ships one PNG set per theme; we derive from
+  `Color.qml` tokens at render time.
+- Tokens, not hexes: segment fills come from existing semantic tokens
+  (`bg`, `surface`, `bgSubtle`) so runtime theme swaps recolor segments live
+  through the existing `colors.json` → `Color.qml` path — no new tokens, no
+  upstream dependency.
+- One place: the segment chrome lives in `shell/Ui/BarSection.qml` (the file
+  that already owns per-slot Loaders and separator collapse), as an optional
+  presentation mode — the bar stays one `RowLayout` of sections, only the
+  background rendering changes. Per-monitor `Bar/` widgets stay untouched.
+- Scope guard: this is an aesthetic option on the existing bar, not a
+  redesign — no widget-set, layout, or `BarLayout.js` changes; if it grows
+  beyond a presentation flag it belongs in a separate workstream.
+- No license risk: Cozytile has no LICENSE file; nothing is vendored — only
+  the visual idea (alternating two-tone segments with curved joins) is
+  borrowed, implemented from scratch against our tokens.
+
+**Acceptance:** `marchyo.bar.segmented = true` (or a Style knob) renders
+two-tone curved segments driven by the live palette; `just check` green;
+offscreen harness still asserts render state; no new image assets committed.
 
 ---
 

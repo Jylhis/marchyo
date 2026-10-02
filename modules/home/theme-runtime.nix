@@ -61,7 +61,7 @@ let
 
   # Guard the textual hex swap. `builtins.replaceStrings` applies the first
   # matching `from`, so two tokens that share a build-variant hex but diverge in
-  # the target silently mis-colour the loser (e.g. status-info and syn-variable
+  # the target silently miscolour the loser (e.g. status-info and syn-variable
   # are both #005e8a in light); and a colour literal that is not a build-variant
   # token hex (a hardcoded colour, an uppercase/shorthand/8-digit hex, an
   # ANSI-only value) would ship untranslated. Both fail the build here. Scoped
