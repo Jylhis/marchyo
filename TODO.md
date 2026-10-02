@@ -109,6 +109,18 @@ live for that app); **next-event** = applies at the next natural occurrence
 | **hyprlock** | build-time | hyprlang config (`programs.hyprlock.settings`) | next-event (only runs at lock) | Emit a `hyprlock-colors.conf` into the theme dir (bg/text/border/accent/err as `rgba()`), `source` it from the base hyprlock config. Next lock uses current colors. No live signal needed (not running between locks). |
 | **console / TTY** | build-time | `console.colors` (kernel palette, `tty16`) | **next-event / privileged** | **Flagged below.** Emit a `setvtrgb`-format table into the theme dir. Live application to active VTs requires `setvtrgb` writing to the console (VT-bound, needs the console device), which a Wayland-session user process cannot do cleanly. Realistically next-boot / next-VT, or a privileged helper. |
 
+**Decisions (step 1, confirmed):**
+
+- **Qt -> Option A (follow GTK).** Set session `QT_QPA_PLATFORMTHEME=gtk3` so Qt
+  apps read the already-live GTK surface; this drops the qt5ct/qt6ct dependency
+  and gives live Qt restyling for free. Needs the gtk3 platform-theme plugin
+  present for Qt5 and Qt6 (`qt5.qtstyleplugins` / `qt6.qt6gtk2` or the
+  `qgtk3`/gtk3 platformtheme). No per-theme Qt asset is emitted.
+- **Console -> emit + accept next-boot.** Emit a `setvtrgb` table per theme for
+  consistency; live VTs apply it on next boot/VT setup. `console.colors` stays
+  the declarative default via `modules/nixos/console.nix`. Does not block
+  retiring stylix (console is marchyo-owned already).
+
 **Surfaces flagged as not cleanly live-runtime:**
 
 - **console / TTY** is the only genuine holdout. The palette can be *emitted* at
