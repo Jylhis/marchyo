@@ -27,13 +27,17 @@ Item {
         return out;
     }
 
-    implicitHeight: grid.implicitHeight
+    // GridView.implicitHeight is 0 even with cells (same offscreen result as
+    // the apps ListView), so compute rows from the match count; the grid height
+    // follows and the Item mirrors it.
+    readonly property int rows: Math.max(1, Math.ceil(root.matches.length / root.columns))
+    implicitHeight: grid.height
 
     GridView {
         id: grid
         anchors.left: parent.left
         anchors.right: parent.right
-        height: Math.min(root.cellSize * 6, root.matches.length > 0 ? root.cellSize * 6 : cellSize)
+        height: Math.min(root.cellSize * 6, root.rows * root.cellSize)
         clip: true
         model: root.matches
         cellWidth: Math.floor(width / root.columns)
