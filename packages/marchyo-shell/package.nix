@@ -133,16 +133,9 @@ let
   greeterThemeQml = themeQmlFor ../../greeter/Commons/Theme.qml;
 
   # Bar colors: every palette + status token, minus syntax-highlighting tokens
-  # (syn-*) which no UI surface uses. QML identifiers can't contain hyphens, so
-  # bg-subtle -> bgSubtle, status-err -> statusErr, etc.
+  # (syn-*) which no UI surface uses.
   hex = lib.filterAttrs (n: _: !lib.hasPrefix "syn-" n) palette.hex;
-  toCamel =
-    s:
-    let
-      parts = lib.splitString "-" s;
-      cap = w: lib.toUpper (lib.substring 0 1 w) + lib.substring 1 (lib.stringLength w) w;
-    in
-    lib.concatStrings (lib.imap0 (i: w: if i == 0 then w else cap w) parts);
+  toCamel = import ../../lib/camel-case.nix { inherit lib; };
   colorLines = lib.concatStringsSep "\n" (
     lib.mapAttrsToList (
       name: _: "readonly property color ${toCamel name}: Theme.palette.${toCamel name}"
