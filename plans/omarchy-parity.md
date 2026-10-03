@@ -57,7 +57,8 @@ flake pins with rollback (see "N/A under NixOS" below).
    per-theme `keyboard.rgb` and `backgrounds/`; marchyo has one
    theme-tied wallpaper per theme plus `marchyo bg set`. Niche.
 4. **Extra connectivity panels.** The shell ships audio/network/power/monitor
-   panels; tailscale/dropbox/speedtest/wifi-qr panels are still absent.
+   panels plus Tailscale, Wi-Fi QR and Weather panels; dropbox/speedtest
+   panels are still absent (and low value).
 
 ## A3. Present-but-DIFFERENT (kept for orientation)
 
