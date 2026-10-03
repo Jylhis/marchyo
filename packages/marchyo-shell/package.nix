@@ -479,12 +479,12 @@ stdenvNoCC.mkDerivation {
     #     /etc/zoneinfo follows the live symlink, so marchyo.autoTimezone
     #     (automatic-timezoned) zone changes still apply.
     #
-    #   - QT_QPA_PLATFORMTHEME=gtk3 makes the Qt6 shell read marchyo's GTK
-    #     settings (modules/home/gtk.nix: icon theme "Adwaita"). The session
-    #     value is typically "qt5ct" (HM qt module via stylix), which has no
-    #     Qt6 platform-theme plugin — without the override, tray and
-    #     notification themed icons resolve against hicolor and fail
-    #     ("Could not load icon ... from request").
+    #   - QT_QPA_PLATFORMTHEME=gtk3 matches the session value modules/home/qt.nix
+    #     sets, pinned here so the shell never depends on session-env quirks
+    #     (e.g. a host overriding the session to qt5ct, which has no Qt6
+    #     plugin; tray/notification themed icons would then resolve against
+    #     hicolor and fail to load). The gtk3 platform theme reads marchyo's
+    #     own GTK settings (modules/home/gtk.nix: icon theme "Adwaita").
     # When plugins are declared, expose the omarchy CLI shims and the runtime
     # tools imported omarchy plugins call by bare name (python3, notify-send,
     # curl, coreutils, hyprctl), and point omarchy-shell at this store shell via
