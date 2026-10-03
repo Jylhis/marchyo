@@ -1,5 +1,16 @@
 # marchyo runtime-theming review and extension plan
 
+**Status (2026-10): complete.** §3 steps 1-4 shipped (bat f045fce, fzf 42c3116,
+hyprlock a797211, console 38898a8); step 5 (Qt) resolved as "Option A: follow
+GTK" (`QT_QPA_PLATFORMTHEME=gtk3`, e01468a) instead of the qtct/Kvantum emitter
+sketched here; step 6 (fonts + cursor) and step 7 (retire stylix) shipped as
+97d74c5 + 8ff3a33, with the TUI long tail (lazygit/k9s/ncspot/spotify-player/
+gdu) and Emacs re-homed from base16 slots (`modules/generic/theme-slots.nix`).
+Still open: the §2 correctness findings F1, F2, F4 (F3 is cosmetic and remains
+as documented) and the optional §3 step-6-adjacent Material-You mode. The text
+below is the original review, kept as the record; line references are to
+`main` @ `43f82b8` and are historical.
+
 Review only. No code changed. All paths are relative to the marchyo repo
 unless noted; `design:` prefixes a path in the jylhis-design source
 (`pkgs.jylhis-design-src`). Line references are to the state reviewed at

@@ -5,8 +5,9 @@ implemented in the flake.
 
 ## F1.11 — Local AI integration (deferred)
 
-- **Status:** `marchyo.ai.local.enable` is **declared but unimplemented** —
-  enabling it currently fails an assertion (use OpenRouter instead).
+- **Status:** not started — no `marchyo.ai.*` options are declared at all
+  (an earlier revision of this note claimed the option existed and failed an
+  assertion; that was stale).
 - **Goal:** `marchyo.ai.local.enable` → `services.ollama` (with
   `acceleration = "cuda"|"rocm"` driven by `marchyo.graphics.vendors`),
   optional model pre-pull; expose the endpoint to shell/editor.
@@ -20,12 +21,11 @@ implemented in the flake.
 - **Share upload target.** `marchyo share` stages clipboard/file/folder
   paths on the clipboard; an actual upload backend is still an open
   decision.
-- **hyprlock live theme swap.** With the shell on, the lock surface is now
-  the in-shell `WlSessionLock` (`shell/Lock/`), which binds `Color.*` and so
-  already follows `marchyo theme set` live. Only the shell-off path
-  (hyprlock, plus console and Plymouth) keeps the build-time theme until
-  rebuild; a `source =` include in the hyprlock config would make hyprlock
-  runtime-swappable there.
+- **hyprlock live theme swap. DONE** (a797211): the shell-off lock surface
+  sources `current-theme/hyprlock-colors.conf`. Console/TTY followed
+  (38898a8, best-effort live + next-boot). Plymouth stays build-time by
+  design: it is never on screen during a session, so runtime theming has
+  no meaning for it (THEME-RUNTIME-REVIEW.md §1).
 
 ## Out of scope (Nix subsumes or low value)
 
