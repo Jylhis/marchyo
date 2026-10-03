@@ -200,6 +200,22 @@ in
         marchyo.desktop.enable = true;
       });
 
+  # Runtime Qt theming: on a desktop the session points Qt at the gtk3
+  # platform theme so Qt follows the live GTK surface (Stylix's qt target is
+  # opted out; no qt5ct/qt6ct config is generated).
+  eval-themes-qt-follows-gtk =
+    testNixOSCheck "themes-qt-follows-gtk"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+        in
+        hm.home.sessionVariables.QT_QPA_PLATFORMTHEME == "gtk3" && hm.stylix.targets.qt.enable == false
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
   # Off the desktop (no runtime layer) fzf keeps its build-time colours.
   eval-themes-fzf-nondesktop-colors =
     testNixOSCheck "themes-fzf-nondesktop-colors"

@@ -127,7 +127,12 @@ marchyo.theme.themes = [
 ];
 ```
 
-Runtime switching covers the directly-themed surfaces; Stylix-derived targets (Qt, fontconfig, …) follow the build-time `variant`/`scheme` until a rebuild. The switch is ephemeral — the next activation resets to the declarative default.
+Runtime switching covers the directly-themed surfaces; Qt follows it too —
+the session runs `QT_QPA_PLATFORMTHEME=gtk3`, so Qt apps pick up the swapped
+`gtk.css` and dconf color-scheme on next launch. The remaining Stylix-derived
+targets (fontconfig, GNOME/KDE bits) follow the build-time `variant`/`scheme`
+until a rebuild. The switch is ephemeral — the next activation resets to the
+declarative default.
 
 GTK apps follow a runtime switch on next launch (newly started apps read the
 swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
@@ -163,7 +168,11 @@ marchyo theme generate --revert                     # back to the declarative th
 
 matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. It recolours the **runtime** surfaces instantly: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, `fzf`, and the wallpaper itself. (Generated themes do not restyle mako/waybar/GTK or `bat` — the matugen palette is the shell subset without the syn-* tokens those surfaces need, so they keep the previously active theme until the next `theme set` or rebuild.)
 
-Build-time surfaces themed through Stylix (Qt/KDE apps, `starship`) keep the declarative theme until the next rebuild — the same limitation every runtime theme switch has ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
+Qt follows the runtime GTK swap on next launch (`QT_QPA_PLATFORMTHEME=gtk3`),
+and `starship` styles through ANSI slot names, so it already recolors with the
+terminal's live palette. Other build-time surfaces themed through Stylix
+(fontconfig, GNOME/KDE) keep the declarative theme until the next rebuild —
+the same limitation every runtime theme switch has ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
 
 ## Light mode
 

@@ -36,6 +36,11 @@ let
     "hyprlock"
     "console"
     "starship"
+    # Qt apps follow the live GTK surface instead: modules/home/qt.nix sets
+    # QT_QPA_PLATFORMTHEME=gtk3 (both nixpkgs qtbase generations ship the
+    # libqgtk3 plugin), so a theme swap restyles Qt with the gtk.css relink
+    # and the dconf color-scheme write, with no qt5ct/qt6ct indirection.
+    "qt"
     # aerc.nix ships its own styleset: upstream Stylix uses base07 (a background
     # slot) as a foreground, which is white-on-white in the light variant.
     "aerc"

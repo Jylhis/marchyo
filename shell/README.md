@@ -435,10 +435,11 @@ session-env quirks (the dev recipe exports the same pair):
   *"Unable to determine system time zone"* on D-Bus `QDateTime` conversions.
   `/etc/zoneinfo` follows the live symlink, so auto-timezone changes apply.
   Harmless (plain fallback to the old behaviour) on hosts without it.
-- `QT_QPA_PLATFORMTHEME=gtk3` — the session value is typically `qt5ct` (HM's
-  qt module via stylix), which has no Qt6 plugin; the shell then resolves
-  themed icons against `hicolor` and tray/notification icons fail to load.
-  The `gtk3` platform theme reads marchyo's own GTK settings (`Adwaita`).
+- `QT_QPA_PLATFORMTHEME=gtk3` — the same value the session gets from
+  `modules/home/qt.nix` (Qt follows the live GTK surface), pinned for the
+  shell process so a host overriding the session (e.g. back to `qt5ct`,
+  which has no Qt6 plugin) can't break themed icon resolution; the `gtk3`
+  platform theme reads marchyo's own GTK settings (`Adwaita`).
 
 ### Tests
 
