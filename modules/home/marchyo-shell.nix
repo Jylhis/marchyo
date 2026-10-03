@@ -55,6 +55,8 @@ let
   uiScale = appearance.uiScale or 1.0;
   animationSpeed = appearance.animationSpeed or 1.0;
   highContrast = appearance.highContrast or false;
+  floatingBar = appearance.floatingBar or true;
+  surfaceAlpha = appearance.surfaceAlpha or 0.85;
   # Theme + scale the store package at build time (no activation-time file writes).
   shellPkg = pkgs.marchyo-shell.override {
     variant = themeVariant;
@@ -68,6 +70,8 @@ let
       uiScale
       animationSpeed
       highContrast
+      floatingBar
+      surfaceAlpha
       tailscaleEnabled
       ;
     plugins = shellPlugins ++ builtExtraPlugins;

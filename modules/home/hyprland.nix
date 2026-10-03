@@ -99,6 +99,13 @@ let
   # (see the panel binds below); only wire them when the shell owns the desktop.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
+  # Glass surfaces: marchyo.theme.appearance.surfaceAlpha < 1 makes the shell's
+  # cards translucent, which only reads as glass when the compositor blurs what
+  # is behind them. Baked off (alpha 1) the blur effect stays disabled and no
+  # layer rules are registered, reproducing the flat opaque look.
+  surfaceAlpha = ((osConfig.marchyo or { }).theme.appearance or { }).surfaceAlpha or 1.0;
+  glassEnabled = shellEnabled && surfaceAlpha < 1.0;
+
   # Gated on marchyo.launcher.enable so an opted-out host gets no dead binds.
   launcherEnabled = ((osConfig.marchyo or { }).launcher or { }).enable or false;
 
@@ -305,7 +312,10 @@ in
             no_hardware_cursors = true;
           };
 
-          # Flat TUI panes: sharp corners, no rounding/shadow/blur.
+          # Flat TUI panes: sharp corners, no rounding/shadow. Blur is only on
+          # when the shell's glass surfaces need it (surfaceAlpha < 1); app
+          # windows never blur (the no_blur window rule below), so the effect
+          # exists solely for the shell's layer surfaces.
           decoration = {
             rounding = 0;
 
@@ -315,9 +325,12 @@ in
             shadow = {
               enabled = false;
             };
-
+          }
+          // lib.optionalAttrs glassEnabled {
             blur = {
-              enabled = false;
+              enabled = true;
+              size = 4;
+              passes = 2;
             };
           };
 
@@ -513,6 +526,30 @@ in
               "(monitor_w-window_w-40)"
               "(monitor_h*0.04)"
             ];
+          }
+
+          # Glass shell surfaces: with the blur effect on (surfaceAlpha < 1),
+          # every app window explicitly opts out so only the shell's layer
+          # surfaces blur. Layer rules cannot scope the effect, so this is the
+          # exclusion direction that works in Hyprland.
+        ]
+        ++ lib.optionals glassEnabled [
+          {
+            match.class = ".*";
+            no_blur = true;
+          }
+        ];
+
+        # Glass shell surfaces: blur the shell's layer-shell namespaces (the
+        # bar, panels, toasts, OSD, launcher, tooltips set WlrLayershell
+        # .namespace to "marchyo:<surface>"). Registered only when the blur
+        # effect is on; ignore_alpha 0.2 keeps the corners outside the pill
+        # radius from smearing.
+        layer_rule = lib.optionals glassEnabled [
+          {
+            match.namespace = "marchyo:.*";
+            blur = true;
+            ignore_alpha = 0.2;
           }
         ];
 

@@ -29,6 +29,9 @@ PanelWindow {
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // Blur anchor: modules/home/hyprland.nix registers blur layer rules for
+    // the "marchyo:" namespace prefix when surfaceAlpha < 1.
+    WlrLayershell.namespace: "marchyo:panel"
 
     anchors {
         top: true
@@ -47,12 +50,13 @@ PanelWindow {
         id: card
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.topMargin: Style.barHeight + Style.panelGap
-        anchors.rightMargin: Style.panelGap
+        // barMarginV is 0 in strip mode, so this reproduces the strip look.
+        anchors.topMargin: Style.barMarginV + Style.barHeight + Style.panelGap
+        anchors.rightMargin: Style.panelGap + Style.barMarginH
         width: Style.panelWidth
         implicitHeight: layout.implicitHeight + Style.panelPad * 2
         radius: Style.panelRadius
-        color: Color.surface
+        color: Qt.alpha(Color.surface, Style.surfaceAlpha)
         border.color: Color.border
         border.width: Style.borderWidth
 

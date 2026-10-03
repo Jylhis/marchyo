@@ -15,7 +15,7 @@ Rectangle {
     required property var notif
 
     radius: Style.notifRadius
-    color: Color.bg
+    color: Qt.alpha(Color.bg, Style.surfaceAlpha)
     border.width: Style.notifBorder
     border.color: {
         if (!notif)

@@ -49,10 +49,12 @@ Stylix `base16Scheme` is derived from the Jylhis Design System `themes/jylhis.js
 
 ### Shell appearance scale axes
 
-`marchyo.theme.appearance.*` are palette-independent scale multipliers over the base design tokens, affecting only the Quickshell shell (`marchyo.shell`). Neutral defaults reproduce the current look. Baked into `Commons/Style.qml` at build time via the `marchyo-shell` override.
+`marchyo.theme.appearance.*` are palette-independent scale multipliers and style switches over the base design tokens, affecting only the Quickshell shell (`marchyo.shell`). The scale axes default neutral; the style axes (`floatingBar`, `surfaceAlpha`) are Caelestia-inspired and default on. Baked into `Commons/Style.qml` at build time via the `marchyo-shell` override.
 
 | Option | Default | Description |
 |--------|---------|-------------|
+| `marchyo.theme.appearance.floatingBar` | `true` | Float the bar as a detached rounded pill with gaps to the screen edges instead of the full-width strip; also lifts panels, toasts, OSD, launcher, and tooltips off the bar geometry |
+| `marchyo.theme.appearance.surfaceAlpha` | `0.85` | Opacity of shell surfaces (bar, panels, toasts, OSD). Below `1` enables the Hyprland blur effect and blur layer rules for the shell's namespaces (glass look); `1.0` restores fully opaque surfaces and keeps blur off |
 | `marchyo.theme.appearance.cornerRadiusScale` | `1.0` | Multiplier on shell corner radii (panels, OSD); `0.0` squares every corner |
 | `marchyo.theme.appearance.uiScale` | `1.0` | Multiplier on shell geometry (bar height, spacing, sizes) on top of `fontScale`, without changing font sizes |
 | `marchyo.theme.appearance.animationSpeed` | `1.0` | Shell animation speed (higher = faster); exposed as `Style.animationDuration` |

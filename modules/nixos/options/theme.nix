@@ -121,8 +121,31 @@ in
     };
 
     # Shell appearance scale axes, independent of the palette. Affect only the
-    # Quickshell shell (marchyo.shell); neutral defaults reproduce the current look.
+    # Quickshell shell (marchyo.shell); neutral defaults reproduce the strip-bar
+    # look. The style axes below (floatingBar, surfaceAlpha) are Caelestia-
+    # inspired and deliberately non-neutral by default.
     appearance = {
+      floatingBar = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Float the bar as a detached rounded pill with gaps to the screen
+          edges, instead of the full-width strip. Also lifts panels, toasts,
+          OSD, launcher, and tooltips off the bar's geometry and rounds them.
+        '';
+      };
+
+      surfaceAlpha = mkOption {
+        type = types.numbers.between 0.3 1.0;
+        default = 0.85;
+        description = ''
+          Opacity of shell surfaces (bar, panels, toasts, OSD). Below 1 the
+          home Hyprland config enables its blur effect and registers blur
+          layer rules for the shell's layer-shell namespaces, giving a glass
+          look; 1.0 restores fully opaque surfaces and keeps blur off.
+        '';
+      };
+
       cornerRadiusScale = mkOption {
         type = types.numbers.between 0.0 4.0;
         default = 1.0;

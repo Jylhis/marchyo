@@ -14,6 +14,19 @@ QtObject {
     readonly property int paddingH: 6
     readonly property string fontFamily: "BlexMono Nerd Font"
 
+    // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
+    // screen edges and the bar's corner radius. Inert while floatingBar is
+    // off (the strip bar spans edge to edge).
+    readonly property bool barFloating: true
+    readonly property int barMarginH: 6
+    readonly property int barMarginV: 6
+    readonly property int barRadius: 12
+
+    // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
+    // to every shell card; 1.0 restores the opaque flat look (and the home
+    // Hyprland config keeps blur off).
+    readonly property real surfaceAlpha: 0.85
+
     // On-screen-display geometry (volume/brightness overlay).
     readonly property int osdPad: 14
     readonly property int osdRadius: 8

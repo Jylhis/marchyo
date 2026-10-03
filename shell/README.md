@@ -129,6 +129,21 @@ The shell also declares a single stock `Quickshell.Io.IpcHandler` (target
 `shell`) in `shell.qml` so Hyprland keybinds can summon panels and poke the OSD;
 see [Keybind summons](#keybind-summons) below.
 
+### Shape and materiality
+
+The bar is a **floating pill** by default: detached from the screen edges
+(`Style.barMarginH/V`), rounded (`Style.barRadius`), translucent
+(`Style.surfaceAlpha`), and floating over content (no layout reservation).
+`marchyo.theme.appearance.floatingBar = false` restores the full-width strip
+(all three bake to 0), and `surfaceAlpha = 1.0` restores opaque surfaces.
+With alpha below 1 the home Hyprland config enables its blur effect and
+registers blur layer rules for the shell's `marchyo:*` layer-shell
+namespaces (bar, panels, toasts, OSD, launcher, tooltip) — the glass look —
+while a `no_blur` window rule keeps app windows unblurred.
+
+Every surface sets `WlrLayershell.namespace` to `marchyo:<surface>`; that
+prefix is the blur anchor and stays stable across surfaces.
+
 ### Widgets
 
 Most widgets bind to native Quickshell services; the rest shell out to tools whose

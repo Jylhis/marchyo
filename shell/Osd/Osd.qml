@@ -134,6 +134,10 @@ Scope {
         color: "transparent"
         exclusiveZone: 0
 
+        // Blur anchor: modules/home/hyprland.nix registers blur layer rules for
+        // the "marchyo:" namespace prefix when surfaceAlpha < 1.
+        WlrLayershell.namespace: "marchyo:osd"
+
         anchors.bottom: true
         margins.bottom: Style.osdMargin
 
@@ -147,7 +151,7 @@ Scope {
             id: card
             anchors.fill: parent
             radius: Style.osdRadius
-            color: Color.surface
+            color: Qt.alpha(Color.surface, Style.surfaceAlpha)
             border.color: Color.border
             border.width: 1
 
