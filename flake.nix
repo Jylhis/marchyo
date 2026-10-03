@@ -14,8 +14,8 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-    # nix-darwin / home-manager / stylix track master so they pair with the
-    # unstable primary nixpkgs (release branches assume their matching nixpkgs).
+    # nix-darwin / home-manager track master so they pair with the unstable
+    # primary nixpkgs (release branches assume their matching nixpkgs).
     # darwinConfigurations.x86_64 instead pins its package set to nixos-26.05, so
     # it uses the matching *-stable release-branch inputs below; nix-darwin
     # enforces this with a hard build assertion, home-manager with a warning.
@@ -42,16 +42,6 @@
     # (release branches assume their matching nixpkgs).
     home-manager-stable = {
       url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
-    };
-    stylix = {
-      url = "github:nix-community/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # Stable stylix (release-26.05) to pair with nixpkgs-stable for
-    # darwinConfigurations.x86_64. Must NOT follow the unstable primary.
-    stylix-stable = {
-      url = "github:nix-community/stylix/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs-stable";
     };
     # nix-on-droid (Android terminal). Pinned to the latest prerelease with a

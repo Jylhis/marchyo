@@ -1,8 +1,8 @@
 # Global font-size scaling helper.
 #
 # Single source of truth for the `marchyo.theme.fontScale` multiplier math, so
-# every text surface (stylix sizes, ghostty, waybar, mako, hyprlock, vicinae,
-# GTK apps, the TTY console) scales from one number. Imported with the resolved
+# every text surface (GTK interface fonts, Qt, ghostty, waybar, mako, hyprlock,
+# vicinae, the TTY console) scales from one number. Imported with the resolved
 # scale: `import ../../lib/font-scale.nix { inherit lib; scale = fontScale; }`.
 #
 # `round` is round-half-up. `terminusFont` snaps a scaled base to the nearest

@@ -7,7 +7,7 @@ in
     enable = mkOption {
       type = types.bool;
       default = true;
-      description = "Enable Stylix theming system";
+      description = "Enable the marchyo theming system (Jylhis design system, runtime theme switching)";
     };
 
     variant = mkOption {
@@ -113,8 +113,8 @@ in
       example = 1.0;
       description = ''
         Global font-size multiplier applied system-wide. Scales every text
-        surface (Stylix applications/terminal/desktop/popups, the terminal,
-        waybar, notifications, the lock screen, the launcher, GTK apps and the
+        surface (the GTK/Qt interface fonts, the terminal, waybar,
+        notifications, the lock screen, the launcher, GTK apps and the
         TTY console) from a single number. 1.0 restores the historical sizes;
         values above 1.0 make everything larger for HiDPI/accessibility.
       '';

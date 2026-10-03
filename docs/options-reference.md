@@ -43,9 +43,9 @@ marchyo.theme = {
 };
 ```
 
-`marchyo.theme.fontScale` is the single knob for font size system-wide: the math lives in `lib/font-scale.nix` (`round` = round-half-up; `terminusFont` snaps the TTY console to the nearest terminus PSF size). `modules/generic/stylix.nix` feeds it into `stylix.fonts.sizes.*`, which covers every still-Stylix'd surface (Qt/KDE/fontconfig apps, and GTK/GNOME apps via the enabled `gnome` target's dconf `interface font-name` — the disabled `gtk` target only governs Stylix's GTK CSS/settings.ini). The surfaces Stylix is fully disabled for read the scale from `osConfig.marchyo.theme.fontScale` and scale in their own modules (`ghostty`, `waybar` — CSS `font-size` + bar `height`, `mako`, `hyprlock`, `vicinae` — `font.normal.size`, `console`).
+`marchyo.theme.fontScale` is the single knob for font size system-wide: the math lives in `lib/font-scale.nix` (`round` = round-half-up; `terminusFont` snaps the TTY console to the nearest terminus PSF size). The GNOME interface fonts (dconf `font-name`/`document-font-name`/`monospace-font-name`) scale in `modules/home/jylhis-theme.nix` — Qt apps read them through the gtk3 platform theme. Every other surface reads the scale from `osConfig.marchyo.theme.fontScale` and scales in its own module (`ghostty`, `waybar` — CSS `font-size` + bar `height`, `mako`, `hyprlock`, `vicinae` — `font.normal.size`, `console`, the launcher, Emacs's default face).
 
-Stylix `base16Scheme` is derived from the Jylhis Design System `themes/jylhis.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light), wired up in `modules/generic/stylix.nix`. To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a `base16-schemes` YAML) or override `stylix.base16Scheme` directly.
+The base16 slot palette is derived from the Jylhis Design System `themes/jylhis.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light) and consumed by `modules/generic/theme-slots.nix` (plus the runtime theme dirs). To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a tinted-schemes catalog YAML); the slot surfaces and runtime switching follow it.
 
 ### Shell appearance scale axes
 

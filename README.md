@@ -14,7 +14,7 @@ A modular NixOS configuration flake providing a curated set of system and home-m
 
 Marchyo is batteries-included: add it as your **only** input and let
 `marchyo.lib.mkNixosSystem` / `mkDarwinSystem` select the correct nixpkgs,
-home-manager, stylix, overlay and marchyo modules for your system. No separate
+home-manager, overlay and marchyo modules for your system. No separate
 `nixpkgs` input is needed.
 
 ```nix

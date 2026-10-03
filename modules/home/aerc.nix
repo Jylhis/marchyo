@@ -1,10 +1,9 @@
 # Per-user aerc (TUI mail client). Account/credential setup is left to the consumer.
 #
-# Theming is marchyo's, not Stylix's (aerc target disabled in
-# modules/generic/theme.nix): upstream uses base07, a base16 background slot, as
-# a foreground, which is white-on-white in the light variant. The "marchyo"
-# styleset built from Jylhis semantic tokens contrasts against its surface in both
-# variants.
+# Theming is marchyo's own (aerc's former Stylix target used base07, a base16
+# background slot, as a foreground, which is white-on-white in the light
+# variant). The "marchyo" styleset built from Jylhis semantic tokens contrasts
+# against its surface in both variants.
 {
   osConfig ? { },
   pkgs,

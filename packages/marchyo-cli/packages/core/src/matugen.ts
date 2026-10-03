@@ -10,7 +10,7 @@ import { join } from "node:path";
 // same token->slot / ANSI mapping modules/home/theme-runtime.nix uses at build
 // time, so a wallpaper-generated theme recolors the same runtime surfaces a
 // catalog scheme does (the shell's colors.json, ghostty, Hyprland borders, and
-// the wallpaper). Build-time Stylix surfaces (Qt/bat/fzf/starship) keep the
+// the wallpaper). Qt follows the runtime GTK swap; only plymouth keeps the
 // declarative theme until the next rebuild — the same limitation every runtime
 // theme switch has.
 
