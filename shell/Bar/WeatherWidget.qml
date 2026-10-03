@@ -11,7 +11,7 @@ BarItem {
     id: root
 
     interactive: true
-    visible: Weather.available
+    shown: Weather.available
     text: Weather.icon + "  " + Weather.tempC + "°C"
     textColor: Color.text
     tooltipText: Weather.description !== "" ? Weather.description + ", " + Weather.tempC + "°C" : "Weather"

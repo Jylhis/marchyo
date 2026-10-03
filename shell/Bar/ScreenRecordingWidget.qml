@@ -10,7 +10,7 @@ BarItem {
     id: root
 
     interactive: true
-    visible: ScreenRecording.recording
+    shown: ScreenRecording.recording
     compact: true
     text: "󰻂"
     textColor: Color.statusErr

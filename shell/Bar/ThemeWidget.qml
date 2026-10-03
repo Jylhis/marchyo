@@ -9,7 +9,7 @@ BarItem {
     id: root
 
     interactive: true
-    visible: Theme.known
+    shown: Theme.known
     compact: true
     text: Theme.variant === "light" ? "󰖙" : "󰖔"
     textColor: Color.textMuted

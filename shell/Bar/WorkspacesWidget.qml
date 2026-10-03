@@ -15,6 +15,10 @@ RowLayout {
     // Name of the screen this bar renders on; empty = show all workspaces.
     property string screenName: ""
 
+    // Always-present widget; `shown` is the flag Ui/BarSection reads to keep
+    // the slot (it never collapses, so it stays true).
+    property bool shown: true
+
     spacing: 0
 
     // Union of the persistent ids (1–5) and every workspace on this monitor,

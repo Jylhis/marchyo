@@ -10,7 +10,7 @@ import qs.Services
 BarItem {
     id: root
 
-    visible: KeyboardLayout.code.length > 0
+    shown: KeyboardLayout.code.length > 0
     interactive: true
     text: KeyboardLayout.code
     textColor: Color.textMuted

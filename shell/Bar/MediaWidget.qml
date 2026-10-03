@@ -15,7 +15,7 @@ BarItem {
         return t.substring(0, Style.mediaMaxChars - 1) + "…";
     }
 
-    visible: Mpris.active
+    shown: Mpris.active
     interactive: true
     text: (Mpris.isPlaying ? "󰎇 " : "󰏤 ") + shortTitle
     textColor: Mpris.isPlaying ? Color.text : Color.textMuted

@@ -9,6 +9,14 @@ import qs.Services
 Rectangle {
     id: root
 
+    // Logical visibility knob. Conditional widgets set `shown` (not `visible`)
+    // so Ui/BarSection can collapse a hidden slot by reading this plain bool.
+    // Binding a slot ancestor's `visible` to a loaded item's own `visible`
+    // freezes that item invisible forever (the Qt Loader/visible hazard in
+    // BarSection); a separate flag sidesteps it. `visible` just follows it.
+    property bool shown: true
+    visible: root.shown
+
     property alias text: label.text
     property color textColor: Color.text
     // Hover highlight + pointer cursor; leave false for passive readouts.
