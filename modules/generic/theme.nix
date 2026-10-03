@@ -47,6 +47,17 @@ let
     # vicinae.nix ships full jylhis Vicinae TOML themes and owns font.normal.* +
     # launcher_window.opacity itself.
     "vicinae"
+    # The long tail marchyo themes from base16 slots (lazygit, k9s, ncspot,
+    # spotify-player, gdu), the Emacs jylhis themes, and the GNOME interface
+    # fonts + cursor: owned by modules/home/*.nix and jylhis-theme.nix from
+    # modules/generic/theme-slots.nix, ahead of the stylix retirement.
+    "lazygit"
+    "k9s"
+    "ncspot"
+    "spotify-player"
+    "gdu"
+    "emacs"
+    "gnome"
   ];
 
   targetDisable = lib.mkMerge (

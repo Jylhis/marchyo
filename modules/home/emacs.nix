@@ -10,6 +10,15 @@ let
   enabled = cfg.enable or false;
   emacsPkg = cfg.package or pkgs.emacs-pgtk;
 
+  themeCfg = (osConfig.marchyo or { }).theme or { };
+  themeEnabled = themeCfg.enable or true;
+  themeVariant = themeCfg.variant or "dark";
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = themeCfg.fontScale or 1.25;
+  };
+  jylhisThemeName = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
+
   windmoveEnabled = enabled && (cfg.windmove.enable or true);
   eventListenerEnabled = enabled && (cfg.eventListener.enable or true);
   scratchpadEnabled = enabled && (cfg.scratchpad.enable or true);
@@ -307,10 +316,28 @@ in
             version = "0.1.0";
             src = elispSrc;
           };
+          # The design system's own Emacs themes (Modus-style faces, generated
+          # in-derivation). Replaces the base16 theme Stylix used to inject.
+          jylhisThemes = pkgs.callPackage "${pkgs.jylhis-design-src}/nix/emacs.nix" {
+            inherit (epkgs) trivialBuild;
+          };
         in
         (lib.optional needsElispPkg marchyoElisp)
+        ++ (lib.optional themeEnabled jylhisThemes)
         ++ (lib.optional everywhereEnabled epkgs.emacs-everywhere)
         ++ (lib.optional eventListenerEnabled epkgs.perspective);
+
+      # Theme + scaled default font; previously injected by Stylix's emacs
+      # target. The batch guard follows the design repo's README: Nix-packaged
+      # themes are not on custom-theme-load-path under `emacs --batch`.
+      extraConfig = lib.mkIf themeEnabled ''
+        (set-face-attribute 'default nil
+          :font (font-spec :family "BlexMono Nerd Font" :size ${toString (fs.round 12)}.0))
+
+        (require 'jylhis-themes)
+        (unless noninteractive
+          (load-theme '${jylhisThemeName} t))
+      '';
     };
 
     services.emacs = {
