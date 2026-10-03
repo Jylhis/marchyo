@@ -68,14 +68,14 @@ in
     };
   });
 
-  # Stylix's `gnome` target and marchyo's gtk.colorScheme both write dconf
-  # `org/gnome/desktop/interface color-scheme` at normal priority. Under the
-  # dark variant both produce "prefer-dark" and merge silently; under light
-  # they diverge (Stylix: "default", HM's gtk3.nix: "prefer-light") and the
-  # merge throws only when the value is forced — i.e. on a real `nixos-rebuild
-  # switch`, not in lazily-evaluated eval tests. Forcing the value here makes
-  # the conflict a build-time failure. (Real-world report: j10s local-lab,
-  # marchyo.theme.variant = "light".)
+  # HM's gtk3 module and marchyo's gtk.colorScheme both write dconf
+  # `org/gnome/desktop/interface color-scheme`; under the light variant their
+  # values diverge (HM's gtk3.nix: "prefer-light" vs marchyo's mkForce), and
+  # the merge throws only when the value is forced — i.e. on a real
+  # `nixos-rebuild switch`, not in lazily-evaluated eval tests. Forcing the
+  # value here makes the conflict a build-time failure. (Historically this
+  # also caught the same collision with Stylix's gnome target, pre-retirement;
+  # the marchyo-vs-HM half is what remains worth pinning.)
   eval-themes-light-dconf-color-scheme =
     testNixOSCheck "themes-light-dconf-color-scheme"
       (
@@ -201,17 +201,11 @@ in
       });
 
   # Runtime Qt theming: on a desktop the session points Qt at the gtk3
-  # platform theme so Qt follows the live GTK surface (Stylix's qt target is
-  # opted out; no qt5ct/qt6ct config is generated).
+  # platform theme so Qt follows the live GTK surface (no qt5ct/qt6ct
+  # config is generated anywhere).
   eval-themes-qt-follows-gtk =
     testNixOSCheck "themes-qt-follows-gtk"
-      (
-        cfg:
-        let
-          hm = cfg.home-manager.users.testuser;
-        in
-        hm.home.sessionVariables.QT_QPA_PLATFORMTHEME == "gtk3" && hm.stylix.targets.qt.enable == false
-      )
+      (cfg: cfg.home-manager.users.testuser.home.sessionVariables.QT_QPA_PLATFORMTHEME == "gtk3")
       (withTestUser {
         marchyo.desktop.enable = true;
       });
@@ -291,25 +285,24 @@ in
         marchyo.theme.scheme = "nord";
       });
 
-  # modules/darwin/home.nix imports a curated subset of modules/home, and that
-  # subset has to include ../generic/theme.nix — the module that opts out of
-  # the Stylix targets marchyo themes itself. Without it, stylix's HM targets
-  # and marchyo's own modules define the same options at normal priority and
-  # the darwin toplevel stops evaluating with "conflicting definition values".
-  # Both input trios are checked: aarch64 (unstable) and x86_64 (stable 26.05).
-  eval-themes-darwin-stylix-optouts =
-    testDarwinCheckFor "aarch64-darwin" "themes-darwin-stylix-optouts"
+  # modules/darwin/home.nix imports a curated subset of modules/home; on
+  # darwin there is no runtime theme layer, so those surfaces keep their
+  # build-time colours. Both input trios are checked: aarch64 (unstable) and
+  # x86_64 (stable 26.05). (Historically these also pinned the Stylix target
+  # opt-outs; stylix is retired and marchyo owns every surface.)
+  eval-themes-darwin-buildtime-colors =
+    testDarwinCheckFor "aarch64-darwin" "themes-darwin-buildtime-colors"
       (
         cfg:
         let
-          targets = cfg.home-manager.users.testuser.stylix.targets;
+          hm = cfg.home-manager.users.testuser;
         in
-        !targets.bat.enable && !targets.fzf.enable && !targets.starship.enable
+        (hm.programs.fzf.colors or { }) != { } && hm.xdg.configFile ? "ghostty/themes/jylhis-dark"
       )
       (withDarwinTestUser { });
 
-  eval-themes-darwin-stable-stylix-optouts =
-    testDarwinCheckFor "x86_64-darwin" "themes-darwin-stable-stylix-optouts"
-      (cfg: !cfg.home-manager.users.testuser.stylix.targets.bat.enable)
+  eval-themes-darwin-stable-buildtime-colors =
+    testDarwinCheckFor "x86_64-darwin" "themes-darwin-stable-buildtime-colors"
+      (cfg: (cfg.home-manager.users.testuser.programs.fzf.colors or { }) != { })
       (withDarwinTestUser { });
 }

@@ -1,9 +1,9 @@
 ---
 title: Theming
-description: Customize system appearance with Stylix and base16 color schemes
+description: Customize system appearance with the Jylhis design system and base16 color schemes
 ---
 
-Marchyo themes the system from two coordinated sources. The core desktop surfaces — GTK, Hyprland, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, the Vicinae launcher, and the Plymouth boot splash — are themed directly from the [Jylhis Design System](https://github.com/jylhis/design) (their Stylix targets are explicitly disabled). [Stylix](https://github.com/danth/stylix) supplies the base16 color scheme and fonts, and themes everything else — Qt, fontconfig, and the remaining targets.
+Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, the Vicinae launcher, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, ncspot, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild. There is no Stylix: marchyo retired it once every surface it covered had a marchyo-owned path.
 
 The launcher is a slightly different case, and split by shell: with `marchyo.shell.enable` the in-shell launcher themes itself from the design tokens at runtime (the shell's `Color` singleton — no registration needed), while the discrete stack's Vicinae gets two real themes (`jylhis-dark` for dark, `jylhis-light` for light) generated from the design tokens and registered both, so the full color surface — text, inputs, buttons, list and grid selection, scrollbars, tooltips — is covered rather than just the background/accent basics. See [Launcher](/docs/configuration/launcher/).
 
@@ -53,34 +53,33 @@ marchyo.theme = {
 
 ## Fonts
 
-Stylix carries the design system's three type roles across the system. The
-defaults are:
+Marchyo carries the design system's three type roles across the system — the
+fontconfig role mapping (`modules/generic/fontconfig.nix`), the GNOME interface
+fonts Qt and GTK apps resolve (`modules/home/jylhis-theme.nix`), and every
+surface that names a family directly. The defaults are:
 
 | Role | Family | Package |
 |------|--------|---------|
-| Display / headings (`serif`) | Zilla Slab | `pkgs.zilla-slab` |
-| Body (`sansSerif`) | Hanken Grotesk | `pkgs.hanken-grotesk` |
+| Display / headings (serif) | Zilla Slab | `pkgs.zilla-slab` |
+| Body (sansSerif) | Hanken Grotesk | `pkgs.hanken-grotesk` |
 | Monospace | BlexMono Nerd Font (IBM Plex Mono, Nerd Font patched) | `pkgs.nerd-fonts.blex-mono` |
 
 The Nerd Font patch of IBM Plex Mono is used for monospace because the desktop
-chrome — Waybar, Mako, hyprlock, Ghostty — needs the icon glyphs. To use a
-different stack, set the Stylix font options directly:
+chrome — Waybar, Mako, hyprlock, Ghostty — needs the icon glyphs. To change the
+role mapping, override the fontconfig defaults:
 
 ```nix
-stylix.fonts.monospace = {
-  package = pkgs.nerd-fonts.jetbrains-mono;
-  name = "JetBrainsMono Nerd Font";
-};
+fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
 ```
 
 ### Font size
 
 `marchyo.theme.fontScale` is a single multiplier that resizes **every** text
-surface at once — the Stylix-driven apps (Qt, fontconfig, GNOME/KDE) and the
-directly-themed chrome alike (the terminal, Waybar, notifications, the lock
-screen, the launcher, GTK apps, and the TTY console). It defaults to `1.25`
-(noticeably larger than upstream defaults). Set it to `1.0` to restore the
-historical sizes, or higher for HiDPI-at-distance or accessibility:
+surface at once — the interface fonts (GTK, Qt, Electron), the terminal, the
+bar, notifications, the lock screen, the launcher, the TUI apps, and the TTY
+console. It defaults to `1.25` (noticeably larger than upstream defaults).
+Set it to `1.0` to restore the historical sizes, or higher for
+HiDPI-at-distance or accessibility:
 
 ```nix
 marchyo.theme.fontScale = 1.5; # everything ~50% larger
@@ -127,12 +126,12 @@ marchyo.theme.themes = [
 ];
 ```
 
-Runtime switching covers the directly-themed surfaces; Qt follows it too —
-the session runs `QT_QPA_PLATFORMTHEME=gtk3`, so Qt apps pick up the swapped
-`gtk.css` and dconf color-scheme on next launch. The remaining Stylix-derived
-targets (fontconfig, GNOME/KDE bits) follow the build-time `variant`/`scheme`
-until a rebuild. The switch is ephemeral — the next activation resets to the
-declarative default.
+Runtime switching covers every surface except the Plymouth boot splash (it is
+not on screen during a session): Qt follows the GTK swap — the session runs
+`QT_QPA_PLATFORMTHEME=gtk3`, so Qt apps pick up the swapped `gtk.css` and dconf
+color-scheme on next launch — and the TUI apps (lazygit, k9s, …) follow the
+build-time `variant`/`scheme` at rebuild. The switch is ephemeral — the next
+activation resets to the declarative default.
 
 GTK apps follow a runtime switch on next launch (newly started apps read the
 swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
@@ -170,9 +169,9 @@ matugen extracts a base16 palette from the image, which Marchyo maps through the
 
 Qt follows the runtime GTK swap on next launch (`QT_QPA_PLATFORMTHEME=gtk3`),
 and `starship` styles through ANSI slot names, so it already recolors with the
-terminal's live palette. Other build-time surfaces themed through Stylix
-(fontconfig, GNOME/KDE) keep the declarative theme until the next rebuild —
-the same limitation every runtime theme switch has ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
+terminal's live palette. Only the Plymouth boot splash keeps the declarative
+theme until the next rebuild — it is not on screen during a session
+([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
 
 ## Light mode
 

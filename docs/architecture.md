@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin, and nix-on-droid configurations with sensible defaults. It is distributed as a batteries-included Nix flake meant to be used as the sole input in downstream configurations: consumers build with the `marchyo.lib.mkNixosSystem` / `mkDarwinSystem` builders, which select the system-correct nixpkgs + home-manager + stylix automatically (x86_64-darwin → stable 26.05, everything else → unstable).
+Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, nix-darwin, and nix-on-droid configurations with sensible defaults. It is distributed as a batteries-included Nix flake meant to be used as the sole input in downstream configurations: consumers build with the `marchyo.lib.mkNixosSystem` / `mkDarwinSystem` builders, which select the system-correct nixpkgs + home-manager automatically (x86_64-darwin → stable 26.05, everything else → unstable).
 
 **Key features:**
 - Modular architecture: configurations broken into small, manageable modules
@@ -12,7 +12,7 @@ Marchyo is a modular NixOS configuration flake providing curated system, Home Ma
 - nix-on-droid support for an Android terminal environment (CLI-only), a first-class build target via `marchyo.lib.mkNixOnDroidConfiguration`
 - Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
 - All custom options live under the `marchyo.*` namespace
-- Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; a separate `nixpkgs-stable` (nixos-26.05) backs `darwinConfigurations.x86_64` only. `home-manager`/`nix-darwin`/`stylix` track `master` to pair with unstable. A matching trio of release-26.05 inputs — `home-manager-stable`, `nix-darwin-stable`, `stylix-stable`, all following `nixpkgs-stable` — pairs with the stable set so `darwinConfigurations.x86_64` runs releases matching its nixpkgs (nix-darwin hard-fails the build on a release mismatch; home-manager and stylix warn). nix-on-droid is pinned independently (its own 2024-era nixpkgs + `home-manager-droid`).
+- Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; a separate `nixpkgs-stable` (nixos-26.05) backs `darwinConfigurations.x86_64` only. `home-manager`/`nix-darwin` track `master` to pair with unstable. A matching pair of release-26.05 inputs — `home-manager-stable`, `nix-darwin-stable`, both following `nixpkgs-stable` — pairs with the stable set so `darwinConfigurations.x86_64` runs releases matching its nixpkgs (nix-darwin hard-fails the build on a release mismatch; home-manager warns). nix-on-droid is pinned independently (its own 2024-era nixpkgs + `home-manager-droid`).
 - Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`; `marchyo.lib.*` builders and `legacyPackages.<system>` give a system-correct nixpkgs (x86_64-darwin → stable 26.05)
 
 ## Hybrid Non-Flake + Flake Architecture
@@ -51,8 +51,8 @@ templates/workstation/  # Developer workstation template
 
 ## Flake Outputs
 
-- `lib.mkNixosSystem` / `lib.mkDarwinSystem` — **Batteries-included system builders** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, nix-darwin, stylix, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix` (x86_64-darwin → stable 26.05 trio; everything else → unstable). The reference `nixosConfigurations`/`darwinConfigurations` are built through these same builders. Also exported: `lib.mkNixOnDroidConfiguration` (batteries-included nix-on-droid builder, fixed to aarch64-linux; flows through the `droidInputs` grouping the way the others flow through `inputsFor`), `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
-- `nixosModules.default` — Main NixOS module (includes Home Manager, Stylix, overlay)
+- `lib.mkNixosSystem` / `lib.mkDarwinSystem` — **Batteries-included system builders** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, nix-darwin, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix` (x86_64-darwin → stable 26.05 trio; everything else → unstable). The reference `nixosConfigurations`/`darwinConfigurations` are built through these same builders. Also exported: `lib.mkNixOnDroidConfiguration` (batteries-included nix-on-droid builder, fixed to aarch64-linux; flows through the `droidInputs` grouping the way the others flow through `inputsFor`), `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
+- `nixosModules.default` — Main NixOS module (includes Home Manager, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
 - `darwinModules.default` — nix-darwin module (includes Home Manager, overlay)
 - `homeManagerModules.default` — Home Manager module only
@@ -68,7 +68,7 @@ templates/workstation/  # Developer workstation template
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
 - `nixosModules` / `darwinModules` / `homeManagerModules` / `nixOnDroidModules` — per-platform module sets
 - `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
-- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs, built through `lib.mkDarwinSystem`. `aarch64` rides unstable (`nix-darwin.lib.darwinSystem`, `home-manager`/`stylix` master); `x86_64` is pinned by the builder to stable nixos-26.05 (the builder injects `nixpkgs.pkgs = mkPkgs "x86_64-darwin"` + `mkForce`-cleared `nixpkgs.config`/`overlays`), uses `nix-darwin-stable.lib.darwinSystem` (nix-darwin-26.05) plus `home-manager-stable` + `stylix-stable` (both release-26.05) — all three perform a nixpkgs-release check (nix-darwin hard-fails, the others warn). `mkDarwinSystem` selects the matching nix-darwin/HM/stylix per system via the `inputsFor` selector and the `mkDarwinModules <hmModule>` helper, so each config bakes in the HM matching its nixpkgs
+- `darwinConfigurations.{aarch64,x86_64}` — Reference nix-darwin configs, built through `lib.mkDarwinSystem`. `aarch64` rides unstable (`nix-darwin.lib.darwinSystem`, `home-manager` master); `x86_64` is pinned by the builder to stable nixos-26.05 (the builder injects `nixpkgs.pkgs = mkPkgs "x86_64-darwin"` + `mkForce`-cleared `nixpkgs.config`/`overlays`), uses `nix-darwin-stable.lib.darwinSystem` (nix-darwin-26.05) plus `home-manager-stable` (release-26.05) — both perform a nixpkgs-release check (nix-darwin hard-fails, home-manager warns). `mkDarwinSystem` selects the matching nix-darwin/HM per system via the `inputsFor` selector and the `mkDarwinModules <hmModule>` helper, so each config bakes in the HM matching its nixpkgs
 - `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
 - `nixOnDroidConfigurations.aarch64` — Reference Android terminal config, built through `lib.mkNixOnDroidConfiguration` (the same exported builder consumers use). Built impurely (`nix build --impure …activationPackage`): nix-on-droid uses `builtins.storePath`, so it cannot be evaluated in pure `nix flake check`. Coverage instead comes from `tests/eval/nix-on-droid.nix`, a pure check of the droid Home-Manager module (incl. the reused generic modules) against HM 24.05
 
@@ -77,7 +77,7 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem` / `mkDarwinSystem`, 
 ## Key Files
 
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`. Includes `flake-compat` as a non-flake input.
-- `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, stylix, etc.). `devenv.lock` syncs to this via `just update`.
+- `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.). `devenv.lock` syncs to this via `just update`.
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, darwinModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`/`mkDarwinSystem` via the `inputsFor` per-system selector + `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
 - `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux` and `wallpapper` in the `isDarwin` branch.

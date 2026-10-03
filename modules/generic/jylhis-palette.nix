@@ -1,6 +1,7 @@
 # Jylhis Design System palette helper. Reads themes/jylhis.json (from
 # pkgs.jylhis-design-src, tracked via flake.lock) and exposes:
-#   - base16 : { scheme, author, base00..base0F } for Stylix
+#   - base16 : { scheme, author, base00..base0F } (feeds
+#              modules/generic/theme-slots.nix and theme-runtime.nix)
 #   - ansi16 : 16 hex strings, ANSI escape palette for terminals that paint
 #              their own background (Ghostty etc.)
 #   - tty16  : 16 hex strings for the kernel TTY. Slots 0/7/15 come from

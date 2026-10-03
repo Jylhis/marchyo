@@ -12,8 +12,8 @@ in
       the Vicinae application launcher (Raycast-like, Wayland layer-shell).
       Runs `vicinae server` as a user service and binds Super+R to toggle it,
       Super+period to the emoji picker and Super+Ctrl+V to clipboard history.
-      Marchyo themes it directly from the Jylhis design tokens (the Stylix
-      vicinae target is disabled). Requires the desktop feature and is
+      Marchyo themes it directly from the Jylhis design tokens (no Stylix:
+      marchyo owns every surface). Requires the desktop feature and is
       auto-enabled (`lib.mkDefault`) when `marchyo.desktop.enable` is on — set
       to `false` to opt out'';
 

@@ -59,10 +59,10 @@ in
     };
   });
 
-  # aerc styleset regression: marchyo hand-rolls its own styleset (the Stylix
-  # aerc target is disabled in modules/generic/theme.nix) because upstream used
-  # base07 (= surface-raised, near-white in Sheet) as a *foreground*, giving
-  # white-on-white unread subjects / title / header in the light variant. Assert
+  # aerc styleset regression: marchyo hand-rolls its own styleset (the former
+  # Stylix aerc target used base07 (= surface-raised, near-white in Sheet) as a
+  # *foreground*, giving white-on-white unread subjects / title / header in the
+  # light variant). Assert
   # (in the light variant) that the styleset is named "marchyo", that unread
   # subjects / title / selected-tab share the heading ink, and — the crux — that
   # that ink is NOT the near-white surface-raised (which the styleset reuses only

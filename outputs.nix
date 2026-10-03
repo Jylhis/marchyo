@@ -13,8 +13,6 @@ let
     vicinae
     ncro
     noctalia
-    stylix
-    stylix-stable
     sops-nix
     treefmt-nix
     ;
@@ -27,7 +25,7 @@ let
   # x86_64-darwin special-case is decided (the builders below and legacyPackages
   # all flow through it). x86_64-darwin is the last nixpkgs release supporting
   # Intel macOS (26.11 drops it), so it rides stable nixos-26.05 with the
-  # matching release-branch home-manager / nix-darwin / stylix; everything else
+  # matching release-branch home-manager / nix-darwin; everything else
   # rides unstable.
   inputsFor =
     system:
@@ -36,7 +34,6 @@ let
         nixpkgs = nixpkgs-stable;
         home-manager = home-manager-stable;
         nix-darwin = nix-darwin-stable;
-        stylix = stylix-stable;
       }
     else
       {
@@ -44,7 +41,6 @@ let
           nixpkgs
           home-manager
           nix-darwin
-          stylix
           ;
       };
 
@@ -187,7 +183,6 @@ let
           inputs
           noctalia
           vicinae
-          stylix
           ;
       };
       modules = [
@@ -216,7 +211,6 @@ let
           inputs
           noctalia
           vicinae
-          stylix
           ;
       };
     };
@@ -227,7 +221,6 @@ let
       imports = [
         home-manager.nixosModules.home-manager
         hmSharedConfig
-        stylix.nixosModules.stylix
         sops-nix.nixosModules.sops
         # Declares programs.vicinae.input-server: the cap_dac_override wrapper
         # the launcher needs to inject keystrokes. Upstream defaults it ON, so
@@ -282,7 +275,7 @@ let
 
   # Batteries-included system builders: a consumer that adds only `marchyo` as
   # an input builds any system with these, with nixpkgs / home-manager /
-  # nix-darwin / stylix / overlay / modules selected automatically via inputsFor.
+  # nix-darwin / overlay / modules selected automatically via inputsFor.
 
   # allowUnfree is set plainly, not via a priority wrapper: nixpkgs.config is a
   # freeform attrset, so mkDefault/mkForce would leak through to nixpkgs
@@ -311,7 +304,7 @@ let
       ++ modules;
     };
 
-  # Darwin builder: selects the nix-darwin / home-manager / stylix modules
+  # Darwin builder: selects the nix-darwin / home-manager modules
   # matching the system's nixpkgs. `overlays`/`config` are the consumer's
   # additions on top of marchyo's overlayList / allowUnfree.
   #
@@ -339,7 +332,6 @@ let
       inherit system specialArgs;
       modules = [
         (mkDarwinModules sel.home-manager.darwinModules.home-manager)
-        sel.stylix.darwinModules.stylix
       ]
       ++ (
         if system == "x86_64-darwin" then

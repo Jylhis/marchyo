@@ -54,9 +54,10 @@ in
       }
 
       (lib.mkIf cfg.enable {
-        # Stylix populates home.pointerCursor.{name,package,size} but not its
-        # enable flag, and home-manager no longer infers it from those, so opt
-        # in explicitly. mkDefault lets a consumer override.
+        # marchyo owns the GTK module outright (no Stylix): the dconf keys and
+        # icon theme land in modules/home/gtk.nix, the CSS below.
+        gtk.enable = lib.mkDefault true;
+
         home.pointerCursor = {
           enable = lib.mkDefault true;
           name = lib.mkDefault "Adwaita";
@@ -65,10 +66,10 @@ in
         };
 
         # GNOME interface fonts (dconf): what GTK/Qt/Electron apps resolve as
-        # the default UI font. Previously written by Stylix's `gnome` target;
-        # the formula mirrors it (document = applications - 1). `gtk.font`
-        # carries font-name (plus the GTK settings.ini); the two dconf keys HM
-        # has no options for are written directly.
+        # the default UI font. The formula mirrors the retired Stylix `gnome`
+        # target (document = applications - 1). `gtk.font` carries font-name
+        # (plus the GTK settings.ini); the two dconf keys HM has no options
+        # for are written directly.
         gtk.font = lib.mkDefault {
           name = "Hanken Grotesk";
           size = fs.round 12;

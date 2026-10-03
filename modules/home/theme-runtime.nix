@@ -5,8 +5,9 @@
 # marchyo.theme.themes as runtime-swappable asset dirs plus a manifest the
 # `marchyo theme` CLI reads. The switch is an ephemeral overlay: the next
 # activation resets every surface (and ~/.config/marchyo/current-theme) back
-# to the declarative default. Qt (via Stylix), bat, fzf, starship, hyprlock,
-# console and plymouth stay on the build-time default until rebuild.
+# to the declarative default. bat, fzf, starship, hyprlock and console have
+# runtime emitters too; Qt follows the GTK relink; only plymouth stays on the
+# build-time default until rebuild.
 #
 # The dual-variant mako/waybar/gtk sources are derived from the resolved Home
 # Manager config by translating the build variant's semantic-token hexes to
@@ -125,10 +126,10 @@ let
     v: text:
     if v == buildVariant then text else swapShade palettes.${otherVariant}.hex.text (swapToOther text);
 
-  # Resolved single-variant sources to translate. Both are marchyo-owned
-  # (Stylix targets disabled in modules/generic/theme.nix), so every color in
-  # them is a semantic-token hex. If a consumer overrides waybar's style with
-  # a path instead of a string, that surface is left build-time.
+  # Resolved single-variant sources to translate. Both are marchyo-owned (no
+  # Stylix), so every color in them is a semantic-token hex. If a consumer
+  # overrides waybar's style with a path instead of a string, that surface is
+  # left build-time.
   makoText =
     if config.services.mako.enable && config.xdg.configFile ? "mako/config" then
       config.xdg.configFile."mako/config".text
@@ -301,7 +302,7 @@ let
   # Beyond the always-built Jylhis pair, any tinted-schemes catalog scheme can
   # be listed for runtime switching. Its assets translate the build variant's
   # resolved surfaces from semantic-token hexes to the scheme's base16 slots,
-  # via the same token/slot correspondence jylhis-palette.nix uses for Stylix.
+  # via the same token/slot correspondence jylhis-palette.nix uses for base16.
   loadScheme = import ../generic/base16-scheme.nix {
     schemes = pkgs.tinted-schemes-src;
     inherit lib;

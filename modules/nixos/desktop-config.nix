@@ -58,8 +58,7 @@ in
       wireplumber.enable = lib.mkDefault true;
     };
 
-    # defaultFonts are set in modules/generic/fontconfig.nix and overridden by
-    # Stylix in modules/nixos/default.nix.
+    # defaultFonts are set in modules/generic/fontconfig.nix.
     fonts = {
       enableDefaultPackages = lib.mkDefault true;
       fontconfig.enable = lib.mkDefault true;

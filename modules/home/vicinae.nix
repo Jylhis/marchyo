@@ -9,9 +9,8 @@
 #   * the window block is `launcher_window`, NOT `window`
 #   * the font size is `font.normal.size`, NOT `font.size`
 #
-# Theming is marchyo's, not Stylix's (the vicinae target is disabled in
-# modules/generic/theme.nix): both variants are registered as real Vicinae TOML
-# themes derived from the Jylhis design tokens.
+# Theming is marchyo's own (no Stylix): both variants are registered as real
+# Vicinae TOML themes derived from the Jylhis design tokens.
 {
   lib,
   pkgs,
@@ -236,7 +235,7 @@ in
           };
 
           # Hanken Grotesk is the v2 body face; keep in sync with the
-          # serif/sansSerif mapping in modules/generic/stylix.nix.
+          # serif/sansSerif mapping in modules/generic/fontconfig.nix.
           font.normal = {
             family = lib.mkDefault "Hanken Grotesk";
             size = lib.mkDefault (fs.round 12);

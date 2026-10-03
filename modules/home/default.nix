@@ -5,6 +5,5 @@
     ../generic/git.nix
     ../generic/shell.nix
     ../generic/packages.nix
-    ../generic/theme.nix
   ];
 }
