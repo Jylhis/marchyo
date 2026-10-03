@@ -11,6 +11,19 @@ let
 in
 {
 
+  # console-table: setvtrgb 3-line RGB table from hex colours (handles both
+  # "#rrggbb" and bare "rrggbb"; splits each hex into decimal R/G/B lines).
+  test-console-table =
+    let
+      table = import ../lib/console-table.nix { inherit lib; };
+    in
+    assertTest "console-table" (
+      table [
+        "#ff8000"
+        "003c69"
+      ] == "255,0\n128,60\n0,105\n"
+    ) "Expected setvtrgb table of reds/greens/blues lines";
+
   # Test lib.genAttrs (replacement for mapListToAttrs)
   test-genAttrs-simple =
     let
