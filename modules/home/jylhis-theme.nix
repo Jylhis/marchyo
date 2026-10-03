@@ -19,6 +19,10 @@ let
       variant = "dark";
     };
   mode = if cfg.variant == "dark" then "dark" else "light";
+  fs = import ../../lib/font-scale.nix {
+    inherit lib;
+    scale = cfg.fontScale or 1.25;
+  };
 
   # Per-polarity GTK stylesheet: the committed snapshot carries the active
   # polarity's @define-colors at top level, so no filtering or hex swap is needed.
@@ -53,12 +57,31 @@ in
         # Stylix populates home.pointerCursor.{name,package,size} but not its
         # enable flag, and home-manager no longer infers it from those, so opt
         # in explicitly. mkDefault lets a consumer override.
-        home.pointerCursor.enable = lib.mkDefault true;
+        home.pointerCursor = {
+          enable = lib.mkDefault true;
+          name = lib.mkDefault "Adwaita";
+          package = lib.mkDefault pkgs.adwaita-icon-theme;
+          size = lib.mkDefault 24;
+        };
+
+        # GNOME interface fonts (dconf): what GTK/Qt/Electron apps resolve as
+        # the default UI font. Previously written by Stylix's `gnome` target;
+        # the formula mirrors it (document = applications - 1). `gtk.font`
+        # carries font-name (plus the GTK settings.ini); the two dconf keys HM
+        # has no options for are written directly.
+        gtk.font = lib.mkDefault {
+          name = "Hanken Grotesk";
+          size = fs.round 12;
+        };
+        dconf.settings."org/gnome/desktop/interface" = {
+          document-font-name = lib.mkDefault "Zilla Slab ${toString (fs.round 12 - 1)}";
+          monospace-font-name = lib.mkDefault "BlexMono Nerd Font ${toString (fs.round 12)}";
+        };
 
         # Read as text (not readFile of a derivation) to stay IFD-free, and so
         # theme-runtime.nix can hex-swap a copy per theme dir. Font size is NOT
-        # set here: Stylix's gnome target writes the scaled interface font to
-        # dconf, which GTK apps read via gsettings even under Hyprland.
+        # set here: the dconf interface fonts above cover GTK apps via
+        # gsettings even under Hyprland.
         gtk = {
           gtk3.extraCss = gtkCss;
           gtk4.extraCss = gtkCss;

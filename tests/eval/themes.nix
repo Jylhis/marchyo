@@ -233,14 +233,62 @@ in
   # marchyo.theme.fontScale scales every font surface from one knob. With
   # desktop on, this also exercises the directly-themed surfaces (waybar / mako /
   # hyprlock / ghostty / gtk / console) that read the scale. 2.0x doubles the
-  # stylix base sizes (12 -> 24, 10 -> 20). The launcher scales the same way but
-  # is asserted in tests/eval/launcher.nix, which owns its font keys.
+  # base size (12 -> 24); the GNOME interface fonts (modules/home/jylhis-theme.nix,
+  # previously Stylix's gnome target) carry the same math. The launcher scales
+  # the same way but is asserted in tests/eval/launcher.nix, which owns its
+  # font keys.
   eval-theme-fontscale =
     testNixOSCheck "theme-fontscale"
-      (cfg: cfg.stylix.fonts.sizes.applications == 24 && cfg.stylix.fonts.sizes.desktop == 20)
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+        in
+        hm.gtk.font.size == 24
+        && hm.dconf.settings."org/gnome/desktop/interface".document-font-name == "Zilla Slab 23"
+        && hm.dconf.settings."org/gnome/desktop/interface".monospace-font-name == "BlexMono Nerd Font 24"
+      )
       (withTestUser {
         marchyo.desktop.enable = true;
         marchyo.theme.fontScale = 2.0;
+      });
+
+  # The slot-driven long tail (previously Stylix targets) is marchyo-owned:
+  # lazygit/k9s/ncspot/spotify-player/gdu theme from
+  # modules/generic/theme-slots.nix, the cursor is complete, and Emacs loads
+  # the design system's own themes. Spot-checks jylhis-dark base05 (#d1d4dc).
+  eval-theme-slot-surfaces =
+    testNixOSCheck "theme-slot-surfaces"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+        in
+        hm.programs.lazygit.settings.gui.theme.defaultFgColor == [ "#d1d4dc" ]
+        && hm.programs.k9s.settings.ui.skin == "jylhis"
+        && hm.programs.k9s.skins.jylhis.k9s.body.fgColor == "#d1d4dc"
+        && (hm.xdg.configFile."gdu/gdu.yaml".text or null) != null
+        && hm.home.pointerCursor.name == "Adwaita"
+        && hm.home.pointerCursor.size == 24
+        && lib.hasInfix "jylhis-dark" hm.programs.emacs.extraConfig
+        && lib.hasInfix "load-theme" hm.programs.emacs.extraConfig
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.emacs.enable = true;
+      });
+
+  # marchyo.theme.scheme drives the slot surfaces too (the catalog palette,
+  # not the Jylhis pair): nord's base05 is #e5e9f0.
+  eval-theme-slot-surfaces-scheme =
+    testNixOSCheck "theme-slot-surfaces-scheme"
+      (
+        cfg:
+        cfg.home-manager.users.testuser.programs.lazygit.settings.gui.theme.defaultFgColor == [ "#e5e9f0" ]
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.scheme = "nord";
       });
 
   # modules/darwin/home.nix imports a curated subset of modules/home, and that
