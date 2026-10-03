@@ -10,7 +10,7 @@ import qs.Services
 BarItem {
     id: root
 
-    visible: Style.dictationIndicator
+    shown: Style.dictationIndicator
     interactive: true
     compact: true
     // Falls back to a microphone glyph until the first status line arrives.

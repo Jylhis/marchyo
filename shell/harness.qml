@@ -23,6 +23,15 @@ ShellRoot {
         // WlSessionLock surface itself needs a compositor, like the panels).
         readonly property var lockService: Lock
 
+        // Flips a late-shown harness widget visible after load (see
+        // cHarnessLate): the regression probe for a slot that starts hidden.
+        property bool lateCond: false
+        Timer {
+            interval: 400
+            running: true
+            onTriggered: harnessRoot.lateCond = true
+        }
+
         BarItem {
             x: 0
             text: "harness"
@@ -44,6 +53,7 @@ ShellRoot {
                 "marchyo.mic": cHarnessHidden,
                 "marchyo.audio": cHarnessVisible,
                 "marchyo.battery": cHarnessHidden,
+                "marchyo.theme": cHarnessLate,
                 "marchyo.separator": cHarnessSeparator
             })
         Component {
@@ -56,7 +66,18 @@ ShellRoot {
             id: cHarnessHidden
             BarItem {
                 text: "hidden"
-                visible: false
+                shown: false
+            }
+        }
+        // Starts hidden, then turns shown: true after load (harnessRoot.lateCond
+        // flips on a timer). Reproduces the theme-toggle regression — a widget
+        // hidden at the load instant that must reappear when its condition later
+        // becomes true, which the old Loader-visible collapse froze forever.
+        Component {
+            id: cHarnessLate
+            BarItem {
+                text: "late"
+                shown: harnessRoot.lateCond
             }
         }
         Component {
@@ -69,7 +90,9 @@ ShellRoot {
             section: "right"
             // Right-group-shaped: hidden alerts cluster, hidden media, hidden
             // mic, visible audio, hidden battery — plus the separators between
-            // them, so the collapse and cluster rules both run offscreen.
+            // them, so the collapse and cluster rules both run offscreen. The
+            // trailing "theme" slot starts hidden and turns shown after load
+            // (cHarnessLate): the regression guard for a slot that must reappear.
             entriesOverride: [
                 {
                     id: "marchyo.clock"
@@ -91,6 +114,9 @@ ShellRoot {
                 },
                 {
                     id: "marchyo.battery"
+                },
+                {
+                    id: "marchyo.theme"
                 }
             ]
             resolve: id => harnessRoot.harnessResolve[id] || null
@@ -98,50 +124,69 @@ ShellRoot {
             barWidth: 1280
         }
 
-        // Assertions over the section above: widgets must actually RENDER,
-        // not just load (the empty-bar regression: Loader's load-time
-        // visibility write once poisoned every widget invisible while the
-        // tree still parsed and bound cleanly). The Justfile check fails on
-        // any ASSERT-FAIL line.
+        // Assertions over the section above: widgets must actually RENDER, not
+        // just load, and a slot hidden at load must reappear when its widget
+        // turns shown (the theme-toggle regression). The Justfile check fails
+        // on any ASSERT-FAIL line.
         Timer {
             interval: 1200
             running: true
             onTriggered: {
                 const fail = msg => console.log("ASSERT-FAIL " + msg);
+                // Each slot is now a wrapper Item (carries modelData) holding a
+                // Loader; the wrapper's visibility is the collapse, the Loader's
+                // item is the widget. Collect wrappers in model order.
                 const kids = sectionSlots.children;
-                // children: [loader x7, Repeater] — Loaders in model order.
-                let loaders = [];
+                let slots = [];
                 for (let i = 0; i < kids.length; i++)
-                    if (kids[i].toString().indexOf("QQuickLoader") >= 0)
-                        loaders.push(kids[i]);
-                if (loaders.length !== 7)
-                    fail("expected 7 slot Loaders, got " + loaders.length);
+                    if (kids[i].modelData !== undefined)
+                        slots.push(kids[i]);
+                if (slots.length !== 8)
+                    fail("expected 8 slot wrappers, got " + slots.length);
+                // The loaded widget inside a wrapper (its Loader's item).
+                const widgetOf = s => {
+                    const sk = s.children;
+                    for (let i = 0; i < sk.length; i++)
+                        if (sk[i].toString().indexOf("QQuickLoader") >= 0)
+                            return sk[i].item;
+                    return null;
+                };
+                const shownOf = s => {
+                    const w = widgetOf(s);
+                    return w ? w.visible === true : false;
+                };
                 // clock: visible widget -> slot visible, item visible
-                if (!loaders[0] || !loaders[0].visible || !loaders[0].item.visible)
-                    fail("visible widget collapsed: clock slot visible=" + loaders[0].visible + " item=" + loaders[0].item.visible);
+                if (!slots[0].visible || !shownOf(slots[0]))
+                    fail("visible widget collapsed: clock slot visible=" + slots[0].visible + " item=" + shownOf(slots[0]));
                 // media (hidden): slot must be collapsed
-                if (loaders[1].visible)
+                if (slots[1].visible)
                     fail("hidden widget did not collapse its slot: media");
                 // separator 1 (idx 2): clock and audio flank the hidden
                 // media+mic run, so exactly this one rule renders
-                if (!loaders[2].visible)
+                if (!slots[2].visible)
                     fail("separator between two populated clusters hidden (idx 2)");
                 // mic (hidden): collapsed
-                if (loaders[3].visible)
+                if (slots[3].visible)
                     fail("hidden widget did not collapse its slot: mic");
                 // audio: visible
-                if (!loaders[4].visible || !loaders[4].item.visible)
+                if (!slots[4].visible || !shownOf(slots[4]))
                     fail("audio slot collapsed though visible");
-                // separator 2 (idx 5): battery hidden -> trailing cluster
-                // empty -> rule hidden
-                if (loaders[5].visible)
-                    fail("trailing separator visible before collapsed battery");
+                // separator 2 (idx 5): battery hidden AND the late theme slot is
+                // shown by now, so audio and theme flank the hidden battery and
+                // this rule must render
+                if (!slots[5].visible)
+                    fail("separator between audio and the late slot hidden (idx 5)");
                 // battery (hidden): collapsed
-                if (loaders[6].visible)
+                if (slots[6].visible)
                     fail("hidden widget did not collapse its slot: battery");
-                for (let i = 0; i < loaders.length; i++) {
-                    const md = loaders[i].modelData;
-                    console.log("ASSERT-INFO idx=" + i + " id=" + (md ? md.id : "?") + " loader.visible=" + loaders[i].visible + " item.visible=" + (loaders[i].item ? loaders[i].item.visible : "null"));
+                // theme (started hidden, flipped shown after load): MUST be
+                // visible now and its item MUST still be live (the bug froze it
+                // invisible forever).
+                if (!slots[7].visible || !shownOf(slots[7]))
+                    fail("late-shown widget stayed collapsed: slot visible=" + slots[7].visible + " item=" + shownOf(slots[7]));
+                for (let i = 0; i < slots.length; i++) {
+                    const md = slots[i].modelData;
+                    console.log("ASSERT-INFO idx=" + i + " id=" + (md ? md.id : "?") + " slot.visible=" + slots[i].visible + " item.visible=" + shownOf(slots[i]));
                 }
                 console.log("ASSERT-DONE");
             }

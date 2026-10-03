@@ -17,7 +17,7 @@ BarItem {
         return out;
     }
 
-    visible: adapter !== null
+    shown: adapter !== null
     interactive: true
     compact: true
     text: !adapter || !adapter.enabled ? "󰂲" : (connected.length > 0 ? "󰂯 " + connected.length : "󰂯")

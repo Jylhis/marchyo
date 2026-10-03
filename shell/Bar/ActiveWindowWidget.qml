@@ -10,7 +10,7 @@ BarItem {
     readonly property var active: ToplevelManager.activeToplevel
     readonly property string title: active ? (active.title || active.appId || "") : ""
 
-    visible: root.title !== ""
+    shown: root.title !== ""
     elide: true
     text: root.title
     textColor: Color.textMuted

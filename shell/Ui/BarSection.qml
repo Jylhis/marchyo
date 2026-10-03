@@ -6,32 +6,32 @@ import "../Commons/BarLayout.js" as BarLayout
 // One anchored section of the bar (left / center / right): a row of widget
 // slots driven by the ShellConfig layout entries for `section`.
 //
-// Slots collapse with their widget. Every conditional widget hides itself with
-// `visible: false` (media with no player, idle mic, desktop battery, ...), but
-// a Loader whose item is hidden still occupies its cell: the layout sizes the
-// cell from the Loader, and the Loader — not its item — is the layout child
-// that is visible. Hiding the Loader as well makes the layout skip the cell
-// entirely, spacing included, exactly as it skips a directly hidden child.
-// Without this the bar shows a dead gap the width of every hidden widget.
+// Slots collapse with their widget. Every conditional widget reports its own
+// visibility through a plain `shown` bool (media with no player, idle mic,
+// desktop battery, hidden theme until the first colors.json read, ...), and
+// each slot is a wrapper Item whose `visible` follows that `shown`. A hidden
+// wrapper is skipped by the layout entirely, spacing included, so no dead gap
+// is left where the widget would sit.
 //
-// The collapse binding is attached in onLoaded, NEVER declared on the Loader:
-// QQuickLoader imperatively writes item.visible from its own visibility as
-// the item is created, overwriting the item's own binding. A Loader that is
-// already hidden at the load instant poisons every loaded widget invisible,
-// permanently (even item.visible = true reads back false — verified against
-// Qt 6.11 offscreen), which is how a declarative `visible: itemShown(item)`
-// binding here once rendered the whole bar empty. Attaching the binding only
-// after the item exists leaves the item's own visible logic intact.
+// The slot must NEVER bind its (or the Loader's) `visible` to the loaded
+// item's own `visible`: QQuickLoader writes item.visible from the Loader's
+// visibility, so hiding the Loader — or letting an ancestor's `visible` depend
+// on the item's `visible` — overwrites the item's own `visible` binding and
+// freezes the widget invisible forever, even after its condition turns true
+// again (verified against Qt 6 offscreen; it is why a hidden-at-startup widget
+// like the theme toggle never reappeared). Reading the independent `shown`
+// flag instead keeps the item's own `visible` logic intact, and the Loader is
+// left visible at all times.
 //
 // Separators are cluster-aware: a rule renders only between two clusters that
 // both have visible content, and the rules around an empty cluster collapse
 // to one. The decision table is Commons/BarLayout.js (pure, node-tested via
 // tests/shell/bar-layout-test.js); this component only feeds it the entry ids
-// plus each loaded widget's visibility. A stray rule next to a collapsed
+// plus each loaded widget's `shown` flag. A stray rule next to a collapsed
 // cluster reads as a floating pixel, and before this component existed every
 // separator rendered unconditionally.
 //
-// Visibility is read through the untyped helpers below (not `slot.item.visible`
+// Visibility is read through the untyped helper below (not `slot.widget.shown`
 // inline): qmllint types Repeater delegates as QQuickItem and Loader.item as
 // QObject, so direct member access trips missing-property, while the runtime
 // objects always have those members. Same indirection applyWidget() uses.
@@ -61,48 +61,35 @@ RowLayout {
 
     readonly property var entries: root.entriesOverride || ShellConfig.bar[root.section] || []
 
-    // A slot's widget visibility, ignoring separator slots (their rendering is
-    // decided by sepShown, not by their own visible flag).
-    function slotShown(slot, id): bool {
-        if (!slot || id === BarLayout.SEPARATOR_ID)
+    // A loaded widget's `shown` flag, read through an untyped parameter for the
+    // reason given in the file comment. A widget with no `shown` property (a
+    // compat plugin bar-widget) defaults to shown, so it keeps its slot. The
+    // `visible` fallback covers the rare non-BarItem that never gained `shown`.
+    function widgetShown(w): bool {
+        if (!w)
             return false;
-        const w = slot.item;
-        return w ? w.visible === true : false;
+        if (w.shown !== undefined)
+            return w.shown === true;
+        return w.visible === true;
     }
 
-    // The loaded item's visibility, for the Loader's collapse binding.
-    function itemShown(w): bool {
-        return w ? w.visible === true : false;
-    }
-
-    // Attach a slot's collapse binding AFTER its item exists (see the file
-    // comment for why the Loader's own visible must not be bound earlier):
-    // Loader visible exactly while its widget is. Runs through an untyped
-    // parameter for the same qmllint reason as slotShown.
-    function bindCollapse(loader): void {
-        if (loader)
-            loader.visible = Qt.binding(() => root.itemShown(loader.item));
-    }
-
-    // Point a freshly loaded separator at its sepShown cell. Called from
-    // onLoaded (where `item` is QObject-typed), so the member write lives
-    // behind an untyped parameter for the same qmllint reason as above.
-    function bindSeparator(loader, index): void {
-        if (loader)
-            loader.visible = Qt.binding(() => root.sepShown[index]);
+    // A slot wrapper's content-shown flag, behind an untyped parameter: qmllint
+    // types repeater.itemAt() as QQuickItem, which has no `contentShown`.
+    function cellShown(cell): bool {
+        return cell ? cell.contentShown === true : false;
     }
 
     // Per-entry separator render decision (true = draw the rule). Reading
-    // repeater.count and each slot's item visibility here is what keeps the
-    // binding live: any widget flipping visible re-runs the computation, and
-    // so does a layout change (ShellConfig re-read) through root.entries.
+    // repeater.count and each slot's `shown` here is what keeps the binding
+    // live: any widget flipping `shown` re-runs the computation, and so does a
+    // layout change (ShellConfig re-read) through root.entries.
     readonly property var sepShown: {
         const ids = [];
         for (let k = 0; k < root.entries.length; k++)
             ids.push(root.entries[k].id);
         const shown = [];
         for (let k = 0; k < repeater.count; k++)
-            shown.push(root.slotShown(repeater.itemAt(k), ids[k]));
+            shown.push(root.cellShown(repeater.itemAt(k)));
         return BarLayout.separatorVisibility(ids, shown);
     }
 
@@ -110,24 +97,34 @@ RowLayout {
         id: repeater
         model: root.entries
 
-        Loader {
+        // The slot is a wrapper Item (the layout child), not the Loader itself:
+        // its `visible` collapses the cell, while the Loader inside stays
+        // visible so it never overwrites the loaded item's own `visible`.
+        Item {
             id: slot
 
             required property var modelData
             required property int index
 
-            // No visible binding here; bindCollapse() attaches it on load.
-            sourceComponent: root.resolve ? root.resolve(modelData.id) : null
+            readonly property bool isSeparator: modelData.id === BarLayout.SEPARATOR_ID
+            // Non-separator slots expose their widget's `shown`; separators
+            // report none (their rendering is decided by sepShown).
+            readonly property bool contentShown: !isSeparator && root.widgetShown(loader.item)
+
+            visible: isSeparator ? (root.sepShown[slot.index] === true) : slot.contentShown
+            implicitWidth: loader.implicitWidth
+            implicitHeight: loader.implicitHeight
             Layout.alignment: Qt.AlignVCenter
             Layout.maximumWidth: modelData.id === root.capId && root.capFraction > 0 ? root.barWidth * root.capFraction : -1
 
-            onLoaded: {
-                if (modelData.id === BarLayout.SEPARATOR_ID) {
-                    root.bindSeparator(slot, slot.index);
-                } else {
-                    if (root.configure)
-                        root.configure(item, modelData);
-                    root.bindCollapse(slot);
+            Loader {
+                id: loader
+                anchors.fill: parent
+                // Never bind this Loader's `visible` (see the file comment).
+                sourceComponent: root.resolve ? root.resolve(slot.modelData.id) : null
+                onLoaded: {
+                    if (!slot.isSeparator && root.configure)
+                        root.configure(item, slot.modelData);
                 }
             }
         }

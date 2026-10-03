@@ -11,7 +11,7 @@ BarItem {
     readonly property var dev: Power.dev
     readonly property int pct: Power.pct
 
-    visible: Power.hasBattery
+    shown: Power.hasBattery
     interactive: true
     text: Power.barText
     // Continuous gradient tint instead of discrete thresholds.

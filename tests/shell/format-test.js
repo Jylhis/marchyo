@@ -65,7 +65,7 @@ test("shortCode falls back to the first word, lowercased and clipped to three", 
 });
 
 test("shortCode returns empty for no layout, so the widget can stay hidden", () => {
-  // KeyboardLayoutWidget binds `visible` to this being non-empty; a placeholder
+  // KeyboardLayoutWidget binds `shown` to this being non-empty; a placeholder
   // here would put a stray label in the bar before the first probe answers.
   assert.equal(Format.shortCode(""), "");
   assert.equal(Format.shortCode(null), "");

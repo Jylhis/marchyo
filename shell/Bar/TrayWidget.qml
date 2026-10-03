@@ -19,8 +19,11 @@ RowLayout {
 
     // Hide the whole widget, not just the expander, when the tray is empty:
     // a visible root with only hidden children still leaks its slot's spacing
-    // (see Ui/BarSection.qml).
-    visible: root.itemCount > 0
+    // (see Ui/BarSection.qml). `shown` is the slot-collapse flag BarSection
+    // reads; `visible` follows it (this is not a BarItem, so both are declared
+    // here).
+    property bool shown: root.itemCount > 0
+    visible: root.shown
 
     BarItem {
         interactive: true

@@ -11,7 +11,7 @@ BarItem {
     id: root
 
     interactive: true
-    visible: Tailscale.installed
+    shown: Tailscale.installed
     onClicked: PanelManager.toggle("tailscale", root)
     text: Tailscale.exitNodeActive ? "󰖂" : (Tailscale.running ? "󰖂" : "󰖃")
     textColor: Tailscale.running ? (Tailscale.exitNodeActive ? Color.accent : Color.statusOk) : Color.textMuted

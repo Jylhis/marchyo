@@ -8,7 +8,7 @@ import qs.Services
 BarItem {
     id: root
 
-    visible: Audio.micInUse
+    shown: Audio.micInUse
     interactive: true
     compact: true
     text: "󰍬"

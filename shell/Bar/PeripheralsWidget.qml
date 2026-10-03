@@ -19,7 +19,7 @@ BarItem {
         return low;
     }
 
-    visible: Peripherals.hasDevices
+    shown: Peripherals.hasDevices
     text: lowDevice ? (lowDevice.glyph + " " + lowDevice.pct) : ""
     textColor: Peripherals.lowest <= 10 ? Color.statusErr : (Peripherals.anyLow ? Color.statusWarn : Color.text)
     tooltipText: {
