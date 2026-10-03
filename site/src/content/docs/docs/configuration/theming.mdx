@@ -187,22 +187,27 @@ marchyo.theme = {
 ## Shell appearance scale
 
 With the Quickshell shell (`marchyo.shell.enable = true`), a set of
-palette-independent scale axes adjust the shell's geometry, corners, animation
-speed, and contrast without touching the colour palette. Neutral defaults
-reproduce the current look.
+palette-independent axes adjust the shell's geometry, corners, animation
+speed, contrast, and overall shape without touching the colour palette.
+The scale axes default neutral; the style axes (`floatingBar`,
+`surfaceAlpha`) are Caelestia-inspired and default on.
 
 ```nix
 marchyo.theme.appearance = {
-  # cornerRadiusScale = 0.0;  # square every corner (default 1.0)
-  # uiScale = 1.2;            # larger chrome without changing font size
-  # animationSpeed = 2.0;     # faster transitions (default 1.0)
-  # highContrast = true;      # thicker panel/notification borders
+  # floatingBar = false;     # full-width strip bar instead of the floating pill
+  # surfaceAlpha = 1.0;      # opaque surfaces, no blur (default 0.85 glass)
+  # cornerRadiusScale = 0.0; # square every corner (default 1.0)
+  # uiScale = 1.2;           # larger chrome without changing font size
+  # animationSpeed = 2.0;    # faster transitions (default 1.0)
+  # highContrast = true;     # thicker panel/notification borders
 };
 ```
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `floatingBar` | `bool` | `true` | Detached rounded pill bar with gaps to the screen edges; `false` restores the full-width strip |
+| `surfaceAlpha` | `float` | `0.85` | Surface opacity; below `1` enables the Hyprland blur effect for the shell's layer surfaces (glass look) |
 | `cornerRadiusScale` | `float` | `1.0` | Multiplier on corner radii (`0.0` squares corners) |
 | `uiScale` | `float` | `1.0` | Geometry multiplier on top of `fontScale`, fonts unchanged |
-| `animationSpeed` | `float` | `1.0` | Animation speed (higher = faster) |
+| `animationSpeed` | `float` | `1.0` | Animation speed (higher is faster) |
 | `highContrast` | `bool` | `false` | Thicker separators for higher-contrast chrome |

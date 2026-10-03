@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 import qs.Commons
 import qs.Bar
@@ -377,13 +378,38 @@ ShellRoot {
             screen: modelData
             visible: shell.barVisible
 
+            // The shell's blur anchor: modules/home/hyprland.nix registers blur
+            // layer rules for the "marchyo:" namespace prefix when
+            // marchyo.theme.appearance.surfaceAlpha < 1.
+            WlrLayershell.namespace: "marchyo:bar"
+
             anchors {
                 top: true
                 left: true
                 right: true
             }
+            margins {
+                // Floating pill: inset from the screen edges. The generator
+                // bakes 0 in strip mode (barFloating false), so the strip keeps
+                // the full-width edge-to-edge look.
+                top: Style.barMarginV
+                left: Style.barMarginH
+                right: Style.barMarginH
+            }
+            // Floating pill floats over content (no layout reservation); the
+            // strip keeps Quickshell's default zone (height + margins).
+            exclusiveZone: Style.barFloating ? 0 : -1
             implicitHeight: Style.barHeight
-            color: Color.background
+            color: "transparent"
+
+            // Pill body: the only painted surface, so the corners outside the
+            // radius never show bar background. Radius bakes to 0 in strip mode.
+            Rectangle {
+                id: barBody
+                anchors.fill: parent
+                radius: Style.barRadius
+                color: Qt.alpha(Color.background, Style.surfaceAlpha)
+            }
 
             // Three anchored sections driven by ShellConfig.bar: left and right
             // groups, plus a centered group (the clock by default). Ui/

@@ -18,13 +18,17 @@ PanelWindow {
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // Blur anchor: modules/home/hyprland.nix registers blur layer rules for
+    // the "marchyo:" namespace prefix when surfaceAlpha < 1.
+    WlrLayershell.namespace: "marchyo:notifs"
 
     anchors {
         top: true
         right: true
     }
-    margins.top: Style.barHeight + Style.notifMargin
-    margins.right: Style.notifMargin
+    // barMarginV/H are 0 in strip mode, so this reproduces the strip look.
+    margins.top: Style.barHeight + Style.barMarginV + Style.notifMargin
+    margins.right: Style.notifMargin + Style.barMarginH
 
     implicitWidth: Style.notifWidth
     implicitHeight: column.implicitHeight

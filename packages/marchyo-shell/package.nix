@@ -68,6 +68,12 @@
   uiScale ? 1.0,
   animationSpeed ? 1.0,
   highContrast ? false,
+  # marchyo.theme.appearance.floatingBar / surfaceAlpha — the Caelestia-inspired
+  # style axes: a detached rounded pill bar instead of the full-width strip, and
+  # translucent glass surfaces (alpha < 1 pairs with the Hyprland blur layer
+  # rules modules/home/hyprland.nix registers for the shell's namespaces).
+  floatingBar ? true,
+  surfaceAlpha ? 0.85,
   # Shell plugins (build-time Option A). A list of pkgs.mkMarchyoShellPlugin
   # derivations; each carries passthru.marchyoPlugin = { id; kinds; entryPoints; }.
   # When non-empty, each plugin dir is copied under share/marchyo/shell/plugins/
@@ -176,6 +182,19 @@ let
       readonly property int spacing: ${toString (ui.round 4)}
       readonly property int paddingH: ${toString (ui.round 6)}
       readonly property string fontFamily: "BlexMono Nerd Font"
+
+      // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
+      // screen edges and the bar's corner radius. All bake to 0 in strip mode
+      // (floatingBar false), where the bar spans edge to edge as before.
+      readonly property bool barFloating: ${lib.boolToString floatingBar}
+      readonly property int barMarginH: ${toString (if floatingBar then ui.round 6 else 0)}
+      readonly property int barMarginV: ${toString (if floatingBar then ui.round 6 else 0)}
+      readonly property int barRadius: ${toString (if floatingBar then radiusPx 12 else 0)}
+
+      // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
+      // to every shell card; 1.0 restores the opaque flat look (and the home
+      // Hyprland config keeps blur off).
+      readonly property real surfaceAlpha: ${toString surfaceAlpha}
 
       // On-screen-display geometry (volume/brightness overlay).
       readonly property int osdPad: ${toString (ui.round 14)}

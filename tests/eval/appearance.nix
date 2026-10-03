@@ -10,7 +10,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) withTestUser hyprEntriesText;
 
   evalWith =
     extra:
@@ -39,6 +39,57 @@ in
         "pass"
       else
         throw "FAIL: marchyo.theme.appearance defaults are not neutral"
+    );
+
+  # Style axes are deliberately non-neutral: the Caelestia-inspired look
+  # (floating pill bar, translucent surfaces) is the default, and the strip /
+  # opaque look is the opt-out.
+  eval-appearance-style-defaults =
+    let
+      a = (evalWith { }).config.marchyo.theme.appearance;
+    in
+    pkgs.writeText "eval-appearance-style-defaults" (
+      if a.floatingBar && a.surfaceAlpha == 0.85 then
+        "pass"
+      else
+        throw "FAIL: marchyo.theme.appearance style defaults should be floatingBar + surfaceAlpha 0.85"
+    );
+
+  # Glass: with the shell on and surfaceAlpha below 1, Hyprland must enable the
+  # blur effect and register a layer rule for the shell's marchyo: namespaces.
+  eval-appearance-shell-glass =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+      settings = hm.wayland.windowManager.hyprland.settings;
+      rules = hyprEntriesText (settings.layer_rule or [ ]);
+      blurEnabled = settings.config.decoration.blur.enabled or false;
+    in
+    pkgs.writeText "eval-appearance-shell-glass" (
+      if blurEnabled && lib.hasInfix "marchyo:" rules && lib.hasInfix "blur=true" rules then
+        "pass"
+      else
+        throw "FAIL: shell on + default surfaceAlpha should enable blur and a marchyo: layer rule"
+    );
+
+  # Opaque opt-out: surfaceAlpha = 1.0 keeps the flat look, so no blur effect
+  # and no shell layer rule may be registered.
+  eval-appearance-opaque =
+    let
+      cfg =
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.theme.appearance.surfaceAlpha = 1.0;
+        }).config;
+      hm = cfg.home-manager.users.testuser;
+      settings = hm.wayland.windowManager.hyprland.settings;
+      rules = hyprEntriesText (settings.layer_rule or [ ]);
+      blurEnabled = settings.config.decoration.blur.enabled or false;
+    in
+    pkgs.writeText "eval-appearance-opaque" (
+      if !blurEnabled && !lib.hasInfix "marchyo:" rules then
+        "pass"
+      else
+        throw "FAIL: surfaceAlpha = 1.0 should keep blur off and register no marchyo: layer rule"
     );
 
   # Non-neutral axes are accepted and the shell evaluates with them.

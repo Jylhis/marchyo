@@ -52,7 +52,7 @@ PanelWindow {
         width: Math.min(Style.launcherWidth, parent.width - 2 * Style.panelGap)
         implicitHeight: Math.min(column.implicitHeight, parent.height - 2 * Style.panelGap)
         radius: 0
-        color: Color.bg
+        color: Qt.alpha(Color.bg, Style.surfaceAlpha)
         border.color: Color.border
         border.width: 1
 

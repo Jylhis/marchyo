@@ -16,6 +16,9 @@ PanelWindow {
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // Blur anchor: modules/home/hyprland.nix registers blur layer rules for
+    // the "marchyo:" namespace prefix when surfaceAlpha < 1.
+    WlrLayershell.namespace: "marchyo:tooltip"
 
     // Follow the hovered item's screen; fall back to the default screen.
     readonly property var targetScreen: {
@@ -29,7 +32,8 @@ PanelWindow {
 
     anchors.top: true
     anchors.left: true
-    margins.top: Style.barHeight + 8
+    // barMarginV is 0 in strip mode, so this reproduces the strip look.
+    margins.top: Style.barHeight + Style.barMarginV + 8
 
     readonly property int tipX: {
         const sw = root.targetScreen ? root.targetScreen.width : 0;
@@ -58,7 +62,7 @@ PanelWindow {
             }
         }
         radius: Style.osdRadius
-        color: Color.surface
+        color: Qt.alpha(Color.surface, Style.surfaceAlpha)
         border.color: Color.border
         border.width: 1
         implicitWidth: label.implicitWidth + Style.paddingH
