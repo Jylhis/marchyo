@@ -396,9 +396,11 @@ ShellRoot {
                 left: Style.barMarginH
                 right: Style.barMarginH
             }
-            // Floating pill floats over content (no layout reservation); the
-            // strip keeps Quickshell's default zone (height + margins).
-            exclusiveZone: Style.barFloating ? 0 : -1
+            // Floating pill reserves its own footprint (top inset + height +
+            // a matching gap below) so windows tile beneath it instead of
+            // being overlapped; the strip keeps Quickshell's default zone
+            // (height + margins).
+            exclusiveZone: Style.barFloating ? Style.barMarginV * 2 + Style.barHeight : -1
             implicitHeight: Style.barHeight
             color: "transparent"
 
