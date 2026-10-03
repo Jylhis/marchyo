@@ -71,6 +71,13 @@ export function awwwImgArgv(image: string): string[] {
   return ["awww", "img", image, "--transition-type", "none"];
 }
 
+// setvtrgb(8) applies a 16-colour palette table to the kernel virtual consoles.
+// Best-effort from a GUI session (no controlling VT there); see the caller in
+// theme.ts. `table` is a setvtrgb file path (three comma-separated RGB lines).
+export function setvtrgbArgv(table: string): string[] {
+  return ["setvtrgb", table];
+}
+
 // The dconf color-scheme key marchyo owns (modules/home/gtk.nix writes the
 // build-time value; HM's dconf activation resets it on every rebuild — the
 // same ephemeral-overlay contract as the current-theme pointer).

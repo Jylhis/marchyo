@@ -36,6 +36,7 @@ import {
   parseChangeFlags,
   pointCurrentTheme,
   readState,
+  setvtrgbArgv,
   readThemeManifest,
   systemctlUserArgv,
   themeAtPointer,
@@ -170,6 +171,14 @@ export async function activateThemeDir(
   if (existsSync(bat)) {
     await relinkConfig(bat, join(configHome(), "bat", "config"));
   }
+
+  // console/TTY: best-effort only. setvtrgb repaints the live VT palette, but a
+  // Wayland-session process has no controlling console, so this usually no-ops
+  // and the TTY instead tracks the declarative console.colors at the next boot
+  // (modules/nixos/console.nix). safeExec swallows the missing-binary / not-a-
+  // console failure, matching the emit-and-accept-next-boot contract.
+  const consoleTable = join(entry.dir, "console.txt");
+  if (existsSync(consoleTable)) await safeExec(ctx, setvtrgbArgv(consoleTable));
 
   await safeExec(
     ctx,

@@ -243,6 +243,12 @@ let
   '';
   hyprlockColorsFor = v: hyprlockVarsFor (t: palettes.${v}.hex.${t});
 
+  # setvtrgb(8) palette table emitted per theme as `console.txt`. Applying it to
+  # live VTs needs setvtrgb against the console device, which the CLI attempts
+  # best-effort; otherwise the console tracks the declarative console.colors
+  # (modules/nixos/console.nix) at the next boot.
+  consoleTableFrom16 = import ../../lib/console-table.nix { inherit lib; };
+
   themeDirFor =
     v:
     pkgs.linkFarm "marchyo-theme-${v}" (
@@ -278,6 +284,11 @@ let
       // {
         "hyprlock-colors.conf" = pkgs.writeText "marchyo-theme-${v}-hyprlock-colors.conf" (
           hyprlockColorsFor v
+        );
+      }
+      // {
+        "console.txt" = pkgs.writeText "marchyo-theme-${v}-console.txt" (
+          consoleTableFrom16 palettes.${v}.tty16
         );
       }
     );
@@ -361,6 +372,33 @@ let
 
   fzfOptsForScheme = scheme: fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
   hyprlockColorsForScheme = scheme: hyprlockVarsFor (schemeHexForToken scheme);
+
+  # 16 console colours for a scheme: the standard base16 ANSI mapping (as in
+  # schemeGhosttyConf) but with slots 0/7/15 set to bg/text/text-heading so a
+  # bare TTY stays readable, mirroring jylhis-palette.nix's tty16 overrides.
+  schemeTty16 =
+    scheme:
+    let
+      s = scheme.slots;
+    in
+    [
+      s.base00 # 0  bg (override)
+      s.base08
+      s.base0B
+      s.base0A
+      s.base0D
+      s.base0E
+      s.base0C
+      s.base05 # 7  text (override; also the standard ANSI white)
+      s.base03
+      s.base08
+      s.base0B
+      s.base0A
+      s.base0D
+      s.base0E
+      s.base0C
+      s.base06 # 15 text-heading (override)
+    ];
 
   schemeHyprlandKeywords = scheme: ''
     misc:background_color ${rgb scheme.slots.base00}
@@ -446,6 +484,11 @@ let
       }
       // {
         "fzf.opts" = pkgs.writeText "marchyo-theme-${scheme.name}-fzf.opts" (fzfOptsForScheme scheme);
+      }
+      // {
+        "console.txt" = pkgs.writeText "marchyo-theme-${scheme.name}-console.txt" (
+          consoleTableFrom16 (schemeTty16 scheme)
+        );
       }
       // {
         "hyprlock-colors.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-hyprlock-colors.conf" (
