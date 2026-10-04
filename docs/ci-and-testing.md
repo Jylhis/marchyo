@@ -32,7 +32,7 @@ Tests in `tests/` are fast evaluation-based checks (no builds required). Two cat
 - **Module tests** (`tests/eval/*.nix`, auto-discovered): verify NixOS configs evaluate without errors for various feature combinations (minimal/feature-flags, themes, keyboard, graphics, defaults, hyprland config check).
 - **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
 
-A few `outputs.nix` `mkChecks` entries are not eval-only. The `build-plymouth-theme-{dark,light}` checks (Linux only) build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`. The `site-option-paths` check guards `site/src/pages/search.astro`'s hand-maintained option table against drift from the options tree.
+A few `outputs.nix` `mkChecks` entries are not eval-only. The `build-plymouth-theme-{dark,light}` checks (Linux only) build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`. The `site-option-paths` check guards the generated `site/src/data/options.json` (built by `nix build .#site-search-data` / `just site-data` and consumed by `site/src/pages/search.astro`): every `declared:` path must exist and be attributed to the right namespace file.
 
 ### Quickshell shell tests (`tests/shell/`, Linux only)
 
@@ -54,10 +54,11 @@ All changes must pass `just check` (or `nix flake check`).
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
+`.github/workflows/validate.yml` runs these stages on push to `main` and PRs:
 1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
 2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is the last release to support it and `aarch64-darwin` covers evaluation equivalently.
-3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
+3. **search-data** — regenerates the committed website search data (`nix build .#site-search-data` → `site/src/data/*.json`) and fails if the working tree drifts, mirroring the lockfile rev-parity gate (the Cloudflare deploy runs bun only, so the JSON is committed and must stay in sync with the option/package source).
+4. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
