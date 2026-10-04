@@ -488,13 +488,165 @@ in
     { system }:
     let
       selectedNixpkgs = (inputsFor system).nixpkgs;
+      inherit (selectedNixpkgs) lib;
       pkgs = import selectedNixpkgs {
         inherit system;
         overlays = overlayList;
       };
+
+      # Build-time data generator for the website's package/option search
+      # (site/src/pages/search.astro). Produces a directory with two JSON files:
+      #
+      #   options.json          - every `marchyo.*` NixOS option, extracted from
+      #                           the declarations via `nixosOptionsDoc` (rendered
+      #                           type / default / example / description) with
+      #                           declaration paths rewritten to repo-relative +
+      #                           GitHub blob URLs.
+      #   marchyo-packages.json - pname/version/meta for marchyo's own packages.
+      #
+      # The output is committed under site/src/data/ (the Cloudflare build runs
+      # bun only, no Nix) via `just site-data`, and the `search-data` CI gate
+      # re-runs this and fails on a diff. nixpkgs (all-of-nixpkgs) search is served
+      # separately by the D1-backed Worker; this generator only covers marchyo's
+      # own options and packages.
+
+      # Evaluate ONLY the marchyo option declarations (modules/nixos/options),
+      # not the full nixosModules.default; the option files are declaration-only
+      # and depend on nothing but lib/pkgs and other marchyo.* options, so this
+      # skips the entire NixOS + home-manager option universe and keeps
+      # nixosOptionsDoc fast. `_module.check = false` tolerates the reduced arg
+      # set. (This is the NuschtOS/search generation approach.)
+      searchEval = lib.evalModules {
+        specialArgs = { inherit pkgs lib; };
+        modules = [
+          ./modules/nixos/options
+          { config._module.check = false; }
+        ];
+      };
+
+      # The flake source in the store; used to rewrite absolute declaration paths
+      # (e.g. /nix/store/HASH-source/modules/nixos/options/theme.nix) back to
+      # repo-relative paths + GitHub blob URLs. Non-marchyo declarations keep
+      # their store path and are filtered out by the jq `startswith("marchyo.")`
+      # selection below, so their URLs never ship.
+      srcPrefix = "${toString ./.}/";
+      gitBlob = "https://github.com/Jylhis/marchyo/blob/main/";
+
+      optionsDoc = pkgs.nixosOptionsDoc {
+        inherit (searchEval) options;
+        warningsAreErrors = false;
+        transformOptions =
+          opt:
+          opt
+          // {
+            declarations = map (
+              decl:
+              let
+                declStr = toString decl;
+              in
+              if lib.hasPrefix srcPrefix declStr then
+                let
+                  rel = lib.removePrefix srcPrefix declStr;
+                in
+                {
+                  name = rel;
+                  url = gitBlob + rel;
+                }
+              else
+                decl
+            ) opt.declarations;
+          };
+      };
+
+      # marchyo's own packages (the mkPackages set), reduced to the metadata the
+      # search UI shows. Optional meta fields are guarded with `or`.
+      searchPkgSet = {
+        inherit (pkgs) marchyo-wallpapers marchyo-cli;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        inherit (pkgs)
+          hyprmon
+          marchyo-shell
+          plymouth-marchyo-theme
+          ;
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        inherit (pkgs) wallpapper;
+      };
+
+      # meta.license may be an attrset (lib.licenses.*), a list of those, or a
+      # bare string (nixpkgs permits a free-form SPDX id). renderOne handles a
+      # single value of any of these shapes; a string element inside a list is
+      # handled too, so neither a top-level string nor a string-in-list errors.
+      renderLicense =
+        let
+          renderOne =
+            x:
+            if builtins.isString x then
+              x
+            else if builtins.isAttrs x then
+              (x.spdxId or x.shortName or "")
+            else
+              "";
+        in
+        l:
+        if l == null then
+          ""
+        else if lib.isList l then
+          lib.concatMapStringsSep ", " renderOne l
+        else
+          renderOne l;
+
+      searchPkgRows = lib.sort (a: b: a.name < b.name) (
+        lib.mapAttrsToList (attr: p: {
+          inherit attr;
+          name = p.pname or (lib.getName p);
+          version = p.version or "";
+          description = p.meta.description or "";
+          homepage = p.meta.homepage or "";
+          license = renderLicense (p.meta.license or null);
+          mainProgram = p.meta.mainProgram or "";
+          source = "marchyo";
+        }) searchPkgSet
+      );
+
+      # jq filter: keep marchyo.* options, reshape to the row shape search.astro
+      # consumes. render() flattens nixosOptionsDoc's {_type,text} wrappers.
+      searchOptionsFilter = ''
+        def render(v): if v == null then "" elif (v|type)=="object" then (v.text // "") else (v|tostring) end;
+        [ to_entries[]
+          | select(.key | startswith("marchyo."))
+          | { name: .key,
+              type: (.value.type // ""),
+              default: render(.value.default),
+              example: render(.value.example),
+              description: ((.value.description // "") | gsub("\\s+$"; "")),
+              declared: (.value.declarations[0].name // ""),
+              url: (.value.declarations[0].url // "") }
+        ]
+      '';
+
+      siteSearchData =
+        pkgs.runCommand "marchyo-site-search-data"
+          {
+            nativeBuildInputs = [ pkgs.jq ];
+            passAsFile = [ "pkgsJson" ];
+            pkgsJson = builtins.toJSON searchPkgRows;
+          }
+          ''
+            mkdir -p "$out"
+            jq -S '${searchOptionsFilter}' \
+              ${optionsDoc.optionsJSON}/share/doc/nixos/options.json \
+              > "$out/options.json"
+            jq -S '.' "$pkgsJsonPath" > "$out/marchyo-packages.json"
+          '';
     in
     {
       inherit (pkgs) marchyo-wallpapers marchyo-cli;
+
+      # Website package/option search data (options.json + marchyo-packages.json),
+      # committed under site/src/data/ and regenerated with `just site-data`.
+      site-search-data = siteSearchData;
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
@@ -597,9 +749,11 @@ in
               touch "$out"
             '';
 
-        # site/src/pages/search.astro's option table is hand-maintained with no
-        # generator, so nothing stops it drifting from the options tree. This is
-        # the guard.
+        # site/src/data/options.json is generated from the marchyo.* option
+        # declarations (nix build .#site-search-data / `just site-data`) and
+        # consumed by site/src/pages/search.astro. This guards that committed
+        # data: every `declared` path must exist and be attributed to the right
+        # namespace file.
         site-option-paths =
           pkgs.runCommand "check-site-option-paths"
             {
@@ -609,7 +763,7 @@ in
               # Only the parents: `cp -r dir target` nests when target exists.
               mkdir -p src/tests src/site/src
               cp -r ${./tests/site} src/tests/site
-              cp -r ${./site/src/pages} src/site/src/pages
+              cp -r ${./site/src/data} src/site/src/data
               cp -r ${./modules} src/modules
               cd src
               node tests/site/option-paths-test.js
