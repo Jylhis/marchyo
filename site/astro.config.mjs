@@ -55,6 +55,7 @@ export default defineConfig({
             'docs/configuration/localization',
             'docs/configuration/theming',
             'docs/configuration/keyboard',
+            'docs/configuration/console',
             'docs/configuration/graphics',
             'docs/configuration/default-apps',
             'docs/configuration/launcher',
