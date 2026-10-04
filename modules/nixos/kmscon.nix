@@ -32,7 +32,7 @@ in
         # fontScale every other marchyo text surface uses.
         font-size = fs.round 12;
         sb-size = cfg.scrollbackLines;
-        hwaccel = cfg.hwaccel;
+        inherit (cfg) hwaccel;
       }
       // cfg.extraConfig;
     };
