@@ -1,0 +1,62 @@
+---
+title: Console (kmscon)
+description: Replace the in-kernel virtual console with kmscon
+---
+
+By default marchyo configures the **in-kernel virtual console** — the gettys on
+`tty1`–`ttyN` — with the Jylhis palette and a scaled Terminus bitmap font
+(`modules/nixos/console.nix`). That console is limited to bitmap fonts and a
+small scrollback.
+
+`marchyo.console.kmscon` swaps those gettys for
+[kmscon](https://www.freedesktop.org/wiki/Software/kmscon/), a userspace
+KMS/DRM terminal that renders the TTY with a real font engine. It brings
+TrueType/Nerd-font rendering, full Unicode, and a large configurable scrollback
+to the console. It is **opt-in** because enabling it suppresses `getty@` and
+takes over the virtual terminals.
+
+```nix
+marchyo.console.kmscon.enable = true;
+```
+
+When enabled, marchyo wires kmscon into the knobs it already owns:
+
+- **Keyboard** — the XKB layout from [`marchyo.keyboard`](/docs/configuration/keyboard/)
+  is injected via kmscon's `useXkbConfig`, so the console keymap matches the
+  graphical session.
+- **Font size** — derived from
+  [`marchyo.theme.fontScale`](/docs/configuration/theming/), the single
+  multiplier that scales every other text surface (a 12 pt base × `fontScale`).
+- **Font family** — defaults to the Jylhis mono role (`BlexMono Nerd Font`),
+  already installed by the fonts module.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.console.kmscon.enable` | `bool` | `false` | Replace the in-kernel VT gettys with kmscon |
+| `marchyo.console.kmscon.fontName` | `str` | `"BlexMono Nerd Font"` | Monospace family kmscon renders with (resolved via fontconfig) |
+| `marchyo.console.kmscon.scrollbackLines` | `positive int` | `10000` | Scrollback buffer size in lines (`sb-size`) |
+| `marchyo.console.kmscon.hwaccel` | `bool` | `false` | Use OpenGL rendering; turns on `hardware.graphics.enable` |
+| `marchyo.console.kmscon.extraConfig` | `attrs of bool/int/str` | `{ }` | Extra `kmscon.conf` keys merged into `services.kmscon.config` |
+
+Anything kmscon supports but marchyo does not expose directly goes through
+`extraConfig`. Booleans render as `key` / `no-key`; see
+[`kmscon.conf(5)`](https://man.archlinux.org/man/kmscon.1.en) for the full list.
+
+```nix
+marchyo.console.kmscon = {
+  enable = true;
+  fontName = "JetBrainsMono Nerd Font";
+  scrollbackLines = 50000;
+  hwaccel = true;
+  extraConfig = {
+    palette = "solarized";
+    font-dpi = 96;
+  };
+};
+```
+
+:::note
+kmscon is **NixOS only**. On a host with a graphical display manager it still
+takes over the text VTs the manager does not own; on a headless machine leave
+`hwaccel` off so the GL stack is not pulled in.
+:::
