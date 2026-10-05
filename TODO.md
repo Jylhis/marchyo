@@ -5,8 +5,8 @@ authoritative description of the shell is [`shell/README.md`](shell/README.md).
 
 Out of scope, not wanted: a dashboard panel and a calendar panel.
 
-Next up, in order: Control Center, launcher command palette (2). New panels
-get a `marchyo shell` verb, a bind and `doctor` coverage on arrival.
+Next up: Control Center (2). New panels get a `marchyo shell` verb, a bind
+and `doctor` coverage on arrival.
 
 ## 1. Theming
 
@@ -78,25 +78,6 @@ One quick-settings surface over `Services/*` singletons, no new daemons.
    update `shell/README.md`. Done when every tile reflects and drives live
    state.
 
-### Launcher as a command palette
-
-`Launcher/LauncherWindow.qml` switches three always-instantiated views on
-`Launcher.mode` with a per-mode key chain; ranking is `Commons/Match.js`.
-
-1. Provider interface: each provider is a component with `prefix`, `query`,
-   `results` (title, subtitle, icon, score, `activate()`); the window renders
-   one list from the active provider. Port apps/clipboard/emoji onto it
-   without behavior change (`tests/shell/launcher-test.js` stays green).
-2. Prefix routing in `Services/Launcher.qml`: `=` calculator (qalc, baked in
-   `Config.qml` + `package.nix`), `>theme` (`marchyo theme list|set`), `#`
-   windows (`hyprctl clients -j`, focus on activate), `!` power actions (the
-   CLI power verbs).
-3. Vendor fuzzysort into `Commons/` with the CommonJS export guard and no
-   `.pragma` (contract-tested); swap `Match.js` scoring for it while keeping
-   `highlight`. Pin the version and license header.
-4. Done when every prefix works, the existing modes are unchanged, and the
-   launcher tests cover routing and ranking.
-
 ### Per-monitor config overrides (lower priority)
 
 - Typed options module as the schema source (ref: serpantinum
@@ -113,7 +94,7 @@ One quick-settings surface over `Services/*` singletons, no new daemons.
 - Lock-screen polish on `shell/Lock/LockScreen.qml`: failed-attempt UX (shake,
   clear field, 3s reset) and input-absorption hardening (ref: qylock).
 - Privacy indicator for camera, next to the mic-in-use indicator.
-- Clipboard image previews in ClipboardView (ref: end-4 `CliphistImage.qml`).
+- Clipboard image previews in `Launcher/ClipboardProvider.qml` (ref: end-4 `CliphistImage.qml`).
 - Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
 - Persistent per-app audio routing across restarts (PipeWire metadata).

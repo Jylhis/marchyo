@@ -6,11 +6,33 @@ import qs.Services
 import qs.Launcher
 
 // The launcher surface: a full-screen transparent layer-shell overlay (the
-// Ui/Panel dismiss idiom) whose centered card hosts one mode view. While open
-// it takes EXCLUSIVE keyboard focus and releases it when closed. Opens on the
-// focused output, like PanelManager's fallback.
+// Ui/Panel dismiss idiom) whose centered card hosts the query field and one
+// result list. Services/Launcher routes the query to a provider (by mode and
+// prefix); the list renders that provider's results. While open it takes
+// EXCLUSIVE keyboard focus and releases it when closed. Opens on the focused
+// output, like PanelManager's fallback.
 PanelWindow {
     id: root
+
+    // Every provider, keyed by the id Services/Launcher routes to.
+    readonly property var providers: ({
+            "apps": appsProvider,
+            "emoji": emojiProvider,
+            "clipboard": clipboardProvider,
+            "calc": calcProvider,
+            "theme": themeProvider,
+            "windows": windowsProvider,
+            "power": powerProvider
+        })
+    readonly property var active: root.providers[Launcher.provider] || appsProvider
+
+    readonly property var appsProvider: AppsProvider {}
+    readonly property var emojiProvider: EmojiProvider {}
+    readonly property var clipboardProvider: ClipboardProvider {}
+    readonly property var calcProvider: CalcProvider {}
+    readonly property var themeProvider: ThemeProvider {}
+    readonly property var windowsProvider: WindowsProvider {}
+    readonly property var powerProvider: PowerProvider {}
 
     visible: Launcher.open
     screen: Screens.byName(Screens.focusedName)
@@ -90,18 +112,20 @@ PanelWindow {
                     clip: true
                     Keys.onEscapePressed: Launcher.close()
 
-                    // Inline autocomplete: remaining letters of the top app
-                    // match, dimmed after the cursor. Only apps mode offers it;
-                    // emoji/clipboard have no single completion.
-                    property string ghost: (Launcher.mode === "apps" && query.activeFocus && apps.suggestion.length > query.text.length) ? apps.suggestion.substring(query.text.length) : ""
+                    // Inline autocomplete: remaining letters of the active
+                    // provider's suggestion, dimmed after the cursor. Only a
+                    // `completes` provider (apps) offers one.
+                    property string ghost: (root.active.completes && query.activeFocus && root.active.suggestion.length > query.text.length) ? root.active.suggestion.substring(query.text.length) : ""
 
                     function acceptGhost() {
                         if (query.ghost.length === 0)
                             return false;
-                        query.text = apps.suggestion;
+                        query.text = root.active.suggestion;
                         query.cursorPosition = query.text.length;
                         return true;
                     }
+
+                    onTextChanged: Launcher.query = text
 
                     Text {
                         id: ghostText
@@ -113,82 +137,43 @@ PanelWindow {
                         font: query.font
                     }
 
-                    // Arrows/Enter are routed to the active view; each view
-                    // owns its list navigation.
+                    // Arrows/Enter go to the results view. Lists move by
+                    // row; the emoji grid moves by three cells on Up/Down and
+                    // by one on Left/Right.
                     Keys.onPressed: event => {
-                        if (Launcher.mode === "apps") {
-                            if (event.key === Qt.Key_Down) {
-                                apps.move(1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Up) {
-                                apps.move(-1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Tab) {
-                                query.acceptGhost();
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Right && query.cursorPosition === query.text.length) {
-                                // Only swallow Right when it accepts a ghost;
-                                // otherwise let the cursor move normally.
-                                event.accepted = query.acceptGhost();
-                            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                apps.activate();
-                                event.accepted = true;
-                            }
-                        } else if (Launcher.mode === "emoji") {
-                            if (event.key === Qt.Key_Down) {
-                                emoji.move(3);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Up) {
-                                emoji.move(-3);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Left) {
-                                emoji.move(-1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Right) {
-                                emoji.move(1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                emoji.activate();
-                                event.accepted = true;
-                            }
-                        } else if (Launcher.mode === "clipboard") {
-                            if (event.key === Qt.Key_Down) {
-                                clip.move(1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Up) {
-                                clip.move(-1);
-                                event.accepted = true;
-                            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                                clip.activate();
-                                event.accepted = true;
-                            }
+                        const grid = root.active.layout === "grid";
+                        if (event.key === Qt.Key_Down) {
+                            results.move(grid ? 3 : 1);
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Up) {
+                            results.move(grid ? -3 : -1);
+                            event.accepted = true;
+                        } else if (grid && event.key === Qt.Key_Left) {
+                            results.move(-1);
+                            event.accepted = true;
+                        } else if (grid && event.key === Qt.Key_Right) {
+                            results.move(1);
+                            event.accepted = true;
+                        } else if (root.active.completes && event.key === Qt.Key_Tab) {
+                            query.acceptGhost();
+                            event.accepted = true;
+                        } else if (root.active.completes && event.key === Qt.Key_Right && query.cursorPosition === query.text.length) {
+                            // Only swallow Right when it accepts a ghost;
+                            // otherwise let the cursor move normally.
+                            event.accepted = query.acceptGhost();
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            results.activate();
+                            event.accepted = true;
                         }
                     }
                 }
             }
 
-            AppsView {
-                id: apps
+            ResultsView {
+                id: results
                 anchors.left: parent.left
                 anchors.right: parent.right
-                visible: Launcher.mode === "apps"
-                query: query.text
-            }
-
-            EmojiView {
-                id: emoji
-                anchors.left: parent.left
-                anchors.right: parent.right
-                visible: Launcher.mode === "emoji"
-                query: query.text
-            }
-
-            ClipboardView {
-                id: clip
-                anchors.left: parent.left
-                anchors.right: parent.right
-                visible: Launcher.mode === "clipboard"
-                query: query.text
+                provider: root.active
             }
         }
     }

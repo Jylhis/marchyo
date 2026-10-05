@@ -5,3 +5,4 @@ singleton Config 1.0 Config.qml
 singleton Theme 1.0 Theme.qml
 singleton ShellConfig 1.0 ShellConfig.qml
 singleton PluginIndex 1.0 PluginIndex.qml
+singleton Fuzzy 1.0 Fuzzy.qml

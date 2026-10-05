@@ -2,10 +2,12 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.Commons
+import "../Commons/LauncherProviders.js" as Providers
 
-// Shared launcher state: which mode is open ("" = closed). Reached from the
-// Hyprland keybinds via the shell IPC target; LauncherWindow and the mode views
-// bind to `mode`. A singleton, so seat-global like PanelManager.
+// Shared launcher state: which mode is open ("" = closed), the query text, and
+// the provider that text routes to. Reached from the Hyprland keybinds via the
+// shell IPC target; LauncherWindow and the Launcher/ providers bind to it. A
+// singleton, so seat-global like PanelManager.
 QtObject {
     id: root
 
@@ -13,6 +15,20 @@ QtObject {
     property string mode: ""
 
     readonly property bool open: mode !== ""
+
+    // The launcher's query field, mirrored here by LauncherWindow.
+    property string query: ""
+
+    // Prefix routing (Commons/LauncherProviders.js): in apps mode "=" routes to
+    // the calculator, ">theme" to themes, "#" to windows and "!" to power
+    // actions; emoji and clipboard search the whole text. `provider` is the
+    // active provider's id ("" while closed), `providerQuery` its query.
+    readonly property var route: Providers.route(root.mode, root.query)
+    readonly property string provider: root.route.provider
+    readonly property string providerQuery: root.route.query
+
+    onOpenChanged: if (!root.open)
+        root.query = ""
 
     function openAs(mode) {
         root.mode = mode;
