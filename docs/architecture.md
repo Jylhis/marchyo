@@ -34,8 +34,8 @@ Justfile            # Task runner (check, fmt, build, update, verify)
 statix.toml         # Statix linter configuration
 docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)
-plans/              # Design RFCs for in-progress and proposed work
-shell/              # Custom Quickshell shell QML tree (bar, OSD, panels, notifications; see plans/shell.md)
+TODO.md             # Open work (single list)
+shell/              # Custom Quickshell shell QML tree (bar, OSD, panels, notifications; see shell/README.md)
 modules/nixos/      # NixOS system-level modules (auto-discovered)
 modules/darwin/     # nix-darwin modules (imports shared options + generic modules)
 modules/nix-on-droid/  # nix-on-droid (Android terminal): built via lib.mkNixOnDroidConfiguration; reuses generic git/shell modules; HM 24.05

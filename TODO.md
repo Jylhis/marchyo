@@ -1,299 +1,212 @@
-# Marchyo shell roadmap
+# Marchyo TODO
 
-Plan distilled from researching the Quickshell/dotfiles repos below against
-marchyo's current shell. Ordered by value. Workstream 1 (fully runtime theming)
-is the flagship and is **complete** (stylix retired in 8ff3a33); the rest are
-independent and can land in any order.
+The single list of open work. Everything not listed here is implemented in the
+flake. Shipped history lives in git; the authoritative description of the
+shell is [`shell/README.md`](shell/README.md).
 
-Explicitly **out of scope**: dashboard panel and calendar panel. Not wanted.
+Out of scope, not wanted: a dashboard panel and a calendar panel.
 
-## Source repos (what each is good for)
+## 1. Theming
 
-- https://github.com/AvengeMedia/DankMaterialShell — most mature architecture: IPC CLI, plugin system + lockfile, matugen theming with system-wide injection, control center. Primary reference.
-- https://github.com/caelestia-dots/shell — cleanest QML design system: launcher-as-command-palette, JSON config + per-monitor overrides, bar hover popouts.
-- https://github.com/ilyamiro/serpantinum — closest Nix-packaged sibling: typed `nix/` options module, CLI-as-IPC, bar "faces" (top/side variants).
-- https://github.com/end-4/dots-hyprland (`ii/` Quickshell tree only; AGS is deprecated) — widest feature set: window overview, declarative quick-toggle models, vendored fuzzy-search JS, cliphist image previews.
-- https://github.com/Darkkal44/qylock — lock-screen reference (`WlSessionLock` + `PamContext`, failed-attempt UX). Skip its SDDM shim.
-- https://github.com/flickowoa/dotfiles/tree/hyprland-yorha — compositor-level effects (per-namespace blur, shell-owned chrome, screen shader).
-- https://github.com/diinki/linux-retroism, https://github.com/Nytril-ark/rumda — readable reference QML (fuzzy launcher, theme-switch popup, radial/heatmap widgets).
+Runtime theming is complete: stylix is retired (8ff3a33) and every per-theme
+surface has a runtime path. The runtime-theming review's correctness findings
+are fixed (the `assertRecolorable` guard in `modules/home/theme-runtime.nix`
+fails the build on an ambiguous or untranslatable hex, and `swapGtkToScheme`
+swaps the `shade_color` rgba literal), except:
 
----
+- **`theme generate` (matugen) restyles fewer surfaces than `theme set`.** It
+  writes colors.json, hyprland, ghostty, fzf and the wallpaper only, so
+  mako/waybar/gtk (and bat, hyprlock, console) keep the previous theme. Closing
+  it needs the full token-to-hex map at runtime (colors.json is deliberately
+  the shell subset, no `syn-*`), e.g. emit a full-palette file per theme dir.
+  Documented in `packages/marchyo-cli/packages/user-cli/src/commands/theme.ts`.
+- **Base16 role approximations are lossy for tinted schemes.** `tokenSlots`
+  collapses `accent-hover` onto `accent`, `border`/`syn-comment` onto
+  `text-faint`, `accent-subtle` onto `bg-subtle`, so a scheme loses the hover
+  delta and a future surface putting text on `accent-subtle` would fail
+  contrast. Cosmetic; a real fix needs distinct hover/subtle/border roles
+  upstream in `jylhis-design`. Keep `tokenSlots` in lockstep with
+  `TOKEN_SLOTS` in `packages/marchyo-cli/packages/core/src/matugen.ts`.
+- **Optional: wallpaper-driven Material-You mode.** matugen already covers the
+  runtime subset; would be a mode, never the default (marchyo's identity is
+  the jylhis palette).
+- **Optional polish:** greeter follows the session theme (needs a
+  world-readable theme marker the greeter reads at start); runtime emitters
+  for the TUI long tail (lazygit/k9s/ncspot/spotify-player/gdu, currently
+  build-time from `modules/generic/theme-slots.nix`).
 
-## Workstream 1 — Fully runtime theming (flagship)
+Rules for any new theme surface:
 
-**Goal:** a theme swap (`marchyo theme set/next`) restyles *everything* live, with
-no activation/rebuild. **Complete:** every per-theme surface has a runtime path
-(stylix retired in 8ff3a33); the build-time remainder is by structure (greeter,
-plymouth) or by format (TUI long tail keyed on the build-time variant/scheme).
+- Emit it from the single palette source in all three places that build a
+  theme dir: `theme-runtime.nix` (Jylhis pair), its `mkSchemeThemeDir`
+  (catalog/inline), and the CLI `generateThemeChangeBase` (matugen); the
+  relink/reload leg goes in `activateThemeDir`.
+- Stay IFD-free: pure string templating from `palette.hex` / base16 slots,
+  never `readFile` of a built derivation such as `pkgs.jylhis-themes`
+  (referencing it as a path is fine).
+- Add a `testNixOS` assertion in `tests/eval/themes.nix` and update
+  `site/src/content/docs/docs/configuration/theming.mdx`.
+- If a surface needs a role with no palette token, report it as a
+  `pkgs.jylhis-design-src` gap instead of inventing it locally.
+- The swaps lean on conventions nothing else enforces: HM renders
+  `services.mako.settings` into `xdg.configFile."mako/config"`,
+  `programs.waybar.style` is a string, and GTK reads
+  `design:platforms/gtk/jylhis-<mode>.css`. Recheck them on HM or design bumps.
 
-**The stylix question. RESOLVED.** Stylix is gone (8ff3a33): every surface it
-still covered when this workstream started (Qt, GNOME interface fonts, cursor,
-emacs, the TUI long tail) got a marchyo-owned path first (97d74c5, e01468a).
+## 2. Shell
 
-Steps:
+### Control Center panel
 
-1. **Inventory what stylix still colors. DONE** — the surface matrix below,
-   plus the pre-deletion enumeration recorded under "Step 5" below.
-2. **Runtime palette emitter. DONE for every per-theme surface** (bat, fzf,
-   hyprlock, console; starship needed nothing; Qt follows GTK). The remaining
-   long-tail TUIs (lazygit/k9s/ncspot/spotify-player/gdu) are build-time from
-   base16 slots (`modules/generic/theme-slots.nix`); making them runtime
-   emitters is a possible future extension, not a gap.
-3. **Reload signalling per app. DONE** (native live-reload where it exists;
-   next-instance documented for the rest).
-4. **Single palette source of truth. DONE** — `jylhis-palette.nix` /
-   `base16-scheme.nix` feed every emitter; `theme-slots.nix` covers the slot
-   consumers.
-5. **Retire stylix. DONE (8ff3a33).**
-6. **Decide on wallpaper-driven Material-You (optional follow-up). OPEN.** The
-   runtime emitter makes live palettes possible from *any* source; matugen
-   already covers generate-from-wallpaper for the runtime subset. marchyo's
-   identity is the jylhis palette, so this stays a mode, not the default.
+One quick-settings surface over existing `Services/*` singletons (Network,
+Bluetooth, DND, Nightlight, Caffeine, ScreenRecording, PowerProfile,
+Tailscale, Audio/Mic). No new daemons.
 
-**Acceptance (met):** `marchyo theme set <x>` restyles shell + GTK + Ghostty +
-Qt + bat/fzf/starship + console with no rebuild; stylix inputs removed; `just
-check` and the reference builds' eval gates green (the reference nixos *build*
-was blocked during landing by an unrelated, pre-existing vicinae-0.29.1 link
-failure — libnumen wants GLIBCXX_3.4.36; reproduced on HEAD without these
-changes).
+- `shell/Panels/ControlCenter.qml`, opened from a bar button and
+  `marchyo-shell ipc call shell controlCenter`.
+- Declarative toggle model per capability, separate from presentation
+  (ref: end-4 `modules/common/models/quickToggles/*.qml`).
+- Tile grid + per-domain detail pages (ref: DMS
+  `quickshell/Modules/ControlCenter/`).
+- Done when toggles reflect and drive live state and every gating option has
+  an eval test.
 
-### Step 1 inventory (surface matrix)
+### Launcher as a command palette
 
-Grounded in a full read of `theme-runtime.nix`, the per-app home modules, and
-the CLI (`activateThemeDir`, `matugen.ts`). Single palette source is
-`modules/generic/jylhis-palette.nix` (`.hex` semantic tokens, `.ansi16`,
-`.tty16`) for the Jylhis pair, base16 `scheme.slots` for catalog/inline/matugen
-themes. Every new emitter must materialize from that same source in all three
-places that build a theme dir: `theme-runtime.nix` (Jylhis pair), its
-`mkSchemeThemeDir` (catalog/inline), and the CLI `generateThemeChangeBase`
-(matugen), and the reload/relink leg goes in `activateThemeDir`.
+- Provider pattern, one component per result source (ref: caelestia
+  `modules/launcher/services/`).
+- Prefix-routed providers: calculator (qalc), `>theme` switch, window search,
+  power actions.
+- Vendor fuzzysort (end-4 `Fuzzy.qml` + `fuzzysort.js`) instead of our own
+  matcher.
+- Done when prefixes work, apps/clipboard/emoji are unaffected, and fuzzy
+  ranking is in use.
+- This also closes the omarchy gap of a searchable QML command menu
+  (`marchyo menu` is a gum TUI today).
 
-Legend: **live** = running processes restyle without relaunch; **next-instance**
-= newly launched processes pick it up (a fresh process per use, so effectively
-live for that app); **next-event** = applies at the next natural occurrence
-(lock, VT switch, boot).
+### IPC/CLI hardening
 
-| Surface | State today | Config format it reads | Reload behavior | Runtime emission plan |
-|---|---|---|---|---|
-| Quickshell shell | runtime | `colors.json` (camelCase tokens) | live (FileView poll -> Color.qml) | done |
-| GTK (libadwaita) | runtime | `gtk-3.0/gtk.css` + dconf `color-scheme` | libadwaita live via dconf; GTK3 next-instance | done |
-| Ghostty | runtime | `ghostty.conf` theme pair + XDG portal | live (portal color-scheme) | done |
-| mako | runtime | `mako/config` | live (symlink + `makoctl reload`) | done |
-| waybar | runtime | `waybar/style.css` | live (symlink + `systemctl --user try-restart`) | done |
-| Hyprland colors | runtime | `section:subkey value` keywords | live (`hyprctl eval hl.config`) | done |
-| Wallpaper | runtime | image file | live (`awww img`) | done |
-| **greetd greeter** | build-time (by structure) | `greeter/Commons/Theme.qml` static fallback + package variant-swap generator | next-boot (greeter runs before any user session) | **None needed.** No user session exists under greetd: no current-theme pointer, no marchyo CLI, no dconf — so the greeter is build-time **by structure**, not by omission (pipeline.md "Session-less surfaces"). The variant arrives through `packages/marchyo-shell/package.nix`'s `themeQmlFor ../../greeter/Commons/Theme.qml` generator. Runtime follow-the-session would need the CLI to write a world-readable theme marker the greeter reads at start; flag as optional polish, not a gap. Cozytile (github.com/Darkkal44/Cozytile) proves the demand for greeter-follows-theme (their sudoers-tee SDDM hack) without the declarative machinery. |
-| **bat** | **runtime (done)** | `.tmTheme` + `bat.conf` relink (`--theme=` line) | next-instance (fresh process each run) | Shipped in f045fce. The Jylhis pair reuses the shipped `pkgs.jylhis-themes` tmThemes; base16 schemes generate one (`lib/base16-tmtheme.nix`, registered via `programs.bat.themes`). `~/.config/bat/config` relinks to the theme dir's `bat.conf`. Generated (matugen) themes skip bat (shell-subset palette). |
-| **fzf** | **runtime (done)** | `fzf.opts` (`--color=` line) via `FZF_DEFAULT_OPTS_FILE` | next-invocation (file read live at every launch) | Shipped. Every theme dir (Jylhis pair, base16 schemes, matugen) emits `fzf.opts`; `FZF_DEFAULT_OPTS_FILE` points at `current-theme/fzf.opts` (read before `FZF_DEFAULT_OPTS`, so the file wins over layout opts). `modules/home/fzf.nix` drops its build-time `programs.fzf.colors` on desktop so the file wins; darwin/non-desktop keep baked colours. Cannot restyle an already-open fzf instance. |
-| **starship** | **already runtime** (verified) | `starship.toml` using ANSI slot names, no hex | live (follows the terminal's ANSI palette) | No emitter needed. The design `starship.toml` (`jylhis-design-src/platforms/shell/starship.toml`) has zero hardcoded hexes and styles via ANSI names, which the terminal resolves; Ghostty already swaps its 16-entry ANSI palette live for the Jylhis pair and base16 schemes, so the prompt recolors with it. Doc note landed with the stylix retirement (theming.mdx). |
-| **Qt (qt5ct/qt6ct)** | **runtime (done)** | `QT_QPA_PLATFORMTHEME=gtk3` (session-wide, `modules/home/qt.nix`); no qt5ct/qt6ct involved | next-instance (follows the gtk.css relink + dconf color-scheme) | Shipped in e01468a (Option A). Both nixpkgs qtbase generations ship the gtk3 platform-theme plugin (`libqgtk3.so`), so no extra package. The stylix `qt` target is opted out; the shell wrapper pins the same value for the shell process. |
-| **TUI long tail (lazygit/k9s/ncspot/spotify-player/gdu)** | build-time (by format) | per-app config from base16 slots (`modules/generic/theme-slots.nix`) | next-instance (config read at launch) | Re-homed from stylix in 97d74c5 with the exact slot mappings stylix used. Not runtime (theme swap does not rewrite them); they follow the build-time `variant`/`scheme`. |
-| **Emacs** | build-time | jylhis themes from the design system (`jylhis-design/nix/emacs.nix`) + scaled default font | next-instance | Re-homed from stylix in 97d74c5: loads `jylhis-<variant>` instead of base16-stylix. |
-| **GNOME interface fonts + cursor** | n/a (not per-theme) | dconf font-name/document/monospace + `home.pointerCursor` (`modules/home/jylhis-theme.nix`) | n/a | Re-homed from stylix in 97d74c5 (formula mirrors stylix's gnome target; document = applications − 1). |
-| **hyprlock** | **runtime (done)** | `hyprlock-colors.conf` sourced into `programs.hyprlock.settings` | next-event (only runs at lock) | Shipped in a797211. Each theme dir emits `hyprlock-colors.conf` as hyprlang `$bg`/`$text`/`$borderStrong`/`$surface`/`$accent`/`$statusErr` vars; `hyprlock.nix` sources it first (sourceFirst) through the current-theme pointer and references the vars. Geometry/fontScale stay build-time. Next lock uses the current theme; no reload signal needed. |
-| **console / TTY** | **runtime (done, best-effort)** | `console.txt` (setvtrgb table); `console.colors` declarative default | best-effort live, else next-boot | Shipped. Each theme dir emits a `setvtrgb` table (`console.txt`) from `tty16` (Jylhis) / base16 slots (schemes) via `lib/console-table.nix`. `activateThemeDir` runs `setvtrgb` best-effort (tolerant, like every other actuation); from a Wayland session that usually no-ops and the TTY tracks the declarative `console.colors` (`modules/nixos/console.nix`) at next boot. No privileged helper added (per step-1 decision). |
+- One IPC verb per domain: `toggle <panel>`, `theme next|set`, `brightness`,
+  `volume`, `screenshot`, `lock`, `reload` (ref: DMS `core/cmd/dms/`,
+  serpantinum `msg toggle <panel>`).
+- `marchyo doctor`: PASS/FAIL per dependency (tool paths, socket, services).
+- Point the Hyprland binds (`modules/home/hyprland.nix`, `omarchy-binds.nix`)
+  at the CLI verbs. Done when every panel toggles from the CLI and
+  `just cli-test` is green.
 
-**Decisions (step 1, confirmed):**
+### Per-monitor config overrides (lower priority)
 
-- **Qt -> Option A (follow GTK). SHIPPED (e01468a).** Session-wide
-  `QT_QPA_PLATFORMTHEME=gtk3` (`modules/home/qt.nix`); both nixpkgs qtbase
-  generations ship the `libqgtk3` platform-theme plugin, so the
-  qt5/qt6 plugin packages the decision speculated about were not needed. No
-  per-theme Qt asset is emitted.
-- **Console -> emit + accept next-boot. SHIPPED (38898a8).** Each theme dir
-  emits a `setvtrgb` table; `console.colors` stays the declarative default via
-  `modules/nixos/console.nix`.
+- Typed options module as the schema source (ref: serpantinum
+  `nix/settings-options.nix`).
+- Per-monitor overrides with an "always global" list (e.g. animations), ref:
+  caelestia `monitors/<name>/shell.json`. Nix stays the default generator;
+  reuse the `shell.json` watch pattern. Document under
+  `site/src/content/docs/docs/configuration/`.
 
-**Surfaces flagged as not cleanly live-runtime:**
+### Widgets and features (independent)
 
-- **console / TTY** is the only genuine holdout. The palette can be *emitted* at
-  runtime from the same source, but *applying* it to live VTs needs `setvtrgb`
-  (or per-VT `\033]P` escapes) against the console device. From inside the
-  Wayland GUI session there is no attached VT to write to, and doing it
-  system-wide is privileged. It is also the lowest-value surface for a live swap
-  (you are in the GUI, not a TTY). Resolution: the table is emitted per theme,
-  next-boot application is accepted, and `console.colors` stays the declarative
-  default via `modules/nixos/console.nix`.
+- Window overview / exposé with live previews + search (ref: end-4
+  `modules/ii/overview/`).
+- Lock-screen polish on `shell/Lock/LockScreen.qml`: failed-attempt UX (shake,
+  clear field, 3s reset) and input-absorption hardening (ref: qylock).
+- Privacy indicator for camera (the mic-in-use indicator already ships).
+- Clipboard image previews in ClipboardView (ref: end-4 `CliphistImage.qml`).
+- Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
+- Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
+- Persistent per-app audio routing across restarts (PipeWire metadata).
+- Dictation silence gate so a silent recording does not hallucinate text.
+- Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +
+  lockfile on top of `Commons/PluginIndex.qml` (ref: DMS
+  `Services/PluginService.qml`). Stays build-time only.
+- Adopt Quickshell v0.3.0 natives once the pin has them: Networking (drop
+  `nmcli` polling), PolkitAgent, `PwNodePeakMonitor`.
+- Optional segmented bar look: two-tone segments with curved joins, pure QML
+  `Shape` arcs in `shell/Ui/BarSection.qml`, filled from existing tokens so
+  theme swaps recolor it. A presentation flag only, no layout changes, no
+  image assets (idea from Cozytile, nothing vendored).
 
-- **Qt** shipped as Option A (see the matrix); no residual decision.
+### Compositor effects (`modules/home/hyprland.nix` only)
 
-**Upstream-dependency note:** all emitters derive from existing palette tokens /
-ANSI slots. No missing token identified so far; if the Qt palette needs a role
-with no token (e.g. a distinct "button" vs "window" shade) it will be reported
-as a `pkgs.jylhis-design-src` gap rather than invented locally.
+- Per-namespace layer blur behind shell surfaces only.
+- Shell-owned chrome: `border_size = 0`, QML draws frames.
+- Snappy `popin` bezier; optional CRT `screen_shader` if a retro theme appears.
 
-**Step 5 (retire stylix): SHIPPED** (97d74c5 re-homed the long tail + fonts +
-cursor; 8ff3a33 removed the stylix/stylix-stable inputs, deleted
-`modules/generic/{stylix,theme}.nix`, pruned flake.lock, and swept the docs).
-The enumeration before deletion found stylix's effective coverage was: cursor,
-GNOME interface fonts, emacs font+theme, lazygit/k9s/ncspot/spotify-player/gdu
-themes — all re-homed. Its fish output was dead (marchyo runs bash) and btop's
-theme file was never referenced; everything else targeted apps not installed.
-Remaining open in this workstream: step 6 (optional wallpaper-driven
-Material-You mode) and the F1/F2/F4 correctness findings recorded in
-[`THEME-RUNTIME-REVIEW.md`](THEME-RUNTIME-REVIEW.md) §2.
+### Discrete stack removal (later milestone)
 
----
+Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
+`marchyo.shell.enable = false` fallback until the shell is the only path.
 
-## Workstream 2 — Unified Control Center panel
+## 3. Features
 
-**Goal:** one quick-settings surface composing services marchyo already has
-(Network, Bluetooth, DND, Nightlight, Caffeine/idle-inhibit, ScreenRecording,
-PowerProfile, Tailscale, Audio/Mic).
+- **Local AI (`marchyo.ai.local.enable`).** Not started, no `marchyo.ai.*`
+  options exist. `services.ollama` with `acceleration` derived from
+  `marchyo.graphics.vendors`, optional model pre-pull, endpoint exposed to
+  shell/editor. New `modules/nixos/ollama.nix` + `modules/nixos/options/ai.nix`.
+- **Share upload target.** `marchyo share` only stages paths on the clipboard;
+  the upload backend is undecided.
+- **Omarchy extras, low priority:** lifecycle hooks (`battery-low`,
+  `theme-set`, `post-boot`), first-run onboarding, crash capture, per-theme
+  keyboard RGB and backgrounds, dropbox/speedtest panels. Each needs a
+  declarative shape (module/timer) first.
 
-Steps:
+## 4. Manual
 
-1. New `shell/Panels/ControlCenter.qml` (or a dedicated dir) summoned from a bar
-   button and via IPC (`marchyo-shell ipc call shell controlCenter`).
-2. **Declarative toggle model per capability** — separate toggle logic from
-   presentation. Reference: end-4 `modules/common/models/quickToggles/*.qml`
-   (`Bluetooth`, `NightLight`, `IdleInhibitor`, `Mic`, `Network`, `PowerProfiles`…).
-3. Tile grid + detail pages (a tile opens a detail pane for its domain). Reference:
-   DMS `quickshell/Modules/ControlCenter/` (`Components/CcTileGrid.qml`,
-   `Widgets/Cc*Tile.qml`, `Details/*Detail.qml`).
-4. Reuse existing `Services/*` singletons as the backends — no new daemons.
+Chapters still stubs in `manual/` (end-user voice: prose-first, second person,
+no Nix internals; minimal Starlight frontmatter; text first):
 
-**Acceptance:** toggles reflect and drive live state; opens/closes via bar + IPC;
-each `testNixOS` option that gates a tile has an eval test.
+- 03 Coming from Other Distros: Arch/omarchy/mac/win; never install imperatively.
+- 05 The Top Bar: stale Waybar tour; cover both bars keyed on
+  `marchyo.shell.enable`, plus click behavior, tooltips, `SUPER+SHIFT+SPACE`.
+- 12 Monitors: declarative vs hyprmon, scaling + scale-cycle bind, lid.
+- 13 Networking: wifi/bt TUIs, tailscale + trusted interface, localsend,
+  firewall default.
+- 14 Hardware Authentication: fingerprint, FIDO2, `marchyo security enroll`.
 
----
+## Won't do
 
-## Workstream 3 — Launcher as a command palette
+- omarchy's update/migrate/refresh engine, AUR tooling, `omarchy-install-*`:
+  replaced by `nixos-rebuild` + `flake.lock` + generations.
+- Runtime plugin fetch/enable: plugins stay Nix-declared and baked.
+- Dev-environment installers (mise etc.): per-project devenv.
+- Per-model kernel patches (expose the kernel package choice instead), a
+  Windows VM, omarchy's server edition.
+- Plymouth runtime theming: never on screen during a session.
+- Material You as default, transparency/blur/glass shell modes.
 
-**Goal:** extend the existing apps/clipboard/emoji launcher with pluggable providers.
+## Shell constraints (keep when touching `shell/`)
 
-Steps:
+- `Bar/` owns no runtime state: every `Process`/`Timer`/`Connections`/
+  `FileView`/`Socket` lives in a `Services/` singleton (contract-tested).
+- Exactly one IPC mechanism, the `IpcHandler { target: "shell" }` in
+  `shell.qml`; compat-shim handlers use per-plugin targets.
+- Long-lived streams restart with backoff keyed on `onRunningChanged` (see
+  `Services/Dictation.qml`); a dead stream reports in the tooltip.
+- Every `Config.<tool>` is declared in `Commons/Config.qml` and baked by
+  `packages/marchyo-shell/package.nix` (contract-tested).
+- Bound subprocess output with a `maxChars` ceiling.
+- Never point a `FileView` at a user-writable file; watch the directory as a
+  doorbell (`preload: false`).
+- Sandbox probes check the Wayland socket, not `WAYLAND_DISPLAY`.
+- Disable `Behavior`s before a construction-time jump to 0 and re-enable
+  `onFinished`, never `onStopped`.
+- Nerd Font glyphs get stripped by editing tools: targeted edits only in `Bar/`.
 
-1. Provider pattern: each result source is its own component. Reference:
-   caelestia `modules/launcher/services/` (`Apps`, `Actions`, `Schemes`, `M3Variants`).
-2. Add providers: calculator (qalc), **theme/scheme switch** (`>theme`), window
-   search, power actions. Prefix-routed like caelestia's `>scheme`/`>variant`.
-3. Lift the vendored fuzzy-search JS directly — identical in end-4
-   (`modules/common/functions/Fuzzy.qml` + `fuzzysort.js`) and retroism
-   (`utils/fuzzysort.js` + `Fuzzy.qml`). Avoid writing our own matcher.
+## Process
 
-**Acceptance:** prefix providers work; clipboard/emoji/apps unaffected; fuzzy
-ranking in use.
+- Verification stops at `nix build` / `nix flake check`; activating the running
+  system is the user's action.
+- Every new module/option gets a `testNixOS` eval test; option declarations
+  stay platform-neutral (Darwin eval gate); keep
+  `site/src/content/docs/docs/configuration/` in sync.
+- `just fmt` + `just check` before each commit; conventional commits.
 
----
+## References
 
-## Workstream 4 — IPC/CLI surface hardening
-
-**Goal:** Hyprland keybinds and scripts drive every panel/action through one CLI,
-never touching QML internals. marchyo already has `marchyo-shell ipc call shell lock`;
-generalize it.
-
-Steps:
-
-1. One IPC verb per domain: `toggle controlCenter|launcher|<panel>`, `theme next|set`,
-   `brightness`, `volume`, `screenshot`, `lock`, `reload`. Reference: DMS
-   `core/cmd/dms/` (one `commands_*.go` per domain) and serpantinum
-   `serpantinum msg toggle <panel>`.
-2. Add a **`marchyo doctor`** health/dependency check (verify tool paths, socket,
-   services). Reference: DMS `commands_doctor.go`. Fits marchyo-cli's test culture.
-3. Point Hyprland binds (`modules/home/hyprland.nix`, `omarchy-binds.nix`) at the
-   CLI verbs.
-
-**Acceptance:** every panel toggles from the CLI; `marchyo doctor` reports PASS/FAIL
-per dependency; `just cli-test` green.
-
----
-
-## Workstream 5 — Config schema + per-monitor overrides
-
-**Goal:** typed, per-monitor shell config. Lower priority — marchyo bakes config via
-Nix today; this adds runtime/per-output flexibility.
-
-Steps:
-
-1. Typed options module as the schema source. Reference: serpantinum
-   `nix/settings-options.nix` + `hm-module.nix`.
-2. Per-monitor overrides with an "ignored options" list (things that must stay
-   global, e.g. animations). Reference: caelestia `~/.config/caelestia/monitors/<name>/shell.json`.
-3. Keep Nix as the generator of defaults; file-watch for live changes
-   (`Commons/Theme.qml` already uses FileView + poll — reuse the pattern).
-
-**Acceptance:** per-monitor bar/position overrides apply live; documented in
-`site/src/content/docs/docs/configuration/`.
-
----
-
-## Workstream 6 — Standalone feature widgets (independent, pick off as desired)
-
-Each is roughly one `Services/` singleton or one widget.
-
-- **Window overview / exposé** with live previews + search. Reference: end-4
-  `modules/ii/overview/` (`OverviewWindow.qml`, `SearchWidget.qml`).
-- **Lock-screen polish** on the existing `shell/Lock/LockScreen.qml`: failed-attempt
-  UX (shake, "ACCESS DENIED", clear field, 3s auto-reset) and input-absorption
-  hardening (`PinchHandler`/`WheelHandler`/catch-all `MouseArea`). Reference:
-  qylock `themes/material-you-dark/Main.qml` + `lock_shell.qml`. Skip the SDDM shim.
-- **Privacy indicator** (active mic/cam in use) as a bar widget. Reference: DMS
-  `Widgets/PrivacyIndicator.qml`.
-- **Clipboard image previews** in the existing ClipboardView. Reference: end-4
-  `CliphistImage.qml` / `services/Cliphist.qml`.
-- **Idle-inhibit-on-video**: a singleton watching playerctl/PipeWire that drives
-  the existing Caffeine service. (Axarva idea; reimplement natively.)
-- **Plugin system evolution**: typed plugin kinds (widget/launcher/daemon) +
-  `plugin.json` manifest + lockfile, built on existing `Commons/PluginIndex.qml`
-  / `Services/PluginPopout.qml`. Reference: DMS `Services/PluginService.qml`,
-  `plugins.lock.json`, `.agents/skills/dms-plugin-dev/`.
-
----
-
-## Workstream 7 — Compositor-level effects (Hyprland config only, no shell code)
-
-Drop-in to `modules/home/hyprland.nix`, framework-agnostic. Reference:
-flickowoa yorha branch.
-
-- Per-namespace layer blur: `layerrule = blur on, match:namespace <bar|...>` so blur
-  sits only behind shell surfaces.
-- Shell-owned chrome: `border_size = 0` + transparent `col.active_border`, let QML
-  draw frames. Fits marchyo's "QML owns the look" model.
-- Snappy `popin` bezier for window open; optional CRT/scanline `screen_shader`
-  (`gridlines.frag`) if a retro theme is ever wanted.
-
----
-
-## Workstream 8 — Segmented bar aesthetic (optional, visual only)
-
-**Goal:** an alternative bar look: alternating two-tone segments joined by
-curved transitions, instead of the current flat monochrome bar background.
-Reference: Cozytile (github.com/Darkkal44/Cozytile) `.config/qtile/config.py`
-bar — alternating `#282738`/`#353446` segments with 500x500 PNG separator
-images between them (Assets/1-6.png). The look, done the marchyo way:
-
-- Pure QML, zero image assets: each bar section is a `Rectangle` whose left
-  and right edges carry concave/convex `Shape` arcs (QtQuick.Shapes) or, for
-  the flat variant, simply `radius` — no committed ONGs, no per-theme image
-  regeneration. Cozytile ships one PNG set per theme; we derive from
-  `Color.qml` tokens at render time.
-- Tokens, not hexes: segment fills come from existing semantic tokens
-  (`bg`, `surface`, `bgSubtle`) so runtime theme swaps recolor segments live
-  through the existing `colors.json` → `Color.qml` path — no new tokens, no
-  upstream dependency.
-- One place: the segment chrome lives in `shell/Ui/BarSection.qml` (the file
-  that already owns per-slot Loaders and separator collapse), as an optional
-  presentation mode — the bar stays one `RowLayout` of sections, only the
-  background rendering changes. Per-monitor `Bar/` widgets stay untouched.
-- Scope guard: this is an aesthetic option on the existing bar, not a
-  redesign — no widget-set, layout, or `BarLayout.js` changes; if it grows
-  beyond a presentation flag it belongs in a separate workstream.
-- No license risk: Cozytile has no LICENSE file; nothing is vendored — only
-  the visual idea (alternating two-tone segments with curved joins) is
-  borrowed, implemented from scratch against our tokens.
-
-**Acceptance:** `marchyo.bar.segmented = true` (or a Style knob) renders
-two-tone curved segments driven by the live palette; `just check` green;
-offscreen harness still asserts render state; no new image assets committed.
-
----
-
-## Notes / constraints
-
-- Verification for marchyo changes stops at `nix build` / `nix flake check` on
-  this host; activation/rebuild of the running system is the user's own action.
-- Every new module/option needs a `testNixOS` eval test; option declarations stay
-  platform-neutral (Darwin eval gate).
-- Keep `site/src/content/docs/docs/configuration/` in sync with new options.
-- Run `just fmt` + `just check` before each commit; conventional commit messages.
+- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell): IPC CLI, plugins + lockfile, control center. Primary reference.
+- [caelestia-dots/shell](https://github.com/caelestia-dots/shell): launcher providers, per-monitor config, closest services split.
+- [serpantinum](https://github.com/ilyamiro/serpantinum): typed Nix options module, CLI-as-IPC.
+- [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (`ii/` only): overview, quick-toggle models, fuzzysort, cliphist previews.
+- [qylock](https://github.com/Darkkal44/qylock): lock-screen UX (skip its SDDM shim).
+- [flickowoa yorha](https://github.com/flickowoa/dotfiles/tree/hyprland-yorha): compositor effects.
+- [linux-retroism](https://github.com/diinki/linux-retroism), [rumda](https://github.com/Nytril-ark/rumda): readable reference QML.
+- [ekremx25/quickshell](https://github.com/ekremx25/quickshell): notification centre.
+- [awesome-quickshell](https://github.com/ziuus/awesome-quickshell): landscape index.

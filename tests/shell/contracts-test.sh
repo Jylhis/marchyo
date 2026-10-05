@@ -145,7 +145,7 @@ check "every IPC method the Hyprland binds call exists in shell.qml" "$missing_i
 
 # One target, one handler: two handlers on the same target make which one
 # answers a call undefined. Every Hyprland bind calls target "shell" (see
-# plans/shell.md), so that name is shell.qml's alone, and shell.qml keeps a
+# shell/README.md), so that name is shell.qml's alone, and shell.qml keeps a
 # single stock handler rather than a bus. The compat shim's handlers are not
 # competitors: compat/Commons/ShellIpc.qml is a base type with no target of its
 # own, compat/Commons/IpcRegistry.qml holds a permanently disabled reflection

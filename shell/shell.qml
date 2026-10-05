@@ -24,7 +24,7 @@ import qs.compat.Ui as Plugin
 // first-party Components in `barComponents` below, or to plugin bar-widgets via
 // Commons/PluginIndex — the build-time Option A plugin model (Nix-declared,
 // store-baked; no runtime discovery). A single stock IpcHandler drives runtime
-// actions; there is no custom bus. See plans/shell.md.
+// actions; there is no custom bus. See shell/README.md.
 ShellRoot {
     id: shell
 

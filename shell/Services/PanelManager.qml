@@ -4,7 +4,7 @@ import QtQuick
 // Tracks which summonable panel is open, and on which output. Panels are
 // mutually exclusive (opening one closes any other). Bar widgets call
 // toggle(id, item); each Ui/Panel binds its visibility to openId === id and its
-// screen to screenName. No manifest, no plugin discovery (see plans/shell.md).
+// screen to screenName. No manifest, no plugin discovery (see shell/README.md).
 QtObject {
     id: root
 
