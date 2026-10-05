@@ -181,6 +181,7 @@ let
       readonly property int fontSizeSmall: ${toString (fs.round 12)}
       readonly property int spacing: ${toString (ui.round 4)}
       readonly property int paddingH: ${toString (ui.round 6)}
+      readonly property int barItemPad: ${toString (ui.round 4)}
       readonly property string fontFamily: "BlexMono Nerd Font"
 
       // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the

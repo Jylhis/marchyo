@@ -12,6 +12,9 @@ QtObject {
     readonly property int fontSizeSmall: 12
     readonly property int spacing: 4
     readonly property int paddingH: 6
+    // Horizontal padding on each side of a bar segment; also the only gap
+    // between segments (the bar rows use zero spacing).
+    readonly property int barItemPad: 4
     readonly property string fontFamily: "BlexMono Nerd Font"
 
     // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
