@@ -53,9 +53,10 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.reminders`, `marchyo.nightLight`, `marchyo.tray`, `marchyo.media`,
 `marchyo.dictation`,
 `marchyo.caffeine`, `marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`,
-`marchyo.bluetooth`, `marchyo.network`, `marchyo.mic`, `marchyo.audio`,
-`marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`,
-`marchyo.tailscale`, `marchyo.weather`, `marchyo.controlCenter`.
+`marchyo.bluetooth`, `marchyo.network`, `marchyo.camera`, `marchyo.mic`,
+`marchyo.audio`, `marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`,
+`marchyo.battery`, `marchyo.tailscale`, `marchyo.weather`, `marchyo.lockKeys`,
+`marchyo.controlCenter`.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
 `marchyo.reminders` (visible only while `marchyo reminder` timers are pending)
@@ -66,6 +67,16 @@ not placed by default; it only works — and only appears — when
 `marchyo.services.tailscale.enable` is set, which is what bakes the tailscale
 CLI into the shell. Clicking it opens a read-only detail panel (this device,
 exit-node status, and online tailnet peers with their addresses).
+
+`marchyo.camera` is the camera privacy indicator next to `marchyo.mic`: it is
+self-hiding and ships in the default layout. It shows while an app captures
+from a camera, through PipeWire (a link out of a `Video/Source` node)
+or by opening `/dev/video*` directly (a `/proc` fd scan every 3 s, run only
+while PipeWire reports a camera node); the tooltip names the apps.
+`marchyo.lockKeys` shows `CAPS` / `NUM` while Caps Lock or Num Lock is on, read
+from the keyboard LEDs in `/sys/class/leds`. It is registered but not placed by
+default: it polls those LEDs every 500 ms while placed, since lock-key toggles
+raise no compositor or sysfs event.
 
 The Network panel gains a **Share (QR)** button on Wi-Fi networks: it opens an
 overlay with a scannable QR of the current network's credentials (rendered as a

@@ -24,3 +24,5 @@ RemindersWidget 1.0 RemindersWidget.qml
 TailscaleWidget 1.0 TailscaleWidget.qml
 WeatherWidget 1.0 WeatherWidget.qml
 ControlCenterWidget 1.0 ControlCenterWidget.qml
+CameraWidget 1.0 CameraWidget.qml
+LockKeysWidget 1.0 LockKeysWidget.qml

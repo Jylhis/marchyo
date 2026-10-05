@@ -268,6 +268,14 @@ ShellRoot {
             x: 1180
             y: 32
         }
+        CameraWidget {
+            x: 220
+            y: 64
+        }
+        LockKeysWidget {
+            x: 300
+            y: 64
+        }
         PanelSlider {
             x: 0
             y: 64

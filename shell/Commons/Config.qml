@@ -27,4 +27,6 @@ QtObject {
     readonly property string curl: "curl"
     readonly property string qrencode: "qrencode"
     readonly property string qalc: "qalc"
+    readonly property string find: "find"
+    readonly property string ps: "ps"
 }
