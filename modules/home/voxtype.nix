@@ -79,6 +79,14 @@ in
           on_demand_loading = cfg.onDemandModel or false;
           gpu_isolation = cfg.gpuIsolation or false;
         };
+        # Silence gate (marchyo.dictation.silenceGate): voice activity detection
+        # drops recordings with no speech before Whisper sees them, so silence
+        # never transcribes into hallucinated text.
+        vad = {
+          enabled = cfg.silenceGate.enable;
+          inherit (cfg.silenceGate) backend threshold;
+          min_speech_duration_ms = cfg.silenceGate.minSpeechMs;
+        };
         output = {
           mode = "type";
           fallback_to_clipboard = true;
