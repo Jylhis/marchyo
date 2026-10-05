@@ -347,6 +347,21 @@ output moves the card there). The session is locked on ALL outputs either way â€
 ext-session-lock-v1 demands a surface per output. Focus and `pam.start()` are
 gated on `secure` (compositor-confirmed coverage), per the upstream docs.
 
+Every surface absorbs all input: a full-surface `MouseArea` (all buttons,
+hover, wheel) plus a `PinchHandler`, and a focused backdrop whose
+`Keys.onPressed` swallows every key the field does not consume. A press or
+keystroke on an output without the card moves the card there (forwarding the
+first printable character), and the field reclaims focus whenever it loses it
+on the card's output. The field goes `readOnly` (not disabled) while PAM is
+busy, so it keeps focus.
+
+A rejected password (`PamResult.Failed` / `MaxTries`) clears the field, shakes
+it (a `Translate` driven by an explicit animation that settles at 0, no
+`Behavior`), and holds a failure state for 3s: `Services/Lock` owns the
+`failed` flag, its reset `Timer`, and a `failureCount` that re-arms the shake
+on back-to-back failures. While `failed`, the failure line shows over the fresh
+PAM prompt and the field border is `Color.statusErr`.
+
 > **Testing warning:** destroying the shell (crash, or a hot-reload from the
 > dev loop) while locked leaves a conformant compositor showing a solid
 > color â€” by design. Never edit QML while a dev instance is locked, and keep
