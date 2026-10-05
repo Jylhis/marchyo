@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import QtQml.Models
 import Quickshell.Services.Pipewire
 
 // Shared Pipewire bindings for AudioWidget, the audio panel, and the OSD. One
@@ -27,9 +28,16 @@ import Quickshell.Services.Pipewire
 //    arrays cannot be diffed), fully resetting them. The membership guard
 //    below keeps the assigned arrays stable through peak traffic.
 //
-// Filters read only properties available on unbound nodes (isStream, isSink,
-// type) — never tracker-bound ones like n.audio, which materialize only
-// while a node is bound and would feed the churn from the other side.
+// Membership filters read only properties available on unbound nodes
+// (isStream, isSink, type), never tracker-bound ones like n.audio or
+// n.properties, which materialize only while a node is bound and would feed
+// the churn from the other side. The one exception is telling this shell's own
+// PwNodePeakMonitor taps apart from real capture streams: both are
+// AudioInStream nodes and only the bound `properties` say which is which. So
+// every input stream is a tracked *candidate* (membership by type alone), and
+// captureStreams is classified from the candidates' properties, re-run when
+// a candidate's properties arrive. Tracking a candidate never depends on its
+// classification, so there is no bind/unbind loop.
 QtObject {
     id: root
 
@@ -44,6 +52,9 @@ QtObject {
     // Per-app playback streams for the panel's per-app volume + meters.
     property var appStreams: []
 
+    // Every input stream, real or a peak tap (tracked so its properties bind).
+    property var inCandidates: []
+
     // Apps capturing audio; drives the microphone-in-use privacy indicator.
     property var captureStreams: []
 
@@ -54,17 +65,29 @@ QtObject {
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
         for (let i = 0; i < nodes.length; i++) {
             const n = nodes[i];
-            if (!n || !n.isStream || n.type !== want)
-                continue;
-            // Skip this shell's own PwNodePeakMonitor taps ("Quickshell Peak
-            // Detect" capture streams, node.name ".quickshell-wrapped"):
-            // meters running must never read as a hot microphone.
-            const p = n.properties || {};
-            if (p["application.name"] === "Quickshell Peak Detect")
-                continue;
-            out.push(n);
+            if (n && n.isStream && n.type === want)
+                out.push(n);
         }
         return out;
+    }
+
+    // A candidate is a real capture once its bound properties are in and it
+    // is not one of this shell's PwNodePeakMonitor taps ("Quickshell Peak
+    // Detect"): meters running must never read as a hot microphone. Until the
+    // properties arrive (a few ms after the tracker binds it) it is not counted.
+    function classifyCapture(): void {
+        const c = [];
+        for (let i = 0; i < root.inCandidates.length; i++) {
+            const n = root.inCandidates[i];
+            const p = n ? n.properties : null;
+            if (!p || Object.keys(p).length === 0)
+                continue;
+            if (p["application.name"] === "Quickshell Peak Detect")
+                continue;
+            c.push(n);
+        }
+        if (!root.sameMembers(root.captureStreams, c))
+            root.captureStreams = c;
     }
 
     function collectSinks(): var {
@@ -99,8 +122,22 @@ QtObject {
         if (!root.sameMembers(root.appStreams, o))
             root.appStreams = o;
         const c = root.collectStreams(PwNodeType.AudioInStream);
-        if (!root.sameMembers(root.captureStreams, c))
-            root.captureStreams = c;
+        if (!root.sameMembers(root.inCandidates, c))
+            root.inCandidates = c;
+        root.classifyCapture();
+    }
+
+    // One properties watcher per input-stream candidate. The model only
+    // changes with candidate membership, never with property traffic.
+    readonly property var candidateWatch: Instantiator {
+        model: root.inCandidates
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onPropertiesChanged(): void {
+                root.classifyCapture();
+            }
+        }
     }
 
     Component.onCompleted: root.refresh()
@@ -131,7 +168,7 @@ QtObject {
                 list.push(root.sink);
             if (root.source)
                 list.push(root.source);
-            return list.concat(root.appStreams).concat(root.captureStreams);
+            return list.concat(root.appStreams).concat(root.inCandidates);
         }
     }
 }

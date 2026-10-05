@@ -12,6 +12,7 @@ import qs.Launcher
 import qs.Notifications
 import qs.Lock
 import qs.Overview
+import qs.Polkit
 import qs.Services
 // omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
 // Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
@@ -278,6 +279,10 @@ ShellRoot {
     // top-right toast stack. DND lives in the shared NotificationState singleton,
     // toggled by the bar's DndWidget and the IPC below.
     NotificationDaemon {}
+
+    // Polkit agent dialog: Services/Polkit registers the session's
+    // authentication agent; this draws its centered password prompt.
+    PolkitDialog {}
 
     // The one tooltip surface: hover text from any BarItem / tray icon, rendered
     // below the bar on the hovered item's screen (Services/Tooltip holds the state).

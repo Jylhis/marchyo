@@ -1031,7 +1031,9 @@ in
         wallpaperPackage
       ];
 
-    services.hyprpolkitagent.enable = true;
+    # With the shell on, the shell is the session's polkit agent
+    # (shell/Services/Polkit.qml) and a session holds only one.
+    services.hyprpolkitagent.enable = !shellEnabled;
     services.hyprsunset.enable = true;
     # Keyring is provided + PAM-unlocked by the NixOS module; the HM user daemon
     # too would start a second gnome-keyring-daemon ("already initialized").

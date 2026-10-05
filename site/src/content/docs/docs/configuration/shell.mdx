@@ -5,8 +5,8 @@ description: The unified Quickshell shell — runtime config and the plugin plat
 
 `marchyo.shell.enable` turns on the unified Quickshell desktop shell: one
 long-running process that draws the top bar, OSD, panels, notifications, lock,
-and launcher, replacing waybar, SwayOSD, and mako. It is opt-in and not cascaded
-from `marchyo.desktop.enable`.
+launcher, and polkit password dialog, replacing waybar, SwayOSD, mako, and
+hyprpolkitagent. It is opt-in and not cascaded from `marchyo.desktop.enable`.
 
 ## Options
 
@@ -104,7 +104,8 @@ them live like the rest of the file.
 ## Control Center
 
 The Control Center is a quick-settings panel: output-volume and microphone
-sliders, plus tiles for Wi-Fi, Bluetooth, Tailscale, do-not-disturb, caffeine,
+sliders with a live microphone input meter (active only while the panel is open
+and the mic is unmuted), plus tiles for Wi-Fi, Bluetooth, Tailscale, do-not-disturb, caffeine,
 night light, and the power profile. Each tile shows the live state and flips it
 on click; its chevron opens the matching detail panel (network, Tailscale,
 notifications, power), with a back button to return. Tiles the host cannot offer
@@ -116,6 +117,22 @@ a `bar.layout` section). The Tailscale tile needs
 `marchyo.services.tailscale.enable`, and tailscaled accepts connect/disconnect
 only from the tailnet operator: run `sudo tailscale set --operator=$USER` once,
 or the tile reports the refusal.
+
+## Polkit authentication
+
+With the shell on, the shell is the session's polkit agent and hyprpolkitagent
+is not started. When an app asks for elevated rights (`pkexec`, a systemd
+action, a 1Password unlock), a centered dialog shows the request, the account it
+authenticates as, and a password field on the focused monitor. `Enter`
+authenticates and `Escape` cancels. A wrong password shakes the dialog and lets
+you retry. With the shell off, hyprpolkitagent stays the agent.
+
+## Audio routing
+
+Moving an app to another output (in `wiremix`, `Super + Ctrl + A`, or
+pavucontrol) persists across app and session restarts: WirePlumber remembers each
+app's target and restores it when the app plays again. The Audio panel's device
+picker sets the default output, which WirePlumber also remembers.
 
 ## Plugins
 
