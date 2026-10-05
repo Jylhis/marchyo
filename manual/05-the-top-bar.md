@@ -82,6 +82,8 @@ the bar closes up the gap when a segment is hidden.
 - **Network**: Wi-Fi signal strength, a cable icon for wired, or a crossed-out icon
   when you're offline. Click to open the Network panel. The tooltip shows the
   network name, your address, and the interface.
+- **Camera in use**: an amber webcam that appears whenever an app is using a
+  camera. Hover to see which apps.
 - **Microphone in use**: an amber microphone that appears whenever an app is
   recording from your mic. Hover to see which apps. Click to open the Audio panel.
 - **Volume**: the output volume. Scroll to change it in steps of 5%, up to 150%.
@@ -148,7 +150,8 @@ marchyo.shell.settings.bar.layout.right = [
 Rebuild, and the bar picks up the new layout without restarting. A few more
 segments are available but not shown by default: `marchyo.nightLight` (click to turn
 night light on or off), `marchyo.tailscale` (your Tailscale connection, click for
-details), and `marchyo.weather` (current conditions, click for a forecast panel).
+details), `marchyo.weather` (current conditions, click for a forecast panel), and
+`marchyo.lockKeys` (shows CAPS / NUM while Caps Lock or Num Lock is on).
 The full list of segment names is in the shell configuration reference.
 
 ## The Waybar bar

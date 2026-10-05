@@ -29,6 +29,7 @@
   curl,
   qrencode,
   libqalculate,
+  findutils,
   uwsm,
   systemd,
   # Runtime tools the omarchy plugin compat shim puts on the shell's PATH, but
@@ -288,6 +289,8 @@ let
       readonly property string curl: "${lib.getExe curl}"
       readonly property string qrencode: "${lib.getExe qrencode}"
       readonly property string qalc: "${lib.getExe libqalculate}"
+      readonly property string find: "${lib.getExe' findutils "find"}"
+      readonly property string ps: "${lib.getExe' procps "ps"}"
     }
   '';
 

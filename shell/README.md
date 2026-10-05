@@ -138,6 +138,8 @@ shell/
     Dictation.qml      singleton: the one voxtype --follow stream (with restart)
     Caffeine.qml       singleton: the one keep-awake probe + toggle, plus the auto video inhibit
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
+    LockKeys.qml       singleton: Caps/Num Lock from the keyboard LEDs (polled while shown)
+    Camera.qml         singleton: camera-in-use apps (PipeWire links + /dev/video* holders)
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
     Polkit.qml         singleton: the session's PolkitAgent + dialog state
@@ -196,8 +198,10 @@ below), so nothing depends on the session `PATH`.
 | ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
+| LockKeysWidget | `Services/LockKeys` → `/sys/class/leds/*::capslock` / `*::numlock` brightness, a 500 ms read poll while placed (shows `CAPS` / `NUM`; registered as `marchyo.lockKeys`, not placed by default) |
 | BluetoothWidget | `Services/BluetoothState` → `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` via `Services/NetworkStatus` (click = network panel) |
+| CameraWidget | `Services/Camera` → `Quickshell.Services.Pipewire` links out of `Video/Source` nodes + a `find` scan of `/proc/*/fd` for `/dev/video*` (3 s, only while PipeWire reports a camera); shown only while a camera is in use, tooltip names the apps |
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
@@ -590,7 +594,7 @@ screen-centered clock on small outputs; the verbose text (`Volume 100%`,
 right group is organized into clusters separated by the `marchyo.separator`
 widget (a thin `Ui/BarSeparator` rule): alerts · tray + media · toggles ·
 connectivity/audio · system. Glyph-only widgets (dictation, caffeine, theme,
-dnd, bluetooth, mic, power-profile, night-light, screen-recording, the tray
+dnd, bluetooth, camera, mic, power-profile, night-light, screen-recording, the tray
 expander) set `BarItem.compact` for half horizontal padding so single icons
 don't render as wide capsules next to text widgets. The active-window title
 elides (`BarItem.elide`) against a layout cap of a quarter of the output width,

@@ -47,8 +47,6 @@ Rules for any new theme surface:
 
 ### Widgets and features (independent)
 
-- Privacy indicator for camera, next to the mic-in-use indicator.
-- Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
 - Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +
   lockfile on top of `Commons/PluginIndex.qml` (ref: DMS
   `Services/PluginService.qml`). Stays build-time only.

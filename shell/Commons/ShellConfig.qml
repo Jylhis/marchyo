@@ -91,6 +91,9 @@ QtObject {
                     id: "marchyo.network"
                 },
                 {
+                    id: "marchyo.camera"
+                },
+                {
                     id: "marchyo.mic"
                 },
                 {

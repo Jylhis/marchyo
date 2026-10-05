@@ -57,7 +57,9 @@ ShellRoot {
             "marchyo.keyboardLayout": cKeyboardLayout,
             "marchyo.bluetooth": cBluetooth,
             "marchyo.network": cNetwork,
+            "marchyo.camera": cCamera,
             "marchyo.mic": cMic,
+            "marchyo.lockKeys": cLockKeys,
             "marchyo.audio": cAudio,
             "marchyo.cpu": cCpu,
             "marchyo.powerProfile": cPowerProfile,
@@ -143,8 +145,16 @@ ShellRoot {
         NetworkWidget {}
     }
     Component {
+        id: cCamera
+        CameraWidget {}
+    }
+    Component {
         id: cMic
         MicWidget {}
+    }
+    Component {
+        id: cLockKeys
+        LockKeysWidget {}
     }
     Component {
         id: cAudio
