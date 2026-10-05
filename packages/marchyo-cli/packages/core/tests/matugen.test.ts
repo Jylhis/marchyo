@@ -1,14 +1,42 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
+  type Base16,
   type ColorsJson,
+  type ThemePalette,
+  batConfigWithTheme,
+  consoleTable,
   detectVariant,
-  fzfOptsFromBase16,
+  fillTemplate,
+  fzfOptsFor,
   ghosttyConfFromBase16,
-  hyprlandConfFromBase16,
+  hyprlandConfFor,
+  hyprlockColorsFor,
   matugenArgv,
   parseMatugenBase16,
   recolorShellColors,
+  resolvedPalette,
+  shadeRgba,
+  tmThemeFromBase16,
+  toCamel,
+  tokenResolver,
+  tty16FromBase16,
 } from "../src/matugen.ts";
+
+// Nix-built parity fixture: inputs plus the output of lib/theme-generators.nix
+// for them. tests/eval/theme-runtime.nix
+// (eval-theme-runtime-cli-parity-fixture) fails when the Nix side drifts
+// from this file and prints the JSON to paste back.
+type ParityFixture = {
+  batThemeName: string;
+  base16: Base16;
+  palette: ThemePalette;
+  expected: Record<string, string> & { tokens: Record<string, string> };
+};
+const parity = JSON.parse(
+  readFileSync(join(import.meta.dir, "fixtures", "theme-parity.json"), "utf8"),
+) as ParityFixture;
 
 // A matugen-shaped `--json hex` fixture: only the fields the parser reads,
 // with distinguishable dark/light values per slot.
@@ -88,31 +116,95 @@ describe("parseMatugenBase16", () => {
   });
 });
 
+// A small palette.json: two slotted tokens sharing a slot, one unslotted.
+const palette: ThemePalette = {
+  tokens: {
+    bg: "#000000",
+    accent: "#ffffff",
+    "accent-hover": "#fefefe",
+    text: "#cccccc",
+    contour: "#abcdef",
+  },
+  tokenSlots: {
+    bg: "base00",
+    accent: "base09",
+    "accent-hover": "base09",
+    text: "base05",
+  },
+};
+
+describe("tokenResolver", () => {
+  const resolve = tokenResolver(
+    palette,
+    parseMatugenBase16(matugenFixture(), "dark"),
+  );
+  test("maps slotted tokens to their base16 slot", () => {
+    expect(resolve("bg")).toBe("#100000");
+    expect(resolve("accent")).toBe("#100009");
+    expect(resolve("accent-hover")).toBe("#100009");
+  });
+  test("falls back to the palette hex for a token without a slot", () => {
+    expect(resolve("contour")).toBe("#abcdef");
+  });
+  test("throws for a token the palette does not know", () => {
+    expect(() => resolve("nope")).toThrow(/nope/);
+  });
+});
+
+describe("resolvedPalette", () => {
+  test("resolves every token and keeps the slot table", () => {
+    const resolve = tokenResolver(
+      palette,
+      parseMatugenBase16(matugenFixture(), "dark"),
+    );
+    const out = resolvedPalette(palette, resolve);
+    expect(out.tokens).toEqual({
+      accent: "#100009",
+      "accent-hover": "#100009",
+      bg: "#100000",
+      contour: "#abcdef",
+      text: "#100005",
+    });
+    expect(out.tokenSlots).toEqual(palette.tokenSlots);
+  });
+});
+
+describe("toCamel", () => {
+  test("matches lib/camel-case.nix", () => {
+    expect(toCamel("bg")).toBe("bg");
+    expect(toCamel("bg-subtle")).toBe("bgSubtle");
+    expect(toCamel("syn-comment")).toBe("synComment");
+  });
+});
+
 describe("recolorShellColors", () => {
-  const base16 = parseMatugenBase16(matugenFixture(), "dark");
+  const resolve = tokenResolver(
+    palette,
+    parseMatugenBase16(matugenFixture(), "dark"),
+  );
   const current: ColorsJson = {
     name: "jylhis-dark",
     variant: "dark",
     colors: {
-      bg: "#000000", // -> base00
-      accent: "#ffffff", // -> base09
-      text: "#cccccc", // -> base05
-      customUnmapped: "#abcdef", // no slot -> kept as-is
+      bg: "#000000",
+      accentHover: "#fefefe",
+      contour: "#abcdef",
+      customUnmapped: "#123456",
     },
   };
 
-  test("maps known tokens to their base16 slot", () => {
-    const out = recolorShellColors(current, base16, "dark", "generated");
+  test("maps camelCase keys through the token resolver", () => {
+    const out = recolorShellColors(current, palette, resolve, "dark", "generated");
     expect(out.colors.bg).toBe("#100000");
-    expect(out.colors.accent).toBe("#100009");
-    expect(out.colors.text).toBe("#100005");
+    expect(out.colors.accentHover).toBe("#100009");
+    expect(out.colors.contour).toBe("#abcdef");
   });
-  test("keeps unmapped keys at their current hex (identity fallback)", () => {
-    const out = recolorShellColors(current, base16, "dark", "generated");
-    expect(out.colors.customUnmapped).toBe("#abcdef");
+  test("keeps keys that name no palette token", () => {
+    const out = recolorShellColors(current, palette, resolve, "dark", "generated");
+    expect(out.colors.customUnmapped).toBe("#123456");
   });
   test("sets the name and variant, keeps the key set", () => {
-    const out = recolorShellColors(current, base16, "dark", "generated");
+    const out = recolorShellColors(current, palette, resolve, "dark", "generated");
     expect(out.name).toBe("generated");
     expect(out.variant).toBe("dark");
     expect(Object.keys(out.colors).sort()).toEqual(
@@ -121,10 +213,68 @@ describe("recolorShellColors", () => {
   });
 });
 
-describe("hyprlandConfFromBase16", () => {
+describe("generators match lib/theme-generators.nix (parity fixture)", () => {
+  const b = parity.base16;
+  const resolve = tokenResolver(parity.palette, b);
+  const exp = parity.expected;
+
+  test("hyprlock-colors.conf", () => {
+    expect(hyprlockColorsFor(resolve)).toBe(exp["hyprlock-colors.conf"]!);
+  });
+  test("console.txt", () => {
+    expect(consoleTable(tty16FromBase16(b))).toBe(exp["console.txt"]!);
+  });
+  test("fzf.opts", () => {
+    expect(fzfOptsFor(resolve, b.base0B!)).toBe(exp["fzf.opts"]!);
+  });
+  test("hyprland.conf", () => {
+    expect(hyprlandConfFor(resolve)).toBe(exp["hyprland.conf"]!);
+  });
+  test("ghostty.conf", () => {
+    expect(ghosttyConfFromBase16(b)).toBe(exp["ghostty.conf"]!);
+  });
+  test("bat tmTheme", () => {
+    expect(tmThemeFromBase16(parity.batThemeName, b)).toBe(exp["bat.tmTheme"]!);
+  });
+  test("gtk shade", () => {
+    expect(shadeRgba(resolve("text"))).toBe(exp.shade!);
+  });
+  test("resolved palette tokens", () => {
+    expect(resolvedPalette(parity.palette, resolve).tokens).toEqual(exp.tokens);
+  });
+});
+
+describe("fillTemplate", () => {
+  const resolve = tokenResolver(parity.palette, parity.base16);
+  test("fills token placeholders and the shade", () => {
+    const out = fillTemplate(
+      "a {{token:bg}} b {{token:syn-variable}} c {{shade}} {{token:bg}}",
+      resolve,
+    );
+    expect(out).toBe(
+      `a ${parity.base16.base00} b ${parity.palette.tokens["syn-variable"]} ` +
+        `c ${parity.expected.shade} ${parity.base16.base00}`,
+    );
+    expect(out).not.toContain("{{");
+  });
+  test("an unknown token throws instead of shipping a placeholder", () => {
+    expect(() => fillTemplate("{{token:nope}}", resolve)).toThrow(/nope/);
+  });
+});
+
+describe("batConfigWithTheme", () => {
+  test("rewrites only the --theme= line", () => {
+    const conf = '--map-syntax="*.nix:Nix"\n--theme=jylhis-dark\n--style=plain\n';
+    expect(batConfigWithTheme(conf, "marchyo-generated")).toBe(
+      '--map-syntax="*.nix:Nix"\n--theme=marchyo-generated\n--style=plain\n',
+    );
+  });
+});
+
+describe("hyprlandConfFor", () => {
   test("emits the three color keywords in the parsed line form (no #)", () => {
     const b = parseMatugenBase16(matugenFixture(), "dark");
-    expect(hyprlandConfFromBase16(b)).toBe(
+    expect(hyprlandConfFor(tokenResolver(parity.palette, b))).toBe(
       [
         "misc:background_color rgb(100000)",
         "general:col.active_border rgba(100009ff)",
@@ -155,16 +305,16 @@ describe("ghosttyConfFromBase16", () => {
   });
 });
 
-describe("fzfOptsFromBase16", () => {
+describe("fzfOptsFor", () => {
   const b = parseMatugenBase16(matugenFixture(), "dark");
-  const opts = fzfOptsFromBase16(b);
+  const opts = fzfOptsFor(tokenResolver(parity.palette, b), b.base0B!);
 
   test("emits a single --color line with trailing newline", () => {
     expect(opts.startsWith("--color=")).toBe(true);
     expect(opts.endsWith("\n")).toBe(true);
     expect(opts.trim().split("\n")).toHaveLength(1);
   });
-  test("maps roles through the same slot mapping as theme-runtime.nix", () => {
+  test("maps roles through the palette.json slot table", () => {
     expect(opts).toContain("fg:#100005"); // text -> base05
     expect(opts).toContain("bg:#100000"); // bg -> base00
     expect(opts).toContain("hl:#100009"); // accent -> base09

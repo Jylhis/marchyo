@@ -18,12 +18,20 @@ import {
   dconfWriteArgv,
   declarativePointerPath,
   err,
-  fzfOptsFromBase16,
+  GENERATED_BAT_THEME,
+  ThemePalette,
+  batCacheBuildArgv,
+  batConfigDirArgv,
+  batConfigWithTheme,
+  consoleTable,
+  fillTemplate,
+  fzfOptsFor,
   ghosttyConfFromBase16,
   hint,
   hyprctlEvalArgv,
   hyprlandAvailable,
-  hyprlandConfFromBase16,
+  hyprlandConfFor,
+  hyprlockColorsFor,
   makoctlArgv,
   matugenArgv,
   ColorsJson as ColorsJsonSchema,
@@ -31,6 +39,10 @@ import {
   generatedThemeDirPath,
   parseMatugenBase16,
   recolorShellColors,
+  resolvedPalette,
+  tmThemeFromBase16,
+  tokenResolver,
+  tty16FromBase16,
   nextTheme,
   notifySendArgv,
   parseChangeFlags,
@@ -44,7 +56,7 @@ import {
   warn,
 } from "@marchyo/core";
 import type { Variant } from "@marchyo/core";
-import { mkdir, symlink, rename, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 
 // Actuation helpers mirroring modules/home/theme-runtime.nix: same commands,
 // same || true tolerance.
@@ -165,8 +177,9 @@ export async function activateThemeDir(
   // bat: relink the per-theme config (a `--theme=<name>` line swap, see
   // theme-runtime.nix). No reload signal: bat is a fresh process per run, so
   // the next invocation reads the swapped config. The theme's tmTheme is
-  // already in bat's build-time cache (the Jylhis pair ships it; scheme themes
-  // are registered via programs.bat.themes), so this is a pure name swap.
+  // already in bat's cache (the Jylhis pair ships it, scheme themes are
+  // registered via programs.bat.themes, and `theme generate` builds the cache
+  // after writing its own), so this is a pure name swap.
   const bat = join(entry.dir, "bat.conf");
   if (existsSync(bat)) {
     await relinkConfig(bat, join(configHome(), "bat", "config"));
@@ -407,21 +420,51 @@ export async function runBgNext(rt: Runtime): Promise<number> {
 
 // Wallpaper-derived theming (`marchyo theme generate <image>`). matugen turns
 // the image into a base16 palette; we materialize a runtime theme dir from it
-// (mirroring the scheme assets modules/home/theme-runtime.nix builds) and apply
-// it live via activateThemeDir. Runtime-only, like `bg` — a rebuild resets to
-// the declarative theme. The override value is a JSON string carrying the
-// image path and the requested polarity so `runtime restore` can replay it.
+// with the same file set modules/home/theme-runtime.nix builds for a catalog
+// scheme, and apply it live via activateThemeDir. Token colours resolve
+// through the build-variant dir's palette.json (slot per tokenSlots, else the
+// build hex); mako/waybar/gtk are filled from that dir's templates/, and bat
+// gets a generated tmTheme registered in its cache. Runtime-only, like `bg`:
+// a rebuild resets to the declarative theme. The override value is a JSON
+// string carrying the image path and the requested polarity so `runtime
+// restore` can replay it.
 
 type GenerateValue = { image: string; variant: Variant | "auto" };
 
-function readCurrentColors(): ColorsJsonSchema {
-  const path = join(currentThemePointerPath(), "colors.json");
-  if (!existsSync(path)) {
+const TEMPLATED_SURFACES = ["mako.conf", "waybar.css", "gtk.css"] as const;
+
+// The build-variant theme dir, the only one carrying templates/. The HM
+// profile's declarative pointer targets it; manifest dirs are the fallback,
+// and a dir with just palette.json (every templated surface disabled) is
+// accepted last.
+function buildThemeDir(manifest: ThemeManifestEntry[]): string {
+  const candidates = [declarativePointerPath(), ...manifest.map((t) => t.dir)];
+  const hasPalette = (d: string): boolean =>
+    existsSync(join(d, "palette.json")) && existsSync(join(d, "colors.json"));
+  const dir =
+    candidates.find((d) => hasPalette(d) && existsSync(join(d, "templates"))) ??
+    candidates.find(hasPalette);
+  if (dir === undefined) {
     throw new Error(
-      "no active theme colors.json (enable marchyo.desktop and rebuild)",
+      "no build theme palette.json (enable marchyo.desktop and rebuild)",
     );
   }
-  return ColorsJsonSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+  return dir;
+}
+
+// Temp file + rename, so a surface reading the file mid-write (mako reload,
+// a new fzf) never sees a partial one.
+async function writeAtomic(path: string, text: string): Promise<void> {
+  const tmp = `${path}.tmp-${process.pid}`;
+  await writeFile(tmp, text);
+  await rename(tmp, path);
+}
+
+// bat's config dir, or null when bat is not installed.
+async function batConfigDir(): Promise<string | null> {
+  const { code, stdout } = await captureArgv(batConfigDirArgv());
+  const dir = stdout.trim();
+  return code === 0 && dir !== "" ? dir : null;
 }
 
 export const generateThemeChangeBase: ChangeSpec = {
@@ -440,31 +483,68 @@ export const generateThemeChangeBase: ChangeSpec = {
     const variant = spec.variant === "auto" ? detectVariant(stdout) : spec.variant;
     const base16 = parseMatugenBase16(stdout, variant);
 
+    const baseDir = buildThemeDir(await readThemeManifest());
+    const readBase = (f: string): string => readFileSync(join(baseDir, f), "utf8");
+    const palette = ThemePalette.parse(JSON.parse(readBase("palette.json")));
+    const resolve = tokenResolver(palette, base16);
+
     const dir = generatedThemeDirPath();
     await mkdir(dir, { recursive: true });
+    const put = (f: string, text: string): Promise<void> =>
+      writeAtomic(join(dir, f), text);
+
     const colors = recolorShellColors(
-      readCurrentColors(),
-      base16,
+      ColorsJsonSchema.parse(JSON.parse(readBase("colors.json"))),
+      palette,
+      resolve,
       variant,
       "generated",
     );
-    await writeFile(join(dir, "colors.json"), `${JSON.stringify(colors)}\n`);
-    await writeFile(join(dir, "variant"), `${variant}\n`);
-    await writeFile(join(dir, "hyprland.conf"), hyprlandConfFromBase16(base16));
-    await writeFile(join(dir, "ghostty.conf"), ghosttyConfFromBase16(base16));
-    await writeFile(join(dir, "fzf.opts"), fzfOptsFromBase16(base16));
+    await put("colors.json", `${JSON.stringify(colors)}\n`);
+    await put("palette.json", JSON.stringify(resolvedPalette(palette, resolve)));
+    await put("variant", `${variant}\n`);
+    await put("hyprland.conf", hyprlandConfFor(resolve));
+    await put("ghostty.conf", ghosttyConfFromBase16(base16));
+    await put("fzf.opts", fzfOptsFor(resolve, base16.base0B!));
+    await put("hyprlock-colors.conf", hyprlockColorsFor(resolve));
+    await put("console.txt", consoleTable(tty16FromBase16(base16)));
+
+    // A surface the build dir has no template for is disabled declaratively;
+    // drop any copy an earlier run left so activateThemeDir skips it.
+    for (const f of TEMPLATED_SURFACES) {
+      const template = join(baseDir, "templates", f);
+      if (existsSync(template)) {
+        await put(f, fillTemplate(readFileSync(template, "utf8"), resolve));
+      } else {
+        await rm(join(dir, f), { force: true });
+      }
+    }
+
+    // bat selects themes by tmTheme filename stem from its cache: write the
+    // generated tmTheme into bat's themes dir, rebuild the cache, and point a
+    // copy of the build bat config at it.
+    const batDir = existsSync(join(baseDir, "bat.conf"))
+      ? await batConfigDir()
+      : null;
+    if (batDir !== null) {
+      await mkdir(join(batDir, "themes"), { recursive: true });
+      await writeAtomic(
+        join(batDir, "themes", `${GENERATED_BAT_THEME}.tmTheme`),
+        tmThemeFromBase16(GENERATED_BAT_THEME, base16),
+      );
+      await safeExec(ctx, batCacheBuildArgv());
+      await put(
+        "bat.conf",
+        batConfigWithTheme(readBase("bat.conf"), GENERATED_BAT_THEME),
+      );
+    } else {
+      await rm(join(dir, "bat.conf"), { force: true });
+    }
+
     // The source image becomes the theme dir's wallpaper (activateThemeDir
     // reads `wallpaper.png`); relinkConfig gives an atomic symlink swap.
     await relinkConfig(spec.image, join(dir, "wallpaper.png"));
 
-    // Known limitation: unlike a manifest `theme set`, generate does NOT emit
-    // mako.conf / waybar.css / gtk.css, so those surfaces keep the previously
-    // active theme. Faithfully recolouring them would need the current theme's
-    // *full* token→hex (incl. the syn-* tokens waybar/gtk use), but colors.json
-    // is deliberately the shell subset (no syn-*), so the data is not available
-    // at runtime. The build-time path (mkSchemeThemeDir in theme-runtime.nix)
-    // has the full palette and does recolour them; a wallpaper theme that needs
-    // those surfaces should be added to marchyo.theme.themes instead.
     await activateThemeDir(ctx, { name: "generated", variant, dir });
     return raw;
   },

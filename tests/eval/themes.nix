@@ -200,6 +200,43 @@ in
         marchyo.desktop.enable = true;
       });
 
+  # `marchyo theme generate` inputs: the build-variant dir (the current-theme
+  # pointer) ships palette.json with the full token map (syn-* included) and
+  # the slot table, plus the mako/waybar/gtk templates. Read from the
+  # linkFarm's `entries` passthru, so nothing is built; forcing the manifest
+  # also instantiates the nord dir (and its palette.json).
+  eval-themes-generate-assets =
+    testNixOSCheck "themes-generate-assets"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+          buildEntries = hm.xdg.configFile."marchyo/current-theme".source.entries;
+          palette = builtins.fromJSON (builtins.unsafeDiscardStringContext buildEntries."palette.json".text);
+          nord = lib.findFirst (t: t.name == "nord") null (manifestOf cfg);
+        in
+        lib.all (f: buildEntries ? ${f}) [
+          "palette.json"
+          "hyprlock-colors.conf"
+          "console.txt"
+          "templates/mako.conf"
+          "templates/waybar.css"
+          "templates/gtk.css"
+        ]
+        && palette.tokens ? "syn-keyword"
+        && palette.tokenSlots.bg == "base00"
+        && lib.hasInfix "{{token:bg}}" buildEntries."templates/mako.conf".text
+        && lib.hasInfix "{{shade}}" buildEntries."templates/gtk.css".text
+        && nord != null
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.themes = [
+          "jylhis-dark"
+          "nord"
+        ];
+      });
+
   # Runtime Qt theming: on a desktop the session points Qt at the gtk3
   # platform theme so Qt follows the live GTK surface (no qt5ct/qt6ct
   # config is generated anywhere).
