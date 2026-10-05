@@ -894,14 +894,15 @@ in
             execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''
           ))
         ]
-        # Panel summons via `marchyo shell toggle`. Only wired when the shell is
-        # on, since the panels do not exist otherwise.
+        # Panel and overview summons via `marchyo shell`. Only wired when the
+        # shell is on, since the panels and the overview do not exist otherwise.
         ++ lib.optionals shellEnabled [
           (bindd "SUPER + SHIFT + V" "Audio panel" (exec (shellVerb "toggle audio")))
           (bindd "SUPER + SHIFT + N" "Network panel" (exec (shellVerb "toggle network")))
           (bindd "SUPER + SHIFT + B" "Power panel" (exec (shellVerb "toggle power")))
           (bindd "SUPER + SHIFT + M" "Monitor panel" (exec (shellVerb "toggle monitor")))
           (bindd "SUPER + SHIFT + Q" "Control Center" (exec (shellVerb "toggle controlcenter")))
+          (bindd "SUPER + grave" "Window overview" (exec (shellVerb "overview")))
         ]
         # Launcher binds: in-shell launcher when the shell is on, else vicinae.
         ++ lib.optionals launcherEnabled [

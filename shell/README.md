@@ -85,6 +85,8 @@ shell/
     Cliphist.js        pure cliphist helpers (quoted-printable payload decode,
                        image-entry preview parsing + cache names)
     Notify.js          pure notification match/eviction helpers
+    Overview.js        pure window-overview helpers (grouping by workspace,
+                       search filter, keyboard navigation, tile layout math)
     BarLayout.js       pure bar-separator decisions (cluster-aware rules)
     Peripherals.js     pure `solaar show` parser (Logitech battery)
   Ui/
@@ -135,6 +137,7 @@ shell/
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
     Launcher.qml       singleton: launcher mode, query + prefix routing, paste helper
+    Overview.qml       singleton: window overview open flag, query, selection + model
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
@@ -144,6 +147,12 @@ shell/
     NotificationDaemon.qml  owns org.freedesktop.Notifications (replaces mako)
     NotificationList.qml    top-right layer-shell toast stack
     NotificationPopup.qml   one themed toast card (delegate)
+  Overview/
+    qmldir             declares module qs.Overview
+    OverviewLayer.qml  one OverviewWindow per screen
+    OverviewWindow.qml full-screen overlay: search field + workspace grid
+    WorkspaceTile.qml  one workspace, its windows at their scaled positions
+    WindowPreview.qml  one window: live ScreencopyView + title
 ```
 
 The shell also declares a single stock `Quickshell.Io.IpcHandler` (target
@@ -159,7 +168,7 @@ The bar is a **floating pill** by default: detached from the screen edges
 (all three bake to 0), and `surfaceAlpha = 1.0` restores opaque surfaces.
 With alpha below 1 the home Hyprland config enables its blur effect and
 registers blur layer rules for the shell's `marchyo:*` layer-shell
-namespaces (bar, panels, toasts, OSD, launcher, tooltip) — the glass look —
+namespaces (bar, panels, toasts, OSD, launcher, overview, tooltip) — the glass look —
 while a `no_blur` window rule keeps app windows unblurred.
 
 Every surface sets `WlrLayershell.namespace` to `marchyo:<surface>`; that
@@ -317,7 +326,7 @@ and `osdShow(...)` — the last is the brightness OSD's **primary trigger** (the
 brightness binds poke it after every `brightnessctl` change; see the OSD
 section), plus `ping()` and `reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
 `close [<panel>]`, `launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`,
-`dismiss [--all]`, `dnd [on|off]`, `reload`), and the Hyprland binds in
+`dismiss [--all]`, `dnd [on|off]`, `overview [on|off]`, `reload`), and the Hyprland binds in
 `modules/home/hyprland.nix` and `window-toggles.nix`, hypridle, and the
 screensaver (all added only when the shell is enabled) run those verbs, by
 store path when `marchyo.cli.enable` is off. Under the hood every call goes
@@ -331,12 +340,41 @@ The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
 self-targets the running instance (no instance id to track). Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
 `SUPER+SHIFT+M` monitor, `SUPER+SHIFT+Q` Control Center; the launcher summons (`toggleLauncher apps|emoji|
-clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
+clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`, and
+`SUPER+grave` runs `marchyo shell overview` (`toggleOverview()`). The DND toggle
 (`SUPER+CTRL+comma`) and dismiss-all
 (`SUPER+CTRL+SHIFT+comma`) binds run `marchyo shell dnd` / `marchyo shell
 dismiss --all` and `SUPER+N` runs `marchyo shell toggle notifications` when the
 shell is on; the first two fall back to the CLI/mako when it is off. This is the
 only IPC in the shell; there is no custom bus.
+
+### Overview
+
+`Overview/` is the window overview (expose): a full-screen `marchyo:overview`
+layer on every screen showing each regular workspace as a scaled-down tile of
+its monitor, with every window at its real position as a live
+`ScreencopyView` of its Hyprland toplevel. `Services/Overview` holds the open
+flag, the query and the selected window, and builds the model from
+`Quickshell.Hyprland`'s toplevels, workspaces and monitors (refreshed on open
+and on window/workspace events while open). The model is empty and the
+overlay content unloaded while closed, so previews and capture exist only
+while the overview is shown. The pure logic lives in `Commons/Overview.js`.
+
+- The search field filters windows by title and class through the launcher's
+  `Commons/Fuzzy` matcher; non-matching windows hide and workspaces without a
+  match dim. A fresh query selects the best match; an empty one selects the
+  focused window.
+- Keys: `Tab` / `Shift+Tab` (and `Left` / `Right` while the query is empty)
+  step through the matching windows, `Up` / `Down` move one grid row, `Enter`
+  focuses the selection (`focuswindow`, switching workspace), `Escape` closes.
+- Mouse: hover selects, a click focuses the window, a click on a tile's empty
+  area switches to that workspace, a click outside the tiles closes.
+- Only the focused output's overlay takes keyboard focus; the others mirror
+  the shared query and selection. Opening the overview closes the launcher and
+  any open panel.
+
+Summoned by `SUPER+grave` / `marchyo shell overview [on|off]`
+(`toggleOverview()` / `openOverview()` / `closeOverview()`).
 
 ### Notifications
 

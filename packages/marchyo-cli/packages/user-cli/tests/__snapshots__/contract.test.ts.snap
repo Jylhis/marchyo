@@ -47,8 +47,8 @@ Commands:
   doctor                                Check session health (baked tool paths,
                                         IPC sockets, user services)
   shell                                 Drive the running marchyo shell
-                                        (panels, launcher, bar, notifications,
-                                        lock)
+                                        (panels, launcher, overview, bar,
+                                        notifications, lock)
   volume [options] <action>             Step or mute the default audio sink (or
                                         source with --mic)
   brightness <action>                   Step the backlight brightness
@@ -313,7 +313,8 @@ Options:
 exports[`help contract: marchyo shell 1`] = `
 "Usage: marchyo shell [options] [command]
 
-Drive the running marchyo shell (panels, launcher, bar, notifications, lock)
+Drive the running marchyo shell (panels, launcher, overview, bar,
+notifications, lock)
 
 Options:
   -h, --help         display help for command
@@ -324,6 +325,7 @@ Commands:
   close [panel]      Close the open shell panel, or only the named one
   launcher <mode>    Toggle the launcher in a mode
   bar [state]        Toggle the top bar, or set it on/off
+  overview [state]   Toggle the window overview, or open/close it
   lock               Lock the session with the shell lock screen
   lock-state         Print the lock screen state: locked | unlocked
   dismiss [options]  Dismiss the newest notification toast
@@ -339,6 +341,7 @@ Examples:
   $ marchyo shell launcher emoji
   $ marchyo shell dnd on
   $ marchyo shell bar off
+  $ marchyo shell overview
   $ marchyo shell reload
 
 "
@@ -372,6 +375,19 @@ exports[`help contract: marchyo shell dnd 1`] = `
 "Usage: marchyo shell dnd [options] [state]
 
 Toggle do-not-disturb, or set it on/off
+
+Arguments:
+  state       on | off (omit to flip)
+
+Options:
+  -h, --help  display help for command
+"
+`;
+
+exports[`help contract: marchyo shell overview 1`] = `
+"Usage: marchyo shell overview [options] [state]
+
+Toggle the window overview, or open/close it
 
 Arguments:
   state       on | off (omit to flip)

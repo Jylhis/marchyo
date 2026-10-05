@@ -47,8 +47,6 @@ Rules for any new theme surface:
 
 ### Widgets and features (independent)
 
-- Window overview / exposé with live previews + search (ref: end-4
-  `modules/ii/overview/`).
 - Privacy indicator for camera, next to the mic-in-use indicator.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
 - Persistent per-app audio routing across restarts (PipeWire metadata).

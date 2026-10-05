@@ -38,6 +38,7 @@ const GROUPS: string[][] = [
   ["shell", "close"],
   ["shell", "dismiss"],
   ["shell", "dnd"],
+  ["shell", "overview"],
   ["volume"],
   ["brightness"],
   ["doctor"],

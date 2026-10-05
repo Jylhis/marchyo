@@ -11,6 +11,7 @@ import qs.Panels
 import qs.Launcher
 import qs.Notifications
 import qs.Lock
+import qs.Overview
 import qs.Services
 // omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
 // Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
@@ -269,6 +270,10 @@ ShellRoot {
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
     LauncherWindow {}
 
+    // Window overview: per-monitor workspace grid with live window previews
+    // and search, summoned over IPC (Services/Overview holds the state).
+    OverviewLayer {}
+
     // Notifications: owns org.freedesktop.Notifications and draws its own
     // top-right toast stack. DND lives in the shared NotificationState singleton,
     // toggled by the bar's DndWidget and the IPC below.
@@ -375,6 +380,21 @@ ShellRoot {
         function closeLauncher(): string {
             Launcher.close();
             return "ok";
+        }
+
+        function toggleOverview(): string {
+            Overview.toggle();
+            return Overview.open ? "on" : "off";
+        }
+
+        function openOverview(): string {
+            Overview.openOverview();
+            return "on";
+        }
+
+        function closeOverview(): string {
+            Overview.close();
+            return "off";
         }
 
         function ping(): string {
