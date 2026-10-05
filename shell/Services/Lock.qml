@@ -31,12 +31,45 @@ QtObject {
     // True between respond() and completed() so the field ignores Enter.
     property bool busy: false
 
+    // Failed-attempt state: `failed` holds for failureResetMs after a rejected
+    // password (the surface shows failureText over the PAM prompt and tints the
+    // field), and `failureCount` bumps once per rejection so every surface can
+    // replay its shake even when two failures land inside one reset window.
+    readonly property int failureResetMs: 3000
+    property bool failed: false
+    property string failureText: ""
+    property int failureCount: 0
+
+    function clearFailure() {
+        failureTimer.stop();
+        root.failed = false;
+        root.failureText = "";
+    }
+
+    function registerFailure(text) {
+        root.failureText = text;
+        root.failed = true;
+        root.failureCount += 1;
+        failureTimer.restart();
+    }
+
+    readonly property var failureTimer: Timer {
+        id: failureTimer
+
+        interval: root.failureResetMs
+        onTriggered: {
+            root.failed = false;
+            root.failureText = "";
+        }
+    }
+
     function lock() {
         if (root.locked)
             return;
         root.message = "";
         root.messageIsError = false;
         root.busy = false;
+        root.clearFailure();
         root.locked = true;
     }
 
@@ -85,13 +118,16 @@ QtObject {
                 root.locked = false;
                 root.message = "";
                 root.messageIsError = false;
+                root.clearFailure();
             } else if (result === PamResult.Failed) {
                 root.message = "Authentication failed";
                 root.messageIsError = true;
+                root.registerFailure(root.message);
                 pam.start(); // fresh conversation for the retry
             } else if (result === PamResult.MaxTries) {
                 root.message = "Too many attempts — wait, then press Enter";
                 root.messageIsError = true;
+                root.registerFailure(root.message);
             } else {
                 // PamResult.Error: the session is dead; the next Enter
                 // (submit -> start) begins a new one.

@@ -10,8 +10,9 @@ import qs.Services
 // way back in through the shell.
 //
 // One WlSessionLockSurface is instantiated per screen automatically; each renders
-// the clock + password card, and the field on the focused output
-// (Services/Screens) takes keyboard focus.
+// the clock, and the output owning the card (Lock.focusScreen) renders the
+// password field and takes keyboard focus. Every surface absorbs all pointer
+// and keyboard input; a press or keystroke on another output moves the card.
 WlSessionLock {
     id: lockRoot
 
@@ -38,19 +39,57 @@ WlSessionLock {
         // if the QML scene fails, never bind a translucent value.
         color: Color.bg
 
-        // Clicking a non-focused output moves the card there. Declared before
-        // the Column so the card (and its own field MouseArea) draws on top.
+        // Shake geometry for a rejected password (local: lock-only, not themed).
+        readonly property int shakeDistance: Style.fontSize
+        readonly property int shakeStep: Math.max(1, Math.round(Style.animationDuration / 3))
+
+        // Move the card to this output and give its field keyboard focus.
+        function claimCard() {
+            if (!surface.isFocused)
+                Lock.focusScreen = surface.screen.name;
+            input.forceActiveFocus();
+        }
+
+        // Pointer absorption: every button, hover, wheel and pinch on this
+        // output terminates here, so nothing reaches a surface beneath or
+        // falls through to compositor bindings. Any press (re)claims the card
+        // for this output. Declared before the backdrop so the field's own
+        // MouseArea draws on top.
         MouseArea {
             anchors.fill: parent
-            onClicked: {
-                Lock.focusScreen = surface.screen.name;
-                input.forceActiveFocus();
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+            onPressed: surface.claimCard()
+            onWheel: wheel => {
+                wheel.accepted = true;
             }
         }
 
+        PinchHandler {
+            target: null
+        }
+
         Rectangle {
+            id: backdrop
+
             anchors.fill: parent
             color: Color.bg
+
+            // Keyboard absorption: keys the field does not consume (Tab,
+            // Escape, function keys) and every key on an output without the
+            // card bubble here. All are swallowed; a key on another output
+            // moves the card to it (the compositor routed the keyboard there)
+            // and forwards a printable character so the first keystroke is
+            // not lost.
+            focus: true
+            Keys.onPressed: event => {
+                event.accepted = true;
+                const moved = !surface.isFocused;
+                surface.claimCard();
+                const printable = event.text.length > 0 && event.text.charCodeAt(0) >= 32 && (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0;
+                if (moved && printable && !input.readOnly)
+                    input.insert(input.cursorPosition, event.text);
+            }
 
             Column {
                 anchors.centerIn: parent
@@ -76,11 +115,13 @@ WlSessionLock {
                 }
                 // qmllint enable missing-property
 
+                // The failure line holds for Lock.failureResetMs over the
+                // fresh PAM prompt, then the prompt shows through again.
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible: surface.isFocused && Lock.message.length > 0
-                    text: Lock.message
-                    color: Lock.messageIsError ? Color.statusErr : Color.textMuted
+                    visible: surface.isFocused && text.length > 0
+                    text: Lock.failed ? Lock.failureText : Lock.message
+                    color: Lock.failed || Lock.messageIsError ? Color.statusErr : Color.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }
@@ -95,7 +136,47 @@ WlSessionLock {
                     color: Color.surface
                     radius: 0
                     border.width: 2
-                    border.color: Lock.messageIsError ? Color.statusErr : Color.borderStrong
+                    border.color: Lock.failed || Lock.messageIsError ? Color.statusErr : Color.borderStrong
+
+                    // Shake offset: a Translate leaves the Column's anchoring
+                    // intact. Driven only by the explicit animation below (no
+                    // Behavior), which always settles back at 0.
+                    transform: Translate {
+                        id: shakeShift
+                    }
+
+                    SequentialAnimation {
+                        id: shake
+
+                        NumberAnimation {
+                            target: shakeShift
+                            property: "x"
+                            to: -surface.shakeDistance
+                            duration: surface.shakeStep
+                            easing.type: Easing.OutQuad
+                        }
+                        NumberAnimation {
+                            target: shakeShift
+                            property: "x"
+                            to: surface.shakeDistance
+                            duration: surface.shakeStep * 2
+                            easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: shakeShift
+                            property: "x"
+                            to: -surface.shakeDistance / 2
+                            duration: surface.shakeStep * 2
+                            easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: shakeShift
+                            property: "x"
+                            to: 0
+                            duration: surface.shakeStep
+                            easing.type: Easing.InQuad
+                        }
+                    }
 
                     TextInput {
                         id: input
@@ -109,8 +190,22 @@ WlSessionLock {
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSize
                         echoMode: Lock.maskInput ? TextInput.Password : TextInput.Normal
-                        enabled: !Lock.busy
-                        opacity: enabled ? 1 : 0.6
+                        // readOnly, not enabled: a disabled item drops active
+                        // focus, and keystrokes during PAM would then escape
+                        // the field.
+                        readOnly: Lock.busy
+                        opacity: readOnly ? 0.6 : 1
+
+                        // Focus always returns to the field on the card's
+                        // output (deferred so a focus hand-off in flight
+                        // settles first).
+                        onActiveFocusChanged: {
+                            if (!activeFocus && surface.isFocused && lockRoot.secure)
+                                Qt.callLater(() => {
+                                    if (surface.isFocused && !input.activeFocus)
+                                        input.forceActiveFocus();
+                                });
+                        }
 
                         onAccepted: {
                             Lock.submit(input.text);
@@ -120,18 +215,19 @@ WlSessionLock {
 
                     Text {
                         anchors.centerIn: parent
-                        visible: input.text.length === 0 && input.enabled
+                        visible: input.text.length === 0 && !input.readOnly
                         text: "Password"
                         color: Color.textFaint
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSize
                     }
 
-                    // Any click claims keyboard focus for this screen's field
+                    // Any press claims keyboard focus for this screen's field
                     // (multi-monitor: focus otherwise follows the focused output).
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: input.forceActiveFocus()
+                        acceptedButtons: Qt.AllButtons
+                        onPressed: surface.claimCard()
                     }
                 }
             }
@@ -140,12 +236,26 @@ WlSessionLock {
         // New PAM prompt or failure message: clear the field and (re)focus.
         // The message always changes between two identical prompts (a failure
         // line lands in between), so a retry reliably re-arms this handler.
+        // A rejected password additionally shakes the field on every output
+        // (only the card's output has it visible).
         Connections {
             target: Lock
             function onMessageChanged() {
                 input.text = "";
-                if (Lock.focusScreen.length === 0 || surface.screen.name === Lock.focusScreen)
+                if (surface.isFocused)
                     input.forceActiveFocus();
+            }
+            function onFailureCountChanged() {
+                input.text = "";
+                shake.restart();
+                if (surface.isFocused)
+                    input.forceActiveFocus();
+            }
+            function onLockedChanged() {
+                if (!Lock.locked) {
+                    shake.stop();
+                    shakeShift.x = 0;
+                }
             }
         }
     }

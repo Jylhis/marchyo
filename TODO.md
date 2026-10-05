@@ -91,8 +91,6 @@ One quick-settings surface over `Services/*` singletons, no new daemons.
 
 - Window overview / exposé with live previews + search (ref: end-4
   `modules/ii/overview/`).
-- Lock-screen polish on `shell/Lock/LockScreen.qml`: failed-attempt UX (shake,
-  clear field, 3s reset) and input-absorption hardening (ref: qylock).
 - Privacy indicator for camera, next to the mic-in-use indicator.
 - Clipboard image previews in `Launcher/ClipboardProvider.qml` (ref: end-4 `CliphistImage.qml`).
 - Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
