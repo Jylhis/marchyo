@@ -25,6 +25,16 @@ import { runRollback } from "./commands/rollback.ts";
 import { runGc } from "./commands/gc.ts";
 import { runDiff } from "./commands/diff.ts";
 import { runDebug } from "./commands/debug.ts";
+import { runDoctor } from "./commands/doctor.ts";
+import {
+  runShellBar,
+  runShellDismiss,
+  runShellLauncher,
+  runShellLock,
+  runShellPanel,
+  runShellReload,
+} from "./commands/shell.ts";
+import { runBrightness, runVolume } from "./commands/media.ts";
 import { runRuntimeRestore, runRuntimeStatus } from "./commands/runtime.ts";
 import { runToggle } from "./commands/toggle.ts";
 import {
@@ -416,6 +426,135 @@ Examples:
   )
   .action(async () => {
     process.exit(await runDebug(rt()));
+  });
+
+program
+  .command("doctor")
+  .description("Check session health (baked tool paths, IPC sockets, user services)")
+  .addHelpText(
+    "after",
+    `
+Each check reports PASS, FAIL, or SKIP (not applicable on this host).
+Exits 1 when any check fails.
+
+Examples:
+  $ marchyo doctor
+  $ marchyo doctor --json | jq '.checks[] | select(.status == "fail")'
+`,
+  )
+  .action(async () => {
+    process.exit(await runDoctor(rt()));
+  });
+
+const shellCmd = program
+  .command("shell")
+  .description("Drive the running marchyo shell (panels, launcher, bar, lock)");
+
+for (const action of ["toggle", "open"] as const) {
+  shellCmd
+    .command(action)
+    .description(`${action === "toggle" ? "Toggle" : "Open"} a shell panel`)
+    .argument("<panel>", "panel id: audio | network | power | monitor | notifications | …")
+    .action(async (panel: string) => {
+      process.exit(await runShellPanel(rt(), action, panel));
+    });
+}
+
+shellCmd
+  .command("close")
+  .description("Close the open shell panel")
+  .action(async () => {
+    process.exit(await runShellPanel(rt(), "close", undefined));
+  });
+
+shellCmd
+  .command("launcher")
+  .description("Toggle the launcher in a mode")
+  .argument("<mode>", "apps | emoji | clipboard")
+  .action(async (mode: string) => {
+    process.exit(await runShellLauncher(rt(), mode));
+  });
+
+shellCmd
+  .command("bar")
+  .description("Toggle the top bar, or set it on/off")
+  .argument("[state]", "on | off (omit to flip)")
+  .action(async (state: string | undefined) => {
+    process.exit(await runShellBar(rt(), state));
+  });
+
+shellCmd
+  .command("lock")
+  .description("Lock the session with the shell lock screen")
+  .action(async () => {
+    process.exit(await runShellLock(rt()));
+  });
+
+shellCmd
+  .command("dismiss")
+  .description("Dismiss the newest notification toast")
+  .action(async () => {
+    process.exit(await runShellDismiss(rt()));
+  });
+
+shellCmd
+  .command("reload")
+  .description("Reload the shell's QML in place")
+  .action(async () => {
+    process.exit(await runShellReload(rt()));
+  });
+
+shellCmd.addHelpText(
+  "after",
+  `
+Exits 1 with a hint when marchyo-shell is not installed or not running.
+
+Examples:
+  $ marchyo shell toggle audio
+  $ marchyo shell launcher emoji
+  $ marchyo shell bar off
+  $ marchyo shell reload
+`,
+);
+
+program
+  .command("volume")
+  .description("Step or mute the default audio sink (or source with --mic)")
+  .argument("<action>", "up | down | mute")
+  .option("--mic", "Act on the default source (microphone)")
+  .addHelpText(
+    "after",
+    `
+With the marchyo shell installed: wpctl (the shell OSD follows Pipewire).
+Without it: swayosd-client when installed, else wpctl. wpctl steps 5% and
+caps at 100%.
+
+Examples:
+  $ marchyo volume up
+  $ marchyo volume mute --mic
+`,
+  )
+  .action(async (action: string, opts: { mic?: boolean }) => {
+    process.exit(await runVolume(rt(), action, opts));
+  });
+
+program
+  .command("brightness")
+  .description("Step the backlight brightness")
+  .argument("<action>", "up | down")
+  .addHelpText(
+    "after",
+    `
+With the marchyo shell installed: brightnessctl, then an OSD poke over
+shell IPC. Without it: swayosd-client when installed, else brightnessctl.
+brightnessctl steps 5%.
+
+Examples:
+  $ marchyo brightness up
+`,
+  )
+  .action(async (action: string) => {
+    process.exit(await runBrightness(rt(), action));
   });
 
 program

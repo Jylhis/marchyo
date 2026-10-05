@@ -10,3 +10,4 @@ export * from "./desktop.ts";
 export * from "./apply.ts";
 export * from "./theme-assets.ts";
 export * from "./matugen.ts";
+export * from "./shell-ipc.ts";

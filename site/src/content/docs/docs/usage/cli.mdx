@@ -43,6 +43,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 | `marchyo gc [--delete-older-than 14d]` | Collect Nix garbage |
 | `marchyo diff [-n]` | Diff system generations (dix) |
 | `marchyo debug` | Diagnostics bundle (versions, generation, journal errors) |
+| `marchyo doctor` | Session health checks: PASS/FAIL/SKIP per check (shell baked tool paths exist, Hyprland and shell IPC answer, marchyo user services active); exits `1` on any FAIL |
 
 ### Theme & wallpaper
 
@@ -57,6 +58,29 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 ### Toggles
 
 `marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu` (the last is `--apply`-only — it changes hardware configuration, persisting `marchyo.graphics.prime.enable`).
+
+### Shell
+
+Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprland binds. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo shell toggle\|open <panel>` | Toggle or open a panel (`audio`, `network`, `power`, `monitor`, `notifications`, …) |
+| `marchyo shell close` | Close the open panel |
+| `marchyo shell launcher <mode>` | Toggle the launcher in a mode (`apps`, `emoji`, `clipboard`) |
+| `marchyo shell bar [on\|off]` | Toggle or set the top bar |
+| `marchyo shell lock` | Lock with the shell lock screen |
+| `marchyo shell dismiss` | Dismiss the newest notification toast |
+| `marchyo shell reload` | Reload the shell's QML in place |
+
+### Volume & brightness
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo volume up\|down\|mute [--mic]` | Step (5%, capped at 100%) or mute the default sink, or the default source with `--mic` |
+| `marchyo brightness up\|down` | Step the backlight 5% |
+
+With the shell installed these run silent `wpctl` / `brightnessctl` and the shell OSD shows the level (brightness through an `osdShow` IPC poke). Without it they use `swayosd-client` when SwayOSD is installed, else plain `wpctl` / `brightnessctl`.
 
 ### Capture
 

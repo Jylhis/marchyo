@@ -95,9 +95,15 @@ let
   dictationStatusWindow =
     dictationEnabled && (((osConfig.marchyo or { }).dictation or { }).statusWindow or true);
 
-  # The unified shell adds keybind summons for its panels via `marchyo-shell ipc`
+  # The unified shell adds keybind summons for its panels via `marchyo shell`
   # (see the panel binds below); only wire them when the shell owns the desktop.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+
+  # `marchyo` verbs for the shell-side binds. The store path when the CLI is
+  # not installed system-wide, so the shell binds never depend on
+  # marchyo.cli.enable.
+  marchyoCli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
+  shellVerb = args: "${marchyoCli} shell ${args}";
 
   # Glass surfaces: marchyo.theme.appearance.surfaceAlpha < 1 makes the shell's
   # cards translucent, which only reads as glass when the compositor blurs what
@@ -690,24 +696,19 @@ in
           (bindd "CTRL + ALT + SHIFT + TAB" "Focus previous monitor" (dsp "focus({ monitor = \"-1\" })"))
 
           # Dismiss last notification. With the shell on, mako is retired and the
-          # toast list lives in the shell, so route to its IPC; otherwise makoctl.
+          # toast list lives in the shell; otherwise makoctl.
           (bindd "SUPER + comma" "Dismiss last notification" (
-            exec (if shellEnabled then "marchyo-shell ipc -n call -- shell dismissLast" else "makoctl dismiss")
+            exec (if shellEnabled then shellVerb "dismiss" else "makoctl dismiss")
           ))
 
           (bindd "SUPER + CTRL + Z" "Zoom in" (exec "marchyo zoom in"))
           (bindd "SUPER + CTRL + SHIFT + Z" "Zoom out" (exec "marchyo zoom out"))
           (bindd "SUPER + CTRL + ALT + Z" "Reset zoom" (exec "marchyo zoom reset"))
 
-          # Toggle top bar: shell hides/shows over IPC, waybar via SIGUSR1.
-          # Guarded so the bind never targets a stood-down daemon.
+          # Toggle top bar: the shell bar via `marchyo shell bar`, waybar via
+          # SIGUSR1. Guarded so the bind never targets a stood-down daemon.
           (bindd "SUPER + SHIFT + SPACE" "Toggle top bar" (
-            exec (
-              if shellEnabled then
-                "marchyo-shell ipc -n call -- shell toggleBar"
-              else
-                "systemctl --user kill -s SIGUSR1 waybar.service"
-            )
+            exec (if shellEnabled then shellVerb "bar" else "systemctl --user kill -s SIGUSR1 waybar.service")
           ))
           (bindd "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight"))
           (bindd "SUPER + CTRL + I" "Toggle idle lock" (exec "marchyo toggle idle"))
@@ -731,10 +732,8 @@ in
           (bind "SUPER + SHIFT + D" (dsp "window.move({ workspace = \"special:magic\" })"))
 
           # Session management. With the unified shell on, SUPER+L engages the
-          # in-shell WlSessionLock over IPC (Phase 4); otherwise hyprlock.
-          (bind "SUPER + L" (
-            exec (if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "hyprlock")
-          ))
+          # in-shell WlSessionLock; otherwise hyprlock.
+          (bind "SUPER + L" (exec (if shellEnabled then shellVerb "lock" else "hyprlock")))
           (bind "CTRL + ALT + Delete" (exec "systemctl poweroff"))
 
           # Move active window to an adjacent monitor (monitor focus is CTRL+ALT+Tab;
@@ -746,10 +745,10 @@ in
           (binddOpts "SUPER + mouse:273" "Resize window" (dsp "window.resize()") { mouse = true; })
         ]
         ++ (
-          # Laptop volume/brightness keys. SwayOSD routes through swayosd-client;
-          # with the shell on, volume reacts natively to Pipewire while brightness keys
-          # poke the shell OSD over IPC (sysfs writes signal POLLPRI, not a watchable
-          # change, so the shell's backlight watcher is unreliable, poke is primary).
+          # Laptop volume/brightness keys. With the shell on, `marchyo volume` /
+          # `marchyo brightness` change the level silently and the shell OSD shows
+          # it (brightness through an explicit IPC poke, see the CLI). SwayOSD
+          # routes through swayosd-client; with neither, silent wpctl/brightnessctl.
           # `locked` keeps them working over the lock screen, `repeating` allows hold.
           let
             osdEnabled = (((osConfig.marchyo or { }).osd or { }).enable or true) && !shellEnabled;
@@ -757,16 +756,17 @@ in
               locked = true;
               repeating = true;
             };
-            # Poke the shell OSD with the new percent (guard max > 0 to avoid divide
-            # by zero). `exit 0` keeps press-and-hold alive if the poke fails.
-            brightnessPoke = delta: ''
-              brightnessctl -e4 -n2 set ${delta}
-              max=$(brightnessctl max)
-              [ "$max" -gt 0 ] && marchyo-shell ipc -n call -- shell osdShow BRT $(( $(brightnessctl get) * 100 / max )) true
-              exit 0
-            '';
             volumeCommands =
-              if osdEnabled then
+              if shellEnabled then
+                {
+                  XF86AudioRaiseVolume = "${marchyoCli} volume up";
+                  XF86AudioLowerVolume = "${marchyoCli} volume down";
+                  XF86AudioMute = "${marchyoCli} volume mute";
+                  XF86AudioMicMute = "${marchyoCli} volume mute --mic";
+                  XF86MonBrightnessUp = "${marchyoCli} brightness up";
+                  XF86MonBrightnessDown = "${marchyoCli} brightness down";
+                }
+              else if osdEnabled then
                 {
                   XF86AudioRaiseVolume = "swayosd-client --output-volume raise";
                   XF86AudioLowerVolume = "swayosd-client --output-volume lower";
@@ -781,10 +781,8 @@ in
                   XF86AudioLowerVolume = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
                   XF86AudioMute = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
                   XF86AudioMicMute = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-                  XF86MonBrightnessUp =
-                    if shellEnabled then brightnessPoke "5%+" else "brightnessctl -e4 -n2 set 5%+";
-                  XF86MonBrightnessDown =
-                    if shellEnabled then brightnessPoke "5%-" else "brightnessctl -e4 -n2 set 5%-";
+                  XF86MonBrightnessUp = "brightnessctl -e4 -n2 set 5%+";
+                  XF86MonBrightnessDown = "brightnessctl -e4 -n2 set 5%-";
                 };
           in
           lib.mapAttrsToList (key: cmd: bindOpts key (exec cmd) elOpts) volumeCommands
@@ -809,45 +807,28 @@ in
             execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''
           ))
         ]
-        # Panel summons via `marchyo-shell ipc`. Only wired when the shell is on,
-        # since the IPC target does not exist otherwise.
+        # Panel summons via `marchyo shell toggle`. Only wired when the shell is
+        # on, since the panels do not exist otherwise.
         ++ lib.optionals shellEnabled [
-          (bindd "SUPER + SHIFT + V" "Audio panel" (
-            exec "marchyo-shell ipc -n call -- shell togglePanel audio"
-          ))
-          (bindd "SUPER + SHIFT + N" "Network panel" (
-            exec "marchyo-shell ipc -n call -- shell togglePanel network"
-          ))
-          (bindd "SUPER + SHIFT + B" "Power panel" (
-            exec "marchyo-shell ipc -n call -- shell togglePanel power"
-          ))
-          (bindd "SUPER + SHIFT + M" "Monitor panel" (
-            exec "marchyo-shell ipc -n call -- shell togglePanel monitor"
-          ))
+          (bindd "SUPER + SHIFT + V" "Audio panel" (exec (shellVerb "toggle audio")))
+          (bindd "SUPER + SHIFT + N" "Network panel" (exec (shellVerb "toggle network")))
+          (bindd "SUPER + SHIFT + B" "Power panel" (exec (shellVerb "toggle power")))
+          (bindd "SUPER + SHIFT + M" "Monitor panel" (exec (shellVerb "toggle monitor")))
         ]
         # Launcher binds: in-shell launcher when the shell is on, else vicinae.
         ++ lib.optionals launcherEnabled [
           (bindd "SUPER + CTRL + V" "Clipboard history" (
             exec (
               if shellEnabled then
-                "marchyo-shell ipc -n call -- shell toggleLauncher clipboard"
+                shellVerb "launcher clipboard"
               else
                 "vicinae vicinae://launch/clipboard/history?toggle=true"
             )
           ))
           (bindd "SUPER + period" "Emoji picker" (
-            exec (
-              if shellEnabled then
-                "marchyo-shell ipc -n call -- shell toggleLauncher emoji"
-              else
-                "vicinae open --query emoji"
-            )
+            exec (if shellEnabled then shellVerb "launcher emoji" else "vicinae open --query emoji")
           ))
-          (bind "SUPER + R" (
-            exec (
-              if shellEnabled then "marchyo-shell ipc -n call -- shell toggleLauncher apps" else "vicinae toggle"
-            )
-          ))
+          (bind "SUPER + R" (exec (if shellEnabled then shellVerb "launcher apps" else "vicinae toggle")))
         ];
 
         workspace_rule = [

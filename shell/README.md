@@ -199,17 +199,17 @@ current level whenever it changes, replacing SwayOSD. Its triggers are mostly
   150% like the bar's scroll ceiling (the filled bar caps at 100% of its
   track, the label tells the truth).
 - **brightness** — the primary path is the **keybind IPC poke**: the Hyprland
-  brightness binds (see `modules/home/hyprland.nix`) run `brightnessctl` and
-  then `marchyo-shell ipc -n call -- shell osdShow BRT <pct> true` with the
-  resulting level. This is deliberate: sysfs attribute writes signal
+  brightness binds (see `modules/home/hyprland.nix`) run `marchyo brightness
+  up|down`, which runs `brightnessctl` and then calls `osdShow BRT <pct> true`
+  over the shell IPC with the resulting level. This is deliberate: sysfs attribute writes signal
   `POLLPRI`, which `FileView`'s watcher (inotify) does not see on most hosts.
   A native `FileView` (`watchChanges`) on the first `/sys/class/backlight`
   node remains as a best-effort fallback for brightness changes made outside
   the keybinds (other tools, external monitors' DDC).
 
-The Hyprland media keys therefore keep doing the *actual* change (silent
-`wpctl` / `brightnessctl` + the poke for brightness; see
-`modules/home/hyprland.nix`). Enabling the shell stands SwayOSD down
+The Hyprland media keys therefore keep doing the *actual* change (`marchyo
+volume` / `marchyo brightness`: silent `wpctl` / `brightnessctl` + the poke
+for brightness; see `modules/home/hyprland.nix`). Enabling the shell stands SwayOSD down
 (`modules/home/swayosd.nix`); the backlight udev write-access from
 `modules/nixos/osd.nix` still applies, so `brightnessctl` keeps working.
 
@@ -251,16 +251,21 @@ motherboard, not the package). CPU and memory come from the shared
 `togglePanel(id)` / `openPanel(id)` / `closePanels()`, the notification controls
 `toggleDnd()` / `setDnd(on)` / `clearNotifications()`, and `osdShow(...)` — the
 last is the brightness OSD's **primary trigger** (the brightness binds poke it
-after every `brightnessctl` change; see the OSD section). Hyprland binds (added
-by `modules/home/hyprland.nix` and `modules/home/window-toggles.nix` only when
-the shell is enabled) reach the running process through the wrapped binary:
+after every `brightnessctl` change; see the OSD section), plus `ping()` and
+`reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
+`close`, `launcher <mode>`, `bar [on|off]`, `lock`, `dismiss`, `reload`), and
+the Hyprland binds in `modules/home/hyprland.nix` (added only when the shell is
+enabled) run those verbs. Under the hood every call goes through the wrapped
+binary:
 
 ```
 marchyo-shell ipc -n call -- shell togglePanel monitor
 ```
 
 The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
-self-targets the running instance (no instance id to track). Default binds:
+self-targets the running instance (no instance id to track).
+`modules/home/window-toggles.nix`, `hypridle.nix`, and `screensaver.nix`
+call it directly. Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
 `SUPER+SHIFT+M` monitor; the launcher summons (`toggleLauncher apps|emoji|
 clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
@@ -315,8 +320,8 @@ hyprlock under the same mutual-exclusion cutover as waybar/mako/SwayOSD.
 drives the prompt/retry loop, and `locked = false` happens in exactly one
 place — a successful authentication. Trigger paths:
 
-- `SUPER+L` and hypridle's lock points (`lock_cmd`, `before_sleep_cmd`, the
-  300s listener in `modules/home/hypridle.nix`) call
+- `SUPER+L` runs `marchyo shell lock`; hypridle's lock points (`lock_cmd`,
+  `before_sleep_cmd`, the 300s listener in `modules/home/hypridle.nix`) call
   `marchyo-shell ipc -n call -- shell lock`. hypridle stays the single idle
   authority so `marchyo toggle idle` keeps disabling idle lock; Quickshell's
   `IdleMonitor` is deliberately unused (no second idle watcher, no
@@ -466,7 +471,7 @@ Three layers, split by what each can reach:
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS — `Match.js` scoring, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
-| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
+| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call and direct `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
 The JS suites are the reason `Commons/*.js` files are plain `.js` modules with a

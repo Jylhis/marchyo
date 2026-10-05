@@ -157,7 +157,8 @@ in
         throw "FAIL: marchyo.shell is off but hyprlock is missing under a plain desktop"
     );
 
-  # SUPER+L reaches the running shell over IPC when it is on; hyprlock when off.
+  # SUPER+L reaches the running shell through `marchyo shell lock` when it is
+  # on; hyprlock when off.
   eval-marchyo-shell-lock-bind =
     let
       bind =
@@ -165,10 +166,10 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-lock-bind" (
-      if hyprHasBind bind "SUPER + L" "shell lock" then
+      if hyprHasBind bind "SUPER + L" "marchyo shell lock" then
         "pass"
       else
-        throw "FAIL: SUPER+L should call 'shell lock' over IPC when the shell is enabled"
+        throw "FAIL: SUPER+L should run 'marchyo shell lock' when the shell is enabled"
     );
 
   eval-marchyo-shell-off-keeps-hyprlock-bind =
@@ -261,7 +262,7 @@ in
     );
 
   # With the shell on, the three launcher binds summon the in-shell launcher
-  # over IPC instead of spawning vicinae.
+  # through `marchyo shell launcher` instead of spawning vicinae.
   eval-marchyo-shell-launcher-binds =
     let
       binds =
@@ -269,13 +270,13 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-launcher-binds" (
-      if !(hyprHasBind binds "SUPER + R" "toggleLauncher") then
+      if !(hyprHasBind binds "SUPER + R" "marchyo shell launcher apps") then
         throw "FAIL: SUPER+R should summon the in-shell launcher when the shell is on"
-      else if !(hyprHasBind binds "SUPER + period" "toggleLauncher emoji") then
+      else if !(hyprHasBind binds "SUPER + period" "marchyo shell launcher emoji") then
         throw "FAIL: SUPER+period should summon the in-shell emoji picker when the shell is on"
       else if !(hyprHasBind binds "SUPER + period" "Emoji picker") then
         throw "FAIL: SUPER+period should keep its 'Emoji picker' description (hyprland.nix test depends on it)"
-      else if !(hyprHasBind binds "SUPER + CTRL + V" "toggleLauncher clipboard") then
+      else if !(hyprHasBind binds "SUPER + CTRL + V" "marchyo shell launcher clipboard") then
         throw "FAIL: SUPER+Ctrl+V should summon the in-shell clipboard history when the shell is on"
       else
         "pass"
@@ -296,5 +297,46 @@ in
         throw "FAIL: marchyo.shell is off but SUPER+R does not spawn vicinae"
       else
         "pass"
+    );
+
+  # With the shell on, the media keys run the `marchyo volume` / `brightness`
+  # verbs (the shell OSD shows the level) and the panel and bar binds run
+  # `marchyo shell`.
+  eval-marchyo-shell-media-and-panel-verbs =
+    let
+      binds =
+        (evalWith { marchyo.shell.enable = true; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-media-and-panel-verbs" (
+      if !(hyprHasBind binds "XF86AudioRaiseVolume" "marchyo volume up") then
+        throw "FAIL: XF86AudioRaiseVolume should run 'marchyo volume up' when the shell is on"
+      else if !(hyprHasBind binds "XF86AudioMicMute" "marchyo volume mute --mic") then
+        throw "FAIL: XF86AudioMicMute should run 'marchyo volume mute --mic' when the shell is on"
+      else if !(hyprHasBind binds "XF86MonBrightnessUp" "marchyo brightness up") then
+        throw "FAIL: XF86MonBrightnessUp should run 'marchyo brightness up' when the shell is on"
+      else if !(hyprHasBind binds "SUPER + SHIFT + V" "marchyo shell toggle audio") then
+        throw "FAIL: SUPER+SHIFT+V should run 'marchyo shell toggle audio'"
+      else if !(hyprHasBind binds "SUPER + SHIFT + SPACE" "marchyo shell bar") then
+        throw "FAIL: SUPER+SHIFT+SPACE should run 'marchyo shell bar' when the shell is on"
+      else
+        "pass"
+    );
+
+  # marchyo.cli.enable = false keeps the shell binds working: they run the CLI
+  # by store path instead of the (absent) `marchyo` on PATH.
+  eval-marchyo-shell-verbs-without-cli =
+    let
+      binds =
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.cli.enable = false;
+        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-verbs-without-cli" (
+      if hyprHasBind binds "SUPER + SHIFT + V" "/bin/marchyo shell toggle audio" then
+        "pass"
+      else
+        throw "FAIL: with marchyo.cli.enable = false the shell binds should run the CLI by store path"
     );
 }

@@ -34,6 +34,10 @@ const GROUPS: string[][] = [
   ["security"],
   ["runtime"],
   ["completion"],
+  ["shell"],
+  ["volume"],
+  ["brightness"],
+  ["doctor"],
 ];
 
 for (const group of GROUPS) {
@@ -132,6 +136,12 @@ test("json contract: debug probes are their declared type when populated", async
   }
 });
 
+// The check list depends on the host (which units exist, whether the shell is
+// installed); the per-check schema does not.
+test("json contract: doctor shape", async () => {
+  expect(shapeOf(await jsonOf(["doctor"]))).toMatchSnapshot();
+});
+
 test("exit-code contract", async () => {
   // 0 success / 1 runtime failure / 2 usage error.
   const run = async (args: string[]) => {
@@ -146,4 +156,6 @@ test("exit-code contract", async () => {
   expect(await run(["toggle", "caffeine", "--status"])).toBe(0);
   expect(await run(["toggle", "warp-drive"])).toBe(2);
   expect(await run(["launch", "definitely-not-a-real-app"])).toBe(1);
+  expect(await run(["volume", "sideways"])).toBe(2);
+  expect(await run(["shell", "bar", "maybe"])).toBe(2);
 });

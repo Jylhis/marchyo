@@ -131,17 +131,33 @@ check "every Commons/Style.qml property is also emitted by package.nix" "$ungene
 
 # ── IPC contract ─────────────────────────────────────────────────────────────
 #
-# The Hyprland keybinds call into the running shell by method name. A renamed
-# IpcHandler function leaves the keybind silently doing nothing.
+# The CLI verbs (`marchyo shell …`, `marchyo brightness`, `marchyo doctor`)
+# call into the running shell by method name through core's shellIpc helper,
+# always with a string-literal name. A renamed IpcHandler function leaves the
+# verb, and every Hyprland bind on it, failing at runtime.
 
 shell_qml="$SHELL_DIR/shell.qml"
+cli_src="$ROOT/packages/marchyo-cli/packages"
+cli_methods=$(grep -rhoE --include="*.ts" --include="*.tsx" 'shellIpc\("[a-zA-Z]+"' "$cli_src" |
+  sed -E 's/.*"([a-zA-Z]+)"/\1/' | sort -u)
 missing_ipc=""
+[[ -n $cli_methods ]] || missing_ipc+="no shellIpc(\"<fn>\") call found under ${cli_src#"$ROOT"/}"$'\n'
 while read -r method; do
   [[ -n $method ]] || continue
   grep -qE "^\s*function $method\(" "$shell_qml" ||
-    missing_ipc+="modules/home calls 'shell $method', which shell.qml does not define"$'\n'
+    missing_ipc+="the CLI calls shellIpc(\"$method\"), which shell.qml does not define"$'\n'
+done <<<"$cli_methods"
+check "every shellIpc method the CLI calls exists in shell.qml" "$missing_ipc"
+
+# Modules that call `marchyo-shell ipc` directly (hypridle, the
+# screensaver, notification binds) are held to the same rule.
+missing_direct=""
+while read -r method; do
+  [[ -n $method ]] || continue
+  grep -qE "^\s*function $method\(" "$shell_qml" ||
+    missing_direct+="modules/home calls 'shell $method', which shell.qml does not define"$'\n'
 done < <(grep -rhoE "ipc -n call -- shell [a-zA-Z]+" "$ROOT/modules/home" | awk '{ print $NF }' | sort -u)
-check "every IPC method the Hyprland binds call exists in shell.qml" "$missing_ipc"
+check "every direct marchyo-shell ipc call in modules/home exists in shell.qml" "$missing_direct"
 
 # One target, one handler: two handlers on the same target make which one
 # answers a call undefined. Every Hyprland bind calls target "shell" (see
