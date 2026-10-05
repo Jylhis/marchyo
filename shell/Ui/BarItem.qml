@@ -24,7 +24,7 @@ Rectangle {
     // Glyph-only widgets take half padding so single icons don't render as
     // wide capsules next to text widgets.
     property bool compact: false
-    readonly property int padH: root.compact ? Math.ceil(Style.paddingH / 2) : Style.paddingH
+    readonly property int padH: root.compact ? Math.ceil(Style.barItemPad / 2) : Style.barItemPad
     // Clip + ElideRight when a layout cap makes us narrower than the text.
     property bool elide: false
     // Empty = no tooltip.

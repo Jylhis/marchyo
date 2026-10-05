@@ -57,7 +57,8 @@ RowLayout {
     property real capFraction: 0.25
     property real barWidth: 0
 
-    spacing: Style.spacing
+    // BarItem padding (Style.barItemPad) is the only gap between segments.
+    spacing: 0
 
     readonly property var entries: root.entriesOverride || ShellConfig.bar[root.section] || []
 
