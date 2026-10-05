@@ -45,15 +45,6 @@ Rules for any new theme surface:
 
 ## 2. Shell
 
-### Per-monitor config overrides (lower priority)
-
-- Typed options module as the schema source (ref: serpantinum
-  `nix/settings-options.nix`).
-- Per-monitor overrides with an "always global" list (e.g. animations), ref:
-  caelestia `monitors/<name>/shell.json`. Nix stays the default generator;
-  reuse the `shell.json` watch pattern. Document under
-  `site/src/content/docs/docs/configuration/`.
-
 ### Widgets and features (independent)
 
 - Window overview / exposé with live previews + search (ref: end-4

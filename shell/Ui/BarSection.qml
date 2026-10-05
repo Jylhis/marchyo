@@ -38,8 +38,12 @@ import "../Commons/BarLayout.js" as BarLayout
 RowLayout {
     id: root
 
-    // Section name into ShellConfig.bar ("left" | "center" | "right").
+    // Section name into the layout ("left" | "center" | "right").
     property string section: ""
+    // Output this section's bar sits on: entries come from
+    // ShellConfig.barFor(screenName), so a `monitors.<name>` override applies.
+    // Empty reads the global layout.
+    property string screenName: ""
     // Test seam: the offscreen harness injects entries (it has no Nix-baked
     // shell.json and needs separator + hidden-widget cases); null reads the
     // real layout like the live bar.
@@ -60,7 +64,7 @@ RowLayout {
     // BarItem padding (Style.barItemPad) is the only gap between segments.
     spacing: 0
 
-    readonly property var entries: root.entriesOverride || ShellConfig.bar[root.section] || []
+    readonly property var entries: root.entriesOverride || ShellConfig.barFor(root.screenName)[root.section] || []
 
     // A loaded widget's `shown` flag, read through an untyped parameter for the
     // reason given in the file comment. A widget with no `shown` property (a

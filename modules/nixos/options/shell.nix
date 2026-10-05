@@ -43,6 +43,124 @@ let
       };
     };
   };
+
+  # Typed schema for shell.json (marchyo.shell.settings). Every level is a
+  # freeform submodule, so keys the schema does not name pass through to
+  # shell.json unchanged. Typed leaves default to null and are dropped from the
+  # rendered file when unset (modules/home/marchyo-shell.nix), so the shell's
+  # own defaults apply. Pure lib types only, per the darwin eval gate.
+  freeform = types.attrsOf types.anything;
+
+  widgetEntryType = types.submodule {
+    freeformType = freeform;
+    options = {
+      id = mkOption {
+        type = types.str;
+        example = "marchyo.clock";
+        description = "Widget id: a first-party `marchyo.*` id or a declared plugin's bar-widget id.";
+      };
+      settings = mkOption {
+        type = types.nullOr freeform;
+        default = null;
+        description = "Per-entry widget settings, handed to the widget as its `settings` object.";
+      };
+    };
+  };
+
+  sectionOption =
+    name:
+    mkOption {
+      type = types.nullOr (types.listOf widgetEntryType);
+      default = null;
+      description = "Widgets in the ${name} bar section, in order. Null keeps the shipped default section.";
+    };
+
+  barType = types.submodule {
+    freeformType = freeform;
+    options.layout = mkOption {
+      type = types.submodule {
+        freeformType = freeform;
+        options = {
+          left = sectionOption "left";
+          center = sectionOption "center";
+          right = sectionOption "right";
+        };
+      };
+      default = { };
+      description = "Bar layout: `left`, `center`, and `right` widget sections.";
+    };
+  };
+
+  barOption = mkOption {
+    type = barType;
+    default = { };
+    description = "Top bar configuration.";
+  };
+
+  # A per-monitor override: the per-output subset of the settings schema.
+  # The always-global keys (idle, caffeine, monitors) are not declared, and
+  # the shell ignores them here (shell/Commons/MonitorConfig.js).
+  monitorType = types.submodule {
+    freeformType = freeform;
+    options.bar = barOption;
+  };
+
+  settingsType = types.submodule {
+    freeformType = freeform;
+    options = {
+      bar = barOption;
+
+      idle = mkOption {
+        type = types.submodule {
+          freeformType = freeform;
+          options = {
+            screensaver = mkOption {
+              type = types.nullOr types.ints.positive;
+              default = null;
+              description = "Seconds of idle before the screensaver (shell default 150).";
+            };
+            lock = mkOption {
+              type = types.nullOr types.ints.positive;
+              default = null;
+              description = "Seconds of idle before the lock (shell default 300).";
+            };
+          };
+        };
+        default = { };
+        description = "Idle thresholds. Always global.";
+      };
+
+      caffeine = mkOption {
+        type = types.submodule {
+          freeformType = freeform;
+          options.autoVideo = mkOption {
+            type = types.nullOr types.bool;
+            default = null;
+            description = "Hold an idle inhibitor while a video plays (shell default true).";
+          };
+        };
+        default = { };
+        description = "Caffeine (idle inhibitor) behaviour. Always global.";
+      };
+
+      monitors = mkOption {
+        type = types.attrsOf monitorType;
+        default = { };
+        example = lib.literalExpression ''
+          {
+            "HDMI-A-1".bar.layout.right = [ { id = "marchyo.clock"; } ];
+          }
+        '';
+        description = ''
+          Per-output overrides keyed by output name (as in `hyprctl monitors`).
+          Each entry is merged over the global settings for that output only:
+          objects merge key by key, lists (such as a bar section) replace the
+          global value whole. `idle`, `caffeine`, and `monitors` are always
+          global and are ignored here.
+        '';
+      };
+    };
+  };
 in
 {
   options.marchyo.shell = {
@@ -113,7 +231,7 @@ in
     };
 
     settings = lib.mkOption {
-      type = lib.types.attrs;
+      type = settingsType;
       default = { };
       example = lib.literalExpression ''
         {
@@ -122,6 +240,7 @@ in
             { id = "marchyo.battery"; }
           ];
           idle = { screensaver = 150; lock = 300; };
+          monitors."HDMI-A-1".bar.layout.right = [ { id = "marchyo.clock"; } ];
         }
       '';
       description = ''
@@ -139,8 +258,13 @@ in
         - `idle.{screensaver,lock}` — idle thresholds in seconds.
         - `caffeine.autoVideo` — hold an idle inhibitor while a video plays
           (default `true`).
+        - `monitors.<output>`: per-output overrides (e.g. `bar.layout`), merged
+          over the global values for that output. `idle`, `caffeine`, and
+          `monitors` are always global.
 
-        Leave empty (the default) to use the shipped bar layout unchanged.
+        Recognised keys are typed; any other key passes through to shell.json
+        unchanged. Unset typed keys are left out of the file, so the shell's
+        defaults apply. Leave empty (the default) to use the shipped bar layout unchanged.
       '';
     };
   };

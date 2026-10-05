@@ -11,8 +11,18 @@ let
   # Opt-in: unlike osd/menus this defaults off, so no `or true` fallback.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
-  # Empty by default so no file is written and the shell keeps its default layout.
-  shellSettings = ((osConfig.marchyo or { }).shell or { }).settings or { };
+  # Unset typed keys (null) and the empty submodules they leave behind are
+  # dropped, so shell.json carries only what the host set. Empty by default, so
+  # no file is written and the shell keeps its default layout.
+  pruneSettings =
+    v:
+    if builtins.isAttrs v then
+      lib.filterAttrs (_: x: x != null && x != { }) (lib.mapAttrs (_: pruneSettings) v)
+    else if builtins.isList v then
+      map pruneSettings v
+    else
+      v;
+  shellSettings = pruneSettings (((osConfig.marchyo or { }).shell or { }).settings or { });
 
   shellPlugins = ((osConfig.marchyo or { }).shell or { }).plugins or [ ];
 

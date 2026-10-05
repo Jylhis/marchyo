@@ -66,7 +66,10 @@ shell/
     Config.qml         resolved external-tool paths; the Nix build regenerates it
                        with absolute /nix/store paths (dev default = PATH names)
     ShellConfig.qml    singleton reading ~/.config/marchyo/shell.json (the live
-                       marchyo.shell.* config, materialized by the Nix build)
+                       marchyo.shell.* config, materialized by the Nix build);
+                       barFor(output) gives a bar its per-monitor layout
+    MonitorConfig.js   pure per-monitor resolution of shell.json (global config
+                       + monitors.<output> override, always-global keys kept)
     PluginIndex.qml    singleton listing the plugins baked into this store shell
                        (build-time Option A model; no runtime discovery)
     Format.js          pure parsing helpers (keymap short codes, nmcli records);
@@ -521,6 +524,14 @@ its cell). Separators render only between two clusters that both have visible
 content — the rules around an empty cluster collapse to one — decided by the
 pure, node-tested `Commons/BarLayout.js` (`tests/shell/bar-layout-test.js`).
 
+Each per-screen bar reads its layout from `ShellConfig.barFor(<output>)`: the
+global `bar.layout` with that output's `monitors.<output>` override from
+shell.json merged over it (`Commons/MonitorConfig.js`, node-tested by
+`tests/shell/monitor-config-test.js`). Objects merge key by key, lists replace
+whole, and the always-global keys (`idle`, `caffeine`, `monitors`) ignore
+per-monitor values. The overrides live in the same generated shell.json, so
+they ride its existing watch.
+
 ## Development
 
 Run the tree directly for a fast QML iteration loop (no rebuild):
@@ -590,6 +601,7 @@ Three layers, split by what each can reach:
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding and image-entry parsing / cache names |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
+| `tests/shell/monitor-config-test.js` | `nix flake check`, or `node tests/shell/monitor-config-test.js` | `Commons/MonitorConfig.js`: per-monitor shell.json merge, always-global keys, per-section bar fallback |
 | `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
