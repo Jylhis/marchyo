@@ -72,7 +72,7 @@ in
     );
 
   # Opaque opt-out: surfaceAlpha = 1.0 keeps the flat look, so no blur effect
-  # and no shell layer rule may be registered.
+  # and no shell blur layer rule may be registered.
   eval-appearance-opaque =
     let
       cfg =
@@ -86,10 +86,10 @@ in
       blurEnabled = settings.config.decoration.blur.enabled or false;
     in
     pkgs.writeText "eval-appearance-opaque" (
-      if !blurEnabled && !lib.hasInfix "marchyo:" rules then
+      if !blurEnabled && !lib.hasInfix "blur=true" rules then
         "pass"
       else
-        throw "FAIL: surfaceAlpha = 1.0 should keep blur off and register no marchyo: layer rule"
+        throw "FAIL: surfaceAlpha = 1.0 should keep blur off and register no blur layer rule"
     );
 
   # Non-neutral axes are accepted and the shell evaluates with them.

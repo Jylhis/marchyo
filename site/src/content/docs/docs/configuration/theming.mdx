@@ -212,3 +212,9 @@ marchyo.theme.appearance = {
 | `uiScale` | `float` | `1.0` | Geometry multiplier on top of `fontScale`, fonts unchanged |
 | `animationSpeed` | `float` | `1.0` | Animation speed (higher is faster) |
 | `highContrast` | `bool` | `false` | Thicker separators for higher-contrast chrome |
+
+With the shell on, Hyprland also turns on short compositor animations driven by
+a snappy `popin` bezier: windows pop in, the shell's panels, launcher, and OSD
+pop in, the bar slides from its edge, and toasts and tooltips keep their own
+QML transitions. Workspace switches and border colour changes stay instant.
+With the shell off, compositor animations stay disabled.

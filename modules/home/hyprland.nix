@@ -340,9 +340,10 @@ in
             };
           };
 
-          # Disabled for instant, terminal-multiplexer-style snapping.
+          # Off for instant, terminal-multiplexer-style snapping. With the shell
+          # on, short popin animations run on the curve/animation leaves below.
           animations = {
-            enabled = false;
+            enabled = shellEnabled;
           };
 
           dwindle = {
@@ -551,11 +552,97 @@ in
         # .namespace to "marchyo:<surface>"). Registered only when the blur
         # effect is on; ignore_alpha 0.2 keeps the corners outside the pill
         # radius from smearing.
-        layer_rule = lib.optionals glassEnabled [
+        layer_rule =
+          lib.optionals glassEnabled [
+            {
+              match.namespace = "marchyo:.*";
+              blur = true;
+              ignore_alpha = 0.2;
+            }
+          ]
+          # Per-surface animation styles. Layers fade by default; the panels,
+          # launcher and OSD map without a QML transition, so they pop in; the
+          # bar slides from its edge; toasts and tooltips animate themselves in
+          # QML, so the compositor stays out of the way. Screenshot region
+          # selection (slurp) and hyprpicker never animate, so no fading overlay
+          # lands in a capture.
+          ++ lib.optionals shellEnabled [
+            {
+              match.namespace = "marchyo:(panel|launcher|osd)";
+              animation = "popin 90%";
+            }
+            {
+              match.namespace = "marchyo:bar";
+              animation = "slide";
+            }
+            {
+              match.namespace = "marchyo:(notifs|tooltip)";
+              no_anim = true;
+            }
+            {
+              match.namespace = "selection|hyprpicker";
+              no_anim = true;
+            }
+          ];
+
+        # Shell animations: one snappy, slightly overshooting "popin" bezier
+        # drives short window and layer animations. Workspace switches and
+        # border colour changes stay instant.
+        curve = lib.mkIf shellEnabled [
           {
-            match.namespace = "marchyo:.*";
-            blur = true;
-            ignore_alpha = 0.2;
+            _args = [
+              "popin"
+              {
+                type = "bezier";
+                points = [
+                  [
+                    0.05
+                    0.9
+                  ]
+                  [
+                    0.1
+                    1.05
+                  ]
+                ];
+              }
+            ];
+          }
+        ];
+
+        animation = lib.mkIf shellEnabled [
+          {
+            leaf = "global";
+            enabled = true;
+            speed = 3;
+            bezier = "popin";
+          }
+          {
+            leaf = "windows";
+            enabled = true;
+            speed = 2.5;
+            bezier = "popin";
+            style = "popin 85%";
+          }
+          {
+            leaf = "layers";
+            enabled = true;
+            speed = 2;
+            bezier = "popin";
+            style = "fade";
+          }
+          {
+            leaf = "fade";
+            enabled = true;
+            speed = 2;
+            bezier = "default";
+          }
+          {
+            leaf = "border";
+            enabled = false;
+          }
+          {
+            leaf = "workspaces";
+            enabled = false;
           }
         ];
 
