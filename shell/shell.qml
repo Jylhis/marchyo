@@ -433,10 +433,11 @@ ShellRoot {
                 color: Qt.alpha(Color.background, Style.surfaceAlpha)
             }
 
-            // Three anchored sections driven by ShellConfig.bar: left and right
-            // groups, plus a centered group (the clock by default). Ui/
-            // BarSection owns the per-entry Loaders, slot collapse (a hidden
-            // widget leaves no gap), and cluster-aware separators.
+            // Three anchored sections driven by ShellConfig.barFor() for this
+            // output: left and right groups, plus a centered group (the clock
+            // by default). Ui/BarSection owns the per-entry Loaders, slot
+            // collapse (a hidden widget leaves no gap), and cluster-aware
+            // separators.
             Item {
                 anchors.fill: parent
 
@@ -444,6 +445,7 @@ ShellRoot {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     section: "left"
+                    screenName: barWin.screenName
                     resolve: shell.componentFor
                     configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
                     capId: "marchyo.activeWindow"
@@ -454,6 +456,7 @@ ShellRoot {
                 BarSection {
                     anchors.centerIn: parent
                     section: "center"
+                    screenName: barWin.screenName
                     resolve: shell.componentFor
                     configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
                 }
@@ -462,6 +465,7 @@ ShellRoot {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     section: "right"
+                    screenName: barWin.screenName
                     resolve: shell.componentFor
                     configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
                 }

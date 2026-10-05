@@ -25,12 +25,17 @@ layout applies without restarting the shell (it is watched, with a short poll to
 catch atomic replacements). This is the build-time model: the file is generated
 from your configuration and stays reproducible, but is re-read at runtime.
 
-Recognised keys:
+Recognised keys are typed options; any other key passes through to
+`shell.json` unchanged, at every level. Typed keys left unset are omitted from
+the file, so the shell's own defaults apply.
 
-- `bar.layout.{left,center,right}` — arrays of `{ id; settings?; }` widget
-  entries. Any section left unset falls back to the shipped default layout.
-- `idle.{screensaver,lock}` — idle thresholds in seconds.
-- `caffeine.autoVideo`: hold an idle inhibitor while a video plays (default `true`).
+| Key | Type | Description |
+|-----|------|-------------|
+| `bar.layout.{left,center,right}` | list of `{ id; settings?; }` | Widget entries for that bar section. A section left unset falls back to the shipped default layout. |
+| `idle.screensaver` | positive int | Seconds of idle before the screensaver (shell default 150). |
+| `idle.lock` | positive int | Seconds of idle before the lock (shell default 300). |
+| `caffeine.autoVideo` | bool | Hold an idle inhibitor while a video plays (shell default `true`). |
+| `monitors.<output>` | per-output overrides | See [Per-monitor overrides](#per-monitor-overrides). |
 
 ```nix
 marchyo.shell.settings = {
@@ -69,6 +74,32 @@ open-network QR when it is unavailable). `marchyo.weather` (current conditions f
 IP-geolocated) is registered but not placed by default; placing it is what
 starts the periodic outbound fetch, so a bar without it makes no network
 request.
+
+### Per-monitor overrides
+
+`monitors.<output>` overrides the global settings for one output, keyed by the
+output name `hyprctl monitors` reports (`DP-1`, `HDMI-A-1`, `eDP-1`, ...). The
+override is merged over the global values for that output only: objects merge
+key by key, and lists replace the global value whole, so a per-monitor
+`bar.layout.right` is that output's complete right section. Sections the
+override leaves unset keep the global (or default) layout.
+
+```nix
+marchyo.shell.settings = {
+  bar.layout.right = [ { id = "marchyo.network"; } { id = "marchyo.audio"; } { id = "marchyo.battery"; } ];
+  # A slim bar on the TV: clock only on the right, global left and center.
+  monitors."HDMI-A-1".bar.layout.right = [ { id = "marchyo.clock"; } ];
+};
+```
+
+These keys are always global; a per-monitor value for them is ignored:
+
+- `idle`: the seat has one idle timer.
+- `caffeine`: the seat has one idle inhibitor.
+- `monitors`: overrides do not nest.
+
+The overrides are part of the same generated `shell.json`, so a rebuild applies
+them live like the rest of the file.
 
 ## Control Center
 

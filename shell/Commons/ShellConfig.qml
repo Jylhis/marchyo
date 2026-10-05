@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "Paths.js" as Paths
+import "MonitorConfig.js" as MonitorConfig
 
 // Runtime shell configuration: the one shell.json read for the whole seat.
 //
@@ -17,6 +18,10 @@ import "Paths.js" as Paths
 // shipped before it became config-driven, so a host with no shell.json — or an
 // empty one — looks identical. shell.qml resolves each entry's `id` to a
 // widget Component (first-party) or a plugin bar-widget (Commons/PluginIndex).
+//
+// Per-monitor overrides live in the same file under `monitors.<output>`;
+// Commons/MonitorConfig.js resolves them (always-global keys stay global).
+// Each per-screen bar reads barFor(<its output>), so Bar/ owns no state.
 //
 // Lives in Commons/ (not Services/) for the same reason as Theme.qml: it is a
 // leaf the rest of the tree reads, and Commons must not import Services.
@@ -121,17 +126,16 @@ QtObject {
     // shell restarts. Merged at load (not live) to avoid rebuilding the bar.
     property var pluginSettings: ({})
 
-    // Effective bar layout: the file's bar.layout when present, else the
-    // default. Each section falls back independently so a partial override is
-    // still valid.
-    readonly property var bar: {
-        const b = root.config && root.config.bar ? root.config.bar : null;
-        const layout = b && b.layout ? b.layout : root.defaultBar;
-        return {
-            left: layout.left || root.defaultBar.left,
-            center: layout.center || root.defaultBar.center,
-            right: layout.right || root.defaultBar.right
-        };
+    // Effective global bar layout: the file's bar.layout when present, else
+    // the default. Each section falls back independently so a partial override
+    // is still valid.
+    readonly property var bar: MonitorConfig.barLayout(root.config, "", root.defaultBar)
+
+    // Effective bar layout for one output: the global layout with that
+    // output's `monitors.<name>.bar.layout` sections merged over it. Reads
+    // root.config, so a binding calling it re-evaluates on every re-read.
+    function barFor(output: string): var {
+        return MonitorConfig.barLayout(root.config, output, root.defaultBar);
     }
 
     // Idle thresholds (seconds); consumed by a future in-shell idle service.
