@@ -73,7 +73,7 @@ let
       pkgs.procps
       pkgs.ghostty
     ]
-    ++ lib.optionals shellEnabled [ pkgs.marchyo-shell ];
+    ++ lib.optionals shellEnabled [ pkgs.marchyo-cli ];
     text = ''
       # `marchyo toggle screensaver off` drops this marker; stay inert while off.
       if [ -e "''${XDG_RUNTIME_DIR:-/tmp}/marchyo-screensaver.off" ]; then
@@ -86,7 +86,7 @@ let
       ${lib.optionalString shellEnabled ''
         # In-shell lock: never animate underneath a locked session. An IPC
         # failure means no shell is running; treat that as unlocked.
-        if [ "$(marchyo-shell ipc -n call -- shell lockState 2>/dev/null || true)" = "locked" ]; then
+        if [ "$(marchyo shell lock-state 2>/dev/null || true)" = "locked" ]; then
           exit 0
         fi
       ''}

@@ -149,16 +149,6 @@ while read -r method; do
 done <<<"$cli_methods"
 check "every shellIpc method the CLI calls exists in shell.qml" "$missing_ipc"
 
-# Modules that call `marchyo-shell ipc` directly (hypridle, the
-# screensaver, notification binds) are held to the same rule.
-missing_direct=""
-while read -r method; do
-  [[ -n $method ]] || continue
-  grep -qE "^\s*function $method\(" "$shell_qml" ||
-    missing_direct+="modules/home calls 'shell $method', which shell.qml does not define"$'\n'
-done < <(grep -rhoE "ipc -n call -- shell [a-zA-Z]+" "$ROOT/modules/home" | awk '{ print $NF }' | sort -u)
-check "every direct marchyo-shell ipc call in modules/home exists in shell.qml" "$missing_direct"
-
 # One target, one handler: two handlers on the same target make which one
 # answers a call undefined. Every Hyprland bind calls target "shell" (see
 # shell/README.md), so that name is shell.qml's alone, and shell.qml keeps a

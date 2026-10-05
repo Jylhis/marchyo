@@ -29,8 +29,10 @@ import { runDoctor } from "./commands/doctor.ts";
 import {
   runShellBar,
   runShellDismiss,
+  runShellDnd,
   runShellLauncher,
   runShellLock,
+  runShellLockState,
   runShellPanel,
   runShellReload,
 } from "./commands/shell.ts";
@@ -448,7 +450,7 @@ Examples:
 
 const shellCmd = program
   .command("shell")
-  .description("Drive the running marchyo shell (panels, launcher, bar, lock)");
+  .description("Drive the running marchyo shell (panels, launcher, bar, notifications, lock)");
 
 for (const action of ["toggle", "open"] as const) {
   shellCmd
@@ -462,9 +464,10 @@ for (const action of ["toggle", "open"] as const) {
 
 shellCmd
   .command("close")
-  .description("Close the open shell panel")
-  .action(async () => {
-    process.exit(await runShellPanel(rt(), "close", undefined));
+  .description("Close the open shell panel, or only the named one")
+  .argument("[panel]", "panel id (omit to close whichever is open)")
+  .action(async (panel: string | undefined) => {
+    process.exit(await runShellPanel(rt(), "close", panel));
   });
 
 shellCmd
@@ -491,10 +494,26 @@ shellCmd
   });
 
 shellCmd
+  .command("lock-state")
+  .description("Print the lock screen state: locked | unlocked")
+  .action(async () => {
+    process.exit(await runShellLockState(rt()));
+  });
+
+shellCmd
   .command("dismiss")
   .description("Dismiss the newest notification toast")
-  .action(async () => {
-    process.exit(await runShellDismiss(rt()));
+  .option("--all", "Dismiss every notification toast")
+  .action(async (opts: { all?: boolean }) => {
+    process.exit(await runShellDismiss(rt(), opts.all === true));
+  });
+
+shellCmd
+  .command("dnd")
+  .description("Toggle do-not-disturb, or set it on/off")
+  .argument("[state]", "on | off (omit to flip)")
+  .action(async (state: string | undefined) => {
+    process.exit(await runShellDnd(rt(), state));
   });
 
 shellCmd
@@ -511,7 +530,9 @@ Exits 1 with a hint when marchyo-shell is not installed or not running.
 
 Examples:
   $ marchyo shell toggle audio
+  $ marchyo shell close notifications
   $ marchyo shell launcher emoji
+  $ marchyo shell dnd on
   $ marchyo shell bar off
   $ marchyo shell reload
 `,

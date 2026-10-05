@@ -768,6 +768,8 @@ function stubDir(stubs: Record<string, string>): {
 // A marchyo-shell stub that answers each IpcHandler function like shell.qml.
 const SHELL_STUB = `case "$6" in
   toggleBar) echo on ;;
+  toggleDnd) echo off ;;
+  lockState) echo locked ;;
   ping) echo ok ;;
   nope) echo "Function not found." ;;
   *) echo ok ;;
@@ -804,8 +806,14 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     ["shell", "toggle", "controlcenter"],
     ["shell", "open", "network"],
     ["shell", "close"],
+    ["shell", "close", "notifications"],
     ["shell", "launcher", "emoji"],
     ["shell", "bar", "off"],
+    ["shell", "dismiss"],
+    ["shell", "dismiss", "--all"],
+    ["shell", "dnd"],
+    ["shell", "dnd", "on"],
+    ["shell", "lock"],
   ]) {
     expect((await run(args, { PATH: s.bin })).code).toBe(0);
   }
@@ -814,15 +822,38 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     "marchyo-shell ipc -n call -- shell togglePanel controlcenter",
     "marchyo-shell ipc -n call -- shell openPanel network",
     "marchyo-shell ipc -n call -- shell closePanels",
+    "marchyo-shell ipc -n call -- shell closePanel notifications",
     "marchyo-shell ipc -n call -- shell toggleLauncher emoji",
     "marchyo-shell ipc -n call -- shell setBar off",
+    "marchyo-shell ipc -n call -- shell dismissLast",
+    "marchyo-shell ipc -n call -- shell clearNotifications",
+    "marchyo-shell ipc -n call -- shell toggleDnd",
+    "marchyo-shell ipc -n call -- shell setDnd on",
+    "marchyo-shell ipc -n call -- shell lock",
   ]);
+});
+
+test("shell lock-state prints the bare reply for scripts", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const r = await run(["shell", "lock-state"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(r.stdout).toBe("locked\n");
+  expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell lockState"]);
+});
+
+test("shell dnd --json reports the IPC function and its reply", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const r = await run(["shell", "dnd", "--json"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(JSON.parse(r.stdout)).toEqual({ function: "toggleDnd", reply: "off" });
 });
 
 test("shell verbs reject bad arguments with exit 2", async () => {
   expect((await run(["shell", "bar", "maybe"], { PATH: "" })).code).toBe(2);
   expect((await run(["shell", "toggle", "Not A Panel"], { PATH: "" })).code).toBe(2);
   expect((await run(["shell", "launcher", "../x"], { PATH: "" })).code).toBe(2);
+  expect((await run(["shell", "close", "Not A Panel"], { PATH: "" })).code).toBe(2);
+  expect((await run(["shell", "dnd", "maybe"], { PATH: "" })).code).toBe(2);
 });
 
 test("volume with a bad action exits 2", async () => {

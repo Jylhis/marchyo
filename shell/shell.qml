@@ -297,6 +297,12 @@ ShellRoot {
             return "ok";
         }
 
+        function closePanel(id: string): string {
+            if (PanelManager.openId === id)
+                PanelManager.close();
+            return "ok";
+        }
+
         function closePanels(): string {
             PanelManager.close();
             return "ok";
