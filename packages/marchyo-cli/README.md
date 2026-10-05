@@ -52,8 +52,9 @@ current `theme set --rebuild`):
 - **`--revert`** — undo: drop the runtime override (reload the declarative
   value) and/or delete the persisted key + rebuild.
 
-Declarative-only commands (`install`/`webapp`/`security`) have no runtime path —
+Declarative-only commands (`install`/`webapp`) have no runtime path —
 they always take the `--apply` route (edit `cli-state.json`, then rebuild).
+`security enroll` only runs `fprintd-enroll` / `pamu2fcfg` and never rebuilds.
 
 ## Commands
 

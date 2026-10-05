@@ -13,7 +13,7 @@ Every *mutating* desktop command follows one three-mode contract:
 - **`--apply`** — additionally persists the change to `/etc/marchyo/cli-state.json` and runs `nixos-rebuild switch`. Survives reboot; hand-written flake configuration still wins (the sidecar merges at `lib.mkDefault` priority).
 - **`--revert`** — undoes: drops the runtime override, restores the declarative value live, and deletes + rebuilds any persisted key.
 
-Declarative-only commands (`install`, `remove`, `webapp`, `security`) have no runtime leg — they always edit the state file and rebuild.
+Declarative-only commands (`install`, `remove`, `webapp`) have no runtime leg — they always edit the state file and rebuild. `security enroll` only runs `fprintd-enroll` or `pamu2fcfg`; it never rebuilds.
 
 ### Wiring `--apply` into your flake
 
