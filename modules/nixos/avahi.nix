@@ -1,6 +1,5 @@
 { lib, ... }:
 {
-  # All mkDefault so a host can opt out.
   services.avahi = {
     enable = lib.mkDefault true;
     nssmdns4 = lib.mkDefault true;
