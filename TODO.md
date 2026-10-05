@@ -1,25 +1,41 @@
 # Marchyo TODO
 
-The single list of open work. Everything not listed here is implemented in the
-flake. Shipped history lives in git; the authoritative description of the
-shell is [`shell/README.md`](shell/README.md).
+Open work only: delete an item in the commit that finishes it. The
+authoritative description of the shell is [`shell/README.md`](shell/README.md).
 
 Out of scope, not wanted: a dashboard panel and a calendar panel.
 
+Next up, in order: `theme generate` parity (1), IPC/CLI verbs, Control
+Center, launcher command palette (2). The CLI verbs come before the panels so
+new panels get their binds and `doctor` coverage on arrival.
+
 ## 1. Theming
 
-Runtime theming is complete: stylix is retired (8ff3a33) and every per-theme
-surface has a runtime path. The runtime-theming review's correctness findings
-are fixed (the `assertRecolorable` guard in `modules/home/theme-runtime.nix`
-fails the build on an ambiguous or untranslatable hex, and `swapGtkToScheme`
-swaps the `shade_color` rgba literal), except:
-
-- **`theme generate` (matugen) restyles fewer surfaces than `theme set`.** It
-  writes colors.json, hyprland, ghostty, fzf and the wallpaper only, so
-  mako/waybar/gtk (and bat, hyprlock, console) keep the previous theme. Closing
-  it needs the full token-to-hex map at runtime (colors.json is deliberately
-  the shell subset, no `syn-*`), e.g. emit a full-palette file per theme dir.
-  Documented in `packages/marchyo-cli/packages/user-cli/src/commands/theme.ts`.
+- **`theme generate` (matugen) parity with `theme set`.**
+  `generateThemeChangeBase` (`packages/marchyo-cli/packages/user-cli/src/commands/theme.ts`)
+  writes only colors.json, variant, hyprland, ghostty, fzf and the wallpaper.
+  mako/waybar/gtk/bat keep the previous theme, and `current-theme` has no
+  `hyprlock-colors.conf`, so the fallback hyprlock (`modules/home/hyprlock.nix`,
+  `marchyo.shell.enable = false`) sources a missing file. Steps:
+  1. Emit `hyprlock-colors.conf` and `console.txt` from base16 in the CLI (TS
+     ports of `hyprlockVarsFor` and `lib/console-table.nix`, next to
+     `fzfOptsFromBase16` in `core/src/matugen.ts`).
+  2. Add `palette.json` to every theme dir in `theme-runtime.nix`: the full
+     kebab-case token-to-hex map (`syn-*` included) and `tokenSlots`. The CLI
+     reads the slots from it and `TOKEN_SLOTS` goes away.
+  3. Add `templates/{mako.conf,waybar.css,gtk.css}` to the build-variant dir:
+     the resolved HM text with each build hex replaced by `{{token:<name>}}`
+     and the gtk shade by `{{shade}}`, under the `assertRecolorable` guard.
+     The CLI fills them from base16 via the slots in `palette.json`, falling
+     back to the build hex for unmapped tokens.
+  4. bat: TS port of `lib/base16-tmtheme.nix`, written to
+     `$(bat --config-dir)/themes` + `bat cache --build`, and the `--theme=`
+     line rewritten.
+  5. Tests: file presence and no raw build hex in templates in
+     `tests/eval/theme-runtime.nix` (`build-theme-runtime-assets`); generator
+     cases in `core/tests/matugen.test.ts` with a Nix-built parity fixture; a
+     full-file-set test for `theme generate` in `user-cli/tests/theme.test.ts`.
+  6. Drop the limitation comment in `theme.ts` and update `theming.mdx`.
 - **Base16 role approximations are lossy for tinted schemes.** `tokenSlots`
   collapses `accent-hover` onto `accent`, `border`/`syn-comment` onto
   `text-faint`, `accent-subtle` onto `bg-subtle`, so a scheme loses the hover
@@ -55,43 +71,75 @@ Rules for any new theme surface:
 
 ## 2. Shell
 
+### IPC/CLI verbs
+
+The shell's `IpcHandler { target: "shell" }` (`shell/shell.qml`) has panel,
+notification, bar, OSD, lock and launcher functions; the CLI
+(`packages/marchyo-cli/packages/user-cli/src/cli.tsx`) has no shell command,
+and the Hyprland binds in `modules/home/hyprland.nix` call
+`marchyo-shell ipc -n call -- shell …` directly.
+
+1. `core`: one `shellIpc(fn, ...args)` helper over `marchyo-shell ipc -n call`
+   with a clear error when the shell is not running.
+2. `marchyo shell toggle|open|close <panel>`, `marchyo shell launcher <mode>`,
+   `marchyo shell bar`, `marchyo shell reload`. `reload` needs a new
+   `function reload()` in shell.qml.
+3. `marchyo volume up|down|mute [--mic]` and `marchyo brightness up|down`:
+   wpctl/swayosd-client and brightnessctl, plus the `osdShow` poke when the
+   shell runs (moves the `brightnessPoke` script out of `hyprland.nix`).
+4. `marchyo doctor`: PASS/FAIL per check (baked tool paths exist, Hyprland and
+   shell IPC sockets answer `ping`, user services active), `--json`, non-zero
+   exit on FAIL. Reuse probes from `src/commands/debug.ts`.
+5. Rewrite the binds in `hyprland.nix` to the verbs. Replace the IPC grep in
+   `tests/shell/contracts-test.sh` with a check that every `shellIpc` function
+   name in the CLI exists in shell.qml.
+6. Update the `--help` snapshot (`user-cli/tests/contract.test.ts`) and add
+   exit-code/JSON cases in `cli.test.ts`. Done when `just cli-test` and
+   `just -f shell/Justfile check` are green.
+
 ### Control Center panel
 
-One quick-settings surface over existing `Services/*` singletons (Network,
-Bluetooth, DND, Nightlight, Caffeine, ScreenRecording, PowerProfile,
-Tailscale, Audio/Mic). No new daemons.
+One quick-settings surface over `Services/*` singletons, no new daemons.
 
-- `shell/Panels/ControlCenter.qml`, opened from a bar button and
-  `marchyo-shell ipc call shell controlCenter`.
-- Declarative toggle model per capability, separate from presentation
-  (ref: end-4 `modules/common/models/quickToggles/*.qml`).
-- Tile grid + per-domain detail pages (ref: DMS
-  `quickshell/Modules/ControlCenter/`).
-- Done when toggles reflect and drive live state and every gating option has
-  an eval test.
+1. Missing services, as `pragma Singleton` in `Services/` + qmldir:
+   `BluetoothState` (wraps `Quickshell.Bluetooth.defaultAdapter`, used today
+   directly by `Bar/BluetoothWidget.qml`) and `PowerProfileState` (wraps
+   `PowerProfiles`, used directly by `Bar/PowerProfileWidget.qml`). Point both
+   widgets at them.
+2. Writable toggles: wifi on/off in `NetworkStatus` (nmcli radio) and
+   Tailscale up/down in `Tailscale`, gated on `Config.tailscale`.
+3. Toggle model: `Commons/QuickToggles.js` (or a `Services/QuickToggles`
+   singleton) listing id, icon, label, `active`, `toggle()`, optional detail
+   panel id, and availability, separate from presentation.
+4. `Panels/ControlCenter.qml` on `Ui/Panel.qml` with `panelId:
+   "controlcenter"`: tile grid, volume and mic sliders from `Audio`, tiles
+   open the existing Audio/Network/Power/Tailscale panels as detail pages.
+   Register in `Panels/qmldir` and `shell.qml`; new Style geometry is emitted
+   by `packages/marchyo-shell/package.nix`.
+5. Bar button widget + `barComponents` entry; `marchyo shell toggle
+   controlcenter` and a Hyprland bind.
+6. Eval tests for any new gating args in `modules/home/marchyo-shell.nix`;
+   update `shell/README.md`. Done when every tile reflects and drives live
+   state.
 
 ### Launcher as a command palette
 
-- Provider pattern, one component per result source (ref: caelestia
-  `modules/launcher/services/`).
-- Prefix-routed providers: calculator (qalc), `>theme` switch, window search,
-  power actions.
-- Vendor fuzzysort (end-4 `Fuzzy.qml` + `fuzzysort.js`) instead of our own
-  matcher.
-- Done when prefixes work, apps/clipboard/emoji are unaffected, and fuzzy
-  ranking is in use.
-- This also closes the omarchy gap of a searchable QML command menu
-  (`marchyo menu` is a gum TUI today).
+`Launcher/LauncherWindow.qml` switches three always-instantiated views on
+`Launcher.mode` with a per-mode key chain; ranking is `Commons/Match.js`.
 
-### IPC/CLI hardening
-
-- One IPC verb per domain: `toggle <panel>`, `theme next|set`, `brightness`,
-  `volume`, `screenshot`, `lock`, `reload` (ref: DMS `core/cmd/dms/`,
-  serpantinum `msg toggle <panel>`).
-- `marchyo doctor`: PASS/FAIL per dependency (tool paths, socket, services).
-- Point the Hyprland binds (`modules/home/hyprland.nix`, `omarchy-binds.nix`)
-  at the CLI verbs. Done when every panel toggles from the CLI and
-  `just cli-test` is green.
+1. Provider interface: each provider is a component with `prefix`, `query`,
+   `results` (title, subtitle, icon, score, `activate()`); the window renders
+   one list from the active provider. Port apps/clipboard/emoji onto it
+   without behavior change (`tests/shell/launcher-test.js` stays green).
+2. Prefix routing in `Services/Launcher.qml`: `=` calculator (qalc, baked in
+   `Config.qml` + `package.nix`), `>theme` (`marchyo theme list|set`), `#`
+   windows (`hyprctl clients -j`, focus on activate), `!` power actions (the
+   CLI power verbs).
+3. Vendor fuzzysort into `Commons/` with the CommonJS export guard and no
+   `.pragma` (contract-tested); swap `Match.js` scoring for it while keeping
+   `highlight`. Pin the version and license header.
+4. Done when every prefix works, the existing modes are unchanged, and the
+   launcher tests cover routing and ranking.
 
 ### Per-monitor config overrides (lower priority)
 
@@ -108,7 +156,7 @@ Tailscale, Audio/Mic). No new daemons.
   `modules/ii/overview/`).
 - Lock-screen polish on `shell/Lock/LockScreen.qml`: failed-attempt UX (shake,
   clear field, 3s reset) and input-absorption hardening (ref: qylock).
-- Privacy indicator for camera (the mic-in-use indicator already ships).
+- Privacy indicator for camera, next to the mic-in-use indicator.
 - Clipboard image previews in ClipboardView (ref: end-4 `CliphistImage.qml`).
 - Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
@@ -122,7 +170,7 @@ Tailscale, Audio/Mic). No new daemons.
 - Optional segmented bar look: two-tone segments with curved joins, pure QML
   `Shape` arcs in `shell/Ui/BarSection.qml`, filled from existing tokens so
   theme swaps recolor it. A presentation flag only, no layout changes, no
-  image assets (idea from Cozytile, nothing vendored).
+  image assets.
 
 ### Compositor effects (`modules/home/hyprland.nix` only)
 
@@ -137,8 +185,7 @@ Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
 
 ## 3. Features
 
-- **Local AI (`marchyo.ai.local.enable`).** Not started, no `marchyo.ai.*`
-  options exist. `services.ollama` with `acceleration` derived from
+- **Local AI (`marchyo.ai.local.enable`).** `services.ollama` with `acceleration` derived from
   `marchyo.graphics.vendors`, optional model pre-pull, endpoint exposed to
   shell/editor. New `modules/nixos/ollama.nix` + `modules/nixos/options/ai.nix`.
 - **Share upload target.** `marchyo share` only stages paths on the clipboard;
