@@ -27,8 +27,10 @@ So every command that *changes* something offers three modes:
   cleans up anything `--apply` persisted.
 
 So the rhythm is: try it live, and if you love it, run the same command with
-`--apply`. A few commands (`install`, `remove`, `webapp`, `security`) always rebuild,
+`--apply`. A few commands (`install`, `remove`, `webapp`) always rebuild,
 because there's no meaningful "live" version of installing software.
+`security enroll` only registers your fingerprint or key; turn the feature on
+in your config first.
 
 ## What you can do
 

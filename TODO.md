@@ -135,13 +135,8 @@ Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
 Chapters still stubs in `manual/` (end-user voice: prose-first, second person,
 no Nix internals; minimal Starlight frontmatter; text first):
 
-- 03 Coming from Other Distros: Arch/omarchy/mac/win; never install imperatively.
 - 05 The Top Bar: stale Waybar tour; cover both bars keyed on
   `marchyo.shell.enable`, plus click behavior, tooltips, `SUPER+SHIFT+SPACE`.
-- 12 Monitors: declarative vs hyprmon, scaling + scale-cycle bind, lid.
-- 13 Networking: wifi/bt TUIs, tailscale + trusted interface, localsend,
-  firewall default.
-- 14 Hardware Authentication: fingerprint, FIDO2, `marchyo security enroll`.
 
 ## Won't do
 
