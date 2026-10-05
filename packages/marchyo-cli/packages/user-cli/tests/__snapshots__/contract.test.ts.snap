@@ -47,7 +47,8 @@ Commands:
   doctor                                Check session health (baked tool paths,
                                         IPC sockets, user services)
   shell                                 Drive the running marchyo shell
-                                        (panels, launcher, bar, lock)
+                                        (panels, launcher, bar, notifications,
+                                        lock)
   volume [options] <action>             Step or mute the default audio sink (or
                                         source with --mic)
   brightness <action>                   Step the backlight brightness
@@ -312,30 +313,71 @@ Options:
 exports[`help contract: marchyo shell 1`] = `
 "Usage: marchyo shell [options] [command]
 
-Drive the running marchyo shell (panels, launcher, bar, lock)
+Drive the running marchyo shell (panels, launcher, bar, notifications, lock)
 
 Options:
-  -h, --help       display help for command
+  -h, --help         display help for command
 
 Commands:
-  toggle <panel>   Toggle a shell panel
-  open <panel>     Open a shell panel
-  close            Close the open shell panel
-  launcher <mode>  Toggle the launcher in a mode
-  bar [state]      Toggle the top bar, or set it on/off
-  lock             Lock the session with the shell lock screen
-  dismiss          Dismiss the newest notification toast
-  reload           Reload the shell's QML in place
-  help [command]   display help for command
+  toggle <panel>     Toggle a shell panel
+  open <panel>       Open a shell panel
+  close [panel]      Close the open shell panel, or only the named one
+  launcher <mode>    Toggle the launcher in a mode
+  bar [state]        Toggle the top bar, or set it on/off
+  lock               Lock the session with the shell lock screen
+  lock-state         Print the lock screen state: locked | unlocked
+  dismiss [options]  Dismiss the newest notification toast
+  dnd [state]        Toggle do-not-disturb, or set it on/off
+  reload             Reload the shell's QML in place
+  help [command]     display help for command
 
 Exits 1 with a hint when marchyo-shell is not installed or not running.
 
 Examples:
   $ marchyo shell toggle audio
+  $ marchyo shell close notifications
   $ marchyo shell launcher emoji
+  $ marchyo shell dnd on
   $ marchyo shell bar off
   $ marchyo shell reload
 
+"
+`;
+
+exports[`help contract: marchyo shell close 1`] = `
+"Usage: marchyo shell close [options] [panel]
+
+Close the open shell panel, or only the named one
+
+Arguments:
+  panel       panel id (omit to close whichever is open)
+
+Options:
+  -h, --help  display help for command
+"
+`;
+
+exports[`help contract: marchyo shell dismiss 1`] = `
+"Usage: marchyo shell dismiss [options]
+
+Dismiss the newest notification toast
+
+Options:
+  --all       Dismiss every notification toast
+  -h, --help  display help for command
+"
+`;
+
+exports[`help contract: marchyo shell dnd 1`] = `
+"Usage: marchyo shell dnd [options] [state]
+
+Toggle do-not-disturb, or set it on/off
+
+Arguments:
+  state       on | off (omit to flip)
+
+Options:
+  -h, --help  display help for command
 "
 `;
 

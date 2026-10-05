@@ -35,6 +35,9 @@ const GROUPS: string[][] = [
   ["runtime"],
   ["completion"],
   ["shell"],
+  ["shell", "close"],
+  ["shell", "dismiss"],
+  ["shell", "dnd"],
   ["volume"],
   ["brightness"],
   ["doctor"],
@@ -158,4 +161,5 @@ test("exit-code contract", async () => {
   expect(await run(["launch", "definitely-not-a-real-app"])).toBe(1);
   expect(await run(["volume", "sideways"])).toBe(2);
   expect(await run(["shell", "bar", "maybe"])).toBe(2);
+  expect(await run(["shell", "dnd", "maybe"])).toBe(2);
 });

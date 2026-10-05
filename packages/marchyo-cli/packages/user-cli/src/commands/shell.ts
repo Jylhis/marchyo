@@ -47,14 +47,7 @@ export async function runShellPanel(
   action: string,
   panel: string | undefined,
 ): Promise<number> {
-  if (action === "close") {
-    if (panel !== undefined) {
-      return usageError(
-        rt,
-        "shell close takes no panel (one panel is open at a time)",
-        "marchyo shell close",
-      );
-    }
+  if (action === "close" && panel === undefined) {
     return call(rt, () => shellIpc("closePanels"), "closePanels");
   }
   if (panel === undefined || !ID_RE.test(panel)) {
@@ -66,6 +59,9 @@ export async function runShellPanel(
   }
   if (action === "toggle") {
     return call(rt, () => shellIpc("togglePanel", panel), "togglePanel");
+  }
+  if (action === "close") {
+    return call(rt, () => shellIpc("closePanel", panel), "closePanel");
   }
   return call(rt, () => shellIpc("openPanel", panel), "openPanel");
 }
@@ -105,6 +101,29 @@ export async function runShellLock(rt: Runtime): Promise<number> {
   return call(rt, () => shellIpc("lock"), "lock");
 }
 
-export async function runShellDismiss(rt: Runtime): Promise<number> {
+export async function runShellLockState(rt: Runtime): Promise<number> {
+  return call(rt, () => shellIpc("lockState"), "lockState");
+}
+
+export async function runShellDismiss(
+  rt: Runtime,
+  all: boolean,
+): Promise<number> {
+  if (all) {
+    return call(rt, () => shellIpc("clearNotifications"), "clearNotifications");
+  }
   return call(rt, () => shellIpc("dismissLast"), "dismissLast");
+}
+
+export async function runShellDnd(
+  rt: Runtime,
+  state: string | undefined,
+): Promise<number> {
+  if (state === undefined) {
+    return call(rt, () => shellIpc("toggleDnd"), "toggleDnd");
+  }
+  if (state !== "on" && state !== "off") {
+    return usageError(rt, `invalid dnd state: "${state}"`, "marchyo shell dnd on|off");
+  }
+  return call(rt, () => shellIpc("setDnd", state), "setDnd");
 }

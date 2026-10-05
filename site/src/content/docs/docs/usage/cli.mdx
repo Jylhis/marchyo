@@ -61,16 +61,18 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 
 ### Shell
 
-Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprland binds. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
+Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprland binds, hypridle, and the screensaver. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
 
 | Command | Purpose |
 |---------|---------|
 | `marchyo shell toggle\|open <panel>` | Toggle or open a panel (`controlcenter`, `audio`, `network`, `power`, `monitor`, `notifications`, …) |
-| `marchyo shell close` | Close the open panel |
+| `marchyo shell close [<panel>]` | Close the named panel when it is open, or whichever panel is open |
 | `marchyo shell launcher <mode>` | Toggle the launcher in a mode (`apps`, `emoji`, `clipboard`) |
 | `marchyo shell bar [on\|off]` | Toggle or set the top bar |
 | `marchyo shell lock` | Lock with the shell lock screen |
-| `marchyo shell dismiss` | Dismiss the newest notification toast |
+| `marchyo shell lock-state` | Print `locked` or `unlocked` |
+| `marchyo shell dismiss [--all]` | Dismiss the newest notification toast (`--all`: every toast) |
+| `marchyo shell dnd [on\|off]` | Toggle or set do-not-disturb |
 | `marchyo shell reload` | Reload the shell's QML in place |
 
 ### Volume & brightness

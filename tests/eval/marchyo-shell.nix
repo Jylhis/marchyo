@@ -11,7 +11,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser hyprHasBind;
+  inherit (helpers) withTestUser hyprHasBind hyprEntryText;
 
   evalWith =
     extra:
@@ -185,8 +185,8 @@ in
     );
 
   # hypridle stays the idle authority, but its lock points (general.lock_cmd,
-  # before_sleep_cmd, the 300s listener) target the shell's IPC when it is on.
-  eval-marchyo-shell-hypridle-locks-via-ipc =
+  # before_sleep_cmd, the 300s listener) run `marchyo shell lock` when it is on.
+  eval-marchyo-shell-hypridle-locks-via-cli =
     let
       hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
       general = hm.services.hypridle.settings.general;
@@ -194,15 +194,16 @@ in
       # cannot coerce.
       listenersText = builtins.toJSON hm.services.hypridle.settings.listener;
       ok =
-        lib.hasInfix "shell lock" (general.lock_cmd or "")
-        && lib.hasInfix "shell lock" (general.before_sleep_cmd or "")
-        && lib.hasInfix "shell lock" listenersText;
+        lib.hasInfix "marchyo shell lock" (general.lock_cmd or "")
+        && lib.hasInfix "marchyo shell lock" (general.before_sleep_cmd or "")
+        && lib.hasInfix "marchyo shell lock" listenersText
+        && !lib.hasInfix "marchyo-shell ipc" (builtins.toJSON hm.services.hypridle.settings);
     in
-    pkgs.writeText "eval-marchyo-shell-hypridle-locks-via-ipc" (
+    pkgs.writeText "eval-marchyo-shell-hypridle-locks-via-cli" (
       if ok then
         "pass"
       else
-        throw "FAIL: hypridle lock commands do not target the shell IPC when marchyo.shell is on"
+        throw "FAIL: hypridle lock commands do not run 'marchyo shell lock' when marchyo.shell is on"
     );
 
   eval-marchyo-shell-off-hypridle-keeps-loginctl =
@@ -212,8 +213,7 @@ in
     in
     pkgs.writeText "eval-marchyo-shell-off-hypridle-keeps-loginctl" (
       if
-        lib.hasInfix "loginctl lock-session" listenersText
-        && !lib.hasInfix "marchyo-shell ipc" listenersText
+        lib.hasInfix "loginctl lock-session" listenersText && !lib.hasInfix "shell lock" listenersText
       then
         "pass"
       else
@@ -325,21 +325,49 @@ in
         "pass"
     );
 
-  # marchyo.cli.enable = false keeps the shell binds working: they run the CLI
-  # by store path instead of the (absent) `marchyo` on PATH.
+  # marchyo.cli.enable = false keeps the shell binds and idle locking working:
+  # they run the CLI by store path instead of the (absent) `marchyo` on PATH.
   eval-marchyo-shell-verbs-without-cli =
     let
-      binds =
+      hm =
         (evalWith {
           marchyo.shell.enable = true;
           marchyo.cli.enable = false;
-        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+        }).config.home-manager.users.testuser;
+      binds = hm.wayland.windowManager.hyprland.settings.bind;
+      general = hm.services.hypridle.settings.general;
     in
     pkgs.writeText "eval-marchyo-shell-verbs-without-cli" (
-      if hyprHasBind binds "SUPER + SHIFT + V" "/bin/marchyo shell toggle audio" then
-        "pass"
-      else
+      if !(hyprHasBind binds "SUPER + SHIFT + V" "/bin/marchyo shell toggle audio") then
         throw "FAIL: with marchyo.cli.enable = false the shell binds should run the CLI by store path"
+      else if !(hyprHasBind binds "SUPER + CTRL + comma" "/bin/marchyo shell dnd") then
+        throw "FAIL: with marchyo.cli.enable = false the DND bind should run the CLI by store path"
+      else if
+        !(lib.hasInfix "/bin/marchyo shell lock" (general.lock_cmd or ""))
+        || !(lib.hasInfix "/bin/marchyo shell lock" (general.before_sleep_cmd or ""))
+      then
+        throw "FAIL: with marchyo.cli.enable = false hypridle should lock through the CLI by store path"
+      else
+        "pass"
+    );
+
+  # The notification binds reach the shell through `marchyo shell` verbs when it
+  # owns notifications (DND, dismiss-all), never through raw IPC.
+  eval-marchyo-shell-notification-binds =
+    let
+      binds =
+        (evalWith { marchyo.shell.enable = true; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+    in
+    pkgs.writeText "eval-marchyo-shell-notification-binds" (
+      if !(hyprHasBind binds "SUPER + CTRL + comma" "marchyo shell dnd") then
+        throw "FAIL: SUPER+CTRL+comma should run 'marchyo shell dnd' when the shell is on"
+      else if !(hyprHasBind binds "SUPER + CTRL + SHIFT + comma" "marchyo shell dismiss --all") then
+        throw "FAIL: SUPER+CTRL+SHIFT+comma should run 'marchyo shell dismiss --all' when the shell is on"
+      else if lib.any (e: lib.hasInfix "marchyo-shell ipc" (hyprEntryText e)) binds then
+        throw "FAIL: a Hyprland bind still calls marchyo-shell ipc directly"
+      else
+        "pass"
     );
 
   # Auto video caffeine: the shell's systemd-inhibit --what=idle only reaches

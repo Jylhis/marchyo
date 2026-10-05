@@ -308,30 +308,31 @@ refusal shows as the tile status and in full in the Tailscale panel.
 ### Keybind summons
 
 `shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
-`togglePanel(id)` / `openPanel(id)` / `closePanels()`, the notification controls
-`toggleDnd()` / `setDnd(on)` / `clearNotifications()`, and `osdShow(...)` — the
-last is the brightness OSD's **primary trigger** (the brightness binds poke it
-after every `brightnessctl` change; see the OSD section), plus `ping()` and
-`reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
-`close`, `launcher <mode>`, `bar [on|off]`, `lock`, `dismiss`, `reload`), and
-the Hyprland binds in `modules/home/hyprland.nix` (added only when the shell is
-enabled) run those verbs. Under the hood every call goes through the wrapped
-binary:
+`togglePanel(id)` / `openPanel(id)` / `closePanel(id)` / `closePanels()`, the
+notification controls `toggleDnd()` / `setDnd(on)` / `clearNotifications()`,
+and `osdShow(...)` — the last is the brightness OSD's **primary trigger** (the
+brightness binds poke it after every `brightnessctl` change; see the OSD
+section), plus `ping()` and `reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
+`close [<panel>]`, `launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`,
+`dismiss [--all]`, `dnd [on|off]`, `reload`), and the Hyprland binds in
+`modules/home/hyprland.nix` and `window-toggles.nix`, hypridle, and the
+screensaver (all added only when the shell is enabled) run those verbs, by
+store path when `marchyo.cli.enable` is off. Under the hood every call goes
+through the wrapped binary:
 
 ```
 marchyo-shell ipc -n call -- shell togglePanel monitor
 ```
 
 The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
-self-targets the running instance (no instance id to track).
-`modules/home/window-toggles.nix`, `hypridle.nix`, and `screensaver.nix`
-call it directly. Default binds:
+self-targets the running instance (no instance id to track). Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
 `SUPER+SHIFT+M` monitor, `SUPER+SHIFT+Q` Control Center; the launcher summons (`toggleLauncher apps|emoji|
 clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
 (`SUPER+CTRL+comma`) and dismiss-all
-(`SUPER+CTRL+SHIFT+comma`) binds route through `toggleDnd` / `clearNotifications`
-when the shell is on, and fall back to the CLI/mako when it is off. This is the
+(`SUPER+CTRL+SHIFT+comma`) binds run `marchyo shell dnd` / `marchyo shell
+dismiss --all` and `SUPER+N` runs `marchyo shell toggle notifications` when the
+shell is on; the first two fall back to the CLI/mako when it is off. This is the
 only IPC in the shell; there is no custom bus.
 
 ### Notifications
@@ -381,12 +382,12 @@ drives the prompt/retry loop, and `locked = false` happens in exactly one
 place — a successful authentication. Trigger paths:
 
 - `SUPER+L` runs `marchyo shell lock`; hypridle's lock points (`lock_cmd`,
-  `before_sleep_cmd`, the 300s listener in `modules/home/hypridle.nix`) call
-  `marchyo-shell ipc -n call -- shell lock`. hypridle stays the single idle
+  `before_sleep_cmd`, the 300s listener in `modules/home/hypridle.nix`) run
+  `marchyo shell lock` too. hypridle stays the single idle
   authority so `marchyo toggle idle` keeps disabling idle lock; Quickshell's
   `IdleMonitor` is deliberately unused (no second idle watcher, no
   double-lock race).
-- The idle screensaver asks `shell lockState` before launching — the same
+- The idle screensaver asks `marchyo shell lock-state` before launching — the same
   guard it had for a running hyprlock.
 
 Each screen gets one `WlSessionLockSurface` (clock on every output); the
@@ -589,7 +590,7 @@ Three layers, split by what each can reach:
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding and image-entry parsing / cache names |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
-| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call and direct `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
+| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
 The JS suites are the reason `Commons/*.js` files are plain `.js` modules with a

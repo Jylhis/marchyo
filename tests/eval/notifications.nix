@@ -69,7 +69,8 @@ in
         throw "FAIL: marchyo.notifications.rules is not empty by default"
     );
 
-  # With the shell on, SUPER+N opens the notification centre over IPC.
+  # With the shell on, SUPER+N toggles the notification centre panel through
+  # `marchyo shell`.
   eval-notifications-centre-bind =
     let
       binds =
@@ -77,9 +78,9 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-notifications-centre-bind" (
-      if hyprHasBind binds "SUPER + N" "toggleNotifications" then
+      if hyprHasBind binds "SUPER + N" "marchyo shell toggle notifications" then
         "pass"
       else
-        throw "FAIL: SUPER+N should summon the notification centre over IPC when the shell is on"
+        throw "FAIL: SUPER+N should run 'marchyo shell toggle notifications' when the shell is on"
     );
 }

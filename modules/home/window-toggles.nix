@@ -13,8 +13,13 @@ let
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # When the unified shell owns notifications, DND is in-shell state and mako is
-  # gone, so these binds reach the shell over IPC instead of the CLI/makoctl.
+  # gone, so these binds reach the shell through `marchyo shell` instead of
+  # `marchyo toggle`/makoctl.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+  # The store path when the CLI is not installed system-wide, so the shell binds
+  # never depend on marchyo.cli.enable.
+  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
+  marchyoCli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -29,14 +34,12 @@ in
     wayland.windowManager.hyprland.settings.bind =
       if shellEnabled then
         [
-          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
-            hlua.exec "marchyo-shell ipc -n call -- shell toggleDnd"
-          ))
+          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (hlua.exec "${marchyoCli} shell dnd"))
           (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
-            hlua.exec "marchyo-shell ipc -n call -- shell clearNotifications"
+            hlua.exec "${marchyoCli} shell dismiss --all"
           ))
           (hlua.bindd "SUPER + N" "Notification centre (history)" (
-            hlua.exec "marchyo-shell ipc -n call -- shell toggleNotifications"
+            hlua.exec "${marchyoCli} shell toggle notifications"
           ))
         ]
       else

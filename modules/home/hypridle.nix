@@ -16,10 +16,16 @@ let
     else
       "systemctl suspend";
 
-  # With the unified shell on, the in-shell WlSessionLock replaces hyprlock/loginctl
-  # as the lock actuation. hypridle stays the single idle authority so `marchyo toggle
-  # idle` (which stops this service) keeps disabling idle lock.
+  # With the unified shell on, the in-shell WlSessionLock (`marchyo shell lock`)
+  # replaces hyprlock/loginctl as the lock actuation. hypridle stays the single
+  # idle authority so `marchyo toggle idle` (which stops this service) keeps
+  # disabling idle lock.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+  # The store path when the CLI is not installed system-wide, so idle locking
+  # never depends on marchyo.cli.enable.
+  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
+  marchyoCli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
+  shellLockCmd = "${marchyoCli} shell lock";
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -27,10 +33,8 @@ in
       enable = true;
       settings = {
         general = {
-          lock_cmd =
-            if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "pidof hyprlock || hyprlock";
-          before_sleep_cmd =
-            if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "loginctl lock-session";
+          lock_cmd = if shellEnabled then shellLockCmd else "pidof hyprlock || hyprlock";
+          before_sleep_cmd = if shellEnabled then shellLockCmd else "loginctl lock-session";
           after_sleep_cmd = "hyprctl dispatch dpms on";
           inhibit_sleep = 3;
         };
@@ -55,8 +59,7 @@ in
             }
             {
               timeout = 300;
-              on-timeout =
-                if shellEnabled then "marchyo-shell ipc -n call -- shell lock" else "loginctl lock-session";
+              on-timeout = if shellEnabled then shellLockCmd else "loginctl lock-session";
             }
             {
               timeout = 330;

@@ -45,14 +45,6 @@ Rules for any new theme surface:
 
 ## 2. Shell
 
-### IPC/CLI verbs
-
-- `modules/home/window-toggles.nix`, `hypridle.nix` and `screensaver.nix`
-  still call `marchyo-shell ipc -n call -- shell …` directly; move them to
-  `marchyo shell` verbs (DND/clear/notification-center need new verbs).
-- `marchyo shell close` closes every panel; a `close <panel>` form needs a
-  `closePanel(id)` in shell.qml.
-
 ### Per-monitor config overrides (lower priority)
 
 - Typed options module as the schema source (ref: serpantinum
