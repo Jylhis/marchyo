@@ -68,7 +68,6 @@ Rules for any new theme surface:
   `modules/ii/overview/`).
 - Privacy indicator for camera, next to the mic-in-use indicator.
 - Clipboard image previews in `Launcher/ClipboardProvider.qml` (ref: end-4 `CliphistImage.qml`).
-- Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
 - Persistent per-app audio routing across restarts (PipeWire metadata).
 - Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +

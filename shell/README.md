@@ -126,7 +126,7 @@ shell/
     PowerProfileState.qml  singleton: power-profiles-daemon profile + cycle
     QuickToggles.qml   singleton: the Control Center toggle model (no presentation)
     Dictation.qml      singleton: the one voxtype --follow stream (with restart)
-    Caffeine.qml       singleton: the one keep-awake probe + toggle
+    Caffeine.qml       singleton: the one keep-awake probe + toggle, plus the auto video inhibit
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
@@ -174,7 +174,7 @@ below), so nothing depends on the session `PATH`.
 | ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
 | TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
 | DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = toggle); baked on/off via `Style.dictationIndicator` |
-| CaffeineWidget | `Services/Caffeine` → `pgrep` probe + `marchyo toggle caffeine` |
+| CaffeineWidget | `Services/Caffeine` → `pgrep` probe + `marchyo toggle caffeine`; lit while a video plays (tooltip `auto: <player>`) |
 | ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
@@ -185,6 +185,16 @@ below), so nothing depends on the session `PATH`.
 | PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
 | ControlCenterWidget | `Services/PanelManager` (click = Control Center; registered as `marchyo.controlCenter`, not placed by default) |
 | BatteryWidget | `Services/Power` → `Quickshell.Services.UPower` (click = power panel) |
+
+Caffeine has two independent sources. The manual toggle (`marchyo toggle
+caffeine`) stops hypridle and holds a tagged sleep:idle inhibitor. The automatic
+one holds `systemd-inhibit --what=idle --why=marchyo-video-inhibit` while any
+MPRIS player that looks like video is Playing (identity, desktop entry or bus
+name is mpv/VLC/Celluloid/Totem/a browser, or `xesam:url` has a video
+extension; browsers playing audio also match), and releases it on pause or
+stop. hypridle honours logind idle inhibitors, so it stays the idle authority.
+Auto never touches the manual inhibitor, and a click always flips the manual
+one. Disable auto with `marchyo.shell.settings.caffeine.autoVideo = false`.
 
 Most widgets also carry a hover **tooltip** (waybar parity: network shows
 IP/interface, battery the power draw `4.2W↓ 87%`, bluetooth the connected
