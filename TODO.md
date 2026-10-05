@@ -79,11 +79,10 @@ Rules for any new theme surface:
   theme swaps recolor it. A presentation flag only, no layout changes, no
   image assets.
 
-### Compositor effects (`modules/home/hyprland.nix` only)
+### Compositor effects
 
-- Per-namespace layer blur behind shell surfaces only.
-- Shell-owned chrome: `border_size = 0`, QML draws frames.
-- Snappy `popin` bezier; optional CRT `screen_shader` if a retro theme appears.
+- Optional CRT `screen_shader` in `modules/home/hyprland.nix` if a retro
+  theme appears.
 
 ### Discrete stack removal (later milestone)
 

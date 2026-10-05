@@ -8,27 +8,31 @@
 }:
 let
   inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
-in
-{
-  # Build the Hyprland config and run hyprland --verify-config against it.
-  check-home-hyprland-config =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
+
+  evalDesktop =
+    extra:
+    lib.nixosSystem {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      modules = [
+        nixosModules
+        (withTestUser (
+          lib.recursiveUpdate {
             marchyo.desktop.enable = true;
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-            };
-          })
-        ];
-      };
+            home-manager.users.testuser.imports = [ homeManagerModules ];
+          } extra
+        ))
+      ];
+    };
+
+  # Build the Hyprland config and run hyprland --verify-config against it.
+  mkVerifyConfig =
+    name: extra:
+    let
+      eval = evalDesktop extra;
       hyprlandConfig = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.lua".source;
       hyprland = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.package;
     in
-    pkgs.runCommand "check-hyprland-config"
+    pkgs.runCommand name
       {
         nativeBuildInputs = [ hyprland ];
       }
@@ -65,6 +69,72 @@ in
         echo "DONE"
         touch $out
       '';
+
+  shellHyprSettings =
+    shellOn:
+    (evalDesktop { marchyo.shell.enable = shellOn; })
+    .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+in
+{
+  check-home-hyprland-config = mkVerifyConfig "check-hyprland-config" { };
+
+  # Same verification with the shell on, which adds the curve, animation
+  # leaves and per-namespace layer rules.
+  check-home-hyprland-config-shell = mkVerifyConfig "check-hyprland-config-shell" {
+    marchyo.shell.enable = true;
+  };
+
+  # Shell on: animations run on the popin bezier and the shell namespaces get
+  # their per-surface layer rules.
+  eval-hyprland-shell-effects =
+    let
+      settings = shellHyprSettings true;
+      layerRules = hyprEntriesText (settings.layer_rule or [ ]);
+      curves = hyprEntriesText (settings.curve or [ ]);
+      animations = settings.animation or [ ];
+      leaf = name: lib.findFirst (a: (a.leaf or "") == name) { } animations;
+      expectedRules = [
+        "marchyo:(panel|launcher|osd)"
+        "popin 90%"
+        "marchyo:bar"
+        "marchyo:(notifs|tooltip)"
+        "no_anim=true"
+        "selection|hyprpicker"
+      ];
+      missingRules = lib.filter (n: !lib.hasInfix n layerRules) expectedRules;
+    in
+    pkgs.writeText "eval-hyprland-shell-effects" (
+      if !(settings.config.animations.enabled or false) then
+        throw "FAIL: shell on should enable Hyprland animations"
+      else if !lib.hasInfix "popin" curves then
+        throw "FAIL: shell on should define the popin bezier curve"
+      else if (leaf "windows").bezier or "" != "popin" || (leaf "layers").bezier or "" != "popin" then
+        throw "FAIL: windows/layers animations should use the popin bezier"
+      else if (leaf "workspaces").enabled or true then
+        throw "FAIL: workspace animations should stay disabled"
+      else if missingRules != [ ] then
+        throw "FAIL: missing shell layer rules: ${toString missingRules}"
+      else
+        "pass"
+    );
+
+  # Shell off: the fallback stack keeps animations off and gets no curve,
+  # animation leaves or shell layer rules.
+  eval-hyprland-shell-effects-off =
+    let
+      settings = shellHyprSettings false;
+      layerRules = hyprEntriesText (settings.layer_rule or [ ]);
+    in
+    pkgs.writeText "eval-hyprland-shell-effects-off" (
+      if settings.config.animations.enabled or true then
+        throw "FAIL: shell off should keep Hyprland animations disabled"
+      else if (settings.curve or [ ]) != [ ] || (settings.animation or [ ]) != [ ] then
+        throw "FAIL: shell off should register no curve or animation leaves"
+      else if lib.hasInfix "marchyo:" layerRules || lib.hasInfix "no_anim" layerRules then
+        throw "FAIL: shell off should register no shell layer rules"
+      else
+        "pass"
+    );
 
   eval-hyprland-keybindings-cheatsheet =
     let
