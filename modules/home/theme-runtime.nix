@@ -14,6 +14,12 @@
 # the other variant's, so edits to those modules flow into both variants
 # automatically. ANSI hexes are excluded (several collide with semantic tokens
 # but map differently, and don't appear in these surfaces).
+#
+# Every theme dir also ships palette.json (token -> hex plus token -> base16
+# slot), and the build-variant dir ships templates/ with the same three
+# surfaces as placeholders, which `marchyo theme generate` fills from a
+# matugen palette. The generators shared with the CLI live in
+# lib/theme-generators.nix.
 {
   config,
   lib,
@@ -45,15 +51,8 @@ let
   # generated gtk css carries `rgba(<text rgb>, 0.08)` (mako/waybar carry none).
   # Translate it to the target palette's text rgb alongside the hex swap — for
   # the jylhis other variant (textFor) and every base16 scheme (swapGtkToScheme).
-  hexByte = import ../../lib/hex-byte.nix { inherit lib; };
-  rgbTriple =
-    h:
-    map (o: toString (hexByte (builtins.substring o 2 (lib.removePrefix "#" h)))) [
-      0
-      2
-      4
-    ];
-  shadeRgba = h: "rgba(${lib.concatStringsSep ", " (rgbTriple h)}, 0.08)";
+  gen = import ../../lib/theme-generators.nix { inherit lib; };
+  inherit (gen) shadeRgba tokenSlots;
   swapShade =
     targetTextHex:
     builtins.replaceStrings
@@ -173,22 +172,17 @@ let
       [ "--theme=jylhis-dark" "--theme=jylhis-light" ]
       [ "--theme=${themeName}" "--theme=${themeName}" ]
       batConfig;
-  batTmTheme = import ../../lib/base16-tmtheme.nix { inherit lib; };
+  batTmTheme = gen.tmTheme;
 
   wallpaperCfg = themeCfg.wallpaper or { };
   wallpaperEnabled = wallpaperCfg.enable or true;
   wallpaperPackage = wallpaperCfg.package or pkgs.marchyo-wallpapers;
 
-  # Hyprland color keywords — mirrors the values modules/home/hyprland.nix
+  # Hyprland color keywords: mirrors the values modules/home/hyprland.nix
   # bakes into the build-time config (misc:background_color +
   # general:col.{active,inactive}_border).
-  rgb = h: "rgb(${lib.removePrefix "#" h})";
-  rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
-  hyprlandKeywordsFor = v: ''
-    misc:background_color ${rgb palettes.${v}.hex.bg}
-    general:col.active_border ${rgba palettes.${v}.hex.accent "ff"}
-    general:col.inactive_border ${rgba palettes.${v}.hex."border-strong" "ff"}
-  '';
+  jylhisResolve = v: t: palettes.${v}.hex.${t};
+  hyprlandKeywordsFor = v: gen.hyprlandKeywordsFor (jylhisResolve v);
 
   ghosttyThemeFor = v: if v == "dark" then "jylhis-dark" else "jylhis-light";
 
@@ -198,57 +192,58 @@ let
   # (modules/home/ghostty.nix).
   ghosttyThemePair = "dark:${ghosttyThemeFor "dark"},light:${ghosttyThemeFor "light"}";
 
-  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix.
-  # Emitted per theme as `fzf.opts` and read live via FZF_DEFAULT_OPTS_FILE
-  # (set in the config block): fzf reads the file before FZF_DEFAULT_OPTS, and
-  # the pointer path is stable, so repointing current-theme recolours every new
-  # fzf launch (including from already-open shells) with no re-login.
-  # `resolve` maps a semantic-token name to a hex; `green` is the ANSI green the
-  # `marker` role uses.
-  fzfOptsText =
-    resolve: green:
-    "--color="
-    + lib.concatStringsSep "," [
-      "fg:${resolve "text"}"
-      "bg:${resolve "bg"}"
-      "hl:${resolve "accent"}"
-      "fg+:${resolve "text-heading"}"
-      "bg+:${resolve "accent-subtle"}"
-      "hl+:${resolve "accent-hover"}"
-      "info:${resolve "text-muted"}"
-      "marker:${green}"
-      "prompt:${resolve "accent"}"
-      "spinner:${resolve "accent"}"
-      "pointer:${resolve "accent"}"
-      "header:${resolve "text-muted"}"
-      "border:${resolve "border"}"
-      "separator:${resolve "border"}"
-      "gutter:${resolve "bg"}"
-    ]
-    + "\n";
-  fzfOptsForJylhis = v: fzfOptsText (t: palettes.${v}.hex.${t}) palettes.${v}.ansi.green;
+  # fzf `--color` string (gen.fzfOptsText), emitted per theme as `fzf.opts`
+  # and read live via FZF_DEFAULT_OPTS_FILE (set in the config block): fzf
+  # reads the file before FZF_DEFAULT_OPTS, and the pointer path is stable, so
+  # repointing current-theme recolours every new fzf launch (including from
+  # already-open shells) with no re-login.
+  fzfOptsForJylhis = v: gen.fzfOptsText (jylhisResolve v) palettes.${v}.ansi.green;
 
-  # hyprlock colour include: hyprlang `$var` definitions the lock config sources
-  # (modules/home/hyprlock.nix, sourceFirst). hyprlock reads its config afresh at
-  # each lock and the source path is the stable current-theme pointer, so the
-  # next lock uses the current theme with no reload. Geometry/fontScale stay
-  # build-time in hyprlock.nix; only colours move here. `resolve` maps a
-  # semantic token to a hex.
-  hyprlockVarsFor = resolve: ''
-    $bg = ${rgba (resolve "bg") "ff"}
-    $text = ${rgba (resolve "text") "ff"}
-    $borderStrong = ${rgba (resolve "border-strong") "ff"}
-    $surface = ${rgba (resolve "surface") "ff"}
-    $accent = ${rgba (resolve "accent") "ff"}
-    $statusErr = ${rgba (resolve "status-err") "ff"}
-  '';
-  hyprlockColorsFor = v: hyprlockVarsFor (t: palettes.${v}.hex.${t});
+  # hyprlock colour include (gen.hyprlockVarsFor). hyprlock reads its config
+  # afresh at each lock and the source path is the stable current-theme
+  # pointer, so the next lock uses the current theme with no reload.
+  # Geometry/fontScale stay build-time in hyprlock.nix; only colours move here.
+  hyprlockColorsFor = v: gen.hyprlockVarsFor (jylhisResolve v);
 
   # setvtrgb(8) palette table emitted per theme as `console.txt`. Applying it to
   # live VTs needs setvtrgb against the console device, which the CLI attempts
   # best-effort; otherwise the console tracks the declarative console.colors
   # (modules/nixos/console.nix) at the next boot.
-  consoleTableFrom16 = import ../../lib/console-table.nix { inherit lib; };
+  consoleTableFrom16 = gen.consoleTable;
+
+  # palette.json: the full kebab-case token -> hex map (syn-* included) plus
+  # the token -> base16 slot table. `marchyo theme generate` resolves tokens
+  # through these slots and falls back to the build dir's hex for a token
+  # without a slot.
+  paletteJsonFor = tokens: builtins.toJSON { inherit tokens tokenSlots; };
+
+  # Build-variant surface templates for `marchyo theme generate`: the resolved
+  # HM text with each build hex replaced by `{{token:<name>}}` and the gtk
+  # shade literal by `{{shade}}`. The guard resolves each token to its slot (or
+  # its own build hex when it has none), so every token sharing a build hex
+  # fills identically and the first token name per hex is a safe placeholder.
+  templateSlotTos = map (n: tokenSlots.${n} or palettes.${buildVariant}.hex.${n}) tokenNames;
+  templateFor =
+    label: text:
+    builtins.replaceStrings [ (shadeRgba palettes.${buildVariant}.hex.text) ] [ "{{shade}}" ] (
+      builtins.replaceStrings buildHexes (map (n: "{{token:${n}}}") tokenNames) (
+        assertRecolorable "template ${label}" templateSlotTos text
+      )
+    );
+  templateFiles =
+    lib.optionalAttrs (makoText != null) {
+      "templates/mako.conf" = pkgs.writeText "marchyo-theme-template-mako.conf" (
+        templateFor "mako" makoText
+      );
+    }
+    // lib.optionalAttrs (waybarStyle != null) {
+      "templates/waybar.css" = pkgs.writeText "marchyo-theme-template-waybar.css" (
+        templateFor "waybar" waybarStyle
+      );
+    }
+    // lib.optionalAttrs (gtkCss != null) {
+      "templates/gtk.css" = pkgs.writeText "marchyo-theme-template-gtk.css" (templateFor "gtk" gtkCss);
+    };
 
   themeDirFor =
     v:
@@ -291,7 +286,11 @@ let
         "console.txt" = pkgs.writeText "marchyo-theme-${v}-console.txt" (
           consoleTableFrom16 palettes.${v}.tty16
         );
+        "palette.json" = pkgs.writeText "marchyo-theme-${v}-palette.json" (
+          paletteJsonFor palettes.${v}.hex
+        );
       }
+      // lib.optionalAttrs (v == buildVariant) templateFiles
     );
 
   themeDirs = {
@@ -327,119 +326,20 @@ let
     name: variant: colors:
     builtins.toJSON { inherit name variant colors; };
 
-  # Token → base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
-  # base16 attrset; the extras get the closest slot by role, which for a tinted
-  # scheme is lossy (border/syn-comment collapse onto text-faint's base03,
-  # accent-hover onto accent's base09, accent-subtle onto bg-subtle's base01).
-  # The jylhis light/dark swap never uses this table — swapToOther is exact per
-  # token. `cursor` must share accent's slot: it is the same hex as accent, so
-  # without it the (unused) cursor token would map a shared surface hex (#f5a351
-  # / #693900) to two targets and trip assertRecolorable. Any token still absent
-  # from this table keeps its build-variant hex (identity); keep this in lockstep
-  # with TOKEN_SLOTS in packages/marchyo-cli/packages/core/src/matugen.ts.
-  tokenSlots = {
-    bg = "base00";
-    "bg-subtle" = "base01";
-    surface = "base02";
-    "surface-raised" = "base07";
-    "text-faint" = "base03";
-    "text-muted" = "base04";
-    text = "base05";
-    "text-heading" = "base06";
-    "status-err" = "base08";
-    accent = "base09";
-    cursor = "base09";
-    "status-warn" = "base0A";
-    "syn-string" = "base0B";
-    "syn-type" = "base0C";
-    "status-info" = "base0D";
-    "syn-keyword" = "base0E";
-    brand = "base0F";
-    border = "base03";
-    "border-strong" = "base04";
-    "accent-hover" = "base09";
-    "accent-subtle" = "base01";
-    "status-ok" = "base0B";
-    "syn-comment" = "base03";
-  };
-
-  schemeHexForToken =
-    scheme: n:
-    if tokenSlots ? ${n} then scheme.slots.${tokenSlots.${n}} else palettes.${buildVariant}.hex.${n};
+  # Token -> base16 slot lives in lib/theme-generators.nix (gen.tokenSlots);
+  # the jylhis light/dark swap never uses it, swapToOther is exact per token.
+  schemeHexForToken = scheme: gen.slotResolver scheme.slots palettes.${buildVariant}.hex;
   swapToScheme =
     scheme: recolorWith "scheme ${scheme.name}" (map (schemeHexForToken scheme) tokenNames);
   # gtk also carries the shade literal; map it to the scheme's text (base05).
   swapGtkToScheme = scheme: text: swapShade scheme.slots.base05 (swapToScheme scheme text);
 
-  fzfOptsForScheme = scheme: fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
-  hyprlockColorsForScheme = scheme: hyprlockVarsFor (schemeHexForToken scheme);
-
-  # 16 console colours for a scheme: the standard base16 ANSI mapping (as in
-  # schemeGhosttyConf) but with slots 0/7/15 set to bg/text/text-heading so a
-  # bare TTY stays readable, mirroring jylhis-palette.nix's tty16 overrides.
-  schemeTty16 =
-    scheme:
-    let
-      s = scheme.slots;
-    in
-    [
-      s.base00 # 0  bg (override)
-      s.base08
-      s.base0B
-      s.base0A
-      s.base0D
-      s.base0E
-      s.base0C
-      s.base05 # 7  text (override; also the standard ANSI white)
-      s.base03
-      s.base08
-      s.base0B
-      s.base0A
-      s.base0D
-      s.base0E
-      s.base0C
-      s.base06 # 15 text-heading (override)
-    ];
-
-  schemeHyprlandKeywords = scheme: ''
-    misc:background_color ${rgb scheme.slots.base00}
-    general:col.active_border ${rgba scheme.slots.base09 "ff"}
-    general:col.inactive_border ${rgba scheme.slots.base04 "ff"}
-  '';
-
-  # Inline terminal colors (base16's standard ANSI mapping) — base16 themes
-  # have no named ghostty theme to reference.
-  schemeGhosttyConf =
-    scheme:
-    let
-      s = scheme.slots;
-      ansi = [
-        s.base00
-        s.base08
-        s.base0B
-        s.base0A
-        s.base0D
-        s.base0E
-        s.base0C
-        s.base05
-        s.base03
-        s.base08
-        s.base0B
-        s.base0A
-        s.base0D
-        s.base0E
-        s.base0C
-        s.base07
-      ];
-    in
-    ''
-      background = ${s.base00}
-      foreground = ${s.base05}
-      cursor-color = ${s.base05}
-      selection-background = ${s.base02}
-      selection-foreground = ${s.base05}
-    ''
-    + lib.concatImapStrings (i: c: "palette = ${toString (i - 1)}=${c}\n") ansi;
+  fzfOptsForScheme = scheme: gen.fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
+  hyprlockColorsForScheme = scheme: gen.hyprlockVarsFor (schemeHexForToken scheme);
+  schemeTty16 = scheme: gen.tty16FromSlots scheme.slots;
+  schemeHyprlandKeywords = scheme: gen.hyprlandKeywordsFor (schemeHexForToken scheme);
+  schemeGhosttyConf = scheme: gen.ghosttyConfFromSlots scheme.slots;
+  schemePaletteJson = scheme: paletteJsonFor (lib.genAttrs tokenNames (schemeHexForToken scheme));
 
   mkSchemeThemeDir =
     scheme:
@@ -494,6 +394,9 @@ let
       // {
         "hyprlock-colors.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-hyprlock-colors.conf" (
           hyprlockColorsForScheme scheme
+        );
+        "palette.json" = pkgs.writeText "marchyo-theme-${scheme.name}-palette.json" (
+          schemePaletteJson scheme
         );
       }
     );

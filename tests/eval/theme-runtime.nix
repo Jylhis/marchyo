@@ -5,8 +5,8 @@
 # for each build-time variant, without building anything. The switching
 # logic itself lives in the marchyo CLI (bun tests cover it). The one
 # exception is `build-theme-runtime-assets`, a build check that materializes
-# both Jylhis theme dirs and asserts their asset files; `just check`
-# (--no-build) only evaluates it, CI's `nix flake check` builds it.
+# both Jylhis theme dirs and asserts their asset files and templates; `just
+# check` (--no-build) only evaluates it, CI's `nix flake check` builds it.
 {
   helpers,
   lib,
@@ -34,6 +34,15 @@ let
     };
 
   hmFor = extra: (evalWith extra).config.home-manager.users.testuser;
+
+  gen = import ../../lib/theme-generators.nix { inherit lib; };
+  parityFixture = builtins.fromJSON (
+    builtins.readFile ../../packages/marchyo-cli/packages/core/tests/fixtures/theme-parity.json
+  );
+  parityExpected = gen.parityExpected {
+    inherit (parityFixture) base16 batThemeName;
+    inherit (parityFixture.palette) tokens;
+  };
 
   manifestText = hm: hm.xdg.dataFile."marchyo/themes/manifest.json".text or null;
 
@@ -104,21 +113,76 @@ in
         throw "FAIL: theme-runtime leaked the manifest, pointer, ghostty include, or surface reset without a desktop"
     );
 
+  # The CLI's `theme generate` generators (core/src/matugen.ts) are pinned to
+  # lib/theme-generators.nix through a committed fixture the bun tests read.
+  # This check recomputes the fixture's `expected` from the Nix generators and
+  # its `palette.tokenSlots` from the shared table; on drift, the failure
+  # prints the JSON to paste back into the fixture.
+  eval-theme-runtime-cli-parity-fixture = pkgs.writeText "eval-theme-runtime-cli-parity-fixture" (
+    if parityFixture.palette.tokenSlots != gen.tokenSlots then
+      throw "FAIL: theme-parity.json palette.tokenSlots drifted from lib/theme-generators.nix: ${builtins.toJSON gen.tokenSlots}"
+    else if parityFixture.expected != parityExpected then
+      throw "FAIL: theme-parity.json expected drifted from lib/theme-generators.nix: ${builtins.toJSON parityExpected}"
+    else
+      "pass"
+  );
+
   # Build check (not eval-only): materialize both Jylhis theme dirs and
-  # assert the runtime asset set. `just check` (--no-build) only evaluates
-  # this; `nix flake check` / CI builds it. The pointer source carries the
-  # linkFarm's context, so interpolating it into the script builds the dir.
+  # assert the runtime asset set, then fill the build dir's templates from an
+  # inline base16 theme the way `marchyo theme generate` does (slot per
+  # palette.json tokenSlots, else the build hex) and require byte equality with
+  # the Nix-swapped surfaces of that theme's own dir. `just check` (--no-build)
+  # only evaluates this; `nix flake check` / CI builds it. The pointer source
+  # and manifest text carry the linkFarm context, so interpolating them into
+  # the script builds the dirs.
   build-theme-runtime-assets =
     let
-      darkDir = (hmFor { }).xdg.configFile."marchyo/current-theme".source;
+      darkHm = hmFor {
+        marchyo.theme.themes = [
+          "jylhis-dark"
+          "jylhis-light"
+          {
+            name = "parity";
+            variant = "dark";
+            slots = parityFixture.base16;
+          }
+        ];
+      };
+      darkDir = darkHm.xdg.configFile."marchyo/current-theme".source;
       lightDir =
         (hmFor { marchyo.theme.variant = "light"; }).xdg.configFile."marchyo/current-theme".source;
+      manifest = pkgs.writeText "theme-manifest.json" (manifestText darkHm);
+      slotsJson = pkgs.writeText "parity-slots.json" (builtins.toJSON parityFixture.base16);
     in
-    pkgs.runCommand "check-theme-runtime-assets" { } ''
+    pkgs.runCommand "check-theme-runtime-assets" { nativeBuildInputs = [ pkgs.jq ]; } ''
       for d in ${darkDir} ${lightDir}; do
-        for f in variant colors.json ghostty.conf gtk.css hyprland.conf; do
+        for f in variant colors.json ghostty.conf gtk.css hyprland.conf mako.conf waybar.css \
+          bat.conf fzf.opts hyprlock-colors.conf console.txt palette.json \
+          templates/mako.conf templates/waybar.css templates/gtk.css; do
           test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
         done
+        jq -e '(.tokens | has("syn-keyword")) and (.tokenSlots.bg == "base00")' "$d/palette.json" >/dev/null \
+          || { echo "FAIL: $d/palette.json lacks the full token map or tokenSlots"; exit 1; }
+        # Every colour literal in a template is a placeholder, never a build hex
+        # (a `#` hex run followed by an identifier char is a CSS id selector).
+        if grep -En '#[0-9a-fA-F]+([^0-9A-Za-z_-]|$)' "$d"/templates/*; then
+          echo "FAIL: raw hex left in $d/templates"; exit 1
+        fi
+      done
+      grep -q '{{shade}}' ${darkDir}/templates/gtk.css \
+        || { echo "FAIL: gtk template has no {{shade}} placeholder"; exit 1; }
+      parity=$(jq -r '.[] | select(.name == "parity") | .dir' ${manifest})
+      test -f "$parity/palette.json" || { echo "FAIL: scheme dir has no palette.json"; exit 1; }
+      test ! -e "$parity/templates" || { echo "FAIL: templates outside the build-variant dir"; exit 1; }
+      for f in mako.conf waybar.css gtk.css; do
+        jq -nrj --rawfile t ${darkDir}/templates/$f \
+          --slurpfile p ${darkDir}/palette.json --slurpfile s ${slotsJson} \
+          --arg shade ${lib.escapeShellArg parityExpected.shade} '
+            def resolve($p; $s; $n): if $p.tokenSlots[$n] then $s[$p.tokenSlots[$n]] else $p.tokens[$n] end;
+            $p[0] as $p | $s[0] as $s
+            | reduce ($p.tokens | keys[]) as $n ($t; gsub("\\{\\{token:" + $n + "\\}\\}"; resolve($p; $s; $n)))
+            | gsub("\\{\\{shade\\}\\}"; $shade)' > filled
+        cmp filled "$parity/$f" || { echo "FAIL: filled template $f differs from the scheme dir"; exit 1; }
       done
       # The jylhis include must name BOTH themes as a ghostty light/dark pair
       # (identical in both dirs): ghostty resolves it from the system

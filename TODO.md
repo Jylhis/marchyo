@@ -5,44 +5,19 @@ authoritative description of the shell is [`shell/README.md`](shell/README.md).
 
 Out of scope, not wanted: a dashboard panel and a calendar panel.
 
-Next up, in order: `theme generate` parity (1), IPC/CLI verbs, Control
-Center, launcher command palette (2). The CLI verbs come before the panels so
-new panels get their binds and `doctor` coverage on arrival.
+Next up, in order: IPC/CLI verbs, Control Center, launcher command palette
+(2). The CLI verbs come before the panels so new panels get their binds and
+`doctor` coverage on arrival.
 
 ## 1. Theming
 
-- **`theme generate` (matugen) parity with `theme set`.**
-  `generateThemeChangeBase` (`packages/marchyo-cli/packages/user-cli/src/commands/theme.ts`)
-  writes only colors.json, variant, hyprland, ghostty, fzf and the wallpaper.
-  mako/waybar/gtk/bat keep the previous theme, and `current-theme` has no
-  `hyprlock-colors.conf`, so the fallback hyprlock (`modules/home/hyprlock.nix`,
-  `marchyo.shell.enable = false`) sources a missing file. Steps:
-  1. Emit `hyprlock-colors.conf` and `console.txt` from base16 in the CLI (TS
-     ports of `hyprlockVarsFor` and `lib/console-table.nix`, next to
-     `fzfOptsFromBase16` in `core/src/matugen.ts`).
-  2. Add `palette.json` to every theme dir in `theme-runtime.nix`: the full
-     kebab-case token-to-hex map (`syn-*` included) and `tokenSlots`. The CLI
-     reads the slots from it and `TOKEN_SLOTS` goes away.
-  3. Add `templates/{mako.conf,waybar.css,gtk.css}` to the build-variant dir:
-     the resolved HM text with each build hex replaced by `{{token:<name>}}`
-     and the gtk shade by `{{shade}}`, under the `assertRecolorable` guard.
-     The CLI fills them from base16 via the slots in `palette.json`, falling
-     back to the build hex for unmapped tokens.
-  4. bat: TS port of `lib/base16-tmtheme.nix`, written to
-     `$(bat --config-dir)/themes` + `bat cache --build`, and the `--theme=`
-     line rewritten.
-  5. Tests: file presence and no raw build hex in templates in
-     `tests/eval/theme-runtime.nix` (`build-theme-runtime-assets`); generator
-     cases in `core/tests/matugen.test.ts` with a Nix-built parity fixture; a
-     full-file-set test for `theme generate` in `user-cli/tests/theme.test.ts`.
-  6. Drop the limitation comment in `theme.ts` and update `theming.mdx`.
 - **Base16 role approximations are lossy for tinted schemes.** `tokenSlots`
   collapses `accent-hover` onto `accent`, `border`/`syn-comment` onto
   `text-faint`, `accent-subtle` onto `bg-subtle`, so a scheme loses the hover
   delta and a future surface putting text on `accent-subtle` would fail
   contrast. Cosmetic; a real fix needs distinct hover/subtle/border roles
-  upstream in `jylhis-design`. Keep `tokenSlots` in lockstep with
-  `TOKEN_SLOTS` in `packages/marchyo-cli/packages/core/src/matugen.ts`.
+  upstream in `jylhis-design`. `tokenSlots` lives in `lib/theme-generators.nix` and
+  reaches the CLI through each theme dir's `palette.json`.
 - **Optional: wallpaper-driven Material-You mode.** matugen already covers the
   runtime subset; would be a mode, never the default (marchyo's identity is
   the jylhis palette).

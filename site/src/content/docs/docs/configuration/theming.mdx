@@ -90,7 +90,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [
@@ -165,7 +165,9 @@ marchyo theme generate ~/Pictures/wall.jpg --dark   # force a dark scheme
 marchyo theme generate --revert                     # back to the declarative theme
 ```
 
-matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. It recolours the **runtime** surfaces instantly: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, `fzf`, and the wallpaper itself. (Generated themes do not restyle mako/waybar/GTK or `bat` — the matugen palette is the shell subset without the syn-* tokens those surfaces need, so they keep the previously active theme until the next `theme set` or rebuild.)
+matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, Mako, Waybar, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), and the wallpaper itself.
+
+The colours come from two files the build ships in the declarative variant's theme dir: `palette.json` (every design token's hex, `syn-*` included, and the token-to-base16-slot table) and `templates/` (the Mako, Waybar and GTK configs with each colour as a token placeholder). `theme generate` fills each placeholder with the matugen slot for that token, and a token with no base16 slot keeps the build variant's hex. For `bat` it writes a `marchyo-generated.tmTheme` into bat's themes directory and runs `bat cache --build`.
 
 Qt follows the runtime GTK swap on next launch (`QT_QPA_PLATFORMTHEME=gtk3`),
 and `starship` styles through ANSI slot names, so it already recolors with the
