@@ -120,9 +120,6 @@ Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
 
 ## 3. Features
 
-- **Local AI (`marchyo.ai.local.enable`).** `services.ollama` with `acceleration` derived from
-  `marchyo.graphics.vendors`, optional model pre-pull, endpoint exposed to
-  shell/editor. New `modules/nixos/ollama.nix` + `modules/nixos/options/ai.nix`.
 - **Share upload target.** `marchyo share` only stages paths on the clipboard;
   the upload backend is undecided.
 - **Omarchy extras, low priority:** lifecycle hooks (`battery-low`,

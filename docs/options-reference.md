@@ -188,6 +188,18 @@ Depth options (all off by default): `onDemandModel` maps to voxtype's `whisper.o
 
 The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The Waybar `custom/voxtype` module (`modules/home/waybar.nix`) is the repo's **first streaming `exec` custom module**: `voxtype status --format json --follow` emits one JSON object per state change, read via `return-type = "json"`; its `class` field (idle/recording/transcribing) recolors the `#custom-voxtype` selector, and both the module definition and the `pkgs.voxtype` store-path reference are guarded by `lib.optionalAttrs` so a desktop without dictation never pulls voxtype into its closure. The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
 
+## Local AI (Ollama)
+
+`marchyo.ai.local.enable` (off by default) enables the upstream NixOS `services.ollama` (`modules/nixos/ollama.nix`, options in `modules/nixos/options/ai.nix`).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.ai.local.enable` | `false` | Run the Ollama server and export `OLLAMA_HOST` |
+| `marchyo.ai.local.acceleration` | `null` | `"cpu"`, `"vulkan"`, `"rocm"` or `"cuda"`; `null` derives it from `marchyo.graphics.vendors` |
+| `marchyo.ai.local.models` | `[]` | Models pulled by `ollama-model-loader` (`services.ollama.loadModels`) |
+
+Backend selection sets `services.ollama.package = lib.mkDefault pkgs."ollama-<backend>"`: `"nvidia"` in vendors selects `cuda` (also on hybrid laptops), else `"amd"` selects `rocm`, else `"intel"` selects `vulkan`, else `cpu`. `environment.sessionVariables.OLLAMA_HOST` defaults to `http://<services.ollama.host>:<services.ollama.port>`. The option declarations reference no packages, so they evaluate on Darwin.
+
 ## Notifications (in-shell)
 
 With `marchyo.shell.enable = true` the shell owns `org.freedesktop.Notifications` (mako stands down) and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.

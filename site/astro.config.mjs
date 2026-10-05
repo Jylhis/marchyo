@@ -61,6 +61,7 @@ export default defineConfig({
             'docs/configuration/launcher',
             'docs/configuration/notifications',
             'docs/configuration/dictation',
+            'docs/configuration/local-ai',
             'docs/configuration/hardware',
             'docs/configuration/performance',
           ],
