@@ -6,3 +6,4 @@ MonitorPanel 1.0 MonitorPanel.qml
 WeatherPanel 1.0 WeatherPanel.qml
 TailscalePanel 1.0 TailscalePanel.qml
 WifiQrPanel 1.0 WifiQrPanel.qml
+ControlCenter 1.0 ControlCenter.qml

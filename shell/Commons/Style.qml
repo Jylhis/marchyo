@@ -44,6 +44,12 @@ QtObject {
     readonly property int panelRadius: 8
     readonly property int panelRowHeight: 30
 
+    // Control Center geometry: its wider card, the quick-toggle tile height,
+    // and the volume/mic slider track thickness.
+    readonly property int controlCenterWidth: 340
+    readonly property int tileHeight: 52
+    readonly property int sliderTrackHeight: 6
+
     // Launcher geometry (apps/emoji/clipboard card).
     readonly property int launcherWidth: 640
 

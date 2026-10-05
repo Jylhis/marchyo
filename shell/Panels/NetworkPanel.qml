@@ -6,8 +6,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Connection status from the native Networking binding, enriched with SSID, signal,
-// and IP from the shared Services/NetworkStatus poll. nmtui opens the full text UI.
+// Connection status and the Wi-Fi radio switch from the native Networking
+// binding, enriched with SSID, signal, and IP from the shared
+// Services/NetworkStatus poll. nmtui opens the full text UI.
 Panel {
     id: root
     panelId: "network"
@@ -55,6 +56,16 @@ Panel {
             visible: root.wifi && NetworkStatus.ssid.length > 0
             text: "Share (QR)"
             onClicked: PanelManager.open("wifiqr", root)
+        },
+        PanelButton {
+            Layout.fillWidth: true
+            visible: NetworkStatus.wifiAvailable
+            text: !NetworkStatus.wifiHardwareEnabled ? "Wi-Fi blocked (hardware switch)" : (NetworkStatus.wifiEnabled ? "Wi-Fi on" : "Wi-Fi off")
+            active: NetworkStatus.wifiEnabled
+            onClicked: {
+                if (NetworkStatus.wifiHardwareEnabled)
+                    NetworkStatus.setWifiEnabled(!NetworkStatus.wifiEnabled);
+            }
         },
         PanelButton {
             Layout.fillWidth: true

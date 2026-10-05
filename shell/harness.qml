@@ -17,7 +17,7 @@ ShellRoot {
     Item {
         id: harnessRoot
         width: 1280
-        height: 64
+        height: 96
 
         // Pull in the lock service singleton (PAM state machine; the
         // WlSessionLock surface itself needs a compositor, like the panels).
@@ -263,6 +263,43 @@ ShellRoot {
         MicWidget {
             x: 1080
             y: 32
+        }
+        ControlCenterWidget {
+            x: 1180
+            y: 32
+        }
+        PanelSlider {
+            x: 0
+            y: 64
+            width: 200
+            value: 0.5
+        }
+
+        // The Control Center tile model (Services/QuickToggles): every entry
+        // carries the full interface the tiles bind to.
+        Timer {
+            interval: 1000
+            running: true
+            onTriggered: {
+                const entries = QuickToggles.all;
+                if (!entries || entries.length === 0)
+                    console.log("ASSERT-FAIL QuickToggles.all is empty");
+                const keys = {};
+                for (let i = 0; i < entries.length; i++) {
+                    const t = entries[i];
+                    if (typeof t.key !== "string" || t.key === "" || keys[t.key])
+                        console.log("ASSERT-FAIL QuickToggles entry " + i + " has a missing or duplicate key");
+                    keys[t.key] = true;
+                    for (const f of ["icon", "label", "status", "detail"])
+                        if (typeof t[f] !== "string")
+                            console.log("ASSERT-FAIL QuickToggles." + t.key + "." + f + " is not a string");
+                    for (const f of ["active", "available"])
+                        if (typeof t[f] !== "boolean")
+                            console.log("ASSERT-FAIL QuickToggles." + t.key + "." + f + " is not a bool");
+                    if (typeof t.toggle !== "function")
+                        console.log("ASSERT-FAIL QuickToggles." + t.key + ".toggle is not a function");
+                }
+            }
         }
     }
 

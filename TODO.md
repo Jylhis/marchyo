@@ -5,8 +5,8 @@ authoritative description of the shell is [`shell/README.md`](shell/README.md).
 
 Out of scope, not wanted: a dashboard panel and a calendar panel.
 
-Next up: Control Center (2). New panels get a `marchyo shell` verb, a bind
-and `doctor` coverage on arrival.
+New panels get a `marchyo shell` verb, a bind and `doctor` coverage on
+arrival.
 
 ## 1. Theming
 
@@ -52,31 +52,6 @@ Rules for any new theme surface:
   `marchyo shell` verbs (DND/clear/notification-center need new verbs).
 - `marchyo shell close` closes every panel; a `close <panel>` form needs a
   `closePanel(id)` in shell.qml.
-
-### Control Center panel
-
-One quick-settings surface over `Services/*` singletons, no new daemons.
-
-1. Missing services, as `pragma Singleton` in `Services/` + qmldir:
-   `BluetoothState` (wraps `Quickshell.Bluetooth.defaultAdapter`, used today
-   directly by `Bar/BluetoothWidget.qml`) and `PowerProfileState` (wraps
-   `PowerProfiles`, used directly by `Bar/PowerProfileWidget.qml`). Point both
-   widgets at them.
-2. Writable toggles: wifi on/off in `NetworkStatus` (nmcli radio) and
-   Tailscale up/down in `Tailscale`, gated on `Config.tailscale`.
-3. Toggle model: `Commons/QuickToggles.js` (or a `Services/QuickToggles`
-   singleton) listing id, icon, label, `active`, `toggle()`, optional detail
-   panel id, and availability, separate from presentation.
-4. `Panels/ControlCenter.qml` on `Ui/Panel.qml` with `panelId:
-   "controlcenter"`: tile grid, volume and mic sliders from `Audio`, tiles
-   open the existing Audio/Network/Power/Tailscale panels as detail pages.
-   Register in `Panels/qmldir` and `shell.qml`; new Style geometry is emitted
-   by `packages/marchyo-shell/package.nix`.
-5. Bar button widget + `barComponents` entry; `marchyo shell toggle
-   controlcenter` and a Hyprland bind.
-6. Eval tests for any new gating args in `modules/home/marchyo-shell.nix`;
-   update `shell/README.md`. Done when every tile reflects and drives live
-   state.
 
 ### Per-monitor config overrides (lower priority)
 

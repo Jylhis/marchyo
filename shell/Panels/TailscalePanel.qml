@@ -4,9 +4,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Read-only view over the shared Services/Tailscale poll. No connect/disconnect or
-// exit-node picker: those need the tailscale operator privilege marchyo does not
-// grant a session by default, so they would fail silently.
+// View over the shared Services/Tailscale poll, with a connect/disconnect
+// button when the CLI is baked. No exit-node picker. The daemon accepts up/down
+// only from root or the tailnet operator, so a refusal is shown under the button.
 Panel {
     id: root
     panelId: "tailscale"
@@ -73,6 +73,22 @@ Panel {
                     font.pixelSize: Style.fontSizeSmall
                 }
             }
+        },
+        PanelButton {
+            Layout.fillWidth: true
+            visible: Tailscale.controllable
+            text: Tailscale.busy ? "..." : (Tailscale.running ? "Disconnect" : "Connect")
+            active: Tailscale.running
+            onClicked: Tailscale.setUp(!Tailscale.running)
+        },
+        Text {
+            Layout.fillWidth: true
+            visible: Tailscale.lastErrorDetail !== ""
+            text: Tailscale.lastErrorDetail
+            color: Color.statusErr
+            font.family: Style.fontFamily
+            font.pixelSize: Style.fontSizeSmall
+            wrapMode: Text.Wrap
         }
     ]
 }

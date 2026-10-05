@@ -1,23 +1,17 @@
 import Quickshell
-import Quickshell.Bluetooth
 import qs.Ui
 import qs.Commons
+import qs.Services
 
-// Bluetooth status via the native BlueZ binding, formatted to match waybar.
+// Bluetooth status: a pure view over Services/BluetoothState, formatted to
+// match waybar.
 BarItem {
     id: root
 
-    readonly property var adapter: Bluetooth.defaultAdapter
-    readonly property var connected: {
-        const out = [];
-        const devs = Bluetooth.devices ? Bluetooth.devices.values : [];
-        for (let i = 0; i < devs.length; i++)
-            if (devs[i].connected)
-                out.push(devs[i].name || devs[i].address);
-        return out;
-    }
+    readonly property var adapter: BluetoothState.adapter
+    readonly property var connected: BluetoothState.connected
 
-    shown: adapter !== null
+    shown: BluetoothState.available
     interactive: true
     compact: true
     text: !adapter || !adapter.enabled ? "󰂲" : (connected.length > 0 ? "󰂯 " + connected.length : "󰂯")

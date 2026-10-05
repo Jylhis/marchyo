@@ -22,3 +22,6 @@ singleton Reminders 1.0 Reminders.qml
 singleton Tailscale 1.0 Tailscale.qml
 singleton Weather 1.0 Weather.qml
 singleton WifiQr 1.0 WifiQr.qml
+singleton BluetoothState 1.0 BluetoothState.qml
+singleton PowerProfileState 1.0 PowerProfileState.qml
+singleton QuickToggles 1.0 QuickToggles.qml

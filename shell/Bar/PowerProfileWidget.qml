@@ -1,13 +1,15 @@
 import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
+import qs.Services
 
-// Power profile indicator, mirroring waybar's power-profiles-daemon widget.
+// Power profile indicator, mirroring waybar's power-profiles-daemon widget: a
+// pure view over Services/PowerProfileState (click = cycle).
 BarItem {
     interactive: true
     compact: true
     text: {
-        switch (PowerProfiles.profile) {
+        switch (PowerProfileState.profile) {
         case PowerProfile.PowerSaver:
             return "󰾆";
         case PowerProfile.Performance:
@@ -16,26 +18,6 @@ BarItem {
             return "󰾅";
         }
     }
-    tooltipText: {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver:
-            return "Power profile: power-saver";
-        case PowerProfile.Performance:
-            return "Power profile: performance";
-        default:
-            return "Power profile: balanced";
-        }
-    }
-    onClicked: () => {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver:
-            PowerProfiles.profile = PowerProfile.Balanced;
-            break;
-        case PowerProfile.Balanced:
-            PowerProfiles.profile = PowerProfile.Performance;
-            break;
-        default:
-            PowerProfiles.profile = PowerProfile.PowerSaver;
-        }
-    }
+    tooltipText: "Power profile: " + PowerProfileState.name
+    onClicked: PowerProfileState.cycle()
 }

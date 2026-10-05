@@ -454,7 +454,7 @@ for (const action of ["toggle", "open"] as const) {
   shellCmd
     .command(action)
     .description(`${action === "toggle" ? "Toggle" : "Open"} a shell panel`)
-    .argument("<panel>", "panel id: audio | network | power | monitor | notifications | …")
+    .argument("<panel>", "panel id: controlcenter | audio | network | power | monitor | notifications | …")
     .action(async (panel: string) => {
       process.exit(await runShellPanel(rt(), action, panel));
     });

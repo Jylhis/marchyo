@@ -814,6 +814,7 @@ in
           (bindd "SUPER + SHIFT + N" "Network panel" (exec (shellVerb "toggle network")))
           (bindd "SUPER + SHIFT + B" "Power panel" (exec (shellVerb "toggle power")))
           (bindd "SUPER + SHIFT + M" "Monitor panel" (exec (shellVerb "toggle monitor")))
+          (bindd "SUPER + SHIFT + Q" "Control Center" (exec (shellVerb "toggle controlcenter")))
         ]
         # Launcher binds: in-shell launcher when the shell is on, else vicinae.
         ++ lib.optionals launcherEnabled [

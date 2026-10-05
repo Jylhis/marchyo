@@ -801,6 +801,7 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
   const s = stubDir({ "marchyo-shell": SHELL_STUB });
   for (const args of [
     ["shell", "toggle", "audio"],
+    ["shell", "toggle", "controlcenter"],
     ["shell", "open", "network"],
     ["shell", "close"],
     ["shell", "launcher", "emoji"],
@@ -810,6 +811,7 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
   }
   expect(s.calls()).toEqual([
     "marchyo-shell ipc -n call -- shell togglePanel audio",
+    "marchyo-shell ipc -n call -- shell togglePanel controlcenter",
     "marchyo-shell ipc -n call -- shell openPanel network",
     "marchyo-shell ipc -n call -- shell closePanels",
     "marchyo-shell ipc -n call -- shell toggleLauncher emoji",

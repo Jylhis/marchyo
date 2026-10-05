@@ -17,6 +17,11 @@ QtObject {
     // output regardless of which monitor's bar was clicked.
     property string screenName: ""
 
+    // Panel to return to from a detail page: set by openDetail() (the Control
+    // Center opening one of the existing panels), cleared by any plain open or
+    // close. Ui/Panel shows a back button while it is set.
+    property string returnId: ""
+
     function toggle(id, item) {
         if (root.openId === id) {
             root.close();
@@ -29,11 +34,26 @@ QtObject {
         // An IPC summon passes no item, so fall back to the focused output.
         const name = Screens.nameOf(item);
         root.screenName = name.length > 0 ? name : Screens.focusedName;
+        root.returnId = "";
         root.openId = id;
+    }
+
+    // Swap the open panel for `id` on the same output, remembering `fromId` so
+    // the detail page can go back to it.
+    function openDetail(id, fromId) {
+        root.returnId = fromId;
+        root.openId = id;
+    }
+
+    function back() {
+        const target = root.returnId;
+        root.returnId = "";
+        root.openId = target;
     }
 
     function close() {
         root.openId = "";
         root.screenName = "";
+        root.returnId = "";
     }
 }
