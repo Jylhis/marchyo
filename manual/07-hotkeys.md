@@ -170,7 +170,7 @@ Dictation needs `marchyo.dictation.enable`. Once it's on:
 |------|--------|
 | `Super + L` | Lock the screen |
 | `Ctrl + Alt + Delete` | Power off |
-| `Super + Shift + Space` | Toggle the top bar (Waybar) |
+| `Super + Shift + Space` | Toggle the top bar |
 | `Super + ,` | Dismiss last notification |
 | `Super + Ctrl + I` | Toggle idle lock (lock/sleep on idle) |
 | `Super + Ctrl + K` | Toggle caffeine (keep awake, block suspend) |
