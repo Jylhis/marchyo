@@ -366,6 +366,12 @@ ShellRoot {
         function ping(): string {
             return "ok";
         }
+
+        // Deferred so the reply reaches the caller before the engine reloads.
+        function reload(): string {
+            Qt.callLater(() => Quickshell.reload(false));
+            return "ok";
+        }
     }
 
     Variants {

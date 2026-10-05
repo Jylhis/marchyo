@@ -5,9 +5,8 @@ authoritative description of the shell is [`shell/README.md`](shell/README.md).
 
 Out of scope, not wanted: a dashboard panel and a calendar panel.
 
-Next up, in order: IPC/CLI verbs, Control Center, launcher command palette
-(2). The CLI verbs come before the panels so new panels get their binds and
-`doctor` coverage on arrival.
+Next up, in order: Control Center, launcher command palette (2). New panels
+get a `marchyo shell` verb, a bind and `doctor` coverage on arrival.
 
 ## 1. Theming
 
@@ -48,29 +47,11 @@ Rules for any new theme surface:
 
 ### IPC/CLI verbs
 
-The shell's `IpcHandler { target: "shell" }` (`shell/shell.qml`) has panel,
-notification, bar, OSD, lock and launcher functions; the CLI
-(`packages/marchyo-cli/packages/user-cli/src/cli.tsx`) has no shell command,
-and the Hyprland binds in `modules/home/hyprland.nix` call
-`marchyo-shell ipc -n call -- shell …` directly.
-
-1. `core`: one `shellIpc(fn, ...args)` helper over `marchyo-shell ipc -n call`
-   with a clear error when the shell is not running.
-2. `marchyo shell toggle|open|close <panel>`, `marchyo shell launcher <mode>`,
-   `marchyo shell bar`, `marchyo shell reload`. `reload` needs a new
-   `function reload()` in shell.qml.
-3. `marchyo volume up|down|mute [--mic]` and `marchyo brightness up|down`:
-   wpctl/swayosd-client and brightnessctl, plus the `osdShow` poke when the
-   shell runs (moves the `brightnessPoke` script out of `hyprland.nix`).
-4. `marchyo doctor`: PASS/FAIL per check (baked tool paths exist, Hyprland and
-   shell IPC sockets answer `ping`, user services active), `--json`, non-zero
-   exit on FAIL. Reuse probes from `src/commands/debug.ts`.
-5. Rewrite the binds in `hyprland.nix` to the verbs. Replace the IPC grep in
-   `tests/shell/contracts-test.sh` with a check that every `shellIpc` function
-   name in the CLI exists in shell.qml.
-6. Update the `--help` snapshot (`user-cli/tests/contract.test.ts`) and add
-   exit-code/JSON cases in `cli.test.ts`. Done when `just cli-test` and
-   `just -f shell/Justfile check` are green.
+- `modules/home/window-toggles.nix`, `hypridle.nix` and `screensaver.nix`
+  still call `marchyo-shell ipc -n call -- shell …` directly; move them to
+  `marchyo shell` verbs (DND/clear/notification-center need new verbs).
+- `marchyo shell close` closes every panel; a `close <panel>` form needs a
+  `closePanel(id)` in shell.qml.
 
 ### Control Center panel
 

@@ -650,6 +650,8 @@ in
               cp -r ${./greeter} src/greeter
               cp -r ${./modules} src/modules
               cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
+              mkdir -p src/packages/marchyo-cli
+              cp -r ${./packages/marchyo-cli/packages} src/packages/marchyo-cli/packages
               cp -r ${./tests/shell} src/tests/shell
               cd src
               bash tests/shell/contracts-test.sh

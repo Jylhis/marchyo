@@ -727,3 +727,216 @@ test("bg set with a nonexistent path fails without writing state", async () => {
   expect(r.stderr).toContain("no such image");
   expect(existsSync(`${dir}/marchyo/runtime.json`)).toBe(false);
 });
+
+// ── shell / volume / brightness / doctor ────────────────────────────────────
+//
+// Stub tools in a private PATH: each stub appends its argv to calls.log and
+// prints a canned reply, so the verbs run end to end without a live shell.
+// Shebangs are absolute because the stub PATH has no bash on it.
+
+const BASH = Bun.which("bash") ?? "/bin/sh";
+
+function stubDir(stubs: Record<string, string>): {
+  dir: string;
+  bin: string;
+  calls: () => string[];
+} {
+  const dir = `/tmp/marchyo-cli-test-stubs-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const bin = `${dir}/bin`;
+  Bun.spawnSync(["mkdir", "-p", bin]);
+  for (const [name, body] of Object.entries(stubs)) {
+    const path = `${bin}/${name}`;
+    Bun.spawnSync([
+      BASH,
+      "-c",
+      `printf '%s\\n' "$1" > "$2" && chmod +x "$2"`,
+      "_",
+      `#!${BASH}\nprintf '%s\\n' "${name} $*" >> "${dir}/calls.log"\n${body}`,
+      path,
+    ]);
+  }
+  return {
+    dir,
+    bin,
+    calls: () => {
+      const r = Bun.spawnSync(["cat", `${dir}/calls.log`]);
+      return r.stdout.toString().split("\n").filter((l) => l !== "");
+    },
+  };
+}
+
+// A marchyo-shell stub that answers each IpcHandler function like shell.qml.
+const SHELL_STUB = `case "$6" in
+  toggleBar) echo on ;;
+  ping) echo ok ;;
+  nope) echo "Function not found." ;;
+  *) echo ok ;;
+esac`;
+
+test("shell verbs without marchyo-shell exit 1 naming the wrapper", async () => {
+  const r = await run(["shell", "toggle", "audio"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("marchyo-shell not found");
+});
+
+test("shell verbs exit 1 with a start hint when the shell is not running", async () => {
+  const s = stubDir({
+    "marchyo-shell": `echo 'No running instances for "/nix/store/x/shell.qml"'; exit 255`,
+  });
+  const r = await run(["shell", "reload"], { PATH: s.bin });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("not running");
+  expect(r.stderr).toContain("systemctl --user start marchyo-shell");
+});
+
+test("shell bar --json reports the IPC function and its reply", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const r = await run(["shell", "bar", "--json"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(JSON.parse(r.stdout)).toEqual({ function: "toggleBar", reply: "on" });
+  expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell toggleBar"]);
+});
+
+test("shell toggle/open/close/launcher map onto the IpcHandler functions", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  for (const args of [
+    ["shell", "toggle", "audio"],
+    ["shell", "open", "network"],
+    ["shell", "close"],
+    ["shell", "launcher", "emoji"],
+    ["shell", "bar", "off"],
+  ]) {
+    expect((await run(args, { PATH: s.bin })).code).toBe(0);
+  }
+  expect(s.calls()).toEqual([
+    "marchyo-shell ipc -n call -- shell togglePanel audio",
+    "marchyo-shell ipc -n call -- shell openPanel network",
+    "marchyo-shell ipc -n call -- shell closePanels",
+    "marchyo-shell ipc -n call -- shell toggleLauncher emoji",
+    "marchyo-shell ipc -n call -- shell setBar off",
+  ]);
+});
+
+test("shell verbs reject bad arguments with exit 2", async () => {
+  expect((await run(["shell", "bar", "maybe"], { PATH: "" })).code).toBe(2);
+  expect((await run(["shell", "toggle", "Not A Panel"], { PATH: "" })).code).toBe(2);
+  expect((await run(["shell", "launcher", "../x"], { PATH: "" })).code).toBe(2);
+});
+
+test("volume with a bad action exits 2", async () => {
+  const r = await run(["volume", "sideways"], { PATH: "" });
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("marchyo volume up|down|mute");
+});
+
+test("volume uses silent wpctl when the shell is installed", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB, wpctl: "", "swayosd-client": "" });
+  expect((await run(["volume", "up"], { PATH: s.bin })).code).toBe(0);
+  expect((await run(["volume", "mute", "--mic"], { PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual([
+    "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+",
+    "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle",
+  ]);
+});
+
+test("volume uses swayosd-client when it is installed and the shell is not", async () => {
+  const s = stubDir({ wpctl: "", "swayosd-client": "" });
+  expect((await run(["volume", "down"], { PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual(["swayosd-client --output-volume lower"]);
+});
+
+test("volume without wpctl fails cleanly", async () => {
+  const r = await run(["volume", "up"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("wpctl");
+});
+
+test("brightness steps brightnessctl and pokes the shell OSD", async () => {
+  const s = stubDir({
+    "marchyo-shell": SHELL_STUB,
+    brightnessctl: `case "$1" in get) echo 120 ;; max) echo 240 ;; esac`,
+  });
+  const r = await run(["brightness", "up"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  const calls = s.calls();
+  expect(calls[0]).toBe("brightnessctl -e4 -n2 set 5%+");
+  expect(calls).toContain("marchyo-shell ipc -n call -- shell osdShow BRT 50 true");
+});
+
+test("brightness still succeeds when the shell is not running", async () => {
+  const s = stubDir({
+    "marchyo-shell": `echo 'No running instances for "x"'; exit 255`,
+    brightnessctl: `case "$1" in get) echo 1 ;; max) echo 2 ;; esac`,
+  });
+  expect((await run(["brightness", "down"], { PATH: s.bin })).code).toBe(0);
+});
+
+test("brightness with a bad action exits 2", async () => {
+  expect((await run(["brightness", "sideways"], { PATH: "" })).code).toBe(2);
+});
+
+type DoctorJson = {
+  ok: boolean;
+  checks: { name: string; status: "pass" | "fail" | "skip"; detail: string }[];
+};
+
+test("doctor with nothing applicable skips every check and exits 0", async () => {
+  const r = await run(["doctor", "--json"], {
+    PATH: "",
+    HYPRLAND_INSTANCE_SIGNATURE: "",
+  });
+  expect(r.code).toBe(0);
+  const report = JSON.parse(r.stdout) as DoctorJson;
+  expect(report.ok).toBe(true);
+  expect(report.checks.length).toBeGreaterThan(0);
+  expect(report.checks.every((c) => c.status === "skip")).toBe(true);
+});
+
+// A fake store shell: the wrapper stub lives in out/bin, PATH holds a
+// symlink to it (like a profile), and out/share/.../Config.qml bakes one
+// existing and one missing tool path.
+function doctorFixture(): { bin: string; missing: string } {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const out = `${s.dir}/out`;
+  const commons = `${out}/share/marchyo/shell/Commons`;
+  const missing = `${s.dir}/gone/bin/curl`;
+  Bun.spawnSync(["mkdir", "-p", `${out}/bin`, commons, `${s.dir}/profile`]);
+  Bun.spawnSync(["mv", `${s.bin}/marchyo-shell`, `${out}/bin/marchyo-shell`]);
+  Bun.spawnSync(["ln", "-s", `${out}/bin/marchyo-shell`, `${s.bin}/marchyo-shell`]);
+  Bun.write(
+    `${commons}/Config.qml`,
+    `QtObject {
+  readonly property string shellBin: "${out}/bin/marchyo-shell"
+  readonly property string curl: "${missing}"
+  readonly property string terminal: "ghostty"
+}
+`,
+  );
+  return { bin: s.bin, missing };
+}
+
+test("doctor fails on a missing baked tool path and exits 1", async () => {
+  const { bin, missing } = doctorFixture();
+  const r = await run(["doctor", "--json"], {
+    PATH: bin,
+    HYPRLAND_INSTANCE_SIGNATURE: "",
+  });
+  expect(r.code).toBe(1);
+  const report = JSON.parse(r.stdout) as DoctorJson;
+  expect(report.ok).toBe(false);
+  const byName = Object.fromEntries(report.checks.map((c) => [c.name, c]));
+  expect(byName["shell tool paths"]?.status).toBe("fail");
+  expect(byName["shell tool paths"]?.detail).toContain(missing);
+  expect(byName["shell ipc"]?.status).toBe("pass");
+  expect(byName["hyprland ipc"]?.status).toBe("skip");
+});
+
+test("doctor text output labels each check PASS/FAIL/SKIP", async () => {
+  const { bin } = doctorFixture();
+  const r = await run(["doctor"], { PATH: bin, HYPRLAND_INSTANCE_SIGNATURE: "" });
+  expect(r.code).toBe(1);
+  expect(r.stdout).toMatch(/^FAIL {2}shell tool paths/m);
+  expect(r.stdout).toMatch(/^PASS {2}shell ipc/m);
+  expect(r.stdout).toMatch(/^SKIP {2}hyprland ipc/m);
+  expect(r.stdout).toContain("1 check failed");
+});

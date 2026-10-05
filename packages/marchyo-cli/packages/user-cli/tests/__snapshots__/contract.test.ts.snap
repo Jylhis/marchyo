@@ -44,6 +44,13 @@ Commands:
                                         generations (via dix)
   debug                                 Print a diagnostics bundle (versions,
                                         generation, journal errors)
+  doctor                                Check session health (baked tool paths,
+                                        IPC sockets, user services)
+  shell                                 Drive the running marchyo shell
+                                        (panels, launcher, bar, lock)
+  volume [options] <action>             Step or mute the default audio sink (or
+                                        source with --mic)
+  brightness <action>                   Step the backlight brightness
   toggle [options] <name> [state]       Flip a desktop toggle live (gaps,
                                         nightlight, waybar, …)
   capture                               Screenshots, screen recording, OCR, and
@@ -302,6 +309,98 @@ Options:
 "
 `;
 
+exports[`help contract: marchyo shell 1`] = `
+"Usage: marchyo shell [options] [command]
+
+Drive the running marchyo shell (panels, launcher, bar, lock)
+
+Options:
+  -h, --help       display help for command
+
+Commands:
+  toggle <panel>   Toggle a shell panel
+  open <panel>     Open a shell panel
+  close            Close the open shell panel
+  launcher <mode>  Toggle the launcher in a mode
+  bar [state]      Toggle the top bar, or set it on/off
+  lock             Lock the session with the shell lock screen
+  dismiss          Dismiss the newest notification toast
+  reload           Reload the shell's QML in place
+  help [command]   display help for command
+
+Exits 1 with a hint when marchyo-shell is not installed or not running.
+
+Examples:
+  $ marchyo shell toggle audio
+  $ marchyo shell launcher emoji
+  $ marchyo shell bar off
+  $ marchyo shell reload
+
+"
+`;
+
+exports[`help contract: marchyo volume 1`] = `
+"Usage: marchyo volume [options] <action>
+
+Step or mute the default audio sink (or source with --mic)
+
+Arguments:
+  action      up | down | mute
+
+Options:
+  --mic       Act on the default source (microphone)
+  -h, --help  display help for command
+
+With the marchyo shell installed: wpctl (the shell OSD follows Pipewire).
+Without it: swayosd-client when installed, else wpctl. wpctl steps 5% and
+caps at 100%.
+
+Examples:
+  $ marchyo volume up
+  $ marchyo volume mute --mic
+
+"
+`;
+
+exports[`help contract: marchyo brightness 1`] = `
+"Usage: marchyo brightness [options] <action>
+
+Step the backlight brightness
+
+Arguments:
+  action      up | down
+
+Options:
+  -h, --help  display help for command
+
+With the marchyo shell installed: brightnessctl, then an OSD poke over
+shell IPC. Without it: swayosd-client when installed, else brightnessctl.
+brightnessctl steps 5%.
+
+Examples:
+  $ marchyo brightness up
+
+"
+`;
+
+exports[`help contract: marchyo doctor 1`] = `
+"Usage: marchyo doctor [options]
+
+Check session health (baked tool paths, IPC sockets, user services)
+
+Options:
+  -h, --help  display help for command
+
+Each check reports PASS, FAIL, or SKIP (not applicable on this host).
+Exits 1 when any check fails.
+
+Examples:
+  $ marchyo doctor
+  $ marchyo doctor --json | jq '.checks[] | select(.status == "fail")'
+
+"
+`;
+
 exports[`json contract: theme get shape 1`] = `
 [
   ".theme.name:null",
@@ -330,5 +429,14 @@ exports[`json contract: debug shape 1`] = `
   ".generationDate:null",
   ".journalErrors[]:string",
   ".nixosVersion:null",
+]
+`;
+
+exports[`json contract: doctor shape 1`] = `
+[
+  ".checks[].detail:string",
+  ".checks[].name:string",
+  ".checks[].status:string",
+  ".ok:boolean",
 ]
 `;
