@@ -4,7 +4,7 @@ A custom [Quickshell](https://quickshell.org) desktop shell: a single
 long-running QML process replacing today's discrete
 waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
 notifications, launcher; lock pending its live-verification pass). Design and
-roadmap: **[../plans/shell.md](../plans/shell.md)**.
+roadmap: **[../TODO.md](../TODO.md)**.
 
 ## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 5 (launcher) done
 
@@ -21,7 +21,7 @@ runtime — there is no runtime plugin directory or hot-reload. Native Quickshel
 service bindings plus a stock `IpcHandler` cover everything the shell itself
 needs. `shell/compat/` additionally provides an omarchy plugin host API
 (`qs.compat.Ui` / `qs.compat.Commons`) so upstream omarchy bar widgets run
-near-unmodified; see the "Plugins" docs and `plans/shell.md`.
+near-unmodified; see the "Plugins" docs.
 
 A hardening pass added **tooltips** (one shared hover surface under the bar),
 **SNI tray menus** on right-click, **per-monitor workspaces** with waybar's
@@ -31,7 +31,7 @@ bar, panel, and OSD), an **event-driven keyboard-layout widget** (no poll),
 toast transitions, a DND queue cap, and a committed offscreen **type-check
 harness** (`just -f shell/Justfile check`).
 
-A second pass (see **[../plans/shell-research.md](../plans/shell-research.md)**,
+A second pass (see the references in **[../TODO.md](../TODO.md)**,
 a survey of ten public Hyprland/Quickshell projects) moved the last three
 stateful widgets into `Services/` singletons: `shell.qml` builds the bar once per
 screen, so a `Process` or `Timer` inside a widget was one subprocess **per
@@ -267,7 +267,7 @@ clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
 (`SUPER+CTRL+comma`) and dismiss-all
 (`SUPER+CTRL+SHIFT+comma`) binds route through `toggleDnd` / `clearNotifications`
 when the shell is on, and fall back to the CLI/mako when it is off. This is the
-only IPC in the shell; there is no custom bus (see `plans/shell.md`).
+only IPC in the shell; there is no custom bus.
 
 ### Notifications
 
@@ -334,7 +334,7 @@ gated on `secure` (compositor-confirmed coverage), per the upstream docs.
 > **Testing warning:** destroying the shell (crash, or a hot-reload from the
 > dev loop) while locked leaves a conformant compositor showing a solid
 > color — by design. Never edit QML while a dev instance is locked, and keep
-> a TTY logged in when live-testing (runbook in `plans/shell.md`).
+> a TTY logged in when live-testing.
 
 ### Launcher
 

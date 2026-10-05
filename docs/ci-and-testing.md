@@ -41,7 +41,7 @@ The QML tree in `shell/` gets two headless suites, wired into `mkChecks` alongsi
 - **`shell-format-unit`** — runs the pure-JS suites over `shell/Commons/*.js`: `format-test.js`, `notify-test.js`, `launcher-test.js`, and `peripherals-test.js`. Each `Commons/*.js` is a plain module with a CommonJS guard so QML imports it unchanged while Node can load it.
 - **`shell-contracts`** — `bash tests/shell/contracts-test.sh`, static cross-file agreements that QML only resolves at runtime: qmldir completeness, `Bar/` widgets owning no `Process`/`Timer`/`Connections` (they are instantiated once per monitor), every `Services/` component being a singleton, every `Config.<tool>` being baked by `packages/marchyo-shell/package.nix`, and every `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving to a function in `shell.qml`.
 
-Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them. Background and rationale: [`plans/shell-research.md`](../plans/shell-research.md).
+Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them. Background and rationale: [`TODO.md`](../TODO.md).
 
 All changes must pass `just check` (or `nix flake check`).
 

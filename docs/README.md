@@ -8,7 +8,7 @@ Documentation is organized into three trees (mirroring the omarchy model):
 
 - **`docs/`** (this tree) — contributor/system-architecture reference.
 - **[`manual/`](../manual/)** — published end-user documentation (how to *use* marchyo).
-- **[`plans/`](../plans/)** — design RFCs for in-progress and proposed work.
+- **[`TODO.md`](../TODO.md)** — the single list of open work.
 
 ## Contents
 

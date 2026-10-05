@@ -1,4 +1,4 @@
-# Evaluation tests for modules/home/omarchy-binds.nix (plans/omarchy-parity.md:
+# Evaluation tests for modules/home/omarchy-binds.nix (TODO.md:
 # monitor controls, connectivity TUIs, app-launch binds).
 {
   helpers,

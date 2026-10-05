@@ -57,7 +57,7 @@ in
         the notification toasts — replacing waybar, SwayOSD, and mako (each
         mutually exclusive; see tests/eval/marchyo-shell.nix). Opt-in and off
         by default; it is not cascaded from `marchyo.desktop.enable`.
-        Vicinae (launcher) and hyprlock (lock) stay. See plans/shell.md for
+        Vicinae (launcher) and hyprlock (lock) stay. See shell/README.md for
         the roadmap.
       '';
     };

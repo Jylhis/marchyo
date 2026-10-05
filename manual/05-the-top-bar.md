@@ -13,4 +13,4 @@ TODO — the top bar tour. Cover:
 
 Note: the bar is Waybar unless the marchyo shell is enabled
 (`marchyo.shell.enable`), which replaces it with the in-house Quickshell
-bar (`plans/shell.md`). Cover both, keyed on the flag.
+bar (`TODO.md`). Cover both, keyed on the flag.
