@@ -90,6 +90,7 @@ shell/
     BarSeparator.qml   thin vertical rule between bar clusters
     Panel.qml          summonable-panel base (layer-shell card + dismiss)
     PanelButton.qml    labelled pill control for panel bodies
+    PanelSlider.qml    0..1 slider for panel bodies (Control Center volume/mic)
     TooltipWindow.qml  the one tooltip surface (hover text below the bar)
   Bar/
     qmldir             declares module qs.Bar
@@ -119,7 +120,11 @@ shell/
     NotificationState.qml  singleton: DND flag + live toast list (shared state)
     Audio.qml          singleton: shared Pipewire default sink/source + tracker
     Power.qml          singleton: shared UPower battery state + waybar-parity text
-    NetworkStatus.qml  singleton: active device + nmcli SSID/signal/IP poll
+    NetworkStatus.qml  singleton: active device, Wi-Fi radio switch + nmcli
+                       SSID/signal/IP poll
+    BluetoothState.qml singleton: default BlueZ adapter, power, connected devices
+    PowerProfileState.qml  singleton: power-profiles-daemon profile + cycle
+    QuickToggles.qml   singleton: the Control Center toggle model (no presentation)
     Dictation.qml      singleton: the one voxtype --follow stream (with restart)
     Caffeine.qml       singleton: the one keep-awake probe + toggle
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
@@ -129,6 +134,7 @@ shell/
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
+    ControlCenter.qml  quick-settings panel (sliders + toggle tiles)
   Notifications/
     qmldir             declares module qs.Notifications
     NotificationDaemon.qml  owns org.freedesktop.Notifications (replaces mako)
@@ -172,11 +178,12 @@ below), so nothing depends on the session `PATH`.
 | ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
-| BluetoothWidget | `Quickshell.Bluetooth` (click = bluetui) |
+| BluetoothWidget | `Services/BluetoothState` → `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` + `Services/NetworkStatus` nmcli poll (click = network panel) |
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
-| PowerProfileWidget | `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
+| PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
+| ControlCenterWidget | `Services/PanelManager` (click = Control Center; registered as `marchyo.controlCenter`, not placed by default) |
 | BatteryWidget | `Services/Power` → `Quickshell.Services.UPower` (click = power panel) |
 
 Most widgets also carry a hover **tooltip** (waybar parity: network shows
@@ -237,9 +244,10 @@ overlay that dismisses on outside click) binds its visibility to
 | Panel | Opened by | Backing service | Contents |
 | --- | --- | --- | --- |
 | AudioPanel | AudioWidget | `Pipewire` | volume -/+, mute, output-device picker, `wiremix` escape |
-| NetworkPanel | NetworkWidget | `Networking` + `nmcli` | connection status, SSID/signal, `nmtui` escape |
+| NetworkPanel | NetworkWidget | `Networking` + `nmcli` | connection status, SSID/signal, Wi-Fi radio switch, `nmtui` escape |
 | PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
 | MonitorPanel | CpuWidget | `Services/SystemStats` + `df` + hwmon | CPU / mem / disk / temp meters, `btop` escape |
+| ControlCenter | ControlCenterWidget | `Services/QuickToggles` + `Audio` | volume / mic sliders, quick-toggle tiles (see below) |
 
 Each panel reuses the exact native bindings of its bar widget (via the shared
 `Services/` singletons — `Audio`, `Power`, `NetworkStatus`, `SystemStats`) and
@@ -255,6 +263,36 @@ polled only while the panel is open) and CPU temperature (the first
 motherboard, not the package). CPU and memory come from the shared
 `Services/SystemStats` singleton, which owns the single `/proc/stat` +
 `/proc/meminfo` sampler that the bar's CpuWidget reads too.
+
+### Control Center
+
+`Panels/ControlCenter.qml` (`panelId: "controlcenter"`) is the quick-settings
+card: output-volume and microphone sliders (`Ui/PanelSlider`) with mute buttons
+over `Services/Audio`, and a two-column tile grid over the
+`Services/QuickToggles` model. It opens from the `marchyo.controlCenter` bar
+widget (registered, not placed by default), `marchyo shell toggle
+controlcenter`, or `SUPER+SHIFT+Q`.
+
+`QuickToggles` holds no presentation: each entry exposes `key`, `icon`, `label`,
+`status`, `active`, `available`, `detail` (a panelId or `""`) and `toggle()`,
+bound to the owning service. `all` is a fixed array, so the tile Repeater never
+resets; unavailable entries render no tile.
+
+| Tile | State and action | Available when | Detail |
+| --- | --- | --- | --- |
+| Wi-Fi | `NetworkStatus.wifiEnabled` / `setWifiEnabled` (NetworkManager radio via `Quickshell.Networking`) | a Wi-Fi device exists | network |
+| Bluetooth | `BluetoothState.enabled` / `toggle` (BlueZ adapter power) | a default adapter exists | none |
+| Tailscale | `Tailscale.running` / `setUp` (`tailscale up --timeout=20s` / `down`) | the CLI is baked (`marchyo.services.tailscale.enable`) and answers | tailscale |
+| Do not disturb | `NotificationState.dnd` / `toggleDnd` | always | notifications |
+| Caffeine | `Caffeine.active` / `toggle` | always | none |
+| Night light | `Nightlight.enabled` / `toggle` | always | none |
+| Power profile | `PowerProfileState.profile` (on = not balanced) / `cycle` | always | power |
+
+A tile click flips its toggle; the chevron opens the detail panel through
+`PanelManager.openDetail(id, "controlcenter")`, and `Ui/Panel` shows a back
+button while `PanelManager.returnId` is set. tailscaled accepts up/down only
+from root or the tailnet operator (`sudo tailscale set --operator=$USER`); a
+refusal shows as the tile status and in full in the Tailscale panel.
 
 ### Keybind summons
 
@@ -278,7 +316,7 @@ self-targets the running instance (no instance id to track).
 `modules/home/window-toggles.nix`, `hypridle.nix`, and `screensaver.nix`
 call it directly. Default binds:
 `SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
-`SUPER+SHIFT+M` monitor; the launcher summons (`toggleLauncher apps|emoji|
+`SUPER+SHIFT+M` monitor, `SUPER+SHIFT+Q` Control Center; the launcher summons (`toggleLauncher apps|emoji|
 clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`. The DND toggle
 (`SUPER+CTRL+comma`) and dismiss-all
 (`SUPER+CTRL+SHIFT+comma`) binds route through `toggleDnd` / `clearNotifications`

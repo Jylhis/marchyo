@@ -5,9 +5,10 @@ import Quickshell.Networking
 import qs.Commons
 import "../Commons/Format.js" as Format
 
-// Shared network status: the active device from the native Networking binding,
-// plus the bits it does not expose (Wi-Fi SSID/signal and the IPv4 address) from
-// one nmcli poll shared by the bar widget, the network panel, and the tooltips.
+// Shared network status: the active device and the Wi-Fi radio switch from the
+// native Networking binding, plus the bits it does not expose (Wi-Fi
+// SSID/signal and the IPv4 address) from one nmcli poll shared by the bar
+// widget, the network panel, the Control Center, and the tooltips.
 QtObject {
     id: root
 
@@ -19,6 +20,23 @@ QtObject {
         return null;
     }
     readonly property bool wifi: activeDevice && activeDevice.type !== DeviceType.Wired
+
+    // Wi-Fi radio: whether this host has a Wi-Fi device at all, NetworkManager's
+    // software radio switch (writable through setWifiEnabled), and the rfkill
+    // hardware switch (read-only; while it is off the radio cannot be enabled).
+    readonly property bool wifiAvailable: {
+        const devs = Networking.devices ? Networking.devices.values : [];
+        for (let i = 0; i < devs.length; i++)
+            if (devs[i].type === DeviceType.Wifi)
+                return true;
+        return false;
+    }
+    readonly property bool wifiEnabled: Networking.wifiEnabled
+    readonly property bool wifiHardwareEnabled: Networking.wifiHardwareEnabled
+
+    function setWifiEnabled(on: bool): void {
+        Networking.wifiEnabled = on;
+    }
 
     property string ssid: ""
     property int signalStrength: -1

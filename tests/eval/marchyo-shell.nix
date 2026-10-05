@@ -317,6 +317,8 @@ in
         throw "FAIL: XF86MonBrightnessUp should run 'marchyo brightness up' when the shell is on"
       else if !(hyprHasBind binds "SUPER + SHIFT + V" "marchyo shell toggle audio") then
         throw "FAIL: SUPER+SHIFT+V should run 'marchyo shell toggle audio'"
+      else if !(hyprHasBind binds "SUPER + SHIFT + Q" "marchyo shell toggle controlcenter") then
+        throw "FAIL: SUPER+SHIFT+Q should run 'marchyo shell toggle controlcenter'"
       else if !(hyprHasBind binds "SUPER + SHIFT + SPACE" "marchyo shell bar") then
         throw "FAIL: SUPER+SHIFT+SPACE should run 'marchyo shell bar' when the shell is on"
       else

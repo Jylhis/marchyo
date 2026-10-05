@@ -23,16 +23,44 @@ QtObject {
 
     // Live temperature probe. `hyprctl hyprsunset temperature` prints a number
     // (with surrounding text on some versions); take the first integer run.
+    // When hyprsunset is not running hyprctl exits non-zero with an error that
+    // contains digits (the socket path), so only a zero exit is parsed and any
+    // failure reads as neutral. stdout and the exit can arrive in either order;
+    // both feed applyProbe().
+    property int probeExit: -1
+    property string probeText: ""
+
+    function applyProbe(): void {
+        if (root.probeExit > 0) {
+            root.temperature = 6500;
+            return;
+        }
+        if (root.probeExit !== 0)
+            return;
+        const m = root.probeText.match(/[0-9]+/);
+        if (m)
+            root.temperature = parseInt(m[0]);
+    }
+
     readonly property var probe: Process {
         id: probe
         command: [Config.hyprctl, "hyprsunset", "temperature"]
         stdout: StdioCollector {
+            readonly property int maxChars: 4096
             onStreamFinished: {
-                const m = String(text).match(/[0-9]+/);
-                if (m)
-                    root.temperature = parseInt(m[0]);
+                root.probeText = text.length <= maxChars ? String(text) : "";
+                root.applyProbe();
             }
         }
+        onExited: code => {
+            root.probeExit = code;
+            root.applyProbe();
+        }
+    }
+
+    function runProbe(): void {
+        root.probeExit = -1;
+        probe.running = true;
     }
 
     // `marchyo toggle nightlight` flips 4000K <-> 6500K. Re-probe on exit so the
@@ -40,7 +68,7 @@ QtObject {
     readonly property var toggleProc: Process {
         id: toggleProc
         command: [Config.marchyo, "toggle", "nightlight"]
-        onExited: probe.running = true
+        onExited: root.runProbe()
     }
 
     readonly property var poll: Timer {
@@ -48,6 +76,6 @@ QtObject {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: probe.running = true
+        onTriggered: root.runProbe()
     }
 }

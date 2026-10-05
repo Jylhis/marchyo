@@ -60,7 +60,8 @@ ShellRoot {
             "marchyo.cpu": cCpu,
             "marchyo.powerProfile": cPowerProfile,
             "marchyo.peripherals": cPeripherals,
-            "marchyo.battery": cBattery
+            "marchyo.battery": cBattery,
+            "marchyo.controlCenter": cControlCenter
         })
 
     Component {
@@ -163,6 +164,10 @@ ShellRoot {
         id: cBattery
         BatteryWidget {}
     }
+    Component {
+        id: cControlCenter
+        ControlCenterWidget {}
+    }
 
     // Per-widget host facade handed to an omarchy-compat plugin bar widget as
     // its `bar`. Scalars mirror marchyo's bar (colors, font, geometry); shared
@@ -256,6 +261,9 @@ ShellRoot {
     TailscalePanel {}
     WifiQrPanel {}
     NotificationCenter {}
+    // Quick settings over the Services/QuickToggles model; opens the panels
+    // above as detail pages.
+    ControlCenter {}
 
     // Launcher: apps / emoji / clipboard surface, summoned over IPC by the
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).

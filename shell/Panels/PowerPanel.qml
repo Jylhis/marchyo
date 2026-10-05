@@ -6,9 +6,9 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Battery status from UPower's composite display device and a power-profile selector
-// on PowerProfiles, both from the shared Services/Power. power menu reaches marchyo's
-// session actions, or the launcher when menus are disabled.
+// Battery status from UPower's composite display device (Services/Power) and a
+// power-profile selector (Services/PowerProfileState). power menu reaches
+// marchyo's session actions, or the launcher when menus are disabled.
 Panel {
     id: root
     panelId: "power"
@@ -68,23 +68,23 @@ Panel {
             PanelButton {
                 Layout.fillWidth: true
                 text: "eco"
-                active: PowerProfiles.profile === PowerProfile.PowerSaver
-                onClicked: PowerProfiles.profile = PowerProfile.PowerSaver
+                active: PowerProfileState.profile === PowerProfile.PowerSaver
+                onClicked: PowerProfileState.setProfile(PowerProfile.PowerSaver)
             }
 
             PanelButton {
                 Layout.fillWidth: true
                 text: "bal"
-                active: PowerProfiles.profile === PowerProfile.Balanced
-                onClicked: PowerProfiles.profile = PowerProfile.Balanced
+                active: PowerProfileState.profile === PowerProfile.Balanced
+                onClicked: PowerProfileState.setProfile(PowerProfile.Balanced)
             }
 
             PanelButton {
                 Layout.fillWidth: true
-                visible: PowerProfiles.hasPerformanceProfile
+                visible: PowerProfileState.hasPerformance
                 text: "perf"
-                active: PowerProfiles.profile === PowerProfile.Performance
-                onClicked: PowerProfiles.profile = PowerProfile.Performance
+                active: PowerProfileState.profile === PowerProfile.Performance
+                onClicked: PowerProfileState.setProfile(PowerProfile.Performance)
             }
         },
         PanelButton {

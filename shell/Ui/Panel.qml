@@ -19,6 +19,8 @@ PanelWindow {
     required property string panelId
     property string title: ""
     property alias body: bodyColumn.data
+    // Card width; wider surfaces (the Control Center) override it.
+    property int cardWidth: Style.panelWidth
 
     visible: PanelManager.openId === root.panelId
     // Open on the output whose bar was clicked, not Quickshell's default screen.
@@ -53,7 +55,7 @@ PanelWindow {
         // barMarginV is 0 in strip mode, so this reproduces the strip look.
         anchors.topMargin: Style.barMarginV + Style.barHeight + Style.panelGap
         anchors.rightMargin: Style.panelGap + Style.barMarginH
-        width: Style.panelWidth
+        width: root.cardWidth
         implicitHeight: layout.implicitHeight + Style.panelPad * 2
         radius: Style.panelRadius
         color: Qt.alpha(Color.surface, Style.surfaceAlpha)
@@ -72,13 +74,27 @@ PanelWindow {
             anchors.margins: Style.panelPad
             spacing: Style.spacing
 
-            Text {
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.title
-                color: Color.textHeading
-                font.family: Style.fontFamily
-                font.pixelSize: Style.fontSize
-                font.bold: true
+                spacing: Style.spacing
+
+                // Back to the panel this one was opened from as a detail page
+                // (PanelManager.openDetail), e.g. the Control Center.
+                PanelButton {
+                    visible: PanelManager.returnId !== "" && PanelManager.openId === root.panelId
+                    implicitHeight: Style.panelRowHeight * 0.8
+                    text: "\u2039"
+                    onClicked: PanelManager.back()
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: root.title
+                    color: Color.textHeading
+                    font.family: Style.fontFamily
+                    font.pixelSize: Style.fontSize
+                    font.bold: true
+                }
             }
 
             ColumnLayout {

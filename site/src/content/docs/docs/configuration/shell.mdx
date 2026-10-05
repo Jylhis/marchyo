@@ -49,7 +49,7 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.caffeine`, `marchyo.theme`, `marchyo.dnd`, `marchyo.keyboardLayout`,
 `marchyo.bluetooth`, `marchyo.network`, `marchyo.mic`, `marchyo.audio`,
 `marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`, `marchyo.battery`,
-`marchyo.tailscale`, `marchyo.weather`.
+`marchyo.tailscale`, `marchyo.weather`, `marchyo.controlCenter`.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
 `marchyo.reminders` (visible only while `marchyo reminder` timers are pending)
@@ -68,6 +68,22 @@ open-network QR when it is unavailable). `marchyo.weather` (current conditions f
 IP-geolocated) is registered but not placed by default; placing it is what
 starts the periodic outbound fetch, so a bar without it makes no network
 request.
+
+## Control Center
+
+The Control Center is a quick-settings panel: output-volume and microphone
+sliders, plus tiles for Wi-Fi, Bluetooth, Tailscale, do-not-disturb, caffeine,
+night light, and the power profile. Each tile shows the live state and flips it
+on click; its chevron opens the matching detail panel (network, Tailscale,
+notifications, power), with a back button to return. Tiles the host cannot offer
+(no Wi-Fi device, no Bluetooth adapter, Tailscale off) are hidden.
+
+Open it with `Super + Shift + Q`, `marchyo shell toggle controlcenter`, or the
+`marchyo.controlCenter` bar widget (registered, not placed by default; add it to
+a `bar.layout` section). The Tailscale tile needs
+`marchyo.services.tailscale.enable`, and tailscaled accepts connect/disconnect
+only from the tailnet operator: run `sudo tailscale set --operator=$USER` once,
+or the tile reports the refusal.
 
 ## Plugins
 
