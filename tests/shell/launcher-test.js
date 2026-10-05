@@ -61,11 +61,39 @@ assert.strictEqual(Cliphist.decodePayload("calf=C3=A9"), "calf\u00e9");
 // U+1F600 = F0 9F 98 80 as a 4-byte UTF-8 sequence -> surrogate pair.
 assert.strictEqual(Cliphist.decodePayload("=F0=9F=98=80"), "\u{1F600}");
 assert.strictEqual(Cliphist.decodePayload("100=25 ok"), "100% ok");
-// parseLine: id TAB payload; binary payloads are skipped.
+// parseLine: id TAB payload; non-image binary payloads are skipped.
 const line = Cliphist.parseLine("42\tHello, wor=6Cd!");
 assert.ok(line && line.raw === "42\tHello, wor=6Cd!" && line.text === "Hello, world!");
+assert.strictEqual(line.id, "42");
+assert.strictEqual(line.image, null);
 assert.strictEqual(Cliphist.parseLine("7\t[[ binary data 1.png ]]"), null);
 assert.strictEqual(Cliphist.parseLine("garbage-without-a-tab"), null);
+
+// Image entries: cliphist's preview string parses to size/format/dimensions.
+assert.deepStrictEqual(Cliphist.parseImage("[[ binary data 12 KiB png 800x600 ]]"),
+    { bytes: 12288, sizeText: "12 KiB", format: "png", width: 800, height: 600 });
+assert.deepStrictEqual(Cliphist.parseImage("[[ binary data 1.5 MiB jpeg 4032x3024 ]]"),
+    { bytes: 1572864, sizeText: "1.5 MiB", format: "jpeg", width: 4032, height: 3024 });
+assert.strictEqual(Cliphist.parseImage("[[ binary data 900 B gif 1x1 ]]").bytes, 900);
+// Non-image binaries, unknown formats and near-misses are not images.
+assert.strictEqual(Cliphist.parseImage("[[ binary data 3 KiB application/pdf ]]"), null);
+assert.strictEqual(Cliphist.parseImage("[[ binary data 3 KiB tiff 10x10 ]]"), null);
+assert.strictEqual(Cliphist.parseImage("[[ binary data 12 KiB png 800x600 ]] trailing"), null);
+assert.strictEqual(Cliphist.parseImage("[[ binary data 12 KiB png ]]"), null);
+assert.strictEqual(Cliphist.parseImage("plain text"), null);
+assert.strictEqual(Cliphist.parseImage(null), null);
+const img = Cliphist.parseLine("5650\t[[ binary data 140 KiB png 902x397 ]]");
+assert.ok(img && img.id === "5650" && img.text === "" && img.image.format === "png");
+assert.deepStrictEqual([img.image.width, img.image.height], [902, 397]);
+// Only a numeric id ever reaches `cliphist decode`.
+assert.strictEqual(Cliphist.parseLine("-1 x\t[[ binary data 1 KiB png 1x1 ]]"), null);
+assert.strictEqual(Cliphist.parseLine("\t[[ binary data 1 KiB png 1x1 ]]"), null);
+// Cache names are id-keyed and change with the image, so a reused id misses.
+assert.strictEqual(Cliphist.cacheName("5650", img.image), "5650-902x397-143360.png");
+assert.notStrictEqual(Cliphist.cacheName("5650", Cliphist.parseImage("[[ binary data 2 KiB png 10x10 ]]")),
+    Cliphist.cacheName("5650", img.image));
+assert.ok(/^[0-9]+-[0-9]+x[0-9]+-[0-9]+\.[a-z0-9]+$/.test(Cliphist.cacheName("1", img.image)));
+assert.strictEqual(Cliphist.describeImage(img.image), "png 902x397 \u00b7 140 KiB");
 
 // Vendored fuzzysort: the pinned release, loadable as CommonJS.
 const fuzzysortSrc = fs.readFileSync(path.join(__dirname, "../../shell/Commons/fuzzysort.js"), "utf8");

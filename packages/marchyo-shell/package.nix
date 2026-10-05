@@ -21,6 +21,7 @@
   coreutils,
   wtype,
   cliphist,
+  wl-clipboard,
   unicode-emoji,
   marchyo-cli,
   solaar,
@@ -277,6 +278,7 @@ let
       readonly property string df: "${lib.getExe' coreutils "df"}"
       readonly property string wtype: "${lib.getExe wtype}"
       readonly property string cliphist: "${lib.getExe cliphist}"
+      readonly property string wlCopy: "${lib.getExe' wl-clipboard "wl-copy"}"
       readonly property string marchyo: "${lib.getExe marchyo-cli}"
       readonly property string solaar: "${lib.getExe solaar}"
       readonly property string systemctl: "${lib.getExe' systemd "systemctl"}"
