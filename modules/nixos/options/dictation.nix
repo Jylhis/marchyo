@@ -153,6 +153,56 @@ in
       '';
     };
 
+    silenceGate = {
+      enable = lib.mkEnableOption "the silence gate that drops recordings with no detected speech" // {
+        default = true;
+        description = ''
+          Run voxtype's voice activity detection (`[vad]`) on each recording and
+          discard it before transcription when no speech is found, so a silent
+          or near-silent recording types nothing instead of a Whisper
+          hallucination ("Thank you.", "you"). A dropped recording plays the
+          cancel cue and produces no output.
+        '';
+      };
+
+      backend = mkOption {
+        type = types.enum [
+          "energy"
+          "whisper"
+        ];
+        default = "energy";
+        description = ''
+          Detection algorithm (voxtype `vad.backend`). "energy" is an RMS
+          threshold over 20 ms frames and needs no model. "whisper" uses the
+          Silero VAD model, which is more accurate on noisy input but needs
+          `ggml-silero-vad.bin` in voxtype's models directory (fetch it with
+          `voxtype setup vad`); without the model the daemon logs a warning and
+          transcribes every recording ungated.
+        '';
+      };
+
+      threshold = mkOption {
+        type = types.numbers.between 0.0 1.0;
+        default = 0.5;
+        description = ''
+          Speech detection threshold (voxtype `vad.threshold`), 0.0-1.0. Higher
+          values need louder or more confident speech. For the energy backend
+          0.0, 0.5 and 1.0 map to frame RMS levels of about 0.001, 0.01 and 0.1.
+          Lower it if quiet speech is dropped; raise it if background noise
+          still reaches Whisper.
+        '';
+      };
+
+      minSpeechMs = mkOption {
+        type = types.ints.unsigned;
+        default = 100;
+        description = ''
+          Minimum total detected speech in milliseconds (voxtype
+          `vad.min_speech_duration_ms`); recordings with less are dropped.
+        '';
+      };
+    };
+
     # UI surfaces, on by default when dictation is enabled, each an opt-out.
     indicator = mkOption {
       type = types.bool;

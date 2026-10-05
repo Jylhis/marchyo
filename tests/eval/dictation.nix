@@ -160,6 +160,55 @@ in
         throw "FAIL: dictation defaults emit a text block or on-demand loading unexpectedly"
     );
 
+  # Silence gate on by default: voxtype's [vad] section is enabled with the
+  # model-free energy backend, so a silent recording is dropped before Whisper.
+  eval-dictation-silence-gate-default =
+    let
+      s =
+        (evalWith { marchyo.dictation.enable = true; })
+        .config.home-manager.users.testuser.services.voxtype.settings;
+    in
+    pkgs.writeText "eval-dictation-silence-gate-default" (
+      if
+        s.vad.enabled
+        && s.vad.backend == "energy"
+        && s.vad.threshold == 0.5
+        && s.vad.min_speech_duration_ms == 100
+      then
+        "pass"
+      else
+        throw "FAIL: dictation enabled but the [vad] silence gate is off or not on energy/0.5/100ms defaults"
+    );
+
+  # Silence gate overrides reach [vad], and enable = false turns detection off.
+  eval-dictation-silence-gate-settings =
+    let
+      settingsFor =
+        gate:
+        (evalWith {
+          marchyo.dictation.enable = true;
+          marchyo.dictation.silenceGate = gate;
+        }).config.home-manager.users.testuser.services.voxtype.settings;
+      tuned = settingsFor {
+        backend = "whisper";
+        threshold = 0.7;
+        minSpeechMs = 250;
+      };
+      off = settingsFor { enable = false; };
+    in
+    pkgs.writeText "eval-dictation-silence-gate-settings" (
+      if
+        tuned.vad.enabled
+        && tuned.vad.backend == "whisper"
+        && tuned.vad.threshold == 0.7
+        && tuned.vad.min_speech_duration_ms == 250
+        && (!off.vad.enabled)
+      then
+        "pass"
+      else
+        throw "FAIL: silenceGate backend/threshold/minSpeechMs did not reach voxtype [vad], or enable = false left it on"
+    );
+
   # Indicator opt-out: dictation stays enabled but the waybar segment drops out.
   eval-dictation-indicator-off =
     let

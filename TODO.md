@@ -96,7 +96,6 @@ One quick-settings surface over `Services/*` singletons, no new daemons.
 - Idle-inhibit-on-video: watch playerctl/PipeWire, drive `Caffeine`.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
 - Persistent per-app audio routing across restarts (PipeWire metadata).
-- Dictation silence gate so a silent recording does not hallucinate text.
 - Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +
   lockfile on top of `Commons/PluginIndex.qml` (ref: DMS
   `Services/PluginService.qml`). Stays build-time only.
