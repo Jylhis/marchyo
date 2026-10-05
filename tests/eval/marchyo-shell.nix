@@ -184,6 +184,29 @@ in
         throw "FAIL: marchyo.shell is off but SUPER+L no longer execs hyprlock"
     );
 
+  # SUPER+grave summons the window overview through `marchyo shell overview`
+  # when the shell is on, and is the only bind on that chord; with the shell
+  # off there is no overview and no bind.
+  eval-marchyo-shell-overview-bind =
+    let
+      bindsFor =
+        extra:
+        (evalWith extra).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+      on = bindsFor { marchyo.shell.enable = true; };
+      off = bindsFor { };
+      onChord = lib.filter (e: (e._args or [ ]) != [ ] && builtins.head e._args == "SUPER + grave") on;
+    in
+    pkgs.writeText "eval-marchyo-shell-overview-bind" (
+      if !(hyprHasBind on "SUPER + grave" "marchyo shell overview") then
+        throw "FAIL: SUPER+grave should run 'marchyo shell overview' when the shell is on"
+      else if lib.length onChord != 1 then
+        throw "FAIL: SUPER+grave should carry exactly one bind, found ${toString (lib.length onChord)}"
+      else if lib.any (e: lib.hasInfix "marchyo shell overview" (hyprEntryText e)) off then
+        throw "FAIL: marchyo.shell is off but a bind still runs 'marchyo shell overview'"
+      else
+        "pass"
+    );
+
   # hypridle stays the idle authority, but its lock points (general.lock_cmd,
   # before_sleep_cmd, the 300s listener) run `marchyo shell lock` when it is on.
   eval-marchyo-shell-hypridle-locks-via-cli =

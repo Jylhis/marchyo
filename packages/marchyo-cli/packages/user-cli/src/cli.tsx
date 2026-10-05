@@ -33,6 +33,7 @@ import {
   runShellLauncher,
   runShellLock,
   runShellLockState,
+  runShellOverview,
   runShellPanel,
   runShellReload,
 } from "./commands/shell.ts";
@@ -450,7 +451,7 @@ Examples:
 
 const shellCmd = program
   .command("shell")
-  .description("Drive the running marchyo shell (panels, launcher, bar, notifications, lock)");
+  .description("Drive the running marchyo shell (panels, launcher, overview, bar, notifications, lock)");
 
 for (const action of ["toggle", "open"] as const) {
   shellCmd
@@ -484,6 +485,14 @@ shellCmd
   .argument("[state]", "on | off (omit to flip)")
   .action(async (state: string | undefined) => {
     process.exit(await runShellBar(rt(), state));
+  });
+
+shellCmd
+  .command("overview")
+  .description("Toggle the window overview, or open/close it")
+  .argument("[state]", "on | off (omit to flip)")
+  .action(async (state: string | undefined) => {
+    process.exit(await runShellOverview(rt(), state));
   });
 
 shellCmd
@@ -534,6 +543,7 @@ Examples:
   $ marchyo shell launcher emoji
   $ marchyo shell dnd on
   $ marchyo shell bar off
+  $ marchyo shell overview
   $ marchyo shell reload
 `,
 );

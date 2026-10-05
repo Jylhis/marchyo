@@ -1,0 +1,5 @@
+module qs.Overview
+OverviewLayer 1.0 OverviewLayer.qml
+OverviewWindow 1.0 OverviewWindow.qml
+WorkspaceTile 1.0 WorkspaceTile.qml
+WindowPreview 1.0 WindowPreview.qml

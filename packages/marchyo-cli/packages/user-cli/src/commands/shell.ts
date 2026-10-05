@@ -93,6 +93,22 @@ export async function runShellBar(
   return call(rt, () => shellIpc("setBar", state), "setBar");
 }
 
+export async function runShellOverview(
+  rt: Runtime,
+  state: string | undefined,
+): Promise<number> {
+  if (state === undefined) {
+    return call(rt, () => shellIpc("toggleOverview"), "toggleOverview");
+  }
+  if (state === "on") {
+    return call(rt, () => shellIpc("openOverview"), "openOverview");
+  }
+  if (state === "off") {
+    return call(rt, () => shellIpc("closeOverview"), "closeOverview");
+  }
+  return usageError(rt, `invalid overview state: "${state}"`, "marchyo shell overview on|off");
+}
+
 export async function runShellReload(rt: Runtime): Promise<number> {
   return call(rt, () => shellIpc("reload"), "reload");
 }
