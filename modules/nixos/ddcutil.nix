@@ -1,6 +1,3 @@
-# hardware.i2c.enable loads i2c-dev, ships udev rules, and creates the `i2c`
-# group, but users must be members to talk to the bus, so add the Marchyo users
-# here (extraGroups list-merges with the base set in system.nix).
 {
   config,
   lib,

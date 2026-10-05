@@ -14,10 +14,6 @@ in
         '';
       }
     ];
-
-    # Forward each marchyo.bees entry to the upstream beesd module. Passing the
-    # submodule fields explicitly keeps the marchyo surface decoupled from any
-    # extra upstream options.
     services.beesd.filesystems = lib.mapAttrs (_name: fs: {
       inherit (fs)
         spec

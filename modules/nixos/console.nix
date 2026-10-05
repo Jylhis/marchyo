@@ -1,8 +1,3 @@
-# Uses `palette.tty16` not `palette.ansi16`: the kernel virtual console uses slot
-# 0 as the actual screen background, so slots 0/7/15 come from the semantic
-# palette (bg/text/text-heading). The raw ansi black/white slots are tuned for
-# terminal apps that paint their own light bg and would leave the light-variant
-# TTY unreadable. earlySetup applies the palette before any login prompt renders.
 {
   config,
   pkgs,
