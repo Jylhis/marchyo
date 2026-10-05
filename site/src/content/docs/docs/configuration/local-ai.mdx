@@ -1,0 +1,68 @@
+---
+title: Local AI
+description: Run local language models with Ollama, accelerated by your GPU
+---
+
+Marchyo can run an [Ollama](https://ollama.com) server for local large language
+models. The server listens on `127.0.0.1:11434`, picks a GPU backend from
+[`marchyo.graphics.vendors`](/docs/configuration/graphics/), and exports its
+endpoint as `OLLAMA_HOST` to every session, so the `ollama` CLI and editor
+integrations find it without extra setup.
+
+It is **off by default**.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.ai.local.enable` | `bool` | `false` | Run the Ollama server and export `OLLAMA_HOST` |
+| `marchyo.ai.local.acceleration` | `null or str` | `null` | Inference backend: `"cpu"`, `"vulkan"`, `"rocm"` or `"cuda"`; `null` derives it from the GPU vendors |
+| `marchyo.ai.local.models` | `list of str` | `[]` | Models pulled after the server starts |
+
+```nix
+marchyo.graphics.vendors = [ "amd" ];
+marchyo.ai.local = {
+  enable = true;
+  models = [ "llama3.2:3b" "qwen2.5-coder:7b" ];
+  # acceleration = "vulkan";  # override the vendor-derived backend
+};
+```
+
+## GPU backend
+
+With `acceleration = null` the backend follows `marchyo.graphics.vendors`:
+
+| Vendors include | Backend | Package |
+|-----------------|---------|---------|
+| `"nvidia"` | CUDA | `pkgs.ollama-cuda` |
+| `"amd"` (no `"nvidia"`) | ROCm | `pkgs.ollama-rocm` |
+| `"intel"` only | Vulkan | `pkgs.ollama-vulkan` |
+| none | CPU | `pkgs.ollama-cpu` |
+
+Hybrid laptops listing both an integrated GPU and `"nvidia"` use CUDA. The
+package is set with `lib.mkDefault`, so `services.ollama.package` can still be
+set directly. If ROCm does not detect your AMD GPU, set
+`services.ollama.rocmOverrideGfx` (for example `"10.3.0"`) or switch to
+`acceleration = "vulkan"`.
+
+:::note
+The CUDA backend is unfree and needs `nixpkgs.config.allowUnfree = true`. The
+CUDA and ROCm builds are large; if they are not in your binary cache they
+compile from source.
+:::
+
+## How it works
+
+Enabling the option configures the upstream NixOS `services.ollama` module:
+
+- The `ollama` system service runs as a dynamic user with its models under
+  `/var/lib/ollama/models`, and the `ollama` CLI is installed system-wide.
+- `marchyo.ai.local.models` maps to `services.ollama.loadModels`. A separate
+  `ollama-model-loader` service pulls them after the server starts, so a
+  rebuild never blocks on the download; it needs network access when it runs.
+- `OLLAMA_HOST` is set to `http://<services.ollama.host>:<services.ollama.port>`
+  via `environment.sessionVariables`, so changing the listen address or port
+  keeps clients in sync.
+
+Check the server with `systemctl status ollama` and the model pull with
+`systemctl status ollama-model-loader`.
