@@ -69,3 +69,5 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 - Use conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 - All changes must pass `just check` before a session is complete, and work is not done until it is committed.
 - Keep `site/src/content/docs/docs/configuration/` in sync when changing options under `modules/nixos/options/`.
+- `TODO.md` lists only open work. When an item is done, delete it from `TODO.md` in the same commit.
+- Docs and code comments describe the current state only: no history (what changed, what was replaced, commit refs) and no backstory or motivation. Git holds history.
