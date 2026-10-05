@@ -137,6 +137,8 @@ in
           bar-widget id. Any section left unset falls back to the shipped
           default layout.
         - `idle.{screensaver,lock}` — idle thresholds in seconds.
+        - `caffeine.autoVideo` — hold an idle inhibitor while a video plays
+          (default `true`).
 
         Leave empty (the default) to use the shipped bar layout unchanged.
       '';

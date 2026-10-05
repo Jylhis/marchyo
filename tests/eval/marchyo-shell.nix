@@ -341,4 +341,25 @@ in
       else
         throw "FAIL: with marchyo.cli.enable = false the shell binds should run the CLI by store path"
     );
+
+  # Auto video caffeine: the shell's systemd-inhibit --what=idle only reaches
+  # hypridle while hypridle honours logind inhibitors, and the
+  # caffeine.autoVideo opt-out must reach the shell.json the shell reads.
+  eval-marchyo-shell-caffeine-auto-video =
+    let
+      hm =
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.shell.settings.caffeine.autoVideo = false;
+        }).config.home-manager.users.testuser;
+      shellJson = builtins.fromJSON hm.xdg.configFile."marchyo/shell.json".text;
+    in
+    pkgs.writeText "eval-marchyo-shell-caffeine-auto-video" (
+      if (hm.services.hypridle.settings.general.ignore_systemd_inhibit or false) then
+        throw "FAIL: hypridle ignores systemd idle inhibitors, so the shell's auto video caffeine cannot reach it"
+      else if (shellJson.caffeine.autoVideo or true) != false then
+        throw "FAIL: marchyo.shell.settings.caffeine.autoVideo = false did not reach shell.json"
+      else
+        "pass"
+    );
 }
