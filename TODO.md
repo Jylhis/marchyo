@@ -99,14 +99,6 @@ Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
   keyboard RGB and backgrounds, dropbox/speedtest panels. Each needs a
   declarative shape (module/timer) first.
 
-## 4. Manual
-
-Chapters still stubs in `manual/` (end-user voice: prose-first, second person,
-no Nix internals; minimal Starlight frontmatter; text first):
-
-- 05 The Top Bar: stale Waybar tour; cover both bars keyed on
-  `marchyo.shell.enable`, plus click behavior, tooltips, `SUPER+SHIFT+SPACE`.
-
 ## Won't do
 
 - omarchy's update/migrate/refresh engine, AUR tooling, `omarchy-install-*`:
