@@ -1,15 +1,17 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
 import qs.Services
 
 // Quick-settings surface: output volume and microphone sliders over
-// Services/Audio, and a tile grid over the Services/QuickToggles model. A tile
-// click flips its toggle; a tile's chevron opens the existing detail panel
-// (audio, network, power, tailscale, notifications) through
-// PanelManager.openDetail, whose back button returns here. Glyphs are code
-// points because editing tools strip Private Use Area characters from source.
+// Services/Audio (plus a live mic input meter), and a tile grid over the
+// Services/QuickToggles model. A tile click flips its toggle; a tile's chevron
+// opens the existing detail panel (audio, network, power, tailscale,
+// notifications) through PanelManager.openDetail, whose back button returns
+// here. Glyphs are code points because editing tools strip Private Use Area
+// characters from source.
 Panel {
     id: root
     panelId: "controlcenter"
@@ -85,6 +87,29 @@ Panel {
             level: root.sourceAudio
             iconOn: 0xF036C
             iconMuted: 0xF036D
+        },
+        // Live microphone input level under the mic slider. The peak monitor
+        // opens a capture tap on the default source, so it runs only while the
+        // Control Center is open and the mic is live (Services/Audio keeps the
+        // tap out of the mic-in-use list).
+        Rectangle {
+            id: micMeter
+            Layout.fillWidth: true
+            Layout.preferredHeight: 3
+            visible: root.sourceAudio !== null && !root.sourceAudio.muted
+            color: Color.surface
+
+            PwNodePeakMonitor {
+                id: micPeak
+                node: Audio.source
+                enabled: root.visible && micMeter.visible
+            }
+
+            Rectangle {
+                width: micMeter.width * Math.max(0, Math.min(1, micPeak.peak))
+                height: micMeter.height
+                color: Color.accent
+            }
         },
         GridLayout {
             Layout.fillWidth: true

@@ -49,12 +49,9 @@ Rules for any new theme surface:
 
 - Privacy indicator for camera, next to the mic-in-use indicator.
 - Lock-keys widget (caps/num lock); needs a small XKB/libinput/sysfs helper.
-- Persistent per-app audio routing across restarts (PipeWire metadata).
 - Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +
   lockfile on top of `Commons/PluginIndex.qml` (ref: DMS
   `Services/PluginService.qml`). Stays build-time only.
-- Adopt Quickshell v0.3.0 natives once the pin has them: Networking (drop
-  `nmcli` polling), PolkitAgent, `PwNodePeakMonitor`.
 - Optional segmented bar look: two-tone segments with curved joins, pure QML
   `Shape` arcs in `shell/Ui/BarSection.qml`, filled from existing tokens so
   theme swaps recolor it. A presentation flag only, no layout changes, no

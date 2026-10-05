@@ -5,10 +5,12 @@ import Quickshell.Networking
 import qs.Commons
 import "../Commons/Format.js" as Format
 
-// Shared network status: the active device and the Wi-Fi radio switch from the
-// native Networking binding, plus the bits it does not expose (Wi-Fi
-// SSID/signal and the IPv4 address) from one nmcli poll shared by the bar
-// widget, the network panel, the Control Center, and the tooltips.
+// Shared network status for the bar widget, the network panel, the Control
+// Center, and the tooltips. The native Networking binding supplies the active
+// device, its interface name, the connected Wi-Fi network (SSID + signal), and
+// the Wi-Fi radio switch. It does not expose IP configuration, so the IPv4
+// address comes from a one-shot `nmcli device show <ifname>` that runs only when
+// the active device, its state, or the connected network changes (no poll).
 QtObject {
     id: root
 
@@ -38,11 +40,24 @@ QtObject {
         Networking.wifiEnabled = on;
     }
 
-    property string ssid: ""
-    property int signalStrength: -1
+    // The Wi-Fi network the active device is associated with. NetworkManager
+    // keeps the access-point list current without a scan request, so this needs
+    // no scanner.
+    readonly property var wifiNetwork: {
+        if (!activeDevice || activeDevice.type !== DeviceType.Wifi)
+            return null;
+        const nets = activeDevice.networks ? activeDevice.networks.values : [];
+        for (let i = 0; i < nets.length; i++)
+            if (nets[i].connected)
+                return nets[i];
+        return null;
+    }
+    readonly property string ssid: wifiNetwork ? wifiNetwork.name : ""
+    // Percent, -1 = no reading (the native value is 0.0..1.0).
+    readonly property int signalStrength: wifiNetwork ? Math.round(wifiNetwork.signalStrength * 100) : -1
+    readonly property string ifName: activeDevice ? activeDevice.name : ""
     property string ipAddress: ""
-    property string ifName: ""
-    // Latch so a failing address probe is reported once, not every poll.
+    // Latch so a failing address probe is reported once, not on every change.
     property bool addrProbeFailed: false
 
     // Tooltip text (waybar parity: "{ipaddr}  {ifname}", plus the SSID on Wi-Fi).
@@ -57,31 +72,39 @@ QtObject {
         return parts.length > 0 ? parts.join("  ") : "offline";
     }
 
-    // `nmcli -t` yields "active:ssid:signal" records; the parse lives in
-    // Commons/Format.js so the escaping rules (an SSID may contain a literal
-    // colon, escaped by nmcli as "\\:") are covered by the headless tests
-    // rather than only by a running bar.
-    readonly property var wifiProbe: Process {
-        id: wifiProbe
-        command: [Config.nmcli, "-t", "-f", "active,ssid,signal", "dev", "wifi"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const wifi = Format.parseWifi(text);
-                root.ssid = wifi.ssid;
-                root.signalStrength = wifi.signal;
-            }
+    onIfNameChanged: addrDebounce.restart()
+    onSsidChanged: addrDebounce.restart()
+
+    readonly property var deviceWatch: Connections {
+        target: root.activeDevice
+        ignoreUnknownSignals: true
+        function onStateChanged() {
+            addrDebounce.restart();
         }
     }
 
-    // Per-device IPv4 + interface name. `device show` (not `device status`,
-    // which rejects the IP4.ADDRESS field outright) emits one blank-line
-    // separated "key:value" block per device; parsed by Commons/Format.js.
+    // Coalesces the change burst of one (re)connect into a single probe.
+    readonly property var addrDebounce: Timer {
+        id: addrDebounce
+        interval: 500
+        triggeredOnStart: false
+        onTriggered: {
+            if (root.ifName.length === 0) {
+                root.ipAddress = "";
+                return;
+            }
+            addrProbe.command = [Config.nmcli, "-t", "-f", "GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS", "device", "show", root.ifName];
+            addrProbe.running = true;
+        }
+    }
+
+    // IPv4 of the active device. `device show` (not `device status`, which
+    // rejects the IP4.ADDRESS field outright) emits a "key:value" block, parsed
+    // by Commons/Format.js.
     readonly property var addrProbe: Process {
         id: addrProbe
-        command: [Config.nmcli, "-t", "-f", "GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS", "device", "show"]
         // A bad field name makes nmcli exit 2 and print nothing, which is
-        // indistinguishable from "no address" in the bar. Say so once instead
-        // of silently polling a failing command for the whole session.
+        // indistinguishable from "no address" in the bar. Say so once.
         onExited: exitCode => {
             if (exitCode !== 0 && !root.addrProbeFailed) {
                 root.addrProbeFailed = true;
@@ -89,24 +112,10 @@ QtObject {
             }
         }
         stdout: StdioCollector {
-            onStreamFinished: {
-                const dev = Format.parseDeviceAddress(text);
-                root.ifName = dev.ifName;
-                root.ipAddress = dev.ipAddress;
-            }
+            readonly property int maxChars: 16384
+            onStreamFinished: root.ipAddress = text.length <= maxChars ? Format.parseDeviceAddress(text).ipAddress : ""
         }
     }
 
-    // One always-on poll drives both probes so the tooltip's address stays
-    // current even while the panel is closed.
-    readonly property var pollTimer: Timer {
-        interval: 5000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            wifiProbe.running = true;
-            addrProbe.running = true;
-        }
-    }
+    Component.onCompleted: addrDebounce.restart()
 }

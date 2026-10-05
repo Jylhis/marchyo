@@ -42,7 +42,6 @@ test("the module exports its whole public surface to Node", () => {
   assert.deepEqual(Object.keys(Format).sort(), [
     "parseDeviceAddress",
     "parseDeviceShow",
-    "parseWifi",
     "shortCode",
     "splitTerse",
   ]);
@@ -92,37 +91,6 @@ test("splitTerse keeps trailing empty fields", () => {
   // "lo:unmanaged:" is a device with no address; dropping the empty tail would
   // make the record look too short to classify.
   assert.deepEqual(Format.splitTerse("lo:unmanaged:"), ["lo", "unmanaged", ""]);
-});
-
-// ── parseWifi ────────────────────────────────────────────────────────────────
-
-test("parseWifi returns the active network, not the first one listed", () => {
-  const wifi = Format.parseWifi(["no:Neighbour:88", "yes:Home:61", "no:Other:40"].join("\n"));
-  assert.deepEqual(wifi, { ssid: "Home", signal: 61 });
-});
-
-test("parseWifi keeps a colon inside an SSID", () => {
-  assert.deepEqual(Format.parseWifi("yes:Cafe\\: Free:73"), { ssid: "Cafe: Free", signal: 73 });
-});
-
-test("parseWifi reports no reading rather than 0% when the signal is unusable", () => {
-  // NetworkWidget renders `signal` as a percentage; -1 is the "unknown" the bar
-  // already understands, while 0 would draw a full-strength-looking empty bar.
-  assert.equal(Format.parseWifi("yes:Home:").signal, -1);
-  assert.equal(Format.parseWifi("yes:Home:not-a-number").signal, -1);
-});
-
-test("parseWifi returns empties when nothing is active or the output is junk", () => {
-  const empty = { ssid: "", signal: -1 };
-  assert.deepEqual(Format.parseWifi("no:Home:61\nno:Other:40"), empty);
-  assert.deepEqual(Format.parseWifi(""), empty);
-  assert.deepEqual(Format.parseWifi(null), empty);
-  // A truncated read must mean "no data", never a wrong answer.
-  assert.deepEqual(Format.parseWifi("ye"), empty);
-});
-
-test("parseWifi does not mistake an SSID of 'yes' for the active marker", () => {
-  assert.deepEqual(Format.parseWifi("no:yes:61"), { ssid: "", signal: -1 });
 });
 
 // ── parseDeviceShow / parseDeviceAddress ─────────────────────────────────────

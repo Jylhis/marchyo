@@ -25,4 +25,5 @@ singleton WifiQr 1.0 WifiQr.qml
 singleton BluetoothState 1.0 BluetoothState.qml
 singleton PowerProfileState 1.0 PowerProfileState.qml
 singleton QuickToggles 1.0 QuickToggles.qml
+singleton Polkit 1.0 Polkit.qml
 singleton Overview 1.0 Overview.qml

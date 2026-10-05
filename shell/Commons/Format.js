@@ -38,31 +38,6 @@ function shortCode(keymap) {
     return keymap.split(/[ (]/)[0].toLowerCase().slice(0, 3);
 }
 
-// `nmcli -t -f active,ssid,signal dev wifi` -> { ssid, signal } for the active
-// network, or nulls when nothing is active.
-//
-// `-t` escapes a colon inside a field as "\:", so a naive split on ":" tears an
-// SSID like "Cafe: Free" into pieces and reads its second half as the signal.
-// splitTerse below unescapes properly; signal is only accepted when it is
-// actually numeric, so a torn line degrades to "no reading" instead of 0%.
-function parseWifi(text) {
-    var lines = String(text || "").split("\n");
-    for (var i = 0; i < lines.length; i++) {
-        var parts = splitTerse(lines[i]);
-        if (parts[0] !== "yes")
-            continue;
-        var signal = parseInt(parts[2], 10);
-        return {
-            ssid: parts[1] || "",
-            signal: isNaN(signal) ? -1 : signal
-        };
-    }
-    return {
-        ssid: "",
-        signal: -1
-    };
-}
-
 // `nmcli -t -f GENERAL.DEVICE,GENERAL.STATE,IP4.ADDRESS device show` -> one
 // record per device, in nmcli's order.
 //
@@ -161,7 +136,6 @@ function splitTerse(line) {
 if (typeof module !== "undefined")
     module.exports = {
         shortCode: shortCode,
-        parseWifi: parseWifi,
         parseDeviceShow: parseDeviceShow,
         parseDeviceAddress: parseDeviceAddress,
         splitTerse: splitTerse

@@ -41,12 +41,13 @@ shell grew two **headless test suites** that `nix flake check` runs (see
 [Tests](#tests)).
 
 Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4), and **vicinae**
-(Phase 5) — each mutually exclusive with its discrete counterpart (see
-`modules/home/waybar.nix`, `modules/home/swayosd.nix`,
-`modules/home/mako.nix`, `modules/home/hyprlock.nix`, and
-`modules/home/vicinae.nix`) — so the shell owns the bar, the OSD,
-notifications, the lock, and the launcher outright.
+waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4), **vicinae**
+(Phase 5), and **hyprpolkitagent** — each mutually exclusive with its discrete
+counterpart (see `modules/home/waybar.nix`, `modules/home/swayosd.nix`,
+`modules/home/mako.nix`, `modules/home/hyprlock.nix`,
+`modules/home/vicinae.nix`, and `modules/home/marchyo-shell.nix`) — so the
+shell owns the bar, the OSD, notifications, the lock, the launcher, and the
+polkit agent outright.
 
 Layout:
 
@@ -72,7 +73,7 @@ shell/
                        + monitors.<output> override, always-global keys kept)
     PluginIndex.qml    singleton listing the plugins baked into this store shell
                        (build-time Option A model; no runtime discovery)
-    Format.js          pure parsing helpers (keymap short codes, nmcli records);
+    Format.js          pure parsing helpers (keymap short codes, nmcli device show);
                        plain JS with a CommonJS guard so Node can unit-test it
     Match.js           pure fuzzy scoring + highlight markup over fuzzysort
                        (launcher providers)
@@ -107,6 +108,9 @@ shell/
   Lock/
     qmldir             declares module qs.Lock
     LockScreen.qml     WlSessionLock surface (replaces hyprlock)
+  Polkit/
+    qmldir             declares module qs.Polkit
+    PolkitDialog.qml   centered polkit password dialog (replaces hyprpolkitagent)
   Launcher/
     qmldir             declares module qs.Launcher
     LauncherWindow.qml the launcher overlay (exclusive keyboard focus layer)
@@ -126,8 +130,8 @@ shell/
     NotificationState.qml  singleton: DND flag + live toast list (shared state)
     Audio.qml          singleton: shared Pipewire default sink/source + tracker
     Power.qml          singleton: shared UPower battery state + waybar-parity text
-    NetworkStatus.qml  singleton: active device, Wi-Fi radio switch + nmcli
-                       SSID/signal/IP poll
+    NetworkStatus.qml  singleton: active device, SSID/signal, Wi-Fi radio switch
+                       (native Networking) + event-driven nmcli IPv4 probe
     BluetoothState.qml singleton: default BlueZ adapter, power, connected devices
     PowerProfileState.qml  singleton: power-profiles-daemon profile + cycle
     QuickToggles.qml   singleton: the Control Center toggle model (no presentation)
@@ -136,6 +140,7 @@ shell/
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
+    Polkit.qml         singleton: the session's PolkitAgent + dialog state
     Launcher.qml       singleton: launcher mode, query + prefix routing, paste helper
     Overview.qml       singleton: window overview open flag, query, selection + model
   Panels/
@@ -192,7 +197,7 @@ below), so nothing depends on the session `PATH`.
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
 | BluetoothWidget | `Services/BluetoothState` → `Quickshell.Bluetooth` (click = bluetui) |
-| NetworkWidget | `Quickshell.Networking` + `Services/NetworkStatus` nmcli poll (click = network panel) |
+| NetworkWidget | `Quickshell.Networking` via `Services/NetworkStatus` (click = network panel) |
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
@@ -266,11 +271,28 @@ overlay that dismisses on outside click) binds its visibility to
 
 | Panel | Opened by | Backing service | Contents |
 | --- | --- | --- | --- |
-| AudioPanel | AudioWidget | `Pipewire` | volume -/+, mute, output-device picker, `wiremix` escape |
-| NetworkPanel | NetworkWidget | `Networking` + `nmcli` | connection status, SSID/signal, Wi-Fi radio switch, `nmtui` escape |
+| AudioPanel | AudioWidget | `Pipewire` | volume -/+, mute, output-device picker, per-app volume + peak meters, `wiremix` escape |
+| NetworkPanel | NetworkWidget | `Networking` + `nmcli` (IPv4 only) | connection status, SSID/signal, IPv4, Wi-Fi radio switch, `nmtui` escape |
 | PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
 | MonitorPanel | CpuWidget | `Services/SystemStats` + `df` + hwmon | CPU / mem / disk / temp meters, `btop` escape |
-| ControlCenter | ControlCenterWidget | `Services/QuickToggles` + `Audio` | volume / mic sliders, quick-toggle tiles (see below) |
+| ControlCenter | ControlCenterWidget | `Services/QuickToggles` + `Audio` | volume / mic sliders, live mic level, quick-toggle tiles (see below) |
+
+`Services/NetworkStatus` reads the active device, its interface name, the
+connected Wi-Fi network (SSID and signal) and the radio switches from
+`Quickshell.Networking`, with no polling. Quickshell 0.3.1's Networking API
+has no IP configuration, so the IPv4 address shown in the tooltip and panel
+comes from one `nmcli -t device show <ifname>` that runs only when the active
+device, its connection state, or the connected network changes. A DHCP lease
+that changes the address without a reconnect shows on the next such change.
+
+Per-app output routing persists across restarts through WirePlumber. Its
+`node.stream.restore-target` setting (default on; marchyo does not change it)
+saves a stream's target whenever `target.object` / `target.node` is set on the
+`default` metadata and restores it the next time that app's stream appears.
+That is the path `wiremix`, `pavucontrol`, and pulse `move-sink-input` take,
+and the state lives in `~/.local/state/wireplumber/stream-properties`. The
+AudioPanel's device picker sets the default sink
+(`Pipewire.preferredDefaultAudioSink`), which WirePlumber also persists.
 
 Each panel reuses the exact native bindings of its bar widget (via the shared
 `Services/` singletons — `Audio`, `Power`, `NetworkStatus`, `SystemStats`) and
@@ -291,7 +313,9 @@ motherboard, not the package). CPU and memory come from the shared
 
 `Panels/ControlCenter.qml` (`panelId: "controlcenter"`) is the quick-settings
 card: output-volume and microphone sliders (`Ui/PanelSlider`) with mute buttons
-over `Services/Audio`, and a two-column tile grid over the
+over `Services/Audio`, a live mic input meter (a `PwNodePeakMonitor` on the
+default source, enabled only while the card is open and the mic is unmuted),
+and a two-column tile grid over the
 `Services/QuickToggles` model. It opens from the `marchyo.controlCenter` bar
 widget (registered, not placed by default), `marchyo shell toggle
 controlcenter`, or `SUPER+SHIFT+Q`.
@@ -457,6 +481,24 @@ PAM prompt and the field border is `Color.statusErr`.
 > dev loop) while locked leaves a conformant compositor showing a solid
 > color — by design. Never edit QML while a dev instance is locked, and keep
 > a TTY logged in when live-testing.
+
+### Polkit agent
+
+`Services/Polkit.qml` holds the session's polkit authentication agent
+(`Quickshell.Services.Polkit.PolkitAgent`); `Polkit/PolkitDialog.qml` draws its
+prompt. With the shell on, `modules/home/marchyo-shell.nix` turns
+hyprpolkitagent off (a session holds one registered agent); with the shell off
+hyprpolkitagent stays the agent. A request (e.g. `pkexec`, a systemd unit
+action, a 1Password unlock) shows a scrim plus a centered card on the focused
+output, layer namespace `marchyo:polkit`, with exclusive keyboard focus: the
+action message, the identity it authenticates as, the action id, PAM's
+supplementary line, and a password field. Enter or Authenticate submits;
+Escape or Cancel cancels the request. An outside click is absorbed and does
+not cancel. A rejected password clears the field, shakes the card, and shows
+the failure line while Quickshell starts a fresh PAM session for the retry.
+Queued requests show one after another. If another agent already holds the
+session (a dev instance next to the store shell), `Polkit.registered` stays
+false and no dialog appears.
 
 ### Launcher
 
@@ -635,7 +677,7 @@ Three layers, split by what each can reach:
 
 | Suite | Runs where | Covers |
 | --- | --- | --- |
-| `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
+| `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t device show` records) |
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding and image-entry parsing / cache names |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |

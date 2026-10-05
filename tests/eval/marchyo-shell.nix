@@ -413,4 +413,29 @@ in
       else
         "pass"
     );
+
+  # Polkit cutover: the shell registers the session's polkit agent, and a
+  # session holds one, so hyprpolkitagent stands down with the shell on.
+  eval-marchyo-shell-disables-hyprpolkitagent =
+    let
+      hm = (evalWith { marchyo.shell.enable = true; }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-disables-hyprpolkitagent" (
+      if hm.services.hyprpolkitagent.enable || (hm.systemd.user.services ? hyprpolkitagent) then
+        throw "FAIL: marchyo.shell.enable = true but hyprpolkitagent is still enabled (two polkit agents)"
+      else
+        "pass"
+    );
+
+  # Plain desktop (shell off): hyprpolkitagent is the polkit agent.
+  eval-marchyo-shell-off-keeps-hyprpolkitagent =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-marchyo-shell-off-keeps-hyprpolkitagent" (
+      if hm.services.hyprpolkitagent.enable && (hm.systemd.user.services ? hyprpolkitagent) then
+        "pass"
+      else
+        throw "FAIL: marchyo.shell is off but hyprpolkitagent is not enabled under a plain desktop"
+    );
 }
