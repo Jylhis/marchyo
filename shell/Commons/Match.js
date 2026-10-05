@@ -1,40 +1,50 @@
-// Pure fuzzy-match scoring and highlighting for the launcher views (apps,
-// emoji, clipboard).
+// Fuzzy-match scoring and highlighting for the launcher providers (apps,
+// emoji, clipboard, theme, windows, power).
 //
-// Dual citizenship like Format.js: QML imports this directly and ignores the
-// CommonJS guard, while Node loads it in tests/shell/launcher-test.js. Stay
-// pure — no Qt types, no globals, no I/O — and never add a `.pragma`
-// directive (Node cannot parse one; pinned by contracts-test.sh).
+// Dual citizenship like Format.js: Commons/Fuzzy.qml imports this from QML
+// and ignores the CommonJS guard, while Node loads it in
+// tests/shell/launcher-test.js. Stay
+// pure (no Qt types, no I/O) and never add a `.pragma` directive (Node cannot
+// parse one; pinned by contracts-test.sh).
 //
-// match(text, query): null when the query characters do not appear in order,
-// otherwise { score, positions } where `positions` are the matched character
-// indices in `text` (for highlighting) and a higher score is better. Tiers,
-// high to low:
-//   2000-range: query is a prefix of text (shorter text wins ties)
-//   1400-range: query is a contiguous run at a word boundary inside text
-//   1000-range: query is a contiguous run mid-word
-//    200-550:   query chars appear in order but scattered — adjacency and
-//               word-boundary bonuses minus a skipped-character penalty set
-//               the spread (a tighter, boundary-aligned match ranks higher)
-//      0:       empty query (caller sorts by name)
+// Ranking is the vendored fuzzysort (Commons/fuzzysort.js), passed in as
+// `engine`. QML code calls this through the Commons/Fuzzy singleton, which
+// imports both files and binds the engine (a `.import` directive here would
+// be a syntax error to Node); under Node an omitted engine is `require`d.
+// Targets are prepared per call rather than through fuzzysort's
+// prepared-target cache, so an open launcher never grows a cache of every
+// clipboard row and emoji name it has scored; a caller that scores the same
+// text on every keystroke (the emoji catalog) keeps its own `prepare(text)`
+// result and passes that in place of the text.
 //
-// score(text, query) is the number-only wrapper the emoji and clipboard
-// filters use: match's score, or -1 for no match.
+// match(text, query, engine): `text` is a string or a prepare() result.
+// null when the query does not match, otherwise { score, positions } where
+// `positions` are the matched character indices in the text (for
+// highlighting) and a higher score is better. fuzzysort's 0..1 score maps
+// onto 1..2000, so a match always outranks the empty-query baseline of 0 and
+// the per-field penalties in Launcher/AppsProvider.qml keep their scale. A
+// space in the query matches each word separately, in any order. Empty
+// query: { score: 0, positions: [] } (caller sorts by name).
+//
+// score(text, query, engine) is the number-only wrapper the filters use:
+// match's score, or -1 for no match.
 
-function isBoundary(ch) {
-    return ch === " " || ch === "-" || ch === "_" || ch === "(" || ch === "/" || ch === ".";
+function resolveEngine(engine) {
+    if (engine)
+        return engine;
+    if (typeof require === "function")
+        return require("./fuzzysort.js");
+    throw new Error("Match.js: no fuzzysort engine (QML goes through Commons/Fuzzy)");
 }
 
-function range(start, len) {
-    var out = [];
-    for (var i = 0; i < len; i++)
-        out.push(start + i);
-    return out;
+function prepare(text, engine) {
+    return resolveEngine(engine).prepare(String(text == null ? "" : text));
 }
 
-function match(text, query) {
-    var t = String(text == null ? "" : text).toLowerCase();
-    var q = String(query == null ? "" : query).toLowerCase();
+function match(text, query, engine) {
+    var prepared = text !== null && typeof text === "object" ? text : null;
+    var t = prepared ? String(prepared.target) : String(text == null ? "" : text);
+    var q = String(query == null ? "" : query).trim();
     if (q.length === 0)
         return {
             score: 0,
@@ -42,58 +52,18 @@ function match(text, query) {
         };
     if (t.length === 0)
         return null;
-
-    var at = t.indexOf(q);
-    if (at >= 0) {
-        var contiguous = range(at, q.length);
-        if (at === 0)
-            return {
-                score: 2000 - Math.min(t.length, 999),
-                positions: contiguous
-            };
-        if (isBoundary(t.charAt(at - 1)))
-            return {
-                score: 1400 - Math.min(at, 399),
-                positions: contiguous
-            };
-        return {
-            score: 1000 - Math.min(at, 399),
-            positions: contiguous
-        };
-    }
-
-    // Scattered subsequence: greedy left-to-right, rewarding a character that
-    // falls directly after the previous match (a run) or on a word boundary,
-    // and penalising the characters skipped to reach each one. A missing
-    // character means no match at all.
-    var ti = 0;
-    var bonus = 0;
-    var run = 0;
-    var positions = [];
-    for (var qi = 0; qi < q.length; qi++) {
-        var idx = t.indexOf(q.charAt(qi), ti);
-        if (idx === -1)
-            return null;
-        if (positions.length > 0 && idx === positions[positions.length - 1] + 1) {
-            run += 1;
-            bonus += 10 + run * 5;
-        } else {
-            run = 0;
-        }
-        if (idx === 0 || isBoundary(t.charAt(idx - 1)))
-            bonus += 15;
-        bonus -= idx - ti;
-        positions.push(idx);
-        ti = idx + 1;
-    }
+    var fz = resolveEngine(engine);
+    var r = fz.single(q, prepared || fz.prepare(t));
+    if (!r)
+        return null;
     return {
-        score: 200 + Math.max(0, Math.min(350, bonus)),
-        positions: positions
+        score: 1 + Math.round(Math.max(0, Math.min(1, r.score)) * 1999),
+        positions: r.indexes
     };
 }
 
-function score(text, query) {
-    var m = match(text, query);
+function score(text, query, engine) {
+    var m = match(text, query, engine);
     return m ? m.score : -1;
 }
 
@@ -122,6 +92,7 @@ function highlight(text, positions, color) {
 // Node (tests) picks these up; QML ignores the guard.
 if (typeof module !== "undefined")
     module.exports = {
+        prepare: prepare,
         match: match,
         score: score,
         highlight: highlight,

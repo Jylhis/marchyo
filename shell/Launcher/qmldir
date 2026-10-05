@@ -1,5 +1,11 @@
 module qs.Launcher
 LauncherWindow 1.0 LauncherWindow.qml
-AppsView 1.0 AppsView.qml
-EmojiView 1.0 EmojiView.qml
-ClipboardView 1.0 ClipboardView.qml
+ResultsView 1.0 ResultsView.qml
+Provider 1.0 Provider.qml
+AppsProvider 1.0 AppsProvider.qml
+EmojiProvider 1.0 EmojiProvider.qml
+ClipboardProvider 1.0 ClipboardProvider.qml
+CalcProvider 1.0 CalcProvider.qml
+ThemeProvider 1.0 ThemeProvider.qml
+WindowsProvider 1.0 WindowsProvider.qml
+PowerProvider 1.0 PowerProvider.qml

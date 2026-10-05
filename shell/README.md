@@ -71,7 +71,12 @@ shell/
                        (build-time Option A model; no runtime discovery)
     Format.js          pure parsing helpers (keymap short codes, nmcli records);
                        plain JS with a CommonJS guard so Node can unit-test it
-    Match.js           pure fuzzy scoring (launcher: apps / emoji / clipboard)
+    Match.js           pure fuzzy scoring + highlight markup over fuzzysort
+                       (launcher providers)
+    fuzzysort.js       vendored fuzzysort 3.1.0 (MIT; pinned, see its header)
+    Fuzzy.qml          singleton binding Match.js to fuzzysort.js for QML
+    LauncherProviders.js  pure launcher prefix routing, ranking, and the
+                       theme / hyprctl clients / qalc output parsers
     EmojiData.js       emoji catalog rows + parse; the Nix build regenerates the
                        rows from pkgs.unicode-emoji (dev subset checked in)
     Cliphist.js        pure cliphist helpers (quoted-printable payload decode)
@@ -98,9 +103,15 @@ shell/
   Launcher/
     qmldir             declares module qs.Launcher
     LauncherWindow.qml the launcher overlay (exclusive keyboard focus layer)
-    AppsView.qml       app search over DesktopEntries (replaces vicinae apps)
-    EmojiView.qml      emoji grid over Commons/EmojiData.js
-    ClipboardView.qml  cliphist history list + paste
+    ResultsView.qml    renders the active provider's results (list or grid)
+    Provider.qml       the provider interface every provider below implements
+    AppsProvider.qml   app search over DesktopEntries (replaces vicinae apps)
+    EmojiProvider.qml  emoji grid over Commons/EmojiData.js
+    ClipboardProvider.qml  cliphist history list + paste
+    CalcProvider.qml   "=" calculator over qalc
+    ThemeProvider.qml  ">theme" switcher over `marchyo theme list|set`
+    WindowsProvider.qml  "#" window switcher over `hyprctl clients -j`
+    PowerProvider.qml  "!" session actions (lock / log out / power verbs)
   Services/
     qmldir             declares module qs.Services
     PanelManager.qml   singleton tracking the one open panel (mutual exclusion)
@@ -114,7 +125,7 @@ shell/
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
-    Launcher.qml       singleton: launcher open-mode state + the paste helper
+    Launcher.qml       singleton: launcher mode, query + prefix routing, paste helper
   Panels/
     qmldir             declares module qs.Panels
     <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
@@ -343,13 +354,22 @@ gated on `secure` (compositor-confirmed coverage), per the upstream docs.
 
 ### Launcher
 
-`Launcher/LauncherWindow.qml` is the Phase 5 launcher: a full-screen
-transparent overlay (the Ui/Panel dismiss idiom) with a centered card, one
-shared query field, and three mode views — replacing vicinae under the same
-mutual-exclusion cutover as waybar/mako/SwayOSD/hyprlock. `Services/Launcher`
-holds the open-mode state ("" / "apps" / "emoji" / "clipboard"); the surface
-takes `WlrKeyboardFocus.Exclusive` while open and closes on Escape,
-outside click, or focus loss.
+`Launcher/LauncherWindow.qml` is the Phase 5 launcher, a command palette: a
+full-screen transparent overlay (the Ui/Panel dismiss idiom) with a centered
+card, one shared query field, and one result list, replacing vicinae under
+the same mutual-exclusion cutover as waybar/mako/SwayOSD/hyprlock.
+`Services/Launcher` holds the open mode ("" / "apps" / "emoji" /
+"clipboard") and the query, and routes them to a provider; the surface takes
+`WlrKeyboardFocus.Exclusive` while open and closes on Escape, outside click,
+or focus loss.
+
+Every source of rows is a provider (`Launcher/Provider.qml`): it turns its
+`query` into `results`, rows of `title`, `subtitle`, `icon`, `score`,
+`positions` (title highlight) and `activate()`, and declares how
+`Launcher/ResultsView.qml` presents them (list or grid, icons, row count).
+A provider only receives a query, and only runs its subprocesses, while it is
+the active one. Up/Down move the selection (by three cells in the emoji
+grid, where Left/Right move by one), Enter activates.
 
 | Mode | Bind | Backing | Activate |
 | --- | --- | --- | --- |
@@ -364,8 +384,27 @@ window. No privileged helper: vicinae's `cap_dac_override` uinput wrapper
 stands down with the cutover (gated in `modules/nixos/launcher.nix`). The
 text travels as argv (`exec "$0" "$1"`), never through shell interpolation.
 
-Search scoring is `Commons/Match.js` (prefix > word-start > scattered
-subsequence; empty query = name order), unit-tested from Node like Format.js.
+In apps mode a prefix routes the query to another provider; the rest of the
+text is that provider's query. The emoji and clipboard modes search the whole
+text, prefix characters included.
+
+| Prefix | Provider | Backing | Activate |
+| --- | --- | --- | --- |
+| `=` | calc | `qalc -t -- <expr>` (`Config.qalc`, libqalculate: units, conversions, currencies); one evaluation at a time, the latest expression queued | copy the answer |
+| `>theme` | theme | `marchyo theme list --format json`, once per activation | `marchyo theme set <name>` (live switch) |
+| `#` | windows | `hyprctl clients -j`, once per activation (most recently focused first; title and class searched) | focus the window (`focuswindow address:`) |
+| `!` | power | lock, log out, suspend, hibernate, reboot, shut down | `marchyo <verb>`; lock goes to the shell's own lock (`Services/Lock`) |
+
+The prefix table and routing live in `Commons/LauncherProviders.js`, beside
+the shared ranking and the output parsers, all unit-tested from Node.
+
+Search scoring is `Commons/Match.js` over the vendored fuzzysort
+(`Commons/fuzzysort.js`, 3.1.0, the last release with a classic-script
+build; its header records the tarball hash and the local changes). QML
+reaches it through the `Commons/Fuzzy` singleton, which binds the two files
+(a `.import` directive would break Node). Scores map onto 1..2000 with 0 for
+an empty query (name order); a space in the query matches words in any
+order. `highlight` builds the StyledText markup for the matched characters.
 
 ### Waybar parity
 
@@ -469,7 +508,7 @@ Three layers, split by what each can reach:
 | --- | --- | --- |
 | `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
-| `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS — `Match.js` scoring, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
+| `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
 | `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call and direct `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |

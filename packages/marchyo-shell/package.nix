@@ -27,6 +27,7 @@
   tailscale,
   curl,
   qrencode,
+  libqalculate,
   uwsm,
   systemd,
   # Runtime tools the omarchy plugin compat shim puts on the shell's PATH, but
@@ -211,6 +212,11 @@ let
       readonly property int panelRadius: ${toString (radiusPx 8)}
       readonly property int panelRowHeight: ${toString (ui.round 30)}
 
+      // Control Center geometry (wider card, quick-toggle tiles, slider track).
+      readonly property int controlCenterWidth: ${toString (ui.round 340)}
+      readonly property int tileHeight: ${toString (ui.round 52)}
+      readonly property int sliderTrackHeight: ${toString (ui.round 6)}
+
       // Launcher geometry (apps/emoji/clipboard card).
       readonly property int launcherWidth: ${toString (ui.round 640)}
 
@@ -279,6 +285,7 @@ let
       }"
       readonly property string curl: "${lib.getExe curl}"
       readonly property string qrencode: "${lib.getExe qrencode}"
+      readonly property string qalc: "${lib.getExe libqalculate}"
     }
   '';
 
