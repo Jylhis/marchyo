@@ -4,7 +4,8 @@ import Quickshell.Widgets
 import qs.Commons
 
 // Renders one provider's `results` (see Launcher/Provider.qml): a row list,
-// or a glyph grid for `layout: "grid"` providers (emoji). Owns the selection;
+// or a glyph grid for `layout: "grid"` providers (emoji); list rows can carry
+// a thumbnail (Provider.previews, the clipboard). Owns the selection;
 // LauncherWindow routes the arrow keys and Enter here.
 Item {
     id: root
@@ -15,6 +16,11 @@ Item {
     readonly property var results: root.provider.results || []
     readonly property int rowHeight: Style.panelRowHeight
     readonly property int maxRows: root.provider.maxRows
+    // Rows with a thumbnail (provider.previews) are three rows tall; the
+    // thumbnail box is landscape so screenshots and snippets both fit.
+    readonly property int previewRowHeight: root.rowHeight * 3
+    readonly property int previewHeight: root.previewRowHeight - Style.spacing * 2
+    readonly property int previewWidth: root.previewHeight * 2
     readonly property int cellSize: Style.panelRowHeight + Style.panelPad
     readonly property int gridRows: Math.max(1, Math.ceil(root.results.length / root.provider.columns))
     readonly property var view: root.grid ? gridView : listView
@@ -65,11 +71,18 @@ Item {
             id: row
             required property var modelData
             required property int index
+            // "" unless this provider draws thumbnails and the row has one.
+            readonly property string previewKey: root.provider.previews ? (row.modelData.preview || "") : ""
             width: ListView.view.width
-            height: root.rowHeight
+            height: row.previewKey !== "" ? root.previewRowHeight : root.rowHeight
             color: ListView.isCurrentItem ? Color.surfaceRaised : "transparent"
             border.width: ListView.isCurrentItem ? 1 : 0
             border.color: Color.accent
+
+            // Delegates exist only for rows in (or near) view, so this is
+            // what keeps thumbnail decoding to the visible rows.
+            Component.onCompleted: if (row.previewKey !== "")
+                root.provider.requestPreview(row.modelData)
 
             MouseArea {
                 anchors.fill: parent
@@ -92,6 +105,39 @@ Item {
                     implicitSize: Style.fontSize + 8
                 }
 
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: row.previewKey !== ""
+                    width: root.previewWidth
+                    height: root.previewHeight
+                    color: Color.bgSubtle
+                    border.width: 1
+                    border.color: Color.border
+
+                    Image {
+                        id: thumb
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        source: row.previewKey !== "" ? (root.provider.previewSources[row.previewKey] || "") : ""
+                        // Decode at thumbnail size, never the full image.
+                        sourceSize.width: root.previewWidth
+                        sourceSize.height: root.previewHeight
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        cache: false
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: thumb.status !== Image.Ready
+                        // Pending decode vs failed decode / unloadable file.
+                        text: row.previewKey !== "" && root.provider.previewSources[row.previewKey] === undefined ? "\u2026" : "image"
+                        color: Color.textFaint
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSizeSmall
+                    }
+                }
+
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     textFormat: root.provider.highlight ? Text.StyledText : Text.PlainText
@@ -100,7 +146,7 @@ Item {
                     font.family: Style.fontFamily
                     font.pixelSize: root.provider.compact ? Style.fontSizeSmall : Style.fontSize
                     elide: Text.ElideRight
-                    width: row.width - Style.paddingH * (root.provider.showIcons ? 4 : 2)
+                    width: row.width - Style.paddingH * (root.provider.showIcons ? 4 : 2) - (row.previewKey !== "" ? root.previewWidth + Style.spacing : 0)
                 }
             }
         }

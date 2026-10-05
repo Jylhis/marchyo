@@ -13,6 +13,7 @@ import qs.Services
 //   icon       themed icon name ("" for none / the fallback icon)
 //   score      ranking score (higher is better; 0 for unranked rows)
 //   positions  matched character indices in `title`, for highlighting
+//   preview    optional thumbnail key, see `previews` below
 //   activate() runs the row's action; it closes the launcher itself
 QtObject {
     id: root
@@ -38,6 +39,16 @@ QtObject {
     // Preselect the first row with an empty query (otherwise only once typed).
     property bool selectOnEmpty: false
     property string emptyText: "no matches"
+
+    // Thumbnails (list only). With `previews`, a row carrying a `preview`
+    // key is drawn taller with an image: ResultsView calls requestPreview(row)
+    // when that row's delegate is created (so only rows in view are decoded),
+    // and shows previewSources[row.preview] once the provider sets it (a file
+    // URL, or "" for "failed, draw the placeholder").
+    property bool previews: false
+    property var previewSources: ({})
+    function requestPreview(row) {
+    }
 
     // Inline completion: when `completes`, `suggestion` is the full text the
     // query field offers as ghost text (accepted on Tab / Right).

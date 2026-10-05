@@ -79,7 +79,8 @@ shell/
                        theme / hyprctl clients / qalc output parsers
     EmojiData.js       emoji catalog rows + parse; the Nix build regenerates the
                        rows from pkgs.unicode-emoji (dev subset checked in)
-    Cliphist.js        pure cliphist helpers (quoted-printable payload decode)
+    Cliphist.js        pure cliphist helpers (quoted-printable payload decode,
+                       image-entry preview parsing + cache names)
     Notify.js          pure notification match/eviction helpers
     BarLayout.js       pure bar-separator decisions (cluster-aware rules)
     Peripherals.js     pure `solaar show` parser (Logitech battery)
@@ -108,7 +109,7 @@ shell/
     Provider.qml       the provider interface every provider below implements
     AppsProvider.qml   app search over DesktopEntries (replaces vicinae apps)
     EmojiProvider.qml  emoji grid over Commons/EmojiData.js
-    ClipboardProvider.qml  cliphist history list + paste
+    ClipboardProvider.qml  cliphist history list + paste, image thumbnails
     CalcProvider.qml   "=" calculator over qalc
     ThemeProvider.qml  ">theme" switcher over `marchyo theme list|set`
     WindowsProvider.qml  "#" window switcher over `hyprctl clients -j`
@@ -438,7 +439,7 @@ grid, where Left/Right move by one), Enter activates.
 | --- | --- | --- | --- |
 | apps | `SUPER+R` | `Quickshell.DesktopEntries` (webapps' `xdg.desktopEntries` flow in) | `DesktopEntry.execute()` — results list (8 rows, app icons via `IconImage` with an `application-x-executable` fallback), inline ghost-text completion on Tab/Right |
 | emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
-| clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js` | copy + type |
+| clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js`; image entries get a thumbnail row (see below) | text: copy + type; image: `wl-copy` + Ctrl+V |
 
 Paste (emoji/clipboard) goes through `Services/Launcher.pasteText`:
 `Quickshell.clipboardText` for the copy, then `wtype` after a 0.25 s settle
@@ -446,6 +447,21 @@ Paste (emoji/clipboard) goes through `Services/Launcher.pasteText`:
 window. No privileged helper: vicinae's `cap_dac_override` uinput wrapper
 stands down with the cutover (gated in `modules/nixos/launcher.nix`). The
 text travels as argv (`exec "$0" "$1"`), never through shell interpolation.
+
+Clipboard image entries (cliphist lists them as `[[ binary data 12 KiB png
+800x600 ]]`) become rows titled `png 800x600 · 12 KiB`, searchable like text;
+other binary entries are skipped. The provider sets `previews`, so
+`ResultsView` draws those rows three rows tall with a thumbnail and calls the
+provider's `requestPreview` when a row's delegate is created, which limits
+decoding to rows in view. Decodes run one at a time as `cliphist decode <id>`
+into the shell's own cache, `<Quickshell.cacheDir>/cliphist/`, under the
+`Cliphist.cacheName` key (id, dimensions and size, so an id reused after
+`cliphist wipe` misses). Each decode writes a `.part` file and renames it,
+skips entries listed above 16 MiB, cuts output at that bound, and prunes the
+directory to the 48 most recently shown files. Every value travels as argv.
+Activating an image row runs `Services/Launcher.pasteImage`: `cliphist
+decode | wl-copy --type image/<format>` (`Config.wlCopy`), then Ctrl+V via
+`wtype` after the same settle.
 
 In apps mode a prefix routes the query to another provider; the rest of the
 text is that provider's query. The emoji and clipboard modes search the whole
@@ -571,7 +587,7 @@ Three layers, split by what each can reach:
 | --- | --- | --- |
 | `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t` records) |
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
-| `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding |
+| `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding and image-entry parsing / cache names |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
 | `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call and direct `marchyo-shell ipc … -- shell <fn>` call in `modules/home/` resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |

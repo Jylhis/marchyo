@@ -19,6 +19,7 @@ QtObject {
     readonly property string df: "df"
     readonly property string wtype: "wtype"
     readonly property string cliphist: "cliphist"
+    readonly property string wlCopy: "wl-copy"
     readonly property string marchyo: "marchyo"
     readonly property string solaar: "solaar"
     readonly property string systemctl: "systemctl"

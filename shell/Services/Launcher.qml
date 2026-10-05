@@ -50,4 +50,11 @@ QtObject {
         Quickshell.clipboardText = text;
         Quickshell.execDetached(["sh", "-c", "sleep 0.25; exec \"$0\" \"$1\"", Config.wtype, text]);
     }
+
+    // Image counterpart of pasteText: put cliphist entry `id` back on the
+    // clipboard as `mime` (wl-copy keeps serving it) and send Ctrl+V. Same
+    // close-first rule; every value travels through argv.
+    function pasteImage(id, mime) {
+        Quickshell.execDetached(["sh", "-c", "\"$0\" decode \"$1\" | \"$2\" --type \"$3\" && sleep 0.25 && exec \"$4\" -M ctrl v -m ctrl", Config.cliphist, id, Config.wlCopy, mime, Config.wtype]);
+    }
 }
