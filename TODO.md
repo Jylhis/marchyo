@@ -20,8 +20,6 @@ arrival.
 - **Optional: wallpaper-driven Material-You mode.** matugen already covers the
   runtime subset; would be a mode, never the default (marchyo's identity is
   the jylhis palette).
-- **Optional polish:** greeter follows the session theme (needs a
-  world-readable theme marker the greeter reads at start).
 
 Rules for any new theme surface:
 

@@ -60,6 +60,7 @@ import {
   warn,
 } from "@marchyo/core";
 import type { Variant } from "@marchyo/core";
+import { writeGreeterTheme } from "@marchyo/core";
 import { mkdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 
 // Actuation helpers mirroring modules/home/theme-runtime.nix: same commands,
@@ -138,6 +139,8 @@ export async function activateThemeDir(
   entry: ThemeManifestEntry,
 ): Promise<void> {
   await pointCurrentTheme(entry.dir);
+  // The greeter follows the session theme (best-effort, skips silently).
+  await writeGreeterTheme(entry.dir);
 
   const wallpaper = join(entry.dir, "wallpaper.png");
   if (existsSync(wallpaper)) await safeExec(ctx, awwwImgArgv(wallpaper));

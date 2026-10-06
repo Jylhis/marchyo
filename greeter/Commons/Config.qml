@@ -9,4 +9,7 @@ QtObject {
     // tuigreet ran (uwsm resolves the hyprland-uwsm wayland session).
     readonly property var sessionCommand: ["uwsm", "start", "hyprland-uwsm.desktop"]
     readonly property string systemctl: "systemctl"
+    // Bounded reader for the session theme marker (Commons/Theme.qml).
+    readonly property string timeout: "timeout"
+    readonly property string head: "head"
 }
