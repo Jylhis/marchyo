@@ -18,12 +18,28 @@ let
   # The manifest text intentionally carries store-path context (it roots
   # the theme dirs in the closure); fromJSON forbids context, so the test
   # reader discards it first.
-  manifestOf =
+  manifestFileOf =
     cfg:
     builtins.fromJSON (
       builtins.unsafeDiscardStringContext
         cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text
     );
+  manifestOf = cfg: (manifestFileOf cfg).themes;
+
+  # A desktop config with followWallpaper set to `value` (null leaves it at
+  # the option default).
+  evalFollow =
+    value:
+    (lib.nixosSystem {
+      inherit (pkgs.stdenv.hostPlatform) system;
+      modules = [
+        nixosModules
+        (withTestUser {
+          marchyo.desktop.enable = true;
+        })
+      ]
+      ++ lib.optional (value != null) { marchyo.theme.followWallpaper = value; };
+    }).config;
 
   evalManifest =
     themes:
@@ -115,6 +131,21 @@ in
       )
       (withTestUser {
         marchyo.desktop.enable = true;
+      });
+
+  # marchyo.theme.followWallpaper reaches the CLI through the manifest:
+  # false by default, true when set.
+  eval-themes-manifest-follow-wallpaper =
+    testNixOSCheck "themes-manifest-follow-wallpaper"
+      (
+        cfg:
+        (manifestFileOf cfg).followWallpaper
+        && !(manifestFileOf (evalFollow false)).followWallpaper
+        && !(manifestFileOf (evalFollow null)).followWallpaper
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.followWallpaper = true;
       });
 
   # A 4-theme list mixing the Jylhis pair with base16 schemes. nord declares

@@ -107,6 +107,20 @@ in
       '';
     };
 
+    followWallpaper = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Wallpaper-driven Material You mode. When true, every `marchyo bg set`
+        and `marchyo bg next` also derives a runtime theme from the new image
+        through the `marchyo theme generate` path (matugen, polarity detected
+        from the image). If generation fails the wallpaper still changes and
+        the CLI reports the error. Runtime-only like `theme generate`: a
+        rebuild resets to the declarative theme, and
+        `marchyo theme generate --revert` returns to it without one.
+      '';
+    };
+
     fontScale = mkOption {
       type = types.numbers.between 0.5 4.0;
       default = 1.25;

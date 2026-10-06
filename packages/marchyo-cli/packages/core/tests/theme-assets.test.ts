@@ -8,6 +8,7 @@ import {
   nextTheme,
   pointCurrentTheme,
   readThemeManifest,
+  readThemeManifestFile,
   themeAtPointer,
   themeManifestPath,
 } from "../src/theme-assets.ts";
@@ -63,6 +64,42 @@ describe("readThemeManifest", () => {
     const { dir, manifestPath, entries } = fixture();
     try {
       expect(await readThemeManifest(manifestPath)).toEqual(entries);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  test("reads the object shape with followWallpaper", async () => {
+    const { dir, manifestPath, entries } = fixture();
+    try {
+      writeFileSync(
+        manifestPath,
+        JSON.stringify({ themes: entries, followWallpaper: true }),
+      );
+      expect(await readThemeManifest(manifestPath)).toEqual(entries);
+      expect(await readThemeManifestFile(manifestPath)).toEqual({
+        themes: entries,
+        followWallpaper: true,
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("followWallpaper defaults to false (array or object without it)", async () => {
+    const { dir, manifestPath, entries } = fixture();
+    try {
+      expect((await readThemeManifestFile(manifestPath)).followWallpaper).toBe(
+        false,
+      );
+      writeFileSync(manifestPath, JSON.stringify({ themes: entries }));
+      expect(await readThemeManifestFile(manifestPath)).toEqual({
+        themes: entries,
+        followWallpaper: false,
+      });
+      expect(
+        (await readThemeManifestFile("/nonexistent/manifest.json"))
+          .followWallpaper,
+      ).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

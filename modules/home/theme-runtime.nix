@@ -490,12 +490,13 @@ let
     ) (lib.filter (t: t.scheme != null) resolvedThemes)
   );
 
-  manifest = builtins.toJSON (
-    map (t: {
+  manifest = builtins.toJSON {
+    themes = map (t: {
       inherit (t) name variant;
       dir = "${t.dir}";
-    }) resolvedThemes
-  );
+    }) resolvedThemes;
+    followWallpaper = themeCfg.followWallpaper or false;
+  };
 
 in
 {
@@ -557,8 +558,9 @@ in
     # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
     xdg.configFile."marchyo/current-theme".source = themeDirs.${buildVariant};
 
-    # Manifest for the CLI (`marchyo theme list/set/next`). Listing the dirs
-    # also roots them in the profile closure, so switching stays a symlink swap.
+    # Manifest for the CLI (`marchyo theme list/set/next`, and `bg` reads
+    # followWallpaper from it). Listing the dirs also roots them in the
+    # profile closure, so switching stays a symlink swap.
     xdg.dataFile."marchyo/themes/manifest.json".text = manifest;
 
     # Optional (`?`) include: ghostty processes config-file includes after the

@@ -40,6 +40,7 @@ marchyo.theme = {
   enable = true;
   variant = "dark";   # or "light"
   fontScale = 1.25;   # global font-size multiplier (default 1.25; 1.0 = historical sizes)
+  followWallpaper = false;  # true: `marchyo bg set/next` also generate a matugen theme from the image
 };
 ```
 

@@ -15,7 +15,20 @@ export const ThemeManifestEntry = z.object({
 });
 export type ThemeManifestEntry = z.infer<typeof ThemeManifestEntry>;
 
-const Manifest = z.array(ThemeManifestEntry);
+// The manifest is an object carrying the theme list plus declarative theme
+// settings; a bare array (the older shape) still parses, with every setting
+// at its default.
+const ManifestObject = z.object({
+  themes: z.array(ThemeManifestEntry),
+  followWallpaper: z.boolean().default(false),
+});
+export type ThemeManifestFile = z.infer<typeof ManifestObject>;
+const Manifest = z.union([
+  ManifestObject,
+  z
+    .array(ThemeManifestEntry)
+    .transform((themes) => ({ themes, followWallpaper: false })),
+]);
 
 // Back-compat aliases: `marchyo theme set dark|light` selects the Jylhis pair.
 export const THEME_ALIASES: Record<string, string> = {
@@ -68,21 +81,29 @@ export function declarativePointerPath(
   );
 }
 
-// Missing or invalid manifest degrades to [] (the module isn't enabled, or
-// predates the N-theme layer); `warn` gets a diagnostic for the non-missing
-// cases.
-export async function readThemeManifest(
+// Missing or invalid manifest degrades to no themes and default settings
+// (the module isn't enabled, or predates the N-theme layer); `warn` gets a
+// diagnostic for the non-missing cases.
+export async function readThemeManifestFile(
   path: string = themeManifestPath(),
   warn: (msg: string) => void = () => {},
-): Promise<ThemeManifestEntry[]> {
+): Promise<ThemeManifestFile> {
+  const empty: ThemeManifestFile = { themes: [], followWallpaper: false };
   const file = Bun.file(path);
-  if (!(await file.exists())) return [];
+  if (!(await file.exists())) return empty;
   try {
     return Manifest.parse(JSON.parse(await file.text()));
   } catch {
     warn(`ignoring invalid theme manifest at ${path}`);
-    return [];
+    return empty;
   }
+}
+
+export async function readThemeManifest(
+  path: string = themeManifestPath(),
+  warn: (msg: string) => void = () => {},
+): Promise<ThemeManifestEntry[]> {
+  return (await readThemeManifestFile(path, warn)).themes;
 }
 
 function realpathOrNull(p: string): string | null {

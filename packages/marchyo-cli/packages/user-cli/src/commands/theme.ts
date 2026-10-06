@@ -54,6 +54,7 @@ import {
   readState,
   setvtrgbArgv,
   readThemeManifest,
+  readThemeManifestFile,
   systemctlUserArgv,
   themeAtPointer,
   usageError,
@@ -411,7 +412,31 @@ export async function runBgSet(
     err(rt, `no such image: ${image}`);
     return 1;
   }
-  return applyChange(rt, bgChangeBase, { mode, value: image });
+  const code = await applyChange(rt, bgChangeBase, { mode, value: image });
+  if (code !== 0 || mode === "revert") return code;
+  return followWallpaper(rt, image);
+}
+
+// `marchyo.theme.followWallpaper`: after a successful `bg set` / `bg next`,
+// derive the theme from the new image through the `theme generate` path
+// (matugen picks the polarity). Both overrides are recorded, so `runtime
+// restore` replays the wallpaper and the generated theme. A failed generation
+// leaves the wallpaper in place: it warns and the command still succeeds.
+async function followWallpaper(rt: Runtime, image: string): Promise<number> {
+  const { followWallpaper } = await readThemeManifestFile();
+  if (!followWallpaper) return 0;
+  try {
+    await applyChange(rt, generateThemeChangeBase, {
+      mode: "runtime",
+      value: JSON.stringify({ image, variant: "auto" }),
+    });
+  } catch (e) {
+    warn(
+      rt,
+      `wallpaper set, but generating a theme from it failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+  return 0;
 }
 
 export async function runBgNext(rt: Runtime): Promise<number> {
@@ -436,7 +461,12 @@ export async function runBgNext(rt: Runtime): Promise<number> {
   }
   const idx = images.indexOf(real);
   const next = images[(idx + 1) % images.length]!;
-  return applyChange(rt, bgChangeBase, { mode: "runtime", value: next });
+  const code = await applyChange(rt, bgChangeBase, {
+    mode: "runtime",
+    value: next,
+  });
+  if (code !== 0) return code;
+  return followWallpaper(rt, next);
 }
 
 // Wallpaper-derived theming (`marchyo theme generate <image>`). matugen turns

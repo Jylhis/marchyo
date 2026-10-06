@@ -17,9 +17,6 @@ arrival.
   contrast. Cosmetic; a real fix needs distinct hover/subtle/border roles
   upstream in `jylhis-design`. `tokenSlots` lives in `lib/theme-generators.nix` and
   reaches the CLI through each theme dir's `palette.json`.
-- **Optional: wallpaper-driven Material-You mode.** matugen already covers the
-  runtime subset; would be a mode, never the default (marchyo's identity is
-  the jylhis palette).
 
 Rules for any new theme surface:
 
