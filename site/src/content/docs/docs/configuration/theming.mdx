@@ -90,7 +90,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, the k9s skin, lazygit, spotify-player and gdu colors, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [
@@ -127,11 +127,25 @@ marchyo.theme.themes = [
 ```
 
 Runtime switching covers every surface except the Plymouth boot splash (it is
-not on screen during a session): Qt follows the GTK swap — the session runs
+not on screen during a session) and ncspot (its theme sits inline in
+`config.toml`, which has no include, so it follows the build-time
+`variant`/`scheme` at rebuild). Qt follows the GTK swap: the session runs
 `QT_QPA_PLATFORMTHEME=gtk3`, so Qt apps pick up the swapped `gtk.css` and dconf
-color-scheme on next launch — and the TUI apps (lazygit, k9s, …) follow the
-build-time `variant`/`scheme` at rebuild. The switch is ephemeral — the next
-activation resets to the declarative default.
+color-scheme on next launch. The switch is ephemeral: the next activation
+resets to the declarative default.
+
+The TUI apps read their colours through the `~/.config/marchyo/current-theme`
+pointer. k9s restyles open sessions: `marchyo theme` relinks
+`~/.config/k9s/skins/jylhis.yaml` at the new theme's skin, and k9s watches its
+skins directory. lazygit, spotify-player and gdu pick up the new theme the next
+time they start. `~/.config/spotify-player/theme.toml` and
+`~/.config/gdu/gdu.yaml` link into the pointer, and lazygit loads
+`LG_CONFIG_FILE`, which lists its main `config.yml` followed by the pointer's
+`lazygit.yml` (lazygit merges the files in order, so the theme overlay wins).
+`LG_CONFIG_FILE` is a session variable, so it applies from the next login.
+These TUI colours come from base16 slots: with `marchyo.theme.scheme` set, the
+declarative theme's files carry that scheme's slots, as the build-time config
+does. Off the desktop, and on Darwin, the TUI apps keep the build-time colours.
 
 GTK apps follow a runtime switch on next launch (newly started apps read the
 swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
@@ -165,14 +179,14 @@ marchyo theme generate ~/Pictures/wall.jpg --dark   # force a dark scheme
 marchyo theme generate --revert                     # back to the declarative theme
 ```
 
-matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, Mako, Waybar, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), and the wallpaper itself.
+matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, Mako, Waybar, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), k9s, lazygit, spotify-player, gdu, and the wallpaper itself.
 
 The colours come from two files the build ships in the declarative variant's theme dir: `palette.json` (every design token's hex, `syn-*` included, and the token-to-base16-slot table) and `templates/` (the Mako, Waybar and GTK configs with each colour as a token placeholder). `theme generate` fills each placeholder with the matugen slot for that token, and a token with no base16 slot keeps the build variant's hex. For `bat` it writes a `marchyo-generated.tmTheme` into bat's themes directory and runs `bat cache --build`.
 
 Qt follows the runtime GTK swap on next launch (`QT_QPA_PLATFORMTHEME=gtk3`),
 and `starship` styles through ANSI slot names, so it already recolors with the
-terminal's live palette. Only the Plymouth boot splash keeps the declarative
-theme until the next rebuild — it is not on screen during a session
+terminal's live palette. Only the Plymouth boot splash (not on screen during a
+session) and ncspot keep the declarative theme until the next rebuild
 ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
 
 ## Light mode

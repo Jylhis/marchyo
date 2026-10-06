@@ -252,12 +252,16 @@ console.log(JSON.stringify({ applied, execs }));
         "colors.json",
         "console.txt",
         "fzf.opts",
+        "gdu.yaml",
         "ghostty.conf",
         "gtk.css",
         "hyprland.conf",
         "hyprlock-colors.conf",
+        "k9s-skin.yaml",
+        "lazygit.yml",
         "mako.conf",
         "palette.json",
+        "spotify-player-theme.toml",
         "variant",
         "wallpaper.png",
         "waybar.css",
@@ -281,6 +285,14 @@ console.log(JSON.stringify({ applied, execs }));
     expect(read("hyprlock-colors.conf")).toContain("$bg = rgba(a0b000ff)");
     expect(read("console.txt").trim().split("\n")).toHaveLength(3);
     expect(read("bat.conf")).toBe("--theme=marchyo-generated\n--style=plain\n");
+    expect(read("k9s-skin.yaml")).toContain(`fgColor: "${slots.base05}"`);
+    expect(read("lazygit.yml")).toContain(
+      `defaultFgColor: ["${slots.base05}"]`,
+    );
+    expect(read("spotify-player-theme.toml")).toContain(
+      `background = "${slots.base00}"`,
+    );
+    expect(read("gdu.yaml")).toContain(`text-color: "${slots.base05}"`);
     expect(JSON.parse(read("colors.json")).colors).toEqual({
       bg: slots.base00,
       accentHover: slots.base09,
@@ -305,6 +317,7 @@ console.log(JSON.stringify({ applied, execs }));
       "gtk-3.0/gtk.css",
       "gtk-4.0/gtk.css",
       "bat/config",
+      "k9s/skins/jylhis.yaml",
     ]) {
       expect(existsSync(join(dirs.config, link))).toBe(true);
       expect(readlinkSync(join(dirs.config, link)).startsWith(dir)).toBe(true);

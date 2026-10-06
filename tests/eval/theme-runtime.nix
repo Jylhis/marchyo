@@ -158,6 +158,7 @@ in
       for d in ${darkDir} ${lightDir}; do
         for f in variant colors.json ghostty.conf gtk.css hyprland.conf mako.conf waybar.css \
           bat.conf fzf.opts hyprlock-colors.conf console.txt palette.json \
+          k9s-skin.yaml lazygit.yml spotify-player-theme.toml gdu.yaml \
           templates/mako.conf templates/waybar.css templates/gtk.css; do
           test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
         done
@@ -184,6 +185,20 @@ in
             | gsub("\\{\\{shade\\}\\}"; $shade)' > filled
         cmp filled "$parity/$f" || { echo "FAIL: filled template $f differs from the scheme dir"; exit 1; }
       done
+      # The base16-slot TUI surfaces in a scheme dir are byte-identical to what
+      # `marchyo theme generate` writes for the same slots (the fixture).
+      ${lib.concatMapStrings
+        (f: ''
+          cmp ${pkgs.writeText "expected-${f}" parityExpected.${f}} "$parity/${f}" \
+            || { echo "FAIL: scheme dir ${f} differs from the parity fixture"; exit 1; }
+        '')
+        [
+          "k9s-skin.yaml"
+          "lazygit.yml"
+          "spotify-player-theme.toml"
+          "gdu.yaml"
+        ]
+      }
       # The jylhis include must name BOTH themes as a ghostty light/dark pair
       # (identical in both dirs): ghostty resolves it from the system
       # color-scheme, so the dconf write in `marchyo theme set` restyles open

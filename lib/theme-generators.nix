@@ -165,6 +165,228 @@ let
     ''
     + lib.concatImapStrings (i: c: "palette = ${toString (i - 1)}=${c}\n") ansi;
 
+  # Long-tail TUI surfaces themed from base16 slots alone (k9s, lazygit,
+  # spotify-player, gdu). Each returns the config data the build-time module in
+  # modules/home/ hands to Home Manager; the `*Text` renderers below serialize
+  # the same data for the runtime theme dirs.
+  k9sSkinFromSlots = s: {
+    k9s = {
+      body = {
+        fgColor = s.base05;
+        bgColor = "default";
+        logoColor = s.base0C;
+      };
+      prompt = {
+        fgColor = s.base05;
+        bgColor = "default";
+        suggestColor = s.base02;
+      };
+      info = {
+        fgColor = s.base0B;
+        sectionColor = s.base05;
+      };
+      # base11 (the Stylix dialog focus slot) is absent from catalog schemes;
+      # base00 stands in.
+      dialog = {
+        fgColor = s.base05;
+        bgColor = s.base01;
+        buttonFgColor = s.base05;
+        buttonBgColor = s.base02;
+        buttonFocusFgColor = s.base00;
+        buttonFocusBgColor = s.base0B;
+        labelFgColor = s.base0A;
+        fieldFgColor = s.base05;
+      };
+      frame = {
+        border = {
+          fgColor = s.base02;
+          focusColor = s.base01;
+        };
+        menu = {
+          fgColor = s.base05;
+          keyColor = s.base0B;
+          numKeyColor = s.base0B;
+        };
+        crumbs = {
+          fgColor = s.base05;
+          bgColor = s.base01;
+          activeColor = s.base02;
+        };
+        status = {
+          newColor = s.base0C;
+          modifyColor = s.base09;
+          addColor = s.base0B;
+          errorColor = s.base08;
+          highlightcolor = s.base0A;
+          killColor = s.base03;
+          completedColor = s.base03;
+        };
+        title = {
+          fgColor = s.base05;
+          bgColor = s.base01;
+          highlightColor = s.base0A;
+          counterColor = s.base0C;
+          filterColor = s.base0B;
+        };
+      };
+      views = {
+        charts = {
+          bgColor = "default";
+          defaultDialColors = [
+            s.base0C
+            s.base0D
+          ];
+          defaultChartColors = [
+            s.base0C
+            s.base0D
+          ];
+        };
+        table = {
+          fgColor = s.base05;
+          bgColor = "default";
+          header = {
+            fgColor = s.base05;
+            bgColor = "default";
+            sorterColor = s.base08;
+          };
+        };
+        xray = {
+          fgColor = s.base05;
+          bgColor = "default";
+          cursorColor = s.base01;
+          graphicColor = s.base0C;
+          showIcons = false;
+        };
+        yaml = {
+          keyColor = s.base08;
+          colonColor = s.base05;
+          valueColor = s.base0B;
+        };
+        logs = {
+          fgColor = s.base05;
+          bgColor = "default";
+          indicator = {
+            fgColor = s.base05;
+            bgColor = "default";
+            toggleOnColor = s.base0B;
+            toggleOffColor = s.base04;
+          };
+        };
+        help = {
+          fgColor = s.base05;
+          bgColor = "default";
+          indicator.fgColor = s.base0D;
+        };
+      };
+    };
+  };
+
+  # lazygit `gui.theme`.
+  lazygitThemeFromSlots = s: {
+    activeBorderColor = [
+      s.base0D
+      "bold"
+    ];
+    inactiveBorderColor = [ s.base03 ];
+    searchingActiveBorderColor = [
+      s.base04
+      "bold"
+    ];
+    optionsTextColor = [ s.base06 ];
+    selectedLineBgColor = [ s.base03 ];
+    cherryPickedCommitBgColor = [ s.base02 ];
+    cherryPickedCommitFgColor = [ s.base03 ];
+    unstagedChangesColor = [ s.base08 ];
+    defaultFgColor = [ s.base05 ];
+  };
+
+  # spotify-player theme palette.
+  spotifyPlayerPaletteFromSlots = s: {
+    background = s.base00;
+    foreground = s.base05;
+    black = s.base00;
+    red = s.base08;
+    green = s.base0B;
+    yellow = s.base0A;
+    blue = s.base0D;
+    magenta = s.base0E;
+    cyan = s.base0C;
+    white = s.base05;
+    bright_black = s.base03;
+    bright_red = s.base08;
+    bright_green = s.base0B;
+    bright_yellow = s.base0A;
+    bright_blue = s.base0D;
+    bright_magenta = s.base0E;
+    bright_cyan = s.base0C;
+    bright_white = s.base07;
+  };
+
+  # Block-style YAML for nested attrsets of strings, bools and string lists,
+  # keys in attrNames (byte) order. Strings are JSON-quoted, which YAML reads
+  # as double-quoted scalars.
+  yamlText =
+    let
+      scalar =
+        v:
+        if builtins.isBool v then
+          lib.boolToString v
+        else if builtins.isList v then
+          "[" + lib.concatMapStringsSep ", " scalar v + "]"
+        else
+          builtins.toJSON v;
+      lines =
+        indent: attrs:
+        lib.concatMap (
+          k:
+          let
+            v = attrs.${k};
+          in
+          if builtins.isAttrs v then
+            [ "${indent}${k}:" ] ++ lines "${indent}  " v
+          else
+            [ "${indent}${k}: ${scalar v}" ]
+        ) (lib.attrNames attrs);
+    in
+    attrs: lib.concatMapStrings (l: l + "\n") (lines "" attrs);
+
+  k9sSkinText = s: yamlText (k9sSkinFromSlots s);
+
+  # Merged over the main lazygit config via LG_CONFIG_FILE.
+  lazygitText = s: yamlText { gui.theme = lazygitThemeFromSlots s; };
+
+  # spotify-player theme.toml with the one `jylhis` theme its app.toml selects.
+  spotifyPlayerThemeText =
+    s:
+    let
+      palette = spotifyPlayerPaletteFromSlots s;
+    in
+    ''
+      [[themes]]
+      name = "jylhis"
+
+      [themes.palette]
+    ''
+    + lib.concatMapStrings (k: "${k} = ${builtins.toJSON palette.${k}}\n") (lib.attrNames palette);
+
+  # gdu.yaml; the file carries only the theme.
+  gduText = s: ''
+    style:
+      selected-row:
+        text-color: "${s.base05}"
+        background-color: "${s.base00}"
+      result-row:
+        number-color: "${s.base06}"
+        directory-color: "${s.base02}"
+      footer:
+        text-color: "${s.base05}"
+        background-color: "${s.base00}"
+        number-color: "${s.base06}"
+      header:
+        text-color: "${s.base05}"
+        background-color: "${s.base00}"
+  '';
+
   # Expected output for the CLI parity fixture: every generator `marchyo theme
   # generate` ports, applied to a base16 palette and the build-variant token
   # hexes the CLI reads from palette.json.
@@ -187,6 +409,10 @@ let
         name = batThemeName;
         slots = base16;
       };
+      "k9s-skin.yaml" = k9sSkinText base16;
+      "lazygit.yml" = lazygitText base16;
+      "spotify-player-theme.toml" = spotifyPlayerThemeText base16;
+      "gdu.yaml" = gduText base16;
       shade = shadeRgba (resolve "text");
       tokens = lib.genAttrs (lib.attrNames tokens) resolve;
     };
@@ -203,6 +429,14 @@ in
     hyprlockVarsFor
     tty16FromSlots
     ghosttyConfFromSlots
+    k9sSkinFromSlots
+    lazygitThemeFromSlots
+    spotifyPlayerPaletteFromSlots
+    yamlText
+    k9sSkinText
+    lazygitText
+    spotifyPlayerThemeText
+    gduText
     parityExpected
     ;
 }

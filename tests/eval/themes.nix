@@ -237,6 +237,76 @@ in
         ];
       });
 
+  # Base16-slot TUI surfaces on the runtime layer: every theme dir ships the
+  # k9s skin, lazygit overlay, spotify-player theme.toml and gdu.yaml, and the
+  # apps read them through the current-theme pointer (k9s/gdu/spotify-player
+  # via links, lazygit via LG_CONFIG_FILE). #d1d4dc is jylhis-dark's base05.
+  eval-themes-tui-slot-surfaces =
+    testNixOSCheck "themes-tui-slot-surfaces"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+          e = hm.xdg.configFile."marchyo/current-theme".source.entries;
+          # mkOutOfStoreSymlink: a runCommand whose build links to the target.
+          linksTo =
+            f: target:
+            lib.hasInfix "${hm.xdg.configHome}/marchyo/current-theme/${target} " (
+              hm.xdg.configFile.${f}.source.buildCommand or ""
+            );
+        in
+        lib.hasInfix ''fgColor: "#d1d4dc"'' e."k9s-skin.yaml".text
+        && lib.hasInfix ''defaultFgColor: ["#d1d4dc"]'' e."lazygit.yml".text
+        && lib.hasInfix ''foreground = "#d1d4dc"'' e."spotify-player-theme.toml".text
+        && lib.hasInfix ''text-color: "#d1d4dc"'' e."gdu.yaml".text
+        && linksTo "k9s/skins/jylhis.yaml" "k9s-skin.yaml"
+        && linksTo "gdu/gdu.yaml" "gdu.yaml"
+        && linksTo "spotify-player/theme.toml" "spotify-player-theme.toml"
+        && hm.programs.k9s.skins == { }
+        && hm.programs.spotify-player.themes == [ ]
+        && lib.hasSuffix "/current-theme/lazygit.yml" hm.home.sessionVariables.LG_CONFIG_FILE
+        && lib.hasPrefix "${hm.xdg.configHome}/lazygit/config.yml," hm.home.sessionVariables.LG_CONFIG_FILE
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.defaults.musicPlayer = "spotify-player";
+      });
+
+  # With marchyo.theme.scheme the declarative (build-variant) dir carries the
+  # scheme's slots, matching the build-time modules: nord's base05 is #e5e9f0.
+  eval-themes-tui-slot-surfaces-scheme =
+    testNixOSCheck "themes-tui-slot-surfaces-scheme"
+      (
+        cfg:
+        let
+          e = cfg.home-manager.users.testuser.xdg.configFile."marchyo/current-theme".source.entries;
+        in
+        lib.hasInfix ''fgColor: "#e5e9f0"'' e."k9s-skin.yaml".text
+        && lib.hasInfix ''defaultFgColor: ["#e5e9f0"]'' e."lazygit.yml".text
+        && lib.hasInfix ''foreground = "#e5e9f0"'' e."spotify-player-theme.toml".text
+        && lib.hasInfix ''text-color: "#e5e9f0"'' e."gdu.yaml".text
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.scheme = "nord";
+      });
+
+  # Off the desktop (no runtime layer) the TUI surfaces keep build-time colours.
+  eval-themes-tui-nondesktop-buildtime =
+    testNixOSCheck "themes-tui-nondesktop-buildtime"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+        in
+        hm.programs.k9s.skins.jylhis.k9s.body.fgColor == "#d1d4dc"
+        && lib.hasInfix ''text-color: "#d1d4dc"'' (hm.xdg.configFile."gdu/gdu.yaml".text or "")
+        && !(hm.home.sessionVariables ? LG_CONFIG_FILE)
+      )
+      (withTestUser {
+        marchyo.theme.enable = true;
+      });
+
   # Runtime Qt theming: on a desktop the session points Qt at the gtk3
   # platform theme so Qt follows the live GTK surface (no qt5ct/qt6ct
   # config is generated anywhere).
@@ -297,8 +367,8 @@ in
         in
         hm.programs.lazygit.settings.gui.theme.defaultFgColor == [ "#d1d4dc" ]
         && hm.programs.k9s.settings.ui.skin == "jylhis"
-        && hm.programs.k9s.skins.jylhis.k9s.body.fgColor == "#d1d4dc"
-        && (hm.xdg.configFile."gdu/gdu.yaml".text or null) != null
+        && hm.xdg.configFile ? "k9s/skins/jylhis.yaml"
+        && hm.xdg.configFile ? "gdu/gdu.yaml"
         && hm.home.pointerCursor.name == "Adwaita"
         && hm.home.pointerCursor.size == 24
         && lib.hasInfix "jylhis-dark" hm.programs.emacs.extraConfig

@@ -32,6 +32,10 @@ import {
   hyprlandAvailable,
   hyprlandConfFor,
   hyprlockColorsFor,
+  gduText,
+  k9sSkinText,
+  lazygitText,
+  spotifyPlayerThemeText,
   makoctlArgv,
   matugenArgv,
   ColorsJson as ColorsJsonSchema,
@@ -183,6 +187,20 @@ export async function activateThemeDir(
   const bat = join(entry.dir, "bat.conf");
   if (existsSync(bat)) {
     await relinkConfig(bat, join(configHome(), "bat", "config"));
+  }
+
+  // k9s: its declarative skin links through current-theme, which already
+  // follows the switch, but k9s only restyles a running session on a change
+  // event in its skins dir. Relinking the skin straight at this theme dir's
+  // copy (atomic rename into skins/) fires that event. lazygit,
+  // spotify-player and gdu read their current-theme files at start, so they
+  // need no step here.
+  const k9sSkin = join(entry.dir, "k9s-skin.yaml");
+  if (existsSync(k9sSkin)) {
+    await relinkConfig(
+      k9sSkin,
+      join(configHome(), "k9s", "skins", "jylhis.yaml"),
+    );
   }
 
   // console/TTY: best-effort only. setvtrgb repaints the live VT palette, but a
@@ -508,6 +526,10 @@ export const generateThemeChangeBase: ChangeSpec = {
     await put("fzf.opts", fzfOptsFor(resolve, base16.base0B!));
     await put("hyprlock-colors.conf", hyprlockColorsFor(resolve));
     await put("console.txt", consoleTable(tty16FromBase16(base16)));
+    await put("k9s-skin.yaml", k9sSkinText(base16));
+    await put("lazygit.yml", lazygitText(base16));
+    await put("spotify-player-theme.toml", spotifyPlayerThemeText(base16));
+    await put("gdu.yaml", gduText(base16));
 
     // A surface the build dir has no template for is disabled declaratively;
     // drop any copy an earlier run left so activateThemeDir skips it.
