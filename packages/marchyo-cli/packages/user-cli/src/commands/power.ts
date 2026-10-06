@@ -5,8 +5,11 @@ import {
   data,
   err,
   runArgv,
+  shellInstalled,
+  shellIpc,
   usageError,
 } from "@marchyo/core";
+import { reportShellIpcError } from "./shell.ts";
 
 // Power/session commands. The gum menu presentation lives in
 // commands/menu.ts and dispatches here.
@@ -25,7 +28,17 @@ function detach(argv: string[]): boolean {
   }
 }
 
+// Lock with the marchyo shell's lock screen when the shell is installed;
+// hyprlock covers a shell that is not running and hosts without the shell.
 export async function runLock(rt: Runtime): Promise<number> {
+  if (shellInstalled()) {
+    try {
+      await shellIpc("lock");
+      return 0;
+    } catch (e) {
+      if (!commandAvailable("hyprlock")) return reportShellIpcError(rt, e);
+    }
+  }
   // Detached so the invoking terminal/menu window can close without
   // killing the locker.
   if (!commandAvailable("hyprlock")) {
