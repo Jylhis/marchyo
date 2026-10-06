@@ -89,17 +89,36 @@ let
 
   barType = types.submodule {
     freeformType = freeform;
-    options.layout = mkOption {
-      type = types.submodule {
-        freeformType = freeform;
-        options = {
-          left = sectionOption "left";
-          center = sectionOption "center";
-          right = sectionOption "right";
+    options = {
+      layout = mkOption {
+        type = types.submodule {
+          freeformType = freeform;
+          options = {
+            left = sectionOption "left";
+            center = sectionOption "center";
+            right = sectionOption "right";
+          };
         };
+        default = { };
+        description = "Bar layout: `left`, `center`, and `right` widget sections.";
       };
-      default = { };
-      description = "Bar layout: `left`, `center`, and `right` widget sections.";
+      style = mkOption {
+        type = types.nullOr (
+          types.enum [
+            "flat"
+            "segmented"
+          ]
+        );
+        default = null;
+        example = "segmented";
+        description = ''
+          Bar look. `flat` draws the widgets straight on the bar surface;
+          `segmented` fills each cluster of widgets between separators with a
+          background that alternates between the theme's subtle-background
+          colour and an accent-tinted surface colour, joined by curved edges. Presentation only: the
+          layout is the same in both. Null keeps the shell default (`flat`).
+        '';
+      };
     };
   };
 
@@ -271,10 +290,13 @@ in
           `marchyo.clock`, `marchyo.battery`) or a declared shell plugin's
           bar-widget id. Any section left unset falls back to the shipped
           default layout.
+        - `bar.style`: `flat` (the shell default) or `segmented`, two-tone
+          cluster backgrounds with curved joins.
         - `idle.{screensaver,lock}` — idle thresholds in seconds.
         - `caffeine.autoVideo` — hold an idle inhibitor while a video plays
           (default `true`).
-        - `monitors.<output>`: per-output overrides (e.g. `bar.layout`), merged
+        - `monitors.<output>`: per-output overrides (e.g. `bar.layout` or
+          `bar.style`), merged
           over the global values for that output. `idle`, `caffeine`, and
           `monitors` are always global.
 

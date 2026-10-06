@@ -155,12 +155,46 @@ test("missing defaults yield empty sections", () => {
   assert.deepEqual(MonitorConfig.barLayout({}, "", null), { left: [], center: [], right: [] });
 });
 
+// ── barStyle ─────────────────────────────────────────────────────────────────
+
+test("barStyle defaults to flat", () => {
+  assert.equal(MonitorConfig.barStyle({}, ""), "flat");
+  assert.equal(MonitorConfig.barStyle(null, "DP-1"), "flat");
+  assert.equal(MonitorConfig.barStyle(config, "DP-1"), "flat");
+});
+
+test("barStyle reads the global bar.style", () => {
+  assert.equal(MonitorConfig.barStyle({ bar: { style: "segmented" } }, ""), "segmented");
+  assert.equal(MonitorConfig.barStyle({ bar: { style: "segmented" } }, "DP-1"), "segmented");
+});
+
+test("a per-monitor bar.style overrides the global one for that output only", () => {
+  const c = { bar: { style: "segmented" }, monitors: { "HDMI-A-1": { bar: { style: "flat" } } } };
+  assert.equal(MonitorConfig.barStyle(c, "HDMI-A-1"), "flat");
+  assert.equal(MonitorConfig.barStyle(c, "DP-1"), "segmented");
+  const m = { monitors: { "DP-1": { bar: { style: "segmented" } } } };
+  assert.equal(MonitorConfig.barStyle(m, "DP-1"), "segmented");
+  assert.equal(MonitorConfig.barStyle(m, "eDP-1"), "flat");
+});
+
+test("an unknown or ill-typed bar.style falls back to flat", () => {
+  assert.equal(MonitorConfig.barStyle({ bar: { style: "powerline" } }, ""), "flat");
+  assert.equal(MonitorConfig.barStyle({ bar: { style: 1 } }, ""), "flat");
+  assert.equal(MonitorConfig.barStyle({ bar: "segmented" }, ""), "flat");
+});
+
+test("the bar styles are flat then segmented", () => {
+  assert.deepEqual(MonitorConfig.BAR_STYLES, ["flat", "segmented"]);
+});
+
 // ── module surface ───────────────────────────────────────────────────────────
 
 test("the module exports its whole public surface to Node", () => {
   assert.deepEqual(Object.keys(MonitorConfig).sort(), [
     "ALWAYS_GLOBAL",
+    "BAR_STYLES",
     "barLayout",
+    "barStyle",
     "deepMerge",
     "overrideFor",
     "resolve",

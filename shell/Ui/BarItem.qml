@@ -35,9 +35,25 @@ Rectangle {
     // Mouse-wheel delta (QWheelEvent.angleDelta.y): > 0 up, < 0 down.
     signal wheel(int delta)
 
+    // The nearest enclosing Ui/BarSection when it draws the segmented style,
+    // else null (flat bar, or an item outside the bar). Walked through an
+    // untyped parameter: qmllint types `parent` as QQuickItem, which has no
+    // `segmented`. Reading each ancestor's `parent` keeps the binding live.
+    function segmentedSection(start): var {
+        for (let p = start; p; p = p.parent) {
+            if (p.segmentHover !== undefined)
+                return p.segmented === true ? p : null;
+        }
+        return null;
+    }
+    readonly property var segmentedBar: root.segmentedSection(root.parent)
+    // Hover highlight: Color.surface on the flat bar; on the segmented bar the
+    // section's hover colour, which differs from both segment tones.
+    readonly property color hoverColor: root.segmentedBar ? root.segmentedBar.segmentHover : Color.surface
+
     implicitWidth: label.implicitWidth + root.padH * 2
     implicitHeight: Style.barHeight
-    color: (root.interactive && mouse.containsMouse) ? Color.surface : "transparent"
+    color: (root.interactive && mouse.containsMouse) ? root.hoverColor : "transparent"
 
     Text {
         id: label

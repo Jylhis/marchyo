@@ -45,13 +45,6 @@ Rules for any new theme surface:
 
 ## 2. Shell
 
-### Widgets and features (independent)
-
-- Optional segmented bar look: two-tone segments with curved joins, pure QML
-  `Shape` arcs in `shell/Ui/BarSection.qml`, filled from existing tokens so
-  theme swaps recolor it. A presentation flag only, no layout changes, no
-  image assets.
-
 ### Compositor effects
 
 - Optional CRT `screen_shader` in `modules/home/hyprland.nix` if a retro

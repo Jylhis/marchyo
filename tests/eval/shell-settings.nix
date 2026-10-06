@@ -115,6 +115,36 @@ in
       && json.monitors."DP-1" == { launcher.scale = 2; }
     ) "unknown shell settings keys did not pass through: ${builtins.toJSON json}";
 
+  # bar.style renders globally and per monitor, beside an untouched layout.
+  eval-shell-settings-bar-style =
+    let
+      json = shellJsonOf (hmWith {
+        marchyo.shell.settings = {
+          bar.style = "segmented";
+          monitors."HDMI-A-1".bar.style = "flat";
+        };
+      });
+    in
+    check "eval-shell-settings-bar-style" (
+      json == {
+        bar.style = "segmented";
+        monitors."HDMI-A-1".bar.style = "flat";
+      }
+    ) "bar.style did not render to shell.json: ${builtins.toJSON json}";
+
+  # bar.style is a closed enum: an unknown look is rejected at eval.
+  eval-shell-settings-bar-style-checked =
+    let
+      bad = builtins.tryEval (
+        builtins.deepSeq (shellJsonOf (hmWith {
+          marchyo.shell.settings.bar.style = "powerline";
+        })) true
+      );
+    in
+    check "eval-shell-settings-bar-style-checked" (
+      !bad.success
+    ) "bar.style accepted \"powerline\"; the enum is not enforced";
+
   # Nothing set: no shell.json, so the shell keeps its defaults.
   eval-shell-settings-empty-no-file =
     let
@@ -147,6 +177,8 @@ in
           s = cfg.marchyo.shell.settings;
         in
         s.idle.lock == 600
+        && s.bar.style == "segmented"
+        && s.monitors."DP-1".bar.style == null
         &&
           s.monitors."DP-1".bar.layout.right == [
             {
@@ -159,6 +191,7 @@ in
       (withDarwinTestUser {
         marchyo.shell.settings = {
           idle.lock = 600;
+          bar.style = "segmented";
           monitors."DP-1".bar.layout.right = [ { id = "marchyo.clock"; } ];
           custom = 1;
         };

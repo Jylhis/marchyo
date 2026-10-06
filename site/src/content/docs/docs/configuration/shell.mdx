@@ -32,6 +32,7 @@ the file, so the shell's own defaults apply.
 | Key | Type | Description |
 |-----|------|-------------|
 | `bar.layout.{left,center,right}` | list of `{ id; settings?; }` | Widget entries for that bar section. A section left unset falls back to the shipped default layout. |
+| `bar.style` | `"flat"` or `"segmented"` | Bar look. `segmented` fills each cluster of widgets with a two-tone background (the theme's subtle-background colour and an accent-tinted surface colour) joined by curved edges. Layout is unchanged. Shell default `"flat"`. |
 | `idle.screensaver` | positive int | Seconds of idle before the screensaver (shell default 150). |
 | `idle.lock` | positive int | Seconds of idle before the lock (shell default 300). |
 | `caffeine.autoVideo` | bool | Hold an idle inhibitor while a video plays (shell default `true`). |
@@ -85,6 +86,24 @@ open-network QR when it is unavailable). `marchyo.weather` (current conditions f
 IP-geolocated) is registered but not placed by default; placing it is what
 starts the periodic outbound fetch, so a bar without it makes no network
 request.
+
+### Bar style
+
+`bar.style = "segmented"` gives each cluster of widgets (the groups between
+separators, or a whole section without them) its own filled background. The
+backgrounds alternate between the theme's subtle-background colour and its
+surface colour tinted with the accent, so a theme change recolours them, and
+neighbouring segments meet in a curved join where the separator rule was.
+Hovering a clickable widget highlights it with a stronger accent tint. Widget widths and positions are the
+same as in the default `"flat"` style.
+
+```nix
+marchyo.shell.settings = {
+  bar.style = "segmented";
+  # Keep the plain look on the TV.
+  monitors."HDMI-A-1".bar.style = "flat";
+};
+```
 
 ### Per-monitor overrides
 

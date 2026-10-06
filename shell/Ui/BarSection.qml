@@ -31,6 +31,15 @@ import "../Commons/BarLayout.js" as BarLayout
 // cluster reads as a floating pixel, and before this component existed every
 // separator rendered unconditionally.
 //
+// The segmented bar style (ShellConfig.barStyleFor, "segmented") fills each
+// cluster, the run of visible widgets between two rendered separators, with a
+// Ui/BarSegment background. The tones alternate between Color.bgSubtle and
+// an accent-tinted Color.surface, and adjacent segments meet in a curved join centred on the
+// separator, whose rule is then transparent. The segments are drawn from the
+// slots' own geometry by a zero-width layer behind them, so widths,
+// positions, and paddings are identical in both styles. The flat style (the
+// default) creates no layer at all.
+//
 // Visibility is read through the untyped helper below (not `slot.widget.shown`
 // inline): qmllint types Repeater delegates as QQuickItem and Loader.item as
 // QObject, so direct member access trips missing-property, while the runtime
@@ -64,6 +73,19 @@ RowLayout {
     // BarItem padding (Style.barItemPad) is the only gap between segments.
     spacing: 0
 
+    // "flat" | "segmented", from this output's resolved `bar.style`. The
+    // offscreen harness assigns it directly to bind both styles.
+    property string barStyle: ShellConfig.barStyleFor(root.screenName)
+    readonly property bool segmented: root.barStyle === "segmented"
+    // Segmented-style colours, all derived from live Color tokens so a theme
+    // swap recolours them: the two alternating segment tones (the odd one is
+    // the surface tinted with the accent, so the pair stays distinguishable
+    // in both variants) and the hover highlight Ui/BarItem uses on this
+    // section, a stronger accent tint distinct from both tones.
+    readonly property color segmentToneEven: Color.bgSubtle
+    readonly property color segmentToneOdd: Qt.tint(Color.surface, Qt.alpha(Color.accent, 0.18))
+    readonly property color segmentHover: Qt.tint(Color.surface, Qt.alpha(Color.accent, 0.36))
+
     readonly property var entries: root.entriesOverride || ShellConfig.barFor(root.screenName)[root.section] || []
 
     // A loaded widget's `shown` flag, read through an untyped parameter for the
@@ -84,6 +106,79 @@ RowLayout {
         return cell ? cell.contentShown === true : false;
     }
 
+    // A slot's horizontal widget padding (BarItem.padH), behind an untyped
+    // parameter for the same qmllint reason. A widget without `padH` (a compat
+    // plugin) reads as compact padding, the smallest a first-party item uses.
+    function cellPad(cell): real {
+        const w = cell ? cell.widget : null;
+        if (w && typeof w.padH === "number")
+            return w.padH;
+        return Math.ceil(Style.barItemPad / 2);
+    }
+
+    // Segmented style: one { left, right, joinLeft, joinRight, depthLeft,
+    // depthRight } per cluster, in section coordinates. A rendered separator
+    // closes one segment and opens the next at its centre; the join depth spans
+    // the separator plus the smaller padding of the two widgets flanking it, so
+    // the curve stays inside the padding on both sides. Reading each slot's
+    // x/width/visibility keeps the binding live across collapses and resizes.
+    readonly property var segments: {
+        if (!root.segmented)
+            return [];
+        const out = [];
+        let cur = null;
+        let pendingJoin = null;
+        let lastPad = 0;
+        for (let k = 0; k < repeater.count; k++) {
+            const cell = repeater.itemAt(k);
+            if (!cell)
+                continue;
+            if (root.entries[k] && root.entries[k].id === BarLayout.SEPARATOR_ID) {
+                if (root.sepShown[k] !== true || !cur)
+                    continue;
+                const centre = cell.x + cell.width / 2;
+                cur.right = centre;
+                cur.joinRight = true;
+                cur.sepWidth = cell.width;
+                cur.padRight = lastPad;
+                out.push(cur);
+                pendingJoin = centre;
+                cur = null;
+                continue;
+            }
+            if (!root.cellShown(cell))
+                continue;
+            const pad = root.cellPad(cell);
+            if (!cur) {
+                const joined = pendingJoin !== null;
+                cur = {
+                    left: joined ? pendingJoin : cell.x,
+                    right: cell.x + cell.width,
+                    joinLeft: joined,
+                    joinRight: false,
+                    padLeft: pad,
+                    padRight: pad,
+                    sepWidth: 0
+                };
+                pendingJoin = null;
+            } else {
+                cur.right = cell.x + cell.width;
+            }
+            lastPad = pad;
+        }
+        if (cur)
+            out.push(cur);
+        else if (pendingJoin !== null && out.length > 0)
+            out[out.length - 1].joinRight = false; // no successor (BarLayout never renders one)
+        for (let i = 0; i < out.length; i++) {
+            const s = out[i];
+            const next = out[i + 1];
+            s.depthRight = s.joinRight && next ? 2 * Math.min(s.padRight, next.padLeft) + s.sepWidth : 0;
+            s.depthLeft = i > 0 ? out[i - 1].depthRight : 0;
+        }
+        return out;
+    }
+
     // Per-entry separator render decision (true = draw the rule). Reading
     // repeater.count and each slot's `shown` here is what keeps the binding
     // live: any widget flipping `shown` re-runs the computation, and so does a
@@ -96,6 +191,43 @@ RowLayout {
         for (let k = 0; k < repeater.count; k++)
             shown.push(root.cellShown(repeater.itemAt(k)));
         return BarLayout.separatorVisibility(ids, shown);
+    }
+
+    // Segmented-style background layer: a zero-width layout item at x = 0
+    // (row spacing is 0, so it shifts nothing), stacked behind the slots, with
+    // segments that paint outside its own bounds in section coordinates. Not
+    // created, and skipped by the layout, in the flat style.
+    Loader {
+        id: segmentLayer
+        visible: root.segmented
+        active: root.segmented
+        z: -1
+        Layout.preferredWidth: 0
+        Layout.maximumWidth: 0
+        Layout.fillHeight: true
+
+        sourceComponent: Item {
+            Repeater {
+                model: root.segments
+
+                BarSegment {
+                    required property var modelData
+                    required property int index
+
+                    x: -segmentLayer.x
+                    width: root.width
+                    height: root.height
+                    segLeft: modelData.left
+                    segRight: modelData.right
+                    joinLeft: modelData.joinLeft
+                    joinRight: modelData.joinRight
+                    joinDepthLeft: modelData.depthLeft
+                    joinDepthRight: modelData.depthRight
+                    cornerRadius: Style.barRadius
+                    fillColor: Qt.alpha(index % 2 === 0 ? root.segmentToneEven : root.segmentToneOdd, Style.surfaceAlpha)
+                }
+            }
+        }
     }
 
     Repeater {
@@ -115,6 +247,8 @@ RowLayout {
             // Non-separator slots expose their widget's `shown`; separators
             // report none (their rendering is decided by sepShown).
             readonly property bool contentShown: !isSeparator && root.widgetShown(loader.item)
+            // The loaded widget, for root.cellPad().
+            readonly property var widget: loader.item
 
             visible: isSeparator ? (root.sepShown[slot.index] === true) : slot.contentShown
             implicitWidth: loader.implicitWidth
@@ -125,6 +259,9 @@ RowLayout {
             Loader {
                 id: loader
                 anchors.fill: parent
+                // The segmented style draws its own curved join in place of
+                // the separator rule; the slot keeps its width.
+                opacity: slot.isSeparator && root.segmented ? 0 : 1
                 // Never bind this Loader's `visible` (see the file comment).
                 sourceComponent: root.resolve ? root.resolve(slot.modelData.id) : null
                 onLoaded: {

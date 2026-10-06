@@ -36,6 +36,12 @@ gap to the screen edges. If you prefer a flat strip that spans the full width, s
 `marchyo.theme.appearance.floatingBar = false`. For solid surfaces instead of
 the see-through glass look, set `marchyo.theme.appearance.surfaceAlpha = 1.0`.
 
+For a segmented look, where each group of segments gets its own two-tone
+background with rounded joins between groups, set
+`marchyo.shell.settings.bar.style = "segmented"` and rebuild. Everything stays
+in the same place; only the backgrounds change, and they follow your theme.
+Set it back to `"flat"` (or remove the line) for the plain bar.
+
 Each monitor gets its own bar. Some segments only show up when they have something
 to say. A recording indicator, for example, appears only while a recording runs, and
 the bar closes up the gap when a segment is hidden.

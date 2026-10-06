@@ -96,6 +96,7 @@ shell/
     BarItem.qml        bar-segment primitive (padded label, hover, signals, tooltip)
     BarSection.qml     one anchored bar group; collapsing slots + cluster-aware rules
     BarSeparator.qml   thin vertical rule between bar clusters
+    BarSegment.qml     one segmented-style cluster background (QtQuick.Shapes)
     Panel.qml          summonable-panel base (layer-shell card + dismiss)
     PanelButton.qml    labelled pill control for panel bodies
     PanelSlider.qml    0..1 slider for panel bodies (Control Center volume/mic)
@@ -181,6 +182,27 @@ while a `no_blur` window rule keeps app windows unblurred.
 
 Every surface sets `WlrLayershell.namespace` to `marchyo:<surface>`; that
 prefix is the blur anchor and stays stable across surfaces.
+
+`marchyo.shell.settings.bar.style` picks the bar look, read live from
+shell.json through `ShellConfig.barStyleFor(<output>)` (so
+`monitors.<output>.bar.style` overrides it per output):
+
+- `flat` (default): widgets sit straight on the pill.
+- `segmented`: `Ui/BarSection` fills each cluster (the visible widgets between
+  two rendered separators, or a whole section without separators) with a
+  `Ui/BarSegment` background. Tones alternate within a section between
+  `Color.bgSubtle` and `Color.surface` tinted with 18% `Color.accent` (both
+  at `Style.surfaceAlpha`), so a theme swap recolours them. `Ui/BarItem`
+  finds its section through the parent chain and hovers in a 36% accent tint
+  of `Color.surface` there, distinct from both tones (flat keeps
+  `Color.surface`). Outer ends are rounded with `Style.barRadius`; adjacent
+  segments meet in a circular-arc join centred on the separator, convex on the
+  earlier segment and concave on the later one. The join depth is the
+  separator plus the smaller padding of its two neighbours, so the curve stays
+  inside the padding. The separator rule turns transparent and keeps its
+  width. The shapes are `QtQuick.Shapes` paths (`Shape.CurveRenderer`, no
+  images) on a zero-width layer behind the slots, so widths, positions, and
+  paddings match the flat style exactly; the harness asserts it.
 
 ### Widgets
 
