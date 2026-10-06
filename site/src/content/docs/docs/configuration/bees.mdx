@@ -1,0 +1,68 @@
+---
+title: Btrfs deduplication (bees)
+description: Block-level btrfs deduplication with the bees daemon
+---
+
+`marchyo.bees` runs the [bees](https://github.com/Zygo/bees) deduplication
+daemon on one or more btrfs filesystems. It is off by default and needs at
+least one filesystem when enabled.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.bees.enable` | `bool` | `false` | Run bees on the filesystems below |
+| `marchyo.bees.filesystems.<name>.spec` | `str` | — | Filesystem identifier: `UUID=…`, `LABEL=…`, `PARTUUID=…`, or a mount path |
+| `marchyo.bees.filesystems.<name>.hashTableSizeMB` | `int` | `1024` | Hash table size in MB, a positive multiple of 16. Locked into RAM |
+| `marchyo.bees.filesystems.<name>.memoryHigh` | `null or str` | `hashTableSizeMB + 1024` MB | systemd `MemoryHigh=` for the bees unit; `null` leaves it unbounded |
+| `marchyo.bees.filesystems.<name>.threadCount` | `null or positive int` | `null` | Worker threads (`--thread-count`); `null` means one per CPU |
+| `marchyo.bees.filesystems.<name>.loadavgTarget` | `null or number` | `null` | Back off while the load average is above this (`--loadavg-target`) |
+| `marchyo.bees.filesystems.<name>.verbosity` | `str` | `"info"` | Syslog keyword or numeric level 0–8 |
+| `marchyo.bees.filesystems.<name>.extraOptions` | `list of str` | `[ ]` | Extra bees command-line options |
+
+```nix
+marchyo.bees = {
+  enable = true;
+  filesystems.root.spec = "UUID=00000000-0000-0000-0000-000000000000";
+};
+```
+
+## Sizing the hash table
+
+The hash table is locked into RAM for the lifetime of the daemon, so every MB
+is permanently resident. A larger table recognises smaller duplicate extents.
+Per TB of unique data:
+
+| Hash table | Average dedupe extent |
+|------------|-----------------------|
+| 128 MB | ~128 KiB (bees' recommended starting point) |
+| 256 MB | ~64 KiB |
+| 1024 MB | ~16 KiB |
+| 4096 MB | ~4 KiB |
+
+Changing `hashTableSizeMB` makes bees rebuild the table.
+
+## Reducing memory use
+
+Bees reads every block on the filesystem. Its resident memory is the hash
+table plus a small heap; the rest is page cache, which without a limit grows
+until it evicts other services into swap.
+
+- **Page cache:** `memoryHigh` caps the unit's cgroup. Above it the kernel
+  throttles bees and reclaims bees' own cache first instead of other
+  services'. The default leaves 1 GiB above the hash table; keep any explicit
+  value well above `hashTableSizeMB`.
+- **Concurrency:** `threadCount` and `loadavgTarget` reduce how many files bees
+  reads at once, which lowers heap use and the rate the cache fills.
+- **Hash table:** size it to the unique data on the filesystem using the table
+  above.
+
+```nix
+marchyo.bees.filesystems.root = {
+  spec = "UUID=00000000-0000-0000-0000-000000000000";
+  hashTableSizeMB = 512;
+  memoryHigh = "1536M";
+  threadCount = 4;
+  loadavgTarget = 8;
+};
+```
