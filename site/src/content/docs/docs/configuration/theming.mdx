@@ -52,6 +52,29 @@ marchyo.theme = {
 };
 ```
 
+A base16 theme in [runtime switching](#runtime-theme-switching) (a catalog or inline entry, or a [matugen](#wallpaper-derived-theming-matugen) result) colours each design token from the slot that best matches its role:
+
+| Slot | Tokens |
+|------|--------|
+| `base00` | `bg` |
+| `base01` | `bg-subtle`, `accent-subtle` |
+| `base02` | `surface`, `selection-bg` |
+| `base03` | `text-faint`, `border`, `syn-comment` |
+| `base04` | `text-muted`, `border-strong` |
+| `base05` | `text` |
+| `base06` | `text-heading` |
+| `base07` | `surface-raised` |
+| `base08` | `status-err`, `destructive`, `syn-variable` |
+| `base09` | `accent`, `accent-hover`, `cursor`, `syn-number` |
+| `base0A` | `status-warn` |
+| `base0B` | `syn-string`, `status-ok` |
+| `base0C` | `syn-type`, `syn-builtin` |
+| `base0D` | `status-info`, `syn-function` |
+| `base0E` | `syn-keyword` |
+| `base0F` | `brand` |
+
+`selection-bg`, `destructive` and the extra `syn-*` tokens follow the slot the [base16 styling guidelines](https://github.com/tinted-theming/home/blob/main/styling.md) name for that role (Selection Background, Diff Deleted, Variables, Integers, Support, Functions). `contour`, `decorator`, `scrim` and `syn-docstring` have no base16 role and keep the Jylhis hex. A matugen theme additionally takes `border`, `border-strong` and `accent-subtle` from Material's `outline_variant`, `outline` and `primary_container` when matugen emits them.
+
 ## Fonts
 
 Marchyo carries the design system's three type roles across the system — the

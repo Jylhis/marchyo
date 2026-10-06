@@ -322,6 +322,43 @@ in
         marchyo.theme.scheme = "nord";
       });
 
+  # Build check (`just check` only evaluates it): a scheme dir resolves each
+  # token through its base16 slot, so nord's palette.json and colors.json take
+  # selection-bg from nord's base02 (#434c5e) and destructive from base08
+  # (#bf616a), while contour (no base16 role) keeps the Jylhis dark hex.
+  build-themes-scheme-token-slots =
+    let
+      cfg =
+        (lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            (withTestUser {
+              marchyo.desktop.enable = true;
+              marchyo.theme.themes = [
+                "jylhis-dark"
+                "nord"
+              ];
+            })
+          ];
+        }).config;
+      manifest =
+        pkgs.writeText "themes-manifest.json"
+          cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
+    in
+    pkgs.runCommand "check-themes-scheme-token-slots" { nativeBuildInputs = [ pkgs.jq ]; } ''
+      jdir=$(jq -r '.themes[] | select(.name == "jylhis-dark") | .dir' ${manifest})
+      ndir=$(jq -r '.themes[] | select(.name == "nord") | .dir' ${manifest})
+      contour=$(jq -r '.tokens.contour' "$jdir/palette.json")
+      jq -e '.tokens."selection-bg" == "#434c5e" and .tokens.destructive == "#bf616a"
+        and .tokenSlots."selection-bg" == "base02"' "$ndir/palette.json" >/dev/null \
+        || { echo "FAIL: nord palette.json selection-bg/destructive not on base02/base08"; exit 1; }
+      jq -e --arg c "$contour" '.colors.selectionBg == "#434c5e" and .colors.contour == $c' \
+        "$ndir/colors.json" >/dev/null \
+        || { echo "FAIL: nord colors.json selectionBg not base02 or contour not the Jylhis hex"; exit 1; }
+      touch "$out"
+    '';
+
   # Off the desktop (no runtime layer) the TUI surfaces keep build-time colours.
   eval-themes-tui-nondesktop-buildtime =
     testNixOSCheck "themes-tui-nondesktop-buildtime"

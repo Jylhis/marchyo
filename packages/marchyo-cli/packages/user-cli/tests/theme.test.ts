@@ -324,4 +324,43 @@ console.log(JSON.stringify({ applied, execs }));
     }
     expect(execs).toContainEqual(["setvtrgb", join(dir, "console.txt")]);
   });
+
+  test("Material outline/container roles override the base16 fallback", () => {
+    const tokensOf = (): Record<string, string> =>
+      JSON.parse(
+        readFileSync(
+          join(dirs.state, "marchyo", "generated-theme", "palette.json"),
+          "utf8",
+        ),
+      ).tokens;
+    const value = JSON.stringify({ image, variant: "dark" });
+
+    runGenerate(value);
+    expect(tokensOf().border).toBe(slots.base03);
+    expect(tokensOf()["accent-subtle"]).toBe(slots.base01);
+
+    const node = (dark: string) => ({
+      dark: { color: dark },
+      light: { color: "#ffffff" },
+      default: { color: dark },
+    });
+    write(
+      join(root, "bin", "matugen.json"),
+      JSON.stringify({
+        ...JSON.parse(matugenJson),
+        colors: {
+          outline_variant: node("#11aa01"),
+          outline: node("#11aa02"),
+          primary_container: node("#11aa03"),
+        },
+      }),
+    );
+    runGenerate(value);
+    const tokens = tokensOf();
+    expect(tokens.border).toBe("#11aa01");
+    expect(tokens["border-strong"]).toBe("#11aa02");
+    expect(tokens["accent-subtle"]).toBe("#11aa03");
+    expect(tokens.bg).toBe(slots.base00);
+    write(join(root, "bin", "matugen.json"), matugenJson);
+  });
 });
