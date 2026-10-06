@@ -29,8 +29,9 @@ in
         Quick-info and media utilities for the desktop: date/time and battery
         notifications (`marchyo-notify-datetime`/`-battery`,
         Super+Ctrl+Alt+T/B), the `marchyo-transcode` ffmpeg menu
-        (Super+Ctrl+Period) and the `marchyo-share` clipboard helper (no
-        keybinding - reached via the central menu). Part of the desktop
+        (Super+Ctrl+Period) and `marchyo share`, which sends files, folders or
+        clipboard text to a nearby LocalSend device (no keybinding; listed
+        under Trigger in the central menu). Part of the desktop
         cascade - only active when `marchyo.desktop.enable` is set; set to
         `false` to opt out of the scripts and their keybindings.
       '';

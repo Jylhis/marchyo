@@ -72,7 +72,7 @@ contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.t
 | Capture     | `capture screenshot [--target …] [--edit]`, `capture record [--audio …]`, `capture ocr`, `capture color` |
 | Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle` |
 | Power       | `lock`, `logout`, `suspend`, `hibernate`, `reboot`, `shutdown`, `powerprofile get\|list\|set` |
-| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [file]`, `font list\|current\|set` |
+| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list\|current\|set` |
 | Declarative | `install\|remove <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
 | Plumbing    | `runtime status\|restore`, `completion bash\|zsh\|fish\|man` |
 

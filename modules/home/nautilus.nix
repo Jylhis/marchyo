@@ -20,12 +20,9 @@ let
   # detached (setsid) so it survives Nautilus exiting.
   sendWithLocalsend = pkgs.writeShellApplication {
     name = "send-with-localsend";
-    runtimeInputs = [
-      pkgs.localsend
-      pkgs.util-linux # setsid
-    ];
+    runtimeInputs = [ pkgs.util-linux ]; # setsid
     text = ''
-      setsid --fork localsend >/dev/null 2>&1
+      setsid --fork ${lib.getExe pkgs.localsend} >/dev/null 2>&1
     '';
   };
 in

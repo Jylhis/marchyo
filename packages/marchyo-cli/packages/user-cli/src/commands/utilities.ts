@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 import { homedir } from "node:os";
@@ -6,16 +6,35 @@ import {
   type Runtime,
   captureArgv,
   commandAvailable,
+  data,
   err,
+  hint,
+  info,
   notifySendArgv,
   ok,
   runArgv,
   usageError,
 } from "@marchyo/core";
+import {
+  type DeviceInfo,
+  type Discover,
+  type Fetch,
+  type Peer,
+  type SendFile,
+  LocalSendError,
+  discoverPeers,
+  expandPaths,
+  matchPeer,
+  parseAddress,
+  registerWith,
+  selfInfo,
+  sendFiles,
+  textEntry,
+} from "@marchyo/core/localsend";
 import { gumChoose, gumFile, gumInput } from "./menu.ts";
 
 // Utilities: reminders (transient systemd user timers), quick-info
-// notifications, media transcode, and share. gum presentation stays; logic
+// notifications, media transcode, and LocalSend share. gum presentation stays; logic
 // lives here.
 
 function stateDir(): string {
@@ -265,47 +284,205 @@ export async function runTranscode(
   return 0;
 }
 
-// Copies the chosen content/path to the clipboard; an actual upload target
-// is deferred (follow-up decision per OMARCHY_PARITY.md).
-export async function runShare(
-  rt: Runtime,
-  file?: string,
-): Promise<number> {
+export type ShareOpts = { to?: string; clipboard?: boolean; pin?: string };
+
+// Every effect of `marchyo share` that touches the network, the desktop or a
+// prompt, injectable so tests run offline.
+export type ShareDeps = {
+  discover: Discover;
+  register: (ip: string, port: number, self: DeviceInfo) => Promise<Peer | null>;
+  fetch: Fetch;
+  interactive: boolean;
+  choose: (header: string, options: string[]) => Promise<string | null>;
+  pickPath: (directory: boolean) => Promise<string | null>;
+  readClipboard: () => Promise<string | null>;
+  notify: (urgency: "low" | "critical", summary: string, body: string) => Promise<void>;
+  // Opens the LocalSend app; false when it is not installed.
+  openLocalSend: () => boolean;
+};
+
+const DISCOVERY_MS = 2000;
+
+export function defaultShareDeps(rt: Runtime): ShareDeps {
+  return {
+    discover: discoverPeers,
+    register: (ip, port, self) => registerWith(ip, port, self),
+    fetch,
+    interactive: !rt.noInput && process.stdin.isTTY === true && commandAvailable("gum"),
+    choose: gumChoose,
+    pickPath: (directory) => gumFile(homedir(), directory),
+    readClipboard: async () => {
+      const r = await captureArgv(["wl-paste", "--no-newline"]);
+      return r.code === 0 ? r.stdout : null;
+    },
+    notify,
+    openLocalSend: () => {
+      if (!commandAvailable("localsend_app")) return false;
+      try {
+        Bun.spawn(["localsend_app"], { stdout: "ignore", stderr: "ignore", stdin: "ignore" }).unref();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  };
+}
+
+function peerLabel(p: Peer): string {
+  return `${p.alias} (${p.ip})`;
+}
+
+async function shareToClipboard(rt: Runtime, path: string): Promise<number> {
   if (!commandAvailable("wl-copy")) {
     err(rt, "wl-copy not found in PATH");
     return 1;
   }
-  if (file !== undefined) {
-    if (!existsSync(file)) {
-      err(rt, `no such file: ${file}`);
+  // A file's contents, or a folder's path.
+  const isDir = statSync(path).isDirectory();
+  const proc = Bun.spawn(["wl-copy"], {
+    stdin: isDir ? new Blob([path]) : Bun.file(path),
+    stdout: "ignore",
+    stderr: "inherit",
+  });
+  const code = await proc.exited;
+  if (code === 0) ok(rt, isDir ? `copied path ${path}` : `copied contents of ${basename(path)}`);
+  return code;
+}
+
+async function resolvePeer(
+  rt: Runtime,
+  self: DeviceInfo,
+  to: string | undefined,
+  deps: ShareDeps,
+): Promise<Peer | null> {
+  if (to !== undefined) {
+    const addr = parseAddress(to);
+    if (addr) {
+      const p = await deps.register(addr.ip, addr.port, self);
+      if (!p) err(rt, `no LocalSend device answers at ${to}`);
+      return p;
+    }
+  }
+  const peers = await deps.discover({ self, timeoutMs: DISCOVERY_MS });
+  if (to !== undefined) {
+    const p = matchPeer(peers, to);
+    if (!p) {
+      err(rt, `no LocalSend device named "${to}" found`);
+      if (peers.length > 0) hint(rt, `Found: ${peers.map(peerLabel).join(", ")}`);
+    }
+    return p;
+  }
+  if (peers.length === 0) {
+    err(rt, "no LocalSend devices found on the local network");
+    hint(rt, "Open LocalSend on the receiving device, or pass --to <ip>");
+    if (
+      deps.interactive &&
+      (await deps.choose("No LocalSend devices found", ["Open LocalSend", "Cancel"])) ===
+        "Open LocalSend" &&
+      !deps.openLocalSend()
+    ) {
+      err(rt, "localsend_app not found in PATH");
+    }
+    return null;
+  }
+  if (peers.length === 1) return peers[0]!;
+  if (!deps.interactive) {
+    err(rt, `${peers.length} LocalSend devices found; pick one with --to`);
+    hint(rt, `Found: ${peers.map(peerLabel).join(", ")}`);
+    return null;
+  }
+  const choice = await deps.choose("Send to", peers.map(peerLabel));
+  return peers.find((p) => peerLabel(p) === choice) ?? null;
+}
+
+// Sends files, folders or clipboard text to a nearby LocalSend device
+// (protocol v2, see @marchyo/core/localsend); --clipboard copies instead.
+export async function runShare(
+  rt: Runtime,
+  paths: string[],
+  opts: ShareOpts = {},
+  deps: ShareDeps = defaultShareDeps(rt),
+): Promise<number> {
+  for (const p of paths) {
+    if (!existsSync(p)) {
+      err(rt, `no such file: ${p}`);
       return 1;
     }
-    const code = await runArgv(["sh", "-c", `wl-copy < '${file.replace(/'/g, `'\\''`)}'`]);
-    if (code === 0) ok(rt, `copied contents of ${basename(file)}`);
-    return code;
   }
 
-  const choice = await gumChoose("Share", ["Clipboard", "File", "Folder"]);
-  switch (choice) {
-    case "Clipboard":
-      await notify("low", "Share", "Clipboard content ready to paste");
-      return 0;
-    case "File": {
-      const f = await gumFile(homedir());
-      if (f === null) return 0;
-      const code = await runArgv(["sh", "-c", `wl-copy < '${f.replace(/'/g, `'\\''`)}'`]);
-      if (code === 0)
-        await notify("low", "Share", `Copied contents of ${basename(f)}`);
-      return code;
+  if (opts.clipboard) {
+    if (paths.length !== 1) {
+      return usageError(rt, "--clipboard takes exactly one path", "marchyo share --clipboard <path>");
     }
-    case "Folder": {
-      const d = await gumFile(homedir(), true);
-      if (d === null) return 0;
-      const code = await runArgv(["sh", "-c", `printf '%s' '${d.replace(/'/g, `'\\''`)}' | wl-copy`]);
-      if (code === 0) await notify("low", "Share", `Copied path ${d}`);
-      return code;
+    return shareToClipboard(rt, paths[0]!);
+  }
+
+  let files: SendFile[];
+  if (paths.length > 0) {
+    files = await expandPaths(paths);
+  } else {
+    if (!deps.interactive) {
+      return usageError(rt, "nothing to share", "marchyo share <path...> [--to <alias|ip>]");
     }
-    default:
+    const choice = await deps.choose("Share", ["File", "Folder", "Clipboard"]);
+    if (choice === "File" || choice === "Folder") {
+      const picked = await deps.pickPath(choice === "Folder");
+      if (picked === null) return 0;
+      files = await expandPaths([picked]);
+    } else if (choice === "Clipboard") {
+      const text = await deps.readClipboard();
+      if (text === null || text === "") {
+        err(rt, "clipboard is empty (or wl-paste is missing)");
+        return 1;
+      }
+      files = [textEntry(text)];
+    } else {
       return 0;
+    }
+  }
+  if (files.length === 0) {
+    err(rt, "nothing to send: the selection contains no regular files");
+    return 1;
+  }
+
+  const self = selfInfo();
+  const peer = await resolvePeer(rt, self, opts.to, deps);
+  if (!peer) return 1;
+
+  info(rt, `waiting for ${peer.alias} to accept ${files.length} file(s)`);
+  try {
+    const result = await sendFiles(peer, files, {
+      self,
+      pin: opts.pin,
+      fetch: deps.fetch,
+      onAccepted: () => deps.notify("low", "Share", `${peer.alias} accepted`),
+    });
+    const summary =
+      result.status === "finished"
+        ? `delivered to ${peer.alias}`
+        : `sent ${result.sent} file(s) to ${peer.alias}` +
+          (result.skipped > 0 ? ` (${result.skipped} declined)` : "");
+    await deps.notify("low", "Share", summary);
+    if (rt.format === "json") {
+      data(
+        rt,
+        { share: { peer: { alias: peer.alias, ip: peer.ip }, ...result } },
+        () => summary,
+      );
+    } else {
+      ok(rt, summary);
+    }
+    return 0;
+  } catch (e) {
+    const msg = (e as Error).message;
+    const kind = e instanceof LocalSendError ? e.kind : "network";
+    await deps.notify(
+      "critical",
+      "Share",
+      kind === "rejected" ? `${peer.alias} declined the transfer` : msg,
+    );
+    err(rt, msg);
+    if (kind === "pin") hint(rt, "Try: marchyo share --pin <pin> ...");
+    return 1;
   }
 }

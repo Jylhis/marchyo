@@ -1,6 +1,6 @@
 import { test, expect, afterAll } from "bun:test";
 import { join } from "node:path";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, rmSync, writeFileSync } from "node:fs";
 
 // Clean up any state file the smoke tests below may have written.
 // Running as root (e.g. in a CI sandbox) writes go to /etc/marchyo;
@@ -598,7 +598,106 @@ test("transcode with an invalid target format exits 2", async () => {
 test("share with a missing file fails cleanly", async () => {
   const r = await run(["share", "/nonexistent.txt"]);
   expect(r.code).toBe(1);
-  expect(r.stderr.length).toBeGreaterThan(0);
+  expect(r.stderr).toContain("no such file: /nonexistent.txt");
+});
+
+// Fake wl-copy / notify-send on PATH so share tests touch neither the real
+// clipboard nor the desktop.
+function shareFixture(): { dir: string; env: Record<string, string> } {
+  const dir = `/tmp/marchyo-cli-test-share-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  Bun.spawnSync(["mkdir", "-p", `${dir}/bin`]);
+  const scripts: Record<string, string> = {
+    "wl-copy": `cat > "${dir}/clipboard"`,
+    "notify-send": `echo "$*" >> "${dir}/notifications"`,
+  };
+  for (const [name, body] of Object.entries(scripts)) {
+    writeFileSync(`${dir}/bin/${name}`, `#!/bin/sh\n${body}\n`, { mode: 0o755 });
+  }
+  return { dir, env: { PATH: `${dir}/bin:${process.env.PATH}` } };
+}
+
+test("share --clipboard copies a file's contents via wl-copy", async () => {
+  const { dir, env } = shareFixture();
+  await Bun.write(`${dir}/note.txt`, "it's \"quoted\" $HOME");
+  const r = await run(["share", `${dir}/note.txt`, "--clipboard"], env);
+  expect(r.code).toBe(0);
+  expect(await Bun.file(`${dir}/clipboard`).text()).toBe(`it's "quoted" $HOME`);
+});
+
+test("share --clipboard copies a folder's path", async () => {
+  const { dir, env } = shareFixture();
+  Bun.spawnSync(["mkdir", "-p", `${dir}/my folder`]);
+  const r = await run(["share", `${dir}/my folder`, "--clipboard"], env);
+  expect(r.code).toBe(0);
+  expect(await Bun.file(`${dir}/clipboard`).text()).toBe(`${dir}/my folder`);
+});
+
+test("share --to <ip:port> sends over LocalSend v2 without discovery", async () => {
+  const { dir, env } = shareFixture();
+  Bun.spawnSync(["mkdir", "-p", `${dir}/trip`]);
+  await Bun.write(`${dir}/trip/a.txt`, "alpha");
+  const seen: { path: string; body: unknown }[] = [];
+  const uploads: Record<string, string> = {};
+  // Plain-HTTP receiver: the CLI falls back from https to http.
+  const server = Bun.serve({
+    port: 0,
+    hostname: "127.0.0.1",
+    async fetch(req) {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/localsend/v2/register") {
+        seen.push({ path: url.pathname, body: await req.json() });
+        return Response.json({ alias: "FakePhone", fingerprint: "fake", version: "2.1" });
+      }
+      if (url.pathname === "/api/localsend/v2/prepare-upload") {
+        const body = (await req.json()) as { files: Record<string, { fileName: string }> };
+        seen.push({ path: url.pathname, body });
+        return Response.json({
+          sessionId: "s",
+          files: Object.fromEntries(Object.keys(body.files).map((id) => [id, `t-${id}`])),
+        });
+      }
+      if (url.pathname === "/api/localsend/v2/upload") {
+        uploads[url.searchParams.get("token")!] = await req.text();
+        return new Response(null, { status: 200 });
+      }
+      return new Response(null, { status: 404 });
+    },
+  });
+  try {
+    const r = await run(["share", `${dir}/trip`, "--to", `127.0.0.1:${server.port}`, "--json"], env);
+    expect(r.stderr).not.toContain("error");
+    expect(r.code).toBe(0);
+    expect(JSON.parse(r.stdout)).toMatchObject({
+      share: { peer: { alias: "FakePhone", ip: "127.0.0.1" }, status: "sent", sent: 1, skipped: 0 },
+    });
+    expect(seen.map((s) => s.path)).toEqual([
+      "/api/localsend/v2/register",
+      "/api/localsend/v2/prepare-upload",
+    ]);
+    const files = Object.values((seen[1]!.body as { files: Record<string, { fileName: string }> }).files);
+    expect(files.map((f) => f.fileName)).toEqual(["trip/a.txt"]);
+    expect(Object.values(uploads)).toEqual(["alpha"]);
+    const notes = await Bun.file(`${dir}/notifications`).text();
+    expect(notes).toContain("FakePhone accepted");
+    expect(notes).toContain("sent 1 file(s) to FakePhone");
+  } finally {
+    server.stop(true);
+  }
+});
+
+test("share --to an address with no LocalSend answering fails", async () => {
+  const { dir, env } = shareFixture();
+  await Bun.write(`${dir}/x.txt`, "x");
+  // Port 9 (discard) on loopback: nothing listens.
+  const r = await run(["share", `${dir}/x.txt`, "--to", "127.0.0.1:9"], env);
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("no LocalSend device answers at 127.0.0.1:9");
+});
+
+test("share without paths under --no-input exits 2", async () => {
+  const r = await run(["share", "--no-input"]);
+  expect(r.code).toBe(2);
+  expect(r.stderr).toContain("nothing to share");
 });
 
 test("font set records a runtime override and font set --revert clears it", async () => {
