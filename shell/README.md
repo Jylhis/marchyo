@@ -72,7 +72,8 @@ shell/
     MonitorConfig.js   pure per-monitor resolution of shell.json (global config
                        + monitors.<output> override, always-global keys kept)
     PluginIndex.qml    singleton listing the plugins baked into this store shell
-                       (build-time Option A model; no runtime discovery)
+                       (build-time Option A model; no runtime discovery), see
+                       Plugins below
     Format.js          pure parsing helpers (keymap short codes, nmcli device show);
                        plain JS with a CommonJS guard so Node can unit-test it
     Match.js           pure fuzzy scoring + highlight markup over fuzzysort
@@ -572,6 +573,56 @@ reaches it through the `Commons/Fuzzy` singleton, which binds the two files
 (a `.import` directive would break Node). Scores map onto 1..2000 with 0 for
 an empty query (name order); a space in the query matches words in any
 order. `highlight` builds the StyledText markup for the matched characters.
+
+### Plugins
+
+Plugins are built with `pkgs.mkMarchyoShellPlugin`
+(`packages/marchyo-shell/plugin.nix`) and baked into the store shell under
+`plugins/<id>/`. `Commons/PluginIndex.qml` lists them; package.nix fills in its
+one `plugins` line, so the dev tree and the store shell share every function.
+Kinds are a closed set (`packages/marchyo-shell/plugin-kinds.nix`), and
+`entryPoints` carries exactly one key per declared kind:
+
+| Kind | Entry point | Root type | Loaded by |
+| --- | --- | --- | --- |
+| `bar-widget` | `barWidget` | a bar item | `shell.qml` `componentFor()`, placed by manifest id in `bar.layout` |
+| `launcher` | `launcher` | a `qs.Launcher` `Provider` | `Launcher/LauncherWindow`, selected in apps mode by the manifest `prefix` |
+| `daemon` | `daemon` | a non-visual `Item` or `QtObject` | `shell.qml`, one instance at the shell root |
+
+The build checks that the manifest's `kinds`, `entryPoints` and `prefix` equal
+the declared arguments. A launcher plugin's `prefix` is required, non-empty,
+free of whitespace, and must not start with `=`, `>`, `#` or `!` (the
+first-party prefixes); plugin ids and prefixes are unique across the shell.
+The launcher sets a plugin provider's `providerId` to the plugin id and its
+`prefix` from the manifest, and `Commons/LauncherProviders.js` `route()`
+checks first-party prefixes before plugin ones (longest plugin prefix wins). A
+launcher or daemon plugin whose QML fails to load is logged with
+`console.warn` and skipped. `tests/eval/fixtures/` holds one example plugin
+per kind.
+
+Every build writes `share/marchyo/shell/plugins.lock.json`, an empty list
+when no plugins are declared:
+
+```json
+{
+  "lockVersion": 1,
+  "plugins": [
+    {
+      "id": "example.echo",
+      "name": "Echo",
+      "version": "1.0.0",
+      "kinds": ["launcher"],
+      "entryPoints": { "launcher": "Provider.qml" },
+      "prefix": "?",
+      "storePath": "/nix/store/...-marchyo-shell-plugin-example-echo-1.0.0",
+      "source": { "url": "https://example.com/echo.git", "rev": "..." }
+    }
+  ]
+}
+```
+
+`source` is set for `marchyo.shell.extraPlugins` entries (the CLI-managed
+pins) and `null` for flake-declared plugins, whose pin lives in the flake.
 
 ### Waybar parity
 

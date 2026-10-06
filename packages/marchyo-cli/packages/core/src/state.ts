@@ -63,7 +63,7 @@ export const StateSchema = z
       .optional(),
     shell: z
       .object({
-        // Additive shell-plugin specs (marchyo plugin add/remove) — maps to
+        // Additive shell-plugin specs (marchyo plugin add/remove/update), maps to
         // marchyo.shell.extraPlugins so the flake's own `plugins` list is
         // never replaced. Raw pinned git specs mirroring the manifest; the
         // Nix side builds them via mkMarchyoShellPlugin.
@@ -79,6 +79,8 @@ export const StateSchema = z
                 entryPoints: z.record(z.string(), z.string()),
                 name: z.string().optional(),
                 version: z.string().optional(),
+                // Launcher query prefix, set for plugins of kind "launcher".
+                prefix: z.string().optional(),
               })
               .strict(),
           )

@@ -14,16 +14,17 @@ import qs.Launcher
 PanelWindow {
     id: root
 
-    // Every provider, keyed by the id Services/Launcher routes to.
-    readonly property var providers: ({
-            "apps": appsProvider,
-            "emoji": emojiProvider,
-            "clipboard": clipboardProvider,
-            "calc": calcProvider,
-            "theme": themeProvider,
-            "windows": windowsProvider,
-            "power": powerProvider
-        })
+    // Every provider, keyed by the id Services/Launcher routes to: the
+    // first-party ones plus the launcher plugins (keyed by plugin id).
+    readonly property var providers: Object.assign({}, root.pluginProviders, {
+        "apps": appsProvider,
+        "emoji": emojiProvider,
+        "clipboard": clipboardProvider,
+        "calc": calcProvider,
+        "theme": themeProvider,
+        "windows": windowsProvider,
+        "power": powerProvider
+    })
     readonly property var active: root.providers[Launcher.provider] || appsProvider
 
     readonly property var appsProvider: AppsProvider {}
@@ -33,6 +34,35 @@ PanelWindow {
     readonly property var themeProvider: ThemeProvider {}
     readonly property var windowsProvider: WindowsProvider {}
     readonly property var powerProvider: PowerProvider {}
+
+    // Launcher plugins (Commons/PluginIndex): each component's root is a
+    // Provider. Its providerId and prefix come from the manifest, so routing
+    // in Services/Launcher and this map agree. A plugin that fails to load is
+    // logged and skipped.
+    property var pluginProviders: ({})
+    Component.onCompleted: {
+        const out = {};
+        const entries = PluginIndex.launcherComponents();
+        for (let i = 0; i < entries.length; i++) {
+            const e = entries[i];
+            if (e.component.status !== Component.Ready) {
+                console.warn(`launcher plugin ${e.id}: ${e.component.errorString()}`);
+                continue;
+            }
+            const obj = e.component.createObject(root, {
+                "providerId": e.id,
+                "prefix": e.prefix
+            });
+            if (obj === null || typeof obj.results === "undefined") {
+                console.warn(`launcher plugin ${e.id}: root is not a Launcher Provider`);
+                if (obj !== null)
+                    obj.destroy();
+                continue;
+            }
+            out[e.id] = obj;
+        }
+        root.pluginProviders = out;
+    }
 
     visible: Launcher.open
     screen: Screens.byName(Screens.focusedName)

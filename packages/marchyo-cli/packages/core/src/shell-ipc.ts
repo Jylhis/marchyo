@@ -92,25 +92,32 @@ export function shellInstalled(): boolean {
   return commandAvailable(SHELL_BIN);
 }
 
-// The store shell's generated Commons/Config.qml, found next to the resolved
+// The store shell's share/marchyo/shell directory, found next to the resolved
 // wrapper ($out/bin/marchyo-shell -> $out/share/marchyo/shell). Null when the
-// wrapper is not on PATH or the file is absent.
-export function shellConfigQmlPath(
-  path: string = process.env.PATH ?? "",
-): string | null {
+// wrapper is not on PATH.
+export function shellShareDir(path: string = process.env.PATH ?? ""): string | null {
   for (const dir of path.split(":")) {
     if (dir === "") continue;
     const candidate = join(dir, SHELL_BIN);
     if (!existsSync(candidate)) continue;
     try {
-      const out = dirname(dirname(realpathSync(candidate)));
-      const qml = join(out, "share", "marchyo", "shell", "Commons", "Config.qml");
-      return existsSync(qml) ? qml : null;
+      return join(dirname(dirname(realpathSync(candidate))), "share", "marchyo", "shell");
     } catch {
       return null;
     }
   }
   return null;
+}
+
+// The store shell's generated Commons/Config.qml. Null when the wrapper is
+// not on PATH or the file is absent.
+export function shellConfigQmlPath(
+  path: string = process.env.PATH ?? "",
+): string | null {
+  const share = shellShareDir(path);
+  if (share === null) return null;
+  const qml = join(share, "Commons", "Config.qml");
+  return existsSync(qml) ? qml : null;
 }
 
 // The absolute tool paths a generated Config.qml bakes, by property name.

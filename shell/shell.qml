@@ -281,6 +281,29 @@ ShellRoot {
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
     LauncherWindow {}
 
+    // Daemon plugins (Commons/PluginIndex): one instance each, owned by the
+    // shell root for its lifetime, the plugin analogue of a Services/
+    // singleton. A plugin that fails to load is logged and skipped.
+    property var pluginDaemons: []
+    Component.onCompleted: {
+        const out = [];
+        const entries = PluginIndex.daemonComponents();
+        for (let i = 0; i < entries.length; i++) {
+            const e = entries[i];
+            if (e.component.status !== Component.Ready) {
+                console.warn(`daemon plugin ${e.id}: ${e.component.errorString()}`);
+                continue;
+            }
+            const obj = e.component.createObject(shell);
+            if (obj === null) {
+                console.warn(`daemon plugin ${e.id}: could not be created`);
+                continue;
+            }
+            out.push(obj);
+        }
+        shell.pluginDaemons = out;
+    }
+
     // Window overview: per-monitor workspace grid with live window previews
     // and search, summoned over IPC (Services/Overview holds the state).
     OverviewLayer {}

@@ -45,7 +45,8 @@ Commands:
   debug                                 Print a diagnostics bundle (versions,
                                         generation, journal errors)
   doctor                                Check session health (baked tool paths,
-                                        IPC sockets, user services)
+                                        IPC sockets, shell plugins, user
+                                        services)
   shell                                 Drive the running marchyo shell
                                         (panels, launcher, overview, bar,
                                         notifications, lock)
@@ -444,13 +445,14 @@ Examples:
 exports[`help contract: marchyo doctor 1`] = `
 "Usage: marchyo doctor [options]
 
-Check session health (baked tool paths, IPC sockets, user services)
+Check session health (baked tool paths, IPC sockets, shell plugins, user
+services)
 
 Options:
   -h, --help  display help for command
 
-Each check reports PASS, FAIL, or SKIP (not applicable on this host).
-Exits 1 when any check fails.
+Each check reports PASS, WARN, FAIL, or SKIP (not applicable on this host).
+Exits 1 when any check fails; warnings do not change the exit code.
 
 Examples:
   $ marchyo doctor

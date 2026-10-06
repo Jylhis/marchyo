@@ -47,9 +47,6 @@ Rules for any new theme surface:
 
 ### Widgets and features (independent)
 
-- Plugin system evolution: typed plugin kinds (widget/launcher/daemon) +
-  lockfile on top of `Commons/PluginIndex.qml` (ref: DMS
-  `Services/PluginService.qml`). Stays build-time only.
 - Optional segmented bar look: two-tone segments with curved joins, pure QML
   `Shape` arcs in `shell/Ui/BarSection.qml`, filled from existing tokens so
   theme swaps recolor it. A presentation flag only, no layout changes, no

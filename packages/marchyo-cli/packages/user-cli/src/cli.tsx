@@ -83,6 +83,7 @@ import {
   runPluginAdd,
   runPluginList,
   runPluginRemove,
+  runPluginUpdate,
 } from "./commands/plugin.ts";
 import { runCompletion } from "./commands/completion.ts";
 import { VERSION } from "./version.ts";
@@ -433,12 +434,12 @@ Examples:
 
 program
   .command("doctor")
-  .description("Check session health (baked tool paths, IPC sockets, user services)")
+  .description("Check session health (baked tool paths, IPC sockets, shell plugins, user services)")
   .addHelpText(
     "after",
     `
-Each check reports PASS, FAIL, or SKIP (not applicable on this host).
-Exits 1 when any check fails.
+Each check reports PASS, WARN, FAIL, or SKIP (not applicable on this host).
+Exits 1 when any check fails; warnings do not change the exit code.
 
 Examples:
   $ marchyo doctor
@@ -946,9 +947,19 @@ plugin
 
 plugin
   .command("list")
-  .description("List CLI-added shell plugins")
+  .description("List the plugins baked into the installed shell, plus CLI-added ones pending a rebuild")
   .action(async () => {
     process.exit(await runPluginList(rt()));
+  });
+
+plugin
+  .command("update")
+  .description("Re-pin CLI-added shell plugins at their source and rebuild when any changed")
+  .argument("[id]", "plugin manifest id (default: every CLI-added plugin)")
+  .option("--rev <rev>", "git revision to pin (needs an id; default: the remote HEAD)")
+  .option("-n, --dry-run", "Print the state change without writing or rebuilding")
+  .action(async (id: string | undefined, opts: { rev?: string; dryRun?: boolean }) => {
+    process.exit(await runPluginUpdate(rt(), id, opts));
   });
 
 plugin

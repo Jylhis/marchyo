@@ -2,6 +2,13 @@
 let
   inherit (lib) mkOption types;
 
+  # Closed plugin kind set, kind -> manifest entryPoints key (pure data, so
+  # this platform-neutral declaration stays Darwin-safe).
+  pluginKinds = import ../../../packages/marchyo-shell/plugin-kinds.nix;
+  pluginKindsDoc = lib.concatStringsSep ", " (
+    lib.mapAttrsToList (k: key: "`${k}` (entry point `${key}`)") pluginKinds
+  );
+
   # Raw, IFD-free spec for a CLI-added plugin: pinned git source plus manifest
   # fields. No pkgs references, per the darwin eval gate; marchyo-shell.nix
   # turns each spec into a built plugin via mkMarchyoShellPlugin on Linux.
@@ -24,12 +31,17 @@ let
         description = "fetchgit hash (SRI or sha256) pinning the source.";
       };
       kinds = mkOption {
-        type = types.listOf types.str;
-        description = "Manifest kinds (bar-widget|panel|overlay|menu|service).";
+        type = types.listOf (types.enum (lib.attrNames pluginKinds));
+        description = "Manifest kinds, from ${pluginKindsDoc}.";
       };
       entryPoints = mkOption {
         type = types.attrsOf types.str;
-        description = "Manifest entry points: each kind mapped to its QML file.";
+        description = "Manifest entry points: exactly one QML file per declared kind, keyed by that kind's entry point key.";
+      };
+      prefix = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Launcher query prefix, required for the `launcher` kind and null otherwise. It must not start with a first-party prefix character (`=`, `>`, `#`, `!`).";
       };
       name = mkOption {
         type = types.nullOr types.str;
@@ -197,10 +209,14 @@ in
         Shell plugins baked into the store shell (build-time Option A model:
         Nix-declared, store-baked, never discovered at runtime). Each entry is a
         `pkgs.mkMarchyoShellPlugin` derivation. Declared plugins are copied under
-        the shell's `plugins/` tree and listed in a generated
-        `Commons/PluginIndex.qml`; a bar-widget plugin becomes referenceable from
-        `marchyo.shell.settings.bar.layout` by its manifest id. Changing the list
-        requires a rebuild. Empty by default.
+        the shell's `plugins/` tree, listed in a generated
+        `Commons/PluginIndex.qml`, and recorded in
+        `share/marchyo/shell/plugins.lock.json`. Kinds are ${pluginKindsDoc}.
+        A `bar-widget` plugin becomes referenceable from
+        `marchyo.shell.settings.bar.layout` by its manifest id, a `launcher`
+        plugin adds a launcher provider selected by its `prefix`, and a
+        `daemon` plugin is instantiated once at the shell root. Changing the
+        list requires a rebuild. Empty by default.
       '';
     };
 

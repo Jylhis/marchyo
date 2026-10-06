@@ -29,6 +29,7 @@ let
   # CLI-added plugins arrive as raw pinned git specs; build each here (Linux pkgs,
   # mkMarchyoShellPlugin available) and append to the flake's own `plugins` list.
   # name/version are only forwarded when set so the builder's defaults still apply.
+  # `source` records the pin in the shell's plugins.lock.json.
   shellExtraPlugins = ((osConfig.marchyo or { }).shell or { }).extraPlugins or [ ];
   builtExtraPlugins = map (
     p:
@@ -36,6 +37,8 @@ let
       {
         src = pkgs.fetchgit { inherit (p) url rev hash; };
         inherit (p) id kinds entryPoints;
+        prefix = p.prefix or null;
+        source = { inherit (p) url rev; };
       }
       // lib.optionalAttrs (p.name or null != null) { inherit (p) name; }
       // lib.optionalAttrs (p.version or null != null) { inherit (p) version; }
