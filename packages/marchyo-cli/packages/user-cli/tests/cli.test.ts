@@ -971,6 +971,120 @@ test("shell overview --json reports the IPC function and its reply", async () =>
   expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell toggleOverview"]);
 });
 
+test("lock goes through the shell lock screen when the shell is installed", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB, hyprlock: "" });
+  const r = await run(["lock"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell lock"]);
+});
+
+test("lock falls back to hyprlock when the shell is not running", async () => {
+  const s = stubDir({
+    "marchyo-shell": `echo 'No running instances for "x"'; exit 255`,
+    hyprlock: "",
+  });
+  expect((await run(["lock"], { PATH: s.bin })).code).toBe(0);
+});
+
+test("lock reports the shell error when neither locker is usable", async () => {
+  const s = stubDir({
+    "marchyo-shell": `echo 'No running instances for "x"'; exit 255`,
+  });
+  const r = await run(["lock"], { PATH: s.bin });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("not running");
+});
+
+test("lock without the shell or hyprlock names hyprlock", async () => {
+  const r = await run(["lock"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("hyprlock not found");
+});
+
+// Toggle actuators as logging stubs, so a test sees which backend ran.
+const TOGGLE_STUBS = {
+  systemctl: "exit 3",
+  makoctl: "",
+  pkill: "",
+  "notify-send": "",
+};
+
+test("toggle waybar drives the shell bar when the shell is installed", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "waybar", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect((await run(["toggle", "waybar"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect((await run(["toggle", "waybar", "--revert"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual([
+    "marchyo-shell ipc -n call -- shell setBar off",
+    "marchyo-shell ipc -n call -- shell toggleBar",
+    "marchyo-shell ipc -n call -- shell setBar on",
+  ]);
+});
+
+test("toggle waybar flip records the state the shell reports", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "waybar"], { ...env, PATH: s.bin })).code).toBe(0);
+  const r = await run(["runtime", "status", "--json"], { ...env, PATH: s.bin });
+  expect(JSON.parse(r.stdout).overrides).toEqual([{ key: "toggle.waybar", value: true }]);
+});
+
+test("toggle waybar --status under the shell reads the recorded override", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "waybar", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  const r = await run(["toggle", "waybar", "--status"], { ...env, PATH: s.bin });
+  expect(r.stdout.trim()).toBe("off");
+  // The status read never queries waybar.service.
+  expect(s.calls().some((c) => c.startsWith("systemctl"))).toBe(false);
+});
+
+test("toggle waybar without the shell drives waybar.service", async () => {
+  const { env } = stateFixture();
+  const s = stubDir(TOGGLE_STUBS);
+  expect((await run(["toggle", "waybar", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual(["systemctl --user stop waybar.service"]);
+});
+
+test("toggle notifications drives the shell DND when the shell is installed", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "notifications", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect((await run(["toggle", "notifications", "on"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect((await run(["toggle", "notifications"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual([
+    "marchyo-shell ipc -n call -- shell setDnd on",
+    "marchyo-shell ipc -n call -- shell setDnd off",
+    "marchyo-shell ipc -n call -- shell toggleDnd",
+  ]);
+  // The stub's toggleDnd replies "off": DND off means notifications on.
+  const r = await run(["runtime", "status", "--json"], { ...env, PATH: s.bin });
+  expect(JSON.parse(r.stdout).overrides).toEqual([
+    { key: "toggle.notifications", value: true },
+  ]);
+});
+
+test("toggle notifications without the shell uses the mako mode", async () => {
+  const { env } = stateFixture();
+  const s = stubDir(TOGGLE_STUBS);
+  expect((await run(["toggle", "notifications", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  expect(s.calls()).toEqual([
+    "makoctl mode -a do-not-disturb",
+    "pkill -SIGRTMIN+9 waybar",
+  ]);
+});
+
+test("toggle caffeine pokes waybar only without the shell", async () => {
+  const { env } = stateFixture();
+  const withShell = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "caffeine", "on"], { ...env, PATH: withShell.bin })).code).toBe(0);
+  expect(withShell.calls()).not.toContain("pkill -SIGRTMIN+8 waybar");
+  const plain = stubDir(TOGGLE_STUBS);
+  expect((await run(["toggle", "caffeine", "on"], { ...env, PATH: plain.bin })).code).toBe(0);
+  expect(plain.calls()).toContain("pkill -SIGRTMIN+8 waybar");
+});
+
 test("volume with a bad action exits 2", async () => {
   const r = await run(["volume", "sideways"], { PATH: "" });
   expect(r.code).toBe(2);

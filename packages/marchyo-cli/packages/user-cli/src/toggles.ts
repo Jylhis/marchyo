@@ -13,6 +13,8 @@ import {
   makoctlArgv,
   notifySendArgv,
   runtimeStatePath,
+  shellInstalled,
+  shellIpc,
   systemctlUserArgv,
 } from "@marchyo/core";
 
@@ -31,6 +33,10 @@ type ToggleDef = {
   // Live state, or null when unknowable (falls back to the recorded
   // override, then `defaultOn`).
   probe: (capture: Capture) => Promise<boolean | null>;
+  // Flip in one step and report the new state, or null to flip through
+  // probe + setOn/setOff. For backends that toggle atomically but expose no
+  // read-only state query (the shell bar and do-not-disturb).
+  flip?: () => Promise<boolean | null>;
   defaultOn: boolean;
   setOn: (ctx: ChangeContext) => Promise<void>;
   setOff: (ctx: ChangeContext) => Promise<void>;
@@ -135,6 +141,25 @@ async function setDevicesEnabled(
   }
 }
 
+// One shell IPC call, best effort: the reply, or null when the shell is not
+// running or rejects the call.
+async function shellCall(
+  invoke: () => Promise<string>,
+): Promise<string | null> {
+  try {
+    return await invoke();
+  } catch {
+    return null;
+  }
+}
+
+// A shell toggle's "on"/"off" reply as a boolean; null for anything else.
+function onOff(reply: string | null): boolean | null {
+  if (reply === "on") return true;
+  if (reply === "off") return false;
+  return null;
+}
+
 const pickTouchpad = (section: "mice" | "touch", name: string): boolean =>
   section === "mice" && /touchpad/i.test(name);
 const pickTouchscreen = (section: "mice" | "touch", _name: string): boolean =>
@@ -211,17 +236,26 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
+    // The top bar: the marchyo shell's bar when the shell is installed (the
+    // shell keeps no queryable bar state, so --status reads the recorded
+    // override), else waybar.service.
     name: "waybar",
     defaultOn: true,
-    probe: (capture) => unitActive(capture, "waybar.service"),
+    probe: async (capture) =>
+      shellInstalled() ? null : unitActive(capture, "waybar.service"),
+    flip: async () =>
+      shellInstalled() ? onOff(await shellCall(() => shellIpc("toggleBar"))) : null,
     setOn: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("start", "waybar.service"));
+      if (shellInstalled()) await shellCall(() => shellIpc("setBar", "on"));
+      else await safeExec(ctx, systemctlUserArgv("start", "waybar.service"));
     },
     setOff: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("stop", "waybar.service"));
+      if (shellInstalled()) await shellCall(() => shellIpc("setBar", "off"));
+      else await safeExec(ctx, systemctlUserArgv("stop", "waybar.service"));
     },
     revert: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("start", "waybar.service"));
+      if (shellInstalled()) await shellCall(() => shellIpc("setBar", "on"));
+      else await safeExec(ctx, systemctlUserArgv("start", "waybar.service"));
     },
   },
   {
@@ -273,24 +307,45 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
-    // "off" = do-not-disturb (mako mode from modules/home/mako.nix) + waybar
-    // indicator poke (SIGRTMIN+9).
+    // "off" = do-not-disturb. With the marchyo shell installed that is the
+    // shell's DND (no queryable state, so --status reads the recorded
+    // override); otherwise the mako mode from modules/home/mako.nix plus a
+    // waybar indicator poke (SIGRTMIN+9).
     name: "notifications",
     defaultOn: true,
     probe: async (capture) => {
+      if (shellInstalled()) return null;
       const r = await capture(makoctlArgv("mode"));
       if (r.code !== 0) return null;
       return !r.stdout.includes("do-not-disturb");
     },
+    // toggleDnd replies with the DND state; notifications are on when it is off.
+    flip: async () => {
+      if (!shellInstalled()) return null;
+      const dnd = onOff(await shellCall(() => shellIpc("toggleDnd")));
+      return dnd === null ? null : !dnd;
+    },
     setOn: async (ctx) => {
+      if (shellInstalled()) {
+        await shellCall(() => shellIpc("setDnd", "off"));
+        return;
+      }
       await safeExec(ctx, makoctlArgv("mode", "-r", "do-not-disturb"));
       await safeExec(ctx, ["pkill", "-SIGRTMIN+9", "waybar"]);
     },
     setOff: async (ctx) => {
+      if (shellInstalled()) {
+        await shellCall(() => shellIpc("setDnd", "on"));
+        return;
+      }
       await safeExec(ctx, makoctlArgv("mode", "-a", "do-not-disturb"));
       await safeExec(ctx, ["pkill", "-SIGRTMIN+9", "waybar"]);
     },
     revert: async (ctx) => {
+      if (shellInstalled()) {
+        await shellCall(() => shellIpc("setDnd", "off"));
+        return;
+      }
       await safeExec(ctx, makoctlArgv("mode", "-r", "do-not-disturb"));
       await safeExec(ctx, ["pkill", "-SIGRTMIN+9", "waybar"]);
     },
@@ -359,13 +414,17 @@ export const TOGGLES: ToggleDef[] = [
       } catch {
         // systemd-inhibit unavailable
       }
-      await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      if (!shellInstalled()) {
+        await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      }
       await notify(ctx, "Caffeine", "On — screen and sleep kept awake");
     },
     setOff: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", CAFFEINE_INHIBIT_TAG]);
       await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
-      await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      if (!shellInstalled()) {
+        await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
+      }
       await notify(ctx, "Caffeine", "Off — normal idle behaviour restored");
     },
     revert: async (ctx) => {
@@ -420,6 +479,10 @@ export function toggleSpecFor(def: ToggleDef): ChangeSpec {
   return {
     key: toggleKey(def.name),
     runtimeApply: async (ctx) => {
+      if (typeof ctx.value !== "boolean" && def.flip) {
+        const flipped = await def.flip();
+        if (flipped !== null) return flipped;
+      }
       const on =
         typeof ctx.value === "boolean"
           ? ctx.value

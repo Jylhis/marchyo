@@ -67,7 +67,7 @@ Commands:
   zoom <direction>                      Step the cursor zoom factor
   monitor                               Monitor helpers (scale cycling, laptop
                                         panel)
-  lock                                  Lock the screen (hyprlock, detached)
+  lock                                  Lock the screen (shell or hyprlock)
   logout                                End the session cleanly (uwsm → hyprctl
                                         exit → loginctl)
   suspend                               Suspend the system

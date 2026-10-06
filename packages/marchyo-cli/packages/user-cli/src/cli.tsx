@@ -739,7 +739,7 @@ monitor
 
 program
   .command("lock")
-  .description("Lock the screen (hyprlock, detached)")
+  .description("Lock the screen (shell or hyprlock)")
   .action(async () => {
     process.exit(await runLock(rt()));
   });
