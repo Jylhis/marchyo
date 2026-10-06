@@ -67,7 +67,7 @@ async function checkHyprland(): Promise<Check> {
     const v = (JSON.parse(r.stdout) as { version?: string }).version;
     return pass(name, `Hyprland ${v ?? "unknown version"} answered`);
   } catch {
-    return fail(name, "socket answered with unparseable output");
+    return fail(name, "socket answered with unparsable output");
   }
 }
 
