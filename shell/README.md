@@ -206,8 +206,8 @@ below), so nothing depends on the session `PATH`.
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
-| ControlCenterWidget | `Services/PanelManager` (click = Control Center; registered as `marchyo.controlCenter`, not placed by default) |
 | BatteryWidget | `Services/Power` → `Quickshell.Services.UPower` (click = power panel) |
+| ControlCenterWidget | `Services/PanelManager` (click = Control Center; `marchyo.controlCenter`, last in the default right group) |
 
 Caffeine has two independent sources. The manual toggle (`marchyo toggle
 caffeine`) stops hypridle and holds a tagged sleep:idle inhibitor. The automatic
@@ -322,7 +322,7 @@ over `Services/Audio`, a live mic input meter (a `PwNodePeakMonitor` on the
 default source, enabled only while the card is open and the mic is unmuted),
 and a two-column tile grid over the
 `Services/QuickToggles` model. It opens from the `marchyo.controlCenter` bar
-widget (registered, not placed by default), `marchyo shell toggle
+widget (the last entry of the default right group), `marchyo shell toggle
 controlcenter`, or `SUPER+SHIFT+Q`.
 
 `QuickToggles` holds no presentation: each entry exposes `key`, `icon`, `label`,
@@ -646,10 +646,11 @@ screen-centered clock on small outputs; the verbose text (`Volume 100%`,
 `CPU 45%`, SSID/signal, …) lives in each widget's hover tooltip. The default
 right group is organized into clusters separated by the `marchyo.separator`
 widget (a thin `Ui/BarSeparator` rule): alerts · tray + media · toggles ·
-connectivity/audio · system. Glyph-only widgets (dictation, caffeine, theme,
-dnd, bluetooth, camera, mic, power-profile, night-light, screen-recording, the tray
-expander) set `BarItem.compact` for half horizontal padding so single icons
-don't render as wide capsules next to text widgets. The active-window title
+connectivity/audio · system · control center. Glyph-only widgets (dictation,
+caffeine, theme, dnd, bluetooth, camera, mic, power-profile, night-light,
+screen-recording, control center, the tray expander) set `BarItem.compact` for
+half horizontal padding so single icons don't render as wide capsules next to
+text widgets. The active-window title
 elides (`BarItem.elide`) against a layout cap of a quarter of the output width,
 so a very long title can never reach the centered clock.
 
