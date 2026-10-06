@@ -343,8 +343,10 @@ resets; unavailable entries render no tile.
 A tile click flips its toggle; the chevron opens the detail panel through
 `PanelManager.openDetail(id, "controlcenter")`, and `Ui/Panel` shows a back
 button while `PanelManager.returnId` is set. tailscaled accepts up/down only
-from root or the tailnet operator (`sudo tailscale set --operator=$USER`); a
-refusal shows as the tile status and in full in the Tailscale panel.
+from root or the tailnet operator. With the shell on, NixOS sets the operator to
+the first enabled marchyo user (`marchyo.services.tailscale.operator`, applied
+by the `tailscaled-set` unit); a refusal shows as the tile status and in full in
+the Tailscale panel.
 
 ### Keybind summons
 

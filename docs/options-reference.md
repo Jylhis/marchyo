@@ -153,6 +153,7 @@ Desktop-cascade features, each on by default with `marchyo.desktop.enable` and i
 | `marchyo.security.fingerprint.enable` | `false` | `services.fprintd` (hyprlock follows automatically) |
 | `marchyo.security.fido2.enable` | `false` | `security.pam.u2f` + libfido2; enroll with `pamu2fcfg` (`modules/nixos/security-auth.nix`) |
 | `marchyo.services.tailscale.enable` | `true` | tailscale + trusted `tailscale0`, loose RP filter (`modules/nixos/tailscale.nix`) |
+| `marchyo.services.tailscale.operator` | first enabled marchyo user with desktop + shell, else `null` | `tailscale set --operator` via `services.tailscale.extraSetFlags`, so the shell's Control Center tile can connect/disconnect (`modules/nixos/tailscale.nix`) |
 | `marchyo.services.localsend.enable` | `true` | LocalSend + firewall ports, Nautilus send action (`modules/nixos/localsend.nix`, `modules/home/nautilus.nix`) |
 | `marchyo.power.hibernation.enable` | `false` | suspend-then-hibernate + hypridle idle-sleep; requires `resumeDevice` (`modules/nixos/hibernation.nix`) |
 

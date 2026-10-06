@@ -126,8 +126,11 @@ Open it with `Super + Shift + Q`, `marchyo shell toggle controlcenter`, or the
 `marchyo.controlCenter` bar widget (registered, not placed by default; add it to
 a `bar.layout` section). The Tailscale tile needs
 `marchyo.services.tailscale.enable`, and tailscaled accepts connect/disconnect
-only from the tailnet operator: run `sudo tailscale set --operator=$USER` once,
-or the tile reports the refusal.
+only from root or the tailnet operator. With the shell on, marchyo sets the
+operator to the first enabled `marchyo.users` entry (by attribute name) through
+`services.tailscale.extraSetFlags`. Tailscale allows one operator; pick another
+with `marchyo.services.tailscale.operator = "alice";` or leave it unmanaged with
+`null`. Without an operator the tile reports the refusal.
 
 ## Polkit authentication
 

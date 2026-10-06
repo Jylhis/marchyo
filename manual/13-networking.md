@@ -44,6 +44,15 @@ sudo tailscale up
 That prints a link to log in with your Tailscale account. After that, the machine
 stays on your tailnet across reboots.
 
+With the Marchyo shell on, your user is set as the Tailscale operator, so the
+Tailscale tile in the Control Center can connect and disconnect without `sudo`. If
+the machine has several Marchyo users, the first one by name gets it, because
+Tailscale allows only one operator. To choose a different user:
+
+```nix
+marchyo.services.tailscale.operator = "alice";
+```
+
 Marchyo treats the Tailscale interface as **trusted**. The firewall doesn't filter
 traffic arriving over Tailscale, so any service you run is reachable by your other
 Tailscale devices without opening ports one by one. Traffic from the rest of the
