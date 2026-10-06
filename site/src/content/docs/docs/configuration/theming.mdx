@@ -16,6 +16,7 @@ The launcher is a slightly different case, and split by shell: with `marchyo.she
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a tinted-schemes catalog name) |
 | `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
 | `marchyo.theme.themes` | `list of string or inline base16 theme` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
+| `marchyo.theme.followWallpaper` | `bool` | `false` | `marchyo bg set` / `bg next` also generate a matugen theme from the new wallpaper ([details](#follow-the-wallpaper)) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
 
@@ -188,6 +189,18 @@ and `starship` styles through ANSI slot names, so it already recolors with the
 terminal's live palette. Only the Plymouth boot splash (not on screen during a
 session) and ncspot keep the declarative theme until the next rebuild
 ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
+
+### Follow the wallpaper
+
+An opt-in Material You mode makes the theme track the wallpaper. It is off by default; the Jylhis palette stays the declarative theme either way.
+
+```nix
+marchyo.theme.followWallpaper = true;
+```
+
+With it set, every `marchyo bg set <image>` and `marchyo bg next` runs the `theme generate` path on the new image after setting it, with matugen picking the polarity as a bare `theme generate <image>` does. If generation fails (matugen missing, an unreadable image), the wallpaper still changes, the CLI prints a warning, and the command exits 0.
+
+Both changes are recorded as runtime overrides, so `marchyo runtime restore` at login replays the wallpaper and the generated theme together. A failed generation leaves the theme override as it was, so restore replays the new wallpaper and whichever theme was live before. `marchyo bg set --revert` shows the active theme's wallpaper, which under a generated theme is the image it came from; `marchyo theme generate --revert` and `marchyo theme set` return to a declarative theme as usual, and a rebuild resets everything.
 
 ## Light mode
 

@@ -172,7 +172,7 @@ in
       done
       grep -q '{{shade}}' ${darkDir}/templates/gtk.css \
         || { echo "FAIL: gtk template has no {{shade}} placeholder"; exit 1; }
-      parity=$(jq -r '.[] | select(.name == "parity") | .dir' ${manifest})
+      parity=$(jq -r '.themes[] | select(.name == "parity") | .dir' ${manifest})
       test -f "$parity/palette.json" || { echo "FAIL: scheme dir has no palette.json"; exit 1; }
       test ! -e "$parity/templates" || { echo "FAIL: templates outside the build-variant dir"; exit 1; }
       for f in mako.conf waybar.css gtk.css; do
