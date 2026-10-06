@@ -93,7 +93,9 @@ in
   # dependency, no shell lock-state probe).
   eval-screensaver-shell-off-no-ipc-probe =
     let
-      hm = hmOf (evalWith { });
+      hm = hmOf (evalWith {
+        marchyo.shell.enable = false;
+      });
       launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
       text = if launcher == null then "" else (launcher.text or "");
     in

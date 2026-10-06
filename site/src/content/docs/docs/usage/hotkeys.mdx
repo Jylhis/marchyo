@@ -4,9 +4,11 @@ description: The Hyprland hotkeys shipped with the Marchyo desktop
 ---
 
 The Marchyo desktop is keyboard-driven. Enabling `marchyo.desktop.enable` ships
-Hyprland with the keybindings below, plus the mako notification daemon, the
-vicinae launcher, cliphist clipboard history, and grimblast/satty/tesseract
-screenshots. `Super` is the primary modifier (the Windows/Command key).
+Hyprland with the keybindings below, plus the Marchyo shell (bar, launcher,
+notifications, OSD, and lock), cliphist clipboard history, and
+grimblast/satty/tesseract screenshots. With `marchyo.shell.enable = false`,
+waybar, vicinae, mako, SwayOSD, and hyprlock take those roles instead. `Super`
+is the primary modifier (the Windows/Command key).
 
 :::note
 These binds are declared across several Home Manager modules — the bulk in
@@ -25,13 +27,13 @@ editing a dotfile at runtime.
 | `Super + Return` | Terminal (Ghostty) |
 | `Super + B` | Web browser |
 | `Super + F` | File manager |
-| `Super + R` | App launcher (in-shell with `marchyo.shell`, else vicinae) |
+| `Super + R` | App launcher (in-shell; vicinae with the shell off) |
 | `Super + M` | Music player |
 | `Super + E` | Editor |
 | `Super + O` | Obsidian |
 | `Super + G` | Messenger |
 | `Super + /` | Password manager (focuses 1Password if open) |
-| `Super + .` | Emoji picker (in-shell with `marchyo.shell`, else vicinae) |
+| `Super + .` | Emoji picker (in-shell; vicinae with the shell off) |
 | `Super + Shift + I` | Input-method config (fcitx5) |
 
 ### Web apps
@@ -145,7 +147,7 @@ default key — start them from the app launcher, or give them one via
 | `Super + Alt + S` (or `Ctrl + Print`) | Screenshot the current screen |
 | `Super + Ctrl + Alt + S` (or `Alt + Print`) | Screenshot all screens |
 | `Super + Shift + O` (or `Super + Ctrl + Shift + S`) | OCR a region → text to clipboard (tesseract) |
-| `Super + Ctrl + V` | Clipboard history (in-shell/cliphist with `marchyo.shell`, else vicinae) |
+| `Super + Ctrl + V` | Clipboard history (in-shell from cliphist; vicinae with the shell off) |
 | `Super + Shift + C` | Pick a color (hex to clipboard) |
 
 Screenshots land in `~/Pictures/Screenshots`. Annotation and OCR can be turned
@@ -162,9 +164,9 @@ page for setup.
 | `Super + Ctrl + X` | Toggle recording on/off |
 | `Super + Shift + H` | Floating dictation status window |
 
-## Top bar (Waybar) mouse actions
+## Waybar mouse actions (shell off)
 
-Segments that open a tool launch it as a centered floating popup — never as a
+With `marchyo.shell.enable = false`, Waybar is the top bar. Segments that open a tool launch it as a centered floating popup — never as a
 tile in the workspace. Scrolling and right-clicks act in place.
 
 | Segment | Action |
@@ -186,9 +188,9 @@ tile in the workspace. Scrolling and right-clicks act in place.
 
 | Keys | Action |
 |------|--------|
-| `Super + L` | Lock the screen (hyprlock) |
+| `Super + L` | Lock the screen (the shell lock; hyprlock with the shell off) |
 | `Ctrl + Alt + Delete` | Power off |
-| `Super + Shift + Space` | Toggle the top bar (Waybar) |
+| `Super + Shift + Space` | Toggle the top bar |
 | `Super + ,` | Dismiss last notification (`Super + Ctrl + Shift + ,` dismisses all) |
 | `Super + Ctrl + I` | Toggle idle lock (keep-awake) |
 | `Super + Ctrl + N` | Toggle night light |
@@ -198,7 +200,7 @@ tile in the workspace. Scrolling and right-clicks act in place.
 
 ## Shell panels
 
-With `marchyo.shell.enable`, these binds summon the shell's panels through
+With the shell on (the desktop default), these binds summon the shell's panels through
 `marchyo shell toggle <panel>`, and the window overview through
 `marchyo shell overview`:
 

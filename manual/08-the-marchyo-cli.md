@@ -49,6 +49,7 @@ marchyo bg next              # cycle wallpapers
 `marchyo toggle <name>` flips a desktop feature on or off, live. The switches include
 `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
 `screensaver`, `notifications`, `suspend`, and `caffeine` (keep the machine awake).
+`waybar` shows or hides the top bar, which is the shell bar unless the shell is off.
 Add `--status` to check one, or `--apply` to make it permanent:
 
 ```bash

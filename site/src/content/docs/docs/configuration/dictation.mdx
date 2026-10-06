@@ -9,7 +9,7 @@ Marchyo can add push-to-talk voice dictation to the Hyprland desktop using
 transcribed text is typed at the cursor (with a clipboard fallback).
 
 It is **off by default** — it needs a microphone and downloads a Whisper model.
-When enabled, the full desktop UI comes with it: a Waybar recording indicator,
+When enabled, the full desktop UI comes with it: a recording indicator on the top bar,
 desktop notifications, start/stop sound cues, and a `Super+Shift+H` floating
 status window. Each surface is on by default and individually opt-out.
 
@@ -34,7 +34,7 @@ status window. Each surface is on by default and individually opt-out.
 | `marchyo.dictation.silenceGate.backend` | `str` | `"energy"` | `"energy"` (RMS, no model) or `"whisper"` (Silero model, needs `voxtype setup vad`) |
 | `marchyo.dictation.silenceGate.threshold` | `float` | `0.5` | Detection threshold 0.0-1.0; higher needs louder speech |
 | `marchyo.dictation.silenceGate.minSpeechMs` | `int` | `100` | Minimum detected speech (ms) for a recording to be transcribed |
-| `marchyo.dictation.indicator` | `bool` | `true` | Show a recording-state segment on Waybar (driven by `voxtype status --follow`) |
+| `marchyo.dictation.indicator` | `bool` | `true` | Show a recording-state segment on the top bar (driven by `voxtype status --follow`) |
 | `marchyo.dictation.notify` | `bool` | `true` | Desktop notifications on record start/stop and transcription |
 | `marchyo.dictation.audioFeedback` | `bool` | `true` | Start/stop sound cues |
 | `marchyo.dictation.statusWindow` | `bool` | `true` | Bind `Super+Shift+H` to a floating status window |
@@ -45,7 +45,7 @@ marchyo.dictation = {
   # model = "large-v3-turbo";  # multilingual + fast (default)
   # language = "auto";         # detect per utterance
   # preloadModel = true;       # fetch the model at activation time
-  # indicator = false;         # drop the Waybar segment
+  # indicator = false;         # drop the top-bar segment
   # notify = false;            # silence desktop notifications
   # audioFeedback = false;     # silence start/stop cues
   # statusWindow = false;      # drop the Super+Shift+H window
@@ -94,7 +94,7 @@ Enabling the option wires the upstream Home Manager `services.voxtype` module:
   `pushToTalk.enable` is set (a real privilege — set it `false` to rely only on
   the compositor toggle).
 - Output mode is `type` (types at the cursor) with clipboard fallback.
-- The Waybar indicator streams `voxtype status --follow` (JSON) and recolors by
+- The top-bar indicator streams `voxtype status --follow` (JSON) and recolors by
   state; notifications and sound cues use voxtype's built-in
   `[output.notification]` / `[audio.feedback]`; `Super+Shift+H` opens a floating
   terminal running `voxtype status --follow`.

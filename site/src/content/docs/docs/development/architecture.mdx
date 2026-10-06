@@ -112,7 +112,7 @@ The keyboard/IME system is the most complex cross-module pattern:
 | `nix-on-droid` | Android terminal environment (own pinned nixpkgs) |
 | `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
-| `vicinae` | Application launcher (discrete stack; in-shell launcher when `marchyo.shell` is on) |
+| `vicinae` | Application launcher on the `marchyo.shell.enable = false` fallback (the shell has its own) |
 | `noctalia` | noctalia-shell, a Wayland desktop shell |
 | `sops-nix` | Secrets management |
 | `jylhis-design` | Jylhis design system — theme tokens and assets |

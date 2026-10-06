@@ -199,15 +199,14 @@ in
       type = lib.types.bool;
       default = false;
       description = ''
-        Experimental unified Quickshell desktop shell. When enabled, a single
-        long-running Quickshell process renders the Jylhis-themed top bar
-        (workspaces, clock, tray, audio, battery, network, bluetooth, CPU,
-        power profile), the OSD, the audio/network/power/monitor panels, and
-        the notification toasts — replacing waybar, SwayOSD, and mako (each
-        mutually exclusive; see tests/eval/marchyo-shell.nix). Opt-in and off
-        by default; it is not cascaded from `marchyo.desktop.enable`.
-        Vicinae (launcher) and hyprlock (lock) stay. See shell/README.md for
-        the roadmap.
+        Unified Quickshell desktop shell, the default desktop shell. A single
+        long-running Quickshell process renders the Jylhis-themed top bar,
+        the launcher, the OSD, the panels, the notification toasts and
+        centre, the lock screen, and the polkit agent, replacing waybar,
+        Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent (each mutually
+        exclusive; see tests/eval/marchyo-shell.nix). Defaults to on with
+        `marchyo.desktop.enable` (set in modules/nixos/desktop-config.nix).
+        Set it to `false` to keep the discrete stack. See shell/README.md.
       '';
     };
 

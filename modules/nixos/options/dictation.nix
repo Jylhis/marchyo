@@ -208,7 +208,7 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Show a recording-state segment on Waybar, driven by
+        Show a recording-state segment on the top bar, driven by
         `voxtype status --follow`. Set false to keep dictation but drop the bar
         indicator.
       '';
@@ -218,7 +218,7 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Emit desktop notifications (mako) on recording start/stop and on
+        Emit desktop notifications (through the notification daemon) on recording start/stop and on
         transcription, via voxtype's built-in `[output.notification]`.
       '';
     };

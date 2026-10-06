@@ -8,16 +8,16 @@ doing: workspaces on the left, the clock in the middle, and status on the right.
 Most segments do something when you click them, and hovering over one shows a
 tooltip with more detail.
 
-Which bar you see depends on one setting. With the Marchyo shell turned on, the bar
-is part of the shell, along with its panels, notifications, and launcher:
+Which bar you see depends on one setting. By default the bar is part of the Marchyo
+shell, along with its panels, notifications, and launcher. Turning the shell off
+switches the top bar to Waybar:
 
 ```nix
-marchyo.shell.enable = true;
+marchyo.shell.enable = false;
 ```
 
-The shell is off by default. Without it, the top bar is Waybar. The two bars look
-similar and cover the same ground, but the shell bar can open panels and you can
-rearrange it. Both are covered below.
+The two bars look similar and cover the same ground, but the shell bar can open
+panels and you can rearrange it. Both are covered below.
 
 ## Hiding the bar
 
@@ -195,4 +195,4 @@ On the right, from left to right:
   to a warning colour at 20% and a critical one at 10%.
 
 Waybar has no panels and no Control Center, and its layout is fixed. If you want
-those, turn on the Marchyo shell.
+those, keep the Marchyo shell on.

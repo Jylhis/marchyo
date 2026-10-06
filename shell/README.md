@@ -1,10 +1,11 @@
 # shell/ — the marchyo Quickshell shell
 
-A custom [Quickshell](https://quickshell.org) desktop shell: a single
-long-running QML process replacing today's discrete
-waybar + mako + swayosd + vicinae composition (bar, panels, OSD,
-notifications, launcher; lock pending its live-verification pass). Design and
-roadmap: **[../TODO.md](../TODO.md)**.
+A custom [Quickshell](https://quickshell.org) desktop shell and the default
+Marchyo desktop shell: a single long-running QML process for the bar, panels,
+OSD, notifications, launcher, lock, and polkit agent. The discrete
+waybar + mako + swayosd + vicinae + hyprlock + hyprpolkitagent stack stays as
+the `marchyo.shell.enable = false` fallback. Design and roadmap:
+**[../TODO.md](../TODO.md)**.
 
 ## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 5 (launcher) done
 
@@ -40,14 +41,15 @@ the `voxtype --follow` stream **restarts with backoff** when it ends, and the
 shell grew two **headless test suites** that `nix flake check` runs (see
 [Tests](#tests)).
 
-Gated behind `marchyo.shell.enable` (default off). Enabling it **replaces
-waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4), **vicinae**
-(Phase 5), and **hyprpolkitagent** — each mutually exclusive with its discrete
-counterpart (see `modules/home/waybar.nix`, `modules/home/swayosd.nix`,
+Gated behind `marchyo.shell.enable`, which defaults to on with
+`marchyo.desktop.enable` (cascaded in `modules/nixos/desktop-config.nix`). The
+shell **replaces waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4),
+**vicinae** (Phase 5), and **hyprpolkitagent**, each mutually exclusive with its
+discrete counterpart (see `modules/home/waybar.nix`, `modules/home/swayosd.nix`,
 `modules/home/mako.nix`, `modules/home/hyprlock.nix`,
-`modules/home/vicinae.nix`, and `modules/home/marchyo-shell.nix`) — so the
-shell owns the bar, the OSD, notifications, the lock, the launcher, and the
-polkit agent outright.
+`modules/home/vicinae.nix`, and `modules/home/hyprland.nix`), so the shell owns
+the bar, the OSD, notifications, the lock, the launcher, and the polkit agent
+outright. Setting `marchyo.shell.enable = false` keeps the discrete stack.
 
 Layout:
 
@@ -515,7 +517,7 @@ PAM prompt and the field border is `Color.statusErr`.
 
 `Services/Polkit.qml` holds the session's polkit authentication agent
 (`Quickshell.Services.Polkit.PolkitAgent`); `Polkit/PolkitDialog.qml` draws its
-prompt. With the shell on, `modules/home/marchyo-shell.nix` turns
+prompt. With the shell on, `modules/home/hyprland.nix` turns
 hyprpolkitagent off (a session holds one registered agent); with the shell off
 hyprpolkitagent stays the agent. A request (e.g. `pkexec`, a systemd unit
 action, a 1Password unlock) shows a scrim plus a centered card on the focused

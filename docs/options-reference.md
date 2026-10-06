@@ -15,6 +15,7 @@ sync when changing option declarations).
 | `marchyo.development.containers.dockerGroup` | `false` | Add users to the root-equivalent `docker` group (Docker backend only) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |
 | `marchyo.office.enable` | `false` | Office apps (auto-enabled with desktop) |
+| `marchyo.shell.enable` | `true` with desktop (mkDefault) | Unified Quickshell shell, the default desktop shell (cascaded in `modules/nixos/desktop-config.nix`). `false` keeps the discrete stack: waybar, Vicinae, SwayOSD, mako, hyprlock, hyprpolkitagent |
 
 ## User Configuration
 
@@ -145,13 +146,13 @@ Desktop-cascade features, each on by default with `marchyo.desktop.enable` and i
 
 | Option | Default | Feature |
 |--------|---------|---------|
-| `marchyo.osd.enable` | `true` | SwayOSD volume/brightness overlay (`modules/home/swayosd.nix` + `modules/nixos/osd.nix` — udev rules + `video` group for backlight) |
+| `marchyo.osd.enable` | `true` | SwayOSD volume/brightness overlay on the `marchyo.shell.enable = false` fallback (the shell draws its own OSD) (`modules/home/swayosd.nix` + `modules/nixos/osd.nix` — udev rules + `video` group for backlight) |
 | `marchyo.menus.enable` | `true` | `marchyo-power-menu` (`Super+Escape`) + `marchyo-menu` central menu (`Super+Alt+Space`), gum TUIs in floating ghostty (`modules/home/menus.nix`) |
 | `marchyo.reminders.enable` | `true` | `marchyo-reminder-*` via transient systemd timers (`modules/home/utilities.nix`) |
 | `marchyo.utilities.enable` | `true` | Quick-info notify, `marchyo-transcode`, and `marchyo share` (LocalSend sender, Trigger submenu of `marchyo menu`) (`modules/home/utilities.nix`) |
 | `marchyo.screensaver.enable` | `true` | tte screensaver on 120s idle; keypress/mouse dismiss (`modules/home/screensaver.nix`) |
 | `marchyo.security.firewall.enable` | `true` | `networking.firewall.enable` follows it at `mkDefault` (`modules/nixos/firewall.nix`) |
-| `marchyo.security.fingerprint.enable` | `false` | `services.fprintd` (hyprlock follows automatically) |
+| `marchyo.security.fingerprint.enable` | `false` | `services.fprintd` (the hyprlock fallback follows automatically) |
 | `marchyo.security.fido2.enable` | `false` | `security.pam.u2f` + libfido2; enroll with `pamu2fcfg` (`modules/nixos/security-auth.nix`) |
 | `marchyo.services.tailscale.enable` | `true` | tailscale + trusted `tailscale0`, loose RP filter (`modules/nixos/tailscale.nix`) |
 | `marchyo.services.tailscale.operator` | first enabled marchyo user with desktop + shell, else `null` | `tailscale set --operator` via `services.tailscale.extraSetFlags`, so the shell's Control Center tile can connect/disconnect (`modules/nixos/tailscale.nix`) |
@@ -159,7 +160,7 @@ Desktop-cascade features, each on by default with `marchyo.desktop.enable` and i
 | `marchyo.services.localsend.openFirewall` | `true` | Open TCP+UDP 53317 so other devices can discover and send to this host; `marchyo share` sends either way (`modules/nixos/localsend.nix`) |
 | `marchyo.power.hibernation.enable` | `false` | suspend-then-hibernate + hypridle idle-sleep; requires `resumeDevice` (`modules/nixos/hibernation.nix`) |
 
-Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-floating moved `Super+V`→`Super+T`, `modules/home/hyprland.nix`); DND toggle `Super+Ctrl+comma` + waybar `custom/dnd` indicator (dismiss-all moved to `Super+Ctrl+Shift+comma`); monitor/connectivity/app-launch binds in `modules/home/omarchy-binds.nix`; runtime theme switching via `marchyo theme` over the `marchyo.theme.themes` manifest (`modules/home/theme-runtime.nix` builds the assets — ephemeral overlay, resets on activation); `nixosModules.hardware.<profile>` re-exports nixos-hardware; the `marchyo` CLI is 1.0: the full omarchy-parity surface (system, theme/bg, 11 toggles, capture, menus/launch/power, reminder/info/transcode/share/font, install/webapp/security, runtime restore, completions+man) with the former `marchyo-*` helper scripts absorbed into TypeScript (`packages/marchyo-cli`) and every bind/menu/waybar action dispatching `marchyo …`. Command names/flags/exit codes are frozen until 2.0 (contract snapshot tests); `cli-state.json`/`runtime.json` stay internal. Full reference: `site/src/content/docs/docs/usage/cli.mdx`. See `site/src/content/docs/docs/usage/hotkeys.mdx` for the full bind list.
+Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-floating moved `Super+V`→`Super+T`, `modules/home/hyprland.nix`); DND toggle `Super+Ctrl+comma` + a DND bar indicator (waybar `custom/dnd` with the shell off) (dismiss-all moved to `Super+Ctrl+Shift+comma`); monitor/connectivity/app-launch binds in `modules/home/omarchy-binds.nix`; runtime theme switching via `marchyo theme` over the `marchyo.theme.themes` manifest (`modules/home/theme-runtime.nix` builds the assets — ephemeral overlay, resets on activation); `nixosModules.hardware.<profile>` re-exports nixos-hardware; the `marchyo` CLI is 1.0: the full omarchy-parity surface (system, theme/bg, 11 toggles, capture, menus/launch/power, reminder/info/transcode/share/font, install/webapp/security, runtime restore, completions+man) with the former `marchyo-*` helper scripts absorbed into TypeScript (`packages/marchyo-cli`) and every bind/menu/waybar action dispatching `marchyo …`. Command names/flags/exit codes are frozen until 2.0 (contract snapshot tests); `cli-state.json`/`runtime.json` stay internal. Full reference: `site/src/content/docs/docs/usage/cli.mdx`. See `site/src/content/docs/docs/usage/hotkeys.mdx` for the full bind list.
 
 ## Dictation (voice-to-text)
 
@@ -184,7 +185,7 @@ Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-fl
 | `marchyo.dictation.silenceGate.backend` | `"energy"` | `"energy"` (RMS over 20 ms frames, no model) or `"whisper"` (Silero, needs `ggml-silero-vad.bin` via `voxtype setup vad`) |
 | `marchyo.dictation.silenceGate.threshold` | `0.5` | `vad.threshold`, 0.0-1.0; higher needs louder speech (energy: about 0.001 / 0.01 / 0.1 RMS at 0 / 0.5 / 1) |
 | `marchyo.dictation.silenceGate.minSpeechMs` | `100` | `vad.min_speech_duration_ms`; recordings with less detected speech are dropped |
-| `marchyo.dictation.indicator` | `true` | Waybar recording-state segment (streams `voxtype status --follow`) |
+| `marchyo.dictation.indicator` | `true` | Top-bar recording-state segment (streams `voxtype status --follow`) |
 | `marchyo.dictation.notify` | `true` | Desktop notifications on record start/stop/transcription |
 | `marchyo.dictation.audioFeedback` | `true` | Start/stop sound cues |
 | `marchyo.dictation.statusWindow` | `true` | Super+Shift+H floating status window + its Hyprland rule |
@@ -211,7 +212,7 @@ Backend selection sets `services.ollama.package = lib.mkDefault pkgs."ollama-<ba
 
 ## Notifications (in-shell)
 
-With `marchyo.shell.enable = true` the shell owns `org.freedesktop.Notifications` (mako stands down) and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.
+The shell (on by default with the desktop) owns `org.freedesktop.Notifications` (mako stands down) and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.
 
 `marchyo.notifications.rules` is a list of per-sender rules matched on `appName` and/or `desktopEntry` (exact, case-insensitive; first match wins), baked into the shell at build time. Only used when the shell is on (mako owns notifications otherwise).
 
@@ -237,7 +238,7 @@ Options live in `modules/nixos/options/notifications.nix`; the apply logic is in
 
 ## Application launcher (Vicinae fallback / in-shell launcher)
 
-`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) selects the launcher: with `marchyo.shell.enable = true` the shell's own in-shell launcher (`shell/Launcher/`, Phase 5) answers `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history) — vicinae, its user service, and the `cap_dac_override` input-server wrapper all stand down (mutually exclusive, eval-tested in `tests/eval/marchyo-shell.nix`). The options below then apply only to the discrete-stack (`marchyo.shell.enable = false`) desktop, where they run [Vicinae](https://vicinae.com) as a user service behind the same three binds.
+`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) selects the launcher: with the shell on (the desktop default) the shell's own in-shell launcher (`shell/Launcher/`, Phase 5) answers `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history) — vicinae, its user service, and the `cap_dac_override` input-server wrapper all stand down (mutually exclusive, eval-tested in `tests/eval/marchyo-shell.nix`). The options below then apply only to the discrete-stack (`marchyo.shell.enable = false`) desktop, where they run [Vicinae](https://vicinae.com) as a user service behind the same three binds.
 
 | Option | Default | Description |
 |--------|---------|-------------|

@@ -44,9 +44,9 @@ let
   };
 
   # Notification DND state for the custom/dnd module: one JSON object per
-  # invocation (interval = "once"), re-run on SIGRTMIN+9 — sent by
-  # marchyo-dnd-toggle (modules/home/window-toggles.nix) right after it flips
-  # mako's do-not-disturb mode. Nerd-font bell glyphs match the voxtype
+  # invocation (interval = "once"), re-run on SIGRTMIN+9, which
+  # `marchyo toggle notifications` sends right after it flips mako's
+  # do-not-disturb mode. Nerd-font bell glyphs match the voxtype
   # indicator's icon style.
   dndStatus = pkgs.writeShellApplication {
     name = "marchyo-dnd-status";

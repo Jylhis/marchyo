@@ -6,12 +6,12 @@ description: The application launcher — the in-shell launcher (marchyo.shell) 
 Marchyo ships two launchers behind the same three binds — **`Super+R`** (apps),
 **`Super+period`** (emoji picker), **`Super+Ctrl+V`** (clipboard history):
 
-- **`marchyo.shell.enable = true`** (the unified Quickshell shell): the shell's
+- **`marchyo.shell.enable = true`** (the default, the unified Quickshell shell): the shell's
   own in-shell launcher — apps from the freedesktop entries, emoji from the
   Unicode catalog, clipboard from cliphist — themed by the design tokens at
   runtime, pasting via `wtype` with **no privileged helper**. Vicinae and its
   `cap_dac_override` input server stand down entirely (mutually exclusive).
-- **`marchyo.shell.enable = false`** (the discrete stack): [Vicinae](https://vicinae.com),
+- **`marchyo.shell.enable = false`** (the discrete-stack fallback): [Vicinae](https://vicinae.com),
   a Raycast-style, Wayland layer-shell launcher that also handles snippets, a
   calculator, and file search, running as a user service.
 

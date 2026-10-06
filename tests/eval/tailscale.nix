@@ -56,6 +56,7 @@ in
       )
       (withTestUser {
         marchyo.desktop.enable = true;
+        marchyo.shell.enable = false;
       });
 
   # An explicit operator wins over the default, and consumer extraSetFlags

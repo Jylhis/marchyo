@@ -1,7 +1,8 @@
-# Quickshell shell: the marchyo-shell user service appears only when
-# marchyo.shell.enable is set, and stays absent under a plain desktop (it does not
-# cascade from desktop.enable). The shell and waybar are mutually exclusive — when
-# the shell is on, waybar stands down — so the two bars never both run.
+# Quickshell shell: marchyo.shell.enable cascades from desktop.enable, so the
+# marchyo-shell user service appears on a plain desktop and stays absent without
+# one. Each shell surface is mutually exclusive with its discrete counterpart
+# (waybar, SwayOSD, mako, hyprlock, vicinae, hyprpolkitagent), which stays as the
+# marchyo.shell.enable = false fallback; the `off` tests pin that fallback.
 {
   helpers,
   lib,
@@ -27,6 +28,10 @@ let
         ))
       ];
     };
+
+  shellOff = {
+    marchyo.shell.enable = false;
+  };
 in
 {
   # shell.enable on: the user service is defined and launches marchyo-shell.
@@ -44,17 +49,26 @@ in
         throw "FAIL: marchyo.shell.enable = true but the marchyo-shell user service is missing or does not launch marchyo-shell"
     );
 
-  # Default desktop: opt-in only, so the service must not appear (no collision
-  # with the discrete waybar/mako/swayosd stack).
-  eval-marchyo-shell-disabled-by-default =
+  # The shell is the default with the desktop: a plain desktop enables it and
+  # runs the user service; without the desktop it stays off and absent.
+  eval-marchyo-shell-default-with-desktop =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      desktop = (evalWith { }).config;
+      noDesktop = (evalWith { marchyo.desktop.enable = false; }).config;
+      desktopHm = desktop.home-manager.users.testuser;
+      noDesktopHm = noDesktop.home-manager.users.testuser;
     in
-    pkgs.writeText "eval-marchyo-shell-disabled-by-default" (
-      if !(hm.systemd.user.services ? marchyo-shell) then
-        "pass"
+    pkgs.writeText "eval-marchyo-shell-default-with-desktop" (
+      if !desktop.marchyo.shell.enable then
+        throw "FAIL: marchyo.desktop.enable = true should enable marchyo.shell by default"
+      else if !(desktopHm.systemd.user.services ? marchyo-shell) then
+        throw "FAIL: the marchyo-shell user service is missing under a plain desktop"
+      else if noDesktop.marchyo.shell.enable then
+        throw "FAIL: marchyo.shell is on without marchyo.desktop.enable"
+      else if noDesktopHm.systemd.user.services ? marchyo-shell then
+        throw "FAIL: the marchyo-shell user service is present without marchyo.desktop.enable"
       else
-        throw "FAIL: marchyo.shell is off by default but the marchyo-shell user service is present under a plain desktop"
+        "pass"
     );
 
   # Cutover: with the shell on, waybar must stand down so the two bars are never
@@ -70,16 +84,16 @@ in
         throw "FAIL: marchyo.shell.enable = true but waybar is still enabled (both bars would run)"
     );
 
-  # Plain desktop (shell off): waybar is the bar, so it must be enabled.
+  # Desktop with the shell off (the fallback): waybar is the bar, so it must be enabled.
   eval-marchyo-shell-off-keeps-waybar =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-waybar" (
       if hm.programs.waybar.enable then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but waybar is not enabled under a plain desktop"
+        throw "FAIL: marchyo.shell is off but waybar is not enabled on a desktop"
     );
 
   # OSD cutover: the shell provides its own OSD, so with the shell on the SwayOSD
@@ -95,16 +109,16 @@ in
         throw "FAIL: marchyo.shell.enable = true but the swayosd server is still defined (both OSDs would run)"
     );
 
-  # Plain desktop (shell off): SwayOSD is the OSD, so its server must be present.
+  # Desktop with the shell off (the fallback): SwayOSD is the OSD, so its server must be present.
   eval-marchyo-shell-off-keeps-swayosd =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-swayosd" (
       if (hm.systemd.user.services ? swayosd) then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but the swayosd server is missing under a plain desktop"
+        throw "FAIL: marchyo.shell is off but the swayosd server is missing on a desktop"
     );
 
   # Notification cutover: the shell owns org.freedesktop.Notifications and draws
@@ -121,16 +135,16 @@ in
         throw "FAIL: marchyo.shell.enable = true but mako is still enabled (both would seize org.freedesktop.Notifications)"
     );
 
-  # Plain desktop (shell off): mako is the notification daemon, so it must be on.
+  # Desktop with the shell off (the fallback): mako is the notification daemon, so it must be on.
   eval-marchyo-shell-off-keeps-mako =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-mako" (
       if hm.services.mako.enable then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but mako is not enabled under a plain desktop"
+        throw "FAIL: marchyo.shell is off but mako is not enabled on a desktop"
     );
 
   # Phase 4 lock cutover: with the shell on, hyprlock stands down (the shell's
@@ -148,13 +162,13 @@ in
 
   eval-marchyo-shell-off-keeps-hyprlock =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-hyprlock" (
       if hm.programs.hyprlock.enable then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but hyprlock is missing under a plain desktop"
+        throw "FAIL: marchyo.shell is off but hyprlock is missing on a desktop"
     );
 
   # SUPER+L reaches the running shell through `marchyo shell lock` when it is
@@ -175,7 +189,7 @@ in
   eval-marchyo-shell-off-keeps-hyprlock-bind =
     let
       bind =
-        (evalWith { }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+        (evalWith shellOff).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-hyprlock-bind" (
       if hyprHasBind bind "SUPER + L" "hyprlock" then
@@ -193,7 +207,7 @@ in
         extra:
         (evalWith extra).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
       on = bindsFor { marchyo.shell.enable = true; };
-      off = bindsFor { };
+      off = bindsFor shellOff;
       onChord = lib.filter (e: (e._args or [ ]) != [ ] && builtins.head e._args == "SUPER + grave") on;
     in
     pkgs.writeText "eval-marchyo-shell-overview-bind" (
@@ -231,7 +245,7 @@ in
 
   eval-marchyo-shell-off-hypridle-keeps-loginctl =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
       listenersText = builtins.toJSON hm.services.hypridle.settings.listener;
     in
     pkgs.writeText "eval-marchyo-shell-off-hypridle-keeps-loginctl" (
@@ -258,13 +272,13 @@ in
 
   eval-marchyo-shell-off-nixos-keeps-hyprlock =
     let
-      c = (evalWith { }).config;
+      c = (evalWith shellOff).config;
     in
     pkgs.writeText "eval-marchyo-shell-off-nixos-keeps-hyprlock" (
       if c.programs.hyprlock.enable then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but NixOS hyprlock is missing under a plain desktop"
+        throw "FAIL: marchyo.shell is off but NixOS hyprlock is missing on a desktop"
     );
 
   # Launcher cutover: the shell ships its own launcher surface, so with the
@@ -305,17 +319,17 @@ in
         "pass"
     );
 
-  # Plain desktop (shell off): vicinae remains the launcher, and its binds
+  # Desktop with the shell off (the fallback): vicinae remains the launcher, and its binds
   # still spawn vicinae.
   eval-marchyo-shell-off-keeps-vicinae =
     let
-      c = (evalWith { }).config;
+      c = (evalWith shellOff).config;
       hm = c.home-manager.users.testuser;
       binds = hm.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-vicinae" (
       if !hm.programs.vicinae.enable then
-        throw "FAIL: marchyo.shell is off but vicinae is not enabled under a plain desktop"
+        throw "FAIL: marchyo.shell is off but vicinae is not enabled on a desktop"
       else if !(hyprHasBind binds "SUPER + R" "vicinae toggle") then
         throw "FAIL: marchyo.shell is off but SUPER+R does not spawn vicinae"
       else
@@ -427,15 +441,15 @@ in
         "pass"
     );
 
-  # Plain desktop (shell off): hyprpolkitagent is the polkit agent.
+  # Desktop with the shell off (the fallback): hyprpolkitagent is the polkit agent.
   eval-marchyo-shell-off-keeps-hyprpolkitagent =
     let
-      hm = (evalWith { }).config.home-manager.users.testuser;
+      hm = (evalWith shellOff).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-hyprpolkitagent" (
       if hm.services.hyprpolkitagent.enable && (hm.systemd.user.services ? hyprpolkitagent) then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but hyprpolkitagent is not enabled under a plain desktop"
+        throw "FAIL: marchyo.shell is off but hyprpolkitagent is not enabled on a desktop"
     );
 }

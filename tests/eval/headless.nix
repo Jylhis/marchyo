@@ -34,7 +34,8 @@ in
         ++ lib.optional hm.programs.hyprlock.enable "hyprlock"
         ++ lib.optional hm.services.hypridle.enable "hypridle"
         ++ lib.optional hm.programs.vicinae.enable "vicinae"
-        ++ lib.optional hm.programs.noctalia.enable "noctalia";
+        ++ lib.optional hm.programs.noctalia.enable "noctalia"
+        ++ lib.optional (hm.systemd.user.services ? marchyo-shell) "marchyo-shell";
     in
     pkgs.writeText "eval-headless-no-wayland" (
       if offenders == [ ] then
@@ -44,16 +45,25 @@ in
     );
 
   # desktop enabled => the same modules ARE configured (the guard does not
-  # over-gate the normal desktop path).
+  # over-gate the normal desktop path): the shell by default, waybar as the
+  # marchyo.shell.enable = false fallback.
   eval-desktop-enables-wayland =
     let
       hm = hmOf { marchyo.desktop.enable = true; };
+      fallbackHm = hmOf {
+        marchyo.desktop.enable = true;
+        marchyo.shell.enable = false;
+      };
     in
     pkgs.writeText "eval-desktop-enables-wayland" (
-      if hm.wayland.windowManager.hyprland.enable && hm.programs.waybar.enable then
-        "pass"
+      if !(hm.wayland.windowManager.hyprland.enable && hm.systemd.user.services ? marchyo-shell) then
+        throw "FAIL: desktop enabled but hyprland/marchyo-shell were not configured"
+      else if
+        !(fallbackHm.wayland.windowManager.hyprland.enable && fallbackHm.programs.waybar.enable)
+      then
+        throw "FAIL: desktop enabled with the shell off but hyprland/waybar were not configured"
       else
-        throw "FAIL: desktop enabled but hyprland/waybar were not configured"
+        "pass"
     );
 
   # The cursor hides on key press (typing) — and because every screenshot bind

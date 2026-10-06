@@ -11,8 +11,9 @@ in
 {
   config = lib.mkIf desktopEnabled {
     # Disabled: noctalia's own notification daemon would seize
-    # org.freedesktop.Notifications and override mako. marchyo already covers the
-    # bar (waybar) and launcher (vicinae).
+    # org.freedesktop.Notifications from the marchyo shell (or mako with
+    # marchyo.shell.enable = false). marchyo already covers the bar and the
+    # launcher: the marchyo shell, or waybar and vicinae with the shell off.
     programs.noctalia.enable = lib.mkDefault false;
   };
 }
