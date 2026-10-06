@@ -232,3 +232,16 @@ a snappy `popin` bezier: windows pop in, the shell's panels, launcher, and OSD
 pop in, the bar slides from its edge, and toasts and tooltips keep their own
 QML transitions. Workspace switches and border colour changes stay instant.
 With the shell off, compositor animations stay disabled.
+
+## Login greeter
+
+The greetd login greeter is built in the host's `marchyo.theme.variant`, so a
+light host shows a light login screen. It also follows the session theme:
+every `marchyo theme set`, `next`, or `generate` writes the active theme's
+colours to `/var/lib/marchyo/greeter/theme.json`, and the greeter picks them up
+at start and whenever the file changes. The directory is owned by `root:users`
+with mode `1775`, so session users can write their own marker but cannot
+replace another user's. The greeter accepts only `#rrggbb` values for colour
+keys it already knows; a missing or invalid file falls back to the built-in
+variant palette. A declarative rebuild does not touch the marker, so the
+greeter keeps the last theme the CLI activated.

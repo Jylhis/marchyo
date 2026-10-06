@@ -272,6 +272,37 @@ cli_prefix_drift=""
   cli_prefix_drift="plugin.nix reservedPrefixStarts ($(tr '\n' ' ' <<<"$reserved_starts")) != RESERVED_PREFIX_STARTS ($(tr '\n' ' ' <<<"$ts_starts"))"
 check "reserved launcher prefix characters match between plugin.nix and the CLI" "$cli_prefix_drift"
 
+# ── greeter theme marker ─────────────────────────────────────────────────────
+#
+# The session theme marker dir is spelled in three languages: boot.nix creates
+# it, the CLI writes theme.json into it, the greeter reads it.
+greeter_ts="$ROOT/packages/marchyo-cli/packages/core/src/greeter-theme.ts"
+marker_dir=$(grep -oE '^export const GREETER_THEME_DIR = "[^"]+"' "$greeter_ts" | cut -d'"' -f2)
+marker_drift=""
+if [[ -z $marker_dir ]]; then
+  marker_drift="GREETER_THEME_DIR not found in ${greeter_ts#"$ROOT"/}"
+else
+  grep -qF "d '$marker_dir' " "$ROOT/modules/nixos/boot.nix" ||
+    marker_drift+="modules/nixos/boot.nix has no tmpfiles rule for $marker_dir"$'\n'
+  grep -qF "markerDir: \"$marker_dir\"" "$GREETER_DIR/Commons/Theme.qml" ||
+    marker_drift+="greeter/Commons/Theme.qml does not read $marker_dir"$'\n'
+fi
+check "greeter theme marker dir agrees between boot.nix, the CLI and the greeter" "$marker_drift"
+
+# Same Config.<tool> contract as the shell, for the greeter's own Config.qml
+# and the greeterConfigQml generator in package.nix.
+greeter_config="$GREETER_DIR/Commons/Config.qml"
+greeter_generated=$(sed -n '/greeterConfigQml = writeText/,/^  .;$/p' "$ROOT/packages/marchyo-shell/package.nix")
+greeter_tools=""
+while read -r tool; do
+  [[ -z $tool ]] && continue
+  grep -qE "property (string|var) $tool:" "$greeter_config" ||
+    greeter_tools+="Config.$tool is used but not declared in greeter/Commons/Config.qml"$'\n'
+  grep -qE "property (string|var) $tool:" <<<"$greeter_generated" ||
+    greeter_tools+="Config.$tool is used but not baked by greeterConfigQml"$'\n'
+done < <(grep -rhoE "\bConfig\.[a-zA-Z]+" "$GREETER_DIR" --include=*.qml | cut -d. -f2 | sort -u | grep -v "^qml$")
+check "every greeter Config.<tool> is declared and baked" "$greeter_tools"
+
 echo "----"
 echo "$pass passed, $fail failed"
 [[ $fail == 0 ]]

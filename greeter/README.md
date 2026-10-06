@@ -22,6 +22,14 @@ build (`../packages/marchyo-shell/package.nix`) regenerates them with the
 host's theme variant and store-baked tool paths, and wraps the entry point as
 `marchyo-greeter`.
 
+Session theme: `Commons/Theme.qml` overrides the baked palette with
+`/var/lib/marchyo/greeter/theme.json`, which `marchyo theme set` writes (the
+directory is a `root:users` `1775` tmpfiles rule in `modules/nixos/boot.nix`).
+The file is user-writable, so no `FileView` points at it: a `FileView` on the
+directory (`preload: false`) is the change doorbell, and a `timeout`-bounded
+`head -c` reads at most 16 KiB. Only `#rrggbb` strings for keys the baked
+palette has are applied; a missing or invalid file restores the baked palette.
+
 Parity with the tuigreet config it replaces: last-user prefill
 (`/var/cache/marchyo-greeter/last-user`, written on successful auth),
 password masking, power controls (reboot / power off). Deliberately not

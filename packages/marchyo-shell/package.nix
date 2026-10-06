@@ -297,8 +297,9 @@ let
   '';
 
   # Generated greeter tool-path singleton: the uwsm session argv for
-  # Greetd.launch() and systemctl for the power buttons, both absolute so the
-  # greeter never depends on greetd's daemon PATH.
+  # Greetd.launch(), systemctl for the power buttons, and timeout/head for the
+  # theme marker reader, all absolute so the greeter never depends on greetd's
+  # daemon PATH.
   greeterConfigQml = writeText "Config.qml" ''
     pragma Singleton
     import QtQuick
@@ -307,6 +308,8 @@ let
     QtObject {
       readonly property var sessionCommand: [ "${lib.getExe uwsm}", "start", "hyprland-uwsm.desktop" ]
       readonly property string systemctl: "${lib.getExe' systemd "systemctl"}"
+      readonly property string timeout: "${lib.getExe' coreutils "timeout"}"
+      readonly property string head: "${lib.getExe' coreutils "head"}"
     }
   '';
 

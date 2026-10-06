@@ -10,5 +10,6 @@ export * from "./desktop.ts";
 export * from "./apply.ts";
 export * from "./theme-assets.ts";
 export * from "./matugen.ts";
+export * from "./greeter-theme.ts";
 export * from "./shell-ipc.ts";
 export * from "./plugins.ts";
