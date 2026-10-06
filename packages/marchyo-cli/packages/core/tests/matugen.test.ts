@@ -10,18 +10,23 @@ import {
   detectVariant,
   fillTemplate,
   fzfOptsFor,
+  gduText,
   ghosttyConfFromBase16,
   hyprlandConfFor,
   hyprlockColorsFor,
+  k9sSkinText,
+  lazygitText,
   matugenArgv,
   parseMatugenBase16,
   recolorShellColors,
   resolvedPalette,
   shadeRgba,
+  spotifyPlayerThemeText,
   tmThemeFromBase16,
   toCamel,
   tokenResolver,
   tty16FromBase16,
+  yamlText,
 } from "../src/matugen.ts";
 
 // Nix-built parity fixture: inputs plus the output of lib/theme-generators.nix
@@ -236,11 +241,31 @@ describe("generators match lib/theme-generators.nix (parity fixture)", () => {
   test("bat tmTheme", () => {
     expect(tmThemeFromBase16(parity.batThemeName, b)).toBe(exp["bat.tmTheme"]!);
   });
+  test("k9s-skin.yaml", () => {
+    expect(k9sSkinText(b)).toBe(exp["k9s-skin.yaml"]!);
+  });
+  test("lazygit.yml", () => {
+    expect(lazygitText(b)).toBe(exp["lazygit.yml"]!);
+  });
+  test("spotify-player-theme.toml", () => {
+    expect(spotifyPlayerThemeText(b)).toBe(exp["spotify-player-theme.toml"]!);
+  });
+  test("gdu.yaml", () => {
+    expect(gduText(b)).toBe(exp["gdu.yaml"]!);
+  });
   test("gtk shade", () => {
     expect(shadeRgba(resolve("text"))).toBe(exp.shade!);
   });
   test("resolved palette tokens", () => {
     expect(resolvedPalette(parity.palette, resolve).tokens).toEqual(exp.tokens);
+  });
+});
+
+describe("yamlText", () => {
+  test("sorts keys, nests maps, quotes strings, flows lists", () => {
+    expect(
+      yamlText({ b: { y: ["#123456", "bold"], x: false }, a: "default" }),
+    ).toBe('a: "default"\nb:\n  x: false\n  y: ["#123456", "bold"]\n');
   });
 });
 

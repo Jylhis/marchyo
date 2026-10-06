@@ -5,9 +5,10 @@
 # marchyo.theme.themes as runtime-swappable asset dirs plus a manifest the
 # `marchyo theme` CLI reads. The switch is an ephemeral overlay: the next
 # activation resets every surface (and ~/.config/marchyo/current-theme) back
-# to the declarative default. bat, fzf, starship, hyprlock and console have
-# runtime emitters too; Qt follows the GTK relink; only plymouth stays on the
-# build-time default until rebuild.
+# to the declarative default. bat, fzf, starship, hyprlock, console, k9s,
+# lazygit, spotify-player and gdu have runtime emitters too; Qt follows the GTK
+# relink; plymouth and ncspot (whose theme sits inline in config.toml, with no
+# include) stay on the build-time default until rebuild.
 #
 # The dual-variant mako/waybar/gtk sources are derived from the resolved Home
 # Manager config by translating the build variant's semantic-token hexes to
@@ -211,6 +212,30 @@ let
   # (modules/nixos/console.nix) at the next boot.
   consoleTableFrom16 = gen.consoleTable;
 
+  # Base16-slot TUI surfaces (lib/theme-generators.nix): k9s skin, lazygit
+  # gui.theme overlay, spotify-player theme.toml and gdu.yaml. The app
+  # modules link to (or, for lazygit, list via LG_CONFIG_FILE) these files
+  # under the current-theme pointer. Shared by the Jylhis pair (slots from
+  # jylhisSlots) and every scheme dir.
+  slotSurfaceFiles = label: slots: {
+    "k9s-skin.yaml" = pkgs.writeText "marchyo-theme-${label}-k9s-skin.yaml" (gen.k9sSkinText slots);
+    "lazygit.yml" = pkgs.writeText "marchyo-theme-${label}-lazygit.yml" (gen.lazygitText slots);
+    "spotify-player-theme.toml" = pkgs.writeText "marchyo-theme-${label}-spotify-player-theme.toml" (
+      gen.spotifyPlayerThemeText slots
+    );
+    "gdu.yaml" = pkgs.writeText "marchyo-theme-${label}-gdu.yaml" (gen.gduText slots);
+  };
+  # The build-variant dir is the declarative state, so it carries the slots
+  # the build-time modules use (marchyo.theme.scheme when set); the other
+  # variant carries the Jylhis pair's own slots.
+  jylhisSlots =
+    v:
+    import ../generic/theme-slots.nix {
+      inherit pkgs lib;
+      variant = v;
+      scheme = if v == buildVariant then themeCfg.scheme or null else null;
+    };
+
   # palette.json: the full kebab-case token -> hex map (syn-* included) plus
   # the token -> base16 slot table. `marchyo theme generate` resolves tokens
   # through these slots and falls back to the build dir's hex for a token
@@ -290,6 +315,7 @@ let
           paletteJsonFor palettes.${v}.hex
         );
       }
+      // slotSurfaceFiles v (jylhisSlots v)
       // lib.optionalAttrs (v == buildVariant) templateFiles
     );
 
@@ -399,6 +425,7 @@ let
           schemePaletteJson scheme
         );
       }
+      // slotSurfaceFiles scheme.name scheme.slots
     );
 
   themeList =
@@ -512,6 +539,7 @@ in
           "${config.xdg.configHome}/mako/config"
           "${config.xdg.configHome}/waybar/style.css"
           "${config.xdg.configHome}/bat/config"
+          "${config.xdg.configHome}/k9s/skins/jylhis.yaml"
           "${config.xdg.configHome}/marchyo/current-theme"
         ];
       in

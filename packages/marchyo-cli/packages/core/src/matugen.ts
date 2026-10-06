@@ -342,6 +342,207 @@ export function tmThemeFromBase16(name: string, b: Base16): string {
   ].join("\n");
 }
 
+// Long-tail TUI surfaces themed from base16 slots alone
+// (lib/theme-generators.nix k9sSkinFromSlots, lazygitThemeFromSlots,
+// spotifyPlayerPaletteFromSlots, gduText), serialized byte for byte like the
+// Nix `*Text` renderers.
+type YamlValue = string | boolean | string[] | YamlMap;
+type YamlMap = { [key: string]: YamlValue };
+
+// Block-style YAML (lib/theme-generators.nix yamlText): keys sorted, strings
+// JSON-quoted, string lists in flow style.
+export function yamlText(map: YamlMap): string {
+  const scalar = (v: string | boolean | string[]): string =>
+    typeof v === "boolean"
+      ? String(v)
+      : Array.isArray(v)
+        ? `[${v.map((x) => JSON.stringify(x)).join(", ")}]`
+        : JSON.stringify(v);
+  const lines = (indent: string, m: YamlMap): string[] =>
+    Object.keys(m)
+      .sort()
+      .flatMap((k) => {
+        const v = m[k]!;
+        return typeof v === "object" && !Array.isArray(v)
+          ? [`${indent}${k}:`, ...lines(`${indent}  `, v)]
+          : [`${indent}${k}: ${scalar(v)}`];
+      });
+  return lines("", map)
+    .map((l) => `${l}\n`)
+    .join("");
+}
+
+export function k9sSkinFromBase16(b: Base16): YamlMap {
+  return {
+    k9s: {
+      body: { fgColor: b.base05!, bgColor: "default", logoColor: b.base0C! },
+      prompt: {
+        fgColor: b.base05!,
+        bgColor: "default",
+        suggestColor: b.base02!,
+      },
+      info: { fgColor: b.base0B!, sectionColor: b.base05! },
+      dialog: {
+        fgColor: b.base05!,
+        bgColor: b.base01!,
+        buttonFgColor: b.base05!,
+        buttonBgColor: b.base02!,
+        buttonFocusFgColor: b.base00!,
+        buttonFocusBgColor: b.base0B!,
+        labelFgColor: b.base0A!,
+        fieldFgColor: b.base05!,
+      },
+      frame: {
+        border: { fgColor: b.base02!, focusColor: b.base01! },
+        menu: {
+          fgColor: b.base05!,
+          keyColor: b.base0B!,
+          numKeyColor: b.base0B!,
+        },
+        crumbs: {
+          fgColor: b.base05!,
+          bgColor: b.base01!,
+          activeColor: b.base02!,
+        },
+        status: {
+          newColor: b.base0C!,
+          modifyColor: b.base09!,
+          addColor: b.base0B!,
+          errorColor: b.base08!,
+          highlightcolor: b.base0A!,
+          killColor: b.base03!,
+          completedColor: b.base03!,
+        },
+        title: {
+          fgColor: b.base05!,
+          bgColor: b.base01!,
+          highlightColor: b.base0A!,
+          counterColor: b.base0C!,
+          filterColor: b.base0B!,
+        },
+      },
+      views: {
+        charts: {
+          bgColor: "default",
+          defaultDialColors: [b.base0C!, b.base0D!],
+          defaultChartColors: [b.base0C!, b.base0D!],
+        },
+        table: {
+          fgColor: b.base05!,
+          bgColor: "default",
+          header: {
+            fgColor: b.base05!,
+            bgColor: "default",
+            sorterColor: b.base08!,
+          },
+        },
+        xray: {
+          fgColor: b.base05!,
+          bgColor: "default",
+          cursorColor: b.base01!,
+          graphicColor: b.base0C!,
+          showIcons: false,
+        },
+        yaml: {
+          keyColor: b.base08!,
+          colonColor: b.base05!,
+          valueColor: b.base0B!,
+        },
+        logs: {
+          fgColor: b.base05!,
+          bgColor: "default",
+          indicator: {
+            fgColor: b.base05!,
+            bgColor: "default",
+            toggleOnColor: b.base0B!,
+            toggleOffColor: b.base04!,
+          },
+        },
+        help: {
+          fgColor: b.base05!,
+          bgColor: "default",
+          indicator: { fgColor: b.base0D! },
+        },
+      },
+    },
+  };
+}
+
+export function k9sSkinText(b: Base16): string {
+  return yamlText(k9sSkinFromBase16(b));
+}
+
+// lazygit `gui.theme` overlay, merged over the main config via LG_CONFIG_FILE.
+export function lazygitText(b: Base16): string {
+  return yamlText({
+    gui: {
+      theme: {
+        activeBorderColor: [b.base0D!, "bold"],
+        inactiveBorderColor: [b.base03!],
+        searchingActiveBorderColor: [b.base04!, "bold"],
+        optionsTextColor: [b.base06!],
+        selectedLineBgColor: [b.base03!],
+        cherryPickedCommitBgColor: [b.base02!],
+        cherryPickedCommitFgColor: [b.base03!],
+        unstagedChangesColor: [b.base08!],
+        defaultFgColor: [b.base05!],
+      },
+    },
+  });
+}
+
+// spotify-player theme.toml with the one `jylhis` theme its app.toml selects.
+export function spotifyPlayerThemeText(b: Base16): string {
+  const palette: Record<string, string> = {
+    background: b.base00!,
+    foreground: b.base05!,
+    black: b.base00!,
+    red: b.base08!,
+    green: b.base0B!,
+    yellow: b.base0A!,
+    blue: b.base0D!,
+    magenta: b.base0E!,
+    cyan: b.base0C!,
+    white: b.base05!,
+    bright_black: b.base03!,
+    bright_red: b.base08!,
+    bright_green: b.base0B!,
+    bright_yellow: b.base0A!,
+    bright_blue: b.base0D!,
+    bright_magenta: b.base0E!,
+    bright_cyan: b.base0C!,
+    bright_white: b.base07!,
+  };
+  return (
+    '[[themes]]\nname = "jylhis"\n\n[themes.palette]\n' +
+    Object.keys(palette)
+      .sort()
+      .map((k) => `${k} = ${JSON.stringify(palette[k])}\n`)
+      .join("")
+  );
+}
+
+// gdu.yaml; the file carries only the theme.
+export function gduText(b: Base16): string {
+  return [
+    "style:",
+    "  selected-row:",
+    `    text-color: "${b.base05}"`,
+    `    background-color: "${b.base00}"`,
+    "  result-row:",
+    `    number-color: "${b.base06}"`,
+    `    directory-color: "${b.base02}"`,
+    "  footer:",
+    `    text-color: "${b.base05}"`,
+    `    background-color: "${b.base00}"`,
+    `    number-color: "${b.base06}"`,
+    "  header:",
+    `    text-color: "${b.base05}"`,
+    `    background-color: "${b.base00}"`,
+    "",
+  ].join("\n");
+}
+
 // Fill a build-variant surface template (theme dir `templates/`): each
 // `{{token:<name>}}` becomes the resolved hex and `{{shade}}` the GTK shade of
 // the resolved text colour. An unknown token name throws rather than shipping

@@ -21,9 +21,7 @@ arrival.
   runtime subset; would be a mode, never the default (marchyo's identity is
   the jylhis palette).
 - **Optional polish:** greeter follows the session theme (needs a
-  world-readable theme marker the greeter reads at start); runtime emitters
-  for the TUI long tail (lazygit/k9s/ncspot/spotify-player/gdu, currently
-  build-time from `modules/generic/theme-slots.nix`).
+  world-readable theme marker the greeter reads at start).
 
 Rules for any new theme surface:
 
