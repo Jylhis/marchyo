@@ -216,6 +216,62 @@ grep -q "id: \"$sep_const\"" "$SHELL_DIR/Commons/ShellConfig.qml" ||
   sep_mismatches+="ShellConfig.qml default layout no longer uses \"$sep_const\""$'\n'
 check "the separator entry id matches BarLayout.SEPARATOR_ID everywhere" "$sep_mismatches"
 
+# ── plugin index generator and kind wiring ───────────────────────────────────
+#
+# package.nix builds the store shell's Commons/PluginIndex.qml by replacing one
+# marker line of the checked-in file with the baked plugin list, so both files
+# share every function. If the marker drifts, the build aborts; this catches it
+# without a build. Each PluginIndex function is one kind's consumer, so a
+# function nothing calls is a kind the shell no longer loads.
+
+plugin_index="$SHELL_DIR/Commons/PluginIndex.qml"
+plugin_marker=$(grep -oE 'pluginIndexMarker = "[^"]+"' "$package_nix" | sed 's/^pluginIndexMarker = "//;s/"$//')
+plugin_index_drift=""
+if [[ -z $plugin_marker ]]; then
+  plugin_index_drift="${package_nix#"$ROOT"/} defines no pluginIndexMarker"
+else
+  marker_lines=$(grep -cF -- "$plugin_marker" "$plugin_index")
+  [[ $marker_lines == 1 ]] ||
+    plugin_index_drift="${plugin_index#"$ROOT"/} has $marker_lines lines matching package.nix's marker '$plugin_marker' (want 1)"
+fi
+check "package.nix's PluginIndex marker appears exactly once in Commons/PluginIndex.qml" "$plugin_index_drift"
+
+unused_index_fns=""
+while read -r fn; do
+  [[ -n $fn ]] || continue
+  grep -rqE --include='*.qml' "PluginIndex\.$fn\(" "$SHELL_DIR" ||
+    unused_index_fns+="PluginIndex.$fn() is called nowhere in shell/"$'\n'
+done < <(grep -oE '^    function [a-zA-Z]+' "$plugin_index" | awk '{print $2}')
+check "every public PluginIndex function has a caller in shell/" "$unused_index_fns"
+
+# plugin.nix rejects launcher prefixes starting with a first-party prefix's
+# first character; the two lists must agree.
+plugin_nix="$ROOT/packages/marchyo-shell/plugin.nix"
+reserved_starts=$(awk '/reservedPrefixStarts = \[/{f=1;next} f&&/\]/{f=0} f' "$plugin_nix" | grep -oE '"[^"]+"' | tr -d '"' | sort -u)
+first_party_starts=$(grep -oE 'prefix: "[^"]+"' "$SHELL_DIR/Commons/LauncherProviders.js" | sed 's/^prefix: "//;s/"$//' | cut -c1 | sort -u)
+prefix_drift=""
+[[ $reserved_starts == "$first_party_starts" ]] ||
+  prefix_drift="plugin.nix reservedPrefixStarts ($(tr '\n' ' ' <<<"$reserved_starts")) != LauncherProviders.js PREFIXES first characters ($(tr '\n' ' ' <<<"$first_party_starts"))"
+check "plugin.nix reserves exactly the first-party launcher prefix characters" "$prefix_drift"
+
+# The CLI validates manifests at `marchyo plugin add` with the same kind set and
+# reserved prefix characters as plugin.nix.
+plugins_ts="$ROOT/packages/marchyo-cli/packages/core/src/plugins.ts"
+nix_kinds=$(grep -E '^[[:space:]]*"?[a-z-]+"?[[:space:]]*=[[:space:]]*"[A-Za-z]+";' \
+  "$ROOT/packages/marchyo-shell/plugin-kinds.nix" | tr -d ' ";' | sort)
+ts_kinds=$(sed -n '/^export const PLUGIN_KINDS = {/,/^} as const;/p' "$plugins_ts" |
+  grep -E '^[[:space:]]*"?[a-z-]+"?:[[:space:]]*"[A-Za-z]+",?$' | tr -d ' ",' | tr ':' '=' | sort)
+kind_drift=""
+[[ -n $nix_kinds && $nix_kinds == "$ts_kinds" ]] ||
+  kind_drift="plugin-kinds.nix ($(tr '\n' ' ' <<<"$nix_kinds")) != PLUGIN_KINDS ($(tr '\n' ' ' <<<"$ts_kinds"))"
+check "plugin kinds match between plugin-kinds.nix and the CLI's PLUGIN_KINDS" "$kind_drift"
+
+ts_starts=$(grep -E '^export const RESERVED_PREFIX_STARTS = ' "$plugins_ts" | grep -oE '"[^"]+"' | tr -d '"' | sort -u)
+cli_prefix_drift=""
+[[ -n $ts_starts && $reserved_starts == "$ts_starts" ]] ||
+  cli_prefix_drift="plugin.nix reservedPrefixStarts ($(tr '\n' ' ' <<<"$reserved_starts")) != RESERVED_PREFIX_STARTS ($(tr '\n' ' ' <<<"$ts_starts"))"
+check "reserved launcher prefix characters match between plugin.nix and the CLI" "$cli_prefix_drift"
+
 echo "----"
 echo "$pass passed, $fail failed"
 [[ $fail == 0 ]]

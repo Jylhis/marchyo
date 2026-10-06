@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "example.ticker",
+  "name": "Ticker",
+  "version": "1.0.0",
+  "kinds": ["daemon"],
+  "entryPoints": {
+    "daemon": "Daemon.qml"
+  }
+}

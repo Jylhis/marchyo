@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "example.echo",
+  "name": "Echo",
+  "version": "1.0.0",
+  "kinds": ["launcher"],
+  "prefix": "?",
+  "entryPoints": {
+    "launcher": "Provider.qml"
+  }
+}

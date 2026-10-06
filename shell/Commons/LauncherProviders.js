@@ -41,9 +41,12 @@ function prefixFor(provider) {
     return "";
 }
 
-// (mode, query text) -> { provider, query }. provider is "" when the launcher
-// is closed or the mode is unknown.
-function route(mode, text) {
+// (mode, query text, plugin prefixes) -> { provider, query }. provider is ""
+// when the launcher is closed or the mode is unknown. `pluginPrefixes` maps a
+// launcher plugin's prefix to its provider id (Commons/PluginIndex
+// launcherPrefixes()). First-party prefixes win; among plugin prefixes the
+// longest match wins.
+function route(mode, text, pluginPrefixes) {
     var t = String(text == null ? "" : text);
     if (MODES.indexOf(mode) < 0)
         return {
@@ -57,6 +60,17 @@ function route(mode, text) {
                 return {
                     provider: p.provider,
                     query: t.slice(p.prefix.length).replace(/^\s+/, "")
+                };
+        }
+        var keys = pluginPrefixes ? Object.keys(pluginPrefixes) : [];
+        keys.sort(function (a, b) {
+            return b.length - a.length;
+        });
+        for (var j = 0; j < keys.length; j++) {
+            if (keys[j].length > 0 && t.indexOf(keys[j]) === 0)
+                return {
+                    provider: pluginPrefixes[keys[j]],
+                    query: t.slice(keys[j].length).replace(/^\s+/, "")
                 };
         }
     }

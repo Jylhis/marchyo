@@ -155,7 +155,8 @@ plugin directory and no hot-reload — changing the plugin set is a rebuild.
 A plugin is a directory with a `manifest.json` (`schemaVersion: 1`, an `id`
 outside the reserved `marchyo.*` namespace, `kinds`, and `entryPoints`) plus its
 QML. Declare one with `pkgs.mkMarchyoShellPlugin`, which validates the manifest
-at build time (matching id, safe relative entry points, no symlinks):
+at build time (matching id, kinds, entry points and prefix, safe relative entry
+points, no symlinks):
 
 ```nix
 marchyo.shell.plugins = [
@@ -172,10 +173,37 @@ marchyo.shell.plugins = [
 ];
 ```
 
-A declared `bar-widget` plugin becomes referenceable from
-`marchyo.shell.settings.bar.layout` by its manifest id (e.g. `acme.weather`),
-so you can place it anywhere on the bar. `kinds` may also include `panel`,
-`overlay`, `menu`, or `service`.
+`kinds` is a closed set, and `entryPoints` carries exactly one QML file per
+declared kind:
+
+| Kind | Entry point key | What it does |
+| --- | --- | --- |
+| `bar-widget` | `barWidget` | A bar item, placed from `marchyo.shell.settings.bar.layout` by its manifest id (e.g. `acme.weather`) |
+| `launcher` | `launcher` | A launcher provider whose root is a `qs.Launcher` `Provider`; typing its `prefix` in the apps palette routes the query to it |
+| `daemon` | `daemon` | A non-visual `Item` or `QtObject`, created once when the shell starts and kept for its lifetime |
+
+A launcher plugin sets `prefix` in both its manifest and the
+`mkMarchyoShellPlugin` call. The prefix is required, non-empty, has no
+whitespace, and must not start with `=`, `>`, `#` or `!`, which belong to the
+built-in launcher providers. Plugin ids and prefixes must be unique. A
+launcher or daemon plugin that fails to load is logged and skipped, so the
+rest of the shell keeps running.
+
+```nix
+(pkgs.mkMarchyoShellPlugin {
+  src = ./echo;
+  id = "acme.echo";
+  kinds = [ "launcher" ];
+  prefix = "?";
+  entryPoints = { launcher = "Provider.qml"; };
+})
+```
+
+Every shell build records its plugins in
+`share/marchyo/shell/plugins.lock.json` inside the shell package: each plugin's
+id, name, version, kinds, entry points, prefix, store path, and `source`
+(`{ url, rev }` for CLI-added plugins, `null` for flake-declared ones). The file
+exists with an empty `plugins` list when no plugins are declared.
 
 :::note
 Because plugins run as ordinary QML inside the shell process, only add plugins
@@ -195,7 +223,8 @@ plugin directory.
 ```sh
 marchyo plugin add https://example.com/acme-weather.git   # pin + bake on rebuild
 marchyo plugin add https://example.com/acme-weather.git --rev <sha>
-marchyo plugin list                                       # CLI-added plugins
+marchyo plugin list                                       # every plugin baked into the shell
+marchyo plugin update acme.weather                        # re-pin at the remote HEAD (or --rev)
 marchyo plugin remove acme.weather
 ```
 

@@ -147,6 +147,20 @@ assert.deepStrictEqual(Providers.route("clipboard", "#tag"), { provider: "clipbo
 // Closed or unknown mode routes nowhere.
 assert.deepStrictEqual(Providers.route("", "=1"), { provider: "", query: "" });
 assert.deepStrictEqual(Providers.route("bogus", "x"), { provider: "", query: "" });
+// Launcher plugin prefixes (PluginIndex.launcherPrefixes(): prefix -> plugin id).
+const plugins = { "?": "acme.search", "?w": "acme.wiki", ";": "acme.notes" };
+assert.deepStrictEqual(Providers.route("apps", "?nix", plugins), { provider: "acme.search", query: "nix" });
+assert.deepStrictEqual(Providers.route("apps", "; todo", plugins), { provider: "acme.notes", query: "todo" });
+// The longest plugin prefix wins.
+assert.deepStrictEqual(Providers.route("apps", "?w quickshell", plugins), { provider: "acme.wiki", query: "quickshell" });
+// First-party prefixes still route, and plugin prefixes only count at the start.
+assert.deepStrictEqual(Providers.route("apps", "=1+1", plugins), { provider: "calc", query: "1+1" });
+assert.deepStrictEqual(Providers.route("apps", "a?b", plugins), { provider: "apps", query: "a?b" });
+// Plugin prefixes only apply in apps mode, and a missing or empty map is no plugins.
+assert.deepStrictEqual(Providers.route("emoji", "?x", plugins), { provider: "emoji", query: "?x" });
+assert.deepStrictEqual(Providers.route("apps", "?x", {}), { provider: "apps", query: "?x" });
+assert.deepStrictEqual(Providers.route("apps", "?x", undefined), { provider: "apps", query: "?x" });
+assert.deepStrictEqual(Providers.route("apps", "x", { "": "acme.empty" }), { provider: "apps", query: "x" });
 // Every prefix is unique and resolvable.
 assert.strictEqual(Providers.prefixFor("calc"), "=");
 assert.strictEqual(Providers.prefixFor("theme"), ">theme");

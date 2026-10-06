@@ -21,9 +21,11 @@ QtObject {
 
     // Prefix routing (Commons/LauncherProviders.js): in apps mode "=" routes to
     // the calculator, ">theme" to themes, "#" to windows and "!" to power
-    // actions; emoji and clipboard search the whole text. `provider` is the
-    // active provider's id ("" while closed), `providerQuery` its query.
-    readonly property var route: Providers.route(root.mode, root.query)
+    // actions; emoji and clipboard search the whole text. A launcher plugin's
+    // prefix (Commons/PluginIndex) routes to that plugin, whose provider id is
+    // its plugin id. `provider` is the active provider's id ("" while closed),
+    // `providerQuery` its query.
+    readonly property var route: Providers.route(root.mode, root.query, PluginIndex.launcherPrefixes())
     readonly property string provider: root.route.provider
     readonly property string providerQuery: root.route.query
 
