@@ -113,6 +113,12 @@ QtObject {
                 },
                 {
                     id: "marchyo.battery"
+                },
+                {
+                    id: "marchyo.separator"
+                },
+                {
+                    id: "marchyo.controlCenter"
                 }
             ]
         })

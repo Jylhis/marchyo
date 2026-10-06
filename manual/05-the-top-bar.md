@@ -99,6 +99,8 @@ the bar closes up the gap when a segment is hidden.
   charging icon while charging and a plug when you're on power but not charging.
   Click to open the Power panel. The tooltip shows the power draw, for example
   `4.2W↓ 87%`.
+- **Control Center**: the last segment on the right. Click to open the Control
+  Center.
 
 ### Panels
 
@@ -127,15 +129,15 @@ power profile. Click a tile to flip it. Tiles with an arrow open the matching pa
 for more detail, with a back button to return. Tiles for hardware you don't have are
 left out.
 
-Open it with `Super + Shift + Q`. There's also a bar segment for it, but it isn't on
-the bar by default. See below for how to add it.
+Open it with `Super + Shift + Q` or the Control Center segment at the right end of
+the bar.
 
 ### Rearranging the bar
 
 You can choose which segments appear in each part of the bar, and in what order.
 Each section you set replaces that section of the default layout, and sections you
-leave out keep their defaults. For example, to put the Control Center at the end of
-a slimmer right side:
+leave out keep their defaults. For example, a slimmer right side that keeps the
+Control Center at the end:
 
 ```nix
 marchyo.shell.settings.bar.layout.right = [
