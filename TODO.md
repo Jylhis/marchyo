@@ -64,8 +64,6 @@ Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
 
 ## 3. Features
 
-- **Share upload target.** `marchyo share` only stages paths on the clipboard;
-  the upload backend is undecided.
 - **Omarchy extras, low priority:** lifecycle hooks (`battery-low`,
   `theme-set`, `post-boot`), first-run onboarding, crash capture, per-theme
   keyboard RGB and backgrounds, dropbox/speedtest panels. Each needs a

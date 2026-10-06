@@ -850,11 +850,32 @@ Examples:
 
 program
   .command("share")
-  .description("Copy content or a path to the clipboard for sharing")
-  .argument("[file]", "copy this file's contents (gum menu when omitted)")
-  .action(async (file: string | undefined) => {
-    process.exit(await runShare(rt(), file));
-  });
+  .description("Send files, folders or clipboard text to a LocalSend device")
+  .argument("[paths...]", "files or folders to send (gum menu when omitted)")
+  .option("--to <alias|ip>", "Send to this device (alias, IPv4 or IPv4:port)")
+  .option("--pin <pin>", "PIN the receiving device asks for")
+  .option("--clipboard", "Copy the file's contents (or a folder's path) instead")
+  .action(
+    async (
+      paths: string[],
+      opts: { to?: string; pin?: string; clipboard?: boolean },
+    ) => {
+      process.exit(await runShare(rt(), paths, opts));
+    },
+  )
+  .addHelpText(
+    "after",
+    `
+Discovers LocalSend devices on the local network for about 2 s. One device
+is used directly; several open a picker (or need --to under --no-input).
+
+Examples:
+  $ marchyo share photo.jpg
+  $ marchyo share ~/Documents/trip --to Pixel
+  $ marchyo share report.pdf --to 192.168.1.20 --json
+  $ marchyo share notes.txt --clipboard
+`,
+  );
 
 const font = program
   .command("font")

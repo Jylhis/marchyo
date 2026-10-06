@@ -77,9 +77,27 @@ If Nautilus is your file manager, there's also a shortcut: right-click a file, o
 **Scripts**, and choose **Send with LocalSend**. That opens LocalSend, ready for you
 to pick the files to send.
 
+From a terminal, `marchyo share` sends without opening the app:
+
+```sh
+marchyo share holiday.jpg         # send to the nearby device
+marchyo share Photos/ --to Pixel  # pick the receiver by its LocalSend name
+```
+
+It finds devices running LocalSend nearby. If there's just one, the files go there; if
+there are several, you choose. Folders arrive with their structure intact. The other
+side still has to accept, and a notification tells you when it does and when the
+transfer is done. Run `marchyo share` on its own (or pick **Share** under **Trigger**
+in the system menu) to choose a file, a folder, or what's on your clipboard.
+
 LocalSend comes with the desktop. For other devices to find yours, it opens port
-53317 (TCP and UDP) on your network. If you'd rather not have it, switch it off and
-the port closes with it:
+53317 (TCP and UDP) on your network. To keep the port closed and only send, use:
+
+```nix
+marchyo.services.localsend.openFirewall = false;
+```
+
+If you'd rather not have LocalSend at all, switch it off and the port closes with it:
 
 ```nix
 marchyo.services.localsend.enable = false;

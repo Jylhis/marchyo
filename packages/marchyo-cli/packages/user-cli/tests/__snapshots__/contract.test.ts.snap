@@ -81,8 +81,8 @@ Commands:
                                         battery)
   transcode [options] [file]            Transcode media next to the source
                                         (ffmpeg / tte / chafa)
-  share [file]                          Copy content or a path to the clipboard
-                                        for sharing
+  share [options] [paths...]            Send files, folders or clipboard text
+                                        to a LocalSend device
   font                                  Terminal font: list, current, or
                                         runtime switch
   install [options] <feature>           Enable a marchyo feature declaratively

@@ -34,11 +34,22 @@ let
     }).config.home-manager.users.testuser;
 in
 {
-  # Desktop default: localsend ships and its port is open (TCP + UDP).
+  # Desktop default: localsend ships through programs.localsend and its port
+  # is open (TCP + UDP).
   eval-localsend-desktop-default =
-    testNixOSCheck "localsend-desktop-default" (cfg: hasLocalsend cfg && tcpOpen cfg && udpOpen cfg)
+    testNixOSCheck "localsend-desktop-default"
+      (cfg: cfg.programs.localsend.enable && hasLocalsend cfg && tcpOpen cfg && udpOpen cfg)
       (withTestUser {
         marchyo.desktop.enable = true;
+      });
+
+  # openFirewall = false keeps the app (send-only) and closes the port.
+  eval-localsend-firewall-closed =
+    testNixOSCheck "localsend-firewall-closed"
+      (cfg: hasLocalsend cfg && !(tcpOpen cfg) && !(udpOpen cfg))
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.services.localsend.openFirewall = false;
       });
 
   # Opting out keeps the desktop but drops the package and the open port.
@@ -71,6 +82,23 @@ in
       else
         throw "FAIL: nautilus integration missing the ghostty dconf key or the LocalSend script"
     );
+
+  # The "Send with LocalSend" script launches the real LocalSend binary
+  # (localsend_app, the package's mainProgram).
+  eval-nautilus-localsend-exe =
+    let
+      hm = evalHome { };
+      script = hm.home.file.${scriptPath}.source;
+      exe = lib.getExe pkgs.localsend;
+    in
+    pkgs.runCommand "eval-nautilus-localsend-exe" { } ''
+      if grep -qF '${exe}' '${script}'; then
+        echo pass > "$out"
+      else
+        echo "FAIL: ${scriptPath} does not run ${exe}" >&2
+        exit 1
+      fi
+    '';
 
   # A non-nautilus file manager gets neither the dconf key nor the script.
   eval-nautilus-disabled =

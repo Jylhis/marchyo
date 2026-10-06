@@ -20,6 +20,7 @@ import {
 } from "./power.ts";
 import { runCaptureColor, runCaptureRecord, runCaptureScreenshot } from "./capture.ts";
 import { runThemeSet } from "./theme.ts";
+import { runShare } from "./utilities.ts";
 
 // The gum-TUI menus and the fzf keybindings cheatsheet. The presentation
 // stays gum/fzf in a floating ghostty; every dispatched action is a marchyo
@@ -216,6 +217,7 @@ export async function runMenu(rt: Runtime, submenu?: string): Promise<number> {
           "Screenshot",
           "Screen record",
           "Color pick",
+          "Share",
           "Back",
         ]);
         if (sel === "Screenshot") {
@@ -230,6 +232,8 @@ export async function runMenu(rt: Runtime, submenu?: string): Promise<number> {
           detachDelayed(["marchyo", "capture", "color"]);
           return 0;
         }
+        // Interactive (file and device pickers), so it runs in this window.
+        if (sel === "Share") return runShare(rt, []);
         break;
       }
       case "Setup": {
