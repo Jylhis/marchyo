@@ -42,6 +42,7 @@ import {
   detectVariant,
   generatedThemeDirPath,
   parseMatugenBase16,
+  parseMatugenMaterial,
   recolorShellColors,
   resolvedPalette,
   tmThemeFromBase16,
@@ -474,7 +475,9 @@ export async function runBgNext(rt: Runtime): Promise<number> {
 // with the same file set modules/home/theme-runtime.nix builds for a catalog
 // scheme, and apply it live via activateThemeDir. Token colours resolve
 // through the build-variant dir's palette.json (slot per tokenSlots, else the
-// build hex); mako/waybar/gtk are filled from that dir's templates/, and bat
+// build hex), except border, border-strong and accent-subtle, which take
+// matugen's Material outline_variant, outline and primary_container when the
+// output carries them; mako/waybar/gtk are filled from that dir's templates/, and bat
 // gets a generated tmTheme registered in its cache. Runtime-only, like `bg`:
 // a rebuild resets to the declarative theme. The override value is a JSON
 // string carrying the image path and the requested polarity so `runtime
@@ -537,7 +540,11 @@ export const generateThemeChangeBase: ChangeSpec = {
     const baseDir = buildThemeDir(await readThemeManifest());
     const readBase = (f: string): string => readFileSync(join(baseDir, f), "utf8");
     const palette = ThemePalette.parse(JSON.parse(readBase("palette.json")));
-    const resolve = tokenResolver(palette, base16);
+    const resolve = tokenResolver(
+      palette,
+      base16,
+      parseMatugenMaterial(stdout, variant),
+    );
 
     const dir = generatedThemeDirPath();
     await mkdir(dir, { recursive: true });

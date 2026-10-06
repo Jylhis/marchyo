@@ -18,6 +18,7 @@ import {
   lazygitText,
   matugenArgv,
   parseMatugenBase16,
+  parseMatugenMaterial,
   recolorShellColors,
   resolvedPalette,
   shadeRgba,
@@ -156,6 +157,62 @@ describe("tokenResolver", () => {
   });
 });
 
+// matugen's Material `colors` block: the three roles the parser reads, plus
+// one it ignores.
+function materialFixture(roles: string[]): string {
+  const colors: Record<string, unknown> = {};
+  roles.forEach((role, i) => {
+    colors[role] = {
+      dark: { color: `#30000${i}` },
+      light: { color: `#40000${i}` },
+      default: { color: `#30000${i}` },
+    };
+  });
+  const base = JSON.parse(matugenFixture()) as Record<string, unknown>;
+  return JSON.stringify({ ...base, colors });
+}
+
+describe("parseMatugenMaterial", () => {
+  const raw = materialFixture([
+    "outline_variant",
+    "outline",
+    "primary_container",
+    "scrim",
+  ]);
+  test("maps border, border-strong, accent-subtle for the chosen mode", () => {
+    expect(parseMatugenMaterial(raw, "dark")).toEqual({
+      border: "#300000",
+      "border-strong": "#300001",
+      "accent-subtle": "#300002",
+    });
+    expect(parseMatugenMaterial(raw, "light")["border-strong"]).toBe("#400001");
+  });
+  test("returns only the roles present (base16-only output gives none)", () => {
+    expect(parseMatugenMaterial(materialFixture(["outline"]), "dark")).toEqual({
+      "border-strong": "#300000",
+    });
+    expect(parseMatugenMaterial(matugenFixture(), "dark")).toEqual({});
+  });
+  test("overrides win over the base16 slot in the resolver", () => {
+    const resolve = tokenResolver(
+      parity.palette,
+      parity.base16,
+      parseMatugenMaterial(raw, "dark"),
+    );
+    expect(resolve("border")).toBe("#300000");
+    expect(resolve("accent-subtle")).toBe("#300002");
+    expect(resolve("bg")).toBe(parity.base16.base00!);
+  });
+});
+
+describe("parity fixture slots", () => {
+  test("selection-bg follows base02, contour keeps the Jylhis hex", () => {
+    const resolve = tokenResolver(parity.palette, parity.base16);
+    expect(resolve("selection-bg")).toBe(parity.base16.base02!);
+    expect(resolve("contour")).toBe(parity.palette.tokens.contour!);
+  });
+});
+
 describe("resolvedPalette", () => {
   test("resolves every token and keeps the slot table", () => {
     const resolve = tokenResolver(
@@ -273,11 +330,11 @@ describe("fillTemplate", () => {
   const resolve = tokenResolver(parity.palette, parity.base16);
   test("fills token placeholders and the shade", () => {
     const out = fillTemplate(
-      "a {{token:bg}} b {{token:syn-variable}} c {{shade}} {{token:bg}}",
+      "a {{token:bg}} b {{token:contour}} c {{shade}} {{token:bg}}",
       resolve,
     );
     expect(out).toBe(
-      `a ${parity.base16.base00} b ${parity.palette.tokens["syn-variable"]} ` +
+      `a ${parity.base16.base00} b ${parity.palette.tokens.contour} ` +
         `c ${parity.expected.shade} ${parity.base16.base00}`,
     );
     expect(out).not.toContain("{{");

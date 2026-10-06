@@ -25,6 +25,8 @@ const Base16Node = z.object({
 const MatugenJson = z.object({
   is_dark_mode: z.boolean().optional(),
   base16: z.record(z.string(), Base16Node),
+  // Material 3 roles, per-mode like base16 (matugen 4.x emits them).
+  colors: z.record(z.string(), Base16Node).optional(),
 });
 
 export const BASE16_SLOTS = [
@@ -80,6 +82,34 @@ export function parseMatugenBase16(raw: string, variant: Variant): Base16 {
   return out;
 }
 
+// Jylhis tokens with no exact base16 slot whose role matugen's Material
+// colours carry directly: border and border-strong are Material's outline
+// pair, accent-subtle the tonal container behind the primary (accent).
+export const MATERIAL_TOKEN_ROLES: Record<string, string> = {
+  border: "outline_variant",
+  "border-strong": "outline",
+  "accent-subtle": "primary_container",
+};
+
+// Token -> hex from matugen's Material `colors` block for the chosen mode.
+// Only roles present in the output are returned, so an older matugen without
+// the block (or a role) leaves those tokens on their base16 slots.
+export function parseMatugenMaterial(
+  raw: string,
+  variant: Variant,
+): Record<string, string> {
+  const colors = MatugenJson.parse(JSON.parse(raw)).colors ?? {};
+  const out: Record<string, string> = {};
+  for (const [token, role] of Object.entries(MATERIAL_TOKEN_ROLES)) {
+    const node = colors[role];
+    if (!node) continue;
+    const picked =
+      (variant === "light" ? node.light : node.dark) ?? node.default;
+    out[token] = picked.color.toLowerCase();
+  }
+  return out;
+}
+
 // palette.json, shipped in every theme dir by modules/home/theme-runtime.nix:
 // the full kebab-case token -> hex map (syn-* included) and the token ->
 // base16 slot table (lib/theme-generators.nix's tokenSlots).
@@ -93,14 +123,16 @@ export type TokenResolver = (token: string) => string;
 
 // Token -> hex for a base16 palette: the slot when tokenSlots maps the token,
 // else the palette's own (build-variant) hex. Same rule as the Nix
-// slotResolver.
+// slotResolver. `overrides` (matugen's Material roles) win over both.
 export function tokenResolver(
   palette: ThemePalette,
   base16: Base16,
+  overrides: Record<string, string> = {},
 ): TokenResolver {
   return (token) => {
     const slot = palette.tokenSlots[token];
-    const hex = slot ? base16[slot] : palette.tokens[token];
+    const hex =
+      overrides[token] ?? (slot ? base16[slot] : palette.tokens[token]);
     if (hex === undefined) throw new Error(`no colour for theme token ${token}`);
     return hex;
   };

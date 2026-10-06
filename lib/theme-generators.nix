@@ -29,10 +29,15 @@ let
   # base16 attrset; the extras get the closest slot by role, which for a tinted
   # scheme is lossy (border/syn-comment collapse onto text-faint's base03,
   # accent-hover onto accent's base09, accent-subtle onto bg-subtle's base01).
-  # `cursor` shares accent's slot because it is the same hex as accent; two
-  # tokens with one build hex but different slots make a surface hex swap
-  # ambiguous. A token absent from this table keeps its build-variant hex.
-  # Shipped to the CLI as `tokenSlots` in every theme dir's palette.json.
+  # selection-bg, destructive and the syn-* extras take the slot the base16
+  # styling guidelines name for their role: base02 "Selection Background",
+  # base08 "Variables" and "Diff Deleted" (the red slot), base09 "Integers",
+  # base0C "Support" (built-ins), base0D "Functions". `cursor` shares
+  # accent's slot because it is the same hex as accent; two tokens with one
+  # build hex but different slots make a surface hex swap ambiguous. A token
+  # absent from this table (contour, decorator, scrim, syn-docstring: no
+  # base16 role) keeps its build-variant hex. Shipped to the CLI as
+  # `tokenSlots` in every theme dir's palette.json.
   tokenSlots = {
     bg = "base00";
     "bg-subtle" = "base01";
@@ -57,6 +62,12 @@ let
     "accent-subtle" = "base01";
     "status-ok" = "base0B";
     "syn-comment" = "base03";
+    "selection-bg" = "base02";
+    destructive = "base08";
+    "syn-variable" = "base08";
+    "syn-number" = "base09";
+    "syn-builtin" = "base0C";
+    "syn-function" = "base0D";
   };
 
   # Token resolver for a base16 scheme: the slot when tokenSlots maps the

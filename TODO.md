@@ -10,13 +10,17 @@ arrival.
 
 ## 1. Theming
 
-- **Base16 role approximations are lossy for tinted schemes.** `tokenSlots`
-  collapses `accent-hover` onto `accent`, `border`/`syn-comment` onto
-  `text-faint`, `accent-subtle` onto `bg-subtle`, so a scheme loses the hover
-  delta and a future surface putting text on `accent-subtle` would fail
-  contrast. Cosmetic; a real fix needs distinct hover/subtle/border roles
-  upstream in `jylhis-design`. `tokenSlots` lives in `lib/theme-generators.nix` and
-  reaches the CLI through each theme dir's `palette.json`.
+- **Base16 roles that need upstream values (`pkgs.jylhis-design-src`).**
+  `tokenSlots` (`lib/theme-generators.nix`) maps each token to the base16
+  slot the styling guidelines name for its role, so scheme themes collapse
+  `accent-hover` and `syn-number` onto `accent`, `border`/`syn-comment` onto
+  `text-faint`, `border-strong` onto `text-muted`, `accent-subtle` onto
+  `bg-subtle`, `selection-bg` onto `surface`, and `destructive`/`syn-variable`
+  onto `status-err`. `contour`, `decorator`, `scrim` and `syn-docstring` have
+  no base16 role and keep the Jylhis hex. A real fix needs a Jylhis extension
+  or base24-style export upstream. The reference exports in
+  `platforms/_reference/base16` have also drifted from `themes/jylhis.json`
+  (field base01; sheet base09 to base0E).
 
 Rules for any new theme surface:
 
