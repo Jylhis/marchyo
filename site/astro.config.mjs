@@ -64,6 +64,7 @@ export default defineConfig({
             'docs/configuration/local-ai',
             'docs/configuration/hardware',
             'docs/configuration/performance',
+            'docs/configuration/bees',
           ],
         },
         {
