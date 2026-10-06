@@ -5,6 +5,9 @@
 # unknown config keys silently instead of failing, so the intended square
 # corners and font size never applied and nothing noticed. Any future rename
 # back to those spellings must fail here.
+#
+# Vicinae is the launcher on the marchyo.shell.enable = false fallback, so
+# these tests pin the shell off; the shell launcher is in marchyo-shell.nix.
 {
   helpers,
   lib,
@@ -25,6 +28,7 @@ let
         (withTestUser (
           lib.recursiveUpdate {
             marchyo.desktop.enable = true;
+            marchyo.shell.enable = false;
             home-manager.users.testuser.imports = [ homeManagerModules ];
           } extra
         ))

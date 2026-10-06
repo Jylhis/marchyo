@@ -16,6 +16,8 @@ let
   hasVoxtypeModule =
     hm: lib.elem "custom/voxtype" (builtins.elemAt hm.programs.waybar.settings 0).modules-right;
 
+  # The indicator assertions read the waybar segment, so these tests pin the
+  # marchyo.shell.enable = false fallback; the shell bar draws its own.
   evalWith =
     extra:
     lib.nixosSystem {
@@ -25,6 +27,7 @@ let
         (withTestUser (
           lib.recursiveUpdate {
             marchyo.desktop.enable = true;
+            marchyo.shell.enable = false;
             home-manager.users.testuser.imports = [ homeManagerModules ];
           } extra
         ))

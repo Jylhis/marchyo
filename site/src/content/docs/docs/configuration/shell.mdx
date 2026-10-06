@@ -3,16 +3,17 @@ title: Desktop Shell
 description: The unified Quickshell shell — runtime config and the plugin platform
 ---
 
-`marchyo.shell.enable` turns on the unified Quickshell desktop shell: one
-long-running process that draws the top bar, OSD, panels, notifications, lock,
-launcher, and polkit password dialog, replacing waybar, SwayOSD, mako, and
-hyprpolkitagent. It is opt-in and not cascaded from `marchyo.desktop.enable`.
+The unified Quickshell shell is the default desktop shell: one long-running
+process that draws the top bar, OSD, panels, notifications, lock, launcher, and
+polkit password dialog. `marchyo.shell.enable` defaults to on with
+`marchyo.desktop.enable`. Setting it to `false` keeps the discrete stack
+instead: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent.
 
 ## Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.shell.enable` | `false` | Enable the unified Quickshell shell |
+| `marchyo.shell.enable` | `true` with desktop | Enable the unified Quickshell shell (`false` keeps the discrete stack) |
 | `marchyo.shell.settings` | `{}` | Runtime config serialized to `~/.config/marchyo/shell.json` |
 | `marchyo.shell.plugins` | `[]` | Shell plugins baked into the store shell (build-time) |
 | `marchyo.shell.extraPlugins` | `[]` | Additive plugin specs (pinned git), managed by `marchyo plugin` |

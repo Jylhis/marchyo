@@ -9,6 +9,8 @@
 let
   inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
+  # SwayOSD is the OSD on the marchyo.shell.enable = false fallback, so these
+  # tests pin the shell off; the shell OSD binds are in marchyo-shell.nix.
   evalWith =
     extra:
     lib.nixosSystem {
@@ -18,6 +20,7 @@ let
         (withTestUser (
           lib.recursiveUpdate {
             marchyo.desktop.enable = true;
+            marchyo.shell.enable = false;
             home-manager.users.testuser.imports = [ homeManagerModules ];
           } extra
         ))
@@ -30,9 +33,10 @@ let
   hasUdevSwayosd = cfg: lib.any (p: lib.getName p == "swayosd") cfg.services.udev.packages;
 in
 {
-  # OSD on by default with the desktop: the swayosd-server user service is
-  # defined, the media keys route through swayosd-client, and the system half
-  # (backlight udev rules + video group for marchyo users) is wired.
+  # OSD on by default with the desktop and the shell off: the swayosd-server
+  # user service is defined, the media keys route through swayosd-client, and
+  # the system half (backlight udev rules + video group for marchyo users) is
+  # wired.
   eval-osd-default =
     let
       cfg = (evalWith { }).config;

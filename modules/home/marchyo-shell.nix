@@ -8,7 +8,8 @@ let
   # Desktop-gated, so inert on darwin and headless hosts.
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  # Opt-in: unlike osd/menus this defaults off, so no `or true` fallback.
+  # modules/nixos/desktop-config.nix turns the shell on with the desktop; an
+  # osConfig without the option (standalone HM) keeps the discrete stack.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
 
   # Unset typed keys (null) and the empty submodules they leave behind are

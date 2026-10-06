@@ -76,10 +76,13 @@ let
     .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
 in
 {
-  check-home-hyprland-config = mkVerifyConfig "check-hyprland-config" { };
+  # The marchyo.shell.enable = false fallback config.
+  check-home-hyprland-config = mkVerifyConfig "check-hyprland-config" {
+    marchyo.shell.enable = false;
+  };
 
-  # Same verification with the shell on, which adds the curve, animation
-  # leaves and per-namespace layer rules.
+  # Same verification with the shell on (the desktop default), which adds the
+  # curve, animation leaves and per-namespace layer rules.
   check-home-hyprland-config-shell = mkVerifyConfig "check-hyprland-config-shell" {
     marchyo.shell.enable = true;
   };
@@ -232,7 +235,7 @@ in
       missingPkgs = lib.filter (n: !hasPkg n) wrappers;
 
       # Monitor focus relocated: no SUPER+comma/period focusmonitor bind remains,
-      # the CTRL+ALT+Tab focus bind exists, and comma/period drive emoji/mako.
+      # the CTRL+ALT+Tab focus bind exists, and comma/period drive emoji/notifications.
       focusmonitorMoved = !(hyprHasBind bind "SUPER + comma" "hl.dsp.focus({ monitor");
       hasCtrlAltMonitor = hyprHasBind bind "CTRL + ALT + TAB" ''hl.dsp.focus({ monitor = "+1" })'';
       hasEmoji = hasBindText "Emoji picker";

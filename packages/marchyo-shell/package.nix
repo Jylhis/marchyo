@@ -48,8 +48,8 @@
   # marchyo.dictation.{enable,indicator} — bakes the dictation bar widget in/out
   # (the shell reads no runtime config yet; parity with waybar's voxtypeIndicator).
   dictationIndicator ? false,
-  # marchyo.menus.enable — drives the battery click target (marchyo menu power vs
-  # vicinae toggle), matching waybar's menusEnabled gate.
+  # marchyo.menus.enable — drives the power panel's menu button (marchyo menu
+  # power vs the in-shell app launcher), matching waybar's menusEnabled gate.
   menusEnabled ? true,
   # marchyo.hardware.logitech.enable — arms the solaar HID++ fallback in the
   # peripherals-battery service (only useful with a Logi receiver the kernel

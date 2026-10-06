@@ -49,8 +49,18 @@ Rules for any new theme surface:
 
 ### Discrete stack removal (later milestone)
 
-Vicinae, waybar, mako, SwayOSD and hyprlock stay as the
-`marchyo.shell.enable = false` fallback until the shell is the only path.
+The shell is the default with the desktop; Vicinae, waybar, mako, SwayOSD,
+hyprlock and hyprpolkitagent remain the `marchyo.shell.enable = false`
+fallback. Removal goes one component per commit, each dropping its module,
+its `eval-marchyo-shell-off-*` tests and its docs, with
+`mkRemovedOptionModule` for the Vicinae-only `marchyo.launcher.*` options
+(`keybinding`, `settings`, `inputServer`, `telemetry`, `declutter`). Close
+the parity gaps first:
+
+- Launcher: file search, snippets and quicklinks (Vicinae has them).
+- Lock: a hyprlock-style grace period and a parallel fingerprint prompt.
+- `marchyo toggle waybar|notifications --status` reads the CLI's recorded
+  state; the shell has no read-only bar/DND query verb.
 
 ## 3. Features
 

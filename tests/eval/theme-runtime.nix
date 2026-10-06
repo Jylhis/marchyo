@@ -134,10 +134,12 @@ in
   # the Nix-swapped surfaces of that theme's own dir. `just check` (--no-build)
   # only evaluates this; `nix flake check` / CI builds it. The pointer source
   # and manifest text carry the linkFarm context, so interpolating them into
-  # the script builds the dirs.
+  # the script builds the dirs. The mako and waybar surfaces exist only with
+  # marchyo.shell.enable = false, so the shell is off here.
   build-theme-runtime-assets =
     let
       darkHm = hmFor {
+        marchyo.shell.enable = false;
         marchyo.theme.themes = [
           "jylhis-dark"
           "jylhis-light"
@@ -150,7 +152,10 @@ in
       };
       darkDir = darkHm.xdg.configFile."marchyo/current-theme".source;
       lightDir =
-        (hmFor { marchyo.theme.variant = "light"; }).xdg.configFile."marchyo/current-theme".source;
+        (hmFor {
+          marchyo.shell.enable = false;
+          marchyo.theme.variant = "light";
+        }).xdg.configFile."marchyo/current-theme".source;
       manifest = pkgs.writeText "theme-manifest.json" (manifestText darkHm);
       slotsJson = pkgs.writeText "parity-slots.json" (builtins.toJSON parityFixture.base16);
     in

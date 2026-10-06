@@ -3,10 +3,11 @@ title: Notifications
 description: Notification history and per-sender rules for the in-shell notification centre
 ---
 
-With the Marchyo shell enabled (`marchyo.shell.enable = true`) the shell owns
+The Marchyo shell (on by default with the desktop) owns
 `org.freedesktop.Notifications` and adds a **notification history** and
-**per-sender rules** on top of the live toast stack. Without the shell, mako is
-the notification daemon and these options do nothing.
+**per-sender rules** on top of the live toast stack. With
+`marchyo.shell.enable = false`, mako is the notification daemon and these
+options do nothing.
 
 Every notification is snapshotted into a persistent history (stored under the
 Quickshell state directory and reloaded on restart), so a toast you dismissed or

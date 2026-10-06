@@ -1,5 +1,6 @@
-# Notification do-not-disturb (omarchy parity): mako mode block, waybar
-# indicator, toggle script, and the rebound comma keybinds.
+# Notification do-not-disturb (omarchy parity) on the marchyo.shell.enable =
+# false fallback: mako mode block, waybar indicator, toggle script, and the
+# rebound comma keybinds. The shell's DND binds are in marchyo-shell.nix.
 {
   helpers,
   lib,
@@ -18,6 +19,7 @@ let
         nixosModules
         (withTestUser {
           marchyo.desktop.enable = true;
+          marchyo.shell.enable = false;
           home-manager.users.testuser.imports = [ homeManagerModules ];
         })
       ];
@@ -29,7 +31,7 @@ let
   waybar = builtins.head hm.programs.waybar.settings;
 in
 {
-  # DND on a desktop config: mako hides notifications in the do-not-disturb
+  # DND on a desktop with the shell off: mako hides notifications in the do-not-disturb
   # mode, waybar carries the signal-refreshed custom/dnd segment driving the
   # CLI toggle (the marchyo-dnd-toggle script was absorbed), and
   # SUPER CTRL, comma toggles DND (dismiss-all on SUPER CTRL SHIFT, comma).

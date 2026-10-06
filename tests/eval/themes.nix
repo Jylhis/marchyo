@@ -73,10 +73,23 @@ in
   });
 
   # Light variant with desktop — catches dark-only regressions in
-  # waybar / hyprland / mako / hyprlock / fzf / starship / etc.
+  # the shell / hyprland / fzf / starship / etc.
   eval-themes-light-desktop = testNixOS "themes-light-desktop" (withTestUser {
     marchyo = {
       desktop.enable = true;
+      theme = {
+        enable = true;
+        variant = "light";
+      };
+    };
+  });
+
+  # The same on the marchyo.shell.enable = false fallback, which themes
+  # waybar / mako / hyprlock directly.
+  eval-themes-light-desktop-shell-off = testNixOS "themes-light-desktop-shell-off" (withTestUser {
+    marchyo = {
+      desktop.enable = true;
+      shell.enable = false;
       theme = {
         enable = true;
         variant = "light";
@@ -214,8 +227,9 @@ in
         marchyo.desktop.enable = true;
       });
 
-  # Runtime hyprlock theming: colours come from the current-theme include,
-  # sourced first, and the lock config references the hyprlang vars.
+  # Runtime hyprlock theming (the marchyo.shell.enable = false lock): colours
+  # come from the current-theme include, sourced first, and the lock config
+  # references the hyprlang vars.
   eval-themes-hyprlock-runtime =
     testNixOSCheck "themes-hyprlock-runtime"
       (
@@ -229,12 +243,14 @@ in
       )
       (withTestUser {
         marchyo.desktop.enable = true;
+        marchyo.shell.enable = false;
       });
 
   # `marchyo theme generate` inputs: the build-variant dir (the current-theme
   # pointer) ships palette.json with the full token map (syn-* included) and
-  # the slot table, plus the mako/waybar/gtk templates. Read from the
-  # linkFarm's `entries` passthru, so nothing is built; forcing the manifest
+  # the slot table, plus the mako/waybar/gtk templates (mako and waybar exist
+  # only with marchyo.shell.enable = false, so the shell is off here). Read from
+  # the linkFarm's `entries` passthru, so nothing is built; forcing the manifest
   # also instantiates the nord dir (and its palette.json).
   eval-themes-generate-assets =
     testNixOSCheck "themes-generate-assets"
@@ -262,6 +278,7 @@ in
       )
       (withTestUser {
         marchyo.desktop.enable = true;
+        marchyo.shell.enable = false;
         marchyo.theme.themes = [
           "jylhis-dark"
           "nord"
@@ -400,8 +417,8 @@ in
   ) "unknown theme name did not fail evaluation";
 
   # marchyo.theme.fontScale scales every font surface from one knob. With
-  # desktop on, this also exercises the directly-themed surfaces (waybar / mako /
-  # hyprlock / ghostty / gtk / console) that read the scale. 2.0x doubles the
+  # desktop on, this also exercises the directly-themed surfaces (the shell /
+  # ghostty / gtk / console) that read the scale. 2.0x doubles the
   # base size (12 -> 24); the GNOME interface fonts (modules/home/jylhis-theme.nix,
   # previously Stylix's gnome target) carry the same math. The launcher scales
   # the same way but is asserted in tests/eval/launcher.nix, which owns its

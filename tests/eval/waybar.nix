@@ -2,7 +2,8 @@
 # window must launch it with an org.omarchy.* --class matched by the
 # floating-window tag rule in modules/home/hyprland.nix, so bar clicks open
 # centered popups instead of tiling into the workspace — and the NixOS
-# services those tools talk to must actually be enabled.
+# services those tools talk to must actually be enabled. Waybar is the bar on
+# the marchyo.shell.enable = false fallback, so these tests pin the shell off.
 {
   helpers,
   lib,
@@ -23,6 +24,7 @@ let
         (withTestUser (
           lib.recursiveUpdate {
             marchyo.desktop.enable = true;
+            marchyo.shell.enable = false;
             home-manager.users.testuser.imports = [ homeManagerModules ];
           } extra
         ))

@@ -44,7 +44,7 @@ in
         engine = "whisper";
         # The daemon's built-in OSD defaults to on and spawns `voxtype-osd`,
         # which is not on the voxtype-vulkan unit PATH (it ships in plain
-        # pkgs.voxtype). Notifications (mako) already cover start/stop feedback,
+        # pkgs.voxtype). Desktop notifications already cover start/stop feedback,
         # so disable the OSD to stop the "Failed to spawn voxtype-osd" warning.
         osd.enabled = false;
         # Daemon evdev push-to-talk hotkey (hold F9 by default). Disabling it via
@@ -90,7 +90,7 @@ in
         output = {
           mode = "type";
           fallback_to_clipboard = true;
-          # Desktop notifications (mako) on start/stop/transcription, gated on
+          # Desktop notifications on start/stop/transcription, gated on
           # the UI toggle.
           notification = {
             on_recording_start = cfg.notify or true;

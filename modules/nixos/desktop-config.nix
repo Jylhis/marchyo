@@ -13,6 +13,7 @@ in
     marchyo.media.enable = lib.mkDefault true;
     marchyo.webapps.enable = lib.mkDefault true;
     marchyo.launcher.enable = lib.mkDefault true;
+    marchyo.shell.enable = lib.mkDefault true;
 
     # dconf is required for GTK apps to read settings (icon theme, font, etc.)
     programs.dconf.enable = lib.mkDefault true;

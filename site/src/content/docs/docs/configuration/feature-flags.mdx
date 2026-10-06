@@ -27,6 +27,7 @@ marchyo.desktop.enable = true;
 # marchyo.office.enable = true;
 # marchyo.media.enable = true;
 # marchyo.webapps.enable = true;
+# marchyo.shell.enable = true;
 ```
 
 Since these use `lib.mkDefault`, you can override them:
@@ -47,7 +48,7 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Bluetooth** — Enabled and configured
 - **Fonts** — Curated set of fonts including Nerd Fonts
 - **Theming** — Jylhis design-system theming across GTK, Qt, terminals, TUIs, and Emacs, with runtime theme switching
-- **Application launcher** — Vicinae (see [Launcher](/docs/configuration/launcher/))
+- **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps the discrete stack: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent
 - **Terminal emulator** — Ghostty
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/docs/configuration/default-apps/)
 
