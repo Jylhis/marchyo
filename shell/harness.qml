@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import qs.Commons
 import qs.Ui
 import qs.Bar
 import qs.Services
@@ -84,6 +85,33 @@ ShellRoot {
             id: cHarnessSeparator
             BarSeparator {}
         }
+        // Entries shared by the flat and segmented sections below.
+        readonly property var harnessEntries: [
+            {
+                id: "marchyo.clock"
+            },
+            {
+                id: "marchyo.media"
+            },
+            {
+                id: "marchyo.separator"
+            },
+            {
+                id: "marchyo.mic"
+            },
+            {
+                id: "marchyo.audio"
+            },
+            {
+                id: "marchyo.separator"
+            },
+            {
+                id: "marchyo.battery"
+            },
+            {
+                id: "marchyo.theme"
+            }
+        ]
         BarSection {
             id: sectionSlots
             x: 200
@@ -93,32 +121,22 @@ ShellRoot {
             // them, so the collapse and cluster rules both run offscreen. The
             // trailing "theme" slot starts hidden and turns shown after load
             // (cHarnessLate): the regression guard for a slot that must reappear.
-            entriesOverride: [
-                {
-                    id: "marchyo.clock"
-                },
-                {
-                    id: "marchyo.media"
-                },
-                {
-                    id: "marchyo.separator"
-                },
-                {
-                    id: "marchyo.mic"
-                },
-                {
-                    id: "marchyo.audio"
-                },
-                {
-                    id: "marchyo.separator"
-                },
-                {
-                    id: "marchyo.battery"
-                },
-                {
-                    id: "marchyo.theme"
-                }
-            ]
+            entriesOverride: harnessRoot.harnessEntries
+            resolve: id => harnessRoot.harnessResolve[id] || null
+            configure: (item, entry) => {}
+            barWidth: 1280
+        }
+
+        // The same section in the segmented style, offscreen beside the flat
+        // one: its slots must sit exactly where the flat section's do, and its
+        // background layer must draw one segment per populated cluster.
+        BarSection {
+            id: sectionSegmented
+            x: 200
+            y: 64
+            section: "right"
+            barStyle: "segmented"
+            entriesOverride: harnessRoot.harnessEntries
             resolve: id => harnessRoot.harnessResolve[id] || null
             configure: (item, entry) => {}
             barWidth: 1280
@@ -188,6 +206,57 @@ ShellRoot {
                     const md = slots[i].modelData;
                     console.log("ASSERT-INFO idx=" + i + " id=" + (md ? md.id : "?") + " slot.visible=" + slots[i].visible + " item.visible=" + shownOf(slots[i]));
                 }
+                // Segmented style: identical slot geometry, and three
+                // segments (clock | audio | late theme) joined at the two
+                // rendered separators.
+                // The harness Item has no window, so nothing runs the layout
+                // polish pass on its own: settle both rows first.
+                sectionSlots.ensurePolished();
+                sectionSegmented.ensurePolished();
+                if (sectionSlots.segments.length !== 0)
+                    fail("flat section computed segments: " + sectionSlots.segments.length);
+                if (sectionSegmented.implicitWidth !== sectionSlots.implicitWidth)
+                    fail("segmented section width " + sectionSegmented.implicitWidth + " != flat " + sectionSlots.implicitWidth);
+                const segKids = sectionSegmented.children;
+                let segSlots = [];
+                for (let i = 0; i < segKids.length; i++)
+                    if (segKids[i].modelData !== undefined)
+                        segSlots.push(segKids[i]);
+                if (segSlots.length !== slots.length)
+                    fail("segmented section has " + segSlots.length + " slots, flat has " + slots.length);
+                for (let i = 0; i < Math.min(segSlots.length, slots.length); i++) {
+                    const a = slots[i];
+                    const b = segSlots[i];
+                    if (a.x !== b.x || a.width !== b.width || a.visible !== b.visible)
+                        fail("segmented slot " + i + " moved: flat x=" + a.x + " w=" + a.width + " segmented x=" + b.x + " w=" + b.width);
+                }
+                const segs = sectionSegmented.segments;
+                if (segs.length !== 3)
+                    fail("expected 3 segments, got " + segs.length);
+                else {
+                    if (segs[0].joinLeft || !segs[0].joinRight || !segs[1].joinLeft || !segs[1].joinRight || !segs[2].joinLeft || segs[2].joinRight)
+                        fail("segment join flags wrong: " + JSON.stringify(segs));
+                    if (segs[0].right !== segs[1].left || segs[1].right !== segs[2].left)
+                        fail("segments do not meet at the separators: " + JSON.stringify(segs));
+                    if (!(segs[0].depthRight > 0) || segs[1].depthLeft !== segs[0].depthRight)
+                        fail("join depth not shared across a join: " + JSON.stringify(segs));
+                    if (segs[2].right !== sectionSegmented.implicitWidth)
+                        fail("last segment does not reach the section end: " + segs[2].right + " " + JSON.stringify(segs) + " w=" + sectionSegmented.implicitWidth);
+                }
+                // Hover on the segmented bar: a BarItem inside the segmented
+                // section takes the section's hover colour, which differs from
+                // both segment tones; one in the flat section keeps
+                // Color.surface.
+                const segItem = widgetOf(segSlots[0]);
+                const flatItem = widgetOf(slots[0]);
+                if (!segItem || !Qt.colorEqual(segItem.hoverColor, sectionSegmented.segmentHover))
+                    fail("segmented BarItem hover colour is not the section's: " + (segItem ? segItem.hoverColor : "no item"));
+                if (Qt.colorEqual(sectionSegmented.segmentHover, sectionSegmented.segmentToneEven) || Qt.colorEqual(sectionSegmented.segmentHover, sectionSegmented.segmentToneOdd))
+                    fail("segmented hover colour equals a segment tone: " + sectionSegmented.segmentHover);
+                if (Qt.colorEqual(sectionSegmented.segmentToneEven, sectionSegmented.segmentToneOdd))
+                    fail("segment tones are identical: " + sectionSegmented.segmentToneEven);
+                if (!flatItem || !Qt.colorEqual(flatItem.hoverColor, Color.surface))
+                    fail("flat BarItem hover colour changed: " + (flatItem ? flatItem.hoverColor : "no item"));
                 console.log("ASSERT-DONE");
             }
         }

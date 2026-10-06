@@ -80,6 +80,17 @@ function barLayout(config, output, defaults) {
     return out;
 }
 
+// Bar styles the shell draws. The first is the default.
+var BAR_STYLES = ["flat", "segmented"];
+
+// Effective bar style for `output`: the resolved `bar.style` when it names a
+// known style, else "flat". A per-monitor `bar.style` overrides the global one.
+function barStyle(config, output) {
+    const resolved = resolve(config, output);
+    const style = isPlainObject(resolved.bar) ? resolved.bar.style : undefined;
+    return BAR_STYLES.indexOf(style) >= 0 ? style : BAR_STYLES[0];
+}
+
 // CommonJS guard: QML ignores this, Node requires it (see format-test.js).
 if (typeof module !== "undefined" && module.exports)
     module.exports = {
@@ -87,5 +98,7 @@ if (typeof module !== "undefined" && module.exports)
         deepMerge: deepMerge,
         overrideFor: overrideFor,
         resolve: resolve,
-        barLayout: barLayout
+        barLayout: barLayout,
+        BAR_STYLES: BAR_STYLES,
+        barStyle: barStyle
     };

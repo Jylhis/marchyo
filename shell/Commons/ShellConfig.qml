@@ -147,6 +147,13 @@ QtObject {
         return MonitorConfig.barLayout(root.config, output, root.defaultBar);
     }
 
+    // Bar style for one output ("flat" | "segmented"): the resolved
+    // `bar.style`, so a `monitors.<name>.bar.style` override applies. Anything
+    // unknown reads "flat". Reads root.config, like barFor().
+    function barStyleFor(output: string): string {
+        return MonitorConfig.barStyle(root.config, output);
+    }
+
     // Idle thresholds (seconds); consumed by a future in-shell idle service.
     readonly property int idleScreensaver: root.config.idle && root.config.idle.screensaver ? root.config.idle.screensaver : 150
     readonly property int idleLock: root.config.idle && root.config.idle.lock ? root.config.idle.lock : 300

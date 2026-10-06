@@ -2,6 +2,7 @@ module qs.Ui
 BarItem 1.0 BarItem.qml
 BarSection 1.0 BarSection.qml
 BarSeparator 1.0 BarSeparator.qml
+BarSegment 1.0 BarSegment.qml
 Panel 1.0 Panel.qml
 PanelButton 1.0 PanelButton.qml
 TooltipWindow 1.0 TooltipWindow.qml
