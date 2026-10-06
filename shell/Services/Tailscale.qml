@@ -21,8 +21,9 @@ QtObject {
 
     // Up/down is offered only when the CLI is baked as a store path
     // (marchyo.services.tailscale.enable) and the status probe succeeds. The
-    // daemon accepts it only from root or the tailnet operator
-    // (`tailscale set --operator=$USER`); any refusal lands in lastError.
+    // daemon accepts it only from root or the tailnet operator, which NixOS
+    // sets via marchyo.services.tailscale.operator (the primary marchyo user
+    // when the shell is on); any refusal lands in lastError.
     readonly property bool controllable: root.installed && Config.tailscale.indexOf("/") === 0
     property bool busy: false
     property int lastExit: 0
