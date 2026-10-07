@@ -14,6 +14,9 @@ in
     earlyoom.enable = lib.mkDefault true;
   };
 
+  # One OOM killer: oomd watches no slices by default, so it is redundant here.
+  systemd.oomd.enable = lib.mkDefault (!config.services.earlyoom.enable);
+
   programs = {
     nix-ld.enable = lib.mkDefault true;
   };
