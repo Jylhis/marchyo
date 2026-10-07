@@ -34,8 +34,9 @@ type ToggleDef = {
   // override, then `defaultOn`).
   probe: (capture: Capture) => Promise<boolean | null>;
   // Flip in one step and report the new state, or null to flip through
-  // probe + setOn/setOff. For backends that toggle atomically but expose no
-  // read-only state query (the shell bar and do-not-disturb).
+  // probe + setOn/setOff. One IPC round-trip instead of two, and the
+  // recorded override is the state the shell reports, not the requested
+  // one (the shell bar and do-not-disturb).
   flip?: () => Promise<boolean | null>;
   defaultOn: boolean;
   setOn: (ctx: ChangeContext) => Promise<void>;
@@ -236,13 +237,15 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
-    // The top bar: the marchyo shell's bar when the shell is installed (the
-    // shell keeps no queryable bar state, so --status reads the recorded
-    // override), else waybar.service.
+    // The top bar: the marchyo shell's bar when the shell is installed
+    // (queried live over IPC; when the shell is not running the probe
+    // falls back to the recorded override), else waybar.service.
     name: "waybar",
     defaultOn: true,
     probe: async (capture) =>
-      shellInstalled() ? null : unitActive(capture, "waybar.service"),
+      shellInstalled()
+        ? onOff(await shellCall(() => shellIpc("barState")))
+        : unitActive(capture, "waybar.service"),
     flip: async () =>
       shellInstalled() ? onOff(await shellCall(() => shellIpc("toggleBar"))) : null,
     setOn: async (ctx) => {
@@ -308,13 +311,18 @@ export const TOGGLES: ToggleDef[] = [
   },
   {
     // "off" = do-not-disturb. With the marchyo shell installed that is the
-    // shell's DND (no queryable state, so --status reads the recorded
-    // override); otherwise the mako mode from modules/home/mako.nix plus a
-    // waybar indicator poke (SIGRTMIN+9).
+    // shell's DND (queried live over IPC; when the shell is not running the
+    // probe falls back to the recorded override); otherwise the mako mode
+    // from modules/home/mako.nix plus a waybar indicator poke (SIGRTMIN+9).
     name: "notifications",
     defaultOn: true,
     probe: async (capture) => {
-      if (shellInstalled()) return null;
+      if (shellInstalled()) {
+        // dndState replies with the DND state; notifications are on when
+        // it is off.
+        const dnd = onOff(await shellCall(() => shellIpc("dndState")));
+        return dnd === null ? null : !dnd;
+      }
       const r = await capture(makoctlArgv("mode"));
       if (r.code !== 0) return null;
       return !r.stdout.includes("do-not-disturb");

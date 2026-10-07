@@ -28,8 +28,10 @@ import { runDebug } from "./commands/debug.ts";
 import { runDoctor } from "./commands/doctor.ts";
 import {
   runShellBar,
+  runShellBarState,
   runShellDismiss,
   runShellDnd,
+  runShellDndState,
   runShellLauncher,
   runShellLock,
   runShellLockState,
@@ -511,6 +513,20 @@ shellCmd
   });
 
 shellCmd
+  .command("bar-state")
+  .description("Print the top bar state: on | off")
+  .action(async () => {
+    process.exit(await runShellBarState(rt()));
+  });
+
+shellCmd
+  .command("dnd-state")
+  .description("Print the do-not-disturb state: on | off")
+  .action(async () => {
+    process.exit(await runShellDndState(rt()));
+  });
+
+shellCmd
   .command("dismiss")
   .description("Dismiss the newest notification toast")
   .option("--all", "Dismiss every notification toast")
@@ -544,6 +560,7 @@ Examples:
   $ marchyo shell launcher emoji
   $ marchyo shell dnd on
   $ marchyo shell bar off
+  $ marchyo shell bar-state
   $ marchyo shell overview
   $ marchyo shell reload
 `,

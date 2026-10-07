@@ -121,6 +121,14 @@ export async function runShellLockState(rt: Runtime): Promise<number> {
   return call(rt, () => shellIpc("lockState"), "lockState");
 }
 
+export async function runShellBarState(rt: Runtime): Promise<number> {
+  return call(rt, () => shellIpc("barState"), "barState");
+}
+
+export async function runShellDndState(rt: Runtime): Promise<number> {
+  return call(rt, () => shellIpc("dndState"), "dndState");
+}
+
 export async function runShellDismiss(
   rt: Runtime,
   all: boolean,

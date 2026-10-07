@@ -57,7 +57,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 
 ### Toggles
 
-`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu` (the last is `--apply`-only — it changes hardware configuration, persisting `marchyo.graphics.prime.enable`).
+`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu` (the last is `--apply`-only — it changes hardware configuration, persisting `marchyo.graphics.prime.enable`). With the shell enabled, `waybar` and `notifications` `--status` read the live bar/DND state over shell IPC (falling back to the recorded runtime override when the shell is not running).
 
 ### Shell
 
@@ -72,6 +72,8 @@ Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprl
 | `marchyo shell overview [on\|off]` | Toggle, open (`on`) or close (`off`) the window overview |
 | `marchyo shell lock` | Lock with the shell lock screen |
 | `marchyo shell lock-state` | Print `locked` or `unlocked` |
+| `marchyo shell bar-state` | Print `on` or `off` (the top bar) |
+| `marchyo shell dnd-state` | Print `on` or `off` (do-not-disturb) |
 | `marchyo shell dismiss [--all]` | Dismiss the newest notification toast (`--all`: every toast) |
 | `marchyo shell dnd [on\|off]` | Toggle or set do-not-disturb |
 | `marchyo shell reload` | Reload the shell's QML in place |
