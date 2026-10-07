@@ -118,15 +118,28 @@ use flake
 
 ### Multi-monitor setup
 
-Override Hyprland monitor configuration in your home config:
+Override Hyprland monitor configuration in your home config. Entries are
+tables for the Lua config renderer (the default since Hyprland 0.55):
 
 ```nix
 wayland.windowManager.hyprland.settings = {
   monitor = [
-    "DP-1,1920x1080@60,0x0,1"
-    "HDMI-A-1,1920x1080@60,1920x0,1"
+    { output = "DP-1"; mode = "1920x1080@60"; position = "0x0"; scale = 1; }
+    { output = "HDMI-A-1"; mode = "1920x1080@60"; position = "1920x0"; scale = 1; }
   ];
 };
+```
+
+### Extra environment variables
+
+`env` entries must use the two-argument form. The legacy hyprlang shape
+(`{ n = ...; v = ...; }`) renders as a single-table call that aborts
+Hyprland's config load, so Marchyo rejects it at eval time:
+
+```nix
+wayland.windowManager.hyprland.settings.env = [
+  { _args = [ "AQ_DRM_DEVICES" "/dev/dri/by-path/pci-0000:03:00.0-card" ]; }
+];
 ```
 
 ## Updating

@@ -73,7 +73,12 @@ rec {
       builtins.filter (s: s != "") (lib.splitString " " modifiers) ++ [ key ]
     );
 
-  # `hl.env("NAME", "value")`.
+  # `hl.env("NAME", "value")`. Hyprland's Lua env takes two string arguments,
+  # so entries must go through `_args`; a plain attrset such as the legacy
+  # hyprlang shape `{ n = "NAME"; v = "value"; }` renders as the single-table
+  # call `hl.env({ n = ..., v = ... })`, which aborts the config chunk on load
+  # and silently drops every later setting. modules/home/hyprland.nix rejects
+  # such entries at eval time.
   env = name: value: {
     _args = [
       name

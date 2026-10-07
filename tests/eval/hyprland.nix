@@ -7,7 +7,12 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
+  inherit (helpers)
+    withTestUser
+    testNixOSFails
+    hyprHasBind
+    hyprEntriesText
+    ;
 
   evalDesktop =
     extra:
@@ -340,9 +345,56 @@ in
       hasAwww = lib.hasInfix "awww-daemon" startup;
     in
     pkgs.writeText "eval-hyprland-wallpaper-disabled" (
-      if hasAwww then
-        throw "FAIL: Hyprland wallpaper startup included awww-daemon when disabled"
+      if hasAwww then throw "FAIL: Hyprland wallpaper included awww-daemon when disabled" else "pass"
+    );
+
+  # settings.env entries must render as two-argument hl.env(name, value) calls:
+  # a single-table hl.env({...}) call aborts Hyprland's Lua chunk on load and
+  # silently drops every setting after it (monitors, window rules, autostarts).
+  # A consumer entry in the `_args` shape must render correctly next to the
+  # module defaults, and no env call anywhere in the file may take a table.
+  eval-hyprland-env-two-arg-calls =
+    let
+      eval = evalDesktop {
+        home-manager.users.testuser.wayland.windowManager.hyprland.settings.env = [
+          {
+            _args = [
+              "MARCHYO_TEST_ENV"
+              "eval-test"
+            ];
+          }
+        ];
+      };
+      lua = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.lua".text;
+      hasTwoArgCall = lib.hasInfix ''hl.env("MARCHYO_TEST_ENV", "eval-test")'' lua;
+      hasTableCall = lib.hasInfix "hl.env({" lua;
+    in
+    pkgs.writeText "eval-hyprland-env-two-arg-calls" (
+      if !hasTwoArgCall then
+        throw "FAIL: consumer env entry did not render as hl.env(\"MARCHYO_TEST_ENV\", \"eval-test\")"
+      else if hasTableCall then
+        throw "FAIL: rendered Hyprland config contains a single-table hl.env({...}) call"
       else
         "pass"
     );
+
+  # The legacy hyprlang `{ n, v }` env shape is rejected at eval time by the
+  # assertion in modules/home/hyprland.nix instead of aborting the Lua chunk
+  # at runtime. Home Manager propagates the user assertion to the system
+  # level, so this is the failure a consumer sees from nixos-rebuild.
+  eval-hyprland-env-legacy-shape-rejected =
+    testNixOSFails "hyprland-env-legacy-shape-rejected"
+      "settings.env entries must be two-argument calls"
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        home-manager.users.testuser = {
+          imports = [ homeManagerModules ];
+          wayland.windowManager.hyprland.settings.env = [
+            {
+              n = "AQ_DRM_DEVICES";
+              v = "/dev/dri/by-path/pci-0000:03:00.0-card";
+            }
+          ];
+        };
+      });
 }
