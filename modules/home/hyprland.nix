@@ -130,6 +130,28 @@ let
     onStart
     ;
 
+  # Every settings.env entry must carry `_args = [ <name> <value> ]` so Home
+  # Manager's Lua renderer emits a two-argument `hl.env(<name>, <value>)` call.
+  # Any other shape renders as a single table argument — most painfully the
+  # legacy hyprlang entry `{ n = ...; v = ...; }`, which becomes
+  # `hl.env({ n = ..., v = ... })` and aborts Hyprland's Lua chunk on load,
+  # silently dropping every setting after it. A module cannot rewrite the
+  # merged value of an option it also defines (self-reference), so reject the
+  # shape at eval time instead of letting the session die at runtime.
+  envSetting = config.wayland.windowManager.hyprland.settings.env or null;
+  envEntries =
+    if lib.isList envSetting then envSetting else lib.optionals (envSetting != null) [ envSetting ];
+  envArgRenderable =
+    arg: lib.isString arg || (lib.isAttrs arg && (arg._type or null) == "lua-inline");
+  envEntryOk =
+    entry:
+    lib.isAttrs entry
+    && entry ? _args
+    && builtins.isList entry._args
+    && builtins.length entry._args == 2
+    && lib.all envArgRenderable entry._args;
+  badEnvEntries = lib.filter (e: !envEntryOk e) envEntries;
+
   browserHyprlandCommands = {
     brave = "brave --new-window";
     google-chrome = "google-chrome --new-window";
@@ -190,6 +212,16 @@ let
 in
 {
   config = lib.mkIf desktopEnabled {
+
+    assertions = [
+      {
+        assertion = badEnvEntries == [ ];
+        message = ''
+          wayland.windowManager.hyprland.settings.env entries must be two-argument calls written as { _args = [ <name> <value> ]; }, which render as hl.env(<name>, <value>) (the `env` helper in marchyo's lib/hyprland-lua.nix produces this shape). Any other attrset renders as a single table argument: the legacy hyprlang shape { n = ...; v = ...; } becomes hl.env({ n = ..., v = ... }), and Hyprland's Lua chunk aborts on that first error, silently dropping every setting after it (monitors, window rules, autostarts).
+          Offending entries:
+          ${lib.concatMapStringsSep "\n" (lib.generators.toPretty { }) badEnvEntries}'';
+      }
+    ];
 
     gtk = {
       enable = true;
@@ -930,6 +962,11 @@ in
           { workspace = "4"; }
         ];
 
+        # Two-argument hl.env(name, value) calls: each entry must be
+        # `{ _args = [ <name> <value> ]; }` (the `env` helper above). Legacy
+        # hyprlang `{ n, v }` entries are rejected at eval time (see the
+        # assertion in this module) because the Lua renderer would emit a
+        # single-table call that aborts Hyprland's config load.
         env = [
           (env "XCURSOR_SIZE" "24")
           (env "HYPRCURSOR_SIZE" "24")
