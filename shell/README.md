@@ -377,10 +377,13 @@ the Tailscale panel.
 `shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
 `togglePanel(id)` / `openPanel(id)` / `closePanel(id)` / `closePanels()`, the
 notification controls `toggleDnd()` / `setDnd(on)` / `clearNotifications()`,
-and `osdShow(...)` — the last is the brightness OSD's **primary trigger** (the
+the read-only queries `barState()` / `dndState()` (feeding `marchyo toggle
+waybar|notifications --status`), and `osdShow(...)` — the last is the
+brightness OSD's **primary trigger** (the
 brightness binds poke it after every `brightnessctl` change; see the OSD
 section), plus `ping()` and `reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
 `close [<panel>]`, `launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`,
+`bar-state`, `dnd-state`,
 `dismiss [--all]`, `dnd [on|off]`, `overview [on|off]`, `reload`), and the Hyprland binds in
 `modules/home/hyprland.nix` and `window-toggles.nix`, hypridle, and the
 screensaver (all added only when the shell is enabled) run those verbs, by

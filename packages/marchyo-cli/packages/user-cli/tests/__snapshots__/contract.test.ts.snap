@@ -329,6 +329,8 @@ Commands:
   overview [state]   Toggle the window overview, or open/close it
   lock               Lock the session with the shell lock screen
   lock-state         Print the lock screen state: locked | unlocked
+  bar-state          Print the top bar state: on | off
+  dnd-state          Print the do-not-disturb state: on | off
   dismiss [options]  Dismiss the newest notification toast
   dnd [state]        Toggle do-not-disturb, or set it on/off
   reload             Reload the shell's QML in place
@@ -342,6 +344,7 @@ Examples:
   $ marchyo shell launcher emoji
   $ marchyo shell dnd on
   $ marchyo shell bar off
+  $ marchyo shell bar-state
   $ marchyo shell overview
   $ marchyo shell reload
 

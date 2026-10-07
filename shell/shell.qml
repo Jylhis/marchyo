@@ -361,6 +361,10 @@ ShellRoot {
             return NotificationState.dnd ? "on" : "off";
         }
 
+        function dndState(): string {
+            return NotificationState.dnd ? "on" : "off";
+        }
+
         function clearNotifications(): string {
             NotificationState.clearAll();
             return "ok";
@@ -388,6 +392,10 @@ ShellRoot {
 
         function setBar(on: string): string {
             shell.barVisible = on === "true" || on === "on" || on === "1";
+            return shell.barVisible ? "on" : "off";
+        }
+
+        function barState(): string {
             return shell.barVisible ? "on" : "off";
         }
 

@@ -59,8 +59,6 @@ the parity gaps first:
 
 - Launcher: file search, snippets and quicklinks (Vicinae has them).
 - Lock: a hyprlock-style grace period and a parallel fingerprint prompt.
-- `marchyo toggle waybar|notifications --status` reads the CLI's recorded
-  state; the shell has no read-only bar/DND query verb.
 
 ## 3. Features
 

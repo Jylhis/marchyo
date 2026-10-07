@@ -870,6 +870,8 @@ const SHELL_STUB = `case "$6" in
   toggleDnd) echo off ;;
   toggleOverview) echo on ;;
   lockState) echo locked ;;
+  barState) echo on ;;
+  dndState) echo off ;;
   ping) echo ok ;;
   nope) echo "Function not found." ;;
   *) echo ok ;;
@@ -917,6 +919,8 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     ["shell", "overview"],
     ["shell", "overview", "on"],
     ["shell", "overview", "off"],
+    ["shell", "bar-state"],
+    ["shell", "dnd-state"],
   ]) {
     expect((await run(args, { PATH: s.bin })).code).toBe(0);
   }
@@ -936,6 +940,8 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     "marchyo-shell ipc -n call -- shell toggleOverview",
     "marchyo-shell ipc -n call -- shell openOverview",
     "marchyo-shell ipc -n call -- shell closeOverview",
+    "marchyo-shell ipc -n call -- shell barState",
+    "marchyo-shell ipc -n call -- shell dndState",
   ]);
 });
 
@@ -945,6 +951,22 @@ test("shell lock-state prints the bare reply for scripts", async () => {
   expect(r.code).toBe(0);
   expect(r.stdout).toBe("locked\n");
   expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell lockState"]);
+});
+
+test("shell bar-state prints the bare reply for scripts", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const r = await run(["shell", "bar-state"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(r.stdout).toBe("on\n");
+  expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell barState"]);
+});
+
+test("shell dnd-state prints the bare reply for scripts", async () => {
+  const s = stubDir({ "marchyo-shell": SHELL_STUB });
+  const r = await run(["shell", "dnd-state"], { PATH: s.bin });
+  expect(r.code).toBe(0);
+  expect(r.stdout).toBe("off\n");
+  expect(s.calls()).toEqual(["marchyo-shell ipc -n call -- shell dndState"]);
 });
 
 test("shell dnd --json reports the IPC function and its reply", async () => {
@@ -1030,14 +1052,28 @@ test("toggle waybar flip records the state the shell reports", async () => {
   expect(JSON.parse(r.stdout).overrides).toEqual([{ key: "toggle.waybar", value: true }]);
 });
 
-test("toggle waybar --status under the shell reads the recorded override", async () => {
+test("toggle waybar --status under the shell reads the live bar state", async () => {
   const { env } = stateFixture();
   const s = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
   expect((await run(["toggle", "waybar", "off"], { ...env, PATH: s.bin })).code).toBe(0);
   const r = await run(["toggle", "waybar", "--status"], { ...env, PATH: s.bin });
-  expect(r.stdout.trim()).toBe("off");
+  // The stub's barState replies "on" even though the recorded override is
+  // off: the live reply wins.
+  expect(r.stdout.trim()).toBe("on");
+  expect(s.calls()).toContain("marchyo-shell ipc -n call -- shell barState");
   // The status read never queries waybar.service.
   expect(s.calls().some((c) => c.startsWith("systemctl"))).toBe(false);
+});
+
+test("toggle waybar --status falls back to the recorded override when the shell is down", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({
+    ...TOGGLE_STUBS,
+    "marchyo-shell": `echo 'No running instances for "x"'; exit 255`,
+  });
+  expect((await run(["toggle", "waybar", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  const r = await run(["toggle", "waybar", "--status"], { ...env, PATH: s.bin });
+  expect(r.stdout.trim()).toBe("off");
 });
 
 test("toggle waybar without the shell drives waybar.service", async () => {
@@ -1063,6 +1099,19 @@ test("toggle notifications drives the shell DND when the shell is installed", as
   expect(JSON.parse(r.stdout).overrides).toEqual([
     { key: "toggle.notifications", value: true },
   ]);
+});
+
+test("toggle notifications --status under the shell reads the live dnd state", async () => {
+  const { env } = stateFixture();
+  const s = stubDir({ ...TOGGLE_STUBS, "marchyo-shell": SHELL_STUB });
+  expect((await run(["toggle", "notifications", "off"], { ...env, PATH: s.bin })).code).toBe(0);
+  const r = await run(["toggle", "notifications", "--status"], { ...env, PATH: s.bin });
+  // The stub's dndState replies "off" even though the recorded override is
+  // off: DND off means notifications on, so the live reply wins.
+  expect(r.stdout.trim()).toBe("on");
+  expect(s.calls()).toContain("marchyo-shell ipc -n call -- shell dndState");
+  // The status read never queries mako.
+  expect(s.calls().some((c) => c.startsWith("makoctl"))).toBe(false);
 });
 
 test("toggle notifications without the shell uses the mako mode", async () => {
