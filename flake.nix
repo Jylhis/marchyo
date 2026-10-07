@@ -2,8 +2,6 @@
   description = "Marchyo";
 
   inputs = {
-    # Primary nixpkgs: unstable. The stable 26.05 set below is used only by
-    # darwinConfigurations.x86_64.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     nixos-hardware = {
