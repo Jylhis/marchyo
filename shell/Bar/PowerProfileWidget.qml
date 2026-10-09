@@ -4,7 +4,8 @@ import qs.Commons
 import qs.Services
 
 // Power profile indicator, mirroring waybar's power-profiles-daemon widget: a
-// pure view over Services/PowerProfileState (click = cycle).
+// pure view over Services/PowerProfileState (click = cycle). Tinted with the
+// throttle warnings from Services/Throttle while in performance mode.
 BarItem {
     interactive: true
     compact: true
@@ -18,6 +19,7 @@ BarItem {
             return "󰾅";
         }
     }
-    tooltipText: "Power profile: " + PowerProfileState.name
+    textColor: Throttle.throttled ? Color.statusWarn : Color.text
+    tooltipText: ["Power profile: " + PowerProfileState.name].concat(Throttle.warnings).join("\n")
     onClicked: PowerProfileState.cycle()
 }

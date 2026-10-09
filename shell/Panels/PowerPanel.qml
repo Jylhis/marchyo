@@ -5,10 +5,12 @@ import Quickshell.Services.UPower
 import qs.Ui
 import qs.Commons
 import qs.Services
+import "../Commons/Format.js" as Format
 
-// Battery status from UPower's composite display device (Services/Power) and a
-// power-profile selector (Services/PowerProfileState). power menu reaches
-// marchyo's session actions, or the launcher when menus are disabled.
+// Battery status, wattages and drain-on-AC warning from Services/Power, a
+// power-profile selector (Services/PowerProfileState) with performance-mode
+// throttle warnings (Services/Throttle). power menu reaches marchyo's session
+// actions, or the launcher when menus are disabled.
 Panel {
     id: root
     panelId: "power"
@@ -39,27 +41,59 @@ Panel {
             const t = fmtTime(Power.pctLeft);
             s += t.length > 0 ? (" (" + t + " left)") : " on battery";
         }
-        const r = Math.abs(Power.rate);
-        if (r > 0.05)
-            s += "  ·  " + r.toFixed(1) + "W" + (Power.charging ? "↑" : "↓");
         return s;
     }
 
+    // "12.3 W discharging · 48.2 / 70.0 Wh"; "idle" when no energy flows
+    // (full, or held at a charge threshold).
+    readonly property string rateLine: {
+        const w = Format.fmtWatts(Power.rate);
+        let s = w.length === 0 ? "idle" : (w + (Power.charging ? " charging" : " discharging"));
+        if (Power.capacityWh > 0)
+            s += "  ·  " + Power.energyWh.toFixed(1) + " / " + Power.capacityWh.toFixed(1) + " Wh";
+        return s;
+    }
+
+    component Muted: Text {
+        Layout.fillWidth: true
+        color: Color.textMuted
+        font.family: Style.fontFamily
+        font.pixelSize: Style.fontSizeSmall
+    }
+
+    component Line: Text {
+        Layout.fillWidth: true
+        color: Color.text
+        font.family: Style.fontFamily
+        font.pixelSize: Style.fontSize
+        elide: Text.ElideRight
+    }
+
+    component Warning: Line {
+        color: Color.statusWarn
+        wrapMode: Text.WordWrap
+        elide: Text.ElideNone
+    }
+
     body: [
-        Text {
-            Layout.fillWidth: true
+        Line {
             text: root.batteryLine
             color: root.hasBattery && root.pct <= 10 ? Color.statusErr : Color.text
-            font.family: Style.fontFamily
-            font.pixelSize: Style.fontSize
-            elide: Text.ElideRight
         },
-        Text {
-            Layout.fillWidth: true
+        Line {
+            visible: root.hasBattery
+            text: "Battery  " + root.rateLine
+        },
+        Line {
+            visible: Power.chargerW > 0
+            text: "Charger  " + Power.chargerW + " W"
+        },
+        Warning {
+            visible: Power.drainingOnAc
+            text: "󰀦 Plugged in but discharging " + Format.fmtWatts(Power.rate) + ": charger can't keep up"
+        },
+        Muted {
             text: "Power profile"
-            color: Color.textMuted
-            font.family: Style.fontFamily
-            font.pixelSize: Style.fontSizeSmall
         },
         RowLayout {
             Layout.fillWidth: true
@@ -85,6 +119,19 @@ Panel {
                 text: "perf"
                 active: PowerProfileState.profile === PowerProfile.Performance
                 onClicked: PowerProfileState.setProfile(PowerProfile.Performance)
+            }
+        },
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: Throttle.throttled
+            spacing: 0
+
+            Repeater {
+                model: Throttle.warnings
+                delegate: Warning {
+                    required property string modelData
+                    text: "󰀦 " + modelData
+                }
             }
         },
         PanelButton {
