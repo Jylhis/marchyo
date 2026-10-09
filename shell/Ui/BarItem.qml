@@ -27,6 +27,10 @@ Rectangle {
     readonly property int padH: root.compact ? Math.ceil(Style.barItemPad / 2) : Style.barItemPad
     // Clip + ElideRight when a layout cap makes us narrower than the text.
     property bool elide: false
+    // Widest text the label can show (e.g. "󰁹 100"). When set, the item keeps
+    // that width and left-aligns the label, so a changing digit count neither
+    // resizes the item nor moves its glyph or neighbours.
+    property string reserveText: ""
     // Empty = no tooltip.
     property string tooltipText: ""
 
@@ -51,13 +55,20 @@ Rectangle {
     // section's hover colour, which differs from both segment tones.
     readonly property color hoverColor: root.segmentedBar ? root.segmentedBar.segmentHover : Color.surface
 
-    implicitWidth: label.implicitWidth + root.padH * 2
+    implicitWidth: Math.max(label.implicitWidth, root.reserveText.length > 0 ? reserve.advanceWidth : 0) + root.padH * 2
     implicitHeight: Style.barHeight
     color: (root.interactive && mouse.containsMouse) ? root.hoverColor : "transparent"
 
+    TextMetrics {
+        id: reserve
+        font: label.font
+        text: root.reserveText
+    }
+
     Text {
         id: label
-        anchors.centerIn: parent
+        anchors.verticalCenter: parent.verticalCenter
+        x: root.reserveText.length > 0 ? root.padH : Math.round((parent.width - width) / 2)
         width: root.elide ? Math.min(implicitWidth, parent.width - root.padH * 2) : implicitWidth
         elide: root.elide ? Text.ElideRight : Text.ElideNone
         clip: root.elide
