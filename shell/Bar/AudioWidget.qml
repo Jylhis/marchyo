@@ -13,6 +13,7 @@ BarItem {
 
     interactive: true
     text: audio ? (audio.muted ? "󰝟" : "󰕾 " + Math.round(audio.volume * 100)) : "󰕾"
+    reserveText: audio && !audio.muted ? "󰕾 100" : ""
     textColor: (audio && audio.muted) ? Color.textFaint : Color.text
     tooltipText: {
         if (!sink)

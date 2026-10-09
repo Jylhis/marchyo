@@ -12,6 +12,8 @@ BarItem {
     readonly property int pct: Power.pct
 
     shown: Power.hasBattery
+    // Hold the 3-digit width only while a number shows (not the bare full/plug glyph).
+    reserveText: Power.barText.indexOf(" ") !== -1 ? "󰁹 100" : ""
     interactive: true
     text: Power.barText
     // Continuous gradient tint instead of discrete thresholds.

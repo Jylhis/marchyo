@@ -21,6 +21,7 @@ BarItem {
 
     shown: Peripherals.hasDevices
     text: lowDevice ? (lowDevice.glyph + " " + lowDevice.pct) : ""
+    reserveText: "󰍽 100"
     textColor: Peripherals.lowest <= 10 ? Color.statusErr : (Peripherals.anyLow ? Color.statusWarn : Color.text)
     tooltipText: {
         const ds = Peripherals.devices;
