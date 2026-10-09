@@ -9,3 +9,5 @@ node_modules/
 .env.production
 # wrangler local state
 .wrangler/
+# generated nixpkgs index dump (built by scripts/build-nixpkgs-index.sh)
+scripts/nixpkgs.sql
