@@ -40,10 +40,13 @@ function test(name, fn) {
 // vacuously, so pin the surface explicitly.
 test("the module exports its whole public surface to Node", () => {
   assert.deepEqual(Object.keys(Format).sort(), [
+    "fmtWatts",
     "parseDeviceAddress",
     "parseDeviceShow",
     "shortCode",
     "splitTerse",
+    "supplyWatts",
+    "throttleWarnings",
   ]);
 });
 
@@ -194,6 +197,57 @@ test("parseDeviceAddress returns empties when nothing is connected", () => {
   // `device status` rejects the IP4.ADDRESS field: nmcli exits 2 and prints
   // nothing. Empties, never a wrong answer.
   assert.deepEqual(Format.parseDeviceAddress("\n"), empty);
+});
+
+// ── power ────────────────────────────────────────────────────────────────────
+
+test("fmtWatts prints one decimal and drops near-zero readings", () => {
+  assert.equal(Format.fmtWatts(12.34), "12.3 W");
+  assert.equal(Format.fmtWatts(-8.06), "8.1 W");
+  assert.equal(Format.fmtWatts(0.01), "");
+  assert.equal(Format.fmtWatts(undefined), "");
+});
+
+test("supplyWatts rates an online USB-C supply from its max voltage and current", () => {
+  const ucsi = [
+    "POWER_SUPPLY_NAME=ucsi-source-psy-USBC000:001",
+    "POWER_SUPPLY_TYPE=USB",
+    "POWER_SUPPLY_ONLINE=1",
+    "POWER_SUPPLY_VOLTAGE_MAX=20000000",
+    "POWER_SUPPLY_CURRENT_MAX=3250000",
+  ].join("\n");
+  assert.equal(Format.supplyWatts(ucsi), 65);
+  assert.equal(Format.supplyWatts(ucsi.replace("ONLINE=1", "ONLINE=0")), 0);
+});
+
+test("supplyWatts reads 0 for plain Mains adapters, batteries and empty input", () => {
+  const mains = ["POWER_SUPPLY_NAME=AC", "POWER_SUPPLY_TYPE=Mains", "POWER_SUPPLY_ONLINE=1"].join("\n");
+  const battery = [
+    "POWER_SUPPLY_TYPE=Battery",
+    "POWER_SUPPLY_ONLINE=1",
+    "POWER_SUPPLY_VOLTAGE_MAX=17000000",
+    "POWER_SUPPLY_CURRENT_MAX=3000000",
+  ].join("\n");
+  assert.equal(Format.supplyWatts(mains), 0);
+  assert.equal(Format.supplyWatts(battery), 0);
+  assert.equal(Format.supplyWatts(""), 0);
+  assert.equal(Format.supplyWatts(null), 0);
+});
+
+test("throttleWarnings lists every active signal", () => {
+  assert.deepEqual(
+    Format.throttleWarnings({ degradation: "heat", throttleDelta: 3, scalingMaxKhz: 2400000, cpuinfoMaxKhz: 4700000 }),
+    ["High temperature: performance limited", "CPU thermal throttling", "CPU capped at 2.4 GHz (max 4.7 GHz)"],
+  );
+  assert.deepEqual(Format.throttleWarnings({ degradation: "lap" }), ["Lap detected: performance limited"]);
+});
+
+test("throttleWarnings stays silent when nothing is throttled or a source is missing", () => {
+  assert.deepEqual(
+    Format.throttleWarnings({ degradation: "", throttleDelta: 0, scalingMaxKhz: 4700000, cpuinfoMaxKhz: 4700000 }),
+    [],
+  );
+  assert.deepEqual(Format.throttleWarnings({ degradation: "", throttleDelta: NaN, scalingMaxKhz: NaN, cpuinfoMaxKhz: NaN }), []);
 });
 
 console.log("# " + passed + " passed");

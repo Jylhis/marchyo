@@ -24,6 +24,7 @@ singleton Weather 1.0 Weather.qml
 singleton WifiQr 1.0 WifiQr.qml
 singleton BluetoothState 1.0 BluetoothState.qml
 singleton PowerProfileState 1.0 PowerProfileState.qml
+singleton Throttle 1.0 Throttle.qml
 singleton QuickToggles 1.0 QuickToggles.qml
 singleton Camera 1.0 Camera.qml
 singleton LockKeys 1.0 LockKeys.qml

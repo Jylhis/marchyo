@@ -132,11 +132,60 @@ function splitTerse(line) {
     return fields;
 }
 
+// A power reading in watts -> "12.3 W"; "" for anything that rounds to zero.
+function fmtWatts(w) {
+    var a = Math.abs(Number(w));
+    if (!(a >= 0.05))
+        return "";
+    return a.toFixed(1) + " W";
+}
+
+// /sys/class/power_supply/<name>/uevent -> the rated watts of an online
+// external supply (VOLTAGE_MAX x CURRENT_MAX, µV x µA), or 0. USB-C (ucsi,
+// typec PD) supplies report these; plain ACPI "Mains" adapters and batteries
+// do not, so they read as 0 and the caller hides the row.
+function supplyWatts(uevent) {
+    var kv = {};
+    String(uevent || "").split("\n").forEach(function (line) {
+        var i = line.indexOf("=");
+        if (i > 0)
+            kv[line.slice(0, i)] = line.slice(i + 1).trim();
+    });
+    if (kv.POWER_SUPPLY_TYPE === "Battery" || kv.POWER_SUPPLY_ONLINE !== "1")
+        return 0;
+    var v = Number(kv.POWER_SUPPLY_VOLTAGE_MAX);
+    var c = Number(kv.POWER_SUPPLY_CURRENT_MAX);
+    if (!(v > 0) || !(c > 0))
+        return 0;
+    return Math.round(v * c / 1e12);
+}
+
+// Performance-mode throttle signals -> user-facing warning lines.
+//   degradation:   power-profiles-daemon's reason, "lap" / "heat" / "".
+//   throttleDelta: Intel thermal_throttle counter increase since last sample.
+//   scalingMaxKhz / cpuinfoMaxKhz: cpufreq policy cap vs hardware max.
+// Missing inputs (NaN, undefined) produce no warning.
+function throttleWarnings(s) {
+    var out = [];
+    if (s.degradation === "lap")
+        out.push("Lap detected: performance limited");
+    else if (s.degradation === "heat")
+        out.push("High temperature: performance limited");
+    if (s.throttleDelta > 0)
+        out.push("CPU thermal throttling");
+    if (s.scalingMaxKhz > 0 && s.cpuinfoMaxKhz > 0 && s.scalingMaxKhz < s.cpuinfoMaxKhz)
+        out.push("CPU capped at " + (s.scalingMaxKhz / 1e6).toFixed(1) + " GHz (max " + (s.cpuinfoMaxKhz / 1e6).toFixed(1) + " GHz)");
+    return out;
+}
+
 // Node (tests) picks these up; QML ignores the guard.
 if (typeof module !== "undefined")
     module.exports = {
         shortCode: shortCode,
         parseDeviceShow: parseDeviceShow,
         parseDeviceAddress: parseDeviceAddress,
-        splitTerse: splitTerse
+        splitTerse: splitTerse,
+        fmtWatts: fmtWatts,
+        supplyWatts: supplyWatts,
+        throttleWarnings: throttleWarnings
     };
