@@ -281,10 +281,12 @@ in
             version = "0.1.0";
             src = elispSrc;
           };
-          # The design system's own Emacs themes (Modus-style faces, generated
-          # in-derivation). Replaces the base16 theme Stylix used to inject.
-          jylhisThemes = pkgs.callPackage "${pkgs.jylhis-design-src}/nix/emacs.nix" {
-            inherit (epkgs) trivialBuild;
+          # The design system's own Emacs themes (Modus-style faces), from
+          # the vendored design files.
+          jylhisThemes = epkgs.trivialBuild {
+            pname = "jylhis-emacs-themes";
+            version = "6.0.0";
+            src = "${pkgs.jylhis-design-src}/platforms/emacs";
           };
         in
         (lib.optional needsElispPkg marchyoElisp)

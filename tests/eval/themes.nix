@@ -25,7 +25,7 @@ let
   manifestOf = cfg: (manifestFileOf cfg).themes;
 
   # jylhis-dark's text colour (base05) from the design tokens, with the
-  # evaluated config's overlays applied (they provide jylhis-design-src).
+  # evaluated config's overlays applied (they provide jylhis-design-src, the vendored lib/design).
   darkTextOf =
     cfg:
     "#"

@@ -58,26 +58,6 @@
         "type": "github"
       }
     },
-    "jylhis-design": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1790188564,
-        "narHash": "sha256-Ui767gdtYbA6aKqA2gHFI9kh1I9CDAiXyItEnTXieJ0=",
-        "owner": "Jylhis",
-        "repo": "design",
-        "rev": "07ec6d2462fd264bfb0121950d83fdc970ddc6ce",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Jylhis",
-        "repo": "design",
-        "type": "github"
-      }
-    },
     "ncro": {
       "inputs": {
         "nixpkgs": [
@@ -277,7 +257,6 @@
         "flake-compat": "flake-compat",
         "home-manager": "home-manager",
         "home-manager-droid": "home-manager-droid",
-        "jylhis-design": "jylhis-design",
         "ncro": "ncro",
         "nix-on-droid": "nix-on-droid",
         "nixos-hardware": "nixos-hardware",

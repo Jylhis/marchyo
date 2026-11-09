@@ -1,12 +1,8 @@
-# Adopt the upstream Jylhis Design System Home Manager module.
-# Upstream: https://github.com/Jylhis/design/blob/main/nix/home-manager-module.nix
-#
-# Driven by jylhis.theme.mode (light|dark); we translate from marchyo's variant.
-# Every target is disabled because marchyo composes each surface itself from
-# IFD-free sources: the upstream gtk/mako/waybar targets readFile the built
-# package at eval time, which is import-from-derivation, banned in this flake.
+# Jylhis design system: GTK stylesheet, pointer cursor and interface fonts,
+# read from the vendored design files in lib/design (pkgs.jylhis-design-src).
+# Every other surface (ghostty, bat, starship, fzf, …) is composed by its own
+# module from the same files.
 {
-  inputs,
   lib,
   pkgs,
   osConfig ? { },
@@ -24,38 +20,14 @@ let
     scale = cfg.fontScale or 1.25;
   };
 
-  inherit (inputs.jylhis-design.lib) fonts;
+  fonts = import "${pkgs.jylhis-design-src}/nix/fonts.nix";
 
   # Per-polarity GTK stylesheet: the committed snapshot carries the active
   # polarity's @define-colors at top level, so no filtering or hex swap is needed.
-  gtkCss = builtins.readFile "${inputs.jylhis-design}/platforms/gtk/jylhis-${mode}.css";
+  gtkCss = builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/jylhis-${mode}.css";
 in
 {
-  imports = [ inputs.jylhis-design.homeManagerModules.default ];
-
-  config = lib.mkIf pkgs.stdenv.hostPlatform.isLinux (
-    lib.mkMerge [
-      {
-        jylhis.theme = {
-          inherit (cfg) enable;
-          name = "jylhis";
-          inherit mode;
-          waybar.enable = false;
-          bat.enable = false;
-          mako.enable = false;
-          gtk.enable = false;
-          # ghostty themes are installed by
-          # modules/home/ghostty.nix from the same upstream theme files.
-          ghostty.enable = false;
-          starship.enable = false;
-          # fzf colors are set cross-platform via programs.fzf.colors in
-          # modules/home/fzf.nix (the upstream target mkForce-overwrites
-          # FZF_DEFAULT_OPTS, which would drop marchyo's layout options).
-          fzf.enable = false;
-        };
-      }
-
-      (lib.mkIf cfg.enable {
+  config = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.enable) {
         # marchyo owns the GTK module outright (no Stylix): the dconf keys and
         # icon theme land in modules/home/gtk.nix, the CSS below.
         gtk.enable = lib.mkDefault true;
@@ -89,7 +61,5 @@ in
           gtk3.extraCss = gtkCss;
           gtk4.extraCss = gtkCss;
         };
-      })
-    ]
-  );
+      };
 }

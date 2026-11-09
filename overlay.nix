@@ -17,15 +17,15 @@ let
   );
 in
 {
-  jylhis-design-src = inputs.jylhis-design;
+  # Vendored Jylhis design system files (lib/design/README.md).
+  jylhis-design-src = ./lib/design;
   tinted-schemes-src = inputs.tinted-schemes;
   marchyo-wallpapers = final.callPackage ./packages/marchyo-wallpapers/package.nix { };
   marchyo-cli = final.callPackage ./packages/marchyo-cli/package.nix { };
   marchyo-agent-skills = final.callPackage ./packages/marchyo-agent-skills/package.nix { };
 }
 // prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux (
-  (inputs.jylhis-design.overlays.default final prev)
-  // {
+  {
     marchyo-shell = final.callPackage ./packages/marchyo-shell/package.nix { };
     marchyo-omarchy-shims = final.callPackage ./packages/marchyo-omarchy-shims/package.nix { };
     mkMarchyoShellPlugin = final.callPackage ./packages/marchyo-shell/plugin.nix { };
@@ -313,9 +313,10 @@ in
   // llmAgents
 )
 // {
-  # The design-system package generates its platform files (ghostty themes, gtk
-  # css, bat themes, …) in-derivation, so the built package is the only source
-  # for those assets: expose it on every platform. The upstream overlay is
-  # Linux-only in this tree, hence the explicit callPackage here.
-  jylhis-themes = final.callPackage (inputs.jylhis-design + "/nix/themes.nix") { };
+  # Ghostty, bat and Emacs theme files of the vendored design system, at the
+  # share/jylhis/<target> paths the home modules read.
+  jylhis-themes = final.runCommand "jylhis-themes" { } ''
+    mkdir -p $out/share/jylhis
+    cp -r ${./lib/design/platforms}/{ghostty,bat,emacs} $out/share/jylhis/
+  '';
 }

@@ -1,6 +1,5 @@
 # Starship prompt with the Jylhis design preset. Split out of jylhis-theme.nix
-# (Linux-gated). The upstream jylhis-design
-# starship target stays disabled there so starship.toml is only written here.
+# (Linux-gated). starship.toml comes from the vendored design files.
 {
   lib,
   pkgs,

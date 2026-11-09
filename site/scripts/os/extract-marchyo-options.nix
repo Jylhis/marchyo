@@ -49,9 +49,6 @@ let
     specialArgs = {
       inherit pkgs;
       osConfig = { };
-      inputs = {
-        jylhis-design.homeManagerModules.default = { };
-      };
     };
   };
 

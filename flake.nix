@@ -46,10 +46,6 @@
       url = "github:manic-systems/ncro";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    jylhis-design = {
-      url = "github:Jylhis/design";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Base16 scheme catalog (successor of the archived
     # tinted-theming/base16-schemes that pkgs.base16-schemes packages).
     # Pure data source: read at eval time from the fetched tree instead of

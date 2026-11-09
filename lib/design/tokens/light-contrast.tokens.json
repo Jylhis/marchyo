@@ -1,0 +1,521 @@
+{
+  "color": {
+    "text": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.0588,
+          0.0549,
+          0.0471
+        ],
+        "hex": "#0f0e0c"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-muted": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.2392,
+          0.2196,
+          0.1843
+        ],
+        "hex": "#3d382f"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-heading": {
+      "$value": "{color.text}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-faint": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.3686,
+          0.3412,
+          0.298
+        ],
+        "hex": "#5e574c"
+      },
+      "$description": "Decoration and disabled states only. The artifact does not require AAA for this role."
+    },
+    "label": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.3529,
+          0.2118,
+          0
+        ],
+        "hex": "#5a3600"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "primary": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.7686,
+          0,
+          0
+        ],
+        "hex": "#c40000"
+      }
+    },
+    "primary-hi": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.3529,
+          0.2902
+        ],
+        "hex": "#ff5a4a"
+      }
+    },
+    "primary-lo": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.4784,
+          0,
+          0
+        ],
+        "hex": "#7a0000"
+      }
+    },
+    "primary-edge": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.2902,
+          0,
+          0
+        ],
+        "hex": "#4a0000"
+      }
+    },
+    "link": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.0863,
+          0.2353,
+          0.4157
+        ],
+        "hex": "#163c6a"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "link-underline-hover": {
+      "$value": "{color.primary}"
+    },
+    "focus-ring": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1333,
+          0.1255,
+          0.1098
+        ],
+        "hex": "#22201c"
+      }
+    },
+    "selection-bg": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.9098,
+          0.8118,
+          0.5804
+        ],
+        "hex": "#e8cf94"
+      }
+    },
+    "border": {
+      "$value": "{color.text-faint}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 4.5
+            }
+          ]
+        }
+      }
+    },
+    "border-strong": {
+      "$value": "{color.text-muted}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 4.5
+            }
+          ]
+        }
+      }
+    },
+    "rule": {
+      "$value": "{color.focus-ring}"
+    },
+    "bevel-edge": {
+      "$value": "{color.focus-ring}"
+    },
+    "destructive": {
+      "$value": "{color.focus-ring}"
+    },
+    "on-primary": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.primary}",
+              "min": 6
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps text on the primary signal below AAA; contrast floor 6:1."
+    }
+  },
+  "status": {
+    "err": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.5569,
+          0,
+          0
+        ],
+        "hex": "#8e0000"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "warn": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.3529,
+          0.2275,
+          0
+        ],
+        "hex": "#5a3a00"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "ok": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1216,
+          0.302,
+          0.1216
+        ],
+        "hex": "#1f4d1f"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "info": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0,
+          0.302,
+          0.2706
+        ],
+        "hex": "#004d45"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "chart": {
+    "ink": {
+      "$value": "{color.focus-ring}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "ansi": {
+    "black": {
+      "$value": "{color.focus-ring}"
+    },
+    "red": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.7216,
+          0,
+          0
+        ],
+        "hex": "#b80000"
+      }
+    },
+    "green": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1843,
+          0.4196,
+          0.1843
+        ],
+        "hex": "#2f6b2f"
+      }
+    },
+    "yellow": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.4784,
+          0.3137,
+          0
+        ],
+        "hex": "#7a5000"
+      }
+    },
+    "blue": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1176,
+          0.3098,
+          0.5412
+        ],
+        "hex": "#1e4f8a"
+      }
+    },
+    "white": {
+      "$value": "{color.text-faint}"
+    },
+    "bright-black": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.5176,
+          0.4863,
+          0.4314
+        ],
+        "hex": "#847c6e"
+      }
+    },
+    "bright-white": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.102,
+          0.0941,
+          0.0784
+        ],
+        "hex": "#1a1814"
+      }
+    }
+  },
+  "syntax": {
+    "keyword": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "string": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 6
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 6:1 on bg."
+    },
+    "number": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 6
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 6:1 on bg."
+    },
+    "function": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "builtin": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "type": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 5.5
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 5.5:1 on bg."
+    },
+    "variable": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 5.5
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 5.5:1 on bg."
+    },
+    "comment": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 5.5
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 5.5:1 on bg."
+    },
+    "docstring": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 5.5
+            }
+          ]
+        }
+      },
+      "$description": "The artifact keeps this syntax role below AAA; contrast floor 5.5:1 on bg."
+    }
+  }
+}

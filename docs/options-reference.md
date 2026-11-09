@@ -47,7 +47,7 @@ marchyo.theme = {
 
 `marchyo.theme.fontScale` is the single knob for font size system-wide: the math lives in `lib/font-scale.nix` (`round` = round-half-up; `terminusFont` snaps the TTY console to the nearest terminus PSF size). The GNOME interface fonts (dconf `font-name`/`document-font-name`/`monospace-font-name`) scale in `modules/home/jylhis-theme.nix` — Qt apps read them through the gtk3 platform theme. Every other surface reads the scale from `osConfig.marchyo.theme.fontScale` and scales in its own module (`ghostty`, the shell, `hyprlock`, `console`, the launcher, Emacs's default face).
 
-The base16 slot palette is derived from the Jylhis Design System `themes/jylhis.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light) and consumed by `modules/generic/theme-slots.nix` (plus the runtime theme dirs). To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a tinted-schemes catalog YAML); the slot surfaces and runtime switching follow it.
+The base16 slot palette is derived from the Jylhis Design System tokens vendored in `lib/design` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light) and consumed by `modules/generic/theme-slots.nix` (plus the runtime theme dirs). To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a tinted-schemes catalog YAML); the slot surfaces and runtime switching follow it.
 
 ### Shell appearance scale axes
 

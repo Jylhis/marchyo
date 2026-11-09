@@ -25,7 +25,7 @@ flake.nix           # Flake entry point — imports outputs.nix, wraps per-syste
 flake.lock          # Single source of truth for all pinned inputs (nixpkgs, home-manager, etc.)
 outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
 default.nix         # Flake-compat shim — exposes flake outputs to non-flake consumers
-overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, plymouth-marchyo-theme, plus jylhis-design)
+overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, plymouth-marchyo-theme, plus the vendored design system in lib/design)
 treefmt.nix         # Formatter config for treefmt-nix
 devenv.nix          # Development shell configuration
 devenv.yaml         # devenv inputs (nixpkgs pinned to same rev as flake.lock)
