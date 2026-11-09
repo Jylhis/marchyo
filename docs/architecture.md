@@ -8,7 +8,7 @@ Marchyo is a modular NixOS configuration flake providing curated system, and Hom
 - Modular architecture: configurations broken into small, manageable modules
 - Feature flags: `marchyo.desktop.enable`, `marchyo.development.enable`, etc. enable entire stacks
 - Home Manager integration for user-specific configurations and dotfiles
-- Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
+- Hardware support through NVIDIA/PRIME graphics options; hosts import `nixos-hardware` profiles from their own flake
 - All custom options live under the `marchyo.*` namespace
 - Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; `home-manager` tracks `master` to pair with unstable.
 - Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`; `marchyo.lib.*` builders and `legacyPackages.<system>` give a system-correct nixpkgs
@@ -35,7 +35,7 @@ manual/             # Published end-user documentation (rendered by site/)
 shell/              # Quickshell shell QML tree, the default desktop shell (bar, launcher, OSD, panels, notifications, lock; see shell/README.md)
 modules/nixos/      # NixOS system-level modules (auto-discovered)
 modules/home/       # Home Manager user-level modules (auto-discovered)
-modules/generic/    # Shared modules imported by nixos and home default.nix
+modules/generic/    # Shared helpers (palette, base16 slots, keyboard lib) imported by path
 packages/           # Custom Nix packages (marchyo-cli, marchyo-shell, plymouth-marchyo-theme, marchyo-wallpapers)
 tests/              # Evaluation-based test suite (no builds required)
 site/               # Astro + Starlight website (landing page + docs, marchyo.org)

@@ -72,6 +72,9 @@ in
     programs = {
       television.enable = lib.mkDefault true;
       fzf.fuzzyCompletion = lib.mkDefault true;
+      # System level: the NixOS module adds the cap_net_raw wrapper trippy
+      # needs to run without root.
+      trippy.enable = lib.mkDefault true;
     };
 
     environment.systemPackages = lib.subtractLists cfg.defaults.excludePackages (

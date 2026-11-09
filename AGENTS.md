@@ -30,7 +30,7 @@ just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host o
 ## Adding or removing modules
 
 - `modules/nixos/` and `modules/home/` are **auto-discovered** via `lib/discover-modules.nix`: every `.nix` file in the directory (plus any subdirectory containing a `default.nix`) is imported automatically. Adding or removing a module is a one-file change — never edit an import list for these.
-- `modules/generic/` holds modules shared by nixos and home.
+- `modules/generic/` holds helpers (palette, base16 slots, keyboard lib) that nixos and home modules import by path; it is not auto-imported.
 - Option declarations go in `modules/nixos/options/` (one file per logical namespace, auto-discovered), declaring `options.marchyo.<namespace>`.
 
 ## The `marchyo.*` flag model

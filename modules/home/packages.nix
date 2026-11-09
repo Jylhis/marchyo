@@ -15,6 +15,10 @@
     };
 
     nh.enable = true;
+    zoxide = {
+      enable = true;
+      options = [ "--cmd cd" ];
+    };
     ripgrep = {
       enable = true;
       arguments = [ "--smart-case" ];

@@ -2,6 +2,7 @@
   osConfig ? { },
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -18,107 +19,116 @@ let
       };
 in
 {
-  programs = lib.mkIf userConfig.enable {
-    mergiraf = {
-      enable = lib.mkDefault true;
-      enableGitIntegration = lib.mkDefault true;
-      enableJujutsuIntegration = lib.mkDefault true;
-    };
-    delta = {
-      enable = lib.mkDefault true;
-      enableGitIntegration = lib.mkDefault true;
-      options = {
-        navigate = true;
-        line-numbers = true;
-        side-by-side = lib.mkDefault false;
-        syntax-theme =
-          if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
-            "jylhis-dark"
-          else
-            "jylhis-light";
+  programs = lib.mkMerge [
+    {
+      git = {
+        enable = true;
+        package = lib.mkDefault pkgs.gitFull;
+        lfs.enable = true;
       };
-    };
-    git = {
-      enable = true;
-      settings = {
-        advice.skippedCherryPicks = lib.mkDefault false;
-        user = {
-          name = userConfig.fullname;
-          inherit (userConfig) email;
-        };
-        init.defaultBranch = lib.mkDefault "main";
-        core = {
-          untrackedcache = lib.mkDefault true;
-          fsmonitor = lib.mkDefault false;
-        };
-        merge = {
-          conflictStyle = lib.mkDefault "zdiff3";
-        };
-        rebase = {
-          updateRefs = lib.mkDefault true;
-          autoSquash = lib.mkDefault true;
-          autoStash = lib.mkDefault true;
-        };
-        color = {
-          ui = lib.mkDefault true;
-        };
-        column = {
-          ui = lib.mkDefault "auto";
-        };
-        fetch = {
-          writeCommitGraph = lib.mkDefault true;
-          prune = lib.mkDefault true;
-          pruneTags = lib.mkDefault true;
-          all = lib.mkDefault true;
-        };
-        branch = {
-          sort = lib.mkDefault "-committerdate";
-        };
-        pull.rebase = lib.mkDefault true;
-        diff = {
-          algorithm = lib.mkDefault "histogram";
-          mnemonicPrefix = lib.mkDefault true;
-          renames = lib.mkDefault true;
-          colorMoved = lib.mkDefault "plain";
-          colorMovedWS = lib.mkDefault "ignore-space-at-eol";
-        };
-        push = {
-          autoSetupRemote = lib.mkDefault true;
-        };
-        help = {
-          autocorrect = lib.mkDefault "immediate";
-        };
-        rerere = {
-          enabled = lib.mkDefault true;
-          autoupdate = lib.mkDefault false;
-        };
-        tag = {
-          sort = lib.mkDefault "version:refname";
+    }
+    (lib.mkIf userConfig.enable {
+      mergiraf = {
+        enable = lib.mkDefault true;
+        enableGitIntegration = lib.mkDefault true;
+        enableJujutsuIntegration = lib.mkDefault true;
+      };
+      delta = {
+        enable = lib.mkDefault true;
+        enableGitIntegration = lib.mkDefault true;
+        options = {
+          navigate = true;
+          line-numbers = true;
+          side-by-side = lib.mkDefault false;
+          syntax-theme =
+            if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
+              "jylhis-dark"
+            else
+              "jylhis-light";
         };
       };
-      ignores = [
-        # Linux
-        "*~"
-        ".fuse_hidden*"
-        ".directory"
-        ".Trash-*"
-        ".nfs*"
-        "nohup.out"
+      git = {
+        enable = true;
+        settings = {
+          advice.skippedCherryPicks = lib.mkDefault false;
+          user = {
+            name = userConfig.fullname;
+            inherit (userConfig) email;
+          };
+          init.defaultBranch = lib.mkDefault "main";
+          core = {
+            untrackedcache = lib.mkDefault true;
+            fsmonitor = lib.mkDefault false;
+          };
+          merge = {
+            conflictStyle = lib.mkDefault "zdiff3";
+          };
+          rebase = {
+            updateRefs = lib.mkDefault true;
+            autoSquash = lib.mkDefault true;
+            autoStash = lib.mkDefault true;
+          };
+          color = {
+            ui = lib.mkDefault true;
+          };
+          column = {
+            ui = lib.mkDefault "auto";
+          };
+          fetch = {
+            writeCommitGraph = lib.mkDefault true;
+            prune = lib.mkDefault true;
+            pruneTags = lib.mkDefault true;
+            all = lib.mkDefault true;
+          };
+          branch = {
+            sort = lib.mkDefault "-committerdate";
+          };
+          pull.rebase = lib.mkDefault true;
+          diff = {
+            algorithm = lib.mkDefault "histogram";
+            mnemonicPrefix = lib.mkDefault true;
+            renames = lib.mkDefault true;
+            colorMoved = lib.mkDefault "plain";
+            colorMovedWS = lib.mkDefault "ignore-space-at-eol";
+          };
+          push = {
+            autoSetupRemote = lib.mkDefault true;
+          };
+          help = {
+            autocorrect = lib.mkDefault "immediate";
+          };
+          rerere = {
+            enabled = lib.mkDefault true;
+            autoupdate = lib.mkDefault false;
+          };
+          tag = {
+            sort = lib.mkDefault "version:refname";
+          };
+        };
+        ignores = [
+          # Linux
+          "*~"
+          ".fuse_hidden*"
+          ".directory"
+          ".Trash-*"
+          ".nfs*"
+          "nohup.out"
 
-        # macOS
-        ".DS_Store"
-        ".AppleDouble"
-        ".LSOverride"
+          # macOS
+          ".DS_Store"
+          ".AppleDouble"
+          ".LSOverride"
 
-        # Windows
-        "Thumbs.db"
-        "ehthumbs.db"
-        "Desktop.ini"
+          # Windows
+          "Thumbs.db"
+          "ehthumbs.db"
+          "Desktop.ini"
 
-        # Editor swap/backup files
-        "*.swp"
-        "*.swo"
-      ];
-    };
-  };
+          # Editor swap/backup files
+          "*.swp"
+          "*.swo"
+        ];
+      };
+    })
+  ];
 }

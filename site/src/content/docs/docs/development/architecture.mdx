@@ -49,7 +49,7 @@ in
 
 ### Generic modules (`modules/generic/`)
 
-Shared modules imported by the NixOS and Home Manager `default.nix` files. These contain configuration that applies at multiple levels (e.g., fontconfig, git).
+Helpers shared by NixOS and Home Manager modules (the design palette, base16 slots, the keyboard library). They are imported by path where needed, not auto-imported.
 
 ## Module patterns
 
@@ -102,7 +102,5 @@ The keyboard/IME system is the most complex cross-module pattern:
 |-------|---------|
 | `nixpkgs` | Primary package set — NixOS unstable channel |
 | `home-manager` | User environment management (master, pairs with unstable) |
-| `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
-| `sops-nix` | Secrets management |
 | `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |

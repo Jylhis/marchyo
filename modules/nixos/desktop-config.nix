@@ -59,7 +59,7 @@ in
       wireplumber.enable = lib.mkDefault true;
     };
 
-    # defaultFonts are set in modules/generic/fontconfig.nix.
+    # defaultFonts are set in modules/nixos/fonts.nix.
     fonts = {
       enableDefaultPackages = lib.mkDefault true;
       fontconfig.enable = lib.mkDefault true;

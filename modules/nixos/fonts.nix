@@ -45,9 +45,6 @@ let
   defaultRules = appendRules "" keyboardLib.cjkImes.${lib.head cjkImes}.region;
 in
 {
-  imports = [
-    ../generic/fontconfig.nix
-  ];
   fonts = {
     enableDefaultPackages = lib.mkDefault true;
     fontDir.enable = lib.mkDefault true;
@@ -69,7 +66,14 @@ in
         # fontconfig fallback (fcitx5 already pulls this on IME hosts).
         noto-fonts-color-emoji
       ]);
+    # System level so the greeter and other non-user processes resolve the
+    # design system's families too; user sessions read the same config.
     fontconfig = {
+      defaultFonts = {
+        serif = [ "DejaVu Serif" ];
+        sansSerif = [ designFonts.body ];
+        monospace = [ designFonts.mono ];
+      };
       cache32Bit = true;
 
       localConf = lib.mkIf (config.marchyo.desktop.enable && cjkImes != [ ]) (langRules + defaultRules);

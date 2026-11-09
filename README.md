@@ -7,7 +7,7 @@ A modular NixOS configuration flake providing a curated set of system and home-m
 - **Modular Architecture**: Organized modules for desktop, development, media, and office environments.
 - **Feature Flags**: Simple enable flags that configure entire stacks (desktop, development, etc.).
 - **Home Manager Integration**: Seamless user environment management.
-- **Hardware Support**: Integration with `nixos-hardware` for common devices.
+- **Hardware Support**: Graphics vendor options (incl. NVIDIA PRIME); pairs with `nixos-hardware` profiles from your own flake.
 - **Extensive Configuration**: A rich set of custom options for fine-grained control.
 
 ## Quick Start

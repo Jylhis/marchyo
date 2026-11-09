@@ -10,7 +10,7 @@ Marchyo is a modular NixOS configuration flake providing a curated set of system
 - **Modular architecture** — Configurations broken into small, manageable modules for desktop, development, media, and office environments.
 - **Feature flags** — Enable entire stacks with a single boolean (`marchyo.desktop.enable = true`).
 - **Home Manager integration** — Seamless user environment management for dotfiles and user-level applications.
-- **Hardware support** — Integration with `nixos-hardware` for common devices, including NVIDIA PRIME hybrid graphics.
+- **Hardware support** — Graphics vendor options including NVIDIA PRIME hybrid graphics; pairs with [nixos-hardware](https://github.com/NixOS/nixos-hardware) profiles imported from your own flake.
 - **Extensive options** — Fine-grained control through the `marchyo.*` option namespace.
 
 ## How it works
@@ -42,7 +42,6 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 |--------|-------------|
 | `lib.mkNixosSystem` | System builder (recommended entry point) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
-| `nixosModules.hardware.<profile>` | [nixos-hardware](https://github.com/NixOS/nixos-hardware) per-machine profiles, re-exported (e.g. `lenovo-thinkpad-x1-9th-gen`, `framework-13-7040-amd`, `common-pc-ssd`) |
 | `homeManagerModules.default` | Home Manager module only |
 | `legacyPackages.{system}` | nixpkgs + marchyo overlay |
 | `overlays.default` | Nixpkgs overlay |

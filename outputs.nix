@@ -3,9 +3,7 @@ let
   inherit (inputs)
     nixpkgs
     home-manager
-    nixos-hardware
     ncro
-    sops-nix
     treefmt-nix
     ;
 
@@ -108,11 +106,9 @@ let
       pkgs = mkPkgs system;
       extraSpecialArgs = {
         osConfig = mockOsConfig;
-        inherit inputs;
       };
       modules = [
         homeManagerModules.default
-        sops-nix.homeManagerModules.sops
         {
           home.username = "developer";
           home.homeDirectory = homeDirectory;
@@ -121,24 +117,11 @@ let
       ];
     };
 
-  hmSharedConfig = {
-    home-manager = {
-      useGlobalPkgs = true;
-      sharedModules = [
-        sops-nix.homeManagerModules.sops
-      ];
-      extraSpecialArgs = {
-        inherit inputs;
-      };
-    };
-  };
-
   nixosModules = {
     default = {
       imports = [
         home-manager.nixosModules.home-manager
-        hmSharedConfig
-        sops-nix.nixosModules.sops
+        { home-manager.useGlobalPkgs = true; }
         # ncro service options; enablement is gated by marchyo.nix.router.enable
         # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service),
         # deliberately absent from hmSharedConfig.
@@ -149,10 +132,6 @@ let
       ];
     };
     inherit (home-manager.nixosModules) home-manager;
-    # Complete nixos-hardware profile set, re-exported wholesale (profiles are
-    # lazy, so unused ones cost nothing). A host imports its profile directly:
-    #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
-    hardware = nixos-hardware.nixosModules;
   };
 
   homeManagerModules = {
@@ -293,7 +272,6 @@ in
         ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
-      nixosHardwareModules = nixosModules.hardware;
     }
     # The one non-eval check: build the Plymouth theme in both variants. The
     # only place the light variant's asset pipeline (resvg/imagemagick + the

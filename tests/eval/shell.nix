@@ -1,6 +1,11 @@
 # Shell configuration tests: bash-by-default, modern tooling, and the
 # SSH/terminfo wiring for interactive TUI applications.
-{ helpers, lib, ... }:
+{
+  helpers,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (helpers)
     testNixOSCheck
@@ -35,7 +40,7 @@ in
   ) (withTestUser { });
 
   # Marchyo users get the modern interactive bash stack: bash enabled with the
-  # shared aliases (generic/shell.nix) and the starship prompt.
+  # marchyo aliases (modules/home/shell.nix) and the starship prompt.
   eval-shell-bash-experience = testNixOSCheck "shell-bash-experience" (
     cfg:
     let
@@ -44,14 +49,34 @@ in
     hm.programs.bash.enable && (hm.programs.bash.shellAliases ? g) && hm.programs.starship.enable
   ) (withTestUser { });
 
-  # On Linux the shared aliases default `cp` to reflink (copy-on-write) copies
-  # via GNU coreutils' --reflink=auto (generic/shell.nix).
+  # The aliases default `cp` to reflink (copy-on-write) copies via GNU
+  # coreutils' --reflink=auto (modules/home/shell.nix).
   eval-shell-cp-reflink = testNixOSCheck "shell-cp-reflink" (
     cfg:
     let
       hm = cfg.home-manager.users.testuser;
     in
     (hm.programs.bash.shellAliases.cp or "") == "cp --reflink=auto"
+  ) (withTestUser { });
+
+  # User-facing shell and git setup lives in Home Manager only; the system
+  # level keeps just what needs root (trippy's capability wrapper) or serves
+  # non-user processes (fontconfig role mapping).
+  eval-shell-user-level-only = testNixOSCheck "shell-user-level-only" (
+    cfg:
+    let
+      hm = cfg.home-manager.users.testuser;
+    in
+    !(cfg.environment.shellAliases ? g)
+    && !cfg.programs.zoxide.enable
+    && hm.programs.zoxide.enable
+    && hm.programs.git.enable
+    && hm.programs.git.lfs.enable
+    && hm.programs.git.package.drvPath == pkgs.gitFull.drvPath
+    && cfg.programs.trippy.enable
+    && cfg.fonts.fontconfig.defaultFonts.monospace != [ ]
+    && hm.fonts.fontconfig.enable
+    && hm.fonts.fontconfig.defaultFonts.monospace == [ ]
   ) (withTestUser { });
 
   # marchyo.users.<name>.uid flows into users.users.<name>.uid on NixOS.

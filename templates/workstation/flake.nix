@@ -3,10 +3,12 @@
 
   inputs = {
     marchyo.url = "github:Jylhis/marchyo";
+    # Optional per-machine hardware profiles, see configuration.nix:
+    # nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 
   outputs =
-    { marchyo, ... }:
+    inputs@{ marchyo, ... }:
     {
       # marchyo.lib.mkNixosSystem selects the correct nixpkgs (unstable),
       # home-manager, overlay and marchyo modules automatically — you
@@ -15,7 +17,7 @@
         system = "x86_64-linux";
         modules = [ ./configuration.nix ];
         specialArgs = {
-          inherit marchyo;
+          inherit inputs marchyo;
         };
       };
     };

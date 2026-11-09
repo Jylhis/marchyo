@@ -10,7 +10,6 @@
   home-manager,
   nixosModules,
   homeManagerModules,
-  nixosHardwareModules,
 }:
 let
   testPkgs = import nixpkgs {
@@ -38,7 +37,6 @@ let
         home-manager
         nixosModules
         homeManagerModules
-        nixosHardwareModules
         ;
       pkgs = testPkgs;
     })
