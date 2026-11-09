@@ -1,7 +1,6 @@
-{ lib, config, ... }:
+{ lib, ... }:
 let
   inherit (lib) mkOption types;
-  xkbCompose = import ../../../lib/xkb-compose.nix;
 in
 {
   options.marchyo.keyboard = {
@@ -141,34 +140,18 @@ in
       '';
     };
 
-    legacyBinds = mkOption {
-      type = types.bool;
-      default = false;
-      description = ''
-        Restore the pre-4.5 marchyo Hyprland bind layout: Super+L locks,
-        panels sit on Super+Shift, the console on Super+Ctrl+grave and the
-        overview on Super+grave. The default follows the Omarchy 4.5 planes:
-        Super for the system, Super+Shift for apps, Super+Ctrl for panels and
-        menus, Super+Ctrl+Alt for quick actions. Kept for one release.
-      '';
-    };
-
     composeKey = mkOption {
       type = types.nullOr types.nonEmptyStr;
-      default = if xkbCompose.remapsCaps config.marchyo.keyboard.options then "menu" else "shift-caps";
-      defaultText = lib.literalMD ''
-        `"menu"` when `marchyo.keyboard.options` remaps Caps Lock, else `"shift-caps"`
-      '';
-      example = "menu";
+      default = "menu";
+      example = "shift-caps";
       description = ''
         Sets the XKB Compose key for typing special characters.
         Common values:
-        - shift-caps: Shift+Caps Lock (default; Caps Lock keeps its normal
-          job). Applies to Hyprland only: the console and X keep no compose
-          key, so set "menu" for a compose key there. It cannot be combined
-          with an option that remaps Caps Lock (ctrl:swapcaps, ctrl:nocaps,
-          caps:escape); the default is then "menu"
-        - menu: Menu key
+        - menu: Menu key (default)
+        - shift-caps: Shift+Caps Lock (Caps Lock keeps its normal job).
+          Applies to Hyprland only: the console and X keep no compose key.
+          It cannot be combined with an option that remaps Caps Lock
+          (ctrl:swapcaps, ctrl:nocaps, caps:escape)
         - ralt: Right Alt key
         - rwin: Right Super/Windows key
         - caps: Caps Lock key

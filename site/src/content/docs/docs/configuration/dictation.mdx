@@ -5,7 +5,7 @@ description: Push-to-talk voice-to-text for the Wayland desktop
 
 Marchyo can add voice dictation to the Hyprland desktop with **voxtype** (open
 source, Whisper). **Hold `F9`** to dictate (push-to-talk) or press
-**`Alt+Space`** to toggle recording on and off; the transcribed text is typed at
+**`Super+Ctrl+X`** to toggle recording on and off; the transcribed text is typed at
 the cursor.
 
 It is **off by default**: it needs a microphone. When enabled, a recording
@@ -19,12 +19,12 @@ binds call it. The daemon's evdev hotkey holds `F9`.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `marchyo.dictation.enable` | `bool` | `false` | Enable dictation (hold `F9` push-to-talk + an `Alt+Space` toggle bind) |
+| `marchyo.dictation.enable` | `bool` | `false` | Enable dictation (hold `F9` push-to-talk + a `Super+Ctrl+X` toggle bind) |
 | `marchyo.dictation.backend` | `enum` | `"voxtype"` | The dictation engine; `"voxtype"` is the only one |
 | `marchyo.dictation.pushToTalk.enable` | `bool` | `true` | Hold-to-talk on `F9`: the daemon's evdev hotkey (adds users to the `input` group) |
 | `marchyo.dictation.pushToTalk.key` | `str` | `"F9"` | evdev key held to record (e.g. `"SCROLLLOCK"`, `"PAUSE"`, `"F13"`) |
 | `marchyo.dictation.pushToTalk.mode` | `str` | `"push_to_talk"` | `"push_to_talk"` (hold) or `"toggle"` (press to start/stop) |
-| `marchyo.dictation.toggleKey` | `str` | `"ALT + SPACE"` | Hyprland bind for `marchyo dictation toggle`; `null` to unbind |
+| `marchyo.dictation.toggleKey` | `str` | `"SUPER + CTRL + X"` | Hyprland bind for `marchyo dictation toggle`; `null` to unbind |
 | `marchyo.dictation.gpu` | `bool` | `true` | Use the Vulkan GPU build (`voxtype-vulkan`); `false` for the CPU-only build |
 | `marchyo.dictation.model` | `str` | `"large-v3-turbo"` | Whisper model voxtype loads |
 | `marchyo.dictation.language` | `str` | `"auto"` | Spoken language (`"auto"` detects per utterance; pin with an ISO code like `"en"`) |
@@ -92,7 +92,7 @@ With `backend = "voxtype"`, enabling the option wires the upstream Home Manager 
   `wtype`/`wl-clipboard` on its PATH for typing into Wayland windows.
 - Recording is driven two ways: the daemon's evdev push-to-talk hotkey (hold
   `F9` by default) and a Hyprland bind (`marchyo.dictation.toggleKey`, default
-  `Alt+Space`) that runs `marchyo dictation toggle`. The evdev hotkey needs
+  `Super+Ctrl+X`) that runs `marchyo dictation toggle`. The evdev hotkey needs
   `/dev/input` access, so dictation users are added to the `input` group while
   `pushToTalk.enable` is set (a real privilege — set it `false` to rely only on
   the compositor toggle).

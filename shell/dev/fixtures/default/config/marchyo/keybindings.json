@@ -6,31 +6,31 @@
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + F",
+    "combo": "SUPER + F",
     "description": "File manager",
     "dispatch": null,
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + B",
+    "combo": "SUPER + B",
     "description": "Web browser",
     "dispatch": null,
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + M",
+    "combo": "SUPER + M",
     "description": "Music player",
     "dispatch": null,
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + Q",
+    "combo": "SUPER + ALT + C",
     "description": "Calculator",
     "dispatch": null,
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + T",
+    "combo": "SUPER + ALT + T",
     "description": "Activity (btop)",
     "dispatch": null,
     "group": "Apps"
@@ -48,7 +48,7 @@
     "group": "Apps"
   },
   {
-    "combo": "SUPER + SHIFT + G",
+    "combo": "SUPER + G",
     "description": "Messenger",
     "dispatch": null,
     "group": "Apps"
@@ -156,19 +156,19 @@
     "group": "Windows"
   },
   {
-    "combo": "SUPER + L",
+    "combo": "SUPER + CTRL + J",
     "description": "Cycle workspace layout",
     "dispatch": null,
     "group": "Windows"
   },
   {
-    "combo": "SUPER + ALT + L",
+    "combo": "SUPER + CTRL + SHIFT + J",
     "description": "Cycle workspace layout back",
     "dispatch": null,
     "group": "Windows"
   },
   {
-    "combo": "SUPER + M",
+    "combo": "SUPER + ALT + D",
     "description": "Minimize window to the drawer",
     "dispatch": "hl.dsp.window.move({ workspace = \"special:magic\", follow = false })",
     "group": "Windows"
@@ -570,6 +570,12 @@
     "group": "Utilities"
   },
   {
+    "combo": "SUPER + CTRL + N",
+    "description": "Toggle nightlight",
+    "dispatch": "hl.dsp.exec_cmd(\"marchyo toggle nightlight\")",
+    "group": "Toggles"
+  },
+  {
     "combo": "SUPER + CTRL + I",
     "description": "Toggle idle lock",
     "dispatch": "hl.dsp.exec_cmd(\"marchyo toggle idle\")",
@@ -606,7 +612,7 @@
     "group": "Workspaces"
   },
   {
-    "combo": "SUPER + CTRL + L",
+    "combo": "SUPER + L",
     "description": "Lock the screen",
     "dispatch": "hl.dsp.exec_cmd(\"marchyo shell lock\")",
     "group": "Session"
@@ -616,6 +622,18 @@
     "description": "Shut down",
     "dispatch": "hl.dsp.exec_cmd(\"systemctl poweroff\")",
     "group": "Session"
+  },
+  {
+    "combo": "SUPER + SHIFT + comma",
+    "description": "Move window to previous monitor",
+    "dispatch": "hl.dsp.window.move({ monitor = \"-1\" })",
+    "group": "Monitors"
+  },
+  {
+    "combo": "SUPER + SHIFT + period",
+    "description": "Move window to next monitor",
+    "dispatch": "hl.dsp.window.move({ monitor = \"+1\" })",
+    "group": "Monitors"
   },
   {
     "combo": "SUPER + SHIFT + CTRL + left",
@@ -654,25 +672,19 @@
     "group": "Windows"
   },
   {
-    "combo": "ALT + SPACE",
-    "description": "Dictation toggle",
-    "dispatch": "hl.dsp.exec_cmd(\"marchyo dictation toggle\")",
-    "group": "Dictation"
-  },
-  {
-    "combo": "SUPER + CTRL + A",
+    "combo": "SUPER + SHIFT + V",
     "description": "Audio panel",
     "dispatch": "hl.dsp.global(\"marchyo:panel.audio\")",
     "group": "Panels"
   },
   {
-    "combo": "SUPER + CTRL + N",
+    "combo": "SUPER + SHIFT + N",
     "description": "Network panel",
     "dispatch": "hl.dsp.global(\"marchyo:panel.network\")",
     "group": "Panels"
   },
   {
-    "combo": "SUPER + CTRL + P",
+    "combo": "SUPER + SHIFT + B",
     "description": "Power panel",
     "dispatch": "hl.dsp.global(\"marchyo:panel.power\")",
     "group": "Panels"
@@ -684,21 +696,15 @@
     "group": "Panels"
   },
   {
-    "combo": "SUPER + CTRL + M",
+    "combo": "SUPER + SHIFT + M",
     "description": "System monitor panel",
     "dispatch": "hl.dsp.global(\"marchyo:panel.monitor\")",
     "group": "Panels"
   },
   {
-    "combo": "SUPER + CTRL + O",
+    "combo": "SUPER + SHIFT + Q",
     "description": "Control Center",
     "dispatch": "hl.dsp.global(\"marchyo:panel.controlcenter\")",
-    "group": "Panels"
-  },
-  {
-    "combo": "SUPER + SHIFT + CTRL + A",
-    "description": "AI agents panel",
-    "dispatch": "hl.dsp.global(\"marchyo:panel.agents\")",
     "group": "Panels"
   },
   {
@@ -726,7 +732,7 @@
     "group": "Panels"
   },
   {
-    "combo": "SUPER + CTRL + grave",
+    "combo": "SUPER + grave",
     "description": "Window overview",
     "dispatch": "hl.dsp.global(\"marchyo:overview\")",
     "group": "Panels"
@@ -780,7 +786,7 @@
     "group": "Clipboard"
   },
   {
-    "combo": "SUPER + CTRL + E",
+    "combo": "SUPER + period",
     "description": "Emoji picker",
     "dispatch": "hl.dsp.global(\"marchyo:launcher.emoji\")",
     "group": "Menus"
@@ -804,7 +810,19 @@
     "group": "Monitors"
   },
   {
+    "combo": "SUPER + CTRL + A",
+    "description": "Audio mixer",
+    "dispatch": null,
+    "group": "Panels"
+  },
+  {
     "combo": "SUPER + CTRL + W",
+    "description": "Wi-Fi manager",
+    "dispatch": null,
+    "group": "Panels"
+  },
+  {
+    "combo": "SUPER + CTRL + SPACE",
     "description": "Next background",
     "dispatch": "hl.dsp.exec_cmd(\"marchyo bg next\")",
     "group": "Toggles"
@@ -835,36 +853,36 @@
   },
   {
     "combo": "SUPER + comma",
+    "description": "Dismiss last notification",
+    "dispatch": "hl.dsp.global(\"marchyo:notifications.dismiss\")",
+    "group": "Notifications"
+  },
+  {
+    "combo": "SUPER + CTRL + ALT + comma",
     "description": "Dismiss, invoke or focus the newest notification",
     "dispatch": "hl.dsp.global(\"marchyo:notifications.act\")",
     "group": "Notifications"
   },
   {
     "combo": "SUPER + ALT + comma",
-    "description": "Dismiss the newest notification",
-    "dispatch": "hl.dsp.global(\"marchyo:notifications.dismissOne\")",
-    "group": "Notifications"
-  },
-  {
-    "combo": "SUPER + CTRL + comma",
     "description": "Control notifications with the keyboard",
     "dispatch": "hl.dsp.global(\"marchyo:notifications.keyboard\")",
     "group": "Notifications"
   },
   {
-    "combo": "SUPER + CTRL + ALT + comma",
-    "description": "Silence notifications (do-not-disturb)",
-    "dispatch": "hl.dsp.global(\"marchyo:notifications.silence\")",
+    "combo": "SUPER + CTRL + comma",
+    "description": "Toggle do-not-disturb",
+    "dispatch": "hl.dsp.global(\"marchyo:dnd\")",
     "group": "Notifications"
   },
   {
-    "combo": "SUPER + SHIFT + comma",
+    "combo": "SUPER + CTRL + SHIFT + comma",
     "description": "Dismiss all notifications",
     "dispatch": "hl.dsp.global(\"marchyo:notifications.dismissAll\")",
     "group": "Notifications"
   },
   {
-    "combo": "SUPER + SHIFT + ALT + comma",
+    "combo": "SUPER + N",
     "description": "Notification history",
     "dispatch": "hl.dsp.global(\"marchyo:panel.notifications\")",
     "group": "Notifications"
@@ -876,19 +894,13 @@
     "group": "Session"
   },
   {
-    "combo": "SUPER + ALT + SPACE",
-    "description": "App launcher",
-    "dispatch": "hl.dsp.global(\"marchyo:launcher.apps\")",
-    "group": "Menus"
-  },
-  {
     "combo": "SUPER + Escape",
     "description": "System menu (lock, suspend, restart, shut down)",
     "dispatch": "hl.dsp.global(\"marchyo:menu.system\")",
     "group": "Menus"
   },
   {
-    "combo": "SUPER + SPACE",
+    "combo": "SUPER + ALT + SPACE",
     "description": "Command menu",
     "dispatch": "hl.dsp.global(\"marchyo:menu\")",
     "group": "Menus"
@@ -900,7 +912,7 @@
     "group": "Menus"
   },
   {
-    "combo": "SUPER + CTRL + X",
+    "combo": "SUPER + CTRL + SHIFT + X",
     "description": "Toggle menu",
     "dispatch": "hl.dsp.global(\"marchyo:menu.toggle\")",
     "group": "Menus"
@@ -1032,27 +1044,15 @@
     "group": "Utilities"
   },
   {
-    "combo": "SUPER + grave",
-    "description": "Toggle Quake console",
-    "dispatch": "hl.dsp.workspace.toggle_special(\"qconsole\")",
-    "group": "Apps"
-  },
-  {
-    "combo": "SUPER + SHIFT + grave",
-    "description": "Move window to Quake console",
-    "dispatch": "hl.dsp.window.move({ workspace = \"special:qconsole\", follow = false })",
-    "group": "Apps"
-  },
-  {
-    "combo": "SUPER + CTRL + return",
-    "description": "herdr",
-    "dispatch": null,
-    "group": "Apps"
-  },
-  {
     "combo": "SUPER + SHIFT + A",
     "description": "ChatGPT",
     "dispatch": "hl.dsp.exec_cmd(\"google-chrome --app=https://chatgpt.com/\")",
+    "group": "Web apps"
+  },
+  {
+    "combo": "SUPER + SHIFT + G",
+    "description": "GitHub",
+    "dispatch": "hl.dsp.exec_cmd(\"google-chrome --app=https://github.com/\")",
     "group": "Web apps"
   },
   {

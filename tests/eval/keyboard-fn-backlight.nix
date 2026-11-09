@@ -94,25 +94,28 @@ in
   # Hyprland only resolves the option with XKB_CONFIG_EXTRA_PATH set, so the
   # Hyprland env and uwsm's session env carry it too.
   eval-keyboard-shift-caps-session-env = verdict "keyboard-shift-caps-session-env" (
-    hyprHasBind (hyprEnv default) "XKB_CONFIG_EXTRA_PATH" "/etc/xkb"
-    && lib.hasInfix "XKB_CONFIG_EXTRA_PATH=/etc/xkb" (uwsmEnv default)
+    hyprHasBind (hyprEnv shiftCaps) "XKB_CONFIG_EXTRA_PATH" "/etc/xkb"
+    && lib.hasInfix "XKB_CONFIG_EXTRA_PATH=/etc/xkb" (uwsmEnv shiftCaps)
     && uwsmEnv menu == ""
   ) "XKB_CONFIG_EXTRA_PATH must reach the Hyprland and uwsm session env with shift-caps";
 
-  eval-keyboard-compose-default-shift-caps = verdict "keyboard-compose-default-shift-caps" (
-    lib.elem "marchyo:shift_caps_compose" (kbOptions default) && default.config.environment.etc ? xkb
-  ) "the default compose key must be Shift+Caps Lock";
+  eval-keyboard-compose-default-menu = verdict "keyboard-compose-default-menu" (
+    default.config.marchyo.keyboard.composeKey == "menu"
+    && lib.elem "compose:menu" (kbOptions default)
+    && !(default.config.environment.etc ? xkb)
+  ) "the default compose key must be the Menu key";
 
-  # The custom <CAPS> symbols would land after ctrl:swapcaps and turn both
-  # Caps Lock and Left Control into Caps Lock.
+  # A Caps Lock remap keeps the Menu compose key.
   eval-keyboard-caps-remap-keeps-menu-compose = verdict "keyboard-caps-remap-keeps-menu-compose" (
     swapCaps.config.marchyo.keyboard.composeKey == "menu"
     && lib.elem "compose:menu" (kbOptions swapCaps)
     && !(lib.elem "marchyo:shift_caps_compose" (kbOptions swapCaps))
-  ) "a Caps Lock remap must fall back to the menu compose key";
+  ) "a Caps Lock remap must keep the menu compose key";
 
   eval-keyboard-caps-remap-shift-caps-rejected = verdict "keyboard-caps-remap-shift-caps-rejected" (
-    lib.any (a: !a.assertion) swapCapsShift.config.assertions
+    lib.any
+      (a: !a.assertion)
+      swapCapsShift.config.assertions
   ) "shift-caps with ctrl:swapcaps must fail an assertion";
 
   # libxkbcommon resolves the custom option against the generated tree: Caps

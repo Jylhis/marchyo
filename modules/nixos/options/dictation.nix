@@ -6,7 +6,7 @@ in
   options.marchyo.dictation = {
     enable = lib.mkEnableOption ''
       voice dictation for the Wayland desktop. The backend (see `backend`)
-      transcribes speech and types it at the cursor. Alt+Space toggles recording
+      transcribes speech and types it at the cursor. Super+Ctrl+X toggles recording
       under Hyprland (see toggleKey) and holding F9 is push-to-talk (see
       pushToTalk). Requires a microphone'';
 
@@ -14,7 +14,7 @@ in
       type = types.enum [ "voxtype" ];
       default = "voxtype";
       description = ''
-        Dictation engine behind `marchyo dictation`, the Alt+Space bind and
+        Dictation engine behind `marchyo dictation`, the Super+Ctrl+X bind and
         the F9 hotkey: voxtype (Whisper, open source).
       '';
     };
@@ -58,7 +58,7 @@ in
 
     toggleKey = mkOption {
       type = types.nullOr types.str;
-      default = "ALT + SPACE";
+      default = "SUPER + CTRL + X";
       example = "SUPER + H";
       description = ''
         Hyprland Lua bind spec ("MOD + MOD + key") wired to

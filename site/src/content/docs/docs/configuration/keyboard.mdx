@@ -11,7 +11,7 @@ Out of the box:
 
 - `layouts = [ { layout = "us"; variant = "altgr-intl"; } "fi" ]`
 - `options = [ "grp:win_space_toggle" ]` (Super+Space switches layout/IME)
-- `composeKey = "shift-caps"`
+- `composeKey = "menu"`
 
 The `altgr-intl` variant ("English (US, intl., AltGr dead keys)") behaves like a plain US layout for the unmodified keys — `'`, `"`, `` ` ``, `~`, `^` produce their normal characters, **not** dead keys. The international characters live behind the AltGr modifier (Right Alt).
 
@@ -123,13 +123,13 @@ marchyo.keyboard.options = [
 The compose key lets you type special characters via key sequences (e.g., Compose + `'` + `e` = `é`).
 
 ```nix
-marchyo.keyboard.composeKey = "menu";  # Menu key (default: "shift-caps")
+marchyo.keyboard.composeKey = "shift-caps";  # Shift+Caps Lock (default: "menu")
 ```
 
 | Value | Key |
 |-------|-----|
-| `"shift-caps"` | Shift+Caps Lock (default; Hyprland only) |
-| `"menu"` | Menu key |
+| `"menu"` | Menu key (default) |
+| `"shift-caps"` | Shift+Caps Lock (Hyprland only) |
 | `"ralt"` | Right Alt — avoid when using `us(altgr-intl)` or `us(intl)` (it needs Right Alt as AltGr) |
 | `"rwin"` | Right Super/Windows |
 | `"caps"` | Caps Lock |
@@ -179,17 +179,9 @@ marchyo.keyboard.fnMode = "function";  # top row sends F1-F12, Fn gives media ke
 
 `marchyo.keyboard.backlight.enable` (default `true`) binds `XF86KbdBrightnessUp/Down`, `XF86KbdLightOnOff` and `Ctrl` plus the display brightness keys to `marchyo brightness --keyboard up|down|toggle`. It acts on the first `*kbd_backlight*` LED and shows the shell OSD when the shell is installed. The level survives reboots through the stock `systemd-backlight@leds:*` service, so nothing extra is installed.
 
-## Legacy hotkeys
-
-```nix
-marchyo.keyboard.legacyBinds = true;
-```
-
-The default Hyprland binds follow the Omarchy 4.5 planes (see [Keybindings](/docs/usage/hotkeys/)). `legacyBinds` restores the previous marchyo chords for one release: `Super+L` locks, the panels sit on `Super+Shift`, the console on `Super+Ctrl+grave` and the overview on `Super+grave`.
-
 ## Shift+Caps Lock as Compose
 
-The default. Caps Lock stays Caps Lock and Shift+Caps Lock sends Compose. Marchyo installs a symbols file and an evdev rules extension in `/etc/xkb` and exports `XKB_CONFIG_EXTRA_PATH=/etc/xkb`, which libxkbcommon (Hyprland) reads. The console and X server do not see the option, so they get no compose key. The change applies to new sessions.
+With `composeKey = "shift-caps"`, Caps Lock stays Caps Lock and Shift+Caps Lock sends Compose. It cannot be combined with an option that remaps Caps Lock (`ctrl:swapcaps`, `ctrl:nocaps`, `caps:escape`). Marchyo installs a symbols file and an evdev rules extension in `/etc/xkb` and exports `XKB_CONFIG_EXTRA_PATH=/etc/xkb`, which libxkbcommon (Hyprland) reads. The console and X server do not see the option, so they get no compose key. The change applies to new sessions.
 
 ## Full example
 
@@ -221,9 +213,8 @@ marchyo.keyboard = {
 |--------|------|---------|-------------|
 | `marchyo.keyboard.layouts` | list of strings or attrsets | `[{ layout = "us"; variant = "altgr-intl"; } "fi"]` | Keyboard layouts and input methods |
 | `marchyo.keyboard.options` | list of strings | `["grp:win_space_toggle"]` | XKB keyboard options |
-| `marchyo.keyboard.composeKey` | string or null | `"shift-caps"` | Compose key (Shift+Caps Lock by default) |
+| `marchyo.keyboard.composeKey` | string or null | `"menu"` | Compose key (the Menu key by default) |
 | `marchyo.keyboard.fnMode` | `"media"`, `"function"` or null | `null` | Top-row default for Apple/ASUS keyboards |
 | `marchyo.keyboard.backlight.enable` | bool | `true` | Keyboard backlight key binds |
-| `marchyo.keyboard.legacyBinds` | bool | `false` | Pre-4.5 marchyo hotkey layout |
 | `marchyo.keyboard.autoActivateIME` | bool | `false` | Start with the IME engine active |
 | `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Keys that cycle layouts, then engines |

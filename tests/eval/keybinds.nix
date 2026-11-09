@@ -24,96 +24,85 @@ let
 
   m = combo: action: { inherit combo action; };
 
-  # Omarchy 4.5 chord -> a substring of the rendered action, with every
-  # bind-contributing feature on.
+  # Chord -> a substring of the rendered action, with every bind-contributing
+  # feature on.
   chordMap = [
-    (m "SUPER + L" "tiled_layout")
-    (m "SUPER + ALT + L" "tiled_layout")
-    (m "SUPER + CTRL + L" "shell lock")
+    (m "SUPER + L" "shell lock")
+    (m "SUPER + CTRL + J" "tiled_layout")
+    (m "SUPER + CTRL + SHIFT + J" "tiled_layout")
     (m "SUPER + Escape" "marchyo:menu.system")
-    (m "SUPER + SPACE" "marchyo:menu")
-    (m "SUPER + ALT + SPACE" "marchyo:launcher.apps")
+    (m "SUPER + ALT + SPACE" "marchyo:menu")
+    (m "SUPER + R" "marchyo:launcher.apps")
     (m "SUPER + CTRL + C" "marchyo:menu.capture")
-    (m "SUPER + CTRL + X" "marchyo:menu.toggle")
+    (m "SUPER + CTRL + SHIFT + X" "marchyo:menu.toggle")
     (m "SUPER + CTRL + SHIFT + H" "marchyo:menu.hardware")
     (m "SUPER + CTRL + SHIFT + T" "marchyo:menu.theme")
-    (m "SUPER + SHIFT + F" "fileManager")
-    (m "SUPER + SHIFT + B" "browser")
-    (m "SUPER + SHIFT + G" "messenger")
+    (m "SUPER + F" "fileManager")
+    (m "SUPER + B" "browser")
+    (m "SUPER + G" "messenger")
+    (m "SUPER + M" "music")
     (m "SUPER + K" "marchyo:launcher.keys")
     (m "SUPER + Q" "window.close()")
     (m "SUPER + W" "window.close()")
-    (m "SUPER + M" "special:magic")
+    (m "SUPER + ALT + D" "special:magic")
     (m "SUPER + A" ''key = "A"'')
     (m "SUPER + C" ''"CTRL SHIFT", key = "C"'')
     (m "SUPER + V" ''"CTRL SHIFT", key = "V"'')
-    (m "SUPER + CTRL + grave" "marchyo:overview")
+    (m "SUPER + grave" "marchyo:overview")
+    (m "SUPER + SHIFT + comma" ''monitor = "-1"'')
+    (m "SUPER + SHIFT + period" ''monitor = "+1"'')
     (m "SUPER + SHIFT + CTRL + left" ''monitor = "l"'')
     (m "SUPER + SHIFT + CTRL + right" ''monitor = "r"'')
     (m "SUPER + SHIFT + CTRL + up" ''monitor = "u"'')
     (m "SUPER + SHIFT + CTRL + down" ''monitor = "d"'')
-    (m "SUPER + SHIFT + M" "music")
-    (m "SUPER + SHIFT + Q" "qalc")
-    (m "SUPER + SHIFT + T" "btop")
-    (m "SUPER + CTRL + A" "marchyo:panel.audio")
+    (m "SUPER + ALT + C" "qalc")
+    (m "SUPER + ALT + T" "btop")
+    (m "SUPER + SHIFT + V" "marchyo:panel.audio")
+    (m "SUPER + SHIFT + N" "marchyo:panel.network")
+    (m "SUPER + SHIFT + B" "marchyo:panel.power")
+    (m "SUPER + SHIFT + M" "marchyo:panel.monitor")
+    (m "SUPER + SHIFT + Q" "marchyo:panel.controlcenter")
+    (m "SUPER + CTRL + A" "wiremix")
+    (m "SUPER + CTRL + W" "nmtui")
+    (m "SUPER + CTRL + N" "toggle nightlight")
     (m "SUPER + CTRL + B" "marchyo:panel.bluetooth")
     (m "SUPER + CTRL + SHIFT + B" "bluetui")
     (m "SUPER + CTRL + ALT + P" "marchyo:panel.speedtest")
     (m "SUPER + CTRL + ALT + D" "marchyo:panel.dropbox")
     (m "SUPER + CTRL + D" "marchyo:panel.display")
-    (m "SUPER + CTRL + N" "marchyo:panel.network")
-    (m "SUPER + CTRL + P" "marchyo:panel.power")
-    (m "SUPER + CTRL + M" "marchyo:panel.monitor")
-    (m "SUPER + CTRL + O" "marchyo:panel.controlcenter")
-    (m "SUPER + CTRL + E" "marchyo:launcher.emoji")
+    (m "SUPER + period" "marchyo:launcher.emoji")
     (m "SUPER + CTRL + V" "marchyo:launcher.clipboard")
     (m "SUPER + CTRL + T" "marchyo:panel.themes")
     (m "SUPER + CTRL + SHIFT + W" "marchyo:panel.backgrounds")
-    (m "SUPER + CTRL + W" "marchyo bg next")
+    (m "SUPER + CTRL + SPACE" "marchyo bg next")
     (m "SUPER + CTRL + ALT + C" "marchyo capture screenshot")
     (m "SUPER + CTRL + ALT + F" "fullscreen-desktop")
     (m "SUPER + CTRL + ALT + E" "marchyo:panel.elsewhen")
     (m "SUPER + CTRL + U" "marchyo:panel.whatsnew")
     (m "SUPER + CTRL + H" "marchyo:panel.setup")
     (m "SUPER + CTRL + ALT + G" "marchyo:panel.gallery")
-    (m "SUPER + comma" "marchyo:notifications.act")
-    (m "SUPER + ALT + comma" "marchyo:notifications.dismissOne")
-    (m "SUPER + CTRL + comma" "marchyo:notifications.keyboard")
-    (m "SUPER + CTRL + ALT + comma" "marchyo:notifications.silence")
-    (m "SUPER + SHIFT + comma" "marchyo:notifications.dismissAll")
-    (m "SUPER + SHIFT + ALT + comma" "marchyo:panel.notifications")
+    (m "SUPER + comma" "marchyo:notifications.dismiss")
+    (m "SUPER + CTRL + ALT + comma" "marchyo:notifications.act")
+    (m "SUPER + ALT + comma" "marchyo:notifications.keyboard")
+    (m "SUPER + CTRL + comma" "marchyo:dnd")
+    (m "SUPER + CTRL + SHIFT + comma" "marchyo:notifications.dismissAll")
+    (m "SUPER + N" "marchyo:panel.notifications")
     (m "SUPER + ALT + return" "tmux new -A -s Work")
-    (m "SUPER + CTRL + ALT + L" "marchyo-cross-windmove focus r")
-    (m "SUPER + SHIFT + ALT + E" "emacs-everywhere")
-    (m "SUPER + CTRL + ALT + O" "org-capture")
-    (m "ALT + SPACE" "dictation toggle")
+    (m "SUPER + ALT + L" "marchyo-cross-windmove focus r")
+    (m "SUPER + ALT + SHIFT + J" "marchyo-cross-windmove move d")
+    (m "SUPER + CTRL + E" "emacs-everywhere")
+    (m "SUPER + SHIFT + T" "org-capture")
+    (m "SUPER + CTRL + X" "dictation toggle")
   ];
-  # Without the shell, the panel chords open the TUIs.
+  # Without the shell, the TUIs and terminal menus take the chords.
   shellOffChordMap = [
     (m "SUPER + CTRL + A" "wiremix")
-    (m "SUPER + CTRL + N" "nmtui")
-    (m "SUPER + CTRL + L" "hyprlock")
+    (m "SUPER + CTRL + W" "nmtui")
+    (m "SUPER + CTRL + B" "bluetui")
+    (m "SUPER + L" "hyprlock")
     (m "SUPER + Escape" "marchyo menu power")
     (m "SUPER + ALT + Space" "marchyo menu")
     (m "SUPER + K" "marchyo keybindings")
-  ];
-  legacyChordMap = [
-    (m "SUPER + L" "shell lock")
-    (m "SUPER + M" "music")
-    (m "SUPER + grave" "marchyo:overview")
-    (m "SUPER + CTRL + N" "toggle nightlight")
-    (m "SUPER + CTRL + W" "nmtui")
-    (m "SUPER + CTRL + A" "wiremix")
-    (m "SUPER + SHIFT + V" "marchyo:panel.audio")
-    (m "SUPER + SHIFT + Q" "marchyo:panel.controlcenter")
-    (m "SUPER + comma" "marchyo:notifications.dismiss")
-    (m "SUPER + N" "marchyo:panel.notifications")
-    (m "SUPER + period" "marchyo:launcher.emoji")
-    (m "SUPER + ALT + L" "marchyo-cross-windmove focus r")
-    (m "SUPER + F" "fileManager")
-    (m "SUPER + B" "browser")
-    (m "SUPER + G" "messenger")
-    (m "SUPER + ALT + SPACE" "marchyo:menu")
   ];
 
   hmFor =
@@ -211,7 +200,7 @@ in
       byCombo = combo: lib.findFirst (e: e.combo == combo) null entries;
     in
     verdict "keybinds-cheatsheet-dispatch" (
-      (byCombo "SUPER + SPACE").dispatch == ''hl.dsp.global("marchyo:menu")''
+      (byCombo "SUPER + ALT + SPACE").dispatch == ''hl.dsp.global("marchyo:menu")''
       && (byCombo "SUPER + C").dispatch == null
       && lib.all (e: e.dispatch == null || !(lib.hasInfix "exec_cmd(terminal" e.dispatch)) entries
     ) "the cheat sheet dispatch field is wrong";
@@ -228,30 +217,18 @@ in
     ) "the cheat sheet shows keycodes instead of digits";
 
   # Super+C/V: Ctrl+Shift+C/V for terminals, Ctrl/Shift+Insert for every
-  # other window (Emacs reads Ctrl+C and Ctrl+V as commands). The legacy
-  # layout keeps the plain Insert binds.
+  # other window (Emacs reads Ctrl+C and Ctrl+V as commands).
   eval-keybinds-universal-clipboard =
     let
-      modern = binds (hmFor everything);
-      old = binds (hmFor (lib.recursiveUpdate everything { marchyo.keyboard.legacyBinds = true; }));
-      oldBind =
-        chord: expr: description:
-        lib.any (
-          b:
-          builtins.head b._args == chord
-          && (builtins.elemAt b._args 1).expr or null == "hl.dsp.${expr}"
-          && (builtins.elemAt b._args 2).description or null == description
-        ) old;
+      bs = binds (hmFor everything);
     in
     verdict "keybinds-universal-clipboard" (
-      hyprHasBind modern "SUPER + C" ''"CTRL SHIFT", key = "C"''
-      && hyprHasBind modern "SUPER + C" ''send_shortcut({ mods = "CTRL", key = "Insert" })''
-      && hyprHasBind modern "SUPER + V" ''send_shortcut({ mods = "SHIFT", key = "Insert" })''
-      && !(hyprHasBind modern "SUPER + C" ''mods = "CTRL", key = "C"'')
-      && oldBind "SUPER + C" ''send_shortcut({ mods = "CTRL", key = "Insert" })'' "Copy"
-      && oldBind "SUPER + V" ''send_shortcut({ mods = "SHIFT", key = "Insert" })'' "Paste"
-      && oldBind "SUPER + X" ''send_shortcut({ mods = "CTRL", key = "X" })'' "Cut"
-    ) "Super+C/V/X do not send the terminal and Insert chords, or the legacy binds changed";
+      hyprHasBind bs "SUPER + C" ''"CTRL SHIFT", key = "C"''
+      && hyprHasBind bs "SUPER + C" ''send_shortcut({ mods = "CTRL", key = "Insert" })''
+      && hyprHasBind bs "SUPER + V" ''send_shortcut({ mods = "SHIFT", key = "Insert" })''
+      && hyprHasBind bs "SUPER + X" ''send_shortcut({ mods = "CTRL", key = "X" })''
+      && !(hyprHasBind bs "SUPER + C" ''mods = "CTRL", key = "C"'')
+    ) "Super+C/V/X do not send the terminal and Insert chords";
 
   # The terminal tag follows the configured terminal (the `terminal` local).
   eval-keybinds-terminal-tag =
@@ -274,13 +251,12 @@ in
       && builtins.match regex "emacs" == null
     ) "the terminal tag rule does not cover the configured terminal: ${regex}";
 
-  # A web app key on a marchyo chord (B, N, V are the legacy panels with the
-  # shell on) loses its bind with a warning instead of double-binding.
+  # A web app key on a marchyo chord (B, N, V are panels with the shell on)
+  # loses its bind with a warning instead of double-binding.
   eval-keybinds-webapp-clash =
     let
       hm = hmFor (
         lib.recursiveUpdate everything {
-          marchyo.keyboard.legacyBinds = true;
           marchyo.webapps.extraApps =
             map
               (key: {
@@ -302,6 +278,16 @@ in
       (dupes == [ ] && builtins.length warned == 3 && !(hasBindText hm "example.com"))
       "clashing web app keys: duplicates ${lib.concatStringsSep ", " dupes}, ${toString (builtins.length warned)} warnings";
 
+  # The default web apps keep their keys: none clashes with a marchyo bind.
+  eval-keybinds-default-webapps-no-clash =
+    let
+      hm = hmFor everything;
+    in
+    verdict "keybinds-default-webapps-no-clash" (
+      !(lib.any (lib.hasInfix "marchyo.webapps: the key") hm.warnings)
+      && hyprHasBind (binds hm) "SUPER + SHIFT + G" "github.com"
+    ) "a default web app key clashes with a marchyo bind";
+
   # Off the desktop there is no table, no binds and no cheat-sheet file.
   eval-keybinds-desktop-off =
     let
@@ -311,44 +297,25 @@ in
       table hm == [ ] && !(hm.xdg.configFile ? "marchyo/keybindings.json")
     ) "desktop disabled but the bind table or the cheat-sheet file is present";
 
-  # The Omarchy 4.5 layout: each chord reaches the named action.
-  eval-keybinds-omarchy-45-layout =
+  # The layout: each chord reaches the named action.
+  eval-keybinds-layout =
     let
       hm = hmFor everything;
       off = hmFor shellOff;
       missing =
         lib.filter (c: !(hyprHasBind (binds hm) c.combo c.action)) chordMap
         ++ lib.filter (c: !(hyprHasBind (binds off) c.combo c.action)) shellOffChordMap;
-      forbidden = lib.filter (s: hasBindText hm s) [
-        "toggle nightlight"
-        "notifications.dismiss\""
-        "marchyo:dnd"
-      ];
     in
-    verdict "keybinds-omarchy-45-layout" (missing == [ ] && forbidden == [ ]) (
-      "chords off the 4.5 layout: "
-      + lib.concatMapStringsSep ", " (c: "${c.combo} -> ${c.action}") missing
-      + "; binds that 4.5 removes: ${lib.concatStringsSep ", " forbidden}"
-    );
+    verdict "keybinds-layout" (missing == [ ])
+      "chords off the layout: ${lib.concatMapStringsSep ", " (c: "${c.combo} -> ${c.action}") missing}";
 
-  # marchyo.keyboard.legacyBinds brings back the pre-4.5 chords.
-  eval-keybinds-legacy-layout =
+  # No chord is bound twice, with the shell on or off.
+  eval-keybinds-no-duplicate-chords =
     let
-      hm = hmFor (lib.recursiveUpdate everything { marchyo.keyboard.legacyBinds = true; });
-      missing = lib.filter (c: !(hyprHasBind (binds hm) c.combo c.action)) legacyChordMap;
+      dupes =
+        normalizedDuplicates (binds (hmFor everything)) ++ normalizedDuplicates (binds (hmFor shellOff));
     in
-    verdict "keybinds-legacy-layout" (
-      missing == [ ] && !(hyprHasBind (binds hm) "SUPER + CTRL + L" "lock")
-    ) "legacy chords missing: ${lib.concatMapStringsSep ", " (c: "${c.combo} -> ${c.action}") missing}";
-
-  # The legacy layout binds no chord twice either.
-  eval-keybinds-legacy-no-duplicate-chords =
-    let
-      dupes = normalizedDuplicates (
-        binds (hmFor (lib.recursiveUpdate everything { marchyo.keyboard.legacyBinds = true; }))
-      );
-    in
-    verdict "keybinds-legacy-no-duplicate-chords" (
+    verdict "keybinds-no-duplicate-chords" (
       dupes == [ ]
-    ) "legacy layout binds these chords more than once: ${lib.concatStringsSep ", " dupes}";
+    ) "these chords are bound more than once: ${lib.concatStringsSep ", " dupes}";
 }

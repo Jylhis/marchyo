@@ -41,16 +41,16 @@ booting the previous generation (see [Updating](./10-updating.md)).
 You'll feel at home quickly. Marchyo takes omarchy's ideas and builds them
 declaratively, so the shape of the desktop is familiar: Hyprland, a curated set of
 apps chosen for you, one coherent theme, and a keyboard-first workflow. Many binds
-follow the Omarchy 4.5 planes on purpose: `Super + Ctrl + A`, `Super + Ctrl + N`
-and `Super + Ctrl + B` open the audio, network and Bluetooth controls,
-`Super + Ctrl + L` locks, `Super + L` cycles the layout, `Super + Escape` opens the
-system menu, and `Super + Alt + Space` opens the Marchyo menu.
+match omarchy on purpose: `Super + Ctrl + A`, `Super + Ctrl + W` and
+`Super + Ctrl + B` open the audio mixer, Wi-Fi and Bluetooth controls, `Super + L`
+locks, `Super + Escape` opens the system menu, and `Super + Alt + Space` opens the
+Marchyo menu.
 
 A few things differ:
 
-- **App launch binds follow the omarchy planes.** `Super + Shift + B` is the browser,
-  `Super + Shift + F` the file manager, `Super + E` the editor, `Super + Return` the
-  terminal (`marchyo.keyboard.legacyBinds` restores the old plain-letter chords). Web apps such as YouTube and GitHub sit on `Super + Shift` chords. The
+- **Apps launch on plain letters.** `Super + B` is the browser, `Super + F` the file
+  manager, `Super + E` the editor, `Super + Return` the terminal, where omarchy uses
+  `Super + Shift`. Web apps such as YouTube and GitHub sit on `Super + Shift` chords. The
   full map is in [Hotkeys](./07-hotkeys.md).
 - **There is no `omarchy-install-*`.** Turning on a whole feature group is one flag,
   such as `marchyo.development.enable`, or the `marchyo install development` command,

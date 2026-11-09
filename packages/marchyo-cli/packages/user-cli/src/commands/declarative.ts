@@ -36,7 +36,7 @@ type Feature = (typeof FEATURES)[number];
 // SUPER+SHIFT letters already claimed by marchyo binds and the default
 // webapp set (see modules/nixos/options/webapps.nix).
 const TAKEN_SUPER_SHIFT_KEYS = new Set(
-  "A C D E G H I O P S W X Y Z".split(" "),
+  "A B C D E G H I L M N O P Q S T V W X Y Z".split(" "),
 );
 
 export type DeclarativeOpts = { dryRun?: boolean };

@@ -504,13 +504,14 @@ Default binds, wired only while the shell is on: `SUPER+SHIFT+V` audio,
 theme picker, `SUPER+CTRL+SHIFT+W` the wallpaper picker, `SUPER+R` /
 `SUPER+period` / `SUPER+CTRL+V` the launcher modes,
 `SUPER+comma` dismiss, `SUPER+CTRL+SHIFT+comma` dismiss all,
-`SUPER+CTRL+comma` do-not-disturb, and `SUPER+ALT+comma` keyboard control of
+`SUPER+CTRL+ALT+comma` act on the newest, `SUPER+CTRL+comma` do-not-disturb,
+and `SUPER+ALT+comma` keyboard control of
 the toasts (the stack takes exclusive focus, the newest toast is selected,
 number keys press its buttons, Enter clicks it, Up/Down or J/K move, Delete
 dismisses, Escape or ten idle seconds hand the keyboard back; toast expiry
 pauses meanwhile). Non-consuming `Caps_Lock` / `Num_Lock` release binds fire
 `lockKeys` so the lock-key widget re-reads its LEDs. Session-critical binds
-keep a direct exec: `SUPER+CTRL+L` runs `marchyo shell lock`, and the terminal bind
+keep a direct exec: `SUPER+L` runs `marchyo shell lock`, and the terminal bind
 execs the terminal.
 
 ### Overview
@@ -606,7 +607,7 @@ exclusive with hyprlock.
 drives the prompt/retry loop, and `locked = false` happens in exactly one
 place — a successful authentication. Trigger paths:
 
-- `SUPER+CTRL+L` runs `marchyo shell lock`; hypridle's lock points (`lock_cmd`,
+- `SUPER+L` runs `marchyo shell lock`; hypridle's lock points (`lock_cmd`,
   `before_sleep_cmd`, the 300s listener in `modules/home/hypridle.nix`) run
   `marchyo shell lock` too. hypridle stays the single idle
   authority so `marchyo toggle idle` keeps disabling idle lock; Quickshell's
@@ -684,7 +685,7 @@ grid, where Left/Right move by one), Enter activates.
 | emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
 | clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js`; image entries get a thumbnail row (see below) | text: copy + type; image: `wl-copy` + Ctrl+V |
 
-| menu | `SUPER+Space` | `Commons/MenuModel.js` over `~/.config/marchyo/menu.json` (from `marchyo.menu.entries`) merged per key with `menu.local.json`; providers list themes, fonts, languages, power profiles, wallpapers and agent accounts with one `marchyo` command each, apps from `DesktopEntries` | submenu: `Services/Launcher.menuInto()`; exec and terminal run detached after the launcher closes; launcher opens another mode |
+| menu | `SUPER+ALT+Space` | `Commons/MenuModel.js` over `~/.config/marchyo/menu.json` (from `marchyo.menu.entries`) merged per key with `menu.local.json`; providers list themes, fonts, languages, power profiles, wallpapers and agent accounts with one `marchyo` command each, apps from `DesktopEntries` | submenu: `Services/Launcher.menuInto()`; exec and terminal run detached after the launcher closes; launcher opens another mode |
 | keys | `SUPER+K` | `~/.config/marchyo/keybindings.json`, rows grouped by modifier plane | `hyprctl dispatch <dispatch>` when the bind has one |
 | dmenu | none (`marchyo menu select|input`) | the request file `$XDG_RUNTIME_DIR/marchyo/menu/<id>.json`, answered in `<id>.out` then `<id>.done` | the chosen value; closing answers with an empty file (a cancel) |
 

@@ -73,6 +73,13 @@ in
     ] "Slack theme injection is not carried in marchyo; Slack keeps its own theme.")
     (removed
       [
+        "keyboard"
+        "legacyBinds"
+      ]
+      "The pre-Omarchy-4.5 bind layout is now the only Hyprland layout; drop marchyo.keyboard.legacyBinds."
+    )
+    (removed
+      [
         "console"
         "enable"
       ]

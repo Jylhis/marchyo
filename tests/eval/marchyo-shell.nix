@@ -86,11 +86,11 @@ in
         "SUPER + ALT + comma"
         "SUPER + CTRL + comma"
         "SUPER + CTRL + ALT + comma"
-        "SUPER + SHIFT + comma"
-        "SUPER + SHIFT + ALT + comma"
-        "SUPER + CTRL + P"
+        "SUPER + CTRL + SHIFT + comma"
+        "SUPER + N"
+        "SUPER + SHIFT + B"
         "SUPER + CTRL + D"
-        "SUPER + CTRL + O"
+        "SUPER + SHIFT + Q"
       ];
       dead = lib.filter (c: lib.elem c chords) shellOnly;
     in
@@ -129,7 +129,7 @@ in
         throw "FAIL: marchyo.shell is off but hyprlock is missing on a desktop"
     );
 
-  # SUPER+CTRL+L reaches the running shell through `marchyo shell lock` when it is
+  # SUPER+L reaches the running shell through `marchyo shell lock` when it is
   # on; hyprlock when off.
   eval-marchyo-shell-lock-bind =
     let
@@ -138,10 +138,10 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-lock-bind" (
-      if hyprHasBind bind "SUPER + CTRL + L" "marchyo shell lock" then
+      if hyprHasBind bind "SUPER + L" "marchyo shell lock" then
         "pass"
       else
-        throw "FAIL: SUPER+CTRL+L should run 'marchyo shell lock' when the shell is enabled"
+        throw "FAIL: SUPER+L should run 'marchyo shell lock' when the shell is enabled"
     );
 
   eval-marchyo-shell-off-keeps-hyprlock-bind =
@@ -150,13 +150,13 @@ in
         (evalWith shellOff).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-off-keeps-hyprlock-bind" (
-      if hyprHasBind bind "SUPER + CTRL + L" "hyprlock" then
+      if hyprHasBind bind "SUPER + L" "hyprlock" then
         "pass"
       else
-        throw "FAIL: marchyo.shell is off but SUPER+CTRL+L no longer execs hyprlock"
+        throw "FAIL: marchyo.shell is off but SUPER+L no longer execs hyprlock"
     );
 
-  # SUPER+CTRL+grave summons the window overview through the shell's `overview`
+  # SUPER+grave summons the window overview through the shell's `overview`
   # global shortcut when the shell is on, and is the only bind on that chord; with the shell
   # off there is no overview and no bind.
   eval-marchyo-shell-overview-bind =
@@ -166,15 +166,13 @@ in
         (evalWith extra).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
       on = bindsFor { marchyo.shell.enable = true; };
       off = bindsFor shellOff;
-      onChord = lib.filter (
-        e: (e._args or [ ]) != [ ] && builtins.head e._args == "SUPER + CTRL + grave"
-      ) on;
+      onChord = lib.filter (e: (e._args or [ ]) != [ ] && builtins.head e._args == "SUPER + grave") on;
     in
     pkgs.writeText "eval-marchyo-shell-overview-bind" (
-      if !(hyprHasBind on "SUPER + CTRL + grave" "hl.dsp.global(\"marchyo:overview\")") then
-        throw "FAIL: SUPER+CTRL+grave should dispatch the overview global shortcut when the shell is on"
+      if !(hyprHasBind on "SUPER + grave" "hl.dsp.global(\"marchyo:overview\")") then
+        throw "FAIL: SUPER+grave should dispatch the overview global shortcut when the shell is on"
       else if lib.length onChord != 1 then
-        throw "FAIL: SUPER+CTRL+grave should carry exactly one bind, found ${toString (lib.length onChord)}"
+        throw "FAIL: SUPER+grave should carry exactly one bind, found ${toString (lib.length onChord)}"
       else if lib.any (e: lib.hasInfix "marchyo:" (hyprEntryText e)) off then
         throw "FAIL: marchyo.shell is off but a bind still dispatches a marchyo global shortcut"
       else
@@ -252,12 +250,12 @@ in
     pkgs.writeText "eval-marchyo-shell-launcher-binds" (
       if !(hyprHasBind binds "SUPER + R" "hl.dsp.global(\"marchyo:launcher.apps\")") then
         throw "FAIL: SUPER+R should summon the in-shell launcher when the shell is on"
-      else if !(hyprHasBind binds "SUPER + CTRL + E" "hl.dsp.global(\"marchyo:launcher.emoji\")") then
-        throw "FAIL: SUPER+CTRL+E should summon the in-shell emoji picker when the shell is on"
+      else if !(hyprHasBind binds "SUPER + period" "hl.dsp.global(\"marchyo:launcher.emoji\")") then
+        throw "FAIL: SUPER+period should summon the in-shell emoji picker when the shell is on"
       else if !(hyprHasBind binds "SUPER + CTRL + T" "hl.dsp.global(\"marchyo:panel.themes\")") then
         throw "FAIL: SUPER+CTRL+T should open the theme picker when the shell is on"
-      else if !(hyprHasBind binds "SUPER + CTRL + E" "Emoji picker") then
-        throw "FAIL: SUPER+CTRL+E should keep its 'Emoji picker' description (hyprland.nix test depends on it)"
+      else if !(hyprHasBind binds "SUPER + period" "Emoji picker") then
+        throw "FAIL: SUPER+period should keep its 'Emoji picker' description (hyprland.nix test depends on it)"
       else if !(hyprHasBind binds "SUPER + CTRL + V" "hl.dsp.global(\"marchyo:launcher.clipboard\")") then
         throw "FAIL: SUPER+Ctrl+V should summon the in-shell clipboard history when the shell is on"
       else
@@ -302,10 +300,10 @@ in
         throw "FAIL: XF86AudioMicMute should run 'marchyo volume mute --mic' when the shell is on"
       else if !(hyprHasBind binds "XF86MonBrightnessUp" "marchyo brightness up") then
         throw "FAIL: XF86MonBrightnessUp should run 'marchyo brightness up' when the shell is on"
-      else if !(hyprHasBind binds "SUPER + CTRL + A" "hl.dsp.global(\"marchyo:panel.audio\")") then
-        throw "FAIL: SUPER+CTRL+A should dispatch the panel.audio global shortcut"
+      else if !(hyprHasBind binds "SUPER + SHIFT + V" "hl.dsp.global(\"marchyo:panel.audio\")") then
+        throw "FAIL: SUPER+SHIFT+V should dispatch the panel.audio global shortcut"
       else if
-        !(hyprHasBind binds "SUPER + CTRL + O" "hl.dsp.global(\"marchyo:panel.controlcenter\")")
+        !(hyprHasBind binds "SUPER + SHIFT + Q" "hl.dsp.global(\"marchyo:panel.controlcenter\")")
       then
         throw "FAIL: SUPER+SHIFT+Q should dispatch the panel.controlcenter global shortcut"
       else if !(hyprHasBind binds "SUPER + SHIFT + SPACE" "hl.dsp.global(\"marchyo:bar\")") then
@@ -328,14 +326,12 @@ in
       general = hm.services.hypridle.settings.general;
     in
     pkgs.writeText "eval-marchyo-shell-verbs-without-cli" (
-      if !(hyprHasBind binds "SUPER + CTRL + A" "hl.dsp.global(\"marchyo:panel.audio\")") then
+      if !(hyprHasBind binds "SUPER + SHIFT + V" "hl.dsp.global(\"marchyo:panel.audio\")") then
         throw "FAIL: with marchyo.cli.enable = false the panel binds should still dispatch global shortcuts"
-      else if
-        !(hyprHasBind binds "SUPER + CTRL + ALT + comma" "hl.dsp.global(\"marchyo:notifications.silence\")")
-      then
+      else if !(hyprHasBind binds "SUPER + CTRL + comma" "hl.dsp.global(\"marchyo:dnd\")") then
         throw "FAIL: with marchyo.cli.enable = false the DND bind should still dispatch its global shortcut"
-      else if !(hyprHasBind binds "SUPER + CTRL + L" "/bin/marchyo shell lock") then
-        throw "FAIL: with marchyo.cli.enable = false SUPER+CTRL+L should lock through the CLI by store path"
+      else if !(hyprHasBind binds "SUPER + L" "/bin/marchyo shell lock") then
+        throw "FAIL: with marchyo.cli.enable = false SUPER+L should lock through the CLI by store path"
       else if
         !(lib.hasInfix "/bin/marchyo shell lock" (general.lock_cmd or ""))
         || !(lib.hasInfix "/bin/marchyo shell lock" (general.before_sleep_cmd or ""))
@@ -354,18 +350,18 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-marchyo-shell-notification-binds" (
-      if
-        !(hyprHasBind binds "SUPER + CTRL + ALT + comma" "hl.dsp.global(\"marchyo:notifications.silence\")")
-      then
-        throw "FAIL: SUPER+CTRL+ALT+comma should dispatch notifications.silence when the shell is on"
+      if !(hyprHasBind binds "SUPER + CTRL + comma" "hl.dsp.global(\"marchyo:dnd\")") then
+        throw "FAIL: SUPER+CTRL+comma should dispatch dnd when the shell is on"
       else if
-        !(hyprHasBind binds "SUPER + SHIFT + comma" "hl.dsp.global(\"marchyo:notifications.dismissAll\")")
+        !(hyprHasBind binds "SUPER + CTRL + SHIFT + comma"
+          "hl.dsp.global(\"marchyo:notifications.dismissAll\")"
+        )
       then
-        throw "FAIL: SUPER+SHIFT+comma should dispatch notifications.dismissAll when the shell is on"
+        throw "FAIL: SUPER+CTRL+SHIFT+comma should dispatch notifications.dismissAll when the shell is on"
       else if
-        !(hyprHasBind binds "SUPER + CTRL + comma" "hl.dsp.global(\"marchyo:notifications.keyboard\")")
+        !(hyprHasBind binds "SUPER + ALT + comma" "hl.dsp.global(\"marchyo:notifications.keyboard\")")
       then
-        throw "FAIL: SUPER+CTRL+comma should dispatch notifications.keyboard when the shell is on"
+        throw "FAIL: SUPER+ALT+comma should dispatch notifications.keyboard when the shell is on"
       else if lib.any (e: lib.hasInfix "marchyo-shell ipc" (hyprEntryText e)) binds then
         throw "FAIL: a Hyprland bind still calls marchyo-shell ipc directly"
       else

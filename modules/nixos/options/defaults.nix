@@ -119,11 +119,11 @@ in
       default = "spotify-player";
       example = "spotify";
       description = ''
-        Default music client bound to the Hyprland Super+Shift+M keybind. Defaults
+        Default music client bound to the Hyprland Super+M keybind. Defaults
         to "spotify-player", a TUI Spotify client launched in a floating
         terminal and installed via its Home-Manager module. "spotify" is the
         GUI app, always installed on x86_64 (see modules/nixos/media.nix);
-        selecting it here only binds Super+Shift+M to it. Set to null to skip music
+        selecting it here only binds Super+M to it. Set to null to skip music
         player management.
       '';
     };

@@ -37,7 +37,7 @@ let
     kbdBacklight = ((marchyoCfg.keyboard or { }).backlight or { }).enable or true;
     dictation = {
       enabled = dictationEnabled;
-      toggleKey = dictationCfg.toggleKey or "ALT + SPACE";
+      toggleKey = dictationCfg.toggleKey or "SUPER + CTRL + X";
       # Push-to-talk (F9) is voxtype's own evdev hotkey, not a Hyprland bind.
       statusWindow =
         dictationEnabled && dictationBackend == "voxtype" && (dictationCfg.statusWindow or true);
@@ -61,14 +61,8 @@ let
     inherit (cfg) commands webapps;
   };
 
-  # marchyo.keyboard.legacyBinds picks each entry's pre-4.5 chord.
-  legacy = (marchyoCfg.keyboard or { }).legacyBinds or false;
-  chord = e: if legacy && e ? legacy then e.legacy else e.combo;
-
   table = import ../../lib/keybinds.nix { inherit lib; } ctx;
-  selected = map (e: e // { combo = chord e; }) (
-    lib.filter (e: (e.when or true) && chord e != null) table
-  );
+  selected = lib.filter (e: e.when or true) table;
 
   # A web app key on a chord marchyo already binds is dropped with a warning,
   # so the marchyo bind keeps working.

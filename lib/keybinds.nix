@@ -3,12 +3,10 @@
 # modules/home/keybinds.nix renders it into
 # `wayland.windowManager.hyprland.settings.bind`. Each entry is data:
 #
-#   combo        Lua key string ("SUPER + SHIFT + A") in the default layout,
-#                which follows the Omarchy 4.5 planes: Super for the system,
-#                Super+Shift for apps, Super+Ctrl for panels and menus,
-#                Super+Ctrl+Alt for quick actions. null: not bound there.
-#   legacy       The chord under marchyo.keyboard.legacyBinds, when it
-#                differs from `combo`; null: not bound there.
+#   combo        Lua key string ("SUPER + SHIFT + A"). Super alone holds the
+#                core apps and window actions, Super+Shift the panels, extra
+#                apps and window moves, Super+Ctrl the utilities, toggles and
+#                menus, Super+Alt groups and extra launchers.
 #   description  What the bind does; every entry has one.
 #   group        Cheat-sheet section.
 #   action       Dispatcher (lib/hyprland-lua.nix value).
@@ -45,18 +43,8 @@ let
   onlyIf = cond: map (e: e // { when = (e.when or true) && cond; });
   hidden = e: e // { hidden = true; };
   withOpts = opts: e: e // { opts = (e.opts or { }) // opts; };
-  moved = old: e: e // { legacy = old; };
-  newBind = e: e // { legacy = null; };
-  legacyOnly =
-    e:
-    e
-    // {
-      combo = null;
-      legacy = e.combo;
-    };
-
-  # Hyprland's built-in tiled layouts, in the order Super+L walks them on the
-  # focused workspace.
+  # Hyprland's built-in tiled layouts, in the order Super+Ctrl+J walks them on
+  # the focused workspace.
   layouts = [
     "dwindle"
     "scrolling"
@@ -281,14 +269,14 @@ let
 in
 [
   (app "SUPER + return" "Terminal" (execLua "terminal"))
-  (moved "SUPER + F" (app "SUPER + SHIFT + F" "File manager" (execLua "fileManager")))
-  (moved "SUPER + B" (app "SUPER + SHIFT + B" "Web browser" (execLua "browser")))
-  (moved "SUPER + M" (app "SUPER + SHIFT + M" "Music player" (execLua "music")))
-  (newBind (app "SUPER + SHIFT + Q" "Calculator" (execInTerminal "qalc")))
-  (newBind (app "SUPER + SHIFT + T" "Activity (btop)" (execInTerminalAs "org.omarchy.btop" "btop")))
+  (app "SUPER + F" "File manager" (execLua "fileManager"))
+  (app "SUPER + B" "Web browser" (execLua "browser"))
+  (app "SUPER + M" "Music player" (execLua "music"))
+  (app "SUPER + ALT + C" "Calculator" (execInTerminal "qalc"))
+  (app "SUPER + ALT + T" "Activity (btop)" (execInTerminalAs "org.omarchy.btop" "btop"))
   (app "SUPER + E" "Editor" (execLua "editor"))
   (app "SUPER + O" "Obsidian" (execLua "notes"))
-  (moved "SUPER + G" (app "SUPER + SHIFT + G" "Messenger" (execLua "messenger")))
+  (app "SUPER + G" "Messenger" (execLua "messenger"))
   # Focus the running 1Password window if there is one, otherwise launch it.
   # The class regex covers both spellings the app reports.
   (app "SUPER + slash" "Password manager" (mkLuaInline ''
@@ -308,23 +296,18 @@ in
   (win "SUPER + J" "Toggle split" (dsp "layout(\"togglesplit\")"))
   (win "SUPER + P" "Pseudo window" (dsp "window.pseudo()"))
   (win "SUPER + T" "Toggle floating" (dsp "window.float({ action = \"toggle\" })"))
-  (newBind (clip "SUPER + A" "Select all" (sendKey "CTRL" "A")))
-  (newBind (clip "SUPER + C" "Universal copy" (universalClipboard "C" insertCopy)))
-  (newBind (clip "SUPER + V" "Universal paste" (universalClipboard "V" insertPaste)))
-  # CTRL+Insert / SHIFT+Insert copy and paste in terminals too, where CTRL+C is SIGINT.
-  (legacyOnly (clip "SUPER + C" "Copy" (dsp insertCopy)))
-  (legacyOnly (clip "SUPER + V" "Paste" (dsp insertPaste)))
+  (clip "SUPER + A" "Select all" (sendKey "CTRL" "A"))
+  (clip "SUPER + C" "Universal copy" (universalClipboard "C" insertCopy))
+  (clip "SUPER + V" "Universal paste" (universalClipboard "V" insertPaste))
   (clip "SUPER + X" "Cut" (dsp "send_shortcut({ mods = \"CTRL\", key = \"X\" })"))
   (win "SUPER + left" "Move focus left" (dsp "focus({ direction = \"l\" })"))
   (win "SUPER + right" "Move focus right" (dsp "focus({ direction = \"r\" })"))
   (win "SUPER + up" "Move focus up" (dsp "focus({ direction = \"u\" })"))
   (win "SUPER + down" "Move focus down" (dsp "focus({ direction = \"d\" })"))
-  (newBind (win "SUPER + L" "Cycle workspace layout" (cycleLayout 1)))
-  (newBind (win "SUPER + ALT + L" "Cycle workspace layout back" (cycleLayout (-1))))
-  (newBind (
-    win "SUPER + M" "Minimize window to the drawer" (
-      dsp "window.move({ workspace = \"special:magic\", follow = false })"
-    )
+  (win "SUPER + CTRL + J" "Cycle workspace layout" (cycleLayout 1))
+  (win "SUPER + CTRL + SHIFT + J" "Cycle workspace layout back" (cycleLayout (-1)))
+  (win "SUPER + ALT + D" "Minimize window to the drawer" (
+    dsp "window.move({ workspace = \"special:magic\", follow = false })"
   ))
 ]
 ++ onlyIf ctx.perMonitor perMonitorWorkspaceBinds
@@ -401,51 +384,37 @@ in
   (util "SUPER + CTRL + SHIFT + Z" "Zoom out" (exec "marchyo zoom out"))
   (util "SUPER + CTRL + ALT + Z" "Reset zoom" (exec "marchyo zoom reset"))
 
-  (legacyOnly (toggle "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight")))
+  (toggle "SUPER + CTRL + N" "Toggle nightlight" (exec "marchyo toggle nightlight"))
   (toggle "SUPER + CTRL + I" "Toggle idle lock" (exec "marchyo toggle idle"))
   (toggle "SUPER + CTRL + K" "Toggle caffeine (keep awake)" (exec "marchyo toggle caffeine"))
   (capture "SUPER + ALT + Print" "Toggle screen recording" (exec "marchyo capture record"))
 
   (win "SUPER + Page_Up" "Full screen" (dsp "window.fullscreen({ mode = \"fullscreen\" })"))
-  # The drawer is the `magic` special workspace; Super+M minimizes into it.
+  # The drawer is the `magic` special workspace; Super+Alt+D minimizes into it.
   (ws "SUPER + D" "Toggle the drawer" (dsp "workspace.toggle_special(\"magic\")"))
   (ws "SUPER + SHIFT + D" "Move window to the drawer" (
     dsp "window.move({ workspace = \"special:magic\" })"
   ))
   # The unified shell engages its in-shell WlSessionLock; otherwise hyprlock.
-  (moved "SUPER + L" (
-    session "SUPER + CTRL + L" "Lock the screen" (
-      exec (if ctx.shell then shellVerb "lock" else "hyprlock")
-    )
-  ))
+  (session "SUPER + L" "Lock the screen" (exec (if ctx.shell then shellVerb "lock" else "hyprlock")))
   (session "CTRL + ALT + Delete" "Shut down" (exec "systemctl poweroff"))
-  (legacyOnly (
-    mon "SUPER + SHIFT + comma" "Move window to previous monitor" (
-      dsp "window.move({ monitor = \"-1\" })"
-    )
+  (mon "SUPER + SHIFT + comma" "Move window to previous monitor" (
+    dsp "window.move({ monitor = \"-1\" })"
   ))
-  (legacyOnly (
-    mon "SUPER + SHIFT + period" "Move window to next monitor" (dsp "window.move({ monitor = \"+1\" })")
+  (mon "SUPER + SHIFT + period" "Move window to next monitor" (
+    dsp "window.move({ monitor = \"+1\" })"
   ))
-  (newBind (
-    mon "SUPER + SHIFT + CTRL + left" "Move window to left monitor" (
-      dsp "window.move({ monitor = \"l\" })"
-    )
+  (mon "SUPER + SHIFT + CTRL + left" "Move window to left monitor" (
+    dsp "window.move({ monitor = \"l\" })"
   ))
-  (newBind (
-    mon "SUPER + SHIFT + CTRL + right" "Move window to right monitor" (
-      dsp "window.move({ monitor = \"r\" })"
-    )
+  (mon "SUPER + SHIFT + CTRL + right" "Move window to right monitor" (
+    dsp "window.move({ monitor = \"r\" })"
   ))
-  (newBind (
-    mon "SUPER + SHIFT + CTRL + up" "Move window to monitor above" (
-      dsp "window.move({ monitor = \"u\" })"
-    )
+  (mon "SUPER + SHIFT + CTRL + up" "Move window to monitor above" (
+    dsp "window.move({ monitor = \"u\" })"
   ))
-  (newBind (
-    mon "SUPER + SHIFT + CTRL + down" "Move window to monitor below" (
-      dsp "window.move({ monitor = \"d\" })"
-    )
+  (mon "SUPER + SHIFT + CTRL + down" "Move window to monitor below" (
+    dsp "window.move({ monitor = \"d\" })"
   ))
 
   (withOpts { mouse = true; } (win "SUPER + mouse:272" "Move window" (dsp "window.drag()")))
@@ -486,40 +455,34 @@ in
 ++ onlyIf ctx.shell [
   (withOpts lockKeyOpts (hidden (session "Caps_Lock" "Refresh Caps Lock state" (global "lockKeys"))))
   (withOpts lockKeyOpts (hidden (session "Num_Lock" "Refresh Num Lock state" (global "lockKeys"))))
-  (moved "SUPER + SHIFT + V" (panel "SUPER + CTRL + A" "Audio panel" (global "panel.audio")))
-  (moved "SUPER + SHIFT + N" (panel "SUPER + CTRL + N" "Network panel" (global "panel.network")))
-  (moved "SUPER + SHIFT + B" (panel "SUPER + CTRL + P" "Power panel" (global "panel.power")))
-  (newBind (panel "SUPER + CTRL + D" "Display panel" (global "panel.display")))
-  (moved "SUPER + SHIFT + M" (
-    panel "SUPER + CTRL + M" "System monitor panel" (global "panel.monitor")
-  ))
-  (moved "SUPER + SHIFT + Q" (
-    panel "SUPER + CTRL + O" "Control Center" (global "panel.controlcenter")
-  ))
+  (panel "SUPER + SHIFT + V" "Audio panel" (global "panel.audio"))
+  (panel "SUPER + SHIFT + N" "Network panel" (global "panel.network"))
+  (panel "SUPER + SHIFT + B" "Power panel" (global "panel.power"))
+  (panel "SUPER + CTRL + D" "Display panel" (global "panel.display"))
+  (panel "SUPER + SHIFT + M" "System monitor panel" (global "panel.monitor"))
+  (panel "SUPER + SHIFT + Q" "Control Center" (global "panel.controlcenter"))
   (panel "SUPER + CTRL + ALT + E" "World clock" (global "panel.elsewhen"))
-  (newBind (panel "SUPER + CTRL + U" "What's new" (global "panel.whatsnew")))
-  (newBind (panel "SUPER + CTRL + H" "First-login setup checklist" (global "panel.setup")))
-  (newBind (panel "SUPER + CTRL + ALT + G" "Ui gallery (developer)" (global "panel.gallery")))
-  (moved "SUPER + grave" (panel "SUPER + CTRL + grave" "Window overview" (global "overview")))
+  (panel "SUPER + CTRL + U" "What's new" (global "panel.whatsnew"))
+  (panel "SUPER + CTRL + H" "First-login setup checklist" (global "panel.setup"))
+  (panel "SUPER + CTRL + ALT + G" "Ui gallery (developer)" (global "panel.gallery"))
+  (panel "SUPER + grave" "Window overview" (global "overview"))
   (panel "SUPER + CTRL + T" "Theme picker" (global "panel.themes"))
-  (newBind (panel "SUPER + CTRL + SHIFT + W" "Wallpaper picker" (global "panel.backgrounds")))
+  (panel "SUPER + CTRL + SHIFT + W" "Wallpaper picker" (global "panel.backgrounds"))
   (panel "SUPER + CTRL + B" "Bluetooth panel" (global "panel.bluetooth"))
-  (newBind (
-    panel "SUPER + CTRL + SHIFT + B" "Bluetooth manager" (execInTerminalAs "org.omarchy.bluetui" "bluetui")
+  (panel "SUPER + CTRL + SHIFT + B" "Bluetooth manager" (
+    execInTerminalAs "org.omarchy.bluetui" "bluetui"
   ))
-  (newBind (panel "SUPER + CTRL + ALT + P" "Speed test" (global "panel.speedtest")))
-  (newBind (panel "SUPER + CTRL + ALT + D" "Dropbox panel" (global "panel.dropbox")))
+  (panel "SUPER + CTRL + ALT + P" "Speed test" (global "panel.speedtest"))
+  (panel "SUPER + CTRL + ALT + D" "Dropbox panel" (global "panel.dropbox"))
   (panel "SUPER + SHIFT + SPACE" "Toggle top bar" (global "bar"))
 ]
 ++ onlyIf (ctx.launcher && ctx.shell) [
   (clip "SUPER + CTRL + V" "Clipboard history" (global "launcher.clipboard"))
-  (moved "SUPER + period" (menu "SUPER + CTRL + E" "Emoji picker" (global "launcher.emoji")))
+  (menu "SUPER + period" "Emoji picker" (global "launcher.emoji"))
   (menu "SUPER + R" "App launcher" (global "launcher.apps"))
 ]
 
-# Monitor controls, connectivity TUIs and extra launchers. With the shell on,
-# Super+Ctrl+A and Super+Ctrl+N open its audio and network panels instead of
-# the TUIs.
+# Monitor controls, connectivity TUIs and extra launchers.
 ++ [
   # SUPER+/ (slash) is the password manager, so the scale cycle sits on the
   # adjacent backslash.
@@ -532,65 +495,36 @@ in
   (withOpts { locked = true; } (
     hidden (mon "switch:off:Lid Switch" "Lid opened" (exec "marchyo monitor clamshell off"))
   ))
-  (legacyOnly (
-    panel "SUPER + CTRL + A" "Audio mixer" (execInTerminalAs "org.omarchy.wiremix" "wiremix")
-  ))
-  (legacyOnly (
-    panel "SUPER + CTRL + W" "Wi-Fi manager" (execInTerminalAs "org.omarchy.nmtui" "nmtui")
-  ))
-  (newBind (toggle "SUPER + CTRL + W" "Next background" (exec "marchyo bg next")))
+  (panel "SUPER + CTRL + A" "Audio mixer" (execInTerminalAs "org.omarchy.wiremix" "wiremix"))
+  (panel "SUPER + CTRL + W" "Wi-Fi manager" (execInTerminalAs "org.omarchy.nmtui" "nmtui"))
+  (toggle "SUPER + CTRL + SPACE" "Next background" (exec "marchyo bg next"))
   (app "SUPER + ALT + return" "tmux Work session" (execInPlainTerminal "tmux new -A -s Work"))
   (app "SUPER + ALT + SHIFT + F" "File manager at terminal cwd" (exec "marchyo launch file-manager"))
 ]
 ++ onlyIf (!ctx.shell) [
   (panel "SUPER + CTRL + B" "Bluetooth manager" (execInTerminalAs "org.omarchy.bluetui" "bluetui"))
-  (newBind (
-    panel "SUPER + CTRL + A" "Audio mixer" (execInTerminalAs "org.omarchy.wiremix" "wiremix")
-  ))
-  (newBind (
-    panel "SUPER + CTRL + N" "Network manager" (execInTerminalAs "org.omarchy.nmtui" "nmtui")
-  ))
 ]
 
 # Window utilities and the shell's notification actions.
 ++ [
   (win "SUPER + ALT + O" "Pop window out (float, pin, centre)" (exec "marchyo window pop"))
-  (newBind (
-    win "SUPER + CTRL + ALT + F" "Toggle full screen desktop" (exec "marchyo toggle fullscreen-desktop")
+  (win "SUPER + CTRL + ALT + F" "Toggle full screen desktop" (
+    exec "marchyo toggle fullscreen-desktop"
   ))
 ]
 ++ onlyIf ctx.shell [
-  (newBind (
-    notif "SUPER + comma" "Dismiss, invoke or focus the newest notification" (
-      global "notifications.act"
-    )
+  (notif "SUPER + comma" "Dismiss last notification" (global "notifications.dismiss"))
+  (notif "SUPER + CTRL + ALT + comma" "Dismiss, invoke or focus the newest notification" (
+    global "notifications.act"
   ))
-  (newBind (
-    notif "SUPER + ALT + comma" "Dismiss the newest notification" (global "notifications.dismissOne")
+  (notif "SUPER + ALT + comma" "Control notifications with the keyboard" (
+    global "notifications.keyboard"
   ))
-  (newBind (
-    notif "SUPER + CTRL + comma" "Control notifications with the keyboard" (
-      global "notifications.keyboard"
-    )
+  (notif "SUPER + CTRL + comma" "Toggle do-not-disturb" (global "dnd"))
+  (notif "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
+    global "notifications.dismissAll"
   ))
-  (newBind (
-    notif "SUPER + CTRL + ALT + comma" "Silence notifications (do-not-disturb)" (
-      global "notifications.silence"
-    )
-  ))
-  (moved "SUPER + CTRL + SHIFT + comma" (
-    notif "SUPER + SHIFT + comma" "Dismiss all notifications" (global "notifications.dismissAll")
-  ))
-  (moved "SUPER + N" (
-    notif "SUPER + SHIFT + ALT + comma" "Notification history" (global "panel.notifications")
-  ))
-  (legacyOnly (notif "SUPER + comma" "Dismiss last notification" (global "notifications.dismiss")))
-  (legacyOnly (notif "SUPER + CTRL + comma" "Toggle do-not-disturb" (global "dnd")))
-  (legacyOnly (
-    notif "SUPER + ALT + comma" "Control notifications with the keyboard" (
-      global "notifications.keyboard"
-    )
-  ))
+  (notif "SUPER + N" "Notification history" (global "panel.notifications"))
 ]
 
 ++ onlyIf (ctx.cheatsheet && ctx.launcher && ctx.shell) [
@@ -600,18 +534,15 @@ in
   (session "SUPER + K" "Keybindings cheat sheet" (execInTerminal "marchyo keybindings"))
 ]
 
-# The command menu (Launcher/MenuProvider). Super+Space opens its root, and the
-# per-route chords open one level directly; Super+Alt+Space opens the apps.
-++ onlyIf (ctx.launcher && ctx.shell) [
-  (newBind (menu "SUPER + ALT + SPACE" "App launcher" (global "launcher.apps")))
-]
+# The command menu (Launcher/MenuProvider). Super+Alt+Space opens its root, and
+# the per-route chords open one level directly.
 ++ onlyIf (ctx.menus && ctx.launcher && ctx.shell) [
   (menu "SUPER + Escape" "System menu (lock, suspend, restart, shut down)" (global "menu.system"))
-  (moved "SUPER + ALT + SPACE" (menu "SUPER + SPACE" "Command menu" (global "menu")))
-  (newBind (menu "SUPER + CTRL + C" "Capture menu" (global "menu.capture")))
-  (newBind (menu "SUPER + CTRL + X" "Toggle menu" (global "menu.toggle")))
-  (newBind (menu "SUPER + CTRL + SHIFT + H" "Hardware menu" (global "menu.hardware")))
-  (newBind (menu "SUPER + CTRL + SHIFT + T" "Theme menu" (global "menu.theme")))
+  (menu "SUPER + ALT + SPACE" "Command menu" (global "menu"))
+  (menu "SUPER + CTRL + C" "Capture menu" (global "menu.capture"))
+  (menu "SUPER + CTRL + SHIFT + X" "Toggle menu" (global "menu.toggle"))
+  (menu "SUPER + CTRL + SHIFT + H" "Hardware menu" (global "menu.hardware"))
+  (menu "SUPER + CTRL + SHIFT + T" "Theme menu" (global "menu.theme"))
 ]
 
 ++ onlyIf (ctx.menus && !(ctx.launcher && ctx.shell)) [
@@ -626,9 +557,7 @@ in
   [
     (capture "Print" "Screenshot area/window" (exec "marchyo capture screenshot"))
     (capture "SUPER + S" "Screenshot area/window" (exec "marchyo capture screenshot"))
-    (newBind (
-      capture "SUPER + CTRL + ALT + C" "Screenshot area/window" (exec "marchyo capture screenshot")
-    ))
+    (capture "SUPER + CTRL + ALT + C" "Screenshot area/window" (exec "marchyo capture screenshot"))
     (capture "SHIFT + Print" "Screenshot active window" (
       exec "marchyo capture screenshot --target active"
     ))
@@ -675,32 +604,15 @@ in
 ++ onlyIf ctx.emacs.enable [
   (emacs "SUPER + SHIFT + E" "New Emacs frame" (exec "emacsclient -c -n"))
 ]
-# Super+Ctrl+Alt: Super+L and Super+Alt+L cycle layouts.
 ++ onlyIf ctx.emacs.windmove [
-  (moved "SUPER + ALT + H" (
-    emacs "SUPER + CTRL + ALT + H" "Focus window (Emacs-aware) left" (windmove "focus" "l")
-  ))
-  (moved "SUPER + ALT + L" (
-    emacs "SUPER + CTRL + ALT + L" "Focus window (Emacs-aware) right" (windmove "focus" "r")
-  ))
-  (moved "SUPER + ALT + K" (
-    emacs "SUPER + CTRL + ALT + K" "Focus window (Emacs-aware) up" (windmove "focus" "u")
-  ))
-  (moved "SUPER + ALT + J" (
-    emacs "SUPER + CTRL + ALT + J" "Focus window (Emacs-aware) down" (windmove "focus" "d")
-  ))
-  (moved "SUPER + ALT + SHIFT + H" (
-    emacs "SUPER + CTRL + ALT + SHIFT + H" "Swap window (Emacs-aware) left" (windmove "move" "l")
-  ))
-  (moved "SUPER + ALT + SHIFT + L" (
-    emacs "SUPER + CTRL + ALT + SHIFT + L" "Swap window (Emacs-aware) right" (windmove "move" "r")
-  ))
-  (moved "SUPER + ALT + SHIFT + K" (
-    emacs "SUPER + CTRL + ALT + SHIFT + K" "Swap window (Emacs-aware) up" (windmove "move" "u")
-  ))
-  (moved "SUPER + ALT + SHIFT + J" (
-    emacs "SUPER + CTRL + ALT + SHIFT + J" "Swap window (Emacs-aware) down" (windmove "move" "d")
-  ))
+  (emacs "SUPER + ALT + H" "Focus window (Emacs-aware) left" (windmove "focus" "l"))
+  (emacs "SUPER + ALT + L" "Focus window (Emacs-aware) right" (windmove "focus" "r"))
+  (emacs "SUPER + ALT + K" "Focus window (Emacs-aware) up" (windmove "focus" "u"))
+  (emacs "SUPER + ALT + J" "Focus window (Emacs-aware) down" (windmove "focus" "d"))
+  (emacs "SUPER + ALT + SHIFT + H" "Swap window (Emacs-aware) left" (windmove "move" "l"))
+  (emacs "SUPER + ALT + SHIFT + L" "Swap window (Emacs-aware) right" (windmove "move" "r"))
+  (emacs "SUPER + ALT + SHIFT + K" "Swap window (Emacs-aware) up" (windmove "move" "u"))
+  (emacs "SUPER + ALT + SHIFT + J" "Swap window (Emacs-aware) down" (windmove "move" "d"))
 ]
 ++ onlyIf ctx.emacs.scratchpad [
   (emacs "SUPER + Z" "Emacs scratchpad" (
@@ -708,14 +620,10 @@ in
   ))
 ]
 ++ onlyIf ctx.emacs.everywhere [
-  (moved "SUPER + CTRL + E" (
-    emacs "SUPER + SHIFT + ALT + E" "Emacs everywhere" (exec "emacsclient -ne '(emacs-everywhere)'")
-  ))
+  (emacs "SUPER + CTRL + E" "Emacs everywhere" (exec "emacsclient -ne '(emacs-everywhere)'"))
 ]
 ++ onlyIf ctx.emacs.orgProtocol [
-  (moved "SUPER + SHIFT + T" (
-    emacs "SUPER + CTRL + ALT + O" "Org capture (task)" (exec "emacsclient -c -n -e '(org-capture)'")
-  ))
+  (emacs "SUPER + SHIFT + T" "Org capture (task)" (exec "emacsclient -c -n -e '(org-capture)'"))
 ]
 
 # marchyo.webapps apps that declare a key.

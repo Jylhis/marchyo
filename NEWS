@@ -6,6 +6,26 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
 
 * Noteworthy changes in 2026
 
+  Hotkeys (breaking): the pre-4.5 marchyo layout is the only layout
+  again, and marchyo.keyboard.legacyBinds is gone.  Super+L locks, apps
+  sit on plain Super+letter, the panels on Super+Shift (V audio,
+  N network, B power, M monitor, Q Control Center), the overview on
+  Super+grave, the command menu on Super+Alt+Space and the emoji picker
+  on Super+period.  Binds that only the 4.5 layout had moved to:
+
+    Cycle workspace layout     Super+Ctrl+J (back: Super+Ctrl+Shift+J)
+    Minimize to the drawer     Super+Alt+D
+    Calculator (qalc)          Super+Alt+C
+    Activity (btop)            Super+Alt+T
+    Next background            Super+Ctrl+Space
+    Toggle menu                Super+Ctrl+Shift+X
+    Act on newest notification Super+Ctrl+Alt+comma
+
+  Dictation toggles on Super+Ctrl+X and the compose key is the Menu key
+  again (marchyo.keyboard.composeKey = "shift-caps" keeps Shift+Caps
+  Lock).  The default web apps keep their Super+Shift keys, GitHub on
+  Super+Shift+G included.
+
   More of omarchy's first-party shell plugins are packaged: workspaces,
   active window, tray, media, polkit, network, weather, tailscale,
   elsewhen and dropbox. A plugin can now replace a native panel or the

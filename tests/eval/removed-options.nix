@@ -70,4 +70,10 @@ in
       (withTestUser {
         marchyo.slack.themeInjection.enable = true;
       });
+
+  eval-removed-keyboard-legacy-binds =
+    testNixOSFails "removed-keyboard-legacy-binds" "only Hyprland layout"
+      (withTestUser {
+        marchyo.keyboard.legacyBinds = true;
+      });
 }

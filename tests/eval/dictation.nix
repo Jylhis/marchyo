@@ -10,8 +10,8 @@ let
   inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
   hasStatusBind = binds: lib.hasInfix "voxtype status --follow" (hyprEntriesText binds);
-  # Alt+Space toggles through the backend-neutral verb (marchyo.dictation.toggleKey).
-  hasToggleKeyBind = binds: hyprHasBind binds "ALT + SPACE" "dictation toggle";
+  # Super+Ctrl+X toggles through the backend-neutral verb (marchyo.dictation.toggleKey).
+  hasToggleKeyBind = binds: hyprHasBind binds "SUPER + CTRL + X" "dictation toggle";
   hasHoldBinds =
     binds:
     hyprHasBind binds "F9" "dictation start"
@@ -39,7 +39,7 @@ let
     extra: evalWith (lib.recursiveUpdate { marchyo.dictation.backend = "voxtype"; } extra);
 in
 {
-  # Dictation on: voxtype service enabled, the Alt+Space toggle bound, the
+  # Dictation on: voxtype service enabled, the Super+Ctrl+X toggle bound, the
   # daemon push-to-talk hotkey (hold F9) configured, dictation user in the
   # `input` group, and the full UI layer present (status-window bind,
   # notifications, audio).

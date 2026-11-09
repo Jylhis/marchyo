@@ -131,15 +131,15 @@ control, run `marchyo shell gallery` or press `Super + Ctrl + Alt + G`.
   `~/.cache/marchyo`. Each test runs when you start it.
 - **Dropbox** (`Super + Ctrl + Alt + D`): the sync state from `dropbox status` and a
   switch for the daemon. It needs the `dropbox` command on your PATH.
-- **Audio** (volume segment or `Super + Ctrl + A`): volume up, down, and mute,
+- **Audio** (volume segment or `Super + Shift + V`): volume up, down, and mute,
   a choice of output device, per-app volume, and which apps are using the
   microphone.
-- **Network** (network segment or `Super + Ctrl + N`): connection status, network
+- **Network** (network segment or `Super + Shift + N`): connection status, network
   name and signal, a switch for the Wi-Fi radio, and a **Share (QR)** button that
   shows a code other devices can scan to join your Wi-Fi.
-- **Power** (battery segment or `Super + Ctrl + P`): battery details, the power
+- **Power** (battery segment or `Super + Shift + B`): battery details, the power
   profile, and a button to the power menu.
-- **Monitor** (CPU segment or `Super + Ctrl + M`): CPU, memory, disk, and
+- **Monitor** (CPU segment or `Super + Shift + M`): CPU, memory, disk, and
   temperature, with a button to btop.
 - **Notification history** (right-click the bell): notifications you've received.
   Opening it marks them as read.
@@ -152,7 +152,7 @@ power profile. Click a tile to flip it. Tiles with an arrow open the matching pa
 for more detail, with a back button to return. Tiles for hardware you don't have are
 left out.
 
-Open it with `Super + Ctrl + O` or the Control Center segment at the right end of
+Open it with `Super + Shift + Q` or the Control Center segment at the right end of
 the bar.
 
 Below the tiles, the **Appearance** section changes how the desktop looks without a

@@ -11,8 +11,7 @@ machines, and sending a file across the room.
 
 ## Wi-Fi
 
-Press `Super + Ctrl + N` to open the network panel, or nmtui in a floating terminal
-when the Marchyo shell is off. In nmtui, pick **Activate a connection**, choose your network, and enter the password. You can
+Press `Super + Ctrl + W` to open nmtui in a floating terminal. In nmtui, pick **Activate a connection**, choose your network, and enter the password. You can
 also get there from the system menu (`Super + Alt + Space`, then **Setup**, then
 **Wifi**), or by clicking the network indicator in the top bar.
 
@@ -20,7 +19,7 @@ Networks you join are remembered by NetworkManager and reconnect on their own. T
 ordinary machine state, like a saved password, so it isn't part of your
 configuration and doesn't change when you rebuild.
 
-If you run the Marchyo shell, `Super + Ctrl + N` opens a Network panel with your
+If you run the Marchyo shell, `Super + Shift + N` opens a Network panel with your
 current connection, signal, and address, and a shortcut into nmtui.
 
 Behind a hotel or airport Wi-Fi, the bar icon turns into a warning glyph and the

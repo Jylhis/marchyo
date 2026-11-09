@@ -18,33 +18,34 @@ start moving around, without the full list.
 
 ## How the keys are laid out
 
-The layout follows the Omarchy 4.5 planes. Each modifier set has one job:
+Each modifier set has a main job:
 
-- `Super + key`: the system (windows, workspaces, layouts, core menus).
-- `Super + Shift + key`: apps.
-- `Super + Ctrl + key`: panels and system menus.
-- `Super + Ctrl + Alt + key`: quick actions and notices.
+- `Super + key`: the core apps and window actions (plain letters, not
+  `Super + Shift` as in omarchy).
+- `Super + Shift + key`: the shell panels, window moves and web apps.
+- `Super + Ctrl + key`: utilities, toggles and menus.
+- `Super + Alt + key`: window groups, Emacs-aware focus and extra launchers.
 
-Adding `Alt` gives a variant of the same bind (`Super + L` cycles layouts,
-`Super + Alt + L` cycles them back). `marchyo.keyboard.legacyBinds = true`
-restores the previous marchyo layout for one release.
+Adding `Shift` to a chord often reverses it (`Super + Tab` / `Super + Shift + Tab`,
+`Super + Ctrl + J` / `Super + Ctrl + Shift + J`).
 
 ## Launching apps
 
 | Keys | Action |
 |------|--------|
 | `Super + Return` | Terminal (Ghostty) |
-| `Super + Shift + B` | Web browser |
-| `Super + Shift + F` | File manager |
+| `Super + B` | Web browser |
+| `Super + F` | File manager |
 | `Super + Alt + Shift + F` | File manager at the focused terminal's cwd |
 | `Super + E` | Editor |
 | `Super + O` | Obsidian |
-| `Super + Shift + G` | Messenger |
+| `Super + G` | Messenger |
 | `Super + /` | Password manager (focuses 1Password if open) |
-| `Super + R` or `Super + Alt + Space` | App launcher (in-shell) |
-| `Super + Shift + M` | Music player |
-| `Super + Shift + Q` | Calculator (qalc) |
-| `Super + Shift + T` | Activity (btop) |
+| `Super + R` | App launcher (in-shell) |
+| `Super + .` | Emoji picker (in-shell) |
+| `Super + M` | Music player |
+| `Super + Alt + C` | Calculator (qalc) |
+| `Super + Alt + T` | Activity (btop) |
 | `Super + Shift + I` | Input-method config (fcitx5) |
 | `Super + Alt + Return` | tmux "Work" session |
 
@@ -75,8 +76,8 @@ default key. Start them from the app launcher, or give them one via
 | `Super + J` | Toggle split direction |
 | `Super + T` | Toggle floating |
 | `Super + P` | Toggle pseudo-tile |
-| `Super + L` / `Super + Alt + L` | Cycle the workspace layout (dwindle, scrolling, master) forward / back |
-| `Super + M` | Minimize the window to the Drawer (`Super + D` shows it) |
+| `Super + Ctrl + J` / `Super + Ctrl + Shift + J` | Cycle the workspace layout (dwindle, scrolling, master) forward / back |
+| `Super + Alt + D` | Minimize the window to the Drawer (`Super + D` shows it) |
 | `Super + Alt + O` | Pop the window out (float, pin, centre) |
 | `Super + ←/→/↑/↓` | Move focus |
 | `Super + Shift + ←/→/↑/↓` | Swap window in a direction |
@@ -131,6 +132,7 @@ monitor's workspaces 1–10. See [Monitors](./12-monitors.md).
 | Keys | Action |
 |------|--------|
 | `Ctrl + Alt + Tab` / `Ctrl + Alt + Shift + Tab` | Focus next / previous monitor |
+| `Super + Shift + ,` / `Super + Shift + .` | Move the active window to the previous / next monitor |
 | `Super + Shift + Ctrl + ←/→/↑/↓` | Move the active window to the monitor in that direction |
 | `Super + Shift + Alt + ←/→/↑/↓` | Move the whole workspace to an adjacent monitor, where it joins that monitor's workspaces |
 | `Super + backslash` | Cycle focused monitor scale |
@@ -138,32 +140,33 @@ monitor's workspaces 1–10. See [Monitors](./12-monitors.md).
 
 ## Panels & menus
 
-With the shell on (the desktop default), the `Super + Ctrl` panel binds reach the
-running shell through Hyprland global shortcuts (`marchyo:<name>`), with no
-process started. `marchyo shell toggle <panel>` and `marchyo shell overview` run
-the same actions from a terminal. With the shell off, `Super + Ctrl + A` opens
-wiremix and `Super + Ctrl + N` opens nmtui.
+With the shell on (the desktop default), the panel binds reach the running shell
+through Hyprland global shortcuts (`marchyo:<name>`), with no process started.
+`marchyo shell toggle <panel>` and `marchyo shell overview` run the same actions
+from a terminal. `Super + Ctrl + A` (wiremix) and `Super + Ctrl + W` (nmtui) open
+the terminal audio mixer and Wi-Fi manager with the shell on or off.
 
 | Keys | Action |
 |------|--------|
 | `Super + Escape` | System menu (lock, suspend, hibernate with `marchyo.power.hibernation.enable`, log out, restart shell, reboot, reboot to firmware, shut down) |
-| `Super + Space` | Command menu (apps, capture, toggle, appearance, hardware, system, setup, share); type to search every entry, `Enter` opens or runs, `Esc` or `Backspace` on an empty field goes up a level |
-| `Super + Ctrl + C` / `Super + Ctrl + X` / `Super + Ctrl + Shift + H` | Capture / toggle / hardware menu |
+| `Super + Alt + Space` | Command menu (apps, capture, toggle, appearance, hardware, system, setup, share); type to search every entry, `Enter` opens or runs, `Esc` or `Backspace` on an empty field goes up a level |
+| `Super + Ctrl + C` / `Super + Ctrl + Shift + X` / `Super + Ctrl + Shift + H` | Capture / toggle / hardware menu |
 | `Super + Ctrl + Shift + T` | Theme menu |
 | `Super + K` | Keybindings cheat sheet, grouped by modifier plane; search the description or the chord, `Enter` runs the bind |
-| `Super + Ctrl + A` | Audio panel |
-| `Super + Ctrl + B` | Bluetooth panel (power, scan, connect and pair) |
+| `Super + Shift + V` | Audio panel |
+| `Super + Shift + N` | Network panel |
+| `Super + Shift + B` | Power panel |
+| `Super + Shift + M` | System monitor panel |
+| `Super + Shift + Q` | Control Center (volume and mic sliders, quick-toggle tiles) |
+| `Super + Ctrl + A` | Audio mixer (wiremix) |
+| `Super + Ctrl + W` | Wi-Fi manager (nmtui) |
+| `Super + Ctrl + B` | Bluetooth panel (power, scan, connect and pair); bluetui with the shell off |
 | `Super + Ctrl + Shift + B` | Bluetooth manager (bluetui) |
 | `Super + Ctrl + D` | Display panel |
-| `Super + Ctrl + N` | Network panel |
-| `Super + Ctrl + P` | Power panel |
-| `Super + Ctrl + M` | System monitor panel |
-| `Super + Ctrl + O` | Control Center (volume and mic sliders, quick-toggle tiles) |
-| `Super + Ctrl + E` | Emoji picker (in-shell) |
 | `Super + Ctrl + T` | Theme picker: a grid of theme previews; arrows move, `Enter` applies, `Escape` closes |
 | `Super + Ctrl + Shift + W` | Wallpaper picker: the same grid for wallpapers |
-| `Super + Ctrl + W` | Next background |
-| `` Super + Ctrl + ` `` | Window overview: every workspace with live window previews; type to filter by title or class, arrows / `Tab` to move, `Enter` to focus, `Escape` to close |
+| `Super + Ctrl + Space` | Next background |
+| `` Super + ` `` | Window overview: every workspace with live window previews; type to filter by title or class, arrows / `Tab` to move, `Enter` to focus, `Escape` to close |
 | `Super + Ctrl + Alt + E` | World clock |
 | `Super + Ctrl + U` | What's new: the NEWS entries since you last looked |
 | `Super + Ctrl + H` | First-login setup checklist |
@@ -178,12 +181,12 @@ Shell only.
 
 | Keys | Action |
 |------|--------|
-| `Super + ,` | Dismiss, invoke or focus the newest notification |
-| `Super + Alt + ,` | Dismiss the newest notification |
-| `Super + Shift + ,` | Dismiss all notifications |
-| `Super + Ctrl + ,` | Control notifications with the keyboard: number keys press buttons, Enter clicks, Up/Down move, Delete dismisses, Escape ends |
-| `Super + Ctrl + Alt + ,` | Silence notifications (do-not-disturb) |
-| `Super + Shift + Alt + ,` | Notification history |
+| `Super + ,` | Dismiss the last notification |
+| `Super + Ctrl + Alt + ,` | Dismiss, invoke or focus the newest notification |
+| `Super + Ctrl + Shift + ,` | Dismiss all notifications |
+| `Super + Alt + ,` | Control notifications with the keyboard: number keys press buttons, Enter clicks, Up/Down move, Delete dismisses, Escape ends |
+| `Super + Ctrl + ,` | Toggle do-not-disturb |
+| `Super + N` | Notification history |
 
 In the history, Up and Down walk the rows, Enter opens the row's link or the sender's window, Delete removes it and Escape closes the panel.
 
@@ -210,7 +213,7 @@ Dictation needs `marchyo.dictation.enable`.
 | Keys | Action |
 |------|--------|
 | `F9` (hold) | Push-to-talk dictation |
-| `Alt + Space` | Toggle recording on/off |
+| `Super + Ctrl + X` | Toggle recording on/off |
 | `Super + Shift + H` | Floating dictation status window (voxtype backend only) |
 
 ## Quick actions & toggles
@@ -223,6 +226,7 @@ Dictation needs `marchyo.dictation.enable`.
 | `Super + Ctrl + period` | Transcode media file |
 | `Super + Ctrl + I` | Toggle idle lock |
 | `Super + Ctrl + K` | Toggle caffeine (keep awake) |
+| `Super + Ctrl + N` | Toggle nightlight |
 | `Super + Shift + L` | Cycle theme |
 | `Super + Ctrl + Z` / `Super + Ctrl + Shift + Z` / `Super + Ctrl + Alt + Z` | Zoom in / out / reset (magnifier) |
 
@@ -230,7 +234,7 @@ Dictation needs `marchyo.dictation.enable`.
 
 | Keys | Action |
 |------|--------|
-| `Super + Ctrl + L` | Lock the screen (the shell lock; hyprlock with the shell off) |
+| `Super + L` | Lock the screen (the shell lock; hyprlock with the shell off) |
 | `Ctrl + Alt + Delete` | Power off |
 | Volume / brightness / media keys | `XF86` laptop keys (volume, mic mute, brightness, play/pause/next/prev) |
 
@@ -241,11 +245,11 @@ With `marchyo.emacs.enable`:
 | Keys | Action |
 |------|--------|
 | `Super + Shift + E` | New Emacs frame |
-| `Super + Shift + Alt + E` | Emacs everywhere (edit the focused text field) |
+| `Super + Ctrl + E` | Emacs everywhere (edit the focused text field) |
 | `Super + Z` | Emacs scratchpad |
-| `Super + Ctrl + Alt + H/J/K/L` | Focus window, Emacs windows first |
-| `Super + Ctrl + Alt + Shift + H/J/K/L` | Swap window, Emacs windows first |
-| `Super + Ctrl + Alt + O` | Org capture |
+| `Super + Alt + H/J/K/L` | Focus window, Emacs windows first |
+| `Super + Alt + Shift + H/J/K/L` | Swap window, Emacs windows first |
+| `Super + Shift + T` | Org capture |
 
 ## Top bar mouse actions
 

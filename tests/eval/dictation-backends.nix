@@ -1,5 +1,5 @@
 # Evaluation tests for marchyo.dictation.backend (voxtype): the default
-# backend, its user service and input group, the Alt+Space toggle and the
+# backend, its user service and input group, the Super+Ctrl+X toggle and the
 # backend hint `marchyo dictation` reads.
 {
   helpers,
@@ -32,14 +32,14 @@ let
   binds = eval: (hmOf eval).wayland.windowManager.hyprland.settings.bind;
   failed = eval: lib.filter (a: !a.assertion) eval.config.assertions;
   hasHold = eval: hyprHasBind (binds eval) "F9" "dictation start";
-  hasToggle = eval: hyprHasBind (binds eval) "ALT + SPACE" "dictation toggle";
+  hasToggle = eval: hyprHasBind (binds eval) "SUPER + CTRL + X" "dictation toggle";
   clientConfig = eval: (hmOf eval).xdg.configFile."marchyo/dictation.json".text;
 
   default = evalWith { };
 in
 {
   # The default backend is voxtype: its daemon keeps the F9 hotkey itself (no
-  # Hyprland hold binds), users join `input` for it, and Alt+Space toggles
+  # Hyprland hold binds), users join `input` for it, and Super+Ctrl+X toggles
   # through the verb.
   eval-dictation-backend-default-voxtype = pkgs.writeText "eval-dictation-backend-default-voxtype" (
     if
@@ -85,7 +85,7 @@ in
         throw "FAIL: dictation disabled but a backend unit, client config or bind is present"
     );
 
-  # toggleKey = null removes the Alt+Space bind.
+  # toggleKey = null removes the Super+Ctrl+X bind.
   eval-dictation-backend-toggle-key-null =
     let
       none = evalWith { marchyo.dictation.toggleKey = null; };

@@ -69,7 +69,7 @@ in
         throw "FAIL: marchyo.notifications.rules is not empty by default"
     );
 
-  # With the shell on, SUPER+SHIFT+ALT+comma toggles the notification centre panel through
+  # With the shell on, SUPER+N toggles the notification centre panel through
   # the shell's panel.notifications global shortcut.
   eval-notifications-centre-bind =
     let
@@ -78,12 +78,10 @@ in
         .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
     in
     pkgs.writeText "eval-notifications-centre-bind" (
-      if
-        hyprHasBind binds "SUPER + SHIFT + ALT + comma" "hl.dsp.global(\"marchyo:panel.notifications\")"
-      then
+      if hyprHasBind binds "SUPER + N" "hl.dsp.global(\"marchyo:panel.notifications\")" then
         "pass"
       else
-        throw "FAIL: SUPER+SHIFT+ALT+comma should dispatch the panel.notifications global shortcut when the shell is on"
+        throw "FAIL: SUPER+N should dispatch the panel.notifications global shortcut when the shell is on"
     );
 
   # Deck, code and DND-pass options default on and thread into the shell.
@@ -120,7 +118,8 @@ in
         (evalWith { marchyo.shell.enable = true; })
         .config.home-manager.users.testuser.systemd.user.services.marchyo-session-notices;
       off =
-        (evalWith { marchyo.shell.enable = false; }).config.home-manager.users.testuser.systemd.user.services
+        (evalWith { marchyo.shell.enable = false; })
+        .config.home-manager.users.testuser.systemd.user.services
           ? marchyo-session-notices;
       cmds = lib.concatStringsSep "\n" svc.Service.ExecStart;
     in

@@ -42,7 +42,7 @@ in
     pkgs.writeText "eval-menus-enabled" (
       if
         hasBind hm "SUPER + Escape" "marchyo:menu.system"
-        && hasBind hm "SUPER + SPACE" "marchyo:menu"
+        && hasBind hm "SUPER + ALT + SPACE" "marchyo:menu"
         && hasScript hm "gum"
         && !(hasScript hm "marchyo-power-menu")
       then

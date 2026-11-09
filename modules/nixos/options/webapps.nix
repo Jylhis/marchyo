@@ -32,13 +32,13 @@ let
         description = ''
           Hyprland key (the part after the modifiers) that launches this app.
           `null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT
-          binds (C, D, E, H, I, L, M, O, Q, S, T are taken, plus
-          minus/equal/comma/SPACE/Print/Tab/grave and the workspace
-          digits/arrows) and of the keys used by the default app set
-          (A, G, P, W, X, Y, Z). With `marchyo.keyboard.legacyBinds` and
-          the shell on, B, N and V are taken too (power, network and audio
-          panels). A key on a chord marchyo binds is dropped with a
-          warning. The bind table is lib/keybinds.nix.
+          binds (C, D, E, H, I, L, O, S, T are taken, plus
+          minus/equal/comma/period/SPACE/Print/Tab and the workspace
+          digits/arrows; with the shell on, B, M, N, Q and V are taken too
+          by the power, system monitor, network, Control Center and audio
+          panels) and of the keys used by the default app set
+          (A, G, P, W, X, Y, Z). A key on a chord marchyo binds is dropped
+          with a warning. The bind table is lib/keybinds.nix.
         '';
       };
       modifiers = mkOption {
