@@ -13,9 +13,22 @@ Marchyo is a modular NixOS configuration flake providing curated system, and Hom
 - Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; `home-manager` tracks `master` to pair with unstable.
 - Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`; `marchyo.lib.*` builders and `legacyPackages.<system>` give a system-correct nixpkgs
 
-## Hybrid Non-Flake + Flake Architecture
+## Plain Nix Behind a Thin Flake
 
-All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. `default.nix` is a flake-compat shim for non-flake consumers (devenv, `nix-build`). Development uses `devenv.sh` (no experimental features required). `flake.lock` is the source of truth for input revisions; the devenv dev shell tracks the primary (unstable) `nixpkgs`, synchronized to `devenv.lock` via `just update`.
+All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. Development uses `devenv.sh` (no experimental features required). `flake.lock` is the source of truth for input revisions; the devenv dev shell tracks the primary (unstable) `nixpkgs`, synchronized to `devenv.lock` via `just update`.
+
+## Flake Inputs
+
+| Input | Purpose |
+|-------|---------|
+| `nixpkgs` | Primary package set — NixOS unstable channel |
+| `home-manager` | User environment management (master, pairs with unstable) |
+| `treefmt-nix` | Multi-tool code formatter |
+| `ncro` | Nix Cache Route Optimizer, behind `marchyo.nix.router.enable` |
+| `tinted-schemes` | Base16 scheme catalog, read at eval time (non-flake input) |
+| `disko` | Declarative partitioning for the `disko/` layouts |
+
+Every input that takes a nixpkgs follows the root `nixpkgs`.
 
 ## Module Organization
 
@@ -23,7 +36,6 @@ All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wra
 flake.nix           # Flake entry point — imports outputs.nix, wraps per-system outputs
 flake.lock          # Single source of truth for all pinned inputs (nixpkgs, home-manager, etc.)
 outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
-default.nix         # Flake-compat shim — exposes flake outputs to non-flake consumers
 overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, plymouth-marchyo-theme, plus the vendored design system in lib/design)
 treefmt.nix         # Formatter config for treefmt-nix
 devenv.nix          # Development shell configuration
@@ -66,10 +78,9 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchy
 
 ## Key Files
 
-- `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`. Includes `flake-compat` as a non-flake input.
+- `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.). `devenv.lock` syncs to this via `just update`.
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkHomeConfiguration`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
-- `default.nix` — Flake-compat shim. Uses `flake-compat` (pinned in `flake.lock`) to expose flake outputs to non-flake consumers (`nix-build`, devenv).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `linux` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.

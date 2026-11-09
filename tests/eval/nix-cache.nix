@@ -18,7 +18,11 @@ in
     config.services.ncro.enable
     && lib.head config.nix.settings.substituters == localhost
     && builtins.elem "https://jylhis.cachix.org" upstreamUrls
-    && builtins.elem "https://cache.numtide.com" upstreamUrls
+    && builtins.elem "https://nix-community.cachix.org" upstreamUrls
+    # Caches for inputs marchyo no longer has stay out.
+    && !(builtins.any (u: lib.hasInfix "numtide" u || lib.hasInfix "hyprland" u) (
+      upstreamUrls ++ config.nix.settings.substituters
+    ))
     && builtins.elem "https://cache.nixos.org" upstreamUrls
     # The direct caches stay as fallbacks alongside the proxy.
     && builtins.elem "https://jylhis.cachix.org" config.nix.settings.substituters

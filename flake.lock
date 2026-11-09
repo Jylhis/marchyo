@@ -1,18 +1,22 @@
 {
   "nodes": {
-    "flake-compat": {
-      "flake": false,
+    "disko": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
-        "lastModified": 1767039857,
-        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
-        "owner": "edolstra",
-        "repo": "flake-compat",
-        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "lastModified": 1768920986,
+        "narHash": "sha256-CNzzBsRhq7gg4BMBuTDObiWDH/rFYHEuDRVOwCcwXw4=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "e92033d8960a363b963cce697aa3ff091fe42a8a",
         "type": "github"
       },
       "original": {
-        "owner": "edolstra",
-        "repo": "flake-compat",
+        "owner": "nix-community",
+        "repo": "disko",
         "type": "github"
       }
     },
@@ -74,7 +78,7 @@
     },
     "root": {
       "inputs": {
-        "flake-compat": "flake-compat",
+        "disko": "disko",
         "home-manager": "home-manager",
         "ncro": "ncro",
         "nixpkgs": "nixpkgs",

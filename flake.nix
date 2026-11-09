@@ -3,40 +3,41 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # ncro (Nix Cache Route Optimizer): local HTTP proxy routing binary-cache
-    # requests to the fastest reachable upstream. Gated behind
-    # marchyo.nix.router.enable.
+    # Nix Cache Route Optimizer, behind marchyo.nix.router.enable.
     ncro = {
       url = "github:manic-systems/ncro";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Base16 scheme catalog (successor of the archived
-    # tinted-theming/base16-schemes that pkgs.base16-schemes packages).
-    # Pure data source: read at eval time from the fetched tree instead of
-    # the built pkgs.base16-schemes package, so evaluation never forces a
-    # package build (no import-from-derivation).
+    # Base16 schemes, read at eval time as plain data (no IFD).
     tinted-schemes = {
       url = "github:tinted-theming/schemes";
       flake = false;
     };
+    # Declarative partitioning for the disko/ layouts.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   nixConfig = {
-    extra-substituters = [ "https://cache.numtide.com" ];
+    extra-substituters = [
+      "https://jylhis.cachix.org"
+      "https://jylhis-extra.cachix.org"
+      "https://nix-community.cachix.org"
+    ];
     extra-trusted-public-keys = [
-      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+      "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE="
+      "jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
   };
 

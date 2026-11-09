@@ -103,4 +103,8 @@ The keyboard/IME system is the most complex cross-module pattern:
 | `nixpkgs` | Primary package set — NixOS unstable channel |
 | `home-manager` | User environment management (master, pairs with unstable) |
 | `treefmt-nix` | Multi-tool code formatter |
-| `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |
+| `ncro` | Nix Cache Route Optimizer, behind `marchyo.nix.router.enable` |
+| `tinted-schemes` | Base16 scheme catalog, read at eval time (non-flake input) |
+| `disko` | Declarative partitioning for the `disko/` layouts |
+
+Every input that takes a nixpkgs follows the root `nixpkgs`.
