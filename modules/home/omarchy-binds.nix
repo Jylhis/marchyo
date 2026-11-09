@@ -3,19 +3,19 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
+  marchyoCfg = osConfig.marchyo;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.desktop.enable;
 
   # Follow marchyo.defaults.fileManager, falling back to xdg-open when null.
   fileManagerPackages = {
     inherit (pkgs) nautilus;
     inherit (pkgs.xfce) thunar;
   };
-  fileManagerName = (marchyoCfg.defaults or { }).fileManager or "nautilus";
+  fileManagerName = marchyoCfg.defaults.fileManager;
   fileManagerDeps =
     if fileManagerName == null then [ pkgs.xdg-utils ] else [ fileManagerPackages.${fileManagerName} ];
 

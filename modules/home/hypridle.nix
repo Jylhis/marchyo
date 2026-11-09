@@ -1,25 +1,24 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   dpmsOn = hlua.hyprDispatch ''dpms({ action = "on" })'';
   dpmsOff = hlua.hyprDispatch ''dpms({ action = "off" })'';
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  screensaverEnabled = (osConfig.marchyo or { }).screensaver.enable or true;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  screensaverEnabled = osConfig.marchyo.screensaver.enable;
 
   # With the unified shell on, the in-shell WlSessionLock (`marchyo shell lock`)
   # replaces hyprlock/loginctl as the lock actuation. hypridle stays the single
   # idle authority so `marchyo toggle idle` (which stops this service) keeps
   # disabling idle lock.
-  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+  shellEnabled = osConfig.marchyo.shell.enable;
   # The store path when the CLI is not installed system-wide, so idle locking
   # never depends on marchyo.cli.enable.
-  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
+  cliEnabled = osConfig.marchyo.cli.enable;
   marchyoCli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
   shellLockCmd = "${marchyoCli} shell lock";
 in

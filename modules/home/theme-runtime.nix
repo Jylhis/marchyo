@@ -28,16 +28,15 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  themeCfg = (osConfig.marchyo or { }).theme or { };
-  themeEnabled = themeCfg.enable or true;
-  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
-  buildVariant = themeCfg.variant or "dark";
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  themeCfg = osConfig.marchyo.theme;
+  themeEnabled = themeCfg.enable;
+  cliEnabled = osConfig.marchyo.cli.enable;
+  buildVariant = themeCfg.variant;
   otherVariant = if buildVariant == "dark" then "light" else "dark";
 
   mkPalette = variant: import ../generic/jylhis-palette.nix { inherit pkgs lib variant; };
@@ -212,9 +211,9 @@ let
       batConfig;
   batTmTheme = gen.tmTheme;
 
-  wallpaperCfg = themeCfg.wallpaper or { };
-  wallpaperEnabled = wallpaperCfg.enable or true;
-  wallpaperPackage = wallpaperCfg.package or pkgs.marchyo-wallpapers;
+  wallpaperCfg = themeCfg.wallpaper;
+  wallpaperEnabled = wallpaperCfg.enable;
+  wallpaperPackage = wallpaperCfg.package;
 
   # Hyprland color keywords: mirrors the values modules/home/hyprland.nix
   # bakes into the build-time config (misc:background_color +
@@ -297,6 +296,8 @@ let
   wallpapersDirFor =
     label: paths: pkgs.linkFarm "marchyo-theme-${label}-wallpapers" (wallpaperLinks paths);
   # The Jylhis pair lists the generated patterns beside the default grid.
+  # `or`: marchyo.theme.wallpaper.package may be any user package, which need
+  # not carry marchyo-wallpapers' forPolarity passthru.
   packageWallpapers =
     v:
     lib.filter (p: !lib.hasSuffix "jylhis-grid-${v}.png" p) (
@@ -311,7 +312,7 @@ let
     import ../generic/theme-slots.nix {
       inherit pkgs lib;
       variant = v;
-      scheme = if v == buildVariant then themeCfg.scheme or null else null;
+      scheme = if v == buildVariant then themeCfg.scheme else null;
     };
 
   # palette.json: the full kebab-case token -> hex map (syn-* included) plus
@@ -496,11 +497,7 @@ let
       }
     );
 
-  themeList =
-    themeCfg.themes or [
-      "jylhis-dark"
-      "jylhis-light"
-    ];
+  themeList = themeCfg.themes;
   # An entry is either a name (the Jylhis pair, or a tinted-schemes base16
   # name) or an inline base16 theme `{ name; variant; slots; wallpaper?; }`.
   # Inline entries share the exact shape mkSchemeThemeDir consumes, so they
@@ -575,7 +572,7 @@ let
       inherit (t) name variant;
       dir = "${t.dir}";
     }) resolvedThemes;
-    followWallpaper = themeCfg.followWallpaper or false;
+    inherit (themeCfg) followWallpaper;
   };
 
 in

@@ -14,20 +14,16 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  theme = (osConfig.marchyo or { }).theme or { };
-  themeEnabled = theme.enable or true;
-  runtimeThemed =
-    themeEnabled
-    && pkgs.stdenv.hostPlatform.isLinux
-    && ((osConfig.marchyo or { }).desktop.enable or false);
+  theme = osConfig.marchyo.theme;
+  themeEnabled = theme.enable;
+  runtimeThemed = themeEnabled && pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
   s = import ../generic/theme-slots.nix {
     inherit pkgs lib;
-    variant = theme.variant or "dark";
-    scheme = theme.scheme or null;
+    inherit (theme) variant scheme;
   };
   gen = import ../../lib/theme-generators.nix { inherit lib; };
   cfg = config.programs.lazygit;

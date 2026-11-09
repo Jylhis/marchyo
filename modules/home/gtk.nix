@@ -2,17 +2,14 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
   home = config.home.homeDirectory;
-  colorScheme =
-    if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then "dark" else "light";
-  runtimeTheme =
-    ((osConfig.marchyo or { }).theme.enable or true) && ((osConfig.marchyo or { }).cli.enable or false);
+  colorScheme = if osConfig.marchyo.theme.variant == "dark" then "dark" else "light";
+  runtimeTheme = osConfig.marchyo.theme.enable && osConfig.marchyo.cli.enable;
 in
 {
   config = lib.mkIf desktopEnabled {

@@ -53,7 +53,6 @@
         nixosModules
         homeManagerModules
         nixosConfigurations
-        homeConfigurations
         overlays
         templates
         lib

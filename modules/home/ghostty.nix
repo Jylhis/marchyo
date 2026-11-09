@@ -2,7 +2,7 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
@@ -12,10 +12,10 @@ let
     mkIf
     ;
 
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeVariant = osConfig.marchyo.theme.variant;
   ghosttyTheme = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
 
-  fontScale = (osConfig.marchyo or { }).theme.fontScale or 1.0;
+  fontScale = osConfig.marchyo.theme.fontScale;
   fs = import ../../lib/font-scale.nix {
     inherit lib;
     scale = fontScale;

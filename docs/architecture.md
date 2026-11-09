@@ -58,12 +58,12 @@ templates/workstation/  # Developer workstation template
 
 ## Flake Outputs
 
-- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and wire in marchyo's nixpkgs, home-manager, overlay and modules. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkHomeConfiguration`, `lib.mkPkgs`
+- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and wire in marchyo's nixpkgs, home-manager, overlay and modules. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkPkgs`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
 - `nixosModules.disko` — Re-exported disko NixOS module; pair with `lib.diskoLayout "<layout>" { device = …; }` (layouts in `lib.diskoLayouts`)
 - `packages.x86_64-linux.iso-{minimal,graphical}` — Installer ISOs from `installer/`
-- `homeManagerModules.default` — Home Manager module only
+- `homeManagerModules.default` — The Home Manager modules (`modules/home`); `modules/nixos/system.nix` imports them for every `marchyo.users` entry. They read `osConfig.marchyo.*` directly, so they need the NixOS module
 - `homeManagerModules._1password` — 1Password Home Manager module
 - `overlays.default` — Nixpkgs overlay (Linux packages wrapped in `optionalAttrs`)
 - `packages.{system}.{marchyo-cli,marchyo-wallpapers,marchyo-shell,plymouth-marchyo-theme}` — marchyo packages
@@ -74,7 +74,6 @@ templates/workstation/  # Developer workstation template
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
 - `nixosModules` / `homeManagerModules` — per-platform module sets
 - `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
-- `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
 
 Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchyo's nixpkgs — no separate nixpkgs input needed. For an overlay-applied package set use `marchyo.legacyPackages.<system>`.
 
@@ -82,7 +81,7 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchy
 
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.). `devenv.lock` syncs to this via `just update`.
-- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkHomeConfiguration`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
+- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `linux` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.

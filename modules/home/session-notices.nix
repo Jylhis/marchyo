@@ -5,16 +5,13 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  mc = osConfig.marchyo or { };
-  enabled =
-    pkgs.stdenv.hostPlatform.isLinux
-    && (mc.desktop.enable or false)
-    && ((mc.shell or { }).enable or false);
-  marchyoCli = if (mc.cli.enable or false) then "marchyo" else lib.getExe pkgs.marchyo-cli;
+  mc = osConfig.marchyo;
+  enabled = pkgs.stdenv.hostPlatform.isLinux && mc.desktop.enable && mc.shell.enable;
+  marchyoCli = if mc.cli.enable then "marchyo" else lib.getExe pkgs.marchyo-cli;
 in
 {
   config = lib.mkIf enabled {

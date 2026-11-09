@@ -6,51 +6,50 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   inherit (lib) mkOption types;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
+  marchyoCfg = osConfig.marchyo;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.desktop.enable;
   cfg = config.marchyo.keybinds;
 
-  cliEnabled = marchyoCfg.cli.enable or false;
-  shellEnabled = (marchyoCfg.shell or { }).enable or false;
+  cliEnabled = marchyoCfg.cli.enable;
+  shellEnabled = marchyoCfg.shell.enable;
 
-  dictationCfg = marchyoCfg.dictation or { };
-  dictationEnabled = dictationCfg.enable or false;
-  dictationBackend = dictationCfg.backend or "voxtype";
+  dictationCfg = marchyoCfg.dictation;
+  dictationEnabled = dictationCfg.enable;
+  dictationBackend = dictationCfg.backend;
 
-  emacsCfg = marchyoCfg.emacs or { };
-  emacsEnabled = emacsCfg.enable or false;
-  emacsFeature = name: emacsEnabled && ((emacsCfg.${name} or { }).enable or true);
+  emacsCfg = marchyoCfg.emacs;
+  emacsEnabled = emacsCfg.enable;
+  emacsFeature = name: emacsEnabled && emacsCfg.${name}.enable;
 
   ctx = {
     # The store path when the CLI is not installed system-wide, so the shell
     # binds never depend on marchyo.cli.enable.
     cli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
     shell = shellEnabled;
-    launcher = (marchyoCfg.launcher or { }).enable or false;
-    perMonitor = (marchyoCfg.workspaces or { }).perMonitor or true;
-    kbdBacklight = ((marchyoCfg.keyboard or { }).backlight or { }).enable or true;
+    launcher = marchyoCfg.launcher.enable;
+    perMonitor = marchyoCfg.workspaces.perMonitor;
+    kbdBacklight = marchyoCfg.keyboard.backlight.enable;
     dictation = {
       enabled = dictationEnabled;
-      toggleKey = dictationCfg.toggleKey or "SUPER + CTRL + X";
+      inherit (dictationCfg) toggleKey;
       # Push-to-talk (F9) is voxtype's own evdev hotkey, not a Hyprland bind.
-      statusWindow =
-        dictationEnabled && dictationBackend == "voxtype" && (dictationCfg.statusWindow or true);
+      statusWindow = dictationEnabled && dictationBackend == "voxtype" && dictationCfg.statusWindow;
     };
     cheatsheet = config.marchyo.keybindingsHelp.enable;
-    menus = (marchyoCfg.menus or { }).enable or true;
+    menus = marchyoCfg.menus.enable;
     screenshot = {
       inherit (config.marchyo.screenshot) enable;
       annotation = config.marchyo.screenshot.enableAnnotation;
       ocr = config.marchyo.screenshot.enableOcr;
     };
-    reminders = (marchyoCfg.reminders or { }).enable or true;
-    utilities = (marchyoCfg.utilities or { }).enable or true;
+    reminders = marchyoCfg.reminders.enable;
+    utilities = marchyoCfg.utilities.enable;
     emacs = {
       enable = emacsEnabled;
       windmove = emacsFeature "windmove";

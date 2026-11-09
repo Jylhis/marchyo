@@ -7,24 +7,22 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  marchyoCfg = osConfig.marchyo or { };
-  theme = marchyoCfg.theme or { };
-  themeEnabled = theme.enable or true;
-  runtimeThemed =
-    themeEnabled && pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
+  marchyoCfg = osConfig.marchyo;
+  inherit (marchyoCfg) theme;
+  themeEnabled = theme.enable;
+  runtimeThemed = themeEnabled && pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.desktop.enable;
   s = import ../generic/theme-slots.nix {
     inherit pkgs lib;
-    variant = theme.variant or "dark";
-    scheme = theme.scheme or null;
+    inherit (theme) variant scheme;
   };
   gen = import ../../lib/theme-generators.nix { inherit lib; };
 in
 {
-  config = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.tmux.enable or false)) {
+  config = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.tmux.enable) {
     programs.tmux = {
       enable = true;
       terminal = "tmux-256color";

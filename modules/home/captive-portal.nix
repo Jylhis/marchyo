@@ -3,17 +3,16 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  mc = osConfig.marchyo or { };
-  check = (mc.network or { }).connectivityCheck or { };
-  enabled =
-    pkgs.stdenv.hostPlatform.isLinux && (mc.desktop.enable or false) && (check.enable or false);
+  mc = osConfig.marchyo;
+  check = mc.network.connectivityCheck;
+  enabled = pkgs.stdenv.hostPlatform.isLinux && mc.desktop.enable && check.enable;
 
   browser = import ../../lib/webapp-browser.nix { inherit osConfig; };
-  hostMatch = builtins.match "[a-zA-Z][a-zA-Z0-9+.-]*://([^/:?#]+).*" (check.uri or "");
+  hostMatch = builtins.match "[a-zA-Z][a-zA-Z0-9+.-]*://([^/:?#]+).*" check.uri;
   host = if hostMatch == null then "" else builtins.head hostMatch;
   # Chromium names an --app window `chrome-<host>__<path>-Default` (brave-...).
   windowClass = "^(chrome|brave)-${builtins.replaceStrings [ "." ] [ "[.]" ] host}__.*$";

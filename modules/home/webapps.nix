@@ -1,21 +1,20 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  cfg = (osConfig.marchyo or { }).webapps or { };
-  enabled = desktopEnabled && (cfg.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  cfg = osConfig.marchyo.webapps;
+  enabled = desktopEnabled && cfg.enable;
 
-  presetOn = name: ((cfg.presets or { }).${name} or { }).enable or false;
+  presetOn = name: cfg.presets.${name}.enable;
   webappPresets = import ../../lib/webapp-presets.nix;
   notionNative =
     presetOn "notion" && pkgs.config.allowUnfree && pkgs.stdenv.hostPlatform.system == "x86_64-linux";
-  emailChoice = ((osConfig.marchyo or { }).defaults or { }).email or null;
+  emailChoice = osConfig.marchyo.defaults.email;
   emailAppName = {
     gmail = "Gmail";
     outlook = "Outlook";
@@ -31,7 +30,7 @@ let
 
   # Presets go last: listToAttrs keeps the first entry per name, so an app the
   # user already lists (the default Gmail, say) wins over the preset copy.
-  apps = (cfg.apps or [ ]) ++ (cfg.extraApps or [ ]) ++ presetApps;
+  apps = cfg.apps ++ cfg.extraApps ++ presetApps;
 
   webappBrowser = import ../../lib/webapp-browser.nix { inherit osConfig; };
   browserCmd = webappBrowser.command;

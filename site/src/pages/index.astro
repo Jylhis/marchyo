@@ -165,7 +165,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
         </details>
         <details>
           <summary><span class="faq__chev">›</span> Home Manager only?</summary>
-          <p>Use <code>homeManagerModules.default</code> in your own home-manager configuration — no NixOS system modules required.</p>
+          <p>No. The Home Manager modules read the NixOS options (<code>osConfig.marchyo</code>), so they run under the NixOS module, which imports them for every marchyo user.</p>
         </details>
       </div>
     </section>

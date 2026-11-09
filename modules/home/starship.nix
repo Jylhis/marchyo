@@ -3,11 +3,11 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  themeEnabled = (osConfig.marchyo or { }).theme.enable or true;
+  themeEnabled = osConfig.marchyo.theme.enable;
 in
 {
   config = lib.mkIf themeEnabled {

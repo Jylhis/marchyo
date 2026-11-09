@@ -1,12 +1,12 @@
 {
-  osConfig ? { },
+  osConfig,
   config,
   lib,
   pkgs,
   ...
 }:
 let
-  marchyoUsers = (osConfig.marchyo or { }).users or { };
+  marchyoUsers = osConfig.marchyo.users;
   hasUser = builtins.hasAttr config.home.username marchyoUsers;
   userConfig =
     if hasUser then
@@ -40,11 +40,7 @@ in
           navigate = true;
           line-numbers = true;
           side-by-side = lib.mkDefault false;
-          syntax-theme =
-            if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then
-              "jylhis-dark"
-            else
-              "jylhis-light";
+          syntax-theme = if osConfig.marchyo.theme.variant == "dark" then "jylhis-dark" else "jylhis-light";
         };
       };
       git = {

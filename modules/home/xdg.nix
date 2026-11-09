@@ -3,13 +3,12 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  defaults = (osConfig.marchyo or { }).defaults or { };
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  defaults = osConfig.marchyo.defaults;
 
   browserDesktopFiles = {
     brave = "brave-browser.desktop";
@@ -48,12 +47,14 @@ let
     aerc = "aerc.desktop";
   };
 
-  browser = defaults.browser or null;
-  editor = defaults.editor or null;
-  videoPlayer = defaults.videoPlayer or null;
-  audioPlayer = defaults.audioPlayer or null;
-  fileManager = defaults.fileManager or null;
-  email = defaults.email or null;
+  inherit (defaults)
+    browser
+    editor
+    videoPlayer
+    audioPlayer
+    fileManager
+    email
+    ;
 
   browserDesktop = lib.optional (browser != null) browserDesktopFiles.${browser};
   editorDesktop = lib.optional (
@@ -114,8 +115,8 @@ let
     else
       { };
 
-  emacsCfg = (osConfig.marchyo or { }).emacs or { };
-  orgProtocolEnabled = (emacsCfg.enable or false) && (emacsCfg.orgProtocol.enable or true);
+  emacsCfg = osConfig.marchyo.emacs;
+  orgProtocolEnabled = emacsCfg.enable && emacsCfg.orgProtocol.enable;
   orgProtocolMimeTypes = lib.optionalAttrs orgProtocolEnabled {
     "x-scheme-handler/org-protocol" = [ "emacsclient.desktop" ];
   };

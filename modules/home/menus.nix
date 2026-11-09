@@ -5,13 +5,13 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   inherit (lib) mkIf;
-  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (osConfig.marchyo.desktop.enable or false);
-  enabled = desktopEnabled && (osConfig.marchyo.menus.enable or true);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  enabled = desktopEnabled && osConfig.marchyo.menus.enable;
 in
 {
   config = mkIf enabled {

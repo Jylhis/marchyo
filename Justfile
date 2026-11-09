@@ -18,10 +18,6 @@ fmt:
 build-nixos config="x86_64":
     nix build .#nixosConfigurations.{{config}}.config.system.build.toplevel
 
-# Build Home Manager configuration (config: x86_64-linux, aarch64-linux)
-build-home config="x86_64-linux":
-    nix build .#homeConfigurations.{{config}}.activationPackage
-
 # Build an installer ISO (variant: minimal, graphical; x86_64-linux)
 iso variant="minimal":
     nix build .#iso-{{variant}}

@@ -30,7 +30,7 @@ Marchyo is distributed as a batteries-included Nix flake. Add it as your only in
 }
 ```
 
-The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). Every system rides nixpkgs unstable. If you only need Home Manager, use `homeManagerModules.default`.
+The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). Every system rides nixpkgs unstable. The Home Manager modules read the NixOS options, so there is no Home Manager-only setup.
 
 :::note
 The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` or the `marchyo.lib.*` builders.
@@ -42,7 +42,7 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 |--------|-------------|
 | `lib.mkNixosSystem` | System builder (recommended entry point) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
-| `homeManagerModules.default` | Home Manager module only |
+| `homeManagerModules.default` | The Home Manager modules (imported for every `marchyo.users` entry; need the NixOS module) |
 | `nixosModules.disko` + `lib.diskoLayout` | Declarative disk layouts from `disko/` (see [Installation](/docs/guides/installation/)) |
 | `packages.x86_64-linux.iso-{minimal,graphical}` | Installer ISOs |
 | `legacyPackages.{system}` | nixpkgs + marchyo overlay |

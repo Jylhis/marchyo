@@ -5,19 +5,15 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  cfg =
-    (osConfig.marchyo or { }).theme or {
-      enable = true;
-      variant = "dark";
-    };
+  cfg = osConfig.marchyo.theme;
   mode = if cfg.variant == "dark" then "dark" else "light";
   fs = import ../../lib/font-scale.nix {
     inherit lib;
-    scale = cfg.fontScale or 1.25;
+    scale = cfg.fontScale;
   };
 
   fonts = import "${pkgs.jylhis-design-src}/nix/fonts.nix";

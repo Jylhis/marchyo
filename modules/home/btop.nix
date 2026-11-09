@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
@@ -12,8 +12,8 @@ let
   # (theme-runtime.nix), so a runtime theme switch needs no relink.
   themed =
     pkgs.stdenv.hostPlatform.isLinux
-    && ((osConfig.marchyo or { }).desktop.enable or false)
-    && ((osConfig.marchyo or { }).theme.enable or true);
+    && osConfig.marchyo.desktop.enable
+    && osConfig.marchyo.theme.enable;
 in
 {
   xdg.configFile."btop/themes/marchyo.theme" = mkIf themed {

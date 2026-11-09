@@ -1,15 +1,10 @@
 {
   lib,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  cfg =
-    (osConfig.marchyo or { }).keyboard or {
-      layouts = [ ];
-      options = [ ];
-      composeKey = null;
-    };
+  cfg = osConfig.marchyo.keyboard;
   keyboardLib = import ../generic/keyboard-lib.nix;
   composeOption = (import ../../lib/xkb-compose.nix).optionFor cfg.composeKey;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };

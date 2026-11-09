@@ -2,14 +2,14 @@
 # else marchyo.defaults.browser when chromium-based, else chromium.
 { osConfig }:
 let
-  mc = osConfig.marchyo or { };
+  mc = osConfig.marchyo;
   chromiumFamily = {
     brave = "brave";
     google-chrome = "google-chrome";
     chromium = "chromium";
   };
-  explicit = (mc.webapps or { }).browser or null;
-  defaultBrowser = (mc.defaults or { }).browser or null;
+  explicit = mc.webapps.browser;
+  defaultBrowser = mc.defaults.browser;
   resolved =
     if explicit != null then
       chromiumFamily.${explicit}

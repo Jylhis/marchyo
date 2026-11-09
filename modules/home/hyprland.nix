@@ -2,24 +2,22 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
 
   # Inert on headless Linux, so consumers never need disabledModules.
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 
   # The marchyo CLI persists ephemeral runtime overrides (theme/toggle
   # changes made without --apply); restore them at session start.
-  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
-  hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
+  cliEnabled = osConfig.marchyo.cli.enable;
+  hasNvidia = builtins.elem "nvidia" osConfig.marchyo.graphics.vendors;
   isPrimeOffload =
-    (osConfig.marchyo.graphics.prime.enable or false)
-    && (osConfig.marchyo.graphics.prime.mode or "") == "offload";
+    osConfig.marchyo.graphics.prime.enable && osConfig.marchyo.graphics.prime.mode == "offload";
 
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeVariant = osConfig.marchyo.theme.variant;
   isDark = themeVariant == "dark";
 
   palette = import ../generic/jylhis-palette.nix {
@@ -27,9 +25,9 @@ let
     variant = themeVariant;
   };
 
-  wallpaperCfg = ((osConfig.marchyo or { }).theme or { }).wallpaper or { };
-  wallpaperEnabled = wallpaperCfg.enable or true;
-  wallpaperPackage = wallpaperCfg.package or pkgs.marchyo-wallpapers;
+  wallpaperCfg = osConfig.marchyo.theme.wallpaper;
+  wallpaperEnabled = wallpaperCfg.enable;
+  wallpaperPackage = wallpaperCfg.package;
   wallpaperFile = "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${
     if isDark then "dark" else "light"
   }.png";
@@ -48,12 +46,12 @@ let
   rgb = h: "rgb(${lib.removePrefix "#" h})";
   rgba = h: a: "rgba(${lib.removePrefix "#" h}${a})";
 
-  marchyoDefaults = (osConfig.marchyo or { }).defaults or { };
+  marchyoDefaults = osConfig.marchyo.defaults;
 
   # Declarative monitor layout (marchyo.monitors) rendered into the Hyprland
   # Lua `monitor` table list. Empty (the default) keeps the catch-all that
   # auto-detects every output at its preferred mode, position, and scale 1.
-  monitorCfg = (osConfig.marchyo or { }).monitors or [ ];
+  monitorCfg = osConfig.marchyo.monitors;
   renderMonitor =
     m:
     if !m.enable then
@@ -89,23 +87,22 @@ let
     else
       map renderMonitor monitorCfg;
 
-  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+  shellEnabled = osConfig.marchyo.shell.enable;
 
   # Glass surfaces: marchyo.theme.appearance.surfaceAlpha < 1 makes the shell's
   # cards translucent, which only reads as glass when the compositor blurs what
   # is behind them. Baked off (alpha 1) the blur effect stays disabled and no
   # layer rules are registered, reproducing the flat opaque look.
-  surfaceAlpha = ((osConfig.marchyo or { }).theme.appearance or { }).surfaceAlpha or 1.0;
+  surfaceAlpha = osConfig.marchyo.theme.appearance.surfaceAlpha;
   # Reduced motion (VM default): no animations, blur or transparency.
-  reduceMotion = ((osConfig.marchyo or { }).theme.appearance or { }).reduceMotion or false;
+  reduceMotion = osConfig.marchyo.theme.appearance.reduceMotion;
   glassShell = shellEnabled && surfaceAlpha < 1.0 && !reduceMotion;
 
   # Window appearance (marchyo.theme.appearance.{transparency,corners,animations}).
-  appearanceCfg = (osConfig.marchyo or { }).theme.appearance or { };
-  transparency = appearanceCfg.transparency or "opaque";
-  corners = appearanceCfg.corners or "theme";
-  animationsMode = appearanceCfg.animations or "auto";
-  gaps = appearanceCfg.gaps or false;
+  appearanceCfg = osConfig.marchyo.theme.appearance;
+  inherit (appearanceCfg) transparency corners;
+  animationsMode = appearanceCfg.animations;
+  inherit (appearanceCfg) gaps;
   glassyWindows = transparency == "glassy" && !reduceMotion;
   seeThroughWindows = transparency != "opaque" && !reduceMotion;
   # Blur serves the shell's glass surfaces and glassy windows.
@@ -189,25 +186,25 @@ let
 
   browserCmd =
     let
-      b = marchyoDefaults.browser or "google-chrome";
+      b = marchyoDefaults.browser;
     in
     if b == null then "xdg-open" else browserHyprlandCommands.${b};
 
   fileManagerCmd =
     let
-      fm = marchyoDefaults.fileManager or "nautilus";
+      fm = marchyoDefaults.fileManager;
     in
     if fm == null then "xdg-open" else fileManagerHyprlandCommands.${fm};
 
   musicCmd =
     let
-      m = marchyoDefaults.musicPlayer or "spotify-player";
+      m = marchyoDefaults.musicPlayer;
     in
     if m == null then "xdg-open" else musicHyprlandCommands.${m};
 
   editorCmd =
     let
-      e = marchyoDefaults.editor or "emacs";
+      e = marchyoDefaults.editor;
     in
     if e == null then "xdg-open" else editorHyprlandCommands.${e};
 
@@ -215,7 +212,7 @@ let
   # block of ten workspace ids. hyprland-monitor-workspaces.lua is loaded with
   # dofile from the store, so `hyprland --verify-config` runs it too, and the
   # connectors of marchyo.monitors seed the block order.
-  perMonitorWorkspaces = ((osConfig.marchyo or { }).workspaces or { }).perMonitor or true;
+  perMonitorWorkspaces = osConfig.marchyo.workspaces.perMonitor;
   workspaceSeed = map (m: m.output) (lib.filter (m: m.enable && m.output != "") monitorCfg);
   monitorWorkspacesLua = mkLuaInline "dofile(${hlua.luaStr "${./hyprland-monitor-workspaces.lua}"})(${
     lib.generators.toLua { multiline = false; } workspaceSeed
@@ -223,7 +220,7 @@ let
   # Display panel settings (marchyo.monitorPanel.persist): the saved file is
   # loaded from the end of the generated config, after the declarative monitor
   # rules.
-  monitorPanelPersist = ((osConfig.marchyo or { }).monitorPanel or { }).persist or true;
+  monitorPanelPersist = osConfig.marchyo.monitorPanel.persist;
   monitorSettingsLoader = "dofile(${hlua.luaStr "${./hyprland-monitor-settings.lua}"})()";
 in
 {

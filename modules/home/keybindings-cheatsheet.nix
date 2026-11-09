@@ -2,14 +2,13 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   inherit (lib) mkIf mkEnableOption;
   cfg = config.marchyo.keybindingsHelp;
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 
   # The cheat sheet is `marchyo keybindings`: it lists marchyo/keybindings.json,
   # which modules/home/keybinds.nix writes from the bind table, plus any

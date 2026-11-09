@@ -1,27 +1,27 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  cfg = (osConfig.marchyo or { }).emacs or { };
-  enabled = cfg.enable or false;
-  emacsPkg = cfg.package or pkgs.emacs-pgtk;
+  cfg = osConfig.marchyo.emacs;
+  enabled = cfg.enable;
+  emacsPkg = cfg.package;
 
-  themeCfg = (osConfig.marchyo or { }).theme or { };
-  themeEnabled = themeCfg.enable or true;
-  themeVariant = themeCfg.variant or "dark";
+  themeCfg = osConfig.marchyo.theme;
+  themeEnabled = themeCfg.enable;
+  themeVariant = themeCfg.variant;
   fs = import ../../lib/font-scale.nix {
     inherit lib;
-    scale = themeCfg.fontScale or 1.25;
+    scale = themeCfg.fontScale;
   };
   jylhisThemeName = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
 
-  windmoveEnabled = enabled && (cfg.windmove.enable or true);
-  eventListenerEnabled = enabled && (cfg.eventListener.enable or true);
-  everywhereEnabled = enabled && (cfg.everywhere.enable or true);
+  windmoveEnabled = enabled && cfg.windmove.enable;
+  eventListenerEnabled = enabled && cfg.eventListener.enable;
+  everywhereEnabled = enabled && cfg.everywhere.enable;
 
   needsElispPkg = windmoveEnabled || eventListenerEnabled;
 

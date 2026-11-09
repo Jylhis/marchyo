@@ -18,7 +18,6 @@ Enter `devenv shell`; it provides Nix tooling, `just`, `jq`, Bun, the CLI, and Q
 just check               # Linux: nix flake check --no-build, then statix + deadnix
 just fmt                 # nix fmt via treefmt
 just build-nixos         # reference NixOS config; optional config=x86_64|aarch64
-just build-home          # standalone HM config; optional config=<supported system>
 just verify              # check shared revisions in flake.lock and devenv.lock
 just cli-test            # frozen Bun install, typecheck, and unit tests
 just site-build          # frozen Bun install, Astro check, and build
@@ -47,7 +46,7 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 
 - `tests/eval/*.nix` is auto-discovered. Each file receives helpers plus `lib`/`pkgs`/module sets and returns an attrset of named tests; every new module or option needs a `testNixOS` eval test, normally merged with `withTestUser`.
 - `tests/lib-tests.nix` contains unit tests for lib functions using `assertTest`.
-- Linux check derivations also build both Plymouth variants and the Marchyo shell wrapper, then run `tests/shell/format-test.js` and `tests/shell/contracts-test.sh`. There are no standalone Home Manager tests; HM modules are exercised through NixOS configs.
+- Linux check derivations also build both Plymouth variants and the Marchyo shell wrapper, then run `tests/shell/format-test.js` and `tests/shell/contracts-test.sh`. HM modules read `osConfig.marchyo.*` directly (no `or` fallbacks) and are exercised only through NixOS configs; there is no standalone Home Manager output.
 
 ## QML shell pitfalls
 

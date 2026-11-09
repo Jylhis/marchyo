@@ -2,7 +2,7 @@
   lib,
   pkgs,
   config,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
@@ -14,8 +14,7 @@ let
     ;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.screenshot;
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
   screenshotDir = "${config.home.homeDirectory}/Pictures/Screenshots";
 in
 {

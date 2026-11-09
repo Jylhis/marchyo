@@ -60,64 +60,6 @@ let
       services.getty.autologinUser = "developer";
     };
 
-  # Mock osConfig for standalone HM configs: the minimum structure HM modules
-  # access directly (without `or` defaults).
-  mockOsConfig = {
-    marchyo = {
-      keyboard = {
-        layouts = [ "us" ];
-        options = [ ];
-        autoActivateIME = false;
-        imeTriggerKey = [ ];
-        composeKey = null;
-      };
-      defaultLocale = "en_US.UTF-8";
-      users.developer = {
-        enable = true;
-        name = "developer";
-        fullname = "Marchyo Developer";
-        email = "dev@example.org";
-      };
-      desktop = {
-        enable = false;
-      };
-      development.enable = false;
-      graphics = {
-        vendors = [ ];
-        prime = {
-          enable = false;
-          mode = "";
-        };
-      };
-      defaults = { };
-      theme = {
-        enable = false;
-        variant = "dark";
-        wallpaper.enable = true;
-      };
-    };
-  };
-
-  mkHomeConfiguration =
-    {
-      system,
-      homeDirectory,
-    }:
-    home-manager.lib.homeManagerConfiguration {
-      pkgs = mkPkgs system;
-      extraSpecialArgs = {
-        osConfig = mockOsConfig;
-      };
-      modules = [
-        homeManagerModules.default
-        {
-          home.username = "developer";
-          home.homeDirectory = homeDirectory;
-          home.stateVersion = "25.11";
-        }
-      ];
-    };
-
   nixosModules = {
     default = {
       imports = [
@@ -210,7 +152,6 @@ in
   lib = {
     inherit
       mkNixosSystem
-      mkHomeConfiguration
       mkPkgs
       diskoLayout
       diskoLayouts
@@ -247,19 +188,6 @@ in
           marchyo.graphics.vendors = nixpkgs.lib.mkForce [ ];
         }
       ];
-    };
-  };
-
-  # Standalone Home Manager configurations (Linux only: many HM modules depend
-  # on Wayland/Hyprland).
-  homeConfigurations = {
-    "x86_64-linux" = mkHomeConfiguration {
-      system = "x86_64-linux";
-      homeDirectory = "/home/developer";
-    };
-    "aarch64-linux" = mkHomeConfiguration {
-      system = "aarch64-linux";
-      homeDirectory = "/home/developer";
     };
   };
 

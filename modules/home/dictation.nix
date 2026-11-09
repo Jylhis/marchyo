@@ -4,13 +4,13 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  cfg = (osConfig.marchyo or { }).dictation or { };
-  enabled = pkgs.stdenv.hostPlatform.isLinux && (cfg.enable or false);
-  backend = cfg.backend or "voxtype";
+  cfg = osConfig.marchyo.dictation;
+  enabled = pkgs.stdenv.hostPlatform.isLinux && cfg.enable;
+  inherit (cfg) backend;
 in
 {
   config = lib.mkIf enabled {

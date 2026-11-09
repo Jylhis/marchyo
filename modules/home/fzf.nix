@@ -7,12 +7,12 @@
   lib,
   pkgs,
   options,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  themeEnabled = (osConfig.marchyo or { }).theme.enable or true;
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeEnabled = osConfig.marchyo.theme.enable;
+  themeVariant = osConfig.marchyo.theme.variant;
 
   # On a Linux desktop the runtime theme layer (modules/home/theme-runtime.nix)
   # owns fzf colours: it sets FZF_DEFAULT_OPTS_FILE to the current-theme's
@@ -20,8 +20,7 @@ let
   # would win over that file (OPTS overrides the file) and defeat the live
   # swap, so drop the build-time colours there and keep them for non-desktop
   # Linux, where there is no runtime layer. Layout options stay.
-  runtimeThemed =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  runtimeThemed = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;

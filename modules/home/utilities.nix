@@ -6,15 +6,15 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (marchyoCfg.desktop.enable or false);
+  marchyoCfg = osConfig.marchyo;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.desktop.enable;
   # `or true` mirrors the option defaults (desktop-cascade opt-outs).
-  remindersEnabled = desktopEnabled && ((marchyoCfg.reminders or { }).enable or true);
-  utilitiesEnabled = desktopEnabled && ((marchyoCfg.utilities or { }).enable or true);
+  remindersEnabled = desktopEnabled && marchyoCfg.reminders.enable;
+  utilitiesEnabled = desktopEnabled && marchyoCfg.utilities.enable;
 in
 {
   config = lib.mkMerge [

@@ -1,7 +1,4 @@
-{
-  marchyo,
-  ...
-}:
+_:
 
 {
   imports = [
@@ -47,12 +44,12 @@
     efi.canTouchEfiVariables = true;
   };
 
+  # marchyo imports its Home Manager modules for every marchyo.users entry;
+  # per-user Home Manager settings go here.
   home-manager.users.developer = {
-    imports = [
-      marchyo.homeManagerModules.default
-    ];
     home.stateVersion = "25.11";
   };
+
   # User account -- change password after first login
   users.users.developer = {
     isNormalUser = true;
