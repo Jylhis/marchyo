@@ -32,21 +32,9 @@ in
 }
 ```
 
-### 3. No import registration needed (usually)
+### 3. No import registration needed
 
 `modules/nixos/` and `modules/home/` are auto-discovered via `lib/discover-modules.nix` — every `.nix` file in the directory (plus any subdirectory containing a `default.nix`) is imported automatically, so adding a module is a one-file change.
-
-The one hand-curated exception is `modules/darwin/default.nix`: it holds a curated darwin-safe subset (Wayland/systemd/desktop modules are NixOS-only), so darwin modules must be added to its import list manually:
-
-```nix
-# modules/darwin/default.nix
-{
-  imports = [
-    # ... existing imports
-    ./my-darwin-feature.nix
-  ];
-}
-```
 
 ### 4. Define options
 

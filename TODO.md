@@ -101,7 +101,7 @@ the parity gaps first:
 - Verification stops at `nix build` / `nix flake check`; activating the running
   system is the user's action.
 - Every new module/option gets a `testNixOS` eval test; option declarations
-  stay platform-neutral (Darwin eval gate); keep
+  stay in `modules/nixos/options/`; keep
   `site/src/content/docs/docs/configuration/` in sync.
 - `just fmt` + `just check` before each commit; conventional commits.
 

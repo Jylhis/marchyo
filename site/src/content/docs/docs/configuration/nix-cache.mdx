@@ -56,9 +56,8 @@ marchyo.nix.router.netrcFile = "/etc/nix/netrc";
 ```
 
 :::note
-The router is **NixOS only**. It is a systemd service, so darwin
-ignores `marchyo.nix.router.*` and uses the caches in
-`marchyo.nix.caches` as direct substituters.
+The router is a systemd service. With it off, the caches in
+`marchyo.nix.caches` are used as direct substituters.
 :::
 
 After activation, verify with:

@@ -53,8 +53,7 @@
     let
       marchyo = import ./outputs.nix { inherit inputs; };
       systems = import ./lib/systems.nix;
-      forLinuxSystems = nixpkgs.lib.genAttrs systems.linux;
-      forAllSystems = nixpkgs.lib.genAttrs systems.all;
+      forAllSystems = nixpkgs.lib.genAttrs systems.linux;
     in
     {
       inherit (marchyo)
@@ -68,7 +67,7 @@
         ;
       legacyPackages = forAllSystems marchyo.legacyPackages;
       packages = forAllSystems (system: marchyo.mkPackages { inherit system; });
-      checks = forLinuxSystems (system: marchyo.mkChecks { inherit system; });
+      checks = forAllSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });
       apps = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (system: marchyo.mkApps { inherit system; });
     };

@@ -13,15 +13,9 @@ let
 
   overlayList = [ overlay ];
 
-  # Single source of truth for the per-system input set (the builders below and
-  # legacyPackages all flow through it).
-  inputsFor = _system: {
-    inherit nixpkgs home-manager;
-  };
-
   mkPkgs =
     system:
-    import (inputsFor system).nixpkgs {
+    import nixpkgs {
       inherit system;
       overlays = overlayList;
       config.allowUnfree = true;
@@ -166,9 +160,8 @@ let
     _1password = ./modules/home/_1password.nix;
   };
 
-  # Batteries-included system builders: a consumer that adds only `marchyo` as
-  # an input builds any system with these, with nixpkgs / home-manager /
-  # overlay / modules selected automatically via inputsFor.
+  # Batteries-included system builder: a consumer that adds only `marchyo` as
+  # an input gets marchyo's nixpkgs, home-manager, overlay and modules.
 
   # allowUnfree is set plainly, not via a priority wrapper: nixpkgs.config is a
   # freeform attrset, so mkDefault/mkForce would leak through to nixpkgs
@@ -182,7 +175,7 @@ let
       overlays ? [ ],
       config ? { },
     }:
-    (inputsFor system).nixpkgs.lib.nixosSystem {
+    nixpkgs.lib.nixosSystem {
       inherit system specialArgs;
       modules = [
         nixosModules.default
@@ -210,7 +203,6 @@ in
     inherit
       mkNixosSystem
       mkHomeConfiguration
-      inputsFor
       mkPkgs
       ;
   };
@@ -226,7 +218,7 @@ in
   };
 
   # Reference configs built through the exported builders, so they exercise the
-  # system-aware input selection end to end.
+  # builder end to end.
   nixosConfigurations = {
     x86_64 = mkNixosSystem {
       system = "x86_64-linux";
@@ -266,22 +258,19 @@ in
   mkPackages =
     { system }:
     let
-      selectedNixpkgs = (inputsFor system).nixpkgs;
-      pkgs = import selectedNixpkgs {
+      pkgs = import nixpkgs {
         inherit system;
         overlays = overlayList;
       };
     in
     {
-      inherit (pkgs) marchyo-wallpapers marchyo-cli;
-    }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
+        marchyo-wallpapers
+        marchyo-cli
         marchyo-shell
         plymouth-marchyo-theme
         ;
-    }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
       # hardening audit (plus the vuls collector) inside it. Deliberately kept
       # out of `checks`: it boots a VM (needs KVM) and is run locally on demand
@@ -315,7 +304,7 @@ in
       let
         pkgs = mkPkgs system;
       in
-      nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      {
         build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
         build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
@@ -419,7 +408,7 @@ in
   mkFormatter =
     { system }:
     let
-      pkgs = (inputsFor system).nixpkgs.legacyPackages.${system};
+      pkgs = nixpkgs.legacyPackages.${system};
     in
     treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
 

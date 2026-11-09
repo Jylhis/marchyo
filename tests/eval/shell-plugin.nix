@@ -134,7 +134,7 @@ in
   ) "plugin ids must be [A-Za-z0-9][A-Za-z0-9._-]* without '..'";
 
   # The CLI-owned additive option accepts a raw pinned git spec and round-trips
-  # its manifest fields (darwin-neutral; no pkgs, no fetch).
+  # its manifest fields (no pkgs, no fetch).
   eval-shell-extra-plugins-option =
     testNixOSCheck "shell-extra-plugins-option"
       (

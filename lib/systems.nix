@@ -1,10 +1,7 @@
-# Single source of truth for the system list.
-# Imported by flake.nix and outputs.nix so adding/removing a system is
-# a one-file change.
-rec {
+# The systems marchyo supports. Imported by flake.nix.
+{
   linux = [
     "x86_64-linux"
     "aarch64-linux"
   ];
-  all = linux;
 }

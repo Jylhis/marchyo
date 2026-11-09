@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 
 <Base
   title="marchyo(7) — a modular NixOS configuration flake"
-  description="Marchyo is a modular NixOS configuration flake providing curated system, Home Manager and nix-darwin configurations with sensible defaults."
+  description="Marchyo is a modular NixOS configuration flake providing curated NixOS system and Home Manager configurations with sensible defaults."
 >
   <header class="site-header">
     <div class="brand">
@@ -64,7 +64,7 @@ import Base from '../layouts/Base.astro';
         <div class="ds-callout">
           <p class="ds-callout__label">currently</p>
           <ul class="callout-list">
-            <li>tracking nixpkgs unstable (stable 26.05 on Intel macOS)</li>
+            <li>tracking nixpkgs unstable</li>
             <li>daily-driven on real hardware</li>
             <li>omarchy parity: tracked in <a href="https://github.com/Jylhis/marchyo/blob/main/OMARCHY_PARITY.md">OMARCHY_PARITY.md</a></li>
           </ul>
@@ -161,7 +161,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
         </details>
         <details>
           <summary><span class="faq__chev">›</span> Does it work on macOS?</summary>
-          <p>Yes — <code>mkDarwinSystem</code> works the same way. Intel macs get pinned to stable nixos-26.05 (the last release supporting them); everything else rides unstable.</p>
+          <p>No. Marchyo targets NixOS on x86_64-linux and aarch64-linux only.</p>
         </details>
         <details>
           <summary><span class="faq__chev">›</span> Home Manager only?</summary>

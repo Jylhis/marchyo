@@ -9,8 +9,7 @@ description: How Marchyo is organized and how modules interact
 modules/
   nixos/          # NixOS system-level modules (auto-discovered)
   home/           # Home Manager user-level modules (auto-discovered)
-  darwin/         # nix-darwin modules (hand-curated import list)
-  generic/        # Shared modules imported by nixos, home, and darwin
+  generic/        # Shared helpers and modules
 lib/              # Flake helpers (system list, module auto-discovery)
 packages/         # Custom Nix packages (marchyo-cli, marchyo-wallpapers,
                   # plymouth-marchyo-theme, wallpapper)
@@ -50,7 +49,7 @@ in
 
 ### Generic modules (`modules/generic/`)
 
-Shared modules imported by the NixOS, Home Manager, and nix-darwin `default.nix` files. These contain configuration that applies at multiple levels (e.g., fontconfig, git).
+Shared modules imported by the NixOS and Home Manager `default.nix` files. These contain configuration that applies at multiple levels (e.g., fontconfig, git).
 
 ## Module patterns
 
@@ -102,13 +101,8 @@ The keyboard/IME system is the most complex cross-module pattern:
 | Input | Purpose |
 |-------|---------|
 | `nixpkgs` | Primary package set — NixOS unstable channel |
-| `nixpkgs-stable` | nixos-26.05, used only by `darwinConfigurations.x86_64` |
 | `home-manager` | User environment management (master, pairs with unstable) |
-| `home-manager-stable` | release-26.05 Home Manager for the stable darwin config |
-| `nix-darwin` | macOS system configuration (master, pairs with unstable) |
-| `nix-darwin-stable` | nix-darwin-26.05 for the stable darwin config |
 | `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
 | `sops-nix` | Secrets management |
 | `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |
-| `wallpapper-src` | Source for the wallpapper macOS dynamic-wallpaper tool (non-flake input) |

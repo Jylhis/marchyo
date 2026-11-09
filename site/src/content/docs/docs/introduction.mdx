@@ -30,21 +30,21 @@ Marchyo is distributed as a batteries-included Nix flake. Add it as your only in
 }
 ```
 
-The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). On x86_64-darwin, `marchyo.lib.mkDarwinSystem` transparently pins the stable nixos-26.05 package set (the last release supporting Intel macOS); every other system rides unstable. If you only need Home Manager, use `homeManagerModules.default`.
+The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). Every system rides nixpkgs unstable. If you only need Home Manager, use `homeManagerModules.default`.
 
 :::note
-The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` (x86_64-darwin → stable 26.05, others → unstable) or the `marchyo.lib.*` builders.
+The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` or the `marchyo.lib.*` builders.
 :::
 
 ## Flake outputs
 
 | Output | Description |
 |--------|-------------|
-| `lib.mkNixosSystem` / `lib.mkDarwinSystem` | System-aware builders (recommended entry point) |
+| `lib.mkNixosSystem` | System builder (recommended entry point) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
 | `nixosModules.hardware.<profile>` | [nixos-hardware](https://github.com/NixOS/nixos-hardware) per-machine profiles, re-exported (e.g. `lenovo-thinkpad-x1-9th-gen`, `framework-13-7040-amd`, `common-pc-ssd`) |
 | `homeManagerModules.default` | Home Manager module only |
-| `legacyPackages.{system}` | System-aware nixpkgs + overlay (x86_64-darwin → stable 26.05) |
+| `legacyPackages.{system}` | nixpkgs + marchyo overlay |
 | `overlays.default` | Nixpkgs overlay |
 | `templates.workstation` | Starter workstation template |
 | `apps.{system}.default` | QEMU VM runner (x86_64-linux) |

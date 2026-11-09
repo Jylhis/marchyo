@@ -37,7 +37,7 @@ All must pass. CI enforces formatting with `nix fmt -- --ci`.
 
 ## Adding features
 
-1. Create the module file in the appropriate `modules/` subdirectory — `modules/nixos/` and `modules/home/` are auto-discovered, so no import edit is needed; only `modules/darwin/default.nix` is a hand-curated import list
+1. Create the module file in the appropriate `modules/` subdirectory — `modules/nixos/` and `modules/home/` are auto-discovered, so no import edit is needed
 2. Define new options in a file under `modules/nixos/options/` (auto-discovered) under `marchyo.*`
 3. Add an evaluation test in `tests/eval/<feature>.nix`
 4. Run `nix fmt` and `nix flake check`

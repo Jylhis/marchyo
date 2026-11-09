@@ -35,7 +35,7 @@ let
         uid = mkOption {
           type = types.nullOr types.int;
           default = null;
-          example = 501;
+          example = 1000;
           description = ''
             Numeric user id. This sets `users.users.<name>.uid`.
           '';

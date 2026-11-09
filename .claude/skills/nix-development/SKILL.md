@@ -54,12 +54,6 @@ in
 }
 ```
 
-## Adding a New nix-darwin Module
-
-`modules/darwin/` is a curated subset, **not** auto-discovered:
-1. Create `modules/darwin/<name>.nix`
-2. Add an import line to `modules/darwin/default.nix` manually
-
 ## Defining New Options
 
 Options live under `modules/nixos/options/` — pick the matching namespace file or create a new one. Each file declares `options.marchyo.<namespace>` and is auto-imported by `modules/nixos/options/default.nix`.
