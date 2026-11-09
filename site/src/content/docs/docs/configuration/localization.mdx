@@ -23,12 +23,12 @@ description: Configure timezone and locale settings
 
 ## Display language
 
-`marchyo.language` sets the language of Marchyo's own UI: the shell panels and the `marchyo` CLI messages. The default follows `marchyo.defaultLocale` (`fi_FI.UTF-8` gives `fi`, `pt_BR.UTF-8` gives `pt-BR`) and falls back to `"en"` when the locale has no entry in the registry. Strings without a translation show in English.
+`marchyo.language` sets the language of Marchyo's own UI: the shell panels and the `marchyo` CLI messages. Only English (`"en"`) ships today, so it is the only accepted value and the default; the option and the `shell/i18n` catalog layer stay in place so translations can be added later. Once more catalogs exist, the default follows `marchyo.defaultLocale` (an exact locale match first, then the bare language) and falls back to `"en"`; strings without a translation show in English.
 
 ```nix
 {
-  marchyo.defaultLocale = "fi_FI.UTF-8";
-  marchyo.language = "fi"; # optional, same as the derived default
+  marchyo.defaultLocale = "fi_FI.UTF-8"; # system LANG; the Marchyo UI stays English
+  marchyo.language = "en"; # optional, the only shipped language
 }
 ```
 
@@ -37,7 +37,7 @@ The system `LANG` changes only when you rebuild. `marchyo language` changes the 
 ```bash
 marchyo language          # show the current language
 marchyo language list     # list the supported codes
-marchyo language de       # switch the shell and CLI to German
+marchyo language en       # switch the shell and CLI to a listed language
 marchyo language --revert # back to marchyo.language
 ```
 

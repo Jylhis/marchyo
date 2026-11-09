@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { createRequire } from "node:module";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  type Locales,
   bakedLanguage,
   i18nDir,
   languageOverride,
@@ -70,9 +71,16 @@ describe("translatePlural", () => {
 });
 
 describe("pluralCategory", () => {
-  test("agrees with shell/Commons/I18n.js for every registry language", () => {
-    const codes = Object.keys(loadLocales());
-    expect(codes.length).toBeGreaterThan(10);
+  // Every code with its own branch in the plural rules (only English ships a
+  // catalog, but the rules stay in step for when translations return).
+  const codes = [
+    "en", "fi", "de", "ja", "ko", "zh-CN", "zh-TW", "th", "vi", "id", "ms",
+    "hi", "bn", "fa", "si", "fr", "pt-BR", "ca", "es-MX", "it", "pt", "fil",
+    "is", "cs", "sk", "pl", "ru", "uk", "hr", "sr", "sl", "lt", "lv", "ro",
+    "ar", "he", "ga",
+  ];
+
+  test("agrees with shell/Commons/I18n.js for every rule set", () => {
     const counts = [...Array.from({ length: 1001 }, (_, i) => i), 1000000, 2000000];
     for (const code of codes) {
       for (const n of counts) {
@@ -83,7 +91,7 @@ describe("pluralCategory", () => {
 });
 
 describe("resolveLanguage", () => {
-  const registry = loadLocales();
+  const registry = { en: {}, fi: {}, de: {} } as unknown as Locales;
 
   test("a known override wins over the baked default", () => {
     expect(resolveLanguage("de", "fi", registry)).toBe("de");
@@ -114,13 +122,28 @@ describe("catalog directory", () => {
     }
   });
 
-  test("the real catalogs translate cli keys with English fallback", () => {
-    const dir = i18nDir();
-    const tr = makeTranslator(dir, "fi");
-    expect(tr.t("language.current", "fi", "Suomi")).toBe("Language: fi (Suomi)");
-    expect(tr.tn("language.listCount", 1, 1)).toBe("1 language");
-    expect(tr.tn("language.listCount", 3, 3)).toBe("3 languages");
-    expect(tr.t("no.such.key")).toBe("no.such.key");
+  test("a translation layers over the real English cli catalog", () => {
+    const real = i18nDir();
+    expect(real).not.toBeNull();
+    const dir = mkdtempSync(join(tmpdir(), "marchyo-i18n-"));
+    try {
+      // The shipped English catalog plus a synthetic Finnish one.
+      mkdirSync(join(dir, "en"));
+      mkdirSync(join(dir, "fi"));
+      copyFileSync(join(real as string, "en", "cli.json"), join(dir, "en", "cli.json"));
+      writeFileSync(
+        join(dir, "fi", "cli.json"),
+        JSON.stringify({ "language.listCount": { one: "%1 kieli", other: "%1 kieltä" } }),
+      );
+      const tr = makeTranslator(dir, "fi");
+      expect(tr.t("language.current", "fi", "Suomi")).toBe("Language: fi (Suomi)");
+      expect(tr.tn("language.listCount", 1, 1)).toBe("1 kieli");
+      expect(tr.tn("language.listCount", 3, 3)).toBe("3 kieltä");
+      expect(tr.t("no.such.key")).toBe("no.such.key");
+      expect(makeTranslator(dir, "en").tn("language.listCount", 3, 3)).toBe("3 languages");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test("without any catalogs a key answers as itself", () => {

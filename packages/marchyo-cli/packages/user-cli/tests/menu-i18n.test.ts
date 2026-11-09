@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import {
   chmodSync,
+  copyFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -9,6 +10,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { i18nDir } from "@marchyo/core";
 
 let dir = "";
 
@@ -24,6 +26,21 @@ beforeAll(() => {
     join(dir, "marchyo", "runtime.json"),
     JSON.stringify({ schemaVersion: 1, overrides: { language: "fi" } }),
   );
+  // Only English ships: a synthetic Finnish menu catalog over the real English.
+  const real = i18nDir();
+  if (real === null) throw new Error("the shell/i18n catalogs are missing");
+  const i18n = join(dir, "i18n");
+  mkdirSync(join(i18n, "en"), { recursive: true });
+  mkdirSync(join(i18n, "fi"), { recursive: true });
+  copyFileSync(join(real, "en", "menu.json"), join(i18n, "en", "menu.json"));
+  writeFileSync(join(i18n, "fi", "menu.json"), JSON.stringify({ "menu.suspend": "Lepotila" }));
+  writeFileSync(
+    join(i18n, "locales.json"),
+    JSON.stringify({
+      en: { name: "English", englishName: "English", formatLocale: "en-US", locale: "en_US.UTF-8", decimal: ".", zeroDigit: "0" },
+      fi: { name: "Suomi", englishName: "Finnish", formatLocale: "fi-FI", locale: "fi_FI.UTF-8", decimal: ",", zeroDigit: "0" },
+    }),
+  );
 });
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -35,6 +52,7 @@ test("a translated gum selection maps back to the English option", async () => {
       ...process.env,
       PATH: `${dir}:${process.env.PATH}`,
       XDG_STATE_HOME: dir,
+      MARCHYO_I18N_DIR: join(dir, "i18n"),
       GUM_ARGS: join(dir, "args"),
       GUM_PICK: "Lepotila",
     },

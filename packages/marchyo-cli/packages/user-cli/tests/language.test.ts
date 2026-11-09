@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type Runtime, i18nDir, loadRuntimeState } from "@marchyo/core";
@@ -21,9 +21,39 @@ const JSON_RT: Runtime = { ...RT, format: "json" };
 let dir = "";
 let reloads = 0;
 
+// Only English ships, so the language tests run against a synthetic catalog
+// tree: the real English cli catalog plus registry entries for fi and de.
+function entry(name: string, englishName: string, tag: string) {
+  return {
+    name,
+    englishName,
+    formatLocale: tag,
+    locale: `${tag.replace("-", "_")}.UTF-8`,
+    decimal: ",",
+    zeroDigit: "0",
+  };
+}
+
+function writeCatalogs(root: string): string {
+  const real = i18nDir();
+  if (real === null) throw new Error("the shell/i18n catalogs are missing");
+  const i18n = join(root, "i18n");
+  mkdirSync(join(i18n, "en"), { recursive: true });
+  copyFileSync(join(real, "en", "cli.json"), join(i18n, "en", "cli.json"));
+  writeFileSync(
+    join(i18n, "locales.json"),
+    JSON.stringify({
+      en: { ...entry("English", "English", "en-US"), decimal: "." },
+      fi: entry("Suomi", "Finnish", "fi-FI"),
+      de: entry("Deutsch", "German", "de-DE"),
+    }),
+  );
+  return i18n;
+}
+
 function deps(baked: string | null = "en"): LanguageDeps {
   return {
-    dir: i18nDir(),
+    dir: join(dir, "i18n"),
     statePath: join(dir, "runtime.json"),
     baked,
     reload: async () => {
@@ -52,6 +82,7 @@ async function captured(fn: () => Promise<number>): Promise<{ code: number; out:
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "marchyo-language-"));
+  writeCatalogs(dir);
   reloads = 0;
 });
 

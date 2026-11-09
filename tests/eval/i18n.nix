@@ -1,6 +1,11 @@
 # marchyo.language: the default derives from marchyo.defaultLocale against the
 # shell/i18n registry, the option rejects codes the registry lacks, and the
 # value reaches the shell package (Commons/Config.qml bakes it).
+#
+# Only English ships, so the derivation and override cases use a synthetic
+# registry: lib/locale-language.nix is called with it directly, and a test
+# module widens the option's enum (enum declarations merge) with the synthetic
+# codes.
 {
   helpers,
   lib,
@@ -28,6 +33,31 @@ let
     };
 
   languageOf = extra: (evalWith extra).config.marchyo.language;
+
+  # Synthetic registry entries in the locales.json shape.
+  entry = locale: {
+    name = locale;
+    englishName = locale;
+    formatLocale = locale;
+    inherit locale;
+    decimal = ",";
+    zeroDigit = "0";
+  };
+  registry = {
+    en = entry "en_US.UTF-8";
+    fi = entry "fi_FI.UTF-8";
+    de = entry "de_DE.UTF-8";
+    pt = entry "pt_PT.UTF-8";
+    pt-BR = entry "pt_BR.UTF-8";
+    no = entry "nb_NO.UTF-8";
+  };
+  languageFor = import ../../lib/locale-language.nix { inherit lib; } registry;
+
+  # Extra language codes accepted by marchyo.language, as if their catalogs
+  # shipped.
+  withCodes = codes: {
+    imports = [ { options.marchyo.language = lib.mkOption { type = lib.types.enum codes; }; } ];
+  };
 
   cases = [
     {
@@ -60,13 +90,18 @@ let
     }
   ];
 
-  wrong = lib.filter (c: languageOf { marchyo.defaultLocale = c.locale; } != c.want) cases;
+  wrong = lib.filter (c: languageFor c.locale != c.want) cases;
+
+  # The shipped registry: every locale derives to English.
+  wrongShipped = lib.filter (l: languageOf { marchyo.defaultLocale = l; } != "en") [
+    "en_US.UTF-8"
+    "fi_FI.UTF-8"
+    "xx_XX.UTF-8"
+  ];
 
   shellPkgOf =
     extra:
-    lib.findFirst (p: (p.pname or "") == "marchyo-shell") null (
-      (evalWith extra).config.home-manager.users.testuser.home.packages
-    );
+    lib.findFirst (p: (p.pname or "") == "marchyo-shell") null (evalWith extra).config.home-manager.users.testuser.home.packages;
 in
 {
   eval-i18n-language-default = pkgs.writeText "eval-i18n-language-default" (
@@ -78,14 +113,25 @@ in
       "pass"
   );
 
+  eval-i18n-language-default-shipped = pkgs.writeText "eval-i18n-language-default-shipped" (
+    if wrongShipped != [ ] then
+      throw "FAIL: marchyo.language should default to en with the shipped registry for: ${lib.concatStringsSep ", " wrongShipped}"
+    else
+      "pass"
+  );
+
   eval-i18n-language-explicit-wins = pkgs.writeText "eval-i18n-language-explicit-wins" (
     if
-      languageOf {
-        marchyo.defaultLocale = "fi_FI.UTF-8";
-        marchyo.language = "de";
-      } != "de"
+      languageOf (
+        withCodes [ "de" ]
+        // {
+          marchyo.defaultLocale = "en_US.UTF-8";
+          marchyo.language = "de";
+        }
+      ) != "de"
+      || languageOf { marchyo.language = "en"; } != "en"
     then
-      throw "FAIL: an explicit marchyo.language must win over the defaultLocale derivation"
+      throw "FAIL: an explicit marchyo.language must win over the defaultLocale derivation (and en must be settable)"
     else
       "pass"
   );
@@ -103,7 +149,7 @@ in
 
   eval-i18n-language-baked-into-shell =
     let
-      pkg = shellPkgOf { marchyo.language = "fi"; };
+      pkg = shellPkgOf (withCodes [ "fi" ] // { marchyo.language = "fi"; });
       defaultPkg = shellPkgOf { };
     in
     pkgs.writeText "eval-i18n-language-baked-into-shell" (

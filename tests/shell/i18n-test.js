@@ -1,4 +1,5 @@
 // Unit tests for shell/Commons/I18n.js and the shipped catalogs in shell/i18n.
+// Only English ships; translation behaviour is covered with synthetic catalogs.
 //
 // Run: node tests/shell/i18n-test.js   (also a `nix flake check` check)
 
@@ -242,10 +243,11 @@ test("every literal key the QML looks up exists in the English shell catalog", (
   assert.deepEqual(missing, []);
 });
 
-test("the seeded shell keys translate through the real lookup", () => {
+test("the real English catalog backs a translation's missing keys", () => {
   const en = readJson(path.join(i18nDir, "en", "shell.json"));
-  const fi = readJson(path.join(i18nDir, "fi", "shell.json"));
-  assert.equal(I18n.t(fi, en, "audio.title", []), fi["audio.title"]);
+  // Synthetic translation: one key translated, the rest fall back to English.
+  const fi = { "audio.title": "Ääni" };
+  assert.equal(I18n.t(fi, en, "audio.title", []), "Ääni");
   assert.equal(I18n.t(fi, en, "audio.noOutput", []), "No output");
   assert.equal(I18n.t(fi, en, "power.charger", [65]), "Charger  65 W");
 });
