@@ -35,10 +35,6 @@ shot *args:
 sandbox-down:
     dev/sandbox down
 
-# Vet and test the sandbox MCP server (dev/mcp)
-mcp-test:
-    cd dev/mcp && go vet ./... && go test ./...
-
 # Type-check the QML tree offscreen: run the harness (harness.qml) under
 # QT_QPA_PLATFORM=offscreen and fail on any QML warning/error pointing at a
 # file in this tree. Service-level noise from Quickshell itself (missing

@@ -910,8 +910,12 @@ workspace `special:shell-sandbox`. `--real` binds the real system bus and the
 PipeWire socket instead of starting the mocks. `--fixture NAME` (default
 `default`) copies `dev/fixtures/NAME/config/` into the scratch
 `XDG_CONFIG_HOME` and reads `dev/fixtures/NAME/system-bus.env`; the default
-fixture holds the `marchyo/` files Home Manager generates (appearance,
-keybindings, menu, shell), with no store paths.
+fixture holds the small `marchyo/` files Home Manager generates (appearance,
+shell). `up` evaluates `keybindings.json` and `menu.json` from the flake's
+reference configuration (`nixosConfigurations.x86_64`, user `developer`) into
+`$R/generated` unless the fixture ships its own copy; if the evaluation fails
+(log in `$R/generate.log`) the shell starts with an empty command menu and
+keybinding sheet.
 
 Gotchas:
 
@@ -954,15 +958,6 @@ SURFACE is `launcher[:MODE]`, `menu[:ROUTE]`, `panel:ID`, `overview`,
 takes `query=TEXT` and `select=INDEX`. Without `--grab` the PNG is cropped
 from the composited output, so blur and shadows show. The default output path
 is `~/.cache/marchyo-shell-sandbox/<surface>.png`.
-
-MCP. `dev/mcp` is a stdlib-only Go MCP server over stdio that wraps `dev/sandbox`
-and `dev/shot`, each run as `devenv shell -- shell/dev/<script>` from the marchyo
-root. The repo ignores `.mcp.json`, so register it once from `lib/marchyo`:
-`claude mcp add marchyo-shell -- go -C shell/dev/mcp run . -root ../../..`.
-Tools: `sandbox_up`, `sandbox_down`, `sandbox_status`, `ipc_call`, `ipc_show`,
-`screenshot` (returns the PNG and new QML warnings; files stay under
-`$TMPDIR/marchyo-shell-mcp/`), `logs` and `reload`. `just -f shell/Justfile mcp-test`
-runs its tests.
 
 Dev hooks. Three environment variables change the shell for the sandbox; each
 is inert when unset. `MARCHYO_SHELL_OUTPUT=<output>` opens every summoned

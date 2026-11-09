@@ -56,9 +56,9 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 - `Bar/` widgets are instantiated per monitor: seat-global state, processes, and timers belong in singleton components under `Services/`; keep each directory's `qmldir` complete.
 - `Commons/Colors.qml`, `Style.qml`, and `Config.qml` are usable source defaults but the Nix package regenerates them with theme values and store paths; change the generators in `packages/marchyo-shell/package.nix` when changing baked output.
 - Run QML tools inside `devenv shell`; its `$DEVENV_STATE/qml/modules/qs` alias (`languages.qml`) is required because qmlls' Quickshell mirror lacks `qmldir` files.
-- To check a QML change on screen, run `shell/dev/shot SURFACE` from `devenv shell`, or call the
-  `marchyo-shell` MCP `screenshot` tool. It runs the tree's shell in an isolated nested Hyprland
-  and never touches the live session or the `marchyo-shell` service.
+- To check a QML change on screen, run `shell/dev/shot SURFACE` from `devenv shell`. It runs the
+  tree's shell in an isolated nested Hyprland and never touches the live session or the
+  `marchyo-shell` service.
 - `shell/dev/sandbox down` stops the sandbox and every process it started.
 - Never start Hyprland without a parent `WAYLAND_DISPLAY`: it takes the DRM seat and aborts.
 - Never use `pkill -f` to stop sandbox processes; it can match live session processes.

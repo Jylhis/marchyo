@@ -2,25 +2,15 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
-import react from '@astrojs/react';
-import tailwindcss from '@tailwindcss/vite';
-import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   site: 'https://marchyo.org',
-  vite: {
-    plugins: [tailwindcss()],
-    resolve: { alias: { '@': fileURLToPath(new URL('./src/os', import.meta.url)) } },
-  },
   integrations: [
-    react(),
     // Explicit sitemap ownership. Starlight bundles @astrojs/sitemap and only
     // injects its own when the integration is absent, so declaring it here
     // (single-language site → no i18n config needed) lets us control what ends
-    // up in `sitemap-index.xml`. `/os` is a client-rendered app, so keep it out.
-    sitemap({
-      filter: (page) => !/^\/os(?:\/|$)/.test(new URL(page).pathname),
-    }),
+    // up in `sitemap-index.xml`.
+    sitemap(),
     starlight({
       title: 'marchyo',
       description: 'A modular NixOS configuration flake with sensible defaults',

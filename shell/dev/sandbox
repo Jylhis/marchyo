@@ -50,6 +50,27 @@ hl.config({
 CONF
 }
 
+# The generated marchyo/ config files the fixture leaves out (keybindings.json,
+# menu.json): evaluate them from the flake's reference configuration into
+# $R/generated, so they track the Nix sources instead of a committed snapshot.
+# A fixture that ships its own copy wins. On failure the shell still starts,
+# with an empty command menu and keybinding sheet.
+generate_config() {
+  local fixture=$1 flake out name
+  flake=$(dirname "$shell_dir")
+  out=$R/generated/marchyo
+  mkdir -p "$out"
+  for name in keybindings.json menu.json; do
+    [[ ! -e $fixture/config/marchyo/$name ]] || continue
+    if ! nix --extra-experimental-features 'nix-command flakes' eval --raw \
+      "$flake#nixosConfigurations.x86_64.config.home-manager.users.developer.xdg.configFile.\"marchyo/$name\".text" \
+      >"$out/$name" 2>>"$R/generate.log"; then
+      rm -f "$out/$name"
+      echo "sandbox: could not evaluate marchyo/$name (see $R/generate.log); starting without it" >&2
+    fi
+  done
+}
+
 # Move the sandbox's host-side window to a silent special workspace.
 park() {
   local cg pids pid i
@@ -95,6 +116,7 @@ cmd_up() {
   R=$(mktemp -d "/run/user/$uid/qsdev.XXXX")
   mkdir -p "$R/home"
   write_conf
+  generate_config "$dev_dir/fixtures/$fixture"
   printf 'R=%q\n' "$R" >"$pointer"
 
   host systemd-run --user --unit="$unit" --collect --quiet \
@@ -211,6 +233,7 @@ guest_env() {
   export XDG_CONFIG_HOME=$R/home/config XDG_STATE_HOME=$R/home/state XDG_CACHE_HOME=$R/home/cache
   export TZDIR=/etc/zoneinfo QT_QPA_PLATFORMTHEME=gtk3
   local fixture=$dev_dir/fixtures/${MARCHYO_SANDBOX_FIXTURE:-default}
+  [[ ! -d $R/generated ]] || cp -rT "$R/generated" "$XDG_CONFIG_HOME"
   [[ ! -d $fixture/config ]] || cp -rT "$fixture/config" "$XDG_CONFIG_HOME"
   mkdir -p "$XDG_CONFIG_HOME/gtk-3.0"
   printf '[Settings]\ngtk-icon-theme-name=Adwaita\n' >"$XDG_CONFIG_HOME/gtk-3.0/settings.ini"
