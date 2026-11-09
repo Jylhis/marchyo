@@ -68,10 +68,6 @@ const EXAMPLES: Record<string, string[]> = {
   "plugin update": ["marchyo plugin update", "marchyo plugin update my-plugin"],
   "plugin remove": ["marchyo plugin remove my-plugin"],
   "plugin validate": ["marchyo plugin validate ~/src/my-plugin"],
-  "plugin dev": [
-    "marchyo plugin dev ~/src/my-plugin --watch",
-    "marchyo plugin dev my.plugin.id --remove",
-  ],
   "security enroll": ["marchyo security enroll fido2", "marchyo security enroll fingerprint"],
   "agent account list": ["marchyo agent account list", "marchyo agent account list claude"],
   "agent account use": ["marchyo agent account use claude work"],

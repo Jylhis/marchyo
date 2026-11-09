@@ -18,8 +18,7 @@ summonable **panels** (`Panels/`, toggled from their bar widgets through the
 (`Notifications/`, owning `org.freedesktop.Notifications`). Extension is
 **build-time, Nix-declared** (the Option A plugin platform): plugins are baked
 into the store shell via `pkgs.mkMarchyoShellPlugin` and never discovered at
-runtime — the one exception is the opt-in dev loader (`marchyo plugin dev`,
-`marchyo.shell.devPlugins.enable`). Native Quickshell
+runtime — there is no runtime plugin directory or hot-reload. Native Quickshell
 service bindings plus one action table (reached through an `IpcHandler`, a
 unix socket and Hyprland global shortcuts) cover everything the shell itself
 needs. `shell/compat/` additionally provides an omarchy plugin host API
@@ -771,32 +770,9 @@ Kinds are a closed set (`packages/marchyo-shell/plugin-kinds.nix`), and
 | `bar-widget` | `barWidget` | a bar item | `shell.qml` `componentFor()`, placed by manifest id in `bar.layout` |
 | `launcher` | `launcher` | a `qs.Launcher` `Provider` | `Launcher/LauncherWindow`, selected in apps mode by the manifest `prefix` |
 | `daemon` | `daemon` | a non-visual `Item` or `QtObject` | `shell.qml`, one instance at the shell root |
-| `panel`, `menu`, `overlay` | same name | an `Item` with `open(payloadJson)`/`close()` | `Plugins/PluginLayer`, one `Loader` each, driven by `Services/PluginHost` |
-| `service` | `service` | a non-visual `Item` or `QtObject` | `Plugins/PluginLayer`, created at start |
-| `bar` | `bar` | a full bar | `Plugins/PluginLayer`, when named by `Config.barPlugin` |
 
-`Services/PluginHost` owns the host state (open ids, payload queues, services,
-live bar widgets) and builds each plugin's `PluginShellApi` facade (from
-`compat/Services`). On load `PluginLayer` injects `omarchyPath`, `shell`,
-`manifest`, `pluginRegistry`, `barWidgetRegistry` and `service` into the
-properties the plugin declares. The shell IPC has `summonPlugin`, `hidePlugin`,
-`togglePlugin`, `callPlugin`, `togglePanelAt` and `rescanPlugins`. The manifest
-fields `keepLoaded`, `replaces`, the `barWidget` block and sibling
-`*.manifest.json` files are accepted; the `omarchy.*` and `marchyo.*` id namespaces are reserved.
-
-`replaces` lists native roles (`packages/marchyo-shell/native-roles.nix`) the
-plugin takes over. `PluginIndex.replacementFor(role)` returns the claiming id or
-`""`. `Services/PanelManager` hands a replaced `panel.<id>` to `PluginHost`, and
-`Services/Polkit` and the `PolkitDialog` loader stay off while `polkit` is
-replaced. `Services/Launcher` routes the modes of a replaced `launcher*` role
-to its plugin (`Commons/LauncherRoutes.js`, which also maps `marchyo menu
-select|input` requests to omarchy.menu's dmenu payload), and the
-`LauncherWindow` loader stays off once all three roles are replaced.
-
-With `Config.devPlugins` baked, `Commons/PluginIndex` also reads
-`$XDG_STATE_HOME/marchyo/shell/dev-plugins/index.json`, written by
-`marchyo plugin dev`; `Commons/PluginManifest.js` validates it (no startup
-kinds, no reserved or baked ids, relative entry points only).
+Plugin ids match `[A-Za-z0-9][A-Za-z0-9._-]*` without `..`, and the
+`marchyo.*` namespace is reserved for first-party surfaces.
 
 The build checks that the manifest's `kinds`, `entryPoints` and `prefix` equal
 the declared arguments. A launcher plugin's `prefix` is required, non-empty,

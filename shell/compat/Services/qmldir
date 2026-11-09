@@ -1,7 +1,0 @@
-module qs.compat.Services
-
-PluginAppLibraryApi 1.0 PluginAppLibraryApi.qml
-PluginBarStateApi 1.0 PluginBarStateApi.qml
-PluginBarWidgetRegistryApi 1.0 PluginBarWidgetRegistryApi.qml
-PluginRegistryApi 1.0 PluginRegistryApi.qml
-PluginShellApi 1.0 PluginShellApi.qml

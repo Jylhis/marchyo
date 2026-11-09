@@ -15,9 +15,8 @@ import qs.Lock
 import qs.Overview
 import qs.Polkit
 import qs.Services
-import qs.Plugins
 // omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
-// Panel / Style / CompatColor do not collide with marchyo's own qs.Ui / qs.Commons.
+// Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
 import qs.compat.Ui as Plugin
 import "Commons/ShellSocket.js" as ShellSocket
 import "Commons/Appearance.js" as Appearance
@@ -244,18 +243,6 @@ ShellRoot {
         }
     }
 
-    // Registers a plugin bar widget with the plugin host for as long as the
-    // widget lives, so summon/hide/toggle by id reach its open()/close().
-    Component {
-        id: cWidgetReg
-        QtObject {
-            property string pluginId: ""
-            property var widget: null
-            Component.onCompleted: PluginHost.registerBarWidget(pluginId, widget)
-            Component.onDestruction: PluginHost.unregisterBarWidget(pluginId, widget)
-        }
-    }
-
     function componentFor(id: string): Component {
         if (shell.barComponents[id])
             return shell.barComponents[id];
@@ -288,13 +275,8 @@ ShellRoot {
             if (!item.bar)
                 item.bar = cPluginBar.createObject(item, {
                     "pluginId": entry.id,
-                    "moduleName": entry.id,
-                    "shell": PluginHost.shellFor(entry.id)
+                    "moduleName": entry.id
                 });
-            cWidgetReg.createObject(item, {
-                "pluginId": entry.id,
-                "widget": item
-            });
         }
     }
 
@@ -341,31 +323,7 @@ ShellRoot {
 
     // Launcher: apps / emoji / clipboard surface, summoned over IPC by the
     // Super+R / Super+period / Super+Ctrl+V binds (see Keybind summons).
-    // Not created once plugins replace every launcher role.
-    LazyLoader {
-        active: Launcher.nativeWindow
-        LauncherWindow {}
-    }
-
-    // Panel, menu, overlay, service and bar plugins (Commons/PluginIndex).
-    PluginLayer {}
-    Loader {
-        active: PluginIndex.replacementFor("launcher") === "omarchy.menu"
-        sourceComponent: Component {
-            OmarchyMenuFeed {}
-        }
-    }
-    Loader {
-        active: PluginIndex.pluginById("omarchy.clipboard") !== null
-        sourceComponent: Component {
-            OmarchyClipboardImages {}
-        }
-    }
-    Binding {
-        target: PluginHost
-        property: "barHidden"
-        value: !shell.barVisible
-    }
+    LauncherWindow {}
 
     // Daemon plugins (Commons/PluginIndex): one instance each, owned by the
     // shell root for its lifetime, the plugin analogue of a Services/
@@ -404,11 +362,7 @@ ShellRoot {
 
     // Polkit agent dialog: Services/Polkit registers the session's
     // authentication agent; this draws its centered password prompt.
-    // Not created while a plugin replaces "polkit".
-    LazyLoader {
-        active: PluginIndex.replacementFor("polkit") === ""
-        PolkitDialog {}
-    }
+    PolkitDialog {}
 
     // The one tooltip surface: hover text from any BarItem / tray icon, rendered
     // below the bar on the hovered item's screen (Services/Tooltip holds the state).
@@ -538,12 +492,6 @@ ShellRoot {
                 Nightlight.setEnabled(shell.truthy(on));
                 return Nightlight.enabled ? "on" : "off";
             },
-            summonPlugin: (id, payload) => PluginHost.summon(id, payload) ? "ok" : "unknown",
-            hidePlugin: id => PluginHost.hide(id) ? "ok" : "unknown",
-            togglePlugin: (id, payload) => PluginHost.toggle(id, payload) ? "ok" : "unknown",
-            callPlugin: (id, method, arg) => PluginHost.call(id, method, arg),
-            togglePanelAt: (section, index) => PluginHost.togglePanelAt(section, index),
-            rescanPlugins: () => PluginHost.rescan(),
             ping: () => "ok",
             // Deferred so the reply reaches the caller before the engine reloads.
             reload: () => {
@@ -698,30 +646,6 @@ ShellRoot {
             return shell.actions.nightlightChanged(on);
         }
 
-        function summonPlugin(id: string, payload: string): string {
-            return shell.actions.summonPlugin(id, payload);
-        }
-
-        function hidePlugin(id: string): string {
-            return shell.actions.hidePlugin(id);
-        }
-
-        function togglePlugin(id: string, payload: string): string {
-            return shell.actions.togglePlugin(id, payload);
-        }
-
-        function callPlugin(id: string, method: string, arg: string): string {
-            return shell.actions.callPlugin(id, method, arg);
-        }
-
-        function togglePanelAt(section: string, index: string): string {
-            return shell.actions.togglePanelAt(section, index);
-        }
-
-        function rescanPlugins(): string {
-            return shell.actions.rescanPlugins();
-        }
-
         function ping(): string {
             return shell.actions.ping();
         }
@@ -819,7 +743,7 @@ ShellRoot {
             required property var modelData
             readonly property string screenName: modelData.name
             screen: modelData
-            visible: shell.barVisible && !PluginHost.customBar
+            visible: shell.barVisible
 
             // The shell's blur anchor: modules/home/hyprland.nix registers blur
             // layer rules for the "marchyo:" namespace prefix when

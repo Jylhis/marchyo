@@ -109,14 +109,9 @@ for you when NEWS changes and on your first login (`Super + Ctrl + U` and
 marchyo plugin add <git-url>     # pin a plugin; a rebuild bakes it in
 marchyo plugin list
 marchyo plugin validate ~/src/my-plugin
-marchyo plugin dev ~/src/my-plugin --watch
 ```
 
-`validate` runs the build's manifest checks on a checkout, including sibling
-`*.manifest.json` files. `dev` loads a checkout into the running shell without a
-rebuild, but only on a host that set `marchyo.shell.devPlugins.enable = true`. Dev
-plugins are unreviewed code that runs unsandboxed inside the shell, so leave the
-option off on every other host.
+`validate` runs the build's manifest checks on a checkout.
 
 ### Capture
 

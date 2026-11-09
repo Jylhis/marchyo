@@ -8,12 +8,7 @@
   ...
 }:
 let
-  inherit (helpers)
-    assertTest
-    testNixOSCheck
-    testNixOSFails
-    withTestUser
-    ;
+  inherit (helpers) assertTest testNixOSCheck withTestUser;
 
   # A representative CLI-added plugin spec (the shape `marchyo plugin add`
   # persists into the marchyoCliState sidecar). Reading it back exercises the
@@ -70,19 +65,6 @@ let
     };
   };
 
-  replacer = mkPlugin {
-    src = ./fixtures/example-replacer;
-    id = "example.audio";
-    name = "Example audio";
-    version = "1.0.0";
-    kinds = [ "panel" ];
-    entryPoints.panel = "Panel.qml";
-    replaces = [
-      "panel.audio"
-      "polkit"
-    ];
-  };
-
   # True when building the plugin aborts at eval time (an assert). deepSeq on
   # drvPath forces the derivation without building it.
   aborts = args: !(builtins.tryEval (builtins.deepSeq (mkPlugin args).drvPath true)).success;
@@ -97,18 +79,6 @@ let
   # Round-trip through JSON (the file package.nix writes). fromJSON refuses
   # store path context, so drop it first.
   lockJson = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.toJSON lock));
-
-  extraClaim =
-    id: role:
-    spec
-    // {
-      inherit id;
-      replaces = [ role ];
-    };
-
-  lockJsonReplacer = builtins.fromJSON (
-    builtins.unsafeDiscardStringContext (builtins.toJSON (mkLock [ replacer ]))
-  );
 
   # extraPlugins type check, evaluated against the platform-neutral option
   # declarations alone.
@@ -145,8 +115,8 @@ in
     })).success
   ) "mkMarchyoShellPlugin must refuse the reserved marchyo.* id namespace";
 
-  # Ids are path components of the dev dir and shell words in the build script,
-  # so traversal and metacharacters must abort for the primary and sibling ids.
+  # The id names a directory under the shell's plugins/ tree and is a shell
+  # word in the build script, so traversal and metacharacters must abort.
   eval-shell-plugin-id-shape = assertTest "shell-plugin-id-shape" (
     let
       args = id: {
@@ -160,108 +130,11 @@ in
     && aborts (args "a/b")
     && aborts (args "a..b")
     && aborts (args "x$(touch pwned)")
-    && aborts (
-      args "acme.ok"
-      // {
-        siblings = [
-          {
-            manifest = "other.manifest.json";
-            id = "x$(touch pwned)";
-            kinds = [ "bar-widget" ];
-            entryPoints.barWidget = "BarWidget.qml";
-          }
-        ];
-      }
-    )
+    && !(aborts (args "acme.ok-1_x"))
   ) "plugin ids must be [A-Za-z0-9][A-Za-z0-9._-]* without '..'";
 
-  # The omarchy namespace is reserved too, unless the vendored-omarchy flag
-  # lifts it; the marchyo one never is.
-  eval-shell-plugin-omarchy-ns = assertTest "shell-plugin-omarchy-ns" (
-    let
-      args = id: {
-        src = ./fixtures/example-plugin;
-        inherit id;
-        kinds = [ "bar-widget" ];
-        entryPoints.barWidget = "BarWidget.qml";
-      };
-    in
-    aborts (args "omarchy.hello")
-    && !(aborts (args "omarchy.hello" // { omarchyFirstParty = true; }))
-    && aborts (args "marchyo.hello" // { omarchyFirstParty = true; })
-  ) "omarchy.* ids need omarchyFirstParty and marchyo.* ids are never allowed";
-
-  # The omarchy kinds, keepLoaded, the barWidget block and sibling manifests.
-  eval-shell-plugin-omarchy-kinds = assertTest "shell-plugin-omarchy-kinds" (
-    let
-      mk =
-        extra:
-        mkPlugin (
-          {
-            src = ./fixtures/example-panel;
-            id = "example.panel";
-            name = "Example panel";
-            version = "1.0.0";
-            kinds = [
-              "panel"
-              "menu"
-            ];
-            keepLoaded = true;
-            entryPoints = {
-              panel = "Panel.qml";
-              menu = "Menu.qml";
-            };
-            siblings = [ sibling ];
-          }
-          // extra
-        );
-      sibling = {
-        manifest = "widgets/Spacer.manifest.json";
-        id = "example.spacer";
-        name = "Spacer";
-        version = "1.0.0";
-        kinds = [ "bar-widget" ];
-        entryPoints.barWidget = "Spacer.qml";
-        barWidget = {
-          displayName = "Spacer";
-          allowMultiple = true;
-          defaultSection = "left";
-        };
-      };
-      p = mk { };
-      m = p.marchyoPlugin;
-      lock' = builtins.fromJSON (builtins.unsafeDiscardStringContext (builtins.toJSON (mkLock [ p ])));
-      spacer = lib.findFirst (e: e.id == "example.spacer") null lock'.plugins;
-      broken = extra: !(builtins.tryEval (builtins.deepSeq (mk extra).drvPath true)).success;
-    in
-    m.keepLoaded
-    && m.siblings != [ ]
-    && (builtins.head m.siblings).entryPoints.barWidget == "widgets/Spacer.qml"
-    && spacer.parent == "example.panel"
-    && spacer.barWidget.defaultSection == "left"
-    &&
-      map (e: e.id) lock'.plugins == [
-        "example.panel"
-        "example.spacer"
-      ]
-    # The set of ids and the barWidget block are checked at eval time.
-    && broken { siblings = [ (sibling // { id = "example.panel"; }) ]; }
-    && broken {
-      siblings = [
-        (
-          sibling
-          // {
-            barWidget = {
-              defaultSection = "nowhere";
-            };
-          }
-        )
-      ];
-    }
-  ) "plugin.nix must accept the omarchy kinds, keepLoaded and siblings, and check them";
-
   # The CLI-owned additive option accepts a raw pinned git spec and round-trips
-  # its manifest fields (no pkgs, no fetch).
+  # its manifest fields (darwin-neutral; no pkgs, no fetch).
   eval-shell-extra-plugins-option =
     testNixOSCheck "shell-extra-plugins-option"
       (
@@ -282,26 +155,13 @@ in
         marchyo.shell.extraPlugins = [ spec ];
       });
 
-  # The dev loader is off by default and barPlugin is unset.
-  eval-shell-dev-plugins-default = testNixOSCheck "shell-dev-plugins-default" (
-    cfg: !cfg.marchyo.shell.devPlugins.enable && cfg.marchyo.shell.barPlugin == null
-  ) (withTestUser { });
-
-  eval-shell-dev-plugins-option =
-    testNixOSCheck "shell-dev-plugins-option"
-      (cfg: cfg.marchyo.shell.devPlugins.enable && cfg.marchyo.shell.barPlugin == "acme.bar")
-      (withTestUser {
-        marchyo.shell.devPlugins.enable = true;
-        marchyo.shell.barPlugin = "acme.bar";
-      });
-
   # Kinds are a closed set.
   eval-shell-plugin-unknown-kind = assertTest "shell-plugin-unknown-kind" (aborts {
     src = ./fixtures/example-plugin;
     id = "example.hello";
-    kinds = [ "widget" ];
-    entryPoints.widget = "BarWidget.qml";
-  }) "mkMarchyoShellPlugin must refuse a kind outside the closed kind set";
+    kinds = [ "panel" ];
+    entryPoints.panel = "BarWidget.qml";
+  }) "mkMarchyoShellPlugin must refuse a kind outside bar-widget, launcher, daemon";
 
   # entryPoints carries exactly the keys of the declared kinds.
   eval-shell-plugin-entrypoint-mismatch = assertTest "shell-plugin-entrypoint-mismatch" (
@@ -383,15 +243,11 @@ in
     && lib.all (
       p:
       lib.attrNames p == [
-        "barWidget"
         "entryPoints"
         "id"
-        "keepLoaded"
         "kinds"
         "name"
-        "parent"
         "prefix"
-        "replaces"
         "source"
         "storePath"
         "version"
@@ -451,88 +307,6 @@ in
         }
       )
     ]
-    && !extraPluginsAccept [ (spec // { kinds = [ "bogus" ]; }) ]
-  ) "marchyo.shell.extraPlugins kinds must be the closed plugin kind enum";
-
-  eval-shell-plugin-replaces = assertTest "shell-plugin-replaces" (
-    replacer.marchyoPlugin.replaces == [
-      "panel.audio"
-      "polkit"
-    ]
-    && m.replaces == [ ]
-    && replacer ? outPath
-    && (lib.findFirst (e: e.id == "example.audio") null lockJsonReplacer.plugins).replaces == [
-      "panel.audio"
-      "polkit"
-    ]
-    && (lib.findFirst (e: e.id == "example.hello") null lockJson.plugins).replaces == [ ]
-  ) "replaces must reach passthru and plugins.lock.json, defaulting to []";
-
-  eval-shell-plugin-replaces-bad-role = assertTest "shell-plugin-replaces-bad-role" (
-    aborts {
-      src = ./fixtures/example-replacer;
-      id = "example.audio";
-      kinds = [ "panel" ];
-      entryPoints.panel = "Panel.qml";
-      replaces = [ "panel.bogus" ];
-    }
-    && aborts {
-      src = ./fixtures/example-plugin;
-      id = "example.hello";
-      kinds = [ "bar-widget" ];
-      entryPoints.barWidget = "BarWidget.qml";
-      siblings = [
-        {
-          manifest = "other.manifest.json";
-          id = "example.other";
-          kinds = [ "bar-widget" ];
-          entryPoints.barWidget = "Other.qml";
-          replaces = [ "nope" ];
-        }
-      ];
-    }
-  ) "mkMarchyoShellPlugin must refuse a replaces role outside native-roles.nix";
-
-  eval-shell-plugin-lock-duplicate-role = assertTest "shell-plugin-lock-duplicate-role" (
-    !(builtins.tryEval (
-      builtins.deepSeq (mkLock [
-        replacer
-        (mkPlugin {
-          src = ./fixtures/example-plugin;
-          id = "example.other";
-          kinds = [ "bar-widget" ];
-          entryPoints.barWidget = "BarWidget.qml";
-          replaces = [ "polkit" ];
-        })
-      ]) true
-    )).success
-  ) "plugin-lock.nix must refuse a native role replaced by two plugins";
-
-  eval-shell-replaced-roles-empty = testNixOSCheck "shell-replaced-roles-empty" (
-    c: c.marchyo.shell.replacedRoles == { }
-  ) (withTestUser { });
-
-  eval-shell-replaced-roles = testNixOSCheck "shell-replaced-roles" (
-    c:
-    c.marchyo.shell.replacedRoles == {
-      "panel.audio" = "example.audio";
-      polkit = "example.audio";
-      "panel.power" = "example.power";
-    }
-  ) (withTestUser {
-    marchyo.shell = {
-      plugins = [ replacer ];
-      extraPlugins = [ (extraClaim "example.power" "panel.power") ];
-    };
-  });
-
-  eval-shell-replaced-roles-duplicate =
-    testNixOSFails "shell-replaced-roles-duplicate"
-      "native role 'panel.audio' is replaced by more than one plugin: example.audio, example.other"
-      (withTestUser {
-        marchyo.shell = {
-          plugins = [ replacer ];
-          extraPlugins = [ (extraClaim "example.other" "panel.audio") ];
-        };
-      });
+    && !extraPluginsAccept [ (spec // { kinds = [ "service" ]; }) ]
+  ) "marchyo.shell.extraPlugins kinds must be the closed bar-widget/launcher/daemon enum";
 }

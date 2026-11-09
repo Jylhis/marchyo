@@ -28,8 +28,6 @@ let
     ((osConfig.marchyo or { }).shell or { }).settings or { }
   )) (lib.optionalAttrs (diskWarnPercent != 10) { health.diskWarnPercent = diskWarnPercent; });
 
-  devPlugins = ((osConfig.marchyo or { }).shell or { }).devPlugins.enable or false;
-  barPlugin = ((osConfig.marchyo or { }).shell or { }).barPlugin or null;
   shellPlugins = ((osConfig.marchyo or { }).shell or { }).plugins or [ ];
 
   # CLI-added plugins arrive as raw pinned git specs; build each here (Linux pkgs,
@@ -42,15 +40,7 @@ let
     pkgs.mkMarchyoShellPlugin (
       {
         src = pkgs.fetchgit { inherit (p) url rev hash; };
-        inherit (p)
-          id
-          kinds
-          entryPoints
-          keepLoaded
-          replaces
-          barWidget
-          siblings
-          ;
+        inherit (p) id kinds entryPoints;
         prefix = p.prefix or null;
         source = { inherit (p) url rev; };
       }
@@ -117,8 +107,6 @@ let
       language
       perMonitorWorkspaces
       monitorPersist
-      devPlugins
-      barPlugin
       ;
     plugins = shellPlugins ++ builtExtraPlugins;
   };

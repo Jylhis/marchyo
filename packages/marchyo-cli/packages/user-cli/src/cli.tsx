@@ -118,7 +118,6 @@ import {
 } from "./commands/declarative.ts";
 import {
   runPluginAdd,
-  runPluginDev,
   runPluginList,
   runPluginRemove,
   runPluginUpdate,
@@ -1607,19 +1606,8 @@ plugin
   .command("validate")
   .description("Check a plugin checkout against the manifest rules the build enforces")
   .argument("<dir>", "plugin directory (holds manifest.json)")
-  .option("--omarchy-first-party", "allow the reserved omarchy.* id namespace (vendored omarchy plugins)")
-  .action(async (dir: string, opts: { omarchyFirstParty?: boolean }) => {
-    process.exit(await runPluginValidate(rt(), dir, opts));
-  });
-
-plugin
-  .command("dev")
-  .description("Load a plugin checkout into the running shell without a rebuild (dev hosts only)")
-  .argument("<dir>", "plugin directory (the plugin id with --remove)")
-  .option("-w, --watch", "sync again whenever the checkout changes")
-  .option("--remove", "unload the dev plugin with this id")
-  .action(async (dir: string, opts: { watch?: boolean; remove?: boolean }) => {
-    process.exit(await runPluginDev(rt(), dir, opts));
+  .action(async (dir: string) => {
+    process.exit(await runPluginValidate(rt(), dir));
   });
 
 const security = program

@@ -341,7 +341,6 @@ in
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
         marchyo-shell
-        marchyo-omarchy-shims
         plymouth-marchyo-theme
         hype
         signed
@@ -405,82 +404,6 @@ in
         eval-amp-desktop = pkgs.runCommand "eval-amp-desktop" { } ''
           echo ${builtins.unsafeDiscardStringContext pkgs.amp-desktop.drvPath} > $out
         '';
-        # The omarchy-* shims build (shellcheck runs on each) and ship every
-        # command the plan names.
-        build-omarchy-shims = pkgs.runCommand "check-omarchy-shims" { } ''
-          for c in omarchy-shell omarchy-bar omarchy-notification-send \
-            omarchy-menu-select omarchy-menu-input omarchy-launch-browser \
-            omarchy-launch-terminal omarchy-launch-floating-terminal-with-presentation \
-            omarchy-default-agent omarchy-cmd-present omarchy-pkg-present \
-            omarchy-launch-editor omasnap omarchy-font-list omarchy-font-current \
-            omarchy-font-set omarchy-powerprofiles-list omarchy-powerprofiles-set \
-            omarchy-language; do
-            test -x "${pkgs.marchyo-omarchy-shims}/bin/$c" || { echo "FAIL: shim $c missing"; exit 1; }
-          done
-          PATH="${pkgs.marchyo-omarchy-shims}/bin:$PATH"
-          omarchy-cmd-present sh || { echo "FAIL: omarchy-cmd-present sh"; exit 1; }
-          if omarchy-cmd-present no-such-command-xyz; then echo "FAIL: cmd-present true for a missing command"; exit 1; fi
-
-          # pkg-present: a binary on the profile counts, a regex or an empty name does not.
-          mkdir -p home/.nix-profile/bin && touch home/.nix-profile/bin/present-pkg
-          HOME="$PWD/home" omarchy-pkg-present present-pkg || { echo "FAIL: pkg-present missed a profile binary"; exit 1; }
-          if omarchy-pkg-present . ""; then echo "FAIL: pkg-present accepted a regex or empty name"; exit 1; fi
-          if omarchy-pkg-present no-such-pkg-xyz; then echo "FAIL: pkg-present true for a missing package"; exit 1; fi
-
-          # bar set: concurrent writers must not lose keys.
-          export XDG_STATE_HOME="$PWD/state"
-          for k in a b c d e f g h; do
-            omarchy-bar set acme.p "$k" 1 --json &
-          done
-          wait
-          n=$(${pkgs.jq}/bin/jq '."acme.p" | length' "$XDG_STATE_HOME/marchyo/shell/plugin-settings.json")
-          [ "$n" = 8 ] || { echo "FAIL: omarchy-bar kept $n of 8 keys"; exit 1; }
-          touch "$out"
-        '';
-
-        # A shell with an omarchy panel plugin baked in: the index lists it, its
-        # QML went through the compat rewrite, and the wrapper carries the shims.
-        build-marchyo-shell-plugins =
-          let
-            shell = pkgs.marchyo-shell.override {
-              plugins = with pkgs.marchyo-shell-plugins; [
-                omarchy-speedtest
-                omarchy-menu
-                omarchy-emojis
-                omarchy-clipboard
-              ];
-              devPlugins = true;
-            };
-          in
-          pkgs.runCommand "check-marchyo-shell-plugins" { nativeBuildInputs = [ pkgs.jq ]; } ''
-            root="${shell}/share/marchyo/shell"
-            grep -q '"omarchy.speedtest"' "$root/Commons/PluginIndex.qml" \
-              || { echo "FAIL: PluginIndex.qml does not list omarchy.speedtest"; exit 1; }
-            grep -q '../plugins/omarchy.speedtest/Panel.qml' "$root/Commons/PluginIndex.qml" \
-              || { echo "FAIL: PluginIndex.qml entry point path"; exit 1; }
-            grep -q 'import qs.compat.Ui' "$root/plugins/omarchy.speedtest/Panel.qml" \
-              || { echo "FAIL: plugin imports were not rewritten onto qs.compat"; exit 1; }
-            if grep -qE 'import qs\.(Ui|Commons)\b' "$root/plugins/omarchy.speedtest/Panel.qml"; then
-              echo "FAIL: plugin still imports marchyo's own qs.Ui/qs.Commons"; exit 1
-            fi
-            grep -q 'devPlugins: true' "$root/Commons/Config.qml" \
-              || { echo "FAIL: Config.devPlugins not baked"; exit 1; }
-            jq -e '.plugins[] | select(.id == "omarchy.speedtest" and .kinds == ["panel"])' \
-              "$root/plugins.lock.json" >/dev/null || { echo "FAIL: lock entry"; exit 1; }
-            wrapper="${shell}/bin/marchyo-shell"
-            grep -q 'OMARCHY_PATH' "$wrapper" || { echo "FAIL: OMARCHY_PATH not set by the wrapper"; exit 1; }
-            grep -q 'marchyo-omarchy-shims' "$wrapper" || { echo "FAIL: shims not on the wrapper PATH"; exit 1; }
-            test -f "$root/compat/omarchy/default/i18n/en/shell.json" || { echo "FAIL: compat catalogs"; exit 1; }
-            for s in bin/omarchy-menu-emoji-insert bin/omarchy-clipboard-open shell/plugins/clipboard/capture.sh; do
-              test -x "$root/compat/omarchy/$s" || { echo "FAIL: $s not executable"; exit 1; }
-              head -1 "$root/compat/omarchy/$s" | grep -q "^#!${builtins.storeDir}/" \
-                || { echo "FAIL: $s shebang not patched"; exit 1; }
-            done
-            jq -e '.plugins[] | select(.id == "omarchy.menu")' "$root/plugins.lock.json" >/dev/null \
-              || { echo "FAIL: omarchy.menu lock entry"; exit 1; }
-            touch "$out"
-          '';
-
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
         build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
           wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"

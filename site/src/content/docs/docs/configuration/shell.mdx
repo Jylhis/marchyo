@@ -16,8 +16,6 @@ hyprpolkitagent, with no bar, OSD or notification daemon.
 | `marchyo.shell.enable` | `true` with desktop | Enable the unified Quickshell shell (`false` keeps the discrete stack) |
 | `marchyo.shell.settings` | `{}` | Runtime config serialized to `~/.config/marchyo/shell.json` |
 | `marchyo.shell.plugins` | `[]` | Shell plugins baked into the store shell (build-time) |
-| `marchyo.shell.devPlugins.enable` | `false` | Let the shell mount dev plugins synced by `marchyo plugin dev` (development hosts only) |
-| `marchyo.shell.barPlugin` | `null` | Id of a `bar` plugin that replaces the built-in bar |
 | `marchyo.shell.extraPlugins` | `[]` | Additive plugin specs (pinned git), managed by `marchyo plugin` |
 | `marchyo.shell.diskWarnPercent` | `10` | Free-space percentage of the Nix store filesystem at or below which `marchyo.disk` appears |
 
@@ -280,7 +278,7 @@ Nix-declared, validated, and baked into the store shell. There is no runtime
 plugin directory and no hot-reload — changing the plugin set is a rebuild.
 
 A plugin is a directory with a `manifest.json` (`schemaVersion: 1`, an `id`
-outside the reserved `marchyo.*` and `omarchy.*` namespaces, `kinds`, and `entryPoints`) plus its
+outside the reserved `marchyo.*` namespace, `kinds`, and `entryPoints`) plus its
 QML. Declare one with `pkgs.mkMarchyoShellPlugin`, which validates the manifest
 at build time (matching id, kinds, entry points and prefix, safe relative entry
 points, no symlinks):
@@ -308,39 +306,15 @@ declared kind:
 | `bar-widget` | `barWidget` | A bar item, placed from `marchyo.shell.settings.bar.layout` by its manifest id (e.g. `acme.weather`) |
 | `launcher` | `launcher` | A launcher provider whose root is a `qs.Launcher` `Provider`; typing its `prefix` in the apps palette routes the query to it |
 | `daemon` | `daemon` | A non-visual `Item` or `QtObject`, created once when the shell starts and kept for its lifetime |
-| `panel`, `menu`, `overlay` | same name | An `Item` with `open(payloadJson)` and `close()` that owns its window; loaded when summoned, or at start with `keepLoaded` |
-| `service` | `service` | A headless singleton created at shell start; a panel of the same plugin reads it as `service` |
-| `bar` | `bar` | A full bar that replaces the built-in one when named in `marchyo.shell.barPlugin` |
 
 A launcher plugin sets `prefix` in both its manifest and the
 `mkMarchyoShellPlugin` call. The prefix is required, non-empty, has no
 whitespace, and must not start with `=`, `>`, `#` or `!`, which belong to the
-built-in launcher providers. Plugin ids and prefixes must be unique. A
+built-in launcher providers. Plugin ids match `[A-Za-z0-9][A-Za-z0-9._-]*`
+without `..`, and the `marchyo.*` namespace is reserved. Plugin ids and
+prefixes must be unique. A
 launcher or daemon plugin that fails to load is logged and skipped, so the
 rest of the shell keeps running.
-
-A plugin can take over a native component with `replaces`, a list of native
-roles: `panel.<id>` (audio, network, power, monitor, display, weather, agents, elsewhen, tailscale, wifiqr, bluetooth, speedtest, dropbox, gallery), `polkit`, `launcher`, `launcher.emoji` and `launcher.clipboard`. Every opener of a replaced panel (keybinds,
-`marchyo shell open`, menus, bar clicks) summons the plugin instead, and a
-plugin that replaces `polkit` registers the only polkit agent. A role can have
-one plugin. `marchyo.shell.replacedRoles` shows the result. A bar-widget plugin
-opens only from its live bar widget, so put a replacing bar-widget plugin in
-`bar.layout`.
-
-A plugin that replaces a launcher role gets the launcher modes of that role:
-the keybinds, `marchyo menu [route]` and `marchyo shell launcher <mode>` summon
-it instead. `launcher` covers the command menu (a route becomes the
-`{"menu": route}` payload), the apps, font and keys modes and the
-`marchyo menu select|input` requests; `launcher.emoji` and
-`launcher.clipboard` cover the emoji and clipboard modes. The native launcher
-window is not created once all three are replaced, and a replaced
-`launcher.clipboard` stops the cliphist watchers. The omarchy plugins
-`omarchy-menu`, `omarchy-emojis` and `omarchy-clipboard` in
-`pkgs.marchyo-shell-plugins` replace the three roles; with `omarchy-menu`,
-the shell writes `marchyo.menu.entries`, merged with
-`~/.config/marchyo/menu.local.json`, to omarchy's
-`~/.config/omarchy/extensions/omarchy-menu.jsonc`, with the keybinding cheat
-sheet as its `keys` submenu, and rewrites it when either file changes.
 
 ```nix
 (pkgs.mkMarchyoShellPlugin {
@@ -363,17 +337,6 @@ Because plugins run as ordinary QML inside the shell process, only add plugins
 you trust and have read. The build-time model means every plugin in your closure
 is pinned and reviewable in your configuration, not fetched at runtime.
 :::
-
-The manifest also accepts omarchy's optional fields: `keepLoaded`, the
-`barWidget` block (`displayName`, `category`, `allowMultiple`, `defaultSection`,
-`defaults`, `schema`, `settingsForm`), and sibling `*.manifest.json` files, each
-a further plugin id whose entry points are relative to its own directory. List
-siblings in the `siblings` argument of `mkMarchyoShellPlugin`.
-
-Summon a panel, menu or overlay plugin with
-`marchyo-shell ipc call shell summonPlugin <id> '{}'` (also `hidePlugin`,
-`togglePlugin`, `callPlugin <id> <method> <arg>` and `togglePanelAt <section>
-<index>`), or `omarchy-shell shell summon <id>`.
 
 ### Adding plugins with the CLI
 
@@ -399,65 +362,12 @@ print the state change without writing or rebuilding.
 
 `marchyo plugin validate <dir>` runs the build's manifest checks on a checkout.
 
-### Developing a plugin
-
-Set `marchyo.shell.devPlugins.enable = true` on a development host and rebuild
-once. `marchyo plugin dev <dir>` then copies the checkout (with the import
-rewrite applied) into `$XDG_STATE_HOME/marchyo/shell/dev-plugins/<id>`, lists
-it in `index.json` there, and reloads the shell; `--watch` repeats on every
-change and `marchyo plugin dev <id> --remove` unloads it. Only the `bar-widget`,
-`panel`, `overlay`, `menu` and `launcher` kinds load from there, ids in the
-reserved namespaces or equal to a baked plugin's are refused, and `marchyo
-doctor` warns while dev plugins are active.
-
-:::caution
-Dev plugins are unreviewed, unpinned code that runs unsandboxed inside the
-shell with your privileges, and any process of yours can replace them. With the
-option off (the default) the shell never reads the directory.
-:::
-
-### omarchy plugin compatibility
+### Compatibility host API
 
 The shell ships a compatibility layer (`shell/compat`, exposed as the QML
-modules `qs.compat.Ui` / `qs.compat.Commons` / `qs.compat.Services`) that provides omarchy's "Quattro"
-plugin host API — `BarWidget`, `Panel`, `KeyboardPanel`, `PluginBarApi`, the
-`Style`/`Color`/`Border` tokens, and the `omarchy-shell` / `omarchy-bar` CLIs —
-mapped onto marchyo's own bar, theme, and services. This lets an upstream
-omarchy bar widget run near-unmodified: when a plugin is baked in, its
-`import qs.Ui` / `import qs.Commons` lines are rewritten to the compat namespace,
-and the shell injects a marchyo-backed `bar` facade. The compat CLIs and the
-runtime tools omarchy plugins call by bare name (`python3`, `notify-send`,
-`curl`) are added to the shell's PATH only when plugins are declared (or dev
-plugins are on), so plugin-less hosts keep a lean closure. The shims
-(`pkgs.marchyo-omarchy-shims`) include `omarchy-notification-send`
-(`marchyo notify`), `omarchy-menu-select` and `omarchy-menu-input` (`marchyo menu
-select` and `input`), `omarchy-launch-browser`, `-terminal` and
-`-floating-terminal-with-presentation` (`marchyo launch`), `omarchy-default-agent`,
-`omarchy-cmd-present` and `omarchy-pkg-present`. `OMARCHY_PATH` points at the
-shell's `compat/omarchy` directory for omarchy's string catalog.
-
-omarchy's first-party speedtest panels are packaged as
-`pkgs.marchyo-shell-plugins.omarchy-speedtest` and `.omarchy-disk-speedtest`.
-Their measuring binaries are not packaged, so a run ends in the panel's error
-state.
-
-Two omarchy plugins are packaged in this repo and can be imported directly:
-
-```nix
-marchyo.shell.plugins = [
-  pkgs.marchyo-shell-plugins.sbb            # vvkycodevv.sbb — Swiss transport
-  pkgs.marchyo-shell-plugins.agent-activity # agf.agent-activity — agent dashboard
-];
-marchyo.shell.settings.bar.layout.right = [
-  { id = "vvkycodevv.sbb"; settings = { homeStation = "Zürich HB"; }; }
-  { id = "agf.agent-activity"; }
-  # … first-party widgets …
-];
-```
-
-A plugin popup that persists a setting via `omarchy-bar set` writes marchyo's
-runtime overlay (`$XDG_STATE_HOME/marchyo/shell/plugin-settings.json`), which is
-merged over the widget's inline settings the next time it loads. Hyprland global
-shortcuts an omarchy plugin registers via `hyprctl eval` degrade gracefully:
-marchyo's Hyprland config has no omarchy `hl` Lua helper, so the widget stays
-usable by click while its shortcut registration no-ops.
+modules `qs.compat.Ui` / `qs.compat.Commons`) that provides the "Quattro"
+bar-widget host API — `BarWidget`, `Panel`, `KeyboardPanel`, `PluginBarApi` and
+the `Style`/`Color`/`Border` tokens — mapped onto marchyo's own bar, theme, and
+services. When a `bar-widget` plugin is baked in, its `import qs.Ui` /
+`import qs.Commons` lines are rewritten to the compat namespace, and the shell
+injects a marchyo-backed `bar` facade.

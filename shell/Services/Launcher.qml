@@ -1,18 +1,13 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 import "../Commons/LauncherProviders.js" as Providers
-import "../Commons/LauncherRoutes.js" as Routes
 
 // Shared launcher state: which mode is open ("" = closed), the query text, and
 // the provider that text routes to. Reached from the Hyprland keybinds via the
 // shell IPC target; LauncherWindow and the Launcher/ providers bind to it. A
-// singleton, so seat-global like PanelManager. A plugin that replaces a
-// launcher role (`launcher`, `launcher.emoji`, `launcher.clipboard`) gets the
-// modes of that role: the functions below summon it (Commons/LauncherRoutes.js)
-// and the native mode never opens.
+// singleton, so seat-global like PanelManager.
 QtObject {
     id: root
 
@@ -48,61 +43,15 @@ QtObject {
         root.menuRoute = "";
     }
 
-    // True while the native launcher window serves some mode: a launcher role
-    // that no plugin replaces.
-    readonly property var _roles: ["launcher", "launcher.emoji", "launcher.clipboard"]
-    readonly property bool nativeWindow: root._roles.some(r => PluginIndex.replacementFor(r) === "")
-
-    // Hiding the menu plugin cancels its pending dmenu request, so a caller
-    // of `marchyo menu select|input` is answered before the menu is reused.
-    function _hideReplacements(keep) {
-        for (const r of root._roles) {
-            const id = PluginIndex.replacementFor(r);
-            if (id !== "" && id !== keep && PluginHost.isOpen(id))
-                PluginHost.hide(id);
-        }
-    }
-
-    function _replacement(mode, route) {
-        return Routes.target(mode, route || "", role => PluginIndex.replacementFor(role));
-    }
-
-    // Opens (or toggles) the replacement `t`; returns whether it is now open.
-    function _summon(t, toggle) {
-        root.mode = "";
-        root._hideReplacements(toggle && t.plugin ? t.plugin : "");
-        if (t.panel) {
-            if (toggle)
-                PanelManager.toggle(t.panel);
-            else
-                PanelManager.open(t.panel);
-            return PanelManager.openId === t.panel;
-        }
-        const payload = JSON.stringify(t.payload);
-        if (toggle)
-            PluginHost.toggle(t.plugin, payload);
-        else
-            PluginHost.summon(t.plugin, payload);
-        return PluginHost.isOpen(t.plugin) || !toggle;
-    }
-
     function openMenu(route) {
-        const t = root._replacement("menu", route);
-        if (t !== null)
-            return root._summon(t, false);
-        root._hideReplacements("");
         root.menuRoute = route;
         root.query = "";
         root.mode = "menu";
         return true;
     }
 
-    // Closes the menu when it shows `route`, else opens it there. A replacing
-    // menu closes on any open route.
+    // Closes the menu when it shows `route`, else opens it there.
     function toggleMenu(route) {
-        const t = root._replacement("menu", route);
-        if (t !== null)
-            return root._summon(t, true);
         if (root.mode === "menu" && root.menuRoute === route) {
             root.close();
             return false;
@@ -125,59 +74,24 @@ QtObject {
         return true;
     }
 
-    readonly property var _dmenuFile: FileView {
-        blockAllReads: true
-        printErrors: false
-    }
-
-    // A replacing menu answers the request itself, in the files `marchyo menu`
-    // polls, so the CLI sees the same answer as from the native mode.
     function openDmenu(path) {
-        const plugin = PluginIndex.replacementFor("launcher");
-        if (plugin === "") {
-            root._hideReplacements("");
-            root.dmenuPath = path;
-            root.query = "";
-            root.mode = "dmenu";
-            return;
-        }
-        if (!Routes.dmenuPathOk(path, Quickshell.env("XDG_RUNTIME_DIR") || ""))
-            return;
-        root._dmenuFile.path = path;
-        root._dmenuFile.reload();
-        let req = {};
-        try {
-            req = JSON.parse(root._dmenuFile.text() || "{}");
-        } catch (e) {
-            req = {};
-        }
-        root.close();
-        PluginHost.summon(plugin, JSON.stringify(Routes.dmenuPayload(req, path)));
+        root.dmenuPath = path;
+        root.query = "";
+        root.mode = "dmenu";
     }
 
     function openAs(mode) {
-        const t = root._replacement(mode, "");
-        if (t !== null) {
-            root._summon(t, false);
-            return;
-        }
-        root._hideReplacements("");
         root.mode = mode;
     }
 
     // Returns whether `mode` is open afterwards.
     function toggle(mode) {
-        const t = root._replacement(mode, "");
-        if (t !== null)
-            return root._summon(t, true);
-        root._hideReplacements("");
         root.mode = root.mode === mode ? "" : mode;
         return root.open;
     }
 
     function close() {
         root.mode = "";
-        root._hideReplacements("");
     }
 
     // Copy `text` and type it at the cursor. wtype targets the focused surface,

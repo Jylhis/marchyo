@@ -1,8 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
-import { shellConfigQmlPath, shellShareDir } from "./shell-ipc.ts";
+import { shellShareDir } from "./shell-ipc.ts";
 
 // Shell plugin kinds and the entry point key each one requires. The set is
 // closed: packages/marchyo-shell/plugin.nix declares the same mapping and
@@ -11,11 +10,6 @@ export const PLUGIN_KINDS = {
   "bar-widget": "barWidget",
   launcher: "launcher",
   daemon: "daemon",
-  bar: "bar",
-  panel: "panel",
-  menu: "menu",
-  overlay: "overlay",
-  service: "service",
 } as const;
 
 export type PluginKind = keyof typeof PLUGIN_KINDS;
@@ -24,19 +18,8 @@ export function isPluginKind(k: string): k is PluginKind {
   return Object.hasOwn(PLUGIN_KINDS, k);
 }
 
-// Kinds the dev loader (`marchyo plugin dev`) may mount. The others run at
-// startup or replace the bar, so they need a rebuild. Commons/PluginManifest.js
-// DEV_KINDS holds the same list.
-export const DEV_PLUGIN_KINDS: readonly PluginKind[] = [
-  "bar-widget",
-  "panel",
-  "overlay",
-  "menu",
-  "launcher",
-];
-
 // Id namespaces no plugin may use (packages/marchyo-shell/plugin.nix).
-export const RESERVED_ID_NAMESPACES = ["marchyo.", "omarchy."] as const;
+export const RESERVED_ID_NAMESPACES = ["marchyo."] as const;
 
 export function reservedIdNamespace(id: string): string | null {
   return RESERVED_ID_NAMESPACES.find((ns) => id.startsWith(ns)) ?? null;
@@ -67,10 +50,6 @@ export const PluginLockSchema = z.object({
       prefix: z.string().nullable(),
       storePath: z.string(),
       source: z.object({ url: z.string(), rev: z.string() }).nullable(),
-      keepLoaded: z.boolean().optional(),
-      barWidget: z.record(z.string(), z.unknown()).nullable().optional(),
-      // The primary plugin's id for a sibling manifest, else null.
-      parent: z.string().nullable().optional(),
     }),
   ),
 });
@@ -96,25 +75,4 @@ export function readPluginLock(lockPath: string | null = pluginLockPath()): Plug
   } catch {
     return null;
   }
-}
-
-// True when the installed shell was built with marchyo.shell.devPlugins.enable
-// (its generated Commons/Config.qml bakes `devPlugins: true`).
-export function shellDevPluginsEnabled(
-  qmlPath: string | null = shellConfigQmlPath(),
-): boolean {
-  if (qmlPath === null || !existsSync(qmlPath)) return false;
-  try {
-    return /readonly property bool devPlugins:\s*true\b/.test(readFileSync(qmlPath, "utf8"));
-  } catch {
-    return false;
-  }
-}
-
-// The directory `marchyo plugin dev` syncs dev plugins into, and the index the
-// shell reads (Commons/PluginIndex.qml).
-export function devPluginsDir(env: NodeJS.ProcessEnv = process.env): string {
-  const xdg = env.XDG_STATE_HOME;
-  const base = xdg && xdg !== "" ? xdg : join(homedir(), ".local", "state");
-  return join(base, "marchyo", "shell", "dev-plugins");
 }

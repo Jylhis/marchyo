@@ -27,5 +27,19 @@ in
     (removed [
       "snapshots"
     ] "Snapper snapshots are no longer part of marchyo; configure services.snapper on the host.")
+    (removed
+      [
+        "shell"
+        "devPlugins"
+      ]
+      "The omarchy plugin layer and `marchyo plugin dev` are not carried in marchyo; declare plugins with marchyo.shell.plugins and rebuild."
+    )
+    (removed
+      [
+        "shell"
+        "barPlugin"
+      ]
+      "Bar-replacing plugins are not carried in marchyo; the built-in bar is always used. Add bar-widget plugins to marchyo.shell.settings.bar.layout instead."
+    )
   ];
 }

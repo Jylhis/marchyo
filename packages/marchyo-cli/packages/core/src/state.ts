@@ -88,10 +88,6 @@ export const StateSchema = z
                 version: z.string().optional(),
                 // Launcher query prefix, set for plugins of kind "launcher".
                 prefix: z.string().optional(),
-                keepLoaded: z.boolean().optional(),
-                replaces: z.array(z.string()).optional(),
-                barWidget: z.record(z.string(), z.unknown()).optional(),
-                siblings: z.array(z.record(z.string(), z.unknown())).optional(),
               })
               .strict(),
           )

@@ -28,7 +28,6 @@
   solaar,
   tailscale,
   curl,
-  marchyo-omarchy-shims,
   qrencode,
   libqalculate,
   imagemagick,
@@ -38,17 +37,6 @@
   ddcutil,
   uwsm,
   systemd,
-  # Runtime tools the omarchy plugin compat shim puts on the shell's PATH, but
-  # only when plugins are declared (see the wrapper below). omarchy plugins call
-  # these by bare name: python3 (agent-activity's odv.py collector) and
-  # notify-send (SBB delay alerts). curl / hyprland / coreutils are already
-  # inputs; the omarchy-* commands come from marchyo-omarchy-shims.
-  python3,
-  libnotify,
-  jq,
-  perl,
-  gnugrep,
-  util-linux,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
   # marchyo.theme.fontScale — every bar dimension derives from it via
@@ -111,11 +99,6 @@
   # checked-in empty index. share/marchyo/shell/plugins.lock.json lists them in
   # every build.
   plugins ? [ ],
-  # marchyo.shell.devPlugins.enable: the shell mounts plugins `marchyo plugin dev`
-  # syncs into $XDG_STATE_HOME/marchyo/shell/dev-plugins (Commons/PluginIndex.qml).
-  devPlugins ? false,
-  # marchyo.shell.barPlugin: id of a `bar` plugin that replaces the built-in bar.
-  barPlugin ? null,
 }:
 let
   # Reuse the design-system palette helper (single source of truth for token ->
@@ -469,8 +452,6 @@ ${lib.concatMapStringsSep ",\n" (n: "        \"${n}\": ${toString (spacePx n)}")
       readonly property string language: "${language}"
       readonly property bool perMonitorWorkspaces: ${lib.boolToString perMonitorWorkspaces}
       readonly property bool monitorPersist: ${lib.boolToString monitorPersist}
-      readonly property bool devPlugins: ${lib.boolToString devPlugins}
-      readonly property string barPlugin: ${builtins.toJSON (if barPlugin == null then "" else barPlugin)}
     }
   '';
 
@@ -495,21 +476,18 @@ ${lib.concatMapStringsSep ",\n" (n: "        \"${n}\": ${toString (spacePx n)}")
   # to a path relative to Commons/ (where PluginIndex.qml lives), so
   # Qt.createComponent resolves them against the copied-in plugins/ tree and the
   # loaded QML still sees the qs.* namespace of the shell config root.
-  pluginEntries = import ./plugin-entries.nix { inherit lib; } plugins;
-  pluginDirOf = e: if e.parent == null then e.id else e.parent;
-  pluginsForQml = map (e: {
-    inherit (e)
+  pluginsForQml = map (p: {
+    inherit (p.marchyoPlugin)
       id
       name
       version
       kinds
-      prefix
-      keepLoaded
-      replaces
-      barWidget
       ;
-    entryPoints = lib.mapAttrs (_kind: ep: "../plugins/${pluginDirOf e}/${ep}") e.entryPoints;
-  }) pluginEntries;
+    prefix = p.marchyoPlugin.prefix or null;
+    entryPoints = lib.mapAttrs (
+      _kind: ep: "../plugins/${p.marchyoPlugin.id}/${ep}"
+    ) p.marchyoPlugin.entryPoints;
+  }) plugins;
 
   # The generated index is the checked-in Commons/PluginIndex.qml with its one
   # `plugins` line filled in, so both share every function by construction.
@@ -565,19 +543,20 @@ stdenvNoCC.mkDerivation {
       ${lib.concatMapStringsSep "\n" (p: ''
         cp -r ${p} "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
         chmod -R u+w "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
-        # Rewrite omarchy plugin imports onto the compat host namespace
-        # (shell/compat/rewrite.sed, shared with `marchyo plugin dev`): qs.Ui
-        # and qs.Commons become qs.compat.*, and a bare `Color.` read becomes
-        # `CompatColor.` because Qt 6.12's QtQuick `Color` singleton shadows the
-        # shim's under its omarchy name (compat/README.md). A dispatched
-        # `o.workspaces.` becomes `marchyo.workspaces.`. Sources stay otherwise
-        # unmodified.
+        # Rewrite plugin imports onto the compat host namespace
+        # (shell/compat) so plugin QML written against that host API resolves
+        # the shim instead of marchyo's own qs.Ui / qs.Commons (different API),
+        # and a bare `Color.` read onto `CompatColor.` because Qt 6.12's
+        # QtQuick `Color` singleton shadows the shim's under that name. The
+        # plugin's source stays otherwise unmodified.
         find "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}" -type f \( -name '*.qml' -o -name '*.js' \) -print0 \
-          | xargs -0 -r sed -i -E -f ${../../shell/compat/rewrite.sed}
+          | xargs -0 -r sed -i -E \
+            -e 's/(^|[^.A-Za-z0-9_])import qs\.Ui\b/\1import qs.compat.Ui/g' \
+            -e 's/(^|[^.A-Za-z0-9_])import qs\.Commons\b/\1import qs.compat.Commons/g' \
+            -e 's/(^|[^.A-Za-z0-9_])Color\.([A-Za-z])/\1CompatColor.\2/g' \
+            -e 's/\bCommons\.Color\.([A-Za-z])/Commons.CompatColor.\1/g'
       '') plugins}
     ''}
-
-    patchShebangs "$out/share/marchyo/shell/compat/omarchy"
 
     # Regenerate Commons/EmojiData.js's RAW rows from unicode-emoji's
     # emoji-test.txt (the checked-in rows are a dev subset). The parser
@@ -638,38 +617,10 @@ stdenvNoCC.mkDerivation {
     #     plugin; tray/notification themed icons would then resolve against
     #     hicolor and fail to load). The gtk3 platform theme reads marchyo's
     #     own GTK settings (modules/home/gtk.nix: icon theme "Adwaita").
-    # When plugins are declared, expose the omarchy CLI shims and the runtime
-    # tools imported omarchy plugins call by bare name (python3, notify-send,
-    # curl, coreutils, hyprctl), point omarchy-shell at this store shell via
-    # MARCHYO_SHELL_ROOT, and give the compat I18n its catalogs via OMARCHY_PATH.
-    # Gated so plugin-less hosts keep a lean closure/PATH.
     makeWrapper ${lib.getExe quickshell} "$out/bin/marchyo-shell" \
       --add-flags "-p $out/share/marchyo/shell" \
       --set-default TZDIR /etc/zoneinfo \
-      --set QT_QPA_PLATFORMTHEME gtk3${
-        lib.optionalString (plugins != [ ] || devPlugins) ''
-          \
-               --set MARCHYO_SHELL_ROOT "$out/share/marchyo/shell" \
-               --set OMARCHY_PATH "$out/share/marchyo/shell/compat/omarchy" \
-               --prefix PATH : "${
-                 lib.makeBinPath [
-                   marchyo-omarchy-shims
-                   python3
-                   libnotify
-                   wl-clipboard
-                   wtype
-                   jq
-                   perl
-                   gawk
-                   gnugrep
-                   util-linux
-                   procps
-                   curl
-                   coreutils
-                   hyprland
-                 ]
-               }"''
-      }
+      --set QT_QPA_PLATFORMTHEME gtk3
 
     # Greeter wrapper. TZDIR for the clock, like the shell; no
     # QT_QPA_PLATFORMTHEME — the greeter user has no GTK settings and no

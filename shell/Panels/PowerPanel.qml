@@ -217,10 +217,7 @@ Panel {
             Layout.fillWidth: true
             text: I18n.t("power.menu")
             onClicked: {
-                if (PluginIndex.replacementFor("launcher") !== "") {
-                    PanelManager.close();
-                    Launcher.openMenu("system");
-                } else if (Style.menusEnabled) {
+                if (Style.menusEnabled) {
                     Quickshell.execDetached([Config.terminal, "--class=org.omarchy.terminal", "-e", Config.marchyo, "menu", "power"]);
                 } else {
                     Launcher.toggle("apps");

@@ -154,8 +154,8 @@ check "every shellIpc method the CLI calls exists in shell.qml" "$missing_ipc"
 # so that name is shell.qml's alone. The compat shim's handlers are not
 # competitors: compat/Commons/ShellIpc.qml is a base type with no target of its
 # own, compat/Commons/IpcRegistry.qml holds a permanently disabled reflection
-# probe, and compat/Ui/Panel.qml binds whatever target its omarchy plugin asks
-# for. Only claiming the literal "shell" would collide.
+# probe, and compat/Ui/Panel.qml binds whatever target its plugin asks for.
+# Only claiming the literal "shell" would collide.
 ipc_handlers=$(grep -c "IpcHandler {" "$shell_qml")
 if [[ $ipc_handlers == 1 ]]; then
   ok "shell.qml declares exactly one IpcHandler"
@@ -388,51 +388,6 @@ untranslated=$(
       Osd/*.qml Overview/*.qml Polkit/*.qml Ui/*.qml Services/*.qml
 )
 check "no user-visible QML string literal bypasses I18n" "$untranslated"
-
-# ── compat plugin workspace dispatches ──────────────────────────────────────
-#
-# omarchy plugins dispatch `o.workspaces.<fn>(...)` through hyprctl. After
-# compat/rewrite.sed they must name a function that
-# modules/home/hyprland-monitor-workspaces.lua defines on `marchyo.workspaces`,
-# or clicks and scrolls on the workspace row do nothing.
-
-lua_workspaces="$ROOT/modules/home/hyprland-monitor-workspaces.lua"
-workspace_dispatch=$(
-  find "$SHELL_DIR/compat/plugins" -name '*.qml' -print0 |
-    xargs -0 sed -E -f "$SHELL_DIR/compat/rewrite.sed" |
-    grep -oE '(^|[^.A-Za-z0-9_])(o|marchyo)\.workspaces\.[A-Za-z_]+' |
-    sed -E 's/^[^om]*//' | sort -u |
-    while read -r call; do
-      fn=${call##*.}
-      if [[ $call != marchyo.* ]]; then
-        echo "$call is not rewritten to marchyo.workspaces"
-      elif ! grep -qE "^[[:space:]]*function M\.$fn\(" "$lua_workspaces"; then
-        echo "$call has no function M.$fn in hyprland-monitor-workspaces.lua"
-      fi
-    done
-)
-check "compat plugin workspace dispatches reach marchyo.workspaces" "$workspace_dispatch"
-
-# ── compat plugin services are seat-global ──────────────────────────────────
-#
-# The bar mounts a plugin bar widget once per monitor. A Service.qml that the
-# widget owns (no `service` kind in the manifest) polls once per widget unless
-# it is a singleton of the plugin directory.
-
-per_widget_services=""
-for svc in "$SHELL_DIR"/compat/plugins/*/Service.qml; do
-  dir=$(dirname -- "$svc")
-  rel=${dir#"$ROOT"/}
-  grep -q '"service"' "$dir/manifest.json" && continue
-  grep -q '^pragma Singleton' "$svc" ||
-    per_widget_services+="$rel/Service.qml is not a pragma Singleton"$'\n'
-  grep -qE '^singleton Service [0-9.]+ Service\.qml$' "$dir/qmldir" 2>/dev/null ||
-    per_widget_services+="$rel/qmldir does not declare the Service singleton"$'\n'
-  while read -r f; do
-    per_widget_services+="${f#"$ROOT"/} instantiates Service per widget"$'\n'
-  done < <(grep -lE '^[[:space:]]*Service[[:space:]]*\{' "$dir"/*.qml)
-done
-check "compat plugin widget services are singletons" "$per_widget_services"
 
 echo "----"
 echo "$pass passed, $fail failed"

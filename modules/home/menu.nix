@@ -1,7 +1,5 @@
 # Writes the command menu tree (marchyo.menu.entries) for the shell. The user
-# overlay ~/.config/marchyo/menu.local.json is merged by the shell at runtime,
-# which also writes the merged tree as omarchy's menu extension while
-# omarchy.menu replaces the launcher (shell/Plugins/OmarchyMenuFeed.qml).
+# overlay ~/.config/marchyo/menu.local.json is merged by the shell at runtime.
 {
   lib,
   pkgs,

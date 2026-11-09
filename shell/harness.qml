@@ -2,14 +2,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
-import qs.compat.Commons as Compat
-import qs.compat.Ui as CUi
-import qs.compat.Services as CSvc
 import qs.Ui
 import qs.Bar
 import qs.Launcher
 import qs.Services
-import qs.Plugins
 import "Commons/DevTools.js" as DevTools
 
 // Offscreen type-check harness (`just -f shell/Justfile check`): instantiates
@@ -60,7 +56,6 @@ ShellRoot {
             "Notifications/NotificationCenter.qml",
             "Panels/ControlCenter.qml",
             "Launcher/LauncherWindow.qml",
-            "Plugins/PluginLayer.qml",
             "Overview/OverviewLayer.qml",
             "Notifications/NotificationDaemon.qml",
             "Polkit/PolkitDialog.qml",
@@ -391,8 +386,6 @@ ShellRoot {
                 // QtQuick `Color` that shadowed the old Commons/Color).
                 if (!Qt.colorEqual(Colors.text, Theme.palette.text) || !Qt.colorEqual(Colors.bg, Theme.palette.bg))
                     fail("Colors does not follow Theme.palette (singleton shadowed?): text=" + Colors.text + " bg=" + Colors.bg);
-                if (!Qt.colorEqual(Compat.CompatColor.foreground, Theme.palette.text))
-                    fail("compat CompatColor does not follow Theme.palette: foreground=" + Compat.CompatColor.foreground);
                 // The lock gate and stranded-lock recovery must exist and
                 // must not lock on their own.
                 if (typeof Lock.screensReady !== "boolean" || typeof Lock.strandedResolved !== "boolean")
@@ -718,151 +711,18 @@ ShellRoot {
             }
         }
 
-        // The omarchy plugin compat host (shell/compat): every Ui type that
-        // loads offscreen is instantiated plainly; the window-based ones need
-        // a layer-shell compositor, so they are only compiled and bound-checked
-        // through their Component. The Services facades are the callback
-        // holders PluginHost wires up.
-        Item {
-            id: compatKit
-            y: 520
-            width: 400
-            height: 400
-
-            readonly property var windowTypes: ["KeyboardPanel", "OverlayWindow", "PopupCard", "SpeedTestOverlay"]
-
-            CUi.BarIconButton {}
-            CUi.BarIconContent {}
-            CUi.BarIndicator {}
-            CUi.BarWidget {}
-            CUi.BorderOverlay {}
-            CUi.BorderSurface {}
-            CUi.Button {
-                id: cButton
-                text: "compat"
-            }
-            CUi.ButtonGroup {
-                options: ["a", "b"]
-                value: "a"
-            }
-            CUi.ConfirmDialog {
-                message: "compat"
-            }
-            CUi.CursorSurface {}
-            CUi.Dropdown {
-                options: [
-                    {
-                        value: "x",
-                        label: "ex"
-                    }
-                ]
-                value: "x"
-            }
-            CUi.FilterInput {}
-            CUi.IconContentBounds {}
-            CUi.MultiSelect {
-                options: ["a", "b"]
-            }
-            CUi.NumberField {}
-            CUi.OpticalGlyph {}
-            CUi.PanelActionButton {
-                iconText: "x"
-            }
-            CUi.PanelController {}
-            CUi.PanelHero {
-                title: "compat"
-            }
-            CUi.PanelKeyCatcher {}
-            CUi.Panel {}
-            CUi.PanelSectionHeader {
-                text: "compat"
-            }
-            CUi.PanelSeparator {}
-            CUi.PanelSlider {
-                value: 0.5
-            }
-            CUi.PanelToolTip {}
-            CUi.PluginBarApi {
-                pluginId: "harness.plugin"
-                moduleName: "harness"
-            }
-            CUi.PointerMoveGate {}
-            CUi.PopupMenuRow {
-                text: "compat"
-            }
-            CUi.SearchableDropdown {
-                options: ["a", "b"]
-            }
-            CUi.SizedImage {}
-            CUi.TextField {}
-            CUi.Toggle {
-                label: "compat"
-            }
-            CUi.ToggleSwitch {}
-            CUi.WidgetButton {}
-
-            CSvc.PluginShellApi {
-                id: cShellApi
-                pluginId: "harness.plugin"
-            }
-            CSvc.PluginAppLibraryApi {
-                id: cAppApi
-                ownerPluginId: "harness.plugin"
-            }
-            CSvc.PluginBarStateApi {
-                id: cBarStateApi
-            }
-            CSvc.PluginBarWidgetRegistryApi {
-                id: cBarRegistryApi
-            }
-            CSvc.PluginRegistryApi {
-                id: cRegistryApi
-            }
-            Compat.Translations {
-                id: cStrings
-                directory: Qt.resolvedUrl("compat/omarchy/default/i18n")
-            }
-        }
-
-        // The plugin layer starts its services and loads nothing without plugins.
-        PluginLayer {
-            id: pluginLayer
-        }
-
         Timer {
             interval: 1100
             running: true
             onTriggered: {
                 const fail = m => console.log("ASSERT-FAIL " + m);
-                for (const name of compatKit.windowTypes) {
-                    const c = Qt.createComponent(Qt.resolvedUrl("compat/Ui/" + name + ".qml"));
-                    // A PanelWindow root cannot be created without a compositor
-                    // backend; that is the only error a clean compile ends in.
-                    const err = c.errorString().replace(/^.*No PanelWindow backend loaded\.\s*/, "");
-                    if (c.status !== Component.Ready && err !== "")
-                        fail("compat Ui/" + name + " did not compile: " + c.errorString());
-                }
-
-                // The shell's own windows cannot be created offscreen either,
-                // but compiling each file still catches QML compile errors.
+                // The shell's windows cannot be created offscreen, but
+                // compiling each file still catches QML compile errors.
                 for (const f of harnessRoot.shellWindowFiles) {
                     const w = Qt.createComponent(Qt.resolvedUrl(f));
                     const stray = w.errorString().split("\n").filter(l => l.trim() !== "" && l.indexOf("No PanelWindow backend loaded") === -1 && !/Type \w+ unavailable/.test(l));
                     if (stray.length > 0)
                         fail(f + " did not compile: " + stray.join("; "));
-                }
-
-                // An omarchy plugin, rewritten like the build does, resolves its
-                // compat imports even from outside the shell tree (the dev
-                // loader's case). The panel's root window cannot be created
-                // offscreen, so only a clean compile counts.
-                const pluginDir = Quickshell.env("HARNESS_PLUGIN_DIR");
-                if (pluginDir) {
-                    const pc = Qt.createComponent("file://" + pluginDir + "/Panel.qml");
-                    const stray = pc.errorString().split("\n").filter(l => l.trim() !== "" && l.indexOf("No PanelWindow backend loaded") === -1 && !/Type \w+ unavailable/.test(l));
-                    if (pc.status !== Component.Ready && (stray.length > 0 || pc.errorString().indexOf("No PanelWindow backend loaded") === -1))
-                        fail("rewritten omarchy plugin did not compile: " + pc.errorString());
-                    console.log("ASSERT-INFO omarchy plugin compile status=" + pc.status);
                 }
 
                 // The menu, cheat sheet and dmenu providers load without their
@@ -875,72 +735,6 @@ ShellRoot {
                 Launcher.close();
                 if (Launcher.menuRoute !== "")
                     fail("closing the launcher kept the menu route");
-
-                // The plugin host has nothing to host without plugins and
-                // refuses what it does not know.
-                if (PluginHost.summon("no.such", "{}") !== false || PluginHost.toggle("no.such", "") !== false)
-                    fail("PluginHost summoned an unknown plugin");
-                if (PluginHost.call("no.such", "x", "") !== "unknown" || PluginHost.togglePanelAt("right", "1") !== "unknown")
-                    fail("PluginHost answered for an unknown plugin");
-                if (PluginHost.shellFor("no.such") !== null || PluginHost.rescan() !== "disabled")
-                    fail("PluginHost facade or rescan misbehaves without plugins");
-                if (PluginHost.customBar || !pluginLayer.servicesReady)
-                    fail("PluginLayer did not start cleanly without plugins");
-                const hostedApps = PluginHost.appLibraryFor("harness.menu");
-                if (hostedApps._apps.target !== DesktopEntries.applications)
-                    fail("the plugin app library does not follow DesktopEntries.applications");
-                hostedApps.destroy();
-
-                // The facades are inert until PluginHost wires their callbacks.
-                if (cShellApi.summon("x") !== false || cShellApi.serviceFor("x") !== null || cShellApi.isPluginOpen("x") !== false)
-                    fail("PluginShellApi is not inert without callbacks");
-                if (cAppApi.sortedEntries("").length !== 0 || cAppApi.entryName(null) !== "")
-                    fail("PluginAppLibraryApi is not inert without callbacks");
-
-                // omarchy's catalogs are read from OMARCHY_PATH (set by the
-                // Justfile and the wrapper); marchyo's strings are the fallback.
-                if (Compat.I18n.t("speedtest.download") !== "DOWNLOAD")
-                    fail("compat I18n.t(speedtest.download) = " + Compat.I18n.t("speedtest.download"));
-                if (Compat.I18n.t("power.charger") === "power.charger")
-                    fail("compat I18n.t does not fall back to marchyo's catalog");
-                if (Compat.I18n.t("no.such.key") !== "no.such.key" || Compat.I18n.t("no.such.key", "fb") !== "fb")
-                    fail("compat I18n.t does not fall back to the key or the caller's text");
-                if (Compat.I18n.formatNumber(13.14, 1) !== "13.1")
-                    fail("compat I18n.formatNumber = " + Compat.I18n.formatNumber(13.14, 1));
-                if (typeof Compat.I18n.rightToLeft !== "boolean" || Compat.I18n.language !== I18n.language)
-                    fail("compat I18n language/rightToLeft do not follow marchyo's I18n");
-
-                // The Style/CompatColor/Util surface the vendored Ui kit and
-                // omarchy's own plugins read.
-                const need = (obj, label, names) => {
-                    for (const n of names)
-                        if (obj[n] === undefined)
-                            fail("compat " + label + "." + n + " is undefined");
-                };
-                need(Compat.Style, "Style", ["normalFillFor", "hoverFillFor", "selectedFillFor", "focusFillFor", "pressedFillFor", "selectionFillFor", "controlFill", "normalBorderWidth", "hoverStateColor", "selectedStateColor", "hoverFill", "easeOut", "duration", "reduceMotion", "space", "spaceReal", "cornerRadius", "gapsOut"]);
-                need(Compat.Style.spacing, "Style.spacing", ["xxs", "xs", "sm", "md", "huge", "controlPaddingX", "controlPaddingY", "controlHeight", "controlGap", "labelGap", "rowGap", "rowPaddingX", "popupRowHeight", "popupPadding", "hairline", "dropdownWidth", "searchableDropdownWidth", "searchablePopupMinHeight", "numberFieldWidth", "inputPaddingY"]);
-                need(Compat.Style.font, "Style.font", ["family", "caption", "bodySmall", "body", "subtitle", "heading", "title", "display", "icon"]);
-                need(Compat.Style.bar, "Style.bar", ["iconSize", "iconSlot", "iconCanvas", "iconFont", "statusSlot", "sizeHorizontal"]);
-                for (const role of ["bar", "popups", "tooltip", "notifications", "menu", "polkit", "lock", "imagePicker"])
-                    if (Compat.CompatColor[role] === undefined)
-                        fail("compat CompatColor." + role + " is undefined");
-                need(Compat.CompatColor, "CompatColor", ["accent", "foreground", "muted", "urgent", "background"]);
-                need(Compat.CompatColor.popups, "CompatColor.popups", ["background", "border", "text"]);
-                need(Compat.CompatColor.tooltip, "CompatColor.tooltip", ["background", "border", "text"]);
-                if (Compat.Style.duration(Style.motionFast) <= 0)
-                    fail("compat Style.duration is 0 with motion on");
-                Style.motionRuntimeOff = true;
-                if (Compat.Style.duration(Style.motionFast) !== 0 || !Compat.Style.reduceMotion)
-                    fail("compat Style ignores marchyo's reduce-motion switch");
-                Style.motionRuntimeOff = false;
-                if (Compat.Style.space(10) < 1)
-                    fail("compat Style.space(10) < 1");
-                if (Compat.Border.canUseNative(Compat.Border.controlSpec("hover-cursor")) !== true || Compat.Border.needsOverlay(Compat.Border.controlSpec("focus")) !== false)
-                    fail("compat Border.controlSpec is not a native flat border");
-                if (Math.abs(Compat.Util.alpha("#ffffff", 0.5).a - 0.5) > 0.01)
-                    fail("compat Util.alpha");
-                if (cStrings.t("none.such", "x") !== "x")
-                    fail("compat Translations.t");
             }
         }
 

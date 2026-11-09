@@ -1,7 +1,6 @@
 module qs.Services
 singleton PanelManager 1.0 PanelManager.qml
 singleton PluginPopout 1.0 PluginPopout.qml
-singleton PluginHost 1.0 PluginHost.qml
 singleton Screens 1.0 Screens.qml
 singleton Dev 1.0 Dev.qml
 singleton SystemStats 1.0 SystemStats.qml

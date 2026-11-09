@@ -42,6 +42,4 @@ QtObject {
     readonly property string language: "en"
     readonly property bool perMonitorWorkspaces: true
     readonly property bool monitorPersist: true
-    readonly property bool devPlugins: false
-    readonly property string barPlugin: ""
 }

@@ -33,33 +33,6 @@ let
     marchyo.shell.enable = false;
   };
 
-  # The omarchy launcher plugins as overlay.nix declares them (the harness
-  # passes a bare nixpkgs, so they are built from plugin.nix directly).
-  mkPlugin = pkgs.callPackage ../../packages/marchyo-shell/plugin.nix { };
-  omarchyPlugin =
-    dir: id: kind: entry: role:
-    mkPlugin {
-      src = ../../shell/compat/plugins/${dir};
-      inherit id;
-      version = "1.0.0";
-      kinds = [ kind ];
-      keepLoaded = true;
-      entryPoints.${if kind == "overlay" then "overlay" else "menu"} = entry;
-      replaces = [ role ];
-      omarchyFirstParty = true;
-    };
-  omarchyLauncher = {
-    marchyo.shell.plugins = [
-      (omarchyPlugin "menu" "omarchy.menu" "menu" "Menu.qml" "launcher")
-      (omarchyPlugin "emojis" "omarchy.emojis" "overlay" "Emojis.qml" "launcher.emoji")
-      (omarchyPlugin "clipboard" "omarchy.clipboard" "overlay" "Clipboard.qml" "launcher.clipboard")
-    ];
-  };
-  replaced = evalWith omarchyLauncher;
-  replacedHm = replaced.config.home-manager.users.testuser;
-  startText =
-    hm:
-    builtins.unsafeDiscardStringContext (builtins.toJSON hm.wayland.windowManager.hyprland.settings.on);
 in
 {
   # shell.enable on: the user service is defined and launches marchyo-shell.
@@ -443,49 +416,5 @@ in
         "pass"
       else
         throw "FAIL: marchyo.shell is off but hyprpolkitagent is not enabled on a desktop"
-    );
-
-  # omarchy's menu, emojis and clipboard take over the launcher roles: the
-  # binds keep their global shortcuts (the shell routes them to the plugins),
-  # the shell feeds the menu tree to omarchy's extension file, cliphist stops capturing,
-  # and the native launcher window is not created.
-  eval-marchyo-shell-omarchy-launcher =
-    let
-      binds = replacedHm.wayland.windowManager.hyprland.settings.bind;
-      jsonc = replacedHm.xdg.configFile."omarchy/extensions/omarchy-menu.jsonc".text or null;
-      shellQml = builtins.readFile ../../shell/shell.qml;
-    in
-    pkgs.writeText "eval-marchyo-shell-omarchy-launcher" (
-      if
-        replaced.config.marchyo.shell.replacedRoles != {
-          launcher = "omarchy.menu";
-          "launcher.emoji" = "omarchy.emojis";
-          "launcher.clipboard" = "omarchy.clipboard";
-        }
-      then
-        throw "FAIL: the omarchy plugins should replace the three launcher roles"
-      else if !(hyprHasBind binds "SUPER + SPACE" "hl.dsp.global(\"marchyo:menu\")") then
-        throw "FAIL: SUPER+SPACE should keep the menu global shortcut under omarchy.menu"
-      else if !(hyprHasBind binds "SUPER + R" "hl.dsp.global(\"marchyo:launcher.apps\")") then
-        throw "FAIL: SUPER+R should keep the launcher.apps global shortcut under omarchy.menu"
-      else if !(hyprHasBind binds "SUPER + CTRL + V" "hl.dsp.global(\"marchyo:launcher.clipboard\")") then
-        throw "FAIL: SUPER+CTRL+V should keep the launcher.clipboard global shortcut"
-      else if jsonc != null then
-        throw "FAIL: Home Manager should leave omarchy-menu.jsonc to the shell's menu feed"
-      else if
-        !(lib.hasInfix ''replacementFor("launcher") === "omarchy.menu"'' shellQml)
-        || !(lib.hasInfix "OmarchyMenuFeed {}" shellQml)
-      then
-        throw "FAIL: shell.qml should mount the omarchy menu feed while omarchy.menu replaces the launcher"
-      else if lib.hasInfix "cliphist store" (startText replacedHm) then
-        throw "FAIL: cliphist should not capture while omarchy.clipboard replaces the clipboard history"
-      else if
-        !(lib.hasInfix "cliphist store" (startText (evalWith { }).config.home-manager.users.testuser))
-      then
-        throw "FAIL: cliphist should capture with the native clipboard history"
-      else if !(lib.hasInfix "active: Launcher.nativeWindow\n        LauncherWindow {}" shellQml) then
-        throw "FAIL: shell.qml should create LauncherWindow only while a launcher role is native"
-      else
-        "pass"
     );
 }

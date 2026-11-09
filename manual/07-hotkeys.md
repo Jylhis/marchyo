@@ -176,8 +176,6 @@ wiremix and `Super + Ctrl + N` opens nmtui.
 | `Super + Ctrl + Alt + G` | Ui gallery (developer) |
 | `Super + Shift + Space` | Toggle the top bar |
 
-With `omarchy-menu`, `omarchy-emojis` and `omarchy-clipboard` in `marchyo.shell.plugins`, the same keys open omarchy's menu, emoji picker and clipboard manager. The command menu then shows the `marchyo.menu.entries` tree, and `Super + K` opens its keys submenu.
-
 ## Notifications
 
 Shell only.

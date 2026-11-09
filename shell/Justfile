@@ -48,13 +48,9 @@ check:
     #!/usr/bin/env bash
     set -euo pipefail
     log="$(mktemp)"
-    plugin_dir="$(mktemp -d)"
-    trap 'rm -rf "$log" "$plugin_dir"' EXIT
-    # The vendored omarchy speedtest panel, rewritten as the build does.
-    cp compat/plugins/speedtest/Panel.qml "$plugin_dir/Panel.qml"
-    sed -i -E -f compat/rewrite.sed "$plugin_dir/Panel.qml"
+    trap 'rm -f "$log"' EXIT
     # A live session would answer hyprctl probes (e.g. stranded-lock recovery).
-    if ! env -u HYPRLAND_INSTANCE_SIGNATURE TZDIR=/etc/zoneinfo OMARCHY_PATH="$PWD/compat/omarchy" HARNESS_PLUGIN_DIR="$plugin_dir" QT_QPA_PLATFORM=offscreen timeout 30 quickshell -p ./harness.qml 2>&1 | tee "$log"; then
+    if ! env -u HYPRLAND_INSTANCE_SIGNATURE TZDIR=/etc/zoneinfo QT_QPA_PLATFORM=offscreen timeout 30 quickshell -p ./harness.qml 2>&1 | tee "$log"; then
         echo "check: quickshell harness failed or timed out" >&2
         exit 1
     fi

@@ -14,11 +14,6 @@ let
   # The marchyo CLI persists ephemeral runtime overrides (theme/toggle
   # changes made without --apply); restore them at session start.
   cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
-  # A clipboard plugin that replaces the native history keeps its own, so
-  # cliphist stops capturing.
-  cliphistEnabled =
-    !((((osConfig.marchyo or { }).shell or { }).replacedRoles or { }) ? "launcher.clipboard");
-
   hasNvidia = builtins.elem "nvidia" (osConfig.marchyo.graphics.vendors or [ ]);
   isPrimeOffload =
     (osConfig.marchyo.graphics.prime.enable or false)
@@ -805,12 +800,8 @@ in
           (onStart (
             [
               "kanshi"
-            ]
-            ++ lib.optionals cliphistEnabled [
               "wl-paste --type text --watch cliphist store"
               "wl-paste --type image --watch cliphist store"
-            ]
-            ++ [
               "1password --silent"
             ]
             ++ lib.optionals wallpaperEnabled [

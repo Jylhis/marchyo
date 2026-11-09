@@ -7,14 +7,12 @@ import {
   captureArgv,
   commandAvailable,
   data,
-  devPluginsDir,
   hyprlandAvailable,
   notifyNonceDir,
   readBakedToolPaths,
   readPluginLock,
   readState,
   shellConfigQmlPath,
-  shellDevPluginsEnabled,
   shellInstalled,
   shellIpc,
 } from "@marchyo/core";
@@ -112,27 +110,6 @@ function readSheet(): SheetEntry[] | null {
     return JSON.parse(readFileSync(keybindingsSheetPath(), "utf8")) as SheetEntry[];
   } catch {
     return null;
-  }
-}
-
-// The dev plugin loader is a development convenience: warn while it mounts
-// unreviewed code.
-export function checkDevPlugins(enabled: boolean, loaded: string[]): Check {
-  const name = "dev plugins";
-  if (!enabled) return skip(name, "dev plugin loader is off");
-  return loaded.length === 0
-    ? pass(name, "dev plugin loader is on, none loaded")
-    : warn(name, `unreviewed code in the shell: ${loaded.join(", ")}`);
-}
-
-function devPluginIds(): string[] {
-  try {
-    const parsed = JSON.parse(readFileSync(join(devPluginsDir(), "index.json"), "utf8")) as {
-      plugins?: { id?: string }[];
-    };
-    return (parsed.plugins ?? []).map((p) => p.id ?? "?");
-  } catch {
-    return [];
   }
 }
 
@@ -253,7 +230,6 @@ export async function collectChecks(): Promise<Check[]> {
   return [
     checkBakedToolPaths(shellInstalled(), shellConfigQmlPath()),
     checkPanelBinds(shellInstalled(), readSheet()),
-    checkDevPlugins(shellInstalled() && shellDevPluginsEnabled(), devPluginIds()),
     hypr,
     shell,
     plugins,

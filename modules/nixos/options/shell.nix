@@ -4,12 +4,9 @@ let
 
   # Closed plugin kind set, kind -> manifest entryPoints key (pure data).
   pluginKinds = import ../../../packages/marchyo-shell/plugin-kinds.nix;
-  nativeRoles = import ../../../packages/marchyo-shell/native-roles.nix;
   pluginKindsDoc = lib.concatStringsSep ", " (
     lib.mapAttrsToList (k: key: "`${k}` (entry point `${key}`)") pluginKinds
   );
-
-  nativeRolesDoc = lib.concatMapStringsSep ", " (r: "`${r}`") nativeRoles;
 
   # Raw, IFD-free spec for a CLI-added plugin: pinned git source plus manifest
   # fields. No pkgs references; marchyo-shell.nix turns
@@ -18,7 +15,7 @@ let
     options = {
       id = mkOption {
         type = types.str;
-        description = "Plugin manifest id (must be outside the reserved marchyo.* and omarchy.* namespaces).";
+        description = "Plugin manifest id (must be outside the reserved marchyo.* namespace).";
       };
       url = mkOption {
         type = types.str;
@@ -54,26 +51,6 @@ let
         type = types.nullOr types.str;
         default = null;
         description = "Plugin version string (defaults to \"0\" when null).";
-      };
-      keepLoaded = mkOption {
-        type = types.bool;
-        default = false;
-        description = "The manifest's `keepLoaded`: mount a panel, menu or overlay at shell start instead of on its first summon.";
-      };
-      replaces = mkOption {
-        type = types.listOf (types.enum nativeRoles);
-        default = [ ];
-        description = "Native shell roles the plugin takes over (the manifest's `replaces`), from ${nativeRolesDoc}.";
-      };
-      barWidget = mkOption {
-        type = types.nullOr (types.attrsOf types.anything);
-        default = null;
-        description = "The manifest's `barWidget` block (displayName, category, allowMultiple, defaultSection, defaults, schema, settingsForm), or null.";
-      };
-      siblings = mkOption {
-        type = types.listOf (types.attrsOf types.anything);
-        default = [ ];
-        description = "Sibling `*.manifest.json` entries: `{ manifest, id, kinds, entryPoints, ... }`, entry points relative to each manifest's directory.";
       };
     };
   };
@@ -304,49 +281,7 @@ in
         `marchyo.shell.settings.bar.layout` by its manifest id, a `launcher`
         plugin adds a launcher provider selected by its `prefix`, and a
         `daemon` plugin is instantiated once at the shell root. Changing the
-        list requires a rebuild. A plugin's `replaces` list names native roles
-        it takes over (see `replacedRoles`). Empty by default.
-      '';
-    };
-
-    replacedRoles = mkOption {
-      type = types.attrsOf types.str;
-      readOnly = true;
-      example = {
-        "panel.audio" = "acme.audio";
-      };
-      description = ''
-        Native shell roles taken over by a declared plugin, as an attribute set
-        from role to plugin id. Computed from `plugins` and `extraPlugins`
-        (their `replaces` lists); empty when no plugin replaces anything. A
-        role replaced by two plugins is an assertion failure. Roles are
-        ${nativeRolesDoc}.
-      '';
-    };
-
-    devPlugins.enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = ''
-        Let the shell mount plugins that `marchyo plugin dev` syncs into
-        `$XDG_STATE_HOME/marchyo/shell/dev-plugins`. Off by default: with it
-        off the shell never reads that directory and `marchyo plugin dev`
-        refuses to write to it. Dev plugins are unreviewed, unpinned code that
-        runs with your privileges inside the shell, and any process of yours
-        can replace them, so enable this only on a development host. Only the
-        `bar-widget`, `panel`, `overlay`, `menu` and `launcher` kinds load from
-        there; `service`, `daemon` and `bar` need a rebuild. Changing it needs
-        a rebuild.
-      '';
-    };
-
-    barPlugin = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      example = "acme.bar";
-      description = ''
-        Id of a declared `bar`-kind plugin that replaces the built-in top bar.
-        The built-in bar stays when this is null or the plugin fails to load.
+        list requires a rebuild. Empty by default.
       '';
     };
 

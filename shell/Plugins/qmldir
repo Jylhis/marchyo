@@ -1,4 +1,0 @@
-module qs.Plugins
-PluginLayer 1.0 PluginLayer.qml
-OmarchyMenuFeed 1.0 OmarchyMenuFeed.qml
-OmarchyClipboardImages 1.0 OmarchyClipboardImages.qml

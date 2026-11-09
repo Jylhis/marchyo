@@ -26,4 +26,16 @@ in
   eval-removed-snapshots = testNixOSFails "removed-snapshots" "Snapper" (withTestUser {
     marchyo.snapshots.enable = true;
   });
+
+  eval-removed-shell-dev-plugins =
+    testNixOSFails "removed-shell-dev-plugins" "plugin dev"
+      (withTestUser {
+        marchyo.shell.devPlugins.enable = true;
+      });
+
+  eval-removed-shell-bar-plugin =
+    testNixOSFails "removed-shell-bar-plugin" "built-in bar"
+      (withTestUser {
+        marchyo.shell.barPlugin = "acme.bar";
+      });
 }
