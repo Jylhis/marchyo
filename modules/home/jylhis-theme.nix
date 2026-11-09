@@ -28,38 +28,38 @@ let
 in
 {
   config = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.enable) {
-        # marchyo owns the GTK module outright (no Stylix): the dconf keys and
-        # icon theme land in modules/home/gtk.nix, the CSS below.
-        gtk.enable = lib.mkDefault true;
+    # marchyo owns the GTK module outright (no Stylix): the dconf keys and
+    # icon theme land in modules/home/gtk.nix, the CSS below.
+    gtk.enable = lib.mkDefault true;
 
-        home.pointerCursor = {
-          enable = lib.mkDefault true;
-          name = lib.mkDefault "Adwaita";
-          package = lib.mkDefault pkgs.adwaita-icon-theme;
-          size = lib.mkDefault 24;
-        };
+    home.pointerCursor = {
+      enable = lib.mkDefault true;
+      name = lib.mkDefault "Adwaita";
+      package = lib.mkDefault pkgs.adwaita-icon-theme;
+      size = lib.mkDefault 24;
+    };
 
-        # GNOME interface fonts (dconf): what GTK/Qt/Electron apps resolve as
-        # the default UI font. The formula mirrors the retired Stylix `gnome`
-        # target (document = applications - 1). `gtk.font` carries font-name
-        # (plus the GTK settings.ini); the two dconf keys HM has no options
-        # for are written directly.
-        gtk.font = lib.mkDefault {
-          name = fonts.body;
-          size = fs.round 12;
-        };
-        dconf.settings."org/gnome/desktop/interface" = {
-          document-font-name = lib.mkDefault "${fonts.body} ${toString (fs.round 12 - 1)}";
-          monospace-font-name = lib.mkDefault "${fonts.mono} ${toString (fs.round 12)}";
-        };
+    # GNOME interface fonts (dconf): what GTK/Qt/Electron apps resolve as
+    # the default UI font. The formula mirrors the retired Stylix `gnome`
+    # target (document = applications - 1). `gtk.font` carries font-name
+    # (plus the GTK settings.ini); the two dconf keys HM has no options
+    # for are written directly.
+    gtk.font = lib.mkDefault {
+      name = fonts.body;
+      size = fs.round 12;
+    };
+    dconf.settings."org/gnome/desktop/interface" = {
+      document-font-name = lib.mkDefault "${fonts.body} ${toString (fs.round 12 - 1)}";
+      monospace-font-name = lib.mkDefault "${fonts.mono} ${toString (fs.round 12)}";
+    };
 
-        # Read as text (not readFile of a derivation) to stay IFD-free, and so
-        # theme-runtime.nix can hex-swap a copy per theme dir. Font size is NOT
-        # set here: the dconf interface fonts above cover GTK apps via
-        # gsettings even under Hyprland.
-        gtk = {
-          gtk3.extraCss = gtkCss;
-          gtk4.extraCss = gtkCss;
-        };
-      };
+    # Read as text (not readFile of a derivation) to stay IFD-free, and so
+    # theme-runtime.nix can hex-swap a copy per theme dir. Font size is NOT
+    # set here: the dconf interface fonts above cover GTK apps via
+    # gsettings even under Hyprland.
+    gtk = {
+      gtk3.extraCss = gtkCss;
+      gtk4.extraCss = gtkCss;
+    };
+  };
 }

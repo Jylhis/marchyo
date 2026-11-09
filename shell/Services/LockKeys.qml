@@ -70,7 +70,6 @@ QtObject {
     }
 
     readonly property var capsViews: Instantiator {
-        id: capsViews
         model: root._capsPaths
         delegate: FileView {
             required property string modelData
@@ -81,7 +80,6 @@ QtObject {
     }
 
     readonly property var numViews: Instantiator {
-        id: numViews
         model: root._numPaths
         delegate: FileView {
             required property string modelData
@@ -95,16 +93,15 @@ QtObject {
     // LED; the short delay covers a keyboard whose LED write lands late.
     function refresh(): void {
         if (root._users > 0)
-            settle.restart();
+            root.settle.restart();
     }
 
     function read(): void {
-        root.capsLock = root.anyLit(capsViews);
-        root.numLock = root.anyLit(numViews);
+        root.capsLock = root.anyLit(root.capsViews);
+        root.numLock = root.anyLit(root.numViews);
     }
 
     readonly property var settle: Timer {
-        id: settle
         interval: 50
         onTriggered: root.read()
     }

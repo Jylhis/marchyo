@@ -33,7 +33,10 @@ QtObject {
 
     // A camera node exists; gates the /proc poll.
     readonly property bool present: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < nodes.length; i++) {
             if (nodes[i] && !nodes[i].isStream && nodes[i].type === PwNodeType.VideoSource)
                 return true;
@@ -44,7 +47,10 @@ QtObject {
     // Consumer nodes linked to a Video/Source node.
     readonly property var consumers: {
         const out = [];
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const groups = Pipewire.linkGroups ? Pipewire.linkGroups.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < groups.length; i++) {
             const g = groups[i];
             if (g && g.source && g.target && g.source.type === PwNodeType.VideoSource && out.indexOf(g.target) < 0)
@@ -95,8 +101,8 @@ QtObject {
     onPresentChanged: {
         if (!root.present)
             root.setDeviceUsers([]);
-        else if (!devList.running)
-            devList.running = true;
+        else if (!root.devList.running)
+            root.devList.running = true;
     }
 
     // Prunes every /proc/<pid>/* subtree except fd/, so it reads one fd table
@@ -150,7 +156,10 @@ QtObject {
     property var videoDevices: []
 
     readonly property int cameraNodes: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         let n = 0;
         for (let i = 0; i < nodes.length; i++) {
             if (nodes[i] && !nodes[i].isStream && nodes[i].type === PwNodeType.VideoSource)
@@ -159,12 +168,11 @@ QtObject {
         return n;
     }
     onCameraNodesChanged: {
-        if (root.present && !devList.running)
-            devList.running = true;
+        if (root.present && !root.devList.running)
+            root.devList.running = true;
     }
 
     readonly property var devList: Process {
-        id: devList
         command: [Config.ls, "/dev"]
         stdout: StdioCollector {
             readonly property int maxChars: 256 * 1024
@@ -184,7 +192,7 @@ QtObject {
     // applies on launch) and restarts with backoff when it exits; while it
     // is down the reconcile below runs at the 3s polling cadence.
     readonly property bool wantWatch: root.present && root.videoDevices.length > 0
-    readonly property bool watching: watcher.running
+    readonly property bool watching: root.watcher.running
     property string watchArgs: ""
     property bool relaunch: false
     property int watchBackoff: 1000
@@ -195,27 +203,26 @@ QtObject {
 
     function syncWatcher(): void {
         if (!root.wantWatch) {
-            watchRetry.stop();
-            if (watcher.running)
-                watcher.running = false;
+            root.watchRetry.stop();
+            if (root.watcher.running)
+                root.watcher.running = false;
             return;
         }
         const args = [Config.inotifywait, "-m", "-q", "-e", "open,close", "--format", "%e"].concat(root.videoDevices);
-        if (watcher.running) {
+        if (root.watcher.running) {
             if (JSON.stringify(args) === root.watchArgs)
                 return;
             root.relaunch = true;
-            watcher.running = false;
+            root.watcher.running = false;
             return;
         }
         root.watchArgs = JSON.stringify(args);
-        watcher.command = args;
+        root.watcher.command = args;
         root.watchStarted = Date.now();
-        watcher.running = true;
+        root.watcher.running = true;
     }
 
     readonly property var watcher: Process {
-        id: watcher
         stdout: SplitParser {
             onRead: settle.restart()
         }
@@ -229,15 +236,14 @@ QtObject {
                 return;
             if (Date.now() - root.watchStarted > 30000)
                 root.watchBackoff = 1000;
-            watchRetry.interval = root.watchBackoff;
-            watchRetry.restart();
+            root.watchRetry.interval = root.watchBackoff;
+            root.watchRetry.restart();
             root.watchBackoff = Math.min(root.watchBackoff * 2, 60000);
             settle.restart();
         }
     }
 
     readonly property var watchRetry: Timer {
-        id: watchRetry
         onTriggered: root.syncWatcher()
     }
 
@@ -263,8 +269,8 @@ QtObject {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            if (!devList.running)
-                devList.running = true;
+            if (!root.devList.running)
+                root.devList.running = true;
             settle.restart();
         }
     }

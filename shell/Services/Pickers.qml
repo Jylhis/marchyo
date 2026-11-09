@@ -46,12 +46,12 @@ QtObject {
     function refresh(kind: string): void {
         if (kind === "themes") {
             root.themesLoading = true;
-            themeProc.running = false;
-            themeProc.running = true;
+            root.themeProc.running = false;
+            root.themeProc.running = true;
         } else if (kind === "backgrounds") {
             root.backgroundsLoading = true;
-            bgProc.running = false;
-            bgProc.running = true;
+            root.bgProc.running = false;
+            root.bgProc.running = true;
         }
     }
 
@@ -79,7 +79,6 @@ QtObject {
 
     // A manifest or wallpaper list is a few KiB; refuse anything absurd.
     readonly property var themeProc: Process {
-        id: themeProc
         command: [Config.marchyo, "theme", "list", "--format", "json"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -90,7 +89,6 @@ QtObject {
     }
 
     readonly property var bgProc: Process {
-        id: bgProc
         command: [Config.marchyo, "bg", "list", "--format", "json"]
         stdout: StdioCollector {
             onStreamFinished: {

@@ -41,7 +41,10 @@ QtObject {
     // UPower-reported peripherals: [{name, pct, glyph, low}]. `powerSupply` is
     // the system battery/line power, excluded; `percentage` is a 0.0-1.0 fraction.
     readonly property var upowerDevices: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const list = UPower.devices ? UPower.devices.values : [];
+        // qmllint enable missing-property
         const out = [];
         for (let i = 0; i < list.length; i++) {
             const d = list[i];

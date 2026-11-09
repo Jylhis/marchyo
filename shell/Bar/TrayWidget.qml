@@ -21,10 +21,16 @@ RowLayout {
     readonly property var pinned: Array.isArray(root.settings.pinned) ? root.settings.pinned : []
 
     property bool expanded: false
+    // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+    // qmllint disable missing-property
     readonly property int itemCount: SystemTray.items ? SystemTray.items.values.length : 0
+    // qmllint enable missing-property
     readonly property int foldedCount: {
         let n = 0;
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const items = SystemTray.items ? SystemTray.items.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < items.length; i++)
             if (!root.isPinned(items[i]))
                 n++;
@@ -68,8 +74,11 @@ RowLayout {
                 id: menuAnchor
                 menu: trayItem.modelData && trayItem.modelData.hasMenu ? trayItem.modelData.menu : null
                 anchor.item: trayItem
+                // The linter types a `|` of Edges flags as int; Edges::Flags takes it at runtime.
+                // qmllint disable incompatible-type
                 anchor.edges: (Style.barBottom ? Edges.Top : Edges.Bottom) | Edges.Left
                 anchor.gravity: (Style.barBottom ? Edges.Bottom : Edges.Top) | Edges.Right
+                // qmllint enable incompatible-type
             }
 
             IconImage {

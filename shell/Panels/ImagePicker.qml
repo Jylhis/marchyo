@@ -20,7 +20,10 @@ Panel {
     panelId: root.kind
     title: I18n.t("picker." + root.kind + ".title")
     centered: true
+    // Quickshell's _Window qmltypes declares QuickshellScreenInfo as an opaque stub, so qmllint cannot see its members.
+    // qmllint disable missing-property
     cardWidth: Math.min(Math.round(Style.launcherWidth * 1.5), Math.max(Style.launcherWidth, root.screen ? root.screen.width - 4 * Style.panelPad : 0))
+    // qmllint enable missing-property
 
     property int index: 0
     property bool touched: false

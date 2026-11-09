@@ -35,14 +35,13 @@ Panel {
 
     // Natural Earth 110m coastlines (public domain): rings of flat lon,lat pairs.
     readonly property var worldFile: FileView {
-        id: worldFile
         path: Quickshell.shellDir + "/Panels/world.json"
         blockLoading: true
         printErrors: false
     }
     readonly property var world: {
         try {
-            return JSON.parse(worldFile.text());
+            return JSON.parse(root.worldFile.text());
         } catch (e) {
             return [];
         }

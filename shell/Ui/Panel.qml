@@ -107,14 +107,14 @@ PanelWindow {
 
         Rectangle {
             id: card
-            anchors.top: !root.centered && !Style.barBottom ? parent.top : undefined
-            anchors.bottom: !root.centered && Style.barBottom ? parent.bottom : undefined
+            // Vertical placement is a plain y binding rather than three
+            // conditional anchors (top / bottom / verticalCenter), which qmllint
+            // rejects as a combination even though only one is ever set.
+            // barMarginV is 0 in strip mode, so this reproduces the strip look.
+            readonly property real barGap: Style.barMarginV + Style.barHeight + Style.panelGap
+            y: root.centered ? Math.round((parent.height - card.height) / 2) : Style.barBottom ? parent.height - card.height - card.barGap : card.barGap
             anchors.right: root.centered ? undefined : parent.right
             anchors.horizontalCenter: root.centered ? parent.horizontalCenter : undefined
-            anchors.verticalCenter: root.centered ? parent.verticalCenter : undefined
-            // barMarginV is 0 in strip mode, so this reproduces the strip look.
-            anchors.topMargin: Style.barMarginV + Style.barHeight + Style.panelGap
-            anchors.bottomMargin: Style.barMarginV + Style.barHeight + Style.panelGap
             anchors.rightMargin: Style.panelGap + Style.barMarginH
             width: root.cardWidth
             implicitHeight: layout.implicitHeight + Style.panelPad * 2

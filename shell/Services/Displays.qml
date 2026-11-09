@@ -317,7 +317,7 @@ QtObject {
         readProc.running = true;
     }
 
-    property Process readProc: Process {
+    readonly property var readProc: Process {
         property var job: null
         stdout: StdioCollector {
             onStreamFinished: {
@@ -347,7 +347,7 @@ QtObject {
     }
 
     // One write after the slider settles, not one per drag step.
-    property Timer brightnessWrite: Timer {
+    readonly property var brightnessWrite: Timer {
         property string target: ""
         property int value: 0
         interval: 150

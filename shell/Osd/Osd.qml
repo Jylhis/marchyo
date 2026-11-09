@@ -153,7 +153,10 @@ Scope {
         WlrLayershell.namespace: "marchyo:osd"
 
         anchors.bottom: true
+        // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+        // qmllint disable missing-property
         margins.bottom: Style.osdMargin
+        // qmllint enable missing-property
 
         // Never intercept clicks: the OSD is a readout, not a control.
         mask: Region {}

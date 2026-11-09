@@ -146,7 +146,7 @@ PanelWindow {
     // from vertical centering of the widget row), which is why `cardOrigin`
     // below uses `barH` for the perpendicular axis instead of this y.
     readonly property point anchorScreenPos: {
-        anchorWatcher.transform;  // reactive dependency
+        void anchorWatcher.transform;  // reactive dependency
         if (!anchorItem || !anchorWindow)
             return Qt.point(0, 0);
         return anchorItem.mapToItem(anchorWindow.contentItem, 0, 0);
@@ -315,13 +315,13 @@ PanelWindow {
                 return null;
             var p = barPoint(px, py);
             var targets = root.bar.clickTargets;
-            for (var i = targets.length - 1; i >= 0; i--) {
-                var target = targets[i];
+            for (let i = targets.length - 1; i >= 0; i--) {
+                let target = targets[i];
                 if (!target || !target.triggerPress || target.visible === false || target.opacity === 0 || !target.mapToItem)
                     continue;
                 if (root.bar.targetBelongsToWindow && !root.bar.targetBelongsToWindow(target, root.anchorWindow))
                     continue;
-                var pos = root.anchorWindow.itemPosition(target);
+                let pos = root.anchorWindow.itemPosition(target);
                 if (p.x >= pos.x && p.x <= pos.x + target.width && p.y >= pos.y && p.y <= pos.y + target.height)
                     return target;
             }

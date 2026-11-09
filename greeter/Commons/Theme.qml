@@ -102,10 +102,10 @@ QtObject {
             root.reset();
             return;
         }
-        if (readProc.running)
-            readProc.pending = true;
+        if (root.readProc.running)
+            root.readProc.pending = true;
         else
-            readProc.running = true;
+            root.readProc.running = true;
     }
 
     // Doorbell: rings on any entry change in the marker dir (the CLI's
@@ -121,7 +121,6 @@ QtObject {
     // `timeout` bounds a FIFO planted at the marker path; `head -c` bounds
     // the size. A missing file yields empty output, which resets.
     readonly property var readProc: Process {
-        id: readProc
         property bool pending: false
         command: [Config.timeout, "2", Config.head, "-c", String(root.maxChars + 1), "--", root.markerPath]
         stdout: StdioCollector {
@@ -133,9 +132,9 @@ QtObject {
             }
         }
         onExited: {
-            if (readProc.pending) {
-                readProc.pending = false;
-                readProc.running = true;
+            if (root.readProc.pending) {
+                root.readProc.pending = false;
+                root.readProc.running = true;
             }
         }
     }

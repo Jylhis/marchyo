@@ -70,16 +70,14 @@ Panel {
                 elide: Text.ElideRight
             }
             Text {
-                text: volume.audio ? Math.round(volume.audio.volume * 100) + "%" : I18n.t(
-                                         "audio.unavailable")
+                text: volume.audio ? Math.round(volume.audio.volume * 100) + "%" : I18n.t("audio.unavailable")
                 opacity: volume.audio && volume.audio.muted ? 0.5 : 1
                 color: Colors.textMuted
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSizeSmall
             }
             PanelButton {
-                text: volume.audio && volume.audio.muted ? I18n.t("audio.unmute") : I18n.t(
-                                                               "audio.mute")
+                text: volume.audio && volume.audio.muted ? I18n.t("audio.unmute") : I18n.t("audio.mute")
                 active: !!volume.audio && volume.audio.muted
                 enabled: !!volume.audio
                 onClicked: volume.audio.muted = !volume.audio.muted
@@ -176,9 +174,7 @@ Panel {
                 }
                 VolumeControl {
                     node: Audio.sink
-                    label: Audio.sink ? Audio.sink.description || Audio.sink.name : I18n.t(
-                                            "audio.noOutput")
-
+                    label: Audio.sink ? Audio.sink.description || Audio.sink.name : I18n.t("audio.noOutput")
                 }
                 Repeater {
                     model: Audio.sinks
@@ -192,9 +188,7 @@ Panel {
                 }
                 VolumeControl {
                     node: Audio.source
-                    label: Audio.source ? Audio.source.description || Audio.source.name : I18n.t(
-                                              "audio.noInput")
-
+                    label: Audio.source ? Audio.source.description || Audio.source.name : I18n.t("audio.noInput")
                 }
                 Repeater {
                     model: Audio.sources
@@ -206,8 +200,7 @@ Panel {
                 }
                 PanelSectionHeader {
                     visible: Audio.appStreams.length > 0
-                    text: I18n.tn("audio.applications", Audio.appStreams.length,
-                                  Audio.appStreams.length)
+                    text: I18n.tn("audio.applications", Audio.appStreams.length, Audio.appStreams.length)
                 }
                 Repeater {
                     model: Audio.appStreams
@@ -240,9 +233,7 @@ Panel {
                 PanelButton {
                     Layout.fillWidth: true
                     text: "wiremix"
-                    onClicked: Quickshell.execDetached([Config.terminal,
-                                                        "--class=org.omarchy.wiremix", "-e",
-                                                        Config.wiremix])
+                    onClicked: Quickshell.execDetached([Config.terminal, "--class=org.omarchy.wiremix", "-e", Config.wiremix])
                 }
             }
         }

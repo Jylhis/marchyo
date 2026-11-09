@@ -130,7 +130,16 @@ let
   baseTokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens/base.tokens.json");
   borderPx = name: baseTokens.border.${name}."$value".value;
   motionMs = name: baseTokens.motion.${name}."$value".duration.value;
-  spaceSteps = [ "2xs" "xs" "sm" "md" "lg" "xl" "2xl" "3xl" ];
+  spaceSteps = [
+    "2xs"
+    "xs"
+    "sm"
+    "md"
+    "lg"
+    "xl"
+    "2xl"
+    "3xl"
+  ];
   # `space` tokens are rem (16 px); the UI scale applies on top.
   spacePx = name: ui.round (baseTokens.space.${name}."$value".value * 16);
 
@@ -214,183 +223,183 @@ let
   # marchyo.theme.fontScale, plus the baked-in feature flags the shell reads (no
   # runtime shell.json yet).
   styleQml = builtins.toFile "Style.qml" ''
-    pragma Singleton
-    import QtQuick
+        pragma Singleton
+        import QtQuick
 
-    // Generated from lib/font-scale.nix (scale ${toString fontScale}).
-    QtObject {
-      readonly property int barHeight: ${toString (ui.round 28)}
-      readonly property int fontSize: ${toString (fs.round 14)}
-      readonly property int fontSizeSmall: ${toString (fs.round 12)}
-      readonly property int spacing: ${toString (ui.round 4)}
-      readonly property int paddingH: ${toString (ui.round 6)}
+        // Generated from lib/font-scale.nix (scale ${toString fontScale}).
+        QtObject {
+          readonly property int barHeight: ${toString (ui.round 28)}
+          readonly property int fontSize: ${toString (fs.round 14)}
+          readonly property int fontSizeSmall: ${toString (fs.round 12)}
+          readonly property int spacing: ${toString (ui.round 4)}
+          readonly property int paddingH: ${toString (ui.round 6)}
 
-      // Jylhis spacing scale in px (tokens/base.tokens.json `space`), scaled
-      // with the UI.
-      readonly property var spaceScale: ({
-${lib.concatMapStringsSep ",\n" (n: "        \"${n}\": ${toString (spacePx n)}") spaceSteps}
-      })
+          // Jylhis spacing scale in px (tokens/base.tokens.json `space`), scaled
+          // with the UI.
+          readonly property var spaceScale: ({
+    ${lib.concatMapStringsSep ",\n" (n: "        \"${n}\": ${toString (spacePx n)}") spaceSteps}
+          })
 
-      // One step of the spacing scale; an unknown step reads as "sm".
-      function space(step: string): int {
-        const px = spaceScale[step];
-        return px === undefined ? spaceScale.sm : px;
-      }
-
-      readonly property int barItemPad: space("xs")
-      readonly property string baseFontFamily: "BlexMono Nerd Font"
-      // Shell font: the runtime UI font (Services/RuntimeStyle, `marchyo font set
-      // --kind ui`) over the baked family.
-      property string uiFont: ""
-      readonly property string fontFamily: uiFont !== "" ? uiFont : baseFontFamily
-
-      // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
-      // screen edges and the bar's corner radius. All bake to 0 in strip mode
-      // (floatingBar false), where the bar spans edge to edge as before.
-      readonly property bool barFloating: ${lib.boolToString floatingBar}
-      readonly property int barMarginH: ${toString (if floatingBar then ui.round 6 else 0)}
-      readonly property int barMarginV: ${toString (if floatingBar then ui.round 6 else 0)}
-      readonly property int barRadius: ${toString (if floatingBar then radiusPx 12 else 0)}
-
-      // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
-      // to every shell card; 1.0 restores the opaque flat look (and the home
-      // Hyprland config keeps blur off).
-      readonly property real surfaceAlpha: ${toString surfaceAlpha}
-
-      // Runtime bar switches, written by Services/RuntimeStyle from
-      // `marchyo theme bar-position` and `marchyo theme bar-background`. An empty
-      // barBackground keeps the surfaceAlpha look above.
-      property string barPosition: "top"
-      property string barBackground: ""
-      readonly property bool barBottom: barPosition === "bottom"
-      readonly property real barAlpha: barBackground === "opaque" ? 1.0 : barBackground === "clear" ? 0.0 : barBackground === "glassy" ? Math.min(surfaceAlpha, 0.6) : surfaceAlpha
-
-      // On-screen-display geometry (volume/brightness overlay).
-      readonly property int osdPad: ${toString (ui.round 14)}
-      readonly property int osdRadius: ${toString (radiusPx 8)}
-      readonly property int osdMargin: ${toString (ui.round 80)}
-      readonly property int osdBarWidth: ${toString (ui.round 140)}
-      readonly property int osdBarHeight: ${toString (ui.round 6)}
-
-      // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
-      readonly property int panelWidth: ${toString (ui.round 260)}
-      readonly property int panelPad: ${toString (ui.round 14)}
-      readonly property int panelGap: ${toString (ui.round 6)}
-      readonly property int panelRadius: ${toString (radiusPx 8)}
-      readonly property int panelRowHeight: ${toString (ui.round 30)}
-
-      // Control Center geometry (wider card, quick-toggle tiles, slider track).
-      readonly property int controlCenterWidth: ${toString (ui.round 340)}
-      readonly property int tileHeight: ${toString (ui.round 52)}
-      readonly property int sliderTrackHeight: ${toString (ui.round 6)}
-
-      // Launcher geometry (apps/emoji/clipboard card).
-      readonly property int launcherWidth: ${toString (ui.round 640)}
-
-      // Media (MPRIS) widget: max characters of the track title shown in the bar.
-      readonly property int mediaMaxChars: 40
-
-      // Notification-toast geometry. Pixel sizes scale with the font; the
-      // timeouts are milliseconds and stay unscaled.
-      readonly property int notifWidth: ${toString (ui.round 380)}
-      readonly property int notifPad: ${toString (ui.round 12)}
-      readonly property int notifRadius: ${toString (radiusPx 0)}
-      readonly property int notifBorder: ${toString (if highContrast then 3 else 2)}
-      readonly property int notifGap: ${toString (ui.round 8)}
-      readonly property int notifMargin: ${toString (ui.round 10)}
-      readonly property int notifIconSize: ${toString (ui.round 40)}
-      readonly property int notifMaxVisible: 5
-      readonly property int notifTimeoutLow: 5000
-      readonly property int notifTimeoutNormal: 5000
-      readonly property int notifTimeoutCritical: 0
-      readonly property int notifCenterMaxHeight: ${toString (ui.round 420)}
-      readonly property var notifRules: ${builtins.toJSON notifRules}
-      readonly property bool notifStackBySender: ${lib.boolToString notifStackBySender}
-      readonly property bool notifDetectCodes: ${lib.boolToString notifDetectCodes}
-      readonly property var notifPassApps: ${builtins.toJSON notifPassApps}
-
-      // Appearance scale axes (marchyo.theme.appearance).
-      readonly property int animationDuration: ${toString (animMs 150)}
-      readonly property bool highContrast: ${lib.boolToString highContrast}
-      readonly property int borderWidth: ${toString (if highContrast then 2 else 1)}
-      readonly property real animationSpeed: ${toString animationSpeed}
-      readonly property bool reduceMotion: ${lib.boolToString reduceMotion}
-
-      // Jylhis motion tokens (ms): press sink, colour ease, base, slow, long.
-      // motionLong is the budget no transition may exceed (tests/shell/motion-budget-test.js).
-      readonly property int motionPress: ${toString (motionMs "press")}
-      readonly property int motionFast: ${toString (motionMs "fast")}
-      readonly property int motionBase: ${toString (motionMs "base")}
-      readonly property int motionSlow: ${toString (motionMs "slow")}
-      readonly property int motionLong: ${toString (motionMs "long")}
-
-      // Runtime switches: the reduce-motion override (Services/RuntimeStyle) and
-      // Hyprland's animations:enabled probe (Services/Motion).
-      property bool motionRuntimeOff: false
-      property bool compositorAnimationsOff: false
-
-      // Every transition length goes through here: 0 when motion is reduced at
-      // build time, by the runtime toggle, or by the compositor.
-      function duration(ms: int): int {
-        if (reduceMotion || motionRuntimeOff || compositorAnimationsOff)
-          return 0;
-        return Math.max(0, Math.round(ms / animationSpeed));
-      }
-
-      // Jylhis border tokens: hairline is borderWidth (wider under high
-      // contrast), the focus ring and the selected-item marker are wider still.
-      readonly property int borderFocus: ${
-        toString (borderPx "focus" + (if highContrast then 1 else 0))
-      }
-      readonly property int borderMarker: ${toString (borderPx "marker")}
-
-      // Control states (normal, hover, focus, selected, pressed): fill colour,
-      // fill alpha and border. Colours follow the live theme through Colors.
-      readonly property var controls: ({
-          normal: {
-            fill: Colors.bgSubtle,
-            fillAlpha: 1.0,
-            border: Colors.border,
-            borderWidth: borderWidth
-          },
-          hover: {
-            fill: Colors.surfaceRaised,
-            fillAlpha: 1.0,
-            border: Colors.borderStrong,
-            borderWidth: borderWidth
-          },
-          focus: {
-            fill: Colors.bgSubtle,
-            fillAlpha: 1.0,
-            border: Colors.focusRing,
-            borderWidth: borderFocus
-          },
-          selected: {
-            fill: Colors.accentSubtle,
-            fillAlpha: 1.0,
-            border: Colors.accent,
-            borderWidth: borderWidth
-          },
-          pressed: {
-            fill: Colors.selectionBg,
-            fillAlpha: 1.0,
-            border: Colors.borderStrong,
-            borderWidth: borderWidth
+          // One step of the spacing scale; an unknown step reads as "sm".
+          function space(step: string): int {
+            const px = spaceScale[step];
+            return px === undefined ? spaceScale.sm : px;
           }
-        })
 
-      function control(state: string): var {
-        return controls[state] || controls.normal;
-      }
+          readonly property int barItemPad: space("xs")
+          readonly property string baseFontFamily: "BlexMono Nerd Font"
+          // Shell font: the runtime UI font (Services/RuntimeStyle, `marchyo font set
+          // --kind ui`) over the baked family.
+          property string uiFont: ""
+          readonly property string fontFamily: uiFont !== "" ? uiFont : baseFontFamily
 
-      // Whether to run the solaar HID++ fallback for peripherals battery.
-      readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
+          // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
+          // screen edges and the bar's corner radius. All bake to 0 in strip mode
+          // (floatingBar false), where the bar spans edge to edge as before.
+          readonly property bool barFloating: ${lib.boolToString floatingBar}
+          readonly property int barMarginH: ${toString (if floatingBar then ui.round 6 else 0)}
+          readonly property int barMarginV: ${toString (if floatingBar then ui.round 6 else 0)}
+          readonly property int barRadius: ${toString (if floatingBar then radiusPx 12 else 0)}
 
-      // Baked feature flags.
-      readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
-      readonly property string dictationBackend: "${dictationBackend}"
-      readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
-    }
+          // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
+          // to every shell card; 1.0 restores the opaque flat look (and the home
+          // Hyprland config keeps blur off).
+          readonly property real surfaceAlpha: ${toString surfaceAlpha}
+
+          // Runtime bar switches, written by Services/RuntimeStyle from
+          // `marchyo theme bar-position` and `marchyo theme bar-background`. An empty
+          // barBackground keeps the surfaceAlpha look above.
+          property string barPosition: "top"
+          property string barBackground: ""
+          readonly property bool barBottom: barPosition === "bottom"
+          readonly property real barAlpha: barBackground === "opaque" ? 1.0 : barBackground === "clear" ? 0.0 : barBackground === "glassy" ? Math.min(surfaceAlpha, 0.6) : surfaceAlpha
+
+          // On-screen-display geometry (volume/brightness overlay).
+          readonly property int osdPad: ${toString (ui.round 14)}
+          readonly property int osdRadius: ${toString (radiusPx 8)}
+          readonly property int osdMargin: ${toString (ui.round 80)}
+          readonly property int osdBarWidth: ${toString (ui.round 140)}
+          readonly property int osdBarHeight: ${toString (ui.round 6)}
+
+          // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
+          readonly property int panelWidth: ${toString (ui.round 260)}
+          readonly property int panelPad: ${toString (ui.round 14)}
+          readonly property int panelGap: ${toString (ui.round 6)}
+          readonly property int panelRadius: ${toString (radiusPx 8)}
+          readonly property int panelRowHeight: ${toString (ui.round 30)}
+
+          // Control Center geometry (wider card, quick-toggle tiles, slider track).
+          readonly property int controlCenterWidth: ${toString (ui.round 340)}
+          readonly property int tileHeight: ${toString (ui.round 52)}
+          readonly property int sliderTrackHeight: ${toString (ui.round 6)}
+
+          // Launcher geometry (apps/emoji/clipboard card).
+          readonly property int launcherWidth: ${toString (ui.round 640)}
+
+          // Media (MPRIS) widget: max characters of the track title shown in the bar.
+          readonly property int mediaMaxChars: 40
+
+          // Notification-toast geometry. Pixel sizes scale with the font; the
+          // timeouts are milliseconds and stay unscaled.
+          readonly property int notifWidth: ${toString (ui.round 380)}
+          readonly property int notifPad: ${toString (ui.round 12)}
+          readonly property int notifRadius: ${toString (radiusPx 0)}
+          readonly property int notifBorder: ${toString (if highContrast then 3 else 2)}
+          readonly property int notifGap: ${toString (ui.round 8)}
+          readonly property int notifMargin: ${toString (ui.round 10)}
+          readonly property int notifIconSize: ${toString (ui.round 40)}
+          readonly property int notifMaxVisible: 5
+          readonly property int notifTimeoutLow: 5000
+          readonly property int notifTimeoutNormal: 5000
+          readonly property int notifTimeoutCritical: 0
+          readonly property int notifCenterMaxHeight: ${toString (ui.round 420)}
+          readonly property var notifRules: ${builtins.toJSON notifRules}
+          readonly property bool notifStackBySender: ${lib.boolToString notifStackBySender}
+          readonly property bool notifDetectCodes: ${lib.boolToString notifDetectCodes}
+          readonly property var notifPassApps: ${builtins.toJSON notifPassApps}
+
+          // Appearance scale axes (marchyo.theme.appearance).
+          readonly property int animationDuration: ${toString (animMs 150)}
+          readonly property bool highContrast: ${lib.boolToString highContrast}
+          readonly property int borderWidth: ${toString (if highContrast then 2 else 1)}
+          readonly property real animationSpeed: ${toString animationSpeed}
+          readonly property bool reduceMotion: ${lib.boolToString reduceMotion}
+
+          // Jylhis motion tokens (ms): press sink, colour ease, base, slow, long.
+          // motionLong is the budget no transition may exceed (tests/shell/motion-budget-test.js).
+          readonly property int motionPress: ${toString (motionMs "press")}
+          readonly property int motionFast: ${toString (motionMs "fast")}
+          readonly property int motionBase: ${toString (motionMs "base")}
+          readonly property int motionSlow: ${toString (motionMs "slow")}
+          readonly property int motionLong: ${toString (motionMs "long")}
+
+          // Runtime switches: the reduce-motion override (Services/RuntimeStyle) and
+          // Hyprland's animations:enabled probe (Services/Motion).
+          property bool motionRuntimeOff: false
+          property bool compositorAnimationsOff: false
+
+          // Every transition length goes through here: 0 when motion is reduced at
+          // build time, by the runtime toggle, or by the compositor.
+          function duration(ms: int): int {
+            if (reduceMotion || motionRuntimeOff || compositorAnimationsOff)
+              return 0;
+            return Math.max(0, Math.round(ms / animationSpeed));
+          }
+
+          // Jylhis border tokens: hairline is borderWidth (wider under high
+          // contrast), the focus ring and the selected-item marker are wider still.
+          readonly property int borderFocus: ${
+            toString (borderPx "focus" + (if highContrast then 1 else 0))
+          }
+          readonly property int borderMarker: ${toString (borderPx "marker")}
+
+          // Control states (normal, hover, focus, selected, pressed): fill colour,
+          // fill alpha and border. Colours follow the live theme through Colors.
+          readonly property var controls: ({
+              normal: {
+                fill: Colors.bgSubtle,
+                fillAlpha: 1.0,
+                border: Colors.border,
+                borderWidth: borderWidth
+              },
+              hover: {
+                fill: Colors.surfaceRaised,
+                fillAlpha: 1.0,
+                border: Colors.borderStrong,
+                borderWidth: borderWidth
+              },
+              focus: {
+                fill: Colors.bgSubtle,
+                fillAlpha: 1.0,
+                border: Colors.focusRing,
+                borderWidth: borderFocus
+              },
+              selected: {
+                fill: Colors.accentSubtle,
+                fillAlpha: 1.0,
+                border: Colors.accent,
+                borderWidth: borderWidth
+              },
+              pressed: {
+                fill: Colors.selectionBg,
+                fillAlpha: 1.0,
+                border: Colors.borderStrong,
+                borderWidth: borderWidth
+              }
+            })
+
+          function control(state: string): var {
+            return controls[state] || controls.normal;
+          }
+
+          // Whether to run the solaar HID++ fallback for peripherals battery.
+          readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
+
+          // Baked feature flags.
+          readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
+          readonly property string dictationBackend: "${dictationBackend}"
+          readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
+        }
   '';
 
   # Thumbnail generator for the theme and wallpaper pickers (Services/Thumbnails).

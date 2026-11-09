@@ -1,3 +1,8 @@
+// Quickshell.Hyprland's GlobalShortcut (used below) derives from PostReloadHook,
+// which that module's qmltypes leaves to Quickshell core, so qmllint cannot
+// resolve the type and reports "PostReloadHook was not found" at a line that
+// does not track this file. Hence a file-wide disable rather than a region.
+// qmllint disable import
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -653,11 +658,15 @@ ShellRoot {
         blockLoading: true
     }
 
+    // Variants hands its delegate modelData; with GlobalShortcut unresolved (see the
+    // top of the file) qmllint cannot tell it is the delegate.
+    // qmllint disable required
     Variants {
         model: Actions.parseShortcuts(shortcutsFile.text())
 
         GlobalShortcut {
             required property var modelData
+            // qmllint enable required
             appid: "marchyo"
             name: modelData.name
             description: modelData.description
@@ -690,10 +699,13 @@ ShellRoot {
                 // Floating pill: inset from the screen edges. The generator
                 // bakes 0 in strip mode (barFloating false), so the strip keeps
                 // the full-width edge-to-edge look.
+                // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+                // qmllint disable missing-property
                 top: Style.barBottom ? 0 : Style.barMarginV
                 bottom: Style.barBottom ? Style.barMarginV : 0
                 left: Style.barMarginH
                 right: Style.barMarginH
+                // qmllint enable missing-property
             }
             // Always explicit: assigning exclusiveZone switches exclusionMode to
             // Normal, where -1 reserves nothing and windows tile under the bar.

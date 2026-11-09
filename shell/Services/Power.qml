@@ -40,7 +40,7 @@ QtObject {
     property int chargerW: 0
 
     readonly property int warningThreshold: Battery.warningThreshold(ShellConfig.battery.lowThreshold)
-    property PersistentProperties batteryWarning: PersistentProperties {
+    readonly property var batteryWarning: PersistentProperties {
         reloadableId: "marchyo-battery-warning"
         property bool notified: false
     }

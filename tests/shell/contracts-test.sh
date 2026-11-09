@@ -206,9 +206,8 @@ while read -r fn; do
 done <<<"$shortcut_calls"
 check "every shell/shortcuts.json call exists in the actions table" "$shortcut_drift"
 
-grep -q 'GlobalShortcut {' "$shell_qml" && grep -q 'appid: "marchyo"' "$shell_qml" &&
-  grep -q 'shortcuts.json' "$shell_qml"
-if [[ $? == 0 ]]; then
+if grep -q 'GlobalShortcut {' "$shell_qml" && grep -q 'appid: "marchyo"' "$shell_qml" &&
+  grep -q 'shortcuts.json' "$shell_qml"; then
   ok "shell.qml registers shell/shortcuts.json as marchyo global shortcuts"
 else
   no "shell.qml registers shell/shortcuts.json as marchyo global shortcuts"

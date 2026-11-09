@@ -21,7 +21,10 @@ QtObject {
     readonly property var sections: BT.sections(root.rows, root.scanning)
     readonly property var rows: {
         const out = [];
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devices = Bluetooth.devices ? Bluetooth.devices.values : [];
+        // qmllint enable missing-property
         for (const d of devices) {
             if (d.adapter !== root.adapter)
                 continue;
@@ -34,20 +37,23 @@ QtObject {
             if (!status && d.state === BluetoothDeviceState.Disconnecting)
                 status = "disconnect";
             out.push({
-                         name: d.name || d.deviceName || d.address,
-                         address: d.address,
-                         connected: d.connected,
-                         paired: d.paired || d.bonded,
-                         busy: status !== "",
-                         status: status,
-                         battery: BT.batteryText(d.batteryAvailable, d.battery)
-                     });
+                name: d.name || d.deviceName || d.address,
+                address: d.address,
+                connected: d.connected,
+                paired: d.paired || d.bonded,
+                busy: status !== "",
+                status: status,
+                battery: BT.batteryText(d.batteryAvailable, d.battery)
+            });
         }
         return BT.sortRows(out);
     }
 
     function deviceFor(address) {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devices = Bluetooth.devices ? Bluetooth.devices.values : [];
+        // qmllint enable missing-property
         return devices.find(d => d.adapter === root.adapter && d.address === address) || null;
     }
 
@@ -162,7 +168,10 @@ QtObject {
 
     function routeAudio(): void {
         const routes = Object.assign({}, root.audioRoutes);
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         for (const address of Object.keys(routes)) {
             const route = routes[address];
             const device = root.deviceFor(address);
@@ -199,7 +208,10 @@ QtObject {
         objects: {
             if (Object.keys(root.audioRoutes).length === 0 || !Pipewire.nodes)
                 return [];
+            // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+            // qmllint disable missing-property
             return Pipewire.nodes.values.filter(n => n.isSink && !n.isStream);
+            // qmllint enable missing-property
         }
     }
 

@@ -34,8 +34,11 @@ PanelWindow {
     anchors.bottom: Style.barBottom
     anchors.left: true
     // barMarginV is 0 in strip mode, so this reproduces the strip look.
+    // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+    // qmllint disable missing-property
     margins.top: Style.barHeight + Style.barMarginV + 8
     margins.bottom: Style.barHeight + Style.barMarginV + 8
+    // qmllint enable missing-property
 
     readonly property int tipX: {
         const sw = root.targetScreen ? root.targetScreen.width : 0;
@@ -44,7 +47,10 @@ PanelWindow {
             x = Math.max(0, Math.min(x, sw - implicitWidth));
         return Math.round(x);
     }
+    // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+    // qmllint disable missing-property
     margins.left: tipX
+    // qmllint enable missing-property
 
     implicitWidth: card.implicitWidth
     implicitHeight: card.implicitHeight

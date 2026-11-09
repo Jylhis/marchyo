@@ -14,7 +14,10 @@ import "../Commons/Overview.js" as Ov
 PanelWindow {
     id: root
 
+    // Quickshell's _Window qmltypes declares QuickshellScreenInfo as an opaque stub, so qmllint cannot see its members.
+    // qmllint disable missing-property
     readonly property string screenName: root.screen ? root.screen.name : ""
+    // qmllint enable missing-property
     // The overlay that owns the keyboard: the focused output, or the first
     // screen when the compositor reports none.
     readonly property bool primary: Screens.focusedName !== "" ? root.screenName === Screens.focusedName : (Quickshell.screens.length > 0 && Quickshell.screens[0].name === root.screenName)

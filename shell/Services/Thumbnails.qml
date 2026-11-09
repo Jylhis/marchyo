@@ -30,16 +30,16 @@ QtObject {
 
     function request(paths: var): void {
         root.wanted = paths.filter(p => p.length > 0);
-        if (!genProc.running)
+        if (!root.genProc.running)
             root.run();
     }
 
     function run(): void {
         if (root.wanted.length === 0)
             return;
-        genProc.command = [Config.thumbs, String(root.size)].concat(root.wanted);
+        root.genProc.command = [Config.thumbs, String(root.size)].concat(root.wanted);
         root.wanted = [];
-        genProc.running = true;
+        root.genProc.running = true;
     }
 
     function take(line: string): void {
@@ -52,7 +52,6 @@ QtObject {
     }
 
     readonly property var genProc: Process {
-        id: genProc
         stdout: SplitParser {
             onRead: line => root.take(line)
         }

@@ -88,25 +88,25 @@ QtObject {
     }
 
     function refreshOffsets(): void {
-        if (!root.active || offsetProbe.running)
+        if (!root.active || root.offsetProbe.running)
             return;
         const zones = root.cfg.cities.map(c => c.tz).filter((z, i, a) => a.indexOf(z) === i);
         if (zones.length === 0)
             return;
-        offsetProbe.zones = zones;
-        offsetProbe.command = [Config.bash, "-c", "d=$1; shift; for z; do TZ=$z \"$d\" '+%z %Z'; done", "bash", Config.date].concat(zones);
-        offsetProbe.running = true;
+        root.offsetProbe.zones = zones;
+        root.offsetProbe.command = [Config.bash, "-c", "d=$1; shift; for z; do TZ=$z \"$d\" '+%z %Z'; done", "bash", Config.date].concat(zones);
+        root.offsetProbe.running = true;
     }
 
     // Temperatures change slowly: refetch at most every 20 minutes.
     function refreshTemps(): void {
-        if (!root.active || tempProbe.running || root.cfg.cities.length === 0)
+        if (!root.active || root.tempProbe.running || root.cfg.cities.length === 0)
             return;
         if (root.temps.length > 0 && Date.now() - root.tempsAt < 1200000)
             return;
-        tempProbe.count = root.cfg.cities.length;
-        tempProbe.command = [Config.curl, "-sf", "--max-time", "15", E.weatherUrl(root.cfg.cities)];
-        tempProbe.running = true;
+        root.tempProbe.count = root.cfg.cities.length;
+        root.tempProbe.command = [Config.curl, "-sf", "--max-time", "15", E.weatherUrl(root.cfg.cities)];
+        root.tempProbe.running = true;
     }
 
     onActiveChanged: {
@@ -160,22 +160,20 @@ QtObject {
     }
 
     readonly property var offsetProbe: Process {
-        id: offsetProbe
         property var zones: []
         stdout: StdioCollector {
-            onStreamFinished: root.offsets = Object.assign({}, root.offsets, E.parseOffsets(text, offsetProbe.zones))
+            onStreamFinished: root.offsets = Object.assign({}, root.offsets, E.parseOffsets(text, root.offsetProbe.zones))
         }
     }
 
     readonly property var tempProbe: Process {
-        id: tempProbe
         property int count: 0
         stdout: StdioCollector {
             readonly property int maxChars: 1024 * 1024
             onStreamFinished: {
                 if (text.length > maxChars)
                     return;
-                root.temps = E.parseWeather(text, tempProbe.count);
+                root.temps = E.parseWeather(text, root.tempProbe.count);
                 root.tempsAt = Date.now();
             }
         }

@@ -36,7 +36,7 @@ Item {
     readonly property var activeFlags: {
         const active = [];
         for (let i = 0; i < items.count; i++) {
-            const cell = items.itemAt(i);
+            const cell = items.itemAt(i) as Loader;
             const state = root.widgetState(cell ? cell.item : null);
             active.push(state.active);
         }
@@ -49,7 +49,7 @@ Item {
     readonly property var geometry: {
         const widths = [];
         for (let i = 0; i < items.count; i++) {
-            const cell = items.itemAt(i);
+            const cell = items.itemAt(i) as Loader;
             widths.push(root.cellWidth(cell));
         }
         const flags = root.activeFlags;

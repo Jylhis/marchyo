@@ -66,7 +66,10 @@ QtObject {
 
     function collectStreams(want): var {
         const out = [];
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < nodes.length; i++) {
             const n = nodes[i];
             if (n && n.isStream && n.type === want)
@@ -96,7 +99,10 @@ QtObject {
 
     function collectSinks(): var {
         const out = [];
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < nodes.length; i++) {
             const n = nodes[i];
             if (n && n.isSink && !n.isStream)
@@ -106,7 +112,10 @@ QtObject {
     }
 
     function collectSources(): var {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         return nodes.filter(n => n && !n.isStream && n.type === PwNodeType.AudioSource);
     }
 
@@ -160,14 +169,20 @@ QtObject {
     // followed: it cannot add or remove a node, and reacting to it is
     // exactly the churn this layout exists to prevent.
     readonly property var nodesConn: Connections {
+        // UntypedObjectModel is an opaque stub in Quickshell's per-module qmltypes, so qmllint does not know it is a QObject.
+        // qmllint disable incompatible-type
         target: Pipewire.nodes
+        // qmllint enable incompatible-type
         function onValuesChanged(): void {
             root.refresh();
         }
     }
 
     function streamLabel(n) {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const players = Mpris.players ? Mpris.players.values : [];
+        // qmllint enable missing-property
         return Devices.streamLabel(n, players, root.appStreams) || I18n.t("audio.stream");
     }
 
@@ -178,8 +193,7 @@ QtObject {
                 list.push(root.sink);
             if (root.source)
                 list.push(root.source);
-            return list.concat(root.sinks).concat(root.sources).concat(root.appStreams).concat(
-                        root.inCandidates);
+            return list.concat(root.sinks).concat(root.sources).concat(root.appStreams).concat(root.inCandidates);
         }
     }
 }

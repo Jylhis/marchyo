@@ -33,33 +33,7 @@ ShellRoot {
         readonly property var lockService: Lock
 
         // The top-level types shell.qml declares.
-        readonly property list<string> shellWindowFiles: [
-            "Osd/Osd.qml",
-            "Lock/LockScreen.qml",
-            "Panels/AudioPanel.qml",
-            "Panels/NetworkPanel.qml",
-            "Panels/PowerPanel.qml",
-            "Panels/MonitorPanel.qml",
-            "Panels/DisplayPanel.qml",
-            "Panels/WeatherPanel.qml",
-            "Panels/ElsewhenPanel.qml",
-            "Panels/TailscalePanel.qml",
-            "Panels/WifiQrPanel.qml",
-            "Panels/BluetoothPanel.qml",
-            "Panels/SpeedtestPanel.qml",
-            "Panels/DropboxPanel.qml",
-            "Panels/GalleryPanel.qml",
-            "Panels/WhatsNewPanel.qml",
-            "Panels/SetupPanel.qml",
-            "Panels/ImagePicker.qml",
-            "Notifications/NotificationCenter.qml",
-            "Panels/ControlCenter.qml",
-            "Launcher/LauncherWindow.qml",
-            "Overview/OverviewLayer.qml",
-            "Notifications/NotificationDaemon.qml",
-            "Polkit/PolkitDialog.qml",
-            "Ui/TooltipWindow.qml"
-        ]
+        readonly property list<string> shellWindowFiles: ["Osd/Osd.qml", "Lock/LockScreen.qml", "Panels/AudioPanel.qml", "Panels/NetworkPanel.qml", "Panels/PowerPanel.qml", "Panels/MonitorPanel.qml", "Panels/DisplayPanel.qml", "Panels/WeatherPanel.qml", "Panels/ElsewhenPanel.qml", "Panels/TailscalePanel.qml", "Panels/WifiQrPanel.qml", "Panels/BluetoothPanel.qml", "Panels/SpeedtestPanel.qml", "Panels/DropboxPanel.qml", "Panels/GalleryPanel.qml", "Panels/WhatsNewPanel.qml", "Panels/SetupPanel.qml", "Panels/ImagePicker.qml", "Notifications/NotificationCenter.qml", "Panels/ControlCenter.qml", "Launcher/LauncherWindow.qml", "Overview/OverviewLayer.qml", "Notifications/NotificationDaemon.qml", "Polkit/PolkitDialog.qml", "Ui/TooltipWindow.qml"]
 
         // Launcher providers are plain QtObjects, so they load offscreen even
         // though LauncherWindow (a PanelWindow) does not.
@@ -795,8 +769,8 @@ ShellRoot {
                 return hex;
             };
             const tok = h => ({
-                    "marchyo-token": h
-                });
+                        "marchyo-token": h
+                    });
             const argvOf = n => JSON.stringify(NS.execArgvOf(n));
             const n1 = nonce("ab".repeat(32));
             if (NS.tokenOk({}) || NS.tokenOk(tok("short")) || NS.tokenOk(tok("ef".repeat(32))))
@@ -815,9 +789,9 @@ ShellRoot {
             // A trusted card, then an update from another bus client that relabels
             // it: Quickshell applies replaces_id in place, without a new signal.
             const exec = (argv, token) => ({
-                    "marchyo-exec-argv": JSON.stringify(argv),
-                    "marchyo-token": token
-                });
+                        "marchyo-exec-argv": JSON.stringify(argv),
+                        "marchyo-token": token
+                    });
             NS.clearAll();
             NS.clearHistory();
             const card = mk("marchyo-action", "Reboot", exec(["a", "b"], nonce("11".repeat(32))));

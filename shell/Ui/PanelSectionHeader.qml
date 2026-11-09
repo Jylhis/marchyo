@@ -23,7 +23,7 @@ RowLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        height: Style.borderWidth
+        Layout.preferredHeight: Style.borderWidth
         color: Colors.border
     }
 }

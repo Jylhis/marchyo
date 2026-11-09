@@ -17,7 +17,10 @@ QtObject {
     id: root
 
     readonly property var activeDevice: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devs = Networking.devices ? Networking.devices.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < devs.length; i++)
             if (devs[i].connected)
                 return devs[i];
@@ -40,7 +43,10 @@ QtObject {
     // software radio switch (writable through setWifiEnabled), and the rfkill
     // hardware switch (read-only; while it is off the radio cannot be enabled).
     readonly property bool wifiAvailable: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devs = Networking.devices ? Networking.devices.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < devs.length; i++)
             if (devs[i].type === DeviceType.Wifi)
                 return true;
@@ -85,20 +91,19 @@ QtObject {
         return parts.length > 0 ? parts.join("  ") : I18n.t("network.offlineHint");
     }
 
-    onIfNameChanged: addrDebounce.restart()
-    onSsidChanged: addrDebounce.restart()
+    onIfNameChanged: root.addrDebounce.restart()
+    onSsidChanged: root.addrDebounce.restart()
 
     readonly property var deviceWatch: Connections {
         target: root.activeDevice
         ignoreUnknownSignals: true
         function onStateChanged() {
-            addrDebounce.restart();
+            root.addrDebounce.restart();
         }
     }
 
     // Coalesces the change burst of one (re)connect into a single probe.
     readonly property var addrDebounce: Timer {
-        id: addrDebounce
         interval: 500
         triggeredOnStart: false
         onTriggered: {
@@ -130,5 +135,5 @@ QtObject {
         }
     }
 
-    Component.onCompleted: addrDebounce.restart()
+    Component.onCompleted: root.addrDebounce.restart()
 }

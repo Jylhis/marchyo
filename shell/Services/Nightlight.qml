@@ -21,12 +21,12 @@ QtObject {
     readonly property bool enabled: root.temperature < root.identityTemp
 
     function toggle() {
-        if (toggleProc.running)
+        if (root.toggleProc.running)
             return;
         const next = !root.enabled;
         root.setEnabled(next);
-        toggleProc.command = [Config.marchyo, "toggle", "nightlight", next ? "on" : "off"];
-        toggleProc.running = true;
+        root.toggleProc.command = [Config.marchyo, "toggle", "nightlight", next ? "on" : "off"];
+        root.toggleProc.running = true;
     }
 
     function setEnabled(on: bool): void {
@@ -55,7 +55,6 @@ QtObject {
     }
 
     readonly property var probe: Process {
-        id: probe
         command: [Config.hyprctl, "hyprsunset", "temperature"]
         stdout: StdioCollector {
             readonly property int maxChars: 4096
@@ -72,13 +71,12 @@ QtObject {
 
     function runProbe(): void {
         root.probeExit = -1;
-        probe.running = true;
+        root.probe.running = true;
     }
 
     // `marchyo toggle nightlight` flips 4000K <-> 6500K. Re-probe on exit so the
     // indicator reflects the daemon, not a guess.
     readonly property var toggleProc: Process {
-        id: toggleProc
         onExited: code => {
             if (code !== 0)
                 root.runProbe();

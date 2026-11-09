@@ -40,10 +40,10 @@ Provider {
     onActiveChanged: {
         if (root.active) {
             root.loading = 2;
-            monoProc.running = false;
-            monoProc.running = true;
-            uiProc.running = false;
-            uiProc.running = true;
+            root.monoProc.running = false;
+            root.monoProc.running = true;
+            root.uiProc.running = false;
+            root.uiProc.running = true;
         }
     }
 
@@ -51,7 +51,6 @@ Provider {
     readonly property int maxChars: 1024 * 1024
 
     readonly property var monoProc: Process {
-        id: monoProc
         command: [Config.marchyo, "font", "list", "--kind", "mono", "--format", "json"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -62,7 +61,6 @@ Provider {
     }
 
     readonly property var uiProc: Process {
-        id: uiProc
         command: [Config.marchyo, "font", "list", "--kind", "ui", "--format", "json"]
         stdout: StdioCollector {
             onStreamFinished: {

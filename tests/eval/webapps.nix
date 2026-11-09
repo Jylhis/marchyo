@@ -173,7 +173,7 @@ in
       then
         "pass"
       else
-        throw "FAIL: m365 preset entries missing, mis-targeted, or carrying a launch bind"
+        throw "FAIL: m365 preset entries missing, wrongly targeted, or carrying a launch bind"
     );
 
   # The selected web email client is registered without a preset.
@@ -186,7 +186,8 @@ in
     pkgs.writeText "eval-webapps-email-client" (
       if
         (entries outlook) ? "marchyo-webapp-outlook"
-        && lib.hasInfix "--app=https://outlook.office.com/mail/" (entries outlook).marchyo-webapp-outlook.exec
+        && lib.hasInfix "--app=https://outlook.office.com/mail/" (entries outlook)
+        .marchyo-webapp-outlook.exec
         && (entries (hmOf "gmail")) ? "marchyo-webapp-gmail"
         && !((entries aerc) ? "marchyo-webapp-outlook")
       then
@@ -226,7 +227,7 @@ in
       then
         "pass"
       else
-        throw "FAIL: google preset entries missing, mis-targeted, or carrying a launch bind"
+        throw "FAIL: google preset entries missing, wrongly targeted, or carrying a launch bind"
     );
 
   # notion without unfree (the default) falls back to a web app and installs no

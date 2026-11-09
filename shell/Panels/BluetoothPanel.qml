@@ -36,8 +36,7 @@ Panel {
         Text {
             Layout.fillWidth: true
             visible: !BluetoothState.available || !BluetoothState.enabled
-            text: !BluetoothState.available ? I18n.t("bluetooth.unavailable") : I18n.t(
-                                                  "bluetooth.turnOn")
+            text: !BluetoothState.available ? I18n.t("bluetooth.unavailable") : I18n.t("bluetooth.turnOn")
             color: Colors.textMuted
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
@@ -70,11 +69,7 @@ Panel {
             id: scroll
             visible: BluetoothState.enabled
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(groups.implicitHeight, Math.max(120, root.height
-                                                                             - Style.barHeight
-                                                                             - Style.panelPad * 8
-                                                                             - Style.panelRowHeight
-                                                                             * 4))
+            Layout.preferredHeight: Math.min(groups.implicitHeight, Math.max(120, root.height - Style.barHeight - Style.panelPad * 8 - Style.panelRowHeight * 4))
             contentWidth: width
             contentHeight: groups.implicitHeight
             clip: true
@@ -147,8 +142,7 @@ Panel {
                                     Keys.onPressed: e => {
                                         if (e.key === Qt.Key_Delete || e.key === Qt.Key_X)
                                             deviceRow.forget();
-                                        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter
-                                                 || e.key === Qt.Key_Space)
+                                        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter || e.key === Qt.Key_Space)
                                             BluetoothState.activate(deviceRow.modelData);
                                         else
                                             return;
@@ -167,9 +161,7 @@ Panel {
                                         e.accepted = true;
                                     }
                                     Keys.onPressed: e => {
-                                        if (e.key === Qt.Key_Delete || e.key === Qt.Key_X || e.key
-                                                === Qt.Key_Return || e.key === Qt.Key_Enter
-                                                || e.key === Qt.Key_Space)
+                                        if (e.key === Qt.Key_Delete || e.key === Qt.Key_X || e.key === Qt.Key_Return || e.key === Qt.Key_Enter || e.key === Qt.Key_Space)
                                             deviceRow.forget();
                                         else
                                             return;

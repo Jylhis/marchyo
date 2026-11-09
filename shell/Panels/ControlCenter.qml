@@ -78,13 +78,12 @@ Panel {
 
     onVisibleChanged: {
         if (root.visible) {
-            gapsProc.running = false;
-            gapsProc.running = true;
+            root.gapsProc.running = false;
+            root.gapsProc.running = true;
         }
     }
 
     readonly property var gapsProc: Process {
-        id: gapsProc
         command: [Config.marchyo, "toggle", "gaps", "--status", "--format", "json"]
         stdout: StdioCollector {
             onStreamFinished: {

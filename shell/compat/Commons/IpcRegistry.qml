@@ -29,7 +29,7 @@ Singleton {
 
     function functionNames(object) {
         var names = [];
-        for (var key in object) {
+        for (let key in object) {
             if (typeof object[key] === "function")
                 names.push(key);
         }
@@ -48,8 +48,8 @@ Singleton {
     }
 
     function handlerFor(target) {
-        for (var i = 0; i < handlers.length; i++) {
-            var handler = handlers[i];
+        for (let i = 0; i < handlers.length; i++) {
+            let handler = handlers[i];
             if (handler && handler.enabled && handler.target === target)
                 return handler;
         }

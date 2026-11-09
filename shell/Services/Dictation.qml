@@ -47,7 +47,7 @@ QtObject {
     function toggle() {
         Quickshell.execDetached([Config.marchyo, "dictation", "toggle"]);
         if (!root.followsStream && root.wanted)
-            settle.restart();
+            root.settle.restart();
     }
 
     function applyPoll(text) {
@@ -64,7 +64,6 @@ QtObject {
     }
 
     readonly property var stream: Process {
-        id: stream
         command: [Config.voxtype, "status", "--format", "json", "--follow", "--icon-theme", "nerd-font"]
         stdout: SplitParser {
             onRead: line => {
@@ -99,7 +98,7 @@ QtObject {
         repeat: false
         onTriggered: {
             root.retryDelay = Math.min(root.retryMax, root.retryDelay * 2);
-            stream.running = true;
+            root.stream.running = true;
         }
     }
 
@@ -123,7 +122,6 @@ QtObject {
     // A toggle from the bar changes the state after the CLI returns: read it
     // again once instead of waiting out the poll interval.
     readonly property var settle: Timer {
-        id: settle
         interval: 400
         repeat: false
         onTriggered: if (!poll.running)
@@ -131,5 +129,5 @@ QtObject {
     }
 
     Component.onCompleted: if (root.wanted && root.followsStream)
-        stream.running = true
+        root.stream.running = true
 }

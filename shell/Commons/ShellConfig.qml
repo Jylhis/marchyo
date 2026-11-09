@@ -205,36 +205,33 @@ QtObject {
     }
 
     readonly property var fileView: FileView {
-        id: fileView
         path: root.configPath()
         watchChanges: true
         printErrors: false
-        onLoaded: root.apply(fileView.text())
-        onFileChanged: fileView.reload()
+        onLoaded: root.apply(root.fileView.text())
+        onFileChanged: root.fileView.reload()
     }
 
     // Plugin settings overlay reader. Watched so a save takes effect for the
     // next widget load; no poll (writes are rare, and unlike shell.json it is
     // updated in place by omarchy-bar, so inotify fires).
     readonly property var pluginSettingsView: FileView {
-        id: pluginSettingsView
         path: root.pluginSettingsPath()
         watchChanges: true
         printErrors: false
-        onLoaded: root.applyPluginSettings(pluginSettingsView.text())
-        onFileChanged: pluginSettingsView.reload()
+        onLoaded: root.applyPluginSettings(root.pluginSettingsView.text())
+        onFileChanged: root.pluginSettingsView.reload()
     }
 
     // Runtime layout edits. The CLI replaces the file atomically, so the watch
     // is re-armed by the reload; a deleted file reads as no edits.
     readonly property var barLayoutView: FileView {
-        id: barLayoutView
         path: root.barLayoutPath()
         watchChanges: true
         printErrors: false
-        onLoaded: root.barOps = BarOverlay.parseOps(barLayoutView.text())
+        onLoaded: root.barOps = BarOverlay.parseOps(root.barLayoutView.text())
         onLoadFailed: root.barOps = []
-        onFileChanged: barLayoutView.reload()
+        onFileChanged: root.barLayoutView.reload()
     }
 
     // The generator writes shell.json via an atomic replace, so the watched
@@ -245,17 +242,17 @@ QtObject {
         repeat: true
         running: true
         onTriggered: {
-            fileView.reload();
-            root.apply(fileView.text());
-            barLayoutView.reload();
+            root.fileView.reload();
+            root.apply(root.fileView.text());
+            root.barLayoutView.reload();
         }
     }
 
     // Blocking initial read before the first frame: no flash of the default
     // layout when a custom one exists. Also seed the plugin settings overlay.
     Component.onCompleted: {
-        root.apply(fileView.text());
-        root.applyPluginSettings(pluginSettingsView.text());
-        root.barOps = BarOverlay.parseOps(barLayoutView.text());
+        root.apply(root.fileView.text());
+        root.applyPluginSettings(root.pluginSettingsView.text());
+        root.barOps = BarOverlay.parseOps(root.barLayoutView.text());
     }
 }

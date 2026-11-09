@@ -35,13 +35,12 @@ Provider {
     onActiveChanged: {
         if (root.active) {
             root.loading = true;
-            listProc.running = false;
-            listProc.running = true;
+            root.listProc.running = false;
+            root.listProc.running = true;
         }
     }
 
     readonly property var listProc: Process {
-        id: listProc
         command: [Config.marchyo, "theme", "list", "--format", "json"]
         stdout: StdioCollector {
             // A theme manifest is a few hundred bytes; refuse anything absurd.

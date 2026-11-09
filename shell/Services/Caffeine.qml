@@ -54,7 +54,10 @@ QtObject {
     readonly property var autoSource: {
         if (!root.autoEnabled)
             return null;
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const list = Mpris.players ? Mpris.players.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < list.length; i++) {
             const p = list[i];
             if (p && p.isPlaying && root.looksLikeVideo(p))
@@ -68,12 +71,12 @@ QtObject {
     readonly property string autoPlayer: autoSource ? (autoSource.identity || autoSource.desktopEntry || I18n.t("caffeine.mediaPlayer")) : ""
 
     function toggle() {
-        if (toggleProc.running)
+        if (root.toggleProc.running)
             return;
         const next = !root.manual;
         root.manual = next;
-        toggleProc.command = [Config.marchyo, "toggle", "caffeine", next ? "on" : "off"];
-        toggleProc.running = true;
+        root.toggleProc.command = [Config.marchyo, "toggle", "caffeine", next ? "on" : "off"];
+        root.toggleProc.running = true;
     }
 
     function setManual(on: bool): void {
@@ -93,7 +96,6 @@ QtObject {
 
     // A failed actuation re-probes instead of keeping the optimistic state.
     readonly property var toggleProc: Process {
-        id: toggleProc
         onExited: code => {
             if (code !== 0)
                 probe.running = true;

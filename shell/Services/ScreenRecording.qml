@@ -21,7 +21,7 @@ QtObject {
     property string markerPath: ""
 
     function toggle() {
-        toggleProc.running = true;
+        root.toggleProc.running = true;
     }
 
     readonly property var ensureDir: Process {
@@ -46,20 +46,18 @@ QtObject {
     function checkMarker(): void {
         if (root.markerPath === "")
             return;
-        if (markerCheck.running)
-            markerRecheck.restart();
+        if (root.markerCheck.running)
+            root.markerRecheck.restart();
         else
-            markerCheck.running = true;
+            root.markerCheck.running = true;
     }
 
     readonly property var markerCheck: Process {
-        id: markerCheck
         command: [Config.ls, "-d", root.markerPath]
         onExited: code => root.recording = (code === 0)
     }
 
     readonly property var markerRecheck: Timer {
-        id: markerRecheck
         interval: 50
         onTriggered: root.checkMarker()
     }
@@ -75,7 +73,6 @@ QtObject {
     // A cancelled selection leaves the state unchanged; the marker reports a
     // started or stopped recorder.
     readonly property var toggleProc: Process {
-        id: toggleProc
         command: [Config.marchyo, "capture", "record"]
     }
 

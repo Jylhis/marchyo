@@ -101,7 +101,8 @@ let
 
   shellPkgOf =
     extra:
-    lib.findFirst (p: (p.pname or "") == "marchyo-shell") null (evalWith extra).config.home-manager.users.testuser.home.packages;
+    lib.findFirst (p: (p.pname or "") == "marchyo-shell") null
+      (evalWith extra).config.home-manager.users.testuser.home.packages;
 in
 {
   eval-i18n-language-default = pkgs.writeText "eval-i18n-language-default" (

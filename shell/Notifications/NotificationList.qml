@@ -30,9 +30,12 @@ PanelWindow {
         right: true
     }
     // barMarginV/H are 0 in strip mode, so this reproduces the strip look.
+    // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+    // qmllint disable missing-property
     margins.top: Style.barHeight + Style.barMarginV + Style.notifMargin
     margins.bottom: Style.barHeight + Style.barMarginV + Style.notifMargin
     margins.right: Style.notifMargin + Style.barMarginH
+    // qmllint enable missing-property
 
     implicitWidth: Style.notifWidth
     implicitHeight: column.implicitHeight

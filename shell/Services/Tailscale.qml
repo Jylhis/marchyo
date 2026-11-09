@@ -45,12 +45,11 @@ QtObject {
         root.actionStderr = "";
         // --timeout bounds `up` on a logged-out node, which would otherwise wait
         // for an interactive login indefinitely.
-        action.command = on ? [Config.tailscale, "up", "--timeout=20s"] : [Config.tailscale, "down"];
-        action.running = true;
+        root.action.command = on ? [Config.tailscale, "up", "--timeout=20s"] : [Config.tailscale, "down"];
+        root.action.running = true;
     }
 
     readonly property var action: Process {
-        id: action
         stderr: StdioCollector {
             readonly property int maxChars: 4096
             onStreamFinished: root.actionStderr = text.length <= maxChars ? text : text.slice(0, maxChars)
@@ -65,7 +64,7 @@ QtObject {
     function first100(ips): string {
         if (!ips)
             return "";
-        for (var i = 0; i < ips.length; i++) {
+        for (let i = 0; i < ips.length; i++) {
             const ip = String(ips[i] || "");
             if (ip.indexOf("100.") === 0)
                 return ip;
@@ -91,7 +90,7 @@ QtObject {
         let en = "";
         const rawPeers = data.Peer || {};
         const list = [];
-        for (var id in rawPeers) {
+        for (let id in rawPeers) {
             const p = rawPeers[id] || {};
             const pdns = String(p.DNSName || "");
             const nm = (p.HostName && String(p.HostName)) || (pdns.charAt(pdns.length - 1) === "." ? pdns.slice(0, -1) : pdns);
