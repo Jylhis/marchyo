@@ -47,6 +47,7 @@ ShellRoot {
         onLoaded: {
             root.lastUser = text().trim();
             root.username = root.lastUser;
+            Theme.user = root.lastUser;
         }
     }
 
@@ -125,6 +126,7 @@ ShellRoot {
             if (root.username !== root.lastUser) {
                 root.lastUser = root.username;
                 lastUserFile.setText(root.username);
+                Theme.user = root.username;
             }
             Greetd.launch(Config.sessionCommand);
         }

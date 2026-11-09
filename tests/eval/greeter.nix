@@ -69,7 +69,7 @@ in
       });
 
   # Session theme marker dir: root:users with the sticky bit, so session users
-  # can drop theme.json, cannot replace each other's, and the greeter can read.
+  # can drop their theme-<user>.json, cannot replace each other's, and the greeter can read.
   eval-greeter-theme-marker-dir =
     testNixOSCheck "greeter-theme-marker-dir"
       (c: builtins.elem "d '/var/lib/marchyo/greeter' 1775 root users - -" c.systemd.tmpfiles.rules)

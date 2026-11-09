@@ -1,13 +1,23 @@
 import { chmod, open, readFile, rename, rm } from "node:fs/promises";
+import { userInfo } from "node:os";
 import { join } from "node:path";
 import { ColorsJson } from "./matugen.ts";
 
-// The session theme marker the greeter follows. modules/nixos/boot.nix
-// tmpfiles-creates the dir (root:users, 1775) and greeter/Commons/Theme.qml
-// reads theme.json from it; tests/shell/contracts-test.sh keeps the three
-// spellings in sync.
+// The session theme markers the greeter follows. modules/nixos/boot.nix
+// tmpfiles-creates the dir (root:users, 1775), each user writes their own
+// theme-<user>.json into it, and greeter/Commons/Theme.qml reads the one of
+// the last user who logged in; tests/shell/contracts-test.sh keeps the three
+// spellings in sync. One file per user: with the sticky bit, a shared file
+// name would stay owned by whoever wrote it first.
 export const GREETER_THEME_DIR = "/var/lib/marchyo/greeter";
-export const GREETER_THEME_FILE = "theme.json";
+
+// Login names the greeter accepts in a marker file name (greeter/Commons/
+// Theme.qml applies the same pattern).
+const USER_NAME = /^[a-z_][a-z0-9_-]{0,31}$/;
+
+export function greeterThemeFile(user: string): string | null {
+  return USER_NAME.test(user) ? `theme-${user}.json` : null;
+}
 
 // MARCHYO_GREETER_THEME_DIR redirects the marker (the test suite points it at
 // a scratch path so a test run never touches the host's real marker).
@@ -20,13 +30,17 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 
 // Copy a theme dir's colors.json to the greeter marker. Only `#rrggbb`
 // colours are carried over; the greeter applies its own key filter.
-// Best-effort: an absent or unwritable dir, a missing or invalid
-// colors.json, or a marker owned by another user (the sticky bit refuses
-// the rename) all skip silently. Returns whether the marker was written.
+// Best-effort: an absent marker dir (no greeter on this host), a missing or
+// invalid colors.json or an unusable user name skip silently; a marker dir
+// that refuses the write is reported on stderr. Returns whether the marker
+// was written.
 export async function writeGreeterTheme(
   themeDir: string,
   markerDir: string = greeterThemeDir(),
+  user: string = userInfo().username,
 ): Promise<boolean> {
+  const file = greeterThemeFile(user);
+  if (file === null) return false;
   let parsed: ColorsJson;
   try {
     parsed = ColorsJson.parse(
@@ -45,7 +59,7 @@ export async function writeGreeterTheme(
     colors,
   })}\n`;
 
-  const tmp = join(markerDir, `.${GREETER_THEME_FILE}.tmp-${process.pid}`);
+  const tmp = join(markerDir, `.${file}.tmp-${process.pid}`);
   let created = false;
   try {
     // "wx" (O_CREAT|O_EXCL) never follows a symlink planted at the temp name.
@@ -58,10 +72,16 @@ export async function writeGreeterTheme(
     }
     // The greeter user reads it as "other", whatever the session umask is.
     await chmod(tmp, 0o644);
-    await rename(tmp, join(markerDir, GREETER_THEME_FILE));
+    await rename(tmp, join(markerDir, file));
     return true;
-  } catch {
+  } catch (err) {
     if (created) await rm(tmp, { force: true }).catch(() => {});
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") {
+      process.stderr.write(
+        `marchyo: greeter theme not updated (${join(markerDir, file)}): ${(err as Error).message}\n`,
+      );
+    }
     return false;
   }
 }

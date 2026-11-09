@@ -31,10 +31,12 @@ in
           )"
           old_hash="$(cat "$stamp_dir/fontset.sha256" 2>/dev/null || true)"
           if [ "$new_hash" != "$old_hash" ]; then
-            rm -rf "${config.xdg.cacheHome}/fontconfig"
-            ${pkgs.fontconfig}/bin/fc-cache -f > /dev/null 2>&1 || true
-            mkdir -p "$stamp_dir"
-            printf '%s\n' "$new_hash" > "$stamp_dir/fontset.sha256"
+            run rm -rf "${config.xdg.cacheHome}/fontconfig"
+            run --silence ${pkgs.fontconfig}/bin/fc-cache -f || true
+            run mkdir -p "$stamp_dir"
+            if [ -z "''${DRY_RUN:-}" ]; then
+              printf '%s\n' "$new_hash" > "$stamp_dir/fontset.sha256"
+            fi
           fi
         '';
       };

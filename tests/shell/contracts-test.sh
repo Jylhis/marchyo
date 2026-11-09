@@ -329,7 +329,7 @@ check "reserved launcher prefix characters match between plugin.nix and the CLI"
 # ── greeter theme marker ─────────────────────────────────────────────────────
 #
 # The session theme marker dir is spelled in three languages: boot.nix creates
-# it, the CLI writes theme.json into it, the greeter reads it.
+# it, the CLI writes theme-<user>.json into it, the greeter reads it.
 greeter_ts="$ROOT/packages/marchyo-cli/packages/core/src/greeter-theme.ts"
 marker_dir=$(grep -oE '^export const GREETER_THEME_DIR = "[^"]+"' "$greeter_ts" | cut -d'"' -f2)
 marker_drift=""

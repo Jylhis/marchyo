@@ -674,7 +674,7 @@ in
         for p in ${lib.concatStringsSep " " (map lib.escapeShellArg runtimeSurfaces)}; do
           if [ -L "$p" ]; then
             case "$(readlink "$p")" in
-              *-marchyo-theme-*|${lib.escapeShellArg "${config.xdg.stateHome}/marchyo/generated-theme"}*) rm -f -- "$p" ;;
+              *-marchyo-theme-*|${lib.escapeShellArg "${config.xdg.stateHome}/marchyo/generated-theme"}*) run rm -f -- "$p" ;;
             esac
           fi
         done

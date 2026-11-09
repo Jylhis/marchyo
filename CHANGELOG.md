@@ -157,6 +157,8 @@ Entries up to 2026-11 were reconstructed from git history (first commit 2025-09-
 
 ### Fixed
 
+- The greeter follows every user's theme, not only the first one's: `marchyo theme set` writes `/var/lib/marchyo/greeter/theme-<user>.json` and the greeter reads the marker of the last user who logged in. With one shared `theme.json` in the sticky marker dir, the first writer owned it and every other user's rename failed silently. A marker dir that refuses the write is now reported on stderr.
+- Home Manager dry runs (`home-manager switch -n`) no longer delete theme runtime links or rebuild the fontconfig cache: those activation steps go through `run`.
 - Plugins that replace a launcher role (`omarchy.menu`, `.emojis`, `.clipboard`) open again: `Plugins/PluginLayer` no longer names its root `layer`, which every `Item`'s own `layer` property shadowed, so `inject` failed and the plugin never registered with `PluginHost`. `Super + R`, `Super + Space`, `Super + Ctrl + E|V` and `Super + K` work again.
 - Container DNS on podman networks: `modules/nixos/containers.nix` set `dns_enable`, which podman ignores; it now sets `dns_enabled`.
 - The shell no longer throws a TypeError at startup: `Services/Motion` still ran the `mkdir` for the removed reduce-motion marker file.

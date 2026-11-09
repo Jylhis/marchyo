@@ -23,7 +23,8 @@ host's theme variant and store-baked tool paths, and wraps the entry point as
 `marchyo-greeter`.
 
 Session theme: `Commons/Theme.qml` overrides the baked palette with
-`/var/lib/marchyo/greeter/theme.json`, which `marchyo theme set` writes (the
+`/var/lib/marchyo/greeter/theme-<user>.json` of the last user who logged in,
+which `marchyo theme set` writes for each user (the
 directory is a `root:users` `1775` tmpfiles rule in `modules/nixos/boot.nix`).
 The file is user-writable, so no `FileView` points at it: a `FileView` on the
 directory (`preload: false`) is the change doorbell, and a `timeout`-bounded
