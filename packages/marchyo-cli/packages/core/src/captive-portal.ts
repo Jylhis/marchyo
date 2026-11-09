@@ -20,7 +20,11 @@ export const SLOW_POLL_MS = 15_000;
 export function portalWindowClass(uri: string): string | null {
   const m = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^/:?#]+)/.exec(uri);
   if (!m || !/^[A-Za-z0-9.-]+$/.test(m[1]!)) return null;
-  return `^(chrome|brave)-${m[1]!.replaceAll(".", "[.]")}__.*$`;
+  // Escape everything but dots (which become `[.]`); after the check above
+  // only dots and hyphens remain, but the escape keeps the pattern literal
+  // even if that check loosens.
+  const host = m[1]!.replace(/[*+?^${}()|[\]\\]/g, "\\$&").replaceAll(".", "[.]");
+  return `^(chrome|brave)-${host}__.*$`;
 }
 
 // The peer to restore after the sign-in: first Tailscale IP of the active exit
