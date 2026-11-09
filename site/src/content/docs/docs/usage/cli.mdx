@@ -133,10 +133,6 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 | `marchyo font list [--kind mono\|ui\|all]` | Installed font families; `--format json` adds `kind` and the `current` mono and UI fonts |
 | `marchyo font set <family> [--kind mono\|ui\|all] [--revert]` | Runtime font switch: `mono` is the ghostty override, `ui` the GTK `font-name` plus the shell font |
 | `marchyo font current` | The active terminal font |
-| `marchyo dev init <lang> [--force]` | Write `devenv.nix`, `devenv.yaml` and `.envrc` for a language (go, rust, python, node, bun, deno, ruby, elixir, java, zig, php, dotnet, ocaml, clojure, scala) |
-| `marchyo dev db <engine>` | Add a devenv database service (postgres, mysql, mariadb, redis, mongodb) to `devenv.nix`; repeating it changes nothing |
-| `marchyo agent usage [--force]` | AI agent usage limits and token totals; refreshes the agents panel data (see [Agent usage](/docs/configuration/feature-flags/#agent-usage)) |
-| `marchyo agent account list\|add\|use\|remove\|rename\|mode\|copy` | Several Claude Code, Codex and Grok accounts (see [Agent accounts](/docs/configuration/feature-flags/#agent-accounts)) |
 
 #### Sharing with LocalSend
 

@@ -166,7 +166,6 @@ in
   "toggle.fullscreen-desktop" = toggle "fullscreen-desktop" "Fullscreen desktop" 120 { };
   "toggle.touchpad" = toggle "touchpad" "Touchpad" 130 { aliases = [ "trackpad" ]; };
   "toggle.touchscreen" = toggle "touchscreen" "Touchscreen" 140 { };
-  "toggle.crash-capture" = toggle "crash-capture" "Crash capture" 150 { };
 
   appearance = sub "Appearance" "preferences-desktop-theme" 40 {
     aliases = [
@@ -303,9 +302,6 @@ in
 
   setup = sub "Setup" "preferences-other" 70 { aliases = [ "configure" ]; };
   "setup.language" = provider "Language" "preferences-desktop-locale" 10 "languages" { };
-  "setup.agents" = provider "Agents" "applications-development" 20 "agents" {
-    aliases = [ "ai" ];
-  };
   "setup.keys" = {
     label = "Keyboard cheat sheet";
     icon = "input-keyboard";

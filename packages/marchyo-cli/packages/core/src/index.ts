@@ -18,6 +18,4 @@ export * from "./bar-layout.ts";
 export * from "./plugins.ts";
 export * from "./i18n.ts";
 export * from "./captive-portal.ts";
-export * from "./agent-usage.ts";
-export * from "./agent-accounts.ts";
 export * from "./notify.ts";

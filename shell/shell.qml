@@ -52,7 +52,6 @@ ShellRoot {
             "marchyo.reminders": cReminders,
             "marchyo.tailscale": cTailscale,
             "marchyo.weather": cWeather,
-            "marchyo.agents": cAgents,
             "marchyo.remoteSession": cRemoteSession,
             "marchyo.update": cUpdate,
             "marchyo.disk": cDisk,
@@ -116,10 +115,6 @@ ShellRoot {
     Component {
         id: cWeather
         WeatherWidget {}
-    }
-    Component {
-        id: cAgents
-        AgentsWidget {}
     }
     Component {
         id: cRemoteSession
@@ -300,7 +295,6 @@ ShellRoot {
     MonitorPanel {}
     DisplayPanel {}
     WeatherPanel {}
-    AgentsPanel {}
     ElsewhenPanel {}
     TailscalePanel {}
     WifiQrPanel {}

@@ -42,7 +42,6 @@ ShellRoot {
             "Panels/MonitorPanel.qml",
             "Panels/DisplayPanel.qml",
             "Panels/WeatherPanel.qml",
-            "Panels/AgentsPanel.qml",
             "Panels/ElsewhenPanel.qml",
             "Panels/TailscalePanel.qml",
             "Panels/WifiQrPanel.qml",

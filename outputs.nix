@@ -336,7 +336,7 @@ in
       };
     in
     {
-      inherit (pkgs) marchyo-wallpapers marchyo-cli marchyo-agent-skills;
+      inherit (pkgs) marchyo-wallpapers marchyo-cli;
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)

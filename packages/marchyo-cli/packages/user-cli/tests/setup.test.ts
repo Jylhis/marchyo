@@ -34,7 +34,6 @@ function probe(over: Partial<SetupProbe> = {}): SetupProbe {
     fingerprint: async () => "enrolled",
     language: async () => ({ override: "de", baked: "en" }),
     themeOverride: async () => "nord",
-    agentSignedIn: () => true,
     dictationBackend: () => "voxtype",
     dictationState: async () => "idle",
     ...over,
@@ -51,7 +50,7 @@ describe("items", () => {
   test("everything configured: no todo, no fix", async () => {
     const items = await collectSetupItems(probe());
     expect(items.map((i) => i.id)).toEqual([
-      "git", "ssh", "fido2", "fingerprint", "language", "keyboard", "theme", "agent", "dictation",
+      "git", "ssh", "fido2", "fingerprint", "language", "keyboard", "theme", "dictation",
     ]);
     expect(items.filter((i) => i.status === "todo")).toEqual([]);
     expect(items.every((i) => i.fix === null)).toBe(true);
@@ -104,14 +103,6 @@ describe("items", () => {
   test("theme: done once chosen at run time", async () => {
     expect((await item({ themeOverride: async () => null }, "theme")).status).toBe("todo");
     expect((await item({}, "theme")).detail).toBe("nord");
-  });
-
-  test("agent: skip without AI_AGENT or a managed provider, todo when signed out", async () => {
-    expect((await item({ env: {} }, "agent")).status).toBe("skip");
-    expect((await item({ env: { AI_AGENT: "aider" } }, "agent")).status).toBe("skip");
-    const out = await item({ env: { AI_AGENT: "/bin/codex --yolo" }, agentSignedIn: () => false }, "agent");
-    expect(out.status).toBe("todo");
-    expect(out.detail).toBe("Not signed in to codex");
   });
 
   test("dictation: skip when off or missing, todo when stopped", async () => {
@@ -282,7 +273,6 @@ describe("fix", () => {
       ["ssh", ["ssh-keygen", "-t", "ed25519"]],
       ["fido2", ["marchyo", "security", "enroll", "fido2"]],
       ["fingerprint", ["marchyo", "security", "enroll", "fingerprint"]],
-      ["agent", ["marchyo", "agent", "account", "add", "claude"]],
       ["dictation", ["marchyo", "dictation", "start"]],
     ];
     for (const [id, argv] of cases) {

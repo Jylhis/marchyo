@@ -58,8 +58,6 @@ let
     };
     reminders = (marchyoCfg.reminders or { }).enable or true;
     utilities = (marchyoCfg.utilities or { }).enable or true;
-    console = (marchyoCfg.console or { }).enable or true;
-    herdr = ((marchyoCfg.ai or { }).herdr or { }).enable or false;
     emacs = {
       enable = emacsEnabled;
       windmove = emacsFeature "windmove";
@@ -110,7 +108,6 @@ let
     "org.gnome.Console"
     "xterm"
     "XTerm"
-    "org.marchyo.console"
   ];
   terminalClassRegex = "^(${
     lib.concatMapStringsSep "|" lib.escapeRegex (lib.unique (knownTerminalClasses ++ [ terminalName ]))

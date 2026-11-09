@@ -126,8 +126,6 @@ in
             emacs.enable = true;
             dictation.enable = true;
             webapps.enable = true;
-            console.enable = true;
-            ai.herdr.enable = true;
           };
         })
       );

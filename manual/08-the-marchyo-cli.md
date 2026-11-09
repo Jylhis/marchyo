@@ -57,8 +57,7 @@ Runtime changes survive a home-manager activation: `marchyo runtime restore` rep
 `marchyo toggle <name>` flips a desktop feature on or off, live. The switches include
 `gaps`, `transparency`, `animations`, `reduce-motion` (make shell transitions instant; takes `--apply`),
 `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
-`screensaver`, `notifications`, `suspend`, `caffeine` (keep the machine awake), and
-`crash-capture` (the crash notifications, see [Crash diagnosis](#crash-diagnosis)).
+`screensaver`, `notifications`, `suspend` and `caffeine` (keep the machine awake).
 `waybar` shows or hides the shell top bar.
 Add `--status` to check one, or `--apply` to make it permanent:
 
@@ -69,20 +68,6 @@ marchyo toggle gaps off --apply      # and keep it that way
 
 One more switch, `hybrid-gpu`, changes hardware configuration and has no live mode, so
 it only works with `--apply` (for example `marchyo toggle hybrid-gpu on --apply`).
-
-### Crash diagnosis
-
-When a program of yours dumps core, a notification offers **Diagnose**. The action
-runs `marchyo agent crash <pid>`, which starts your default AI agent (`$AI_AGENT`) in
-a terminal with the `diagnose-crash` skill, in its most restricted approval mode and
-in its own transient unit. The crash values reach the agent quoted and marked as
-untrusted. You can also run it by hand against any PID from `coredumpctl list`. The watcher is on while a desktop and an AI agent are
-installed. Silence it for the session with `marchyo toggle crash-capture off`, or for
-good with `marchyo.ai.crashCapture.enable = false`; `marchyo.ai.crashCapture.ignore`
-skips programs by name.
-
-The same agents get the `marchyo`, `marchyo-plugin` and `diagnose-crash` skills in
-their skill directories (`marchyo.ai.skills.enable`).
 
 ### Notifications, what changed, first-login setup
 
@@ -148,18 +133,6 @@ marchyo font list --kind ui         # families to pick from (mono | ui | all)
 marchyo font set <family>           # switch the terminal font live
 marchyo font set <family> --kind ui # switch the UI font (GTK and shell)
 ```
-
-### Project dev environments
-
-```bash
-marchyo dev init <lang>      # write devenv.nix, devenv.yaml and .envrc here
-marchyo dev db <engine>      # add a devenv database service to devenv.nix
-```
-
-`dev init` knows go, rust, python, node, bun, deno, ruby, elixir, java, zig, php, dotnet,
-ocaml, clojure and scala. It refuses to replace existing files unless you pass `--force`.
-`dev db` takes postgres, mysql, mariadb, redis or mongodb, can be repeated safely, and
-leaves a `devenv.nix` of an unexpected shape untouched.
 
 ### Managing the system
 

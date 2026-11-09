@@ -51,9 +51,6 @@ const GROUPS: string[][] = [
   ["bar", "reset"],
   ["bar", "background"],
   ["bar", "position"],
-  ["dev"],
-  ["dev", "init"],
-  ["dev", "db"],
   ["language"],
   ["dictation"],
   ["webapp"],
@@ -76,18 +73,6 @@ const GROUPS: string[][] = [
   ["whats-new"],
   ["setup"],
   ["setup", "fix"],
-  ["agent"],
-  ["agent", "usage"],
-  ["agent", "crash"],
-  ["agent", "account"],
-  ["agent", "account", "list"],
-  ["agent", "account", "add"],
-  ["agent", "account", "use"],
-  ["agent", "account", "remove"],
-  ["agent", "account", "rename"],
-  ["agent", "account", "mode"],
-  ["agent", "account", "copy"],
-  ["agent", "account", "import"],
 ];
 
 for (const group of GROUPS) {

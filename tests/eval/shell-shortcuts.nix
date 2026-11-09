@@ -36,7 +36,6 @@ let
     "SUPER + CTRL + D" = "panel.display";
     "SUPER + CTRL + M" = "panel.monitor";
     "SUPER + CTRL + O" = "panel.controlcenter";
-    "SUPER + SHIFT + CTRL + A" = "panel.agents";
     "SUPER + CTRL + ALT + E" = "panel.elsewhen";
     "SUPER + CTRL + U" = "panel.whatsnew";
     "SUPER + CTRL + H" = "panel.setup";

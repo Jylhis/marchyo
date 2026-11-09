@@ -1,9 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import {
-  type AccountProvider,
   type NotifierWait,
   type NotifyDeps,
   type Runtime,
@@ -12,14 +11,11 @@ import {
   captureArgv,
   commandAvailable,
   data,
-  defaultAccountsDeps,
   defaultNotifierWait,
   defaultNotifyDeps,
   err,
   info,
-  isAccountProvider,
   languageOverride,
-  listAccounts,
   loadRuntimeState,
   marchyoStateDir,
   ok,
@@ -45,7 +41,6 @@ export const SETUP_IDS = [
   "language",
   "keyboard",
   "theme",
-  "agent",
   "dictation",
 ] as const;
 export type SetupId = (typeof SETUP_IDS)[number];
@@ -73,7 +68,6 @@ export interface SetupProbe {
   fingerprint(): Promise<FingerprintState>;
   language(): Promise<{ override: string | null; baked: string | null }>;
   themeOverride(): Promise<string | null>;
-  agentSignedIn(provider: AccountProvider): boolean;
   dictationBackend(): Backend | null;
   dictationState(backend: Backend): Promise<DictationState>;
 }
@@ -151,22 +145,6 @@ export async function checkTheme(p: SetupProbe): Promise<SetupItem> {
   return item("theme", title, "todo", tr("setup.themeDefault"), tr("setup.fixTheme"));
 }
 
-// $AI_AGENT may carry flags or a path; the provider is its first word's base name.
-export function agentProvider(env: Record<string, string | undefined>): AccountProvider | null {
-  const word = (env.AI_AGENT ?? "").trim().split(/\s+/)[0] ?? "";
-  const name = basename(word);
-  return isAccountProvider(name) ? name : null;
-}
-
-export async function checkAgent(p: SetupProbe): Promise<SetupItem> {
-  const title = tr("setup.titleAgent");
-  if ((p.env.AI_AGENT ?? "").trim() === "") return item("agent", title, "skip", tr("setup.agentNone"));
-  const provider = agentProvider(p.env);
-  if (provider === null) return item("agent", title, "skip", tr("setup.agentUnmanaged", p.env.AI_AGENT));
-  if (p.agentSignedIn(provider)) return item("agent", title, "done", provider);
-  return item("agent", title, "todo", tr("setup.agentSignedOut", provider), tr("setup.fixAgent"));
-}
-
 export async function checkDictation(p: SetupProbe): Promise<SetupItem> {
   const title = tr("setup.titleDictation");
   const backend = p.dictationBackend();
@@ -189,7 +167,6 @@ const CHECKS: Record<SetupId, (p: SetupProbe) => Promise<SetupItem>> = {
   language: checkLanguage,
   keyboard: checkKeyboard,
   theme: checkTheme,
-  agent: checkAgent,
   dictation: checkDictation,
 };
 
@@ -209,7 +186,6 @@ export function defaultProbe(
   env: Record<string, string | undefined> = process.env,
   home: string = homedir(),
 ): SetupProbe {
-  const accounts = { ...defaultAccountsDeps(), env, home };
   return {
     env,
     available: commandAvailable,
@@ -241,8 +217,6 @@ export function defaultProbe(
       const value = (await loadRuntimeState()).overrides["theme.selection"];
       return typeof value === "string" && value !== "" ? value : null;
     },
-    agentSignedIn: (provider) =>
-      listAccounts(accounts, [provider]).some((a) => a.accounts.some((acc) => acc.signedIn)),
     dictationBackend: () => bakedBackend(),
     dictationState: (backend) =>
       stateOf(backend, {
@@ -392,12 +366,6 @@ function chooseFix(listArgv: string[], applyArgv: string[], question: () => stri
   };
 }
 
-async function agentFix(d: FixDeps): Promise<boolean> {
-  const provider = agentProvider(d.env);
-  if (provider === null) return false;
-  return (await d.run(["marchyo", "agent", "account", "add", provider])) === 0;
-}
-
 const FIXES: Record<SetupId, Step | null> = {
   git: gitFix,
   ssh: run("ssh-keygen", "-t", "ed25519"),
@@ -406,7 +374,6 @@ const FIXES: Record<SetupId, Step | null> = {
   language: chooseFix(["marchyo", "language", "list"], ["marchyo", "language"], () => tr("setup.askLanguage")),
   keyboard: null,
   theme: chooseFix(["marchyo", "theme", "list"], ["marchyo", "theme", "set"], () => tr("setup.askTheme")),
-  agent: agentFix,
   dictation: run("marchyo", "dictation", "start"),
 };
 

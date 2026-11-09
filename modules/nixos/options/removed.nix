@@ -5,6 +5,9 @@ let
   removed = path: why: lib.mkRemovedOptionModule ([ "marchyo" ] ++ path) why;
 
   vicinae = "Vicinae is no longer part of marchyo; the in-shell launcher of marchyo.shell replaces it.";
+  aiTooling =
+    what:
+    "${what} is not carried in marchyo. marchyo.defaults.aiAgent (with marchyo.development.enable) still installs one agent CLI and sets $AI_AGENT; install anything else on the host.";
 in
 {
   imports = [
@@ -40,6 +43,25 @@ in
         "barPlugin"
       ]
       "Bar-replacing plugins are not carried in marchyo; the built-in bar is always used. Add bar-widget plugins to marchyo.shell.settings.bar.layout instead."
+    )
+    (removed [ "ai" "agents" ] (aiTooling "The multi-agent install list (marchyo.ai.agents)"))
+    (removed [ "ai" "accounts" ] (aiTooling "Agent account switching (marchyo.ai.accounts)"))
+    (removed [ "ai" "skills" ] (aiTooling "The Marchyo agent skills (marchyo.ai.skills)"))
+    (removed [ "ai" "crashCapture" ] (
+      aiTooling "Crash capture with an agent (marchyo.ai.crashCapture)"
+    ))
+    (removed [ "ai" "herdr" ] (aiTooling "herdr (marchyo.ai.herdr)"))
+    (removed [ "ai" "amp" ] (aiTooling "Amp (marchyo.ai.amp)"))
+    (removed [
+      "ai"
+      "local"
+    ] "Local AI (Ollama) is not carried in marchyo; configure services.ollama on the host.")
+    (removed
+      [
+        "console"
+        "enable"
+      ]
+      "The Quake-style agent console is not carried in marchyo; use a terminal or a special workspace bind on the host."
     )
   ];
 }

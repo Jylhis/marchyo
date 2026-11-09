@@ -53,7 +53,6 @@ let
             "fonts"
             "power-profiles"
             "languages"
-            "agents"
           ]
         );
         default = null;

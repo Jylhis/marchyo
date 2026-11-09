@@ -507,7 +507,6 @@ in
   (moved "SUPER + SHIFT + Q" (
     panel "SUPER + CTRL + O" "Control Center" (global "panel.controlcenter")
   ))
-  (newBind (panel "SUPER + SHIFT + CTRL + A" "AI agents panel" (global "panel.agents")))
   (panel "SUPER + CTRL + ALT + E" "World clock" (global "panel.elsewhen"))
   (newBind (panel "SUPER + CTRL + U" "What's new" (global "panel.whatsnew")))
   (newBind (panel "SUPER + CTRL + H" "First-login setup checklist" (global "panel.setup")))
@@ -682,20 +681,6 @@ in
   (util "SUPER + CTRL + ALT + T" "Show date and time" (exec "marchyo info datetime"))
   (util "SUPER + CTRL + ALT + B" "Show battery status" (exec "marchyo info battery"))
   (util "SUPER + CTRL + period" "Transcode media" (execInTerminal "marchyo transcode"))
-]
-
-++ onlyIf ctx.console [
-  (moved "SUPER + CTRL + grave" (
-    app "SUPER + grave" "Toggle Quake console" (dsp ''workspace.toggle_special("qconsole")'')
-  ))
-  (moved "SUPER + CTRL + SHIFT + grave" (
-    app "SUPER + SHIFT + grave" "Move window to Quake console" (
-      dsp ''window.move({ workspace = "special:qconsole", follow = false })''
-    )
-  ))
-]
-++ onlyIf ctx.herdr [
-  (app "SUPER + CTRL + return" "herdr" (execInPlainTerminal "herdr"))
 ]
 
 ++ onlyIf ctx.emacs.enable [

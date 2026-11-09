@@ -15,7 +15,7 @@
 
 var ACTIONS = ["submenu", "exec", "terminal", "launcher", "provider"];
 
-var PROVIDERS = ["apps", "themes", "wallpapers", "fonts", "power-profiles", "languages", "agents"];
+var PROVIDERS = ["apps", "themes", "wallpapers", "fonts", "power-profiles", "languages"];
 
 function isObject(v) {
     return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -411,31 +411,6 @@ var PROVIDER_SPECS = {
                     argv: ["bg", "set", l]
                 };
             });
-        }
-    },
-    "agents": {
-        list: ["agent", "account", "list", "--format", "json"],
-        icon: "utilities-terminal",
-        parse: function (text) {
-            var j = parseJson(text);
-            var out = [];
-            var provs = Array.isArray(j) ? j : [];
-            for (var i = 0; i < provs.length; i++) {
-                var p = provs[i];
-                var accounts = p && Array.isArray(p.accounts) ? p.accounts : [];
-                for (var a = 0; a < accounts.length; a++) {
-                    var acc = accounts[a];
-                    if (!acc || typeof acc.id !== "string")
-                        continue;
-                    out.push({
-                        title: (p.name || p.provider) + ": " + (acc.label || acc.id),
-                        subtitle: typeof acc.email === "string" ? acc.email : "",
-                        checked: acc.active === true,
-                        argv: ["agent", "account", "use", String(p.provider), acc.id]
-                    });
-                }
-            }
-            return out;
         }
     }
 };

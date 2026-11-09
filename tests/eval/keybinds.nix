@@ -48,8 +48,6 @@ let
     (m "SUPER + A" ''key = "A"'')
     (m "SUPER + C" ''"CTRL SHIFT", key = "C"'')
     (m "SUPER + V" ''"CTRL SHIFT", key = "V"'')
-    (m "SUPER + grave" ''toggle_special("qconsole")'')
-    (m "SUPER + SHIFT + grave" "special:qconsole")
     (m "SUPER + CTRL + grave" "marchyo:overview")
     (m "SUPER + SHIFT + CTRL + left" ''monitor = "l"'')
     (m "SUPER + SHIFT + CTRL + right" ''monitor = "r"'')
@@ -68,7 +66,6 @@ let
     (m "SUPER + CTRL + P" "marchyo:panel.power")
     (m "SUPER + CTRL + M" "marchyo:panel.monitor")
     (m "SUPER + CTRL + O" "marchyo:panel.controlcenter")
-    (m "SUPER + SHIFT + CTRL + A" "marchyo:panel.agents")
     (m "SUPER + CTRL + E" "marchyo:launcher.emoji")
     (m "SUPER + CTRL + V" "marchyo:launcher.clipboard")
     (m "SUPER + CTRL + T" "marchyo:panel.themes")
@@ -86,7 +83,6 @@ let
     (m "SUPER + CTRL + ALT + comma" "marchyo:notifications.silence")
     (m "SUPER + SHIFT + comma" "marchyo:notifications.dismissAll")
     (m "SUPER + SHIFT + ALT + comma" "marchyo:panel.notifications")
-    (m "SUPER + CTRL + return" "herdr")
     (m "SUPER + ALT + return" "tmux new -A -s Work")
     (m "SUPER + CTRL + ALT + L" "marchyo-cross-windmove focus r")
     (m "SUPER + SHIFT + ALT + E" "emacs-everywhere")
@@ -108,7 +104,6 @@ let
     (m "SUPER + L" "shell lock")
     (m "SUPER + M" "music")
     (m "SUPER + grave" "marchyo:overview")
-    (m "SUPER + CTRL + grave" ''toggle_special("qconsole")'')
     (m "SUPER + CTRL + N" "toggle nightlight")
     (m "SUPER + CTRL + W" "nmtui")
     (m "SUPER + CTRL + A" "wiremix")
@@ -145,7 +140,6 @@ let
       emacs.enable = true;
       dictation.enable = true;
       webapps.enable = true;
-      ai.herdr.enable = true;
     };
   };
   shellOff = lib.recursiveUpdate everything {

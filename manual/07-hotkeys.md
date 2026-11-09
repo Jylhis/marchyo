@@ -47,9 +47,6 @@ restores the previous marchyo layout for one release.
 | `Super + Shift + T` | Activity (btop) |
 | `Super + Shift + I` | Input-method config (fcitx5) |
 | `Super + Alt + Return` | tmux "Work" session |
-| `Super + Ctrl + Return` | herdr (with `marchyo.ai.herdr.enable`) |
-| `` Super + ` `` | Toggle the Quake console |
-| `` Super + Shift + ` `` | Move the focused window into the Quake console |
 
 ### Web apps
 
@@ -162,7 +159,6 @@ wiremix and `Super + Ctrl + N` opens nmtui.
 | `Super + Ctrl + P` | Power panel |
 | `Super + Ctrl + M` | System monitor panel |
 | `Super + Ctrl + O` | Control Center (volume and mic sliders, quick-toggle tiles) |
-| `Super + Shift + Ctrl + A` | AI agents panel |
 | `Super + Ctrl + E` | Emoji picker (in-shell) |
 | `Super + Ctrl + T` | Theme picker: a grid of theme previews; arrows move, `Enter` applies, `Escape` closes |
 | `Super + Ctrl + Shift + W` | Wallpaper picker: the same grid for wallpapers |

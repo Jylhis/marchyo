@@ -4,7 +4,6 @@
   { "name": "panel.power", "call": "togglePanel", "args": ["power"], "description": "Toggle the power panel" },
   { "name": "panel.monitor", "call": "togglePanel", "args": ["monitor"], "description": "Toggle the monitor panel" },
   { "name": "panel.display", "call": "togglePanel", "args": ["display"], "description": "Toggle the display panel" },
-  { "name": "panel.agents", "call": "togglePanel", "args": ["agents"], "description": "Toggle the AI agents panel" },
   {
     "name": "panel.controlcenter",
     "call": "togglePanel",

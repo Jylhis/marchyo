@@ -1,8 +1,0 @@
-skills/diagnose-crash is adapted from the diagnose-crash skill of Omarchy
-(https://github.com/basecamp/omarchy, default/agents/skills/diagnose-crash,
-last changed at a9eaf7978e33a6832630c51f1bb87f97dbf5fe36, 2026-09-06).
-Omarchy is MIT licensed, Copyright (c) David Heinemeier Hansson.
-
-The adaptation replaces the Arch tooling with NixOS tooling (debug outputs,
-debuginfod.nixos.org, nix shell) and Omarchy's reporting and mute commands
-with Marchyo's.

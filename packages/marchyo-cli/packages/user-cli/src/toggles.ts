@@ -355,22 +355,6 @@ export const TOGGLES: ToggleDef[] = [
     },
   },
   {
-    name: "crash-capture",
-    defaultOn: true,
-    probe: (capture) => unitActive(capture, "marchyo-crash-watch.service"),
-    setOn: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("start", "marchyo-crash-watch.service"));
-      await notify(ctx, tr("toggles.crashCapture"), tr("toggles.enabled"));
-    },
-    setOff: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("stop", "marchyo-crash-watch.service"));
-      await notify(ctx, tr("toggles.crashCapture"), tr("toggles.crashCaptureOff"));
-    },
-    revert: async (ctx) => {
-      await safeExec(ctx, systemctlUserArgv("start", "marchyo-crash-watch.service"));
-    },
-  },
-  {
     // The idle-triggered tte screensaver: gated by a runtime-dir marker the
     // launcher (modules/home/screensaver.nix) checks before opening.
     name: "screensaver",

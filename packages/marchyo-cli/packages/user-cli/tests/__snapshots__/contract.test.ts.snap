@@ -90,8 +90,6 @@ Commands:
                                         or runtime switch
   bar                                   Edit the shell bar live: widgets,
                                         sections, position, background
-  dev                                   Project dev environments: devenv
-                                        templates and database services
   dictation <action>                    Start, stop or toggle voice dictation
                                         on the configured backend
   language [options] [code]             Show or set marchyo's display language
@@ -108,8 +106,6 @@ Commands:
   security                              Security enrollment helpers
   runtime                               Inspect or re-apply ephemeral runtime
                                         overrides
-  agent                                 Inspect the AI coding agents in use on
-                                        this machine
   completion <target>                   Emit shell completions or the man page
                                         (generated from the live command tree)
   notify [args...]                      Send a desktop notification, optionally
@@ -117,7 +113,7 @@ Commands:
   whats-new [options]                   Show what the Marchyo NEWS gained since
                                         you last looked
   setup [options]                       First-login checklist: git, SSH,
-                                        security keys, language, theme, agent,
+                                        security keys, language, theme,
                                         dictation
   help [command]                        display help for command
 
@@ -298,7 +294,7 @@ Arguments:
   name        gaps | transparency | animations | reduce-motion |
               fullscreen-desktop | nightlight | waybar | touchpad | touchscreen
               | idle | screensaver | notifications | suspend | caffeine |
-              crash-capture | hybrid-gpu
+              hybrid-gpu
   state       on | off (omit to flip)
 
 Options:
@@ -740,67 +736,6 @@ Examples:
 "
 `;
 
-exports[`help contract: marchyo dev 1`] = `
-"Usage: marchyo dev [options] [command]
-
-Project dev environments: devenv templates and database services
-
-Options:
-  -h, --help             display help for command
-
-Commands:
-  init [options] <lang>  Write a devenv.nix, devenv.yaml and .envrc for a
-                         language
-  db <engine>            Add a devenv database service to the devenv.nix in
-                         this directory
-  help [command]         display help for command
-"
-`;
-
-exports[`help contract: marchyo dev init 1`] = `
-"Usage: marchyo dev init [options] <lang>
-
-Write a devenv.nix, devenv.yaml and .envrc for a language
-
-Arguments:
-  lang        one of: bun, clojure, deno, dotnet, elixir, go, java, node,
-              ocaml, php, python, ruby, rust, scala, zig
-
-Options:
-  --force     overwrite existing files
-  -h, --help  display help for command
-
-Writes into the current directory and refuses to replace existing devenv.nix,
-devenv.yaml or .envrc files unless --force is given.
-
-Examples:
-  $ marchyo dev init go
-  $ marchyo dev init python --force
-
-"
-`;
-
-exports[`help contract: marchyo dev db 1`] = `
-"Usage: marchyo dev db [options] <engine>
-
-Add a devenv database service to the devenv.nix in this directory
-
-Arguments:
-  engine      one of: postgres, mysql, mariadb, redis, mongodb
-
-Options:
-  -h, --help  display help for command
-
-Safe to repeat: an engine that is already configured is left alone. A
-devenv.nix of an unexpected shape is refused and left untouched.
-
-Examples:
-  $ marchyo dev db postgres
-  $ marchyo dev db redis
-
-"
-`;
-
 exports[`help contract: marchyo language 1`] = `
 "Usage: marchyo language [options] [code]
 
@@ -1216,8 +1151,7 @@ Examples:
 exports[`help contract: marchyo setup 1`] = `
 "Usage: marchyo setup [options] [command]
 
-First-login checklist: git, SSH, security keys, language, theme, agent,
-dictation
+First-login checklist: git, SSH, security keys, language, theme, dictation
 
 Options:
   --done      mark the checklist finished (hides the welcome)
@@ -1246,7 +1180,7 @@ Run the interactive fix for one checklist item
 
 Arguments:
   id          git | ssh | fido2 | fingerprint | language | keyboard | theme |
-              agent | dictation
+              dictation
 
 Options:
   -h, --help  display help for command
@@ -1254,223 +1188,6 @@ Options:
 Examples:
   $ marchyo setup fix git
   $ marchyo setup fix ssh
-
-"
-`;
-
-exports[`help contract: marchyo agent 1`] = `
-"Usage: marchyo agent [options] [command]
-
-Inspect the AI coding agents in use on this machine
-
-Options:
-  -h, --help                                     display help for command
-
-Commands:
-  usage [options]                                Show agent usage limits and token totals (refreshes the agents panel data)
-  crash <pid> [comm] [exe] [signal] [timestamp]  Diagnose a crashed process with the default coding agent ($AI_AGENT)
-  account                                        Keep several Claude Code, Codex and Grok sign-ins and choose one per launch
-  help [command]                                 display help for command
-"
-`;
-
-exports[`help contract: marchyo agent usage 1`] = `
-"Usage: marchyo agent usage [options]
-
-Show agent usage limits and token totals (refreshes the agents panel data)
-
-Options:
-  --force     rescan transcripts now instead of reusing a scan up to 20 s old
-  -h, --help  display help for command
-
-Limits come from each provider (Claude Code, Codex, GitHub Copilot, and Z.ai and
-OpenRouter when ZAI_API_KEY or OPENROUTER_API_KEY is set) and are
-probed at most every 15 seconds; tokens come from local transcripts. The result
-is cached in $XDG_STATE_HOME/marchyo/agents/usage.json without credentials.
-
-Examples:
-  $ marchyo agent usage
-  $ marchyo agent usage --json | jq '.agents[] | select(.ready)'
-
-"
-`;
-
-exports[`help contract: marchyo agent crash 1`] = `
-"Usage: marchyo agent crash [options] <pid> [comm] [exe] [signal] [timestamp]
-
-Diagnose a crashed process with the default coding agent ($AI_AGENT)
-
-Arguments:
-  pid         PID from \`coredumpctl list\`
-  comm        process name
-  exe         executable path
-  signal      signal name
-  timestamp   COREDUMP_TIMESTAMP in microseconds, to tell dumps of a reused PID
-              apart
-
-Options:
-  -h, --help  display help for command
-
-Starts $AI_AGENT with a prompt that points at the diagnose-crash skill, in its
-most restricted approval mode. Outside a terminal (a click on the crash
-notification) the agent opens in a new window. The crash watcher
-(marchyo.ai.crashCapture) runs this from its notification.
-
-Examples:
-  $ marchyo agent crash 1516893
-  $ marchyo agent crash 1516893 firefox /nix/store/...-firefox/bin/firefox SIGSEGV
-
-"
-`;
-
-exports[`help contract: marchyo agent account 1`] = `
-"Usage: marchyo agent account [options] [command]
-
-Keep several Claude Code, Codex and Grok sign-ins and choose one per launch
-
-Options:
-  -h, --help                                display help for command
-
-Commands:
-  list [provider]                           List the accounts per provider with their last known limits
-  add <provider> [label]                    Sign in to another account with the provider's own login
-  use <provider> [account]                  Choose the account new sessions use (default: the next one)
-  remove <provider> <account>               Forget an added account (its local home only; no logout)
-  rename <provider> <account> <label...>    Give an account a new name
-  mode <provider> [mode] [threshold]        Show or set the switch mode (manual|auto) and threshold percent (50-100)
-  copy [options] <ssh-host> [providers...]  Copy the signed-in accounts to another marchyo machine over ssh
-  import [options]                          Receive accounts from \`marchyo agent account copy\` on stdin
-  help [command]                            display help for command
-
-The first login stays in ~/.claude, ~/.codex or ~/.grok. An added account
-keeps only its credentials in $XDG_STATE_HOME/marchyo/agents/accounts/<provider>/<id>/
-and links history, settings, skills and sessions to the first home. The
-claude, codex and grok wrappers start new sessions as the active account
-(CLAUDE_CONFIG_DIR, CODEX_HOME, GROK_HOME). Running sessions keep their account.
-
-"
-`;
-
-exports[`help contract: marchyo agent account list 1`] = `
-"Usage: marchyo agent account list [options] [provider]
-
-List the accounts per provider with their last known limits
-
-Options:
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account list
-  $ marchyo agent account list claude
-
-"
-`;
-
-exports[`help contract: marchyo agent account add 1`] = `
-"Usage: marchyo agent account add [options] <provider> [label]
-
-Sign in to another account with the provider's own login
-
-Options:
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account add claude Work
-  $ marchyo agent account add codex
-
-"
-`;
-
-exports[`help contract: marchyo agent account use 1`] = `
-"Usage: marchyo agent account use [options] <provider> [account]
-
-Choose the account new sessions use (default: the next one)
-
-Options:
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account use claude work
-
-"
-`;
-
-exports[`help contract: marchyo agent account remove 1`] = `
-"Usage: marchyo agent account remove [options] <provider> <account>
-
-Forget an added account (its local home only; no logout)
-
-Options:
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account remove claude work
-
-"
-`;
-
-exports[`help contract: marchyo agent account rename 1`] = `
-"Usage: marchyo agent account rename [options] <provider> <account> <label...>
-
-Give an account a new name
-
-Options:
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account rename claude work Work account
-
-"
-`;
-
-exports[`help contract: marchyo agent account mode 1`] = `
-"Usage: marchyo agent account mode [options] <provider> [mode] [threshold]
-
-Show or set the switch mode (manual|auto) and threshold percent (50-100)
-
-Options:
-  -h, --help  display help for command
-
-manual: at the threshold, the shell offers a one-click switch.
-auto:   at the threshold, new sessions move to the account with the most headroom.
-
-Examples:
-  $ marchyo agent account mode claude auto 90
-
-"
-`;
-
-exports[`help contract: marchyo agent account copy 1`] = `
-"Usage: marchyo agent account copy [options] <ssh-host> [providers...]
-
-Copy the signed-in accounts to another marchyo machine over ssh
-
-Options:
-  --replace   overwrite accounts the other machine has signed in already
-  -h, --help  display help for command
-
-The credentials go over ssh stdin, never on a command line, and land with
-mode 0600 in 0700 directories. Before it replaces a sign-in it asks.
-
-Examples:
-  $ marchyo agent account copy laptop
-  $ marchyo agent account copy user@desktop claude
-
-"
-`;
-
-exports[`help contract: marchyo agent account import 1`] = `
-"Usage: marchyo agent account import [options]
-
-Receive accounts from \`marchyo agent account copy\` on stdin
-
-Options:
-  --replace   overwrite accounts signed in here already
-  -h, --help  display help for command
-
-Examples:
-  $ marchyo agent account import
-  $ marchyo agent account import --replace
 
 "
 `;

@@ -106,7 +106,6 @@ import {
   runFontList,
   runFontSet,
 } from "./commands/font.ts";
-import { DB_PRESETS, devLanguages, runDevDb, runDevInit } from "./commands/dev.ts";
 import { runDictation } from "./commands/dictation.ts";
 import { runLanguage } from "./commands/language.ts";
 import {
@@ -125,18 +124,6 @@ import {
 } from "./commands/plugin.ts";
 import { runCompletion } from "./commands/completion.ts";
 import { runNetworkPortal } from "./commands/network.ts";
-import {
-  runAccountAdd,
-  runAccountCopy,
-  runAccountImport,
-  runAccountList,
-  runAccountMode,
-  runAccountRemove,
-  runAccountRename,
-  runAccountUse,
-  runAgentCrash,
-  runAgentUsage,
-} from "./commands/agent.ts";
 import { runNotify } from "./commands/notify.ts";
 import { splitNotifyArgv } from "./notify-argv.ts";
 import { runWhatsNew } from "./commands/whatsnew.ts";
@@ -828,7 +815,7 @@ program
   .description("Flip a desktop toggle live (gaps, nightlight, waybar, …)")
   .argument(
     "<name>",
-    "gaps | transparency | animations | reduce-motion | fullscreen-desktop | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | caffeine | crash-capture | hybrid-gpu",
+    "gaps | transparency | animations | reduce-motion | fullscreen-desktop | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | caffeine | hybrid-gpu",
   )
   .argument("[state]", "on | off (omit to flip)")
   .option(
@@ -1418,49 +1405,6 @@ Examples:
     process.exit(await runBarPosition(rt(), position, opts));
   });
 
-const dev = program
-  .command("dev")
-  .description("Project dev environments: devenv templates and database services");
-
-dev
-  .command("init")
-  .description("Write a devenv.nix, devenv.yaml and .envrc for a language")
-  .argument("<lang>", `one of: ${devLanguages().join(", ")}`)
-  .option("--force", "overwrite existing files")
-  .addHelpText(
-    "after",
-    `
-Writes into the current directory and refuses to replace existing devenv.nix,
-devenv.yaml or .envrc files unless --force is given.
-
-Examples:
-  $ marchyo dev init go
-  $ marchyo dev init python --force
-`,
-  )
-  .action(async (lang: string, opts: { force?: boolean }) => {
-    process.exit(await runDevInit(rt(), lang, opts));
-  });
-
-dev
-  .command("db")
-  .description("Add a devenv database service to the devenv.nix in this directory")
-  .argument("<engine>", `one of: ${Object.keys(DB_PRESETS).join(", ")}`)
-  .addHelpText(
-    "after",
-    `
-Safe to repeat: an engine that is already configured is left alone. A
-devenv.nix of an unexpected shape is refused and left untouched.
-
-Examples:
-  $ marchyo dev db postgres
-  $ marchyo dev db redis
-`,
-  )
-  .action(async (engine: string) => {
-    process.exit(await runDevDb(rt(), engine));
-  });
-
 program
   .command("dictation")
   .description("Start, stop or toggle voice dictation on the configured backend")
@@ -1662,158 +1606,6 @@ Examples:
     process.exit(await runRuntimeRestore(rt()));
   });
 
-const agent = program
-  .command("agent")
-  .description("Inspect the AI coding agents in use on this machine");
-
-agent
-  .command("usage")
-  .description("Show agent usage limits and token totals (refreshes the agents panel data)")
-  .option("--force", "rescan transcripts now instead of reusing a scan up to 20 s old")
-  .addHelpText(
-    "after",
-    `
-Limits come from each provider (Claude Code, Codex, GitHub Copilot, and Z.ai and
-OpenRouter when ZAI_API_KEY or OPENROUTER_API_KEY is set) and are
-probed at most every 15 seconds; tokens come from local transcripts. The result
-is cached in $XDG_STATE_HOME/marchyo/agents/usage.json without credentials.
-
-Examples:
-  $ marchyo agent usage
-  $ marchyo agent usage --json | jq '.agents[] | select(.ready)'
-`,
-  )
-  .action(async (opts: { force?: boolean }) => {
-    process.exit(await runAgentUsage(rt(), opts));
-  });
-
-agent
-  .command("crash")
-  .description("Diagnose a crashed process with the default coding agent ($AI_AGENT)")
-  .argument("<pid>", "PID from `coredumpctl list`")
-  .argument("[comm]", "process name")
-  .argument("[exe]", "executable path")
-  .argument("[signal]", "signal name")
-  .argument("[timestamp]", "COREDUMP_TIMESTAMP in microseconds, to tell dumps of a reused PID apart")
-  .addHelpText(
-    "after",
-    `
-Starts $AI_AGENT with a prompt that points at the diagnose-crash skill, in its
-most restricted approval mode. Outside a terminal (a click on the crash
-notification) the agent opens in a new window. The crash watcher
-(marchyo.ai.crashCapture) runs this from its notification.
-
-Examples:
-  $ marchyo agent crash 1516893
-  $ marchyo agent crash 1516893 firefox /nix/store/...-firefox/bin/firefox SIGSEGV
-`,
-  )
-  .action(async (pid: string, comm?: string, exe?: string, signal?: string, timestamp?: string) => {
-    const rest = [comm ?? "unknown", exe ?? "unknown", signal ?? "unknown", timestamp];
-    process.exit(await runAgentCrash(rt(), pid, rest.filter((v) => v !== undefined)));
-  });
-
-const account = agent
-  .command("account")
-  .description("Keep several Claude Code, Codex and Grok sign-ins and choose one per launch")
-  .addHelpText(
-    "after",
-    `
-The first login stays in ~/.claude, ~/.codex or ~/.grok. An added account
-keeps only its credentials in $XDG_STATE_HOME/marchyo/agents/accounts/<provider>/<id>/
-and links history, settings, skills and sessions to the first home. The
-claude, codex and grok wrappers start new sessions as the active account
-(CLAUDE_CONFIG_DIR, CODEX_HOME, GROK_HOME). Running sessions keep their account.
-`,
-  );
-
-account
-  .command("list [provider]")
-  .description("List the accounts per provider with their last known limits")
-  .action(async (prov?: string) => {
-    process.exit(await runAccountList(rt(), prov));
-  });
-
-account
-  .command("add <provider> [label]")
-  .description("Sign in to another account with the provider's own login")
-  .addHelpText(
-    "after",
-    `
-Examples:
-  $ marchyo agent account add claude Work
-  $ marchyo agent account add codex
-`,
-  )
-  .action(async (prov: string, label?: string) => {
-    process.exit(await runAccountAdd(rt(), prov, label));
-  });
-
-account
-  .command("use <provider> [account]")
-  .description("Choose the account new sessions use (default: the next one)")
-  .action(async (prov: string, target?: string) => {
-    process.exit(await runAccountUse(rt(), prov, target));
-  });
-
-account
-  .command("remove <provider> <account>")
-  .description("Forget an added account (its local home only; no logout)")
-  .action(async (prov: string, target: string) => {
-    process.exit(await runAccountRemove(rt(), prov, target));
-  });
-
-account
-  .command("rename <provider> <account> <label...>")
-  .description("Give an account a new name")
-  .action(async (prov: string, target: string, label: string[]) => {
-    process.exit(await runAccountRename(rt(), prov, target, label));
-  });
-
-account
-  .command("mode <provider> [mode] [threshold]")
-  .description("Show or set the switch mode (manual|auto) and threshold percent (50-100)")
-  .addHelpText(
-    "after",
-    `
-manual: at the threshold, the shell offers a one-click switch.
-auto:   at the threshold, new sessions move to the account with the most headroom.
-
-Examples:
-  $ marchyo agent account mode claude auto 90
-`,
-  )
-  .action(async (prov: string, mode?: string, threshold?: string) => {
-    process.exit(await runAccountMode(rt(), prov, mode, threshold));
-  });
-
-account
-  .command("copy <ssh-host> [providers...]")
-  .description("Copy the signed-in accounts to another marchyo machine over ssh")
-  .option("--replace", "overwrite accounts the other machine has signed in already")
-  .addHelpText(
-    "after",
-    `
-The credentials go over ssh stdin, never on a command line, and land with
-mode 0600 in 0700 directories. Before it replaces a sign-in it asks.
-
-Examples:
-  $ marchyo agent account copy laptop
-  $ marchyo agent account copy user@desktop claude
-`,
-  )
-  .action(async (host: string, provs: string[], opts: { replace?: boolean }) => {
-    process.exit(await runAccountCopy(rt(), host, provs, opts));
-  });
-
-account
-  .command("import")
-  .description("Receive accounts from `marchyo agent account copy` on stdin")
-  .option("--replace", "overwrite accounts signed in here already")
-  .action(async (opts: { replace?: boolean }) => {
-    process.exit(await runAccountImport(rt(), opts));
-  });
-
 program
   .command("completion")
   .description("Emit shell completions or the man page (generated from the live command tree)")
@@ -1879,7 +1671,7 @@ Examples:
 
 const setup = program
   .command("setup")
-  .description("First-login checklist: git, SSH, security keys, language, theme, agent, dictation")
+  .description("First-login checklist: git, SSH, security keys, language, theme, dictation")
   .option("--done", "mark the checklist finished (hides the welcome)")
   .option("--welcome", "send the one-time welcome notification (used by a user unit at login)")
   .addHelpText(
@@ -1901,7 +1693,7 @@ Examples:
 setup
   .command("fix")
   .description("Run the interactive fix for one checklist item")
-  .argument("<id>", "git | ssh | fido2 | fingerprint | language | keyboard | theme | agent | dictation")
+  .argument("<id>", "git | ssh | fido2 | fingerprint | language | keyboard | theme | dictation")
   .action(async (id: string) => {
     process.exit(await runSetupFix(rt(), id));
   });

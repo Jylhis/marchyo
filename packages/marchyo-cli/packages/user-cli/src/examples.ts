@@ -69,14 +69,6 @@ const EXAMPLES: Record<string, string[]> = {
   "plugin remove": ["marchyo plugin remove my-plugin"],
   "plugin validate": ["marchyo plugin validate ~/src/my-plugin"],
   "security enroll": ["marchyo security enroll fido2", "marchyo security enroll fingerprint"],
-  "agent account list": ["marchyo agent account list", "marchyo agent account list claude"],
-  "agent account use": ["marchyo agent account use claude work"],
-  "agent account remove": ["marchyo agent account remove claude work"],
-  "agent account rename": ["marchyo agent account rename claude work Work account"],
-  "agent account import": [
-    "marchyo agent account import",
-    "marchyo agent account import --replace",
-  ],
   notify: [
     "marchyo notify 'Build done' '3 tests failed' -u critical",
     "marchyo notify Reminder 'Stand up' --action 'Snooze' marchyo reminder set 'stand up' 10m",

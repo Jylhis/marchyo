@@ -38,4 +38,22 @@ in
       (withTestUser {
         marchyo.shell.barPlugin = "acme.bar";
       });
+
+  eval-removed-ai-agents = testNixOSFails "removed-ai-agents" "not carried" (withTestUser {
+    marchyo.ai.agents = [ "codex" ];
+  });
+
+  eval-removed-ai-local = testNixOSFails "removed-ai-local" "Ollama" (withTestUser {
+    marchyo.ai.local.enable = true;
+  });
+
+  eval-removed-ai-crash-capture =
+    testNixOSFails "removed-ai-crash-capture" "Crash capture"
+      (withTestUser {
+        marchyo.ai.crashCapture.enable = false;
+      });
+
+  eval-removed-console = testNixOSFails "removed-console" "Quake-style" (withTestUser {
+    marchyo.console.enable = false;
+  });
 }

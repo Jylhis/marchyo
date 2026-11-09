@@ -126,10 +126,6 @@ test("provider parsers read the CLI outputs", () => {
   const ppd = "* performance:\n    CpuDriver:\tamd_pstate\n    Degraded:   no\n\n  balanced:\n    CpuDriver:\tx\n\n  power-saver:\n    CpuDriver:\tx\n";
   assert.deepEqual(S["power-profiles"].parse(ppd).map((p) => [p.title, p.checked]), [["performance", true], ["balanced", false], ["power-saver", false]]);
   assert.deepEqual(S.wallpapers.parse("/a/b.png\n\n/c/d.jpg\n")[1].argv, ["bg", "set", "/c/d.jpg"]);
-  const agents = JSON.stringify([{ provider: "claude", name: "Claude Code", accounts: [{ id: "main", label: "Main", email: "a@b", active: true }] }]);
-  assert.deepEqual(S.agents.parse(agents), [
-    { title: "Claude Code: Main", subtitle: "a@b", checked: true, argv: ["agent", "account", "use", "claude", "main"] }
-  ]);
   for (const k of Object.keys(S).filter((n) => n !== "wallpapers" && n !== "power-profiles")) assert.deepEqual(S[k].parse("not json"), [], k);
 });
 

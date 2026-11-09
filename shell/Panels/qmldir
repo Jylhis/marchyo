@@ -8,7 +8,6 @@ WeatherPanel 1.0 WeatherPanel.qml
 TailscalePanel 1.0 TailscalePanel.qml
 WifiQrPanel 1.0 WifiQrPanel.qml
 ControlCenter 1.0 ControlCenter.qml
-AgentsPanel 1.0 AgentsPanel.qml
 ElsewhenPanel 1.0 ElsewhenPanel.qml
 GalleryPanel 1.0 GalleryPanel.qml
 WhatsNewPanel 1.0 WhatsNewPanel.qml
@@ -19,5 +18,3 @@ SpeedtestPanel 1.0 SpeedtestPanel.qml
 DropboxPanel 1.0 DropboxPanel.qml
 ReminderFlow 1.0 ReminderFlow.qml
 PickerImage 1.0 PickerImage.qml
-AgentMeter 1.0 AgentMeter.qml
-AgentInfo 1.0 AgentInfo.qml
