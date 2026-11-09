@@ -14,9 +14,12 @@ export const SLOW_POLL_MS = 15_000;
 
 // Hyprland class of a chromium `--app=<uri>` window: `chrome-<host>__<path>`
 // (brave-… for Brave). Dots become `[.]` so the pattern survives Lua quoting.
+// The URI comes from the network (the portal's redirect), so only a plain
+// host name or IPv4 address forms a pattern: a host carrying regex syntax
+// (`a|.*`) would otherwise match, and close, unrelated windows.
 export function portalWindowClass(uri: string): string | null {
   const m = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/([^/:?#]+)/.exec(uri);
-  if (!m) return null;
+  if (!m || !/^[A-Za-z0-9.-]+$/.test(m[1]!)) return null;
   return `^(chrome|brave)-${m[1]!.replaceAll(".", "[.]")}__.*$`;
 }
 

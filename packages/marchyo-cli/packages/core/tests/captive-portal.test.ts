@@ -47,6 +47,9 @@ test("portalWindowClass escapes dots and names the host", () => {
     "^(chrome|brave)-10[.]0[.]0[.]1__.*$",
   );
   expect(portalWindowClass("nonsense")).toBeNull();
+  // A host with regex syntax never becomes a pattern.
+  expect(portalWindowClass("http://a|.*/x")).toBeNull();
+  expect(portalWindowClass("http://(a+)+b/")).toBeNull();
 });
 
 test("parseExitNode returns the first IP without a prefix length", () => {
