@@ -122,7 +122,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, the k9s skin, lazygit, spotify-player and gdu colors, the [application surfaces](#application-surfaces), the [terminal, editor and browser surfaces](#terminal-editor-and-browser-surfaces), a `preview.png` palette card, a `wallpapers/` dir, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, the k9s skin, lazygit, spotify-player and gdu colors, the [application surfaces](#application-surfaces), the [terminal, editor and browser surfaces](#terminal-editor-and-browser-surfaces), a `wallpapers/` dir, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [
@@ -197,16 +197,12 @@ pointer — and `Super+Shift+L` cycles the theme from the compositor.
 
 ## Application surfaces
 
-Every theme dir also carries colours for six more applications, generated from the same base16 slots (the Jylhis pair, catalog and inline themes, and `theme generate` all emit them):
+Every theme dir also carries colours for two more applications, generated from the same base16 slots (the Jylhis pair, catalog and inline themes, and `theme generate` all emit them):
 
-- **VS Code, VS Code Insiders, VSCodium and Cursor**: `vscode-theme.json` is installed as the local extension `local.marchyo-theme` (registered in the editor's `extensions.json`, version derived from the colours), and `workbench.colorTheme` is set to `Marchyo` in `settings.json`. The theme file is watched, so open windows restyle. Only editors whose config directory exists are touched.
-- **Obsidian**: `obsidian.css` is written to `<vault>/.obsidian/snippets/marchyo.css` for every vault in Obsidian's vault list, and `marchyo` is added to the vault's enabled snippets. Your own Obsidian theme stays selected.
 - **tmux**: see [tmux](#tmux). The status line, messages, pane borders and pane background follow the theme.
-- **Slack**: `slack.json` holds the colour preferences.
 - **fcitx5**: `fcitx5-theme.conf` is linked as the classicui theme `marchyo` (`~/.local/share/fcitx5/themes/marchyo/theme.conf`, with the stock glyphs). `marchyo.theme.enable` makes the fcitx5 module select it, and a switch reloads classicui.
-- **herdr and herdr-app**: `herdr.json` is linked as the custom theme `marchyo` under `~/.config/herdr/themes/` and `~/.config/herdr-app/themes/`. Select it in herdr.
 
-tmux, fcitx5 and herdr read their files through the `current-theme` pointer, so the declarative reset on activation covers them. VS Code, Obsidian and Slack colours live in files the apps own, so `marchyo theme set`, `next` and `generate` write them; they stay on the last applied theme until the next switch.
+Both read their files through the `current-theme` pointer, so the declarative reset on activation covers them.
 
 ### tmux
 
@@ -214,7 +210,7 @@ tmux, fcitx5 and herdr read their files through the `current-theme` pointer, so 
 
 ## Terminal, editor and browser surfaces
 
-Every theme dir carries seven more files from the same base16 slots, and the build-variant dir ships each one as a `templates/` placeholder file that `theme generate` fills. A `preview.png` (480 by 270, rendered at build time with resvg from the theme's colours) shows the palette in theme pickers.
+Every theme dir carries seven more files from the same base16 slots, and the build-variant dir ships each one as a `templates/` placeholder file that `theme generate` fills.
 
 - **btop**: `btop.theme`. btop reads it as the `marchyo` theme through `~/.config/btop/themes/marchyo.theme`, which links into the `current-theme` pointer.
 - **kitty**: `kitty.conf`, a colour block that `kitty @ set-colors` applies and `kitty.conf` can `include`.
@@ -250,7 +246,7 @@ marchyo theme generate ~/Pictures/wall.jpg --dark   # force a dark scheme
 marchyo theme generate --revert                     # back to the declarative theme
 ```
 
-matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty, kitty, foot, alacritty), btop, helix, Neovim, Emacs, Hyprland window borders, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), k9s, lazygit, spotify-player, gdu, the application surfaces (VS Code, Obsidian, tmux, Slack, fcitx5, herdr), and the wallpaper itself.
+matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty, kitty, foot, alacritty), btop, helix, Neovim, Emacs, Hyprland window borders, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), k9s, lazygit, spotify-player, gdu, the application surfaces (tmux, fcitx5), and the wallpaper itself.
 
 The colours come from two files the build ships in the declarative variant's theme dir: `palette.json` (every design token's hex, `syn-*` included, and the token-to-base16-slot table) and `templates/` (the GTK CSS and the terminal, editor and browser surfaces, with each colour as a token placeholder). `theme generate` fills each placeholder with the matugen slot for that token, and a token with no base16 slot keeps the build variant's hex. For `bat` it writes a `marchyo-generated.tmTheme` into bat's themes directory and runs `bat cache --build`.
 

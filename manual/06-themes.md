@@ -56,7 +56,7 @@ A failed preference update stops the switch before application links change.
 The saved selection stays unchanged.
 Use `--revert` to restore the Nix default, or `--apply` to make the selection declarative.
 Browsers keep the build-time colour, because their policy files are system-owned.
-Each theme also has a palette preview card and, optionally, its own wallpapers.
+Each theme can also carry its own wallpapers.
 
 `marchyo runtime restore` reports failures and returns a nonzero status.
 It continues restoring independent overrides.

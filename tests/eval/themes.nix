@@ -514,9 +514,9 @@ in
       });
 
   # Application surfaces on the runtime layer: the Jylhis dirs (themeDirFor)
-  # carry VS Code, Obsidian, tmux, Slack, fcitx5 and herdr files in jylhis-dark's
-  # base05, tmux/herdr/fcitx5 read them through the current-theme pointer, and
-  # the fcitx5 module selects the generated theme.
+  # carry the tmux and fcitx5 files in jylhis-dark's base05, both read them
+  # through the current-theme pointer, and the fcitx5 module selects the
+  # generated theme.
   eval-themes-app-surfaces =
     testNixOSCheck "themes-app-surfaces"
       (
@@ -532,37 +532,21 @@ in
             );
           classicui = cfg.i18n.inputMethod.fcitx5.settings.addons.classicui.globalSection;
         in
-        lib.hasInfix ''"editor.foreground":"${fg}"'' e."vscode-theme.json".text
-        && lib.hasInfix ''"type":"dark"'' e."vscode-theme.json".text
-        && lib.hasInfix "--text-normal: ${fg};" e."obsidian.css".text
-        && lib.hasInfix ''status-style "fg=${fg},'' e."tmux.conf".text
-        && lib.hasInfix ''"mode":"dark"'' e."slack.json".text
+        lib.hasInfix ''status-style "fg=${fg},'' e."tmux.conf".text
         && lib.hasInfix "NormalColor=${fg}" e."fcitx5-theme.conf".text
-        && lib.hasInfix ''"foreground":"${fg}"'' e."herdr.json".text
-        && linksTo hm.xdg.configFile "herdr/themes/marchyo.json" "herdr.json"
-        && linksTo hm.xdg.configFile "herdr-app/themes/marchyo.json" "herdr.json"
         && linksTo hm.xdg.dataFile "fcitx5/themes/marchyo/theme.conf" "fcitx5-theme.conf"
         && classicui.Theme == "marchyo"
+        && lib.all (f: !(e ? ${f})) [
+          "vscode-theme.json"
+          "obsidian.css"
+          "slack.json"
+          "herdr.json"
+          "preview.png"
+        ]
       )
       (withTestUser {
         marchyo.desktop.enable = true;
         marchyo.tmux.enable = true;
-      });
-
-  # Light build: the same surfaces take the light polarity.
-  eval-themes-app-surfaces-light =
-    testNixOSCheck "themes-app-surfaces-light"
-      (
-        cfg:
-        let
-          e = cfg.home-manager.users.testuser.xdg.configFile."marchyo/current-theme".source.entries;
-        in
-        lib.hasInfix ''"type":"light"'' e."vscode-theme.json".text
-        && lib.hasInfix ''"mode":"light"'' e."slack.json".text
-      )
-      (withTestUser {
-        marchyo.desktop.enable = true;
-        marchyo.theme.variant = "light";
       });
 
   # Build check (`just check` only evaluates it): a catalog scheme dir
@@ -597,7 +581,7 @@ in
       manifest =
         pkgs.writeText "themes-manifest.json"
           cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
-      files = builtins.attrNames (gen.appSurfaceTexts "dark" fixture.base16);
+      files = builtins.attrNames (gen.appSurfaceTexts fixture.base16);
     in
     pkgs.runCommand "check-themes-app-surfaces" { nativeBuildInputs = [ pkgs.jq ]; } ''
       ndir=$(jq -r '.themes[] | select(.name == "nord") | .dir' ${manifest})
@@ -607,16 +591,13 @@ in
         cmp ${pkgs.writeText "expected-${f}" fixture.expected.surfaces.${f}} "$idir/${f}" \
           || { echo "FAIL: inline dir ${f} differs from the generator"; exit 1; }
       '') files}
-      grep -q '"editor.background":"#2e3440"' "$ndir/vscode-theme.json" \
-        || { echo "FAIL: nord vscode theme not on base00"; exit 1; }
       grep -q 'status-style "fg=#e5e9f0,bg=#3b4252"' "$ndir/tmux.conf" \
         || { echo "FAIL: nord tmux.conf not on base05/base01"; exit 1; }
       touch "$out"
     '';
 
   # Terminal and editor surfaces: the dark build dir carries every file (foot
-  # without `#`), the placeholder templates, the preview card and the
-  # wallpapers dir; btop reads its theme through the current-theme pointer.
+  # without `#`), the placeholder templates and the wallpapers dir; btop reads its theme through the current-theme pointer.
   # No Chrome policy pins a colour, so Chrome follows the portal colour scheme.
   eval-themes-editor-surfaces =
     testNixOSCheck "themes-editor-surfaces"
@@ -645,7 +626,6 @@ in
           "nvim-theme.lua"
           "emacs-theme.el"
         ]
-        && e ? "preview.png"
         && e ? wallpapers
         && hm.programs.btop.settings.color_theme == "marchyo"
         && hm.xdg.configFile ? "btop/themes/marchyo.theme"
@@ -691,9 +671,8 @@ in
     );
 
   # marchyo.theme.themes.[].wallpapers: the files appear under wallpapers/ of
-  # the theme dir (named by their own file name) beside the default wallpaper.png,
-  # and every dir carries a rendered 480x270 preview.png.
-  build-themes-wallpapers-preview =
+  # the theme dir (named by their own file name) beside the default wallpaper.png.
+  build-themes-wallpapers =
     let
       extra = pkgs.writeText "extra-wall.png" "not-a-real-png";
       fixture = builtins.fromJSON (
@@ -723,29 +702,20 @@ in
         pkgs.writeText "themes-manifest.json"
           cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
     in
-    pkgs.runCommand "check-themes-wallpapers-preview"
-      {
-        nativeBuildInputs = [
-          pkgs.jq
-          pkgs.file
-        ];
-      }
-      ''
-        for name in jylhis-dark nord inline; do
-          d=$(jq -r --arg n "$name" '.themes[] | select(.name == $n) | .dir' ${manifest})
-          test -d "$d/wallpapers" || { echo "FAIL: $name has no wallpapers dir"; exit 1; }
-          file -L "$d/preview.png" | grep -q 'PNG image data, 480 x 270' \
-            || { echo "FAIL: $name preview.png is not a 480x270 PNG"; exit 1; }
-        done
-        d=$(jq -r '.themes[] | select(.name == "inline") | .dir' ${manifest})
-        test -e "$d/wallpapers/extra-wall.png" \
-          || { echo "FAIL: inline wallpapers dir lacks extra-wall.png"; exit 1; }
-        d=$(jq -r '.themes[] | select(.name == "jylhis-dark") | .dir' ${manifest})
-        for k in dots bands contour; do
-          test -e "$d/wallpapers/jylhis-$k-dark.png" \
-            || { echo "FAIL: jylhis-dark wallpapers lacks $k"; exit 1; }
-        done
-        test -e "$d/wallpaper.png" || { echo "FAIL: jylhis-dark lost wallpaper.png"; exit 1; }
-        touch "$out"
-      '';
+    pkgs.runCommand "check-themes-wallpapers" { nativeBuildInputs = [ pkgs.jq ]; } ''
+      for name in jylhis-dark nord inline; do
+        d=$(jq -r --arg n "$name" '.themes[] | select(.name == $n) | .dir' ${manifest})
+        test -d "$d/wallpapers" || { echo "FAIL: $name has no wallpapers dir"; exit 1; }
+      done
+      d=$(jq -r '.themes[] | select(.name == "inline") | .dir' ${manifest})
+      test -e "$d/wallpapers/extra-wall.png" \
+        || { echo "FAIL: inline wallpapers dir lacks extra-wall.png"; exit 1; }
+      d=$(jq -r '.themes[] | select(.name == "jylhis-dark") | .dir' ${manifest})
+      for k in dots bands contour; do
+        test -e "$d/wallpapers/jylhis-$k-dark.png" \
+          || { echo "FAIL: jylhis-dark wallpapers lacks $k"; exit 1; }
+      done
+      test -e "$d/wallpaper.png" || { echo "FAIL: jylhis-dark lost wallpaper.png"; exit 1; }
+      touch "$out"
+    '';
 }

@@ -1,5 +1,5 @@
-# Terminal, editor and browser theme surfaces plus the preview card, all from
-# base16 slots (modules/home/theme-runtime.nix emits them into every theme dir).
+# Terminal and editor theme surfaces, all from base16 slots
+# (modules/home/theme-runtime.nix emits them into every theme dir).
 # Pure string work, IFD-free. `gen` is lib/theme-generators.nix.
 #
 # `templates` applies the same generators to `{{token:<name>}}` placeholders,
@@ -7,7 +7,7 @@
 # wants bare RRGGBB, so its template uses `{{bare:<name>}}`).
 { lib, gen }:
 let
-  inherit (gen) tty16FromSlots jsonText;
+  inherit (gen) tty16FromSlots;
   noHash = lib.removePrefix "#";
 
   # Slot -> the semantic token whose colour a scheme dir gives it (base07 is
@@ -547,71 +547,11 @@ let
     // {
       "foot-theme.ini" = builtins.replaceStrings [ "{{token:" ] [ "{{bare:" ] t."foot-theme.ini";
     };
-
-  # Palette card for a theme (`preview.png`, 480x270 once rendered): background,
-  # surface, text and accent blocks over the 16 terminal colours, with the name.
-  previewSvg =
-    {
-      name,
-      variant,
-      s,
-      sans ? "sans-serif",
-      mono ? "monospace",
-    }:
-    let
-      esc = builtins.replaceStrings [ "&" "<" ">" "\"" ] [ "&amp;" "&lt;" "&gt;" "&quot;" ];
-      rect =
-        {
-          x,
-          y,
-          w,
-          h,
-          fill,
-        }:
-        ''<rect x="${toString x}" y="${toString y}" width="${toString w}" height="${toString h}" rx="6" fill="${fill}" stroke="${s.base03}" stroke-width="1"/>'';
-      blocks =
-        lib.imap0
-          (
-            i: fill:
-            rect {
-              x = 24 + i * 108;
-              y = 92;
-              w = 96;
-              h = 52;
-              inherit fill;
-            }
-          )
-          [
-            s.base00
-            s.base01
-            s.base05
-            s.base0D
-          ];
-      swatches = lib.imap0 (
-        i: fill:
-        rect {
-          x = 24 + (lib.mod i 8) * 54;
-          y = 164 + (i / 8) * 40;
-          w = 46;
-          h = 32;
-          inherit fill;
-        }
-      ) (tty16FromSlots s);
-    in
-    ''
-      <svg xmlns="http://www.w3.org/2000/svg" width="480" height="270" viewBox="0 0 480 270">
-        <rect width="480" height="270" fill="${s.base00}"/>
-        <text x="24" y="50" font-family="${sans}" font-size="26" font-weight="600" fill="${s.base05}">${esc name}</text>
-        <text x="24" y="74" font-family="${mono}" font-size="13" fill="${s.base04}">${esc variant}</text>
-        ${lib.concatStringsSep "\n  " (blocks ++ swatches)}
-      </svg>
-    '';
 in
 {
   inherit
     texts
     templates
     templateSlots
-    previewSvg
     ;
 }

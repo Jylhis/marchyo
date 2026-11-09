@@ -219,23 +219,18 @@ in
     in
     pkgs.runCommand "check-theme-runtime-assets"
       {
-        nativeBuildInputs = [
-          pkgs.jq
-          pkgs.file
-        ];
+        nativeBuildInputs = [ pkgs.jq ];
       }
       ''
         for d in ${darkDir} ${lightDir}; do
           for f in variant colors.json ghostty.conf gtk.css hyprland.conf \
             bat.conf fzf.opts hyprlock-colors.conf console.txt palette.json \
             k9s-skin.yaml lazygit.yml spotify-player-theme.toml gdu.yaml \
-            ${lib.concatStringsSep " " surfaceFiles} preview.png \
+            tmux.conf fcitx5-theme.conf ${lib.concatStringsSep " " surfaceFiles} \
             templates/gtk.css ${lib.concatMapStringsSep " " (f: "templates/${f}") surfaceFiles}; do
             test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
           done
           test -d "$d/wallpapers" || { echo "FAIL: $d/wallpapers missing"; exit 1; }
-          file -L "$d/preview.png" | grep -q 'PNG image data, 480 x 270' \
-            || { echo "FAIL: $d/preview.png is not a 480x270 PNG"; exit 1; }
           jq -e '(.tokens | has("syn-keyword")) and (.tokenSlots.bg == "base00")' "$d/palette.json" >/dev/null \
             || { echo "FAIL: $d/palette.json lacks the full token map or tokenSlots"; exit 1; }
           # Every colour literal in a template is a placeholder, never a build hex

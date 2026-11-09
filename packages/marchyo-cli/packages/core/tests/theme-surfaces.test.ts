@@ -24,7 +24,7 @@ const parity = JSON.parse(
 ) as Parity;
 
 describe("application surfaces", () => {
-  const texts = appSurfaceTexts("dark", parity.base16);
+  const texts = appSurfaceTexts(parity.base16);
 
   for (const file of APP_SURFACE_FILES) {
     test(`${file} matches the Nix generator`, () => {

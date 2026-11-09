@@ -11,76 +11,26 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   activateAppSurfaces,
-  installVscodeTheme,
   relinkSurface,
-  selectVscodeTheme,
 } from "../src/commands/theme-surfaces.ts";
 
 const tmp = (): string => mkdtempSync(join(tmpdir(), "marchyo-surfaces-"));
 
-describe("VS Code", () => {
-  test("selectVscodeTheme edits JSONC in place", async () => {
-    const settings = join(tmp(), "settings.json");
-    writeFileSync(settings, '{\n  // keep\n  "workbench.colorTheme": "Other",\n}\n');
-    await selectVscodeTheme(settings);
-    expect(readFileSync(settings, "utf8")).toBe(
-      '{\n  // keep\n  "workbench.colorTheme": "Marchyo",\n}\n',
-    );
-  });
-
-  test("installVscodeTheme registers the extension once", async () => {
-    const root = tmp();
-    const ext = join(root, "extensions");
-    const settings = join(root, "User", "settings.json");
-    await installVscodeTheme(ext, settings, '{"name":"Marchyo"}\n', "light");
-    await installVscodeTheme(ext, settings, '{"name":"Marchyo"}\n', "light");
-    const registry = JSON.parse(readFileSync(join(ext, "extensions.json"), "utf8"));
-    expect(registry).toHaveLength(1);
-    expect(registry[0].identifier.id).toBe("local.marchyo-theme");
-    const pkg = JSON.parse(
-      readFileSync(join(ext, "marchyo-theme", "package.json"), "utf8"),
-    );
-    expect(pkg.contributes.themes[0].uiTheme).toBe("vs");
-    expect(readFileSync(settings, "utf8")).toContain('"workbench.colorTheme": "Marchyo"');
-  });
-});
-
 describe("activateAppSurfaces", () => {
-  test("writes the Obsidian snippet and the Slack theme, reloads tmux", async () => {
+  test("reloads tmux when its config sources the pointer", async () => {
     const root = tmp();
     const dir = join(root, "theme");
     const config = join(root, "config");
-    const vault = join(root, "vault");
     mkdirSync(dir);
-    mkdirSync(join(vault, ".obsidian"), { recursive: true });
-    mkdirSync(join(config, "obsidian"), { recursive: true });
     mkdirSync(join(config, "tmux"), { recursive: true });
-    writeFileSync(join(dir, "obsidian.css"), "a{}\n");
-    writeFileSync(join(dir, "slack.json"), '{"mode":"dark"}\n');
     writeFileSync(join(dir, "tmux.conf"), "set -g x y\n");
-    writeFileSync(
-      join(config, "obsidian", "obsidian.json"),
-      JSON.stringify({ vaults: { a: { path: vault } } }),
-    );
     writeFileSync(
       join(config, "tmux", "tmux.conf"),
       "source-file -q /h/.config/marchyo/current-theme/tmux.conf\n",
     );
-    const state = join(root, "state");
-    mkdirSync(join(state, "marchyo", "slack"), { recursive: true });
-    process.env.XDG_STATE_HOME = state;
     const calls: string[][] = [];
-    await activateAppSurfaces(async (a) => void calls.push(a), config, dir, "dark");
-    expect(readFileSync(join(vault, ".obsidian", "snippets", "marchyo.css"), "utf8")).toBe("a{}\n");
-    expect(
-      JSON.parse(readFileSync(join(vault, ".obsidian", "appearance.json"), "utf8"))
-        .enabledCssSnippets,
-    ).toEqual(["marchyo"]);
-    expect(readFileSync(join(state, "marchyo", "slack", "theme.json"), "utf8")).toBe(
-      '{"mode":"dark"}\n',
-    );
-    expect(calls.some((c) => c[0] === "tmux" && c[1] === "source-file")).toBe(true);
-    delete process.env.XDG_STATE_HOME;
+    await activateAppSurfaces(async (a) => void calls.push(a), config, dir);
+    expect(calls).toContainEqual(["tmux", "source-file", join(dir, "tmux.conf")]);
   });
 });
 
@@ -135,7 +85,7 @@ describe("terminal and editor surfaces", () => {
     for (const f of files) writeFileSync(join(dir, f), `${f}\n`);
     process.env.XDG_DATA_HOME = data;
     const calls: string[][] = [];
-    await activateAppSurfaces(async (a) => void calls.push(a), config, dir, "dark");
+    await activateAppSurfaces(async (a) => void calls.push(a), config, dir);
     delete process.env.XDG_DATA_HOME;
 
     const links: Record<string, string> = {
@@ -160,7 +110,7 @@ describe("terminal and editor surfaces", () => {
     const dir = join(root, "theme");
     mkdirSync(dir);
     const calls: string[][] = [];
-    await activateAppSurfaces(async (a) => void calls.push(a), join(root, "config"), dir, "dark");
+    await activateAppSurfaces(async (a) => void calls.push(a), join(root, "config"), dir);
     expect(calls.map((c) => c[0])).toEqual(["busctl"]);
   });
 
@@ -178,7 +128,6 @@ describe("terminal and editor surfaces", () => {
       },
       join(root, "config"),
       dir,
-      "dark",
     );
     expect(calls.some((c) => c[0] === "kitty")).toBe(true);
   });

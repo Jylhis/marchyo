@@ -7,8 +7,8 @@
 # default: every activation first resets the relinked surfaces (and
 # ~/.config/marchyo/current-theme) to the build-time state, then replays the
 # stored runtime overrides with `marchyo runtime restore`. bat, fzf, starship,
-# hyprlock, console, k9s, lazygit, spotify-player, gdu, btop, kitty, foot,
-# alacritty, helix, neovim and emacs have runtime emitters too; Qt follows the
+# hyprlock, console, k9s, lazygit, spotify-player, gdu, tmux, fcitx5, btop,
+# kitty, foot, alacritty, helix, neovim and emacs have runtime emitters too; Qt follows the
 # GTK relink; plymouth stays on the build-time default until rebuild, and the
 # Chromium policy is root-owned, so it carries the build-time colour only.
 #
@@ -19,7 +19,7 @@
 # differently, and don't appear in this surface).
 #
 # Every theme dir also ships palette.json (token -> hex plus token -> base16
-# slot), preview.png (palette card), a wallpapers/ dir (the theme's own
+# slot), a wallpapers/ dir (the theme's own
 # wallpapers beside the default wallpaper.png), and the build-variant dir ships
 # templates/ with the same surfaces as placeholders, which `marchyo theme
 # generate` fills from a matugen palette. The generators shared with the CLI live in
@@ -262,51 +262,21 @@ let
     );
     "gdu.yaml" = pkgs.writeText "marchyo-theme-${label}-gdu.yaml" (gen.gduText slots);
   };
-  # Application surfaces (VS Code, Obsidian, tmux, Slack, fcitx5, herdr), from
-  # the same slots. tmux, fcitx5 and herdr read them through the current-theme
-  # pointer; the CLI copies the VS Code, Obsidian and Slack files on a switch.
+  # Application surfaces (tmux, fcitx5) from the same slots; both read them
+  # through the current-theme pointer.
   appSurfaceFiles =
-    label: variant: slots:
+    label: slots:
     lib.mapAttrs (name: text: pkgs.writeText "marchyo-theme-${label}-${name}" text) (
-      gen.appSurfaceTexts variant slots
+      gen.appSurfaceTexts slots
     );
-  # Terminal, editor and browser surfaces (btop, kitty, foot, alacritty, helix,
-  # neovim, emacs, chromium policy) from the same slots; lib/theme-surfaces.nix.
+  # Terminal and editor surfaces (btop, kitty, foot, alacritty, helix, neovim,
+  # emacs) from the same slots; lib/theme-surfaces.nix.
   surfaces = import ../../lib/theme-surfaces.nix { inherit lib gen; };
   editorSurfaceFiles =
     label: slots:
     lib.mapAttrs (name: text: pkgs.writeText "marchyo-theme-${label}-${name}" text) (
       surfaces.texts slots
     );
-
-  # preview.png: the palette card rendered by resvg with the design system's
-  # Fira Sans and IBM Plex Mono (no system fonts in the sandbox).
-  designFonts = import "${pkgs.jylhis-design-src}/nix/fonts.nix";
-  previewFor =
-    {
-      name,
-      variant,
-      slots,
-    }:
-    pkgs.runCommand "marchyo-theme-${name}-preview.png"
-      {
-        nativeBuildInputs = [ pkgs.resvg ];
-        svg = pkgs.writeText "marchyo-theme-${name}-preview.svg" (
-          surfaces.previewSvg {
-            inherit name variant;
-            s = slots;
-            sans = designFonts.body;
-            mono = designFonts.mono;
-          }
-        );
-      }
-      ''
-        resvg --width 480 --height 270 --skip-system-fonts \
-          ${
-            lib.concatMapStringsSep " " (p: "--use-fonts-dir ${p}/share/fonts") (designFonts.packages pkgs)
-          } \
-          "$svg" "$out"
-      '';
 
   # wallpapers/: store symlinks named by the file's own name (a bare store path
   # carries its hash as the name prefix).
@@ -407,14 +377,9 @@ let
         );
       }
       // slotSurfaceFiles v (jylhisSlots v)
-      // appSurfaceFiles v v (jylhisSlots v)
+      // appSurfaceFiles v (jylhisSlots v)
       // editorSurfaceFiles v (jylhisSlots v)
       // {
-        "preview.png" = previewFor {
-          name = "jylhis-${v}";
-          variant = v;
-          slots = jylhisSlots v;
-        };
         wallpapers = wallpapersDirFor v (lib.optionals wallpaperEnabled (packageWallpapers v));
       }
       // lib.optionalAttrs (v == buildVariant) templateFiles
@@ -522,12 +487,9 @@ let
         );
       }
       // slotSurfaceFiles scheme.name scheme.slots
-      // appSurfaceFiles scheme.name scheme.variant scheme.slots
+      // appSurfaceFiles scheme.name scheme.slots
       // editorSurfaceFiles scheme.name scheme.slots
       // {
-        "preview.png" = previewFor {
-          inherit (scheme) name variant slots;
-        };
         wallpapers = wallpapersDirFor scheme.name (
           lib.optionals wallpaperEnabled (scheme.wallpapers or [ ])
         );
@@ -655,10 +617,8 @@ in
         runtimeSurfaces = [
           "${config.xdg.configHome}/gtk-3.0/gtk.css"
           "${config.xdg.configHome}/gtk-4.0/gtk.css"
-          # The CLI still relinks these two when a theme dir carries them
-          # (tests/cli/theme-surfaces-test.js keeps this list a superset).
-          "${config.xdg.configHome}/mako/config"
-          "${config.xdg.configHome}/waybar/style.css"
+          # tests/cli/theme-surfaces-test.js keeps this list a superset of
+          # what the CLI relinks.
           "${config.xdg.configHome}/bat/config"
           "${config.xdg.configHome}/k9s/skins/jylhis.yaml"
           "${config.xdg.configHome}/btop/themes/marchyo.theme"
@@ -714,17 +674,9 @@ in
     );
 
     # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
-
-    # herdr and herdr-app read their custom theme through the pointer; the
-    # fcitx5 classicui theme (modules/nixos/fcitx5.nix selects it) does too,
-    # with the stock glyphs beside it.
-    xdg.configFile = {
-      "marchyo/current-theme".source = themeDirs.${buildVariant};
-      "herdr/themes/marchyo.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/herdr.json";
-      "herdr-app/themes/marchyo.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/herdr.json";
-    };
+    xdg.configFile."marchyo/current-theme".source = themeDirs.${buildVariant};
+    # The fcitx5 classicui theme (modules/nixos/fcitx5.nix selects it) reads
+    # through the pointer, with the stock glyphs beside it.
     xdg.dataFile = {
       # Manifest for the CLI (`marchyo theme list/set/next`, and `bg` reads
       # followWallpaper from it). Listing the dirs also roots them in the

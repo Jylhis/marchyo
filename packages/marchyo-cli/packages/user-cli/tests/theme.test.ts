@@ -146,11 +146,6 @@ describe("generateThemeChangeBase.runtimeApply", () => {
         colors: { bg: "#0c0f14", accentHover: "#ffb063", synVariable: "#00a3ee" },
       }),
     );
-    write(join(buildDir, "templates", "mako.conf"), "background-color={{token:bg}}\n");
-    write(
-      join(buildDir, "templates", "waybar.css"),
-      "#cpu { color: {{token:accent}}; border-color: {{token:syn-variable}}; }\n",
-    );
     write(
       join(buildDir, "templates", "gtk.css"),
       "@define-color shade_color {{shade}};\n@define-color fg {{token:text}};\n",
@@ -258,39 +253,27 @@ console.log(JSON.stringify({ applied, execs }));
         "ghostty.conf",
         "gtk.css",
         "helix-theme.toml",
-        "herdr.json",
         "hyprland.conf",
         "hyprlock-colors.conf",
         "k9s-skin.yaml",
         "kitty.conf",
         "lazygit.yml",
-        "mako.conf",
         "nvim-theme.lua",
-        "obsidian.css",
         "palette.json",
-        "slack.json",
         "spotify-player-theme.toml",
         "tmux.conf",
         "variant",
-        "vscode-theme.json",
         "wallpaper.png",
-        "waybar.css",
       ].sort(),
     );
     const read = (f: string): string => readFileSync(join(dir, f), "utf8");
 
     expect(read("variant")).toBe("dark\n");
-    expect(read("mako.conf")).toBe(`background-color=${slots.base00}\n`);
-    expect(read("waybar.css")).toBe(
-      `#cpu { color: ${slots.base05}; border-color: ${slots.base08}; }\n`,
-    );
     expect(read("gtk.css")).toBe(
       "@define-color shade_color rgba(160, 176, 5, 0.08);\n" +
         `@define-color fg ${slots.base05};\n`,
     );
     for (const f of [
-      "mako.conf",
-      "waybar.css",
       "gtk.css",
       "btop.theme",
       "kitty.conf",
@@ -333,8 +316,6 @@ console.log(JSON.stringify({ applied, execs }));
       realpathSync(dir),
     );
     for (const link of [
-      "mako/config",
-      "waybar/style.css",
       "gtk-3.0/gtk.css",
       "gtk-4.0/gtk.css",
       "bat/config",

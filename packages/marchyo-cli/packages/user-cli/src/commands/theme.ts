@@ -41,7 +41,6 @@ import {
   k9sSkinText,
   lazygitText,
   spotifyPlayerThemeText,
-  makoctlArgv,
   matugenArgv,
   ColorsJson as ColorsJsonSchema,
   detectVariant,
@@ -61,7 +60,6 @@ import {
   setvtrgbArgv,
   readThemeManifest,
   readThemeManifestFile,
-  systemctlUserArgv,
   themeAtPointer,
   usageError,
   warn,
@@ -172,18 +170,6 @@ async function activateThemeSurfaces(
   const wallpaper = join(entry.dir, "wallpaper.png");
   if (existsSync(wallpaper)) await safeExec(ctx, awwwImgArgv(wallpaper));
 
-  const mako = join(entry.dir, "mako.conf");
-  if (existsSync(mako)) {
-    await relinkConfig(mako, join(configHome(), "mako", "config"));
-    await safeExec(ctx, makoctlArgv("reload"));
-  }
-
-  const waybar = join(entry.dir, "waybar.css");
-  if (existsSync(waybar)) {
-    await relinkConfig(waybar, join(configHome(), "waybar", "style.css"));
-    await safeExec(ctx, systemctlUserArgv("try-restart", "waybar.service"));
-  }
-
   const hypr = join(entry.dir, "hyprland.conf");
   if (existsSync(hypr) && hyprlandAvailable()) {
     const table = hyprlandConfigTable(readFileSync(hypr, "utf8"));
@@ -230,13 +216,8 @@ async function activateThemeSurfaces(
   const consoleTable = join(entry.dir, "console.txt");
   if (existsSync(consoleTable)) await safeExec(ctx, setvtrgbArgv(consoleTable));
 
-  // VS Code, Obsidian, Slack, tmux and fcitx5 (see theme-surfaces.ts).
-  await activateAppSurfaces(
-    (argv) => safeExec(ctx, argv),
-    configHome(),
-    entry.dir,
-    entry.variant,
-  );
+  // tmux, fcitx5 and the terminal/editor surfaces (see theme-surfaces.ts).
+  await activateAppSurfaces((argv) => safeExec(ctx, argv), configHome(), entry.dir);
 
   await safeExec(ctx, notifySendArgv("Theme", `Switched to ${entry.name}`));
 }
@@ -624,7 +605,7 @@ export async function runBgNext(rt: Runtime): Promise<number> {
 // through the build-variant dir's palette.json (slot per tokenSlots, else the
 // build hex), except border, border-strong and accent-subtle, which take
 // matugen's Material outline_variant, outline and primary_container when the
-// output carries them; mako, waybar, gtk and the terminal/editor surfaces
+// output carries them; gtk and the terminal/editor surfaces
 // (TEMPLATE_SURFACE_FILES) are filled from that dir's templates/, and bat
 // gets a generated tmTheme registered in its cache. Runtime-only, like `bg`:
 // a rebuild resets to the declarative theme. The override value is a JSON
@@ -652,8 +633,8 @@ function buildThemeDir(manifest: ThemeManifestEntry[]): string {
   return dir;
 }
 
-// Temp file + rename, so a surface reading the file mid-write (mako reload,
-// a new fzf) never sees a partial one.
+// Temp file + rename, so a surface reading the file mid-write (a new fzf)
+// never sees a partial one.
 async function writeAtomic(path: string, text: string): Promise<void> {
   const tmp = `${path}.tmp-${process.pid}`;
   await writeFile(tmp, text);
@@ -719,7 +700,7 @@ export const generateThemeChangeBase: ChangeSpec = {
     await put("lazygit.yml", lazygitText(base16));
     await put("spotify-player-theme.toml", spotifyPlayerThemeText(base16));
     await put("gdu.yaml", gduText(base16));
-    for (const [file, text] of Object.entries(appSurfaceTexts(variant, base16))) {
+    for (const [file, text] of Object.entries(appSurfaceTexts(base16))) {
       await put(file, text);
     }
 
