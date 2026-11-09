@@ -43,7 +43,7 @@ The value is written to `security.sudo.extraConfig` as `Defaults timestamp_timeo
 
 ## Firewall, fingerprint and FIDO2
 
-- `marchyo.security.firewall.enable` (`bool`, default `true`): default for `networking.firewall.enable`.
+- The firewall is the NixOS one (`networking.firewall.enable`, on by default); turn it off there.
 - `marchyo.security.fingerprint.enable` (`bool`, default `false`): fprintd with PAM integration.
 - `marchyo.security.fido2.enable` (`bool`, default `false`): FIDO2/U2F keys through pam_u2f.
 

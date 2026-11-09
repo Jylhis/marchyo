@@ -26,7 +26,7 @@ in
   eval-logitech = testNixOS "logitech" (
     minimalConfig
     // {
-      marchyo.hardware.logitech.enable = true;
+      programs.solaar.enable = true;
     }
   );
 }

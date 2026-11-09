@@ -23,10 +23,12 @@ On NixOS, each Marchyo user is created as a normal user with `extraGroups = [ "w
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.users.<name>.enable` | `bool` | `true` | Whether to apply Marchyo configuration to this user |
-| `marchyo.users.<name>.name` | `string` | attribute name | The name of the Unix user account (override to decouple it from the attribute name) |
 | `marchyo.users.<name>.fullname` | `string` | — | Full name (used in git config and applications) |
 | `marchyo.users.<name>.email` | `string` | — | Email address (used in git config and applications) |
-| `marchyo.users.<name>.uid` | `int` or `null` | `null` | Numeric user id; sets `users.users.<name>.uid` |
+
+The attribute name is the account name. Set everything else about the account,
+such as its numeric id, on `users.users.<name>` (for example
+`users.users.alice.uid = 1000;`).
 
 ## Login shell
 

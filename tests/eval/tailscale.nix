@@ -1,4 +1,4 @@
-# Tailscale feature toggle (marchyo.services.tailscale.enable, default on).
+# Tailscale (services.tailscale.enable, on by default through marchyo).
 { helpers, lib, ... }:
 let
   inherit (helpers) testNixOSCheck withTestUser;
@@ -14,7 +14,7 @@ in
     && builtins.elem config.services.tailscale.port config.networking.firewall.allowedUDPPorts
   ) (withTestUser { });
 
-  # Opt-out: disabling the flag drops the daemon and every firewall relaxation.
+  # Opt-out: disabling the service drops the daemon and every firewall relaxation.
   # checkReversePath is deliberately not asserted: nixpkgs (a391f95+) defaults
   # it to "loose" on its own, so it stays "loose" either way — the tailscale
   # module's mkDefault only mirrors the upstream default for explicitness.
@@ -27,7 +27,7 @@ in
         && !(builtins.elem config.services.tailscale.port config.networking.firewall.allowedUDPPorts)
       )
       (withTestUser {
-        marchyo.services.tailscale.enable = false;
+        services.tailscale.enable = false;
       });
 
   # Desktop + shell on: the primary (first enabled) marchyo user becomes the

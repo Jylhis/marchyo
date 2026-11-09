@@ -1,5 +1,6 @@
-# Nix cache single-source-of-truth (marchyo.nix.caches) and the ncro router
-# (marchyo.nix.router.enable, default on).
+# marchyo's binary caches (modules/nixos/caches.json) and the ncro router
+# (services.ncro.enable, on by default through marchyo), which routes every
+# substituter.
 { helpers, lib, ... }:
 let
   inherit (helpers) testNixOSCheck withTestUser;
@@ -24,6 +25,13 @@ in
       upstreamUrls ++ config.nix.settings.substituters
     ))
     && builtins.elem "https://cache.nixos.org" upstreamUrls
+    # ncro itself is not its own upstream.
+    && !(builtins.any (lib.hasPrefix "http://localhost") upstreamUrls)
+    # Upstreams carry the trusted key named after their host.
+    && builtins.elem {
+      url = "https://jylhis.cachix.org";
+      public_key = "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE=";
+    } config.services.ncro.settings.upstreams
     # The direct caches stay as fallbacks alongside the proxy.
     && builtins.elem "https://jylhis.cachix.org" config.nix.settings.substituters
     && builtins.elem "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE=" config.nix.settings.trusted-public-keys
@@ -41,11 +49,11 @@ in
         && builtins.elem "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE=" config.nix.settings.trusted-public-keys
       )
       (withTestUser {
-        marchyo.nix.router.enable = false;
+        services.ncro.enable = false;
       });
 
-  # Extensibility: a single entry appended to marchyo.nix.caches flows into both
-  # the substituter list and the ncro upstreams from one declaration.
+  # Extensibility: a substituter the host adds merges with marchyo's list and
+  # becomes an ncro upstream, with its key.
   eval-nix-cache-extend =
     testNixOSCheck "nix-cache-extend"
       (
@@ -54,15 +62,18 @@ in
           upstreamUrls = map (u: u.url) config.services.ncro.settings.upstreams;
         in
         builtins.elem "https://example.cachix.org" config.nix.settings.substituters
+        && builtins.elem "https://jylhis.cachix.org" config.nix.settings.substituters
         && builtins.elem "https://example.cachix.org" upstreamUrls
+        && builtins.elem {
+          url = "https://example.cachix.org";
+          public_key = "example.cachix.org-1:abc=";
+        } config.services.ncro.settings.upstreams
         && builtins.elem "example.cachix.org-1:abc=" config.nix.settings.trusted-public-keys
       )
       (withTestUser {
-        marchyo.nix.caches = [
-          {
-            url = "https://example.cachix.org";
-            publicKey = "example.cachix.org-1:abc=";
-          }
-        ];
+        nix.settings = {
+          substituters = [ "https://example.cachix.org" ];
+          trusted-public-keys = [ "example.cachix.org-1:abc=" ];
+        };
       });
 }

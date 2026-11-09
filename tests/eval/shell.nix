@@ -78,16 +78,4 @@ in
     && hm.fonts.fontconfig.enable
     && hm.fonts.fontconfig.defaultFonts.monospace == [ ]
   ) (withTestUser { });
-
-  # marchyo.users.<name>.uid flows into users.users.<name>.uid on NixOS.
-  eval-shell-user-uid =
-    testNixOSCheck "shell-user-uid" (cfg: cfg.users.users.seconduser.uid == 1501)
-      (withTestUser {
-        marchyo.users.seconduser = {
-          enable = true;
-          fullname = "Second User";
-          email = "second@example.com";
-          uid = 1501;
-        };
-      });
 }

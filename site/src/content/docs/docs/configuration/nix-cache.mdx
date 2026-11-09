@@ -5,29 +5,20 @@ description: Binary caches and the ncro cache-route optimizer
 
 ## Binary caches
 
-`marchyo.nix.caches` is the single source of truth for the binary caches marchyo
-trusts. Each entry's `url` populates `nix.settings.substituters` and
-`trusted-substituters`; each non-null `publicKey` populates
-`trusted-public-keys`. The same list also feeds the cache router (below), so a
-cache is declared exactly once.
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.nix.caches` | `list of { url; publicKey; }` | marchyo's 7 default caches | Binary caches used as substituters and (when the router is on) ncro upstreams |
-| `marchyo.nix.caches.*.url` | `str` | — | Cache URL |
-| `marchyo.nix.caches.*.publicKey` | `nullable str` | `null` | Trusted public key; `null` for an unsigned cache |
-
-Adding a cache is a one-line change that both the substituter list and the
-router consume:
+marchyo adds its binary caches (`modules/nixos/caches.json`) to
+`nix.settings.substituters`, `trusted-substituters` and
+`trusted-public-keys`. These are plain list definitions, so your own entries
+merge with them:
 
 ```nix
-marchyo.nix.caches = options.marchyo.nix.caches.default ++ [
-  {
-    url = "https://my-cache.example.com";
-    publicKey = "my-cache.example.com-1:...";
-  }
-];
+nix.settings = {
+  substituters = [ "https://my-cache.example.com" ];
+  trusted-public-keys = [ "my-cache.example.com-1:..." ];
+};
 ```
+
+Use `lib.mkForce` on a list to replace marchyo's entries (and NixOS's
+`cache.nixos.org`) instead.
 
 ## Cache router (ncro)
 
@@ -36,28 +27,32 @@ local HTTP proxy that measures upstream latency in real time and routes each
 binary-cache request to the fastest reachable upstream, streaming NARs with zero
 local NAR storage. It runs as a `DynamicUser` systemd service.
 
-When enabled, `http://localhost:<port>` is prepended to
-`nix.settings.substituters` and the caches from `marchyo.nix.caches` stay as
-direct fallbacks (Nix dedups and routes by priority, so the local proxy wins).
+marchyo turns on `services.ncro.enable` with `lib.mkDefault`. While it is on,
+`http://localhost:<services.ncro.port>` is prepended to
+`nix.settings.substituters`, and every other substituter becomes an ncro
+upstream (with the trusted key named after its host, such as
+`cache.nixos.org-1:...`). The substituters stay as direct fallbacks; Nix routes
+by priority, so the local proxy wins.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.nix.router.enable` | `bool` | `true` | Run ncro and front the caches with it |
-| `marchyo.nix.router.port` | `port` | `4200` | Port ncro listens on (127.0.0.1 only) / the prepended `localhost` substituter |
-| `marchyo.nix.router.netrcFile` | `nullable path` | `null` | netrc file for authenticating to private upstreams (e.g. a sops-generated `/etc/nix/netrc`) |
-| `marchyo.nix.router.extraUpstreams` | `list of str` | `[ "https://cache.nixos.org" ]` | Extra upstream URLs to route through ncro that are not in `marchyo.nix.caches` |
+| Option | Default | Description |
+|--------|---------|-------------|
+| `services.ncro.enable` | `true` (marchyo) | Run ncro and front the caches with it |
+| `services.ncro.port` | `4200` (marchyo) | Port ncro listens on (localhost only) and the prepended substituter's port |
+| `services.ncro.netrcFile` | `null` | netrc file for authenticating to private upstreams (e.g. a sops-generated `/etc/nix/netrc`) |
+| `services.ncro.settings.upstreams` | the substituters | Extra entries merge with the derived list |
 
 ```nix
 # Opt out and talk to the caches directly:
-marchyo.nix.router.enable = false;
+services.ncro.enable = false;
 
 # Authenticate to a private upstream:
-marchyo.nix.router.netrcFile = "/etc/nix/netrc";
+services.ncro.netrcFile = "/etc/nix/netrc";
 ```
 
 :::note
-The router is a systemd service. With it off, the caches in
-`marchyo.nix.caches` are used as direct substituters.
+The former `marchyo.nix.caches` and `marchyo.nix.router.extraUpstreams` are
+removed; `marchyo.nix.router.{enable,port,netrcFile}` still work as aliases of
+the `services.ncro` options, with a warning.
 :::
 
 After activation, verify with:

@@ -34,21 +34,22 @@ When `vendors` is empty (default), Intel packages are applied on x86_64 for back
 ## NVIDIA options
 
 - `marchyo.graphics.nvidia.generation` (`"turing-or-newer"` or `"pre-turing"`, default `"turing-or-newer"`): the GPU generation. Turing is RTX 20xx and GTX 16xx. Pre-Turing is Maxwell, Pascal and Volta.
-- `marchyo.graphics.nvidia.package` (`"stable"`, `"beta"`, `"production"` or `"legacy_580"`): the driver branch from `boot.kernelPackages.nvidiaPackages`. The default is `"stable"`, or `"legacy_580"` for pre-Turing GPUs.
-- `marchyo.graphics.nvidia.open` (bool): use the open kernel modules. The default is `true` for Turing or newer and `false` for pre-Turing. RTX 50xx requires them.
-- `marchyo.graphics.nvidia.powerManagement` (bool, default `false`): experimental power management (may improve laptop battery life).
-- `marchyo.graphics.nvidia.containerToolkit.enable` (bool): enable `hardware.nvidia-container-toolkit`, so containers get the GPU through CDI (`podman run --device nvidia.com/gpu=all ...`). The default is `true` when `"nvidia"` is in `vendors` and `marchyo.development.enable` is set.
+
+marchyo sets these NVIDIA options with `lib.mkDefault`; set them directly to override:
+
+- `hardware.nvidia.package`: `boot.kernelPackages.nvidiaPackages.stable`, or `legacy_580` for pre-Turing GPUs.
+- `hardware.nvidia.open`: `true` for Turing or newer, `false` for pre-Turing. RTX 50xx requires the open modules.
+- `hardware.nvidia-container-toolkit.enable`: `true` with `marchyo.development.enable`, so containers get the GPU through CDI (`podman run --device nvidia.com/gpu=all ...`).
+
+Experimental power management is `hardware.nvidia.powerManagement.enable` (off).
 
 ```nix
-marchyo.graphics.nvidia = {
-  generation = "turing-or-newer";
-  package = "stable";
-  powerManagement = false;
-};
+marchyo.graphics.nvidia.generation = "turing-or-newer";
+hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
 ```
 
 :::caution
-`nvidia.open = true` with `generation = "pre-turing"` fails evaluation. The open modules support only Turing and newer.
+`hardware.nvidia.open = true` with `generation = "pre-turing"` fails evaluation. The open modules support only Turing and newer.
 :::
 
 ### NVIDIA environment variables
@@ -62,7 +63,7 @@ In PRIME `offload` and `reverse-sync` modes the integrated GPU drives the displa
 ## AMD options
 
 - `marchyo.graphics.amd.vaapi.enable` (bool, default `true`): Mesa radeonsi VA-API and VDPAU, plus `vainfo`. `LIBVA_DRIVER_NAME=radeonsi` and `VDPAU_DRIVER=radeonsi` are set only when AMD is the primary GPU (no Intel iGPU, and NVIDIA does not drive the display).
-- `marchyo.graphics.amd.overdrive.enable` (bool, default `false`): set `hardware.amdgpu.overdrive.enable` for overclocking and undervolting tools such as LACT or CoreCtrl.
+- Overclocking and undervolting (LACT, CoreCtrl) need `hardware.amdgpu.overdrive.enable = true;`.
 - `marchyo.graphics.amd.rocm.enable` (bool, default `false`): the ROCm compute stack. It installs the HIP runtime (`rocmPackages.clr`), links it to `/opt/rocm/hip`, and adds Marchyo users to the `render` and `video` groups. It requires `"amd"` in `vendors`.
 - `marchyo.graphics.amd.rocm.hsaOverrideGfxVersion` (string or null, default `null`): the value of `HSA_OVERRIDE_GFX_VERSION`, for GPUs that ROCm does not officially support (for example `"10.3.0"` for RDNA2 or `"11.0.0"` for RDNA3).
 
@@ -156,7 +157,6 @@ marchyo.graphics.vendors = [ "amd" ];
 ```nix
 marchyo.graphics = {
   vendors = [ "nvidia" ];
-  nvidia.open = true;
 };
 ```
 
@@ -165,7 +165,6 @@ marchyo.graphics = {
 ```nix
 marchyo.graphics = {
   vendors = [ "intel" "nvidia" ];
-  nvidia.open = true;
   prime = {
     enable = true;
     intelBusId = "PCI:0:2:0";
@@ -180,7 +179,6 @@ marchyo.graphics = {
 ```nix
 marchyo.graphics = {
   vendors = [ "amd" "nvidia" ];
-  nvidia.open = true;
   prime = {
     enable = true;
     amdgpuBusId = "PCI:6:0:0";

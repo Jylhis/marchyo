@@ -65,8 +65,8 @@ let
       imports = [
         home-manager.nixosModules.home-manager
         { home-manager.useGlobalPkgs = true; }
-        # ncro service options; enablement is gated by marchyo.nix.router.enable
-        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service),
+        # ncro service options; modules/nixos/ncro.nix turns services.ncro on
+        # by default. NixOS only (systemd DynamicUser service),
         # deliberately absent from hmSharedConfig.
         ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }

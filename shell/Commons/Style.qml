@@ -188,7 +188,7 @@ QtObject {
 
     // Whether to run the solaar HID++ fallback for peripherals battery (only
     // useful with a Logitech receiver the kernel will not bind; baked from
-    // marchyo.hardware.logitech.enable). Off by default so no solaar poll runs.
+    // programs.solaar.enable). Off by default so no solaar poll runs.
     readonly property bool peripheralsFallback: false
 
     // Baked feature flags (parity with waybar's conditional widgets). Dev default

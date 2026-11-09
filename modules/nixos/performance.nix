@@ -1,35 +1,21 @@
-# Global (headless-safe): kernel selection and CPU mitigations.
+# Global (headless-safe): CPU mitigations.
 {
   config,
   lib,
   options,
-  pkgs,
   ...
 }:
 let
   cfg = config.marchyo.performance;
-
-  # marchyo.performance.kernel enum -> kernel package set ("default" leaves
-  # boot.kernelPackages unmanaged; see the option description).
-  kernelPackages = {
-    latest = pkgs.linuxPackages_latest;
-    zen = pkgs.linuxPackages_zen;
-    xanmod = pkgs.linuxPackages_xanmod_latest;
-    lts = pkgs.linuxPackages;
-  };
 in
 {
-  # No lib.mkDefault here, unlike boot.kernelPackages below: kernelParams is a
+  # No lib.mkDefault here: kernelParams is a
   # list option, so definitions concatenate rather than compete on priority and
   # a default would not make the entry removable. Opting out is done through
   # marchyo.performance.disableMitigations, which drops the entry entirely.
   boot.kernelParams = lib.mkIf cfg.disableMitigations [
     "mitigations=off"
   ];
-
-  boot.kernelPackages = lib.mkIf (cfg.kernel != "default") (
-    lib.mkDefault kernelPackages.${cfg.kernel}
-  );
 
   # Warn on any container runtime, not just marchyo.development.enable — a host
   # that turns on podman or docker directly is in the same position. Only when

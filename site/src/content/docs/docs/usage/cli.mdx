@@ -144,7 +144,7 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 - With no paths, a gum menu picks a file, a folder, or the current clipboard text (sent as a LocalSend message).
 - `--json` prints the result (`{"share": {"peer": …, "status": "sent", "sent": n, "skipped": n}}`).
 
-The receiver has to accept the transfer; desktop notifications report when it is accepted, declined, and finished. Discovery uses UDP multicast on port 53317 and falls back to scanning the local /24 subnet, so sending also works with `marchyo.services.localsend.openFirewall = false`. `Share` is also listed under **Trigger** in `marchyo menu`.
+The receiver has to accept the transfer; desktop notifications report when it is accepted, declined, and finished. Discovery uses UDP multicast on port 53317 and falls back to scanning the local /24 subnet, so sending also works with `programs.localsend.openFirewall = false`. `Share` is also listed under **Trigger** in `marchyo menu`.
 
 ### Dictation
 

@@ -24,7 +24,7 @@ All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wra
 | `nixpkgs` | Primary package set — NixOS unstable channel |
 | `home-manager` | User environment management (master, pairs with unstable) |
 | `treefmt-nix` | Multi-tool code formatter |
-| `ncro` | Nix Cache Route Optimizer, behind `marchyo.nix.router.enable` |
+| `ncro` | Nix Cache Route Optimizer (`services.ncro.enable`, on by default) |
 | `tinted-schemes` | Base16 scheme catalog, read at eval time (non-flake input) |
 | `disko` | Declarative partitioning for the `disko/` layouts |
 

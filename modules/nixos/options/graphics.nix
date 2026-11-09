@@ -1,8 +1,6 @@
-{ config, lib, ... }:
+{ lib, ... }:
 let
   inherit (lib) mkOption types;
-  cfg = config.marchyo.graphics;
-  isTuring = cfg.nvidia.generation == "turing-or-newer";
 in
 {
   options.marchyo.graphics = {
@@ -45,56 +43,13 @@ in
             Uses the open kernel modules and the direct VA-API backend.
           - "pre-turing": Maxwell, Pascal and Volta.
             Uses the closed kernel modules, the 580 legacy driver and the EGL VA-API backend.
+
+          The kernel modules and driver branch are set on `hardware.nvidia.open`
+          and `hardware.nvidia.package` with `lib.mkDefault`; set those
+          directly to override them.
         '';
       };
 
-      package = mkOption {
-        type = types.enum [
-          "stable"
-          "beta"
-          "production"
-          "legacy_580"
-        ];
-        default = if isTuring then "stable" else "legacy_580";
-        defaultText = lib.literalExpression ''if generation == "pre-turing" then "legacy_580" else "stable"'';
-        description = ''
-          NVIDIA driver branch from `config.boot.kernelPackages.nvidiaPackages`.
-          `legacy_580` is the last branch that supports pre-Turing GPUs.
-        '';
-      };
-
-      open = mkOption {
-        type = types.bool;
-        default = isTuring;
-        defaultText = lib.literalExpression ''generation == "turing-or-newer"'';
-        description = ''
-          Use NVIDIA's open-source kernel modules.
-          Supported only on Turing (RTX 20xx, GTX 16xx) and newer GPUs.
-          Required for RTX 50xx series.
-        '';
-      };
-
-      containerToolkit.enable = mkOption {
-        type = types.bool;
-        default = builtins.elem "nvidia" cfg.vendors && config.marchyo.development.enable;
-        defaultText = lib.literalExpression ''
-          builtins.elem "nvidia" config.marchyo.graphics.vendors && config.marchyo.development.enable
-        '';
-        description = ''
-          Enable the NVIDIA Container Toolkit (`hardware.nvidia-container-toolkit`),
-          so Podman and Docker containers can use the GPU through CDI
-          (`--device nvidia.com/gpu=all`).
-        '';
-      };
-
-      powerManagement = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Enable experimental power management for NVIDIA GPUs.
-          May improve battery life on laptops but can cause issues on some systems.
-        '';
-      };
     };
 
     amd = {
@@ -127,15 +82,6 @@ in
         description = ''
           Use the Mesa radeonsi driver for VA-API and VDPAU video acceleration.
           `LIBVA_DRIVER_NAME` is set to "radeonsi" only when AMD is the primary GPU.
-        '';
-      };
-
-      overdrive.enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Enable amdgpu overdrive (`hardware.amdgpu.overdrive`), which allows
-          overclocking and undervolting with tools such as LACT or CoreCtrl.
         '';
       };
     };

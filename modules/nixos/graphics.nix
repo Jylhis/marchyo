@@ -72,7 +72,6 @@ in
       hardware.amdgpu = {
         initrd.enable = lib.mkDefault true;
         opencl.enable = lib.mkDefault true;
-        overdrive.enable = lib.mkDefault cfg.amd.overdrive.enable;
       };
 
       hardware.graphics.extraPackages = with pkgs; [
@@ -119,13 +118,15 @@ in
 
       hardware.nvidia = {
         modesetting.enable = true;
-        package = lib.mkDefault config.boot.kernelPackages.nvidiaPackages.${cfg.nvidia.package};
-        open = lib.mkDefault cfg.nvidia.open;
+        package =
+          lib.mkDefault
+            config.boot.kernelPackages.nvidiaPackages.${if isTuring then "stable" else "legacy_580"};
+        open = lib.mkDefault isTuring;
         nvidiaSettings = lib.mkDefault true;
-        powerManagement.enable = lib.mkDefault cfg.nvidia.powerManagement;
       };
 
-      hardware.nvidia-container-toolkit.enable = lib.mkDefault cfg.nvidia.containerToolkit.enable;
+      # GPU access for Podman and Docker containers through CDI.
+      hardware.nvidia-container-toolkit.enable = lib.mkDefault config.marchyo.development.enable;
 
       hardware.graphics.extraPackages = with pkgs; [
         nvidia-vaapi-driver
@@ -189,8 +190,8 @@ in
           vendors = lib.mkForce (lib.remove "nvidia" cfg.vendors);
           prime.enable = lib.mkForce false;
           prime.integratedOnlySpecialisation = lib.mkForce false;
-          nvidia.containerToolkit.enable = lib.mkForce false;
         };
+        hardware.nvidia-container-toolkit.enable = lib.mkForce false;
         boot.blacklistedKernelModules = nvidiaModules ++ [ "nouveau" ];
       };
     })
@@ -222,12 +223,8 @@ in
           message = "marchyo.graphics.prime.integratedOnlySpecialisation requires marchyo.graphics.prime.enable";
         }
         {
-          assertion = hasNvidia && cfg.nvidia.open -> isTuring;
-          message = ''marchyo.graphics.nvidia.open = true requires a Turing or newer GPU; set nvidia.open = false or nvidia.generation = "turing-or-newer"'';
-        }
-        {
-          assertion = cfg.nvidia.containerToolkit.enable -> hasNvidia;
-          message = ''marchyo.graphics.nvidia.containerToolkit.enable requires "nvidia" in marchyo.graphics.vendors'';
+          assertion = hasNvidia && config.hardware.nvidia.open -> isTuring;
+          message = ''hardware.nvidia.open = true requires a Turing or newer GPU; set hardware.nvidia.open = false or marchyo.graphics.nvidia.generation = "turing-or-newer"'';
         }
         {
           assertion = cfg.amd.rocm.enable -> hasAmd;

@@ -4,12 +4,6 @@ let
 in
 {
   options.marchyo.hardware = {
-    logitech.enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Enable Logitech wireless device support (Solaar GUI + udev rules).";
-    };
-
     camera.waitForAccess = mkOption {
       type = types.bool;
       default = config.marchyo.desktop.enable;

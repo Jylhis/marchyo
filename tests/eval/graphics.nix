@@ -69,11 +69,9 @@ in
         // {
           marchyo.graphics = {
             vendors = [ "nvidia" ];
-            nvidia = {
-              generation = "pre-turing";
-              open = true;
-            };
+            nvidia.generation = "pre-turing";
           };
+          hardware.nvidia.open = true;
         }
       );
 
@@ -108,23 +106,9 @@ in
       (c: !c.hardware.nvidia-container-toolkit.enable)
       (withTestUser {
         marchyo.development.enable = true;
-        marchyo.graphics = {
-          vendors = [ "nvidia" ];
-          nvidia.containerToolkit.enable = false;
-        };
+        marchyo.graphics.vendors = [ "nvidia" ];
+        hardware.nvidia-container-toolkit.enable = false;
       });
-
-  eval-graphics-container-toolkit-without-nvidia-fails =
-    testNixOSFails "graphics-container-toolkit-without-nvidia" "requires \"nvidia\""
-      (
-        minimalConfig
-        // {
-          marchyo.graphics = {
-            vendors = [ "intel" ];
-            nvidia.containerToolkit.enable = true;
-          };
-        }
-      );
 
   eval-graphics-integrated-only-specialisation =
     testNixOSCheck "graphics-integrated-only-specialisation"
@@ -210,10 +194,8 @@ in
       (
         minimalConfig
         // {
-          marchyo.graphics = {
-            vendors = [ "amd" ];
-            amd.overdrive.enable = true;
-          };
+          marchyo.graphics.vendors = [ "amd" ];
+          hardware.amdgpu.overdrive.enable = true;
         }
       );
 
@@ -335,10 +317,15 @@ in
       (
         minimalConfig
         // {
-          marchyo.graphics = {
-            vendors = [ "nvidia" ];
-            nvidia.package = "beta";
-          };
+          marchyo.graphics.vendors = [ "nvidia" ];
+          imports = [
+            (
+              { config, ... }:
+              {
+                hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
+              }
+            )
+          ];
         }
       );
 

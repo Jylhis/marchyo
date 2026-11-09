@@ -45,9 +45,9 @@ in
       (withTestUser {
         marchyo.power.hibernation = {
           enable = true;
-          resumeDevice = "/dev/disk/by-uuid/0f0c0a5e-0000-4000-8000-000000000000";
           suspendThenHibernateDelay = "30min";
         };
+        boot.resumeDevice = "/dev/disk/by-uuid/0f0c0a5e-0000-4000-8000-000000000000";
       });
 
   eval-power-hibernation-needs-swap =

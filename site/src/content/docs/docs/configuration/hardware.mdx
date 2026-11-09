@@ -10,23 +10,23 @@ management) by default. Some peripheral-specific support is opt-in.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.hardware.logitech.enable` | `false` | Logitech wireless device support (Solaar GUI + udev rules) |
 | `marchyo.hardware.camera.waitForAccess` | desktop | Delay WirePlumber at login until camera devices are accessible |
 | `marchyo.hardware.ddc.enable` | `true` | DDC/CI external-monitor brightness (ddcutil, i2c bus + group), desktop-only |
 
 ## Logitech wireless
 
 Enable support for Logitech Unifying / Bolt receivers and the Solaar
-management GUI:
+management GUI with the NixOS option:
 
 ```nix
 {
-  marchyo.hardware.logitech.enable = true;
+  programs.solaar.enable = true;
 }
 ```
 
-This turns on `hardware.logitech.wireless` with the graphical Solaar tool, so
-you can pair devices and tune per-device settings.
+This also turns on `hardware.logitech.wireless`, so you can pair devices and
+tune per-device settings, and arms the shell's Solaar fallback for device
+batteries. (`marchyo.hardware.logitech.enable` is a deprecated alias.)
 
 ## Camera access at login
 

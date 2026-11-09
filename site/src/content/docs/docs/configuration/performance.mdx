@@ -25,16 +25,11 @@ marchyo.performance.disableMitigations = false;
 
 ## Kernel selection
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.performance.kernel` | `enum` | `"default"` | Kernel variant: `default` (nixpkgs LTS default), `latest`, `zen`, `xanmod`, `lts` |
+marchyo leaves the kernel to NixOS. Pick another one with `boot.kernelPackages`:
 
 ```nix
-marchyo.performance.kernel = "zen";
+boot.kernelPackages = pkgs.linuxPackages_zen; # or linuxPackages_latest, linuxPackages_xanmod_latest
 ```
-
-Set via `lib.mkDefault`, so hosts can still override `boot.kernelPackages`
-directly. `"default"` leaves the option unmanaged.
 
 ## Network and disk defaults
 

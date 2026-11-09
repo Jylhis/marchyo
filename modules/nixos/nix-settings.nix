@@ -1,12 +1,14 @@
 # Global (headless-safe): nix daemon settings, store cleanup and optimisation.
 { config, lib, ... }:
 let
-  cfg = config.marchyo.nix;
-  # Single source of truth: derive the substituter and key lists from
-  # marchyo.nix.caches so a cache is declared exactly once (and the ncro
-  # router can consume the same list). See modules/nixos/options/nix-cache.nix.
-  cacheUrls = map (c: c.url) cfg.caches;
-  cacheKeys = lib.filter (k: k != null) (map (c: c.publicKey) cfg.caches);
+  # marchyo's binary caches. caches.json is plain data so other tooling can
+  # read the same list. They are plain list definitions, so a host's own
+  # nix.settings.substituters / trusted-public-keys merge with them (and
+  # lib.mkForce replaces them); ncro (modules/nixos/ncro.nix) routes whatever
+  # the merged substituter list ends up holding.
+  inherit ((builtins.fromJSON (builtins.readFile ./caches.json))) caches;
+  cacheUrls = map (c: c.url) caches;
+  cacheKeys = lib.filter (k: k != null) (map (c: c.publicKey) caches);
 in
 {
   nix = {

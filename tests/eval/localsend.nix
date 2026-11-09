@@ -49,7 +49,7 @@ in
       (cfg: hasLocalsend cfg && !(tcpOpen cfg) && !(udpOpen cfg))
       (withTestUser {
         marchyo.desktop.enable = true;
-        marchyo.services.localsend.openFirewall = false;
+        programs.localsend.openFirewall = false;
       });
 
   # Opting out keeps the desktop but drops the package and the open port.
@@ -57,11 +57,10 @@ in
     testNixOSCheck "localsend-disabled" (cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg))
       (withTestUser {
         marchyo.desktop.enable = true;
-        marchyo.services.localsend.enable = false;
+        programs.localsend.enable = false;
       });
 
-  # Headless host: the sub-toggle defaults to true, but without the desktop
-  # nothing installs and no port opens.
+  # Headless host: without the desktop nothing installs and no port opens.
   eval-localsend-headless = testNixOSCheck "localsend-headless" (
     cfg: !(hasLocalsend cfg) && !(tcpOpen cfg) && !(udpOpen cfg)
   ) (withTestUser { });

@@ -19,12 +19,10 @@ in
     (lib.mkIf hib.enable {
       assertions = [
         {
-          assertion = config.swapDevices != [ ] || hib.resumeDevice != null || config.boot.resumeDevice != "";
-          message = "marchyo.power.hibernation.enable needs swapDevices, marchyo.power.hibernation.resumeDevice or boot.resumeDevice.";
+          assertion = config.swapDevices != [ ] || config.boot.resumeDevice != "";
+          message = "marchyo.power.hibernation.enable needs swapDevices or boot.resumeDevice.";
         }
       ];
-
-      boot.resumeDevice = lib.mkIf (hib.resumeDevice != null) hib.resumeDevice;
 
       services.logind.settings.Login.HandleSuspendKey = lib.mkDefault "suspend-then-hibernate";
 

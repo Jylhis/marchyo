@@ -11,7 +11,7 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Nix Cache Route Optimizer, behind marchyo.nix.router.enable.
+    # Nix Cache Route Optimizer (services.ncro, on by default in modules/nixos/ncro.nix).
     ncro = {
       url = "github:manic-systems/ncro";
       inputs.nixpkgs.follows = "nixpkgs";

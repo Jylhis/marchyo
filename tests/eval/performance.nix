@@ -12,17 +12,6 @@ in
     marchyo.performance.tuning.enable = true;
   });
 
-  # Kernel selection maps the enum onto boot.kernelPackages (testNixOS never
-  # forces that option). modDirVersion carries the zen localversion suffix
-  # (e.g. "6.x.y-zen1"), which is more stable across nixpkgs revs than the
-  # derivation name.
-  eval-performance-kernel-zen =
-    testNixOSCheck "performance-kernel-zen"
-      (c: lib.hasInfix "zen" c.boot.kernelPackages.kernel.modDirVersion)
-      (withTestUser {
-        marchyo.performance.kernel = "zen";
-      });
-
   # mitigations=off is the shipped default, and setting the flag to false must
   # actually drop the kernel param (kernelParams is a list, so a stale
   # definition would silently concatenate rather than be overridden).

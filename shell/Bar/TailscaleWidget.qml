@@ -4,7 +4,7 @@ import qs.Commons
 import qs.Services
 
 // Tailscale status indicator: a pure view over Services/Tailscale. Self-hides
-// on hosts without tailscale (marchyo.services.tailscale.enable off, so the CLI
+// on hosts without tailscale (services.tailscale.enable off, so the CLI
 // is not baked, the probe fails, and installed stays false). Registered but not
 // placed in the default layout: add marchyo.tailscale to a section to show it.
 BarItem {

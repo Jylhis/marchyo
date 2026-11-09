@@ -22,21 +22,12 @@ in
         };
       });
 
-  # Firewall gate off: networking.firewall.enable defaults to false — a real
-  # off-switch, since NixOS itself would otherwise leave the firewall on.
-  eval-security-firewall-disabled =
-    testNixOSCheck "security-firewall-disabled" (cfg: !cfg.networking.firewall.enable)
-      (withTestUser {
-        marchyo.security.firewall.enable = false;
-      });
-
   # Default state: the firewall is on.
   eval-security-firewall-default = testNixOSCheck "security-firewall-default" (
     cfg: cfg.networking.firewall.enable
   ) (withTestUser { });
 
-  # firewall.nix uses mkDefault, so a host can force the firewall off directly
-  # without touching the marchyo option.
+  # The host turns the firewall off with the upstream option.
   eval-security-firewall-host-override =
     testNixOSCheck "security-firewall-host-override" (cfg: !cfg.networking.firewall.enable)
       (withTestUser {

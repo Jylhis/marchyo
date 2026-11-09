@@ -14,7 +14,7 @@ let
   fileManager = marchyoCfg.defaults.fileManager;
   enabled = desktopEnabled && fileManager == "nautilus";
 
-  localsendEnabled = marchyoCfg.services.localsend.enable;
+  localsendEnabled = osConfig.programs.localsend.enable;
 
   # LocalSend has no CLI to pre-fill files, so the script just launches the app,
   # detached (setsid) so it survives Nautilus exiting.

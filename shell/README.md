@@ -448,7 +448,7 @@ resets; unavailable entries render no tile.
 | --- | --- | --- | --- |
 | Wi-Fi | `NetworkStatus.wifiEnabled` / `setWifiEnabled` (NetworkManager radio via `Quickshell.Networking`) | a Wi-Fi device exists | network |
 | Bluetooth | `BluetoothState.enabled` / `toggle` (BlueZ adapter power) | a default adapter exists | none |
-| Tailscale | `Tailscale.running` / `setUp` (`tailscale up --timeout=20s` / `down`) | the CLI is baked (`marchyo.services.tailscale.enable`) and answers | tailscale |
+| Tailscale | `Tailscale.running` / `setUp` (`tailscale up --timeout=20s` / `down`) | the CLI is baked (`services.tailscale.enable`) and answers | tailscale |
 | Do not disturb | `NotificationState.dnd` / `toggleDnd` | always | notifications |
 | Caffeine | `Caffeine.active` / `toggle` | always | none |
 | Night light | `Nightlight.enabled` / `toggle` | always | none |

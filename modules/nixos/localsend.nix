@@ -1,16 +1,11 @@
+# LocalSend file sharing ships with the desktop (programs.localsend, which
+# also opens port 53317 by default). `marchyo share` and the Nautilus
+# "Send with LocalSend" script follow programs.localsend.enable.
 {
   config,
   lib,
   ...
 }:
-let
-  cfg = config.marchyo;
-in
 {
-  config = lib.mkIf (cfg.desktop.enable && cfg.services.localsend.enable) {
-    programs.localsend = {
-      enable = true;
-      inherit (cfg.services.localsend) openFirewall;
-    };
-  };
+  programs.localsend.enable = lib.mkDefault config.marchyo.desktop.enable;
 }

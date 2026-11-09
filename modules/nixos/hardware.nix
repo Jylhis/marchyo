@@ -8,11 +8,7 @@
   hardware = {
     # mkDefault so tests can override this.
     enableRedistributableFirmware = lib.mkDefault true;
-
-    logitech.wireless.enable = lib.mkIf config.marchyo.hardware.logitech.enable true;
   };
-
-  programs.solaar.enable = lib.mkIf config.marchyo.hardware.logitech.enable true;
 
   services.hardware.bolt.enable = lib.mkDefault true;
 

@@ -51,11 +51,11 @@
   # marchyo.menus.enable — drives the power panel's menu button (marchyo menu
   # power vs the in-shell app launcher).
   menusEnabled ? true,
-  # marchyo.hardware.logitech.enable — arms the solaar HID++ fallback in the
+  # programs.solaar.enable — arms the solaar HID++ fallback in the
   # peripherals-battery service (only useful with a Logi receiver the kernel
   # will not bind); off by default so no solaar poll runs.
   peripheralsFallback ? false,
-  # marchyo.services.tailscale.enable — conditionally bakes the tailscale CLI
+  # services.tailscale.enable — conditionally bakes the tailscale CLI
   # path into Config so the store shell can drive the Tailscale status widget.
   # When off, the bare name is baked (never forced into the closure) and the
   # widget self-hides because the command is absent. Keeps tailscale out of the

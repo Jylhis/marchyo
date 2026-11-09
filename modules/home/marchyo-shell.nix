@@ -58,10 +58,10 @@ let
   menusEnabled = osConfig.marchyo.menus.enable;
   # Arm the solaar HID++ fallback only when Logitech support is on; otherwise
   # the shell never polls solaar.
-  peripheralsFallback = osConfig.marchyo.hardware.logitech.enable;
+  peripheralsFallback = osConfig.programs.solaar.enable;
   # Bake the tailscale CLI in only when the service is on, to keep it out of the
   # closure on hosts that do not enable it.
-  tailscaleEnabled = osConfig.marchyo.services.tailscale.enable;
+  tailscaleEnabled = osConfig.services.tailscale.enable;
   # Drop empty match keys so a rule matching only on appName does not also carry
   # an empty desktopEntry (and vice versa).
   notifRules = map (r: lib.filterAttrs (_n: v: v != "") r) osConfig.marchyo.notifications.rules;

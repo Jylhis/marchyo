@@ -1,5 +1,5 @@
 {
-  "_comment": "Binary caches marchyo trusts by default (marchyo.nix.caches).",
+  "_comment": "Binary caches marchyo adds to nix.settings.substituters and trusted-public-keys (modules/nixos/nix-settings.nix).",
   "caches": [
     {
       "url": "https://jylhis.cachix.org",

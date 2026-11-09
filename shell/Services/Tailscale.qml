@@ -4,7 +4,7 @@ import Quickshell.Io
 import qs.Commons
 
 // Shared Tailscale state: ONE seat-wide `tailscale status --json` poll. The CLI
-// is only baked into Config when marchyo.services.tailscale.enable is set; on
+// is only baked into Config when services.tailscale.enable is set; on
 // other hosts the bare name is baked, the probe fails, and `installed` stays
 // false so the widget self-hides. A singleton; this state is seat-global.
 QtObject {
@@ -20,7 +20,7 @@ QtObject {
     property var peers: []
 
     // Up/down is offered only when the CLI is baked as a store path
-    // (marchyo.services.tailscale.enable) and the status probe succeeds. The
+    // (services.tailscale.enable) and the status probe succeeds. The
     // daemon accepts it only from root or the tailnet operator, which NixOS
     // sets via marchyo.services.tailscale.operator (the primary marchyo user
     // when the shell is on); any refusal lands in lastError.
