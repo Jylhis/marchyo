@@ -19,22 +19,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # nix-on-droid (Android terminal). Pinned to the latest prerelease with a
-    # dedicated home-manager input matching it (the prerelease expects HM 24.05).
-    # Kept internally consistent on its own bundled nixpkgs (NOT following the
-    # unstable primary), so the droid HM config stays on HM-24.05 semantics.
-    nix-on-droid = {
-      url = "github:nix-community/nix-on-droid/prerelease-25.11";
-      inputs.home-manager.follows = "home-manager-droid";
-    };
-    # Pinned to the exact home-manager revision nix-on-droid prerelease-25.11
-    # bundles, so it matches that branch's (2024-era) nixpkgs lib. Using
-    # release-24.05 HEAD instead breaks: its kanshi.nix needs lib.types.attrTag,
-    # absent from the bundled nixpkgs.
-    home-manager-droid = {
-      url = "github:nix-community/home-manager/4de84265d7ec7634a69ba75028696d74de9a44a7";
-      inputs.nixpkgs.follows = "nix-on-droid/nixpkgs";
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -76,10 +60,8 @@
       inherit (marchyo)
         nixosModules
         homeManagerModules
-        nixOnDroidModules
         nixosConfigurations
         homeConfigurations
-        nixOnDroidConfigurations
         overlays
         templates
         lib

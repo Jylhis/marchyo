@@ -7,7 +7,6 @@
 just check               # Lint + eval checks (nix flake check, statix, deadnix)
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
 just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
-just build-nix-on-droid  # Build reference Android config (uses --impure; nix-on-droid needs builtins.storePath)
 just update              # Update all inputs: flake.lock -> devenv.lock
 just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
 just run                 # Run default configuration VM (x86_64-linux only)

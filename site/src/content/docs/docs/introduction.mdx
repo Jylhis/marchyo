@@ -41,7 +41,6 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 | Output | Description |
 |--------|-------------|
 | `lib.mkNixosSystem` / `lib.mkDarwinSystem` | System-aware builders (recommended entry point) |
-| `lib.mkNixOnDroidConfiguration` | nix-on-droid (Android terminal) builder, aarch64; reuses the HM-agnostic generic modules (HM 24.05) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
 | `nixosModules.hardware.<profile>` | [nixos-hardware](https://github.com/NixOS/nixos-hardware) per-machine profiles, re-exported (e.g. `lenovo-thinkpad-x1-9th-gen`, `framework-13-7040-amd`, `common-pc-ssd`) |
 | `homeManagerModules.default` | Home Manager module only |

@@ -2,16 +2,15 @@
 
 ## Project Overview
 
-Marchyo is a modular NixOS configuration flake providing curated system, Home Manager, and nix-on-droid configurations with sensible defaults. It is distributed as a batteries-included Nix flake meant to be used as the sole input in downstream configurations: consumers build with the `marchyo.lib.mkNixosSystem` builder, which selects the system-correct nixpkgs + home-manager automatically.
+Marchyo is a modular NixOS configuration flake providing curated system, and Home Manager configurations with sensible defaults. It is distributed as a batteries-included Nix flake meant to be used as the sole input in downstream configurations: consumers build with the `marchyo.lib.mkNixosSystem` builder, which selects the system-correct nixpkgs + home-manager automatically.
 
 **Key features:**
 - Modular architecture: configurations broken into small, manageable modules
 - Feature flags: `marchyo.desktop.enable`, `marchyo.development.enable`, etc. enable entire stacks
 - Home Manager integration for user-specific configurations and dotfiles
-- nix-on-droid support for an Android terminal environment (CLI-only), a first-class build target via `marchyo.lib.mkNixOnDroidConfiguration`
 - Hardware support via `nixos-hardware` with NVIDIA/PRIME graphics options
 - All custom options live under the `marchyo.*` namespace
-- Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; `home-manager` tracks `master` to pair with unstable. nix-on-droid is pinned independently (its own 2024-era nixpkgs + `home-manager-droid`).
+- Multi-nixpkgs: the primary `nixpkgs` input is **unstable**; `home-manager` tracks `master` to pair with unstable.
 - Nixpkgs passthrough: downstream consumers only need `inputs.marchyo`; `marchyo.lib.*` builders and `legacyPackages.<system>` give a system-correct nixpkgs
 
 ## Hybrid Non-Flake + Flake Architecture
@@ -35,7 +34,6 @@ docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)
 shell/              # Quickshell shell QML tree, the default desktop shell (bar, launcher, OSD, panels, notifications, lock; see shell/README.md)
 modules/nixos/      # NixOS system-level modules (auto-discovered)
-modules/nix-on-droid/  # nix-on-droid (Android terminal): built via lib.mkNixOnDroidConfiguration; reuses generic git/shell modules; HM 24.05
 modules/home/       # Home Manager user-level modules (auto-discovered)
 modules/generic/    # Shared modules imported by nixos and home default.nix
 packages/           # Custom Nix packages (marchyo-cli, marchyo-shell, plymouth-marchyo-theme, marchyo-wallpapers)
@@ -48,7 +46,7 @@ templates/workstation/  # Developer workstation template
 
 ## Flake Outputs
 
-- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix`. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkNixOnDroidConfiguration` (batteries-included nix-on-droid builder, fixed to aarch64-linux; flows through the `droidInputs` grouping the way the others flow through `inputsFor`), `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
+- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and auto-select the correct nixpkgs, home-manager, overlay and marchyo modules via the `inputsFor` selector in `outputs.nix`. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkHomeConfiguration`, `lib.inputsFor`, `lib.mkPkgs`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
 - `homeManagerModules.default` — Home Manager module only
@@ -61,10 +59,9 @@ templates/workstation/  # Developer workstation template
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{linux}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (shared config with devenv)
-- `nixosModules` / `homeManagerModules` / `nixOnDroidModules` — per-platform module sets
+- `nixosModules` / `homeManagerModules` — per-platform module sets
 - `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
 - `homeConfigurations.{x86_64-linux,aarch64-linux}` — Standalone Home Manager configs (Linux only)
-- `nixOnDroidConfigurations.aarch64` — Reference Android terminal config, built through `lib.mkNixOnDroidConfiguration` (the same exported builder consumers use). Built impurely (`nix build --impure …activationPackage`): nix-on-droid uses `builtins.storePath`, so it cannot be evaluated in pure `nix flake check`. Coverage instead comes from `tests/eval/nix-on-droid.nix`, a pure check of the droid Home-Manager module (incl. the reused generic modules) against HM 24.05
 
 Downstream consumers build with `marchyo.lib.mkNixosSystem`, which selects the system-correct nixpkgs automatically — no separate nixpkgs input needed. The raw `marchyo.inputs.nixpkgs` passthrough remains available but is always **unstable**; for a system-correct, overlay-applied package set use `marchyo.legacyPackages.<system>`.
 

@@ -51,8 +51,7 @@ in
           fronts the binary caches. When on, `http://localhost:<port>` is prepended
           to `nix.settings.substituters` (the caches in `marchyo.nix.caches` stay as
           direct fallbacks) and ncro routes each request to the fastest reachable
-          upstream. NixOS only; nix-on-droid ignores this and talk to the
-          caches directly.
+          upstream.
         '';
       };
 

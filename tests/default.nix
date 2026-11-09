@@ -8,8 +8,6 @@
   lib,
   nixpkgs,
   home-manager,
-  home-manager-droid,
-  nix-on-droid,
   nixosModules,
   homeManagerModules,
   nixosHardwareModules,
@@ -25,8 +23,6 @@ let
     inherit
       lib
       nixosModules
-      nix-on-droid
-      home-manager-droid
       ;
   };
 

@@ -10,7 +10,6 @@ modules/
   nixos/          # NixOS system-level modules (auto-discovered)
   home/           # Home Manager user-level modules (auto-discovered)
   darwin/         # nix-darwin modules (hand-curated import list)
-  nix-on-droid/   # nix-on-droid (Android terminal) modules
   generic/        # Shared modules imported by nixos, home, and darwin
 lib/              # Flake helpers (system list, module auto-discovery)
 packages/         # Custom Nix packages (marchyo-cli, marchyo-wallpapers,
@@ -106,10 +105,8 @@ The keyboard/IME system is the most complex cross-module pattern:
 | `nixpkgs-stable` | nixos-26.05, used only by `darwinConfigurations.x86_64` |
 | `home-manager` | User environment management (master, pairs with unstable) |
 | `home-manager-stable` | release-26.05 Home Manager for the stable darwin config |
-| `home-manager-droid` | Pinned Home Manager revision (HM 24.05) for nix-on-droid |
 | `nix-darwin` | macOS system configuration (master, pairs with unstable) |
 | `nix-darwin-stable` | nix-darwin-26.05 for the stable darwin config |
-| `nix-on-droid` | Android terminal environment (own pinned nixpkgs) |
 | `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
 | `sops-nix` | Secrets management |

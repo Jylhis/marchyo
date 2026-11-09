@@ -22,7 +22,7 @@ Documentation is organized into three trees (mirroring the omarchy model):
   breaking changes.
 - [gotchas.md](gotchas.md) — the accumulated sharp edges (theme source of truth,
   design-system v3, font stack, the stylix retirement, the in-shell launcher, Plymouth
-  generation, nix-on-droid, ghostty ssh, hyprlock fingerprint, …).
+  generation, ghostty ssh, hyprlock fingerprint, …).
 - [ci-and-testing.md](ci-and-testing.md) — commands, the test suite, CI pipeline,
   session-completion checklist.
 

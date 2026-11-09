@@ -4,7 +4,7 @@ Tool-agnostic guidance for AI agents working in this repository. This file is th
 
 ## What this repository is
 
-Marchyo is a modular NixOS configuration flake with Home Manager and nix-on-droid support. Consumers build systems with `marchyo.lib.mkNixosSystem` / `mkNixOnDroidConfiguration`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; after a design change run `just ds-sync` (the `design-copies` check fails until you do).
+Marchyo is a modular NixOS configuration flake with Home Manager support. Consumers build systems with `marchyo.lib.mkNixosSystem`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; after a design change run `just ds-sync` (the `design-copies` check fails until you do).
 
 ## Declarative only — never suggest imperative changes
 
@@ -19,7 +19,6 @@ just check               # Linux: nix flake check --no-build, then statix + dead
 just fmt                 # nix fmt via treefmt
 just build-nixos         # reference NixOS config; optional config=x86_64|aarch64
 just build-home          # standalone HM config; optional config=<supported system>
-just build-nix-on-droid  # Android config; recipe supplies required --impure
 just verify              # check shared revisions in flake.lock and devenv.lock
 just cli-test            # frozen Bun install, typecheck, and unit tests
 just site-build          # frozen Bun install, Astro check, and build
@@ -32,7 +31,6 @@ just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host o
 
 - `modules/nixos/` and `modules/home/` are **auto-discovered** via `lib/discover-modules.nix`: every `.nix` file in the directory (plus any subdirectory containing a `default.nix`) is imported automatically. Adding or removing a module is a one-file change — never edit an import list for these.
 - `modules/generic/` holds modules shared by nixos and home.
-- `modules/nix-on-droid/` is a small separate tree on HM 24.05 — do not import `modules/home/*`, `modules/nixos/options`, or the overlay there.
 - Option declarations go in `modules/nixos/options/` (one file per logical namespace, auto-discovered), declaring `options.marchyo.<namespace>`.
 
 ## The `marchyo.*` flag model
