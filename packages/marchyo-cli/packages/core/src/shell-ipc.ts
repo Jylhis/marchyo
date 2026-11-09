@@ -4,10 +4,9 @@ import { commandAvailable } from "./flake.ts";
 import { captureArgv } from "./system.ts";
 
 // The one bridge from the CLI into the running marchyo shell's function table
-// (`actions` in shell/shell.qml). The shell's unix socket answers first; the
-// `IpcHandler { target: "shell" }`, reached through the `marchyo-shell`
-// wrapper (it bakes its own `-p <store-path>`, so the call self-targets the
-// running instance), answers when the socket is absent or skips the call.
+// (`actions` in shell/shell.qml): the `IpcHandler { target: "shell" }`,
+// reached through the `marchyo-shell` wrapper (it bakes its own
+// `-p <store-path>`, so the call self-targets the running instance).
 // Every call site passes the function name as a string literal:
 // tests/shell/contracts-test.sh greps `shellIpc("<fn>"` across the CLI sources
 // and fails when shell.qml lacks it.
@@ -78,124 +77,7 @@ export async function shellIpcWith(
 
 export async function shellIpc(fn: string, ...args: string[]): Promise<string> {
   if (!commandAvailable(SHELL_BIN)) throw notInstalled();
-  const socket = shellSocketPath();
-  if (socket !== null) {
-    const reply = await shellSocketCall(socket, fn, args);
-    if (reply !== null) return reply;
-  }
   return shellIpcWith(captureArgv, fn, ...args);
-}
-
-// The shell's own unix socket (shell.qml SocketServer, framed like
-// shell/Commons/ShellSocket.js): a Bun socket connects in a few ms where a
-// `qs ipc` client takes tens. Fields are split by the unit separator and the
-// request ends with the record separator.
-export const UNIT = "\x1f";
-export const RECORD = "\x1e";
-export const SOCKET_TIMEOUT_MS = 2000;
-
-// marchyo-shell-<16 hex of md5(shell dir "\n" WAYLAND_DISPLAY)>.sock, the name
-// shell.qml derives from Quickshell.shellDir and its own WAYLAND_DISPLAY.
-export function shellSocketName(shellDir: string, waylandDisplay: string): string {
-  const id = new Bun.CryptoHasher("md5").update(`${shellDir}\n${waylandDisplay}`).digest("hex");
-  return `marchyo-shell-${id.slice(0, 16)}.sock`;
-}
-
-export function shellSocketPath(
-  env: NodeJS.ProcessEnv = process.env,
-  shellDir: string | null = shellShareDir(env.PATH ?? ""),
-): string | null {
-  const runtime = env.XDG_RUNTIME_DIR;
-  if (!runtime || shellDir === null) return null;
-  const path = join(runtime, shellSocketName(shellDir, env.WAYLAND_DISPLAY ?? ""));
-  return existsSync(path) ? path : null;
-}
-
-// Null when an argument cannot be framed (it holds a separator).
-export function encodeShellRequest(fn: string, args: string[]): string | null {
-  const fields = [SHELL_IPC_TARGET, fn, ...args];
-  if (fields.some((f) => f.includes(UNIT) || f.includes(RECORD))) return null;
-  return fields.join(UNIT) + RECORD;
-}
-
-export type ShellSocketReply =
-  | { kind: "ok"; output: string }
-  | { kind: "skip" }
-  | { kind: "error"; message: string }
-  | { kind: "partial" };
-
-// Classify the bytes read so far. A reply counts only once its record
-// separator arrived, so a cut-off answer never passes for the whole of it.
-export function parseShellReply(raw: string): ShellSocketReply {
-  const end = raw.indexOf(RECORD);
-  if (end < 0) return { kind: "partial" };
-  const body = raw.slice(0, end);
-  if (body === "SKIP") return { kind: "skip" };
-  if (body.startsWith(`OK${UNIT}`)) {
-    return { kind: "ok", output: body.slice(3).trim() };
-  }
-  if (body.startsWith(`ERR${UNIT}`)) return { kind: "error", message: body.slice(4) };
-  return { kind: "error", message: `unexpected reply: ${JSON.stringify(body.slice(0, 80))}` };
-}
-
-// The reply, or null when the socket ran nothing (SKIP, no connection) and
-// `qs ipc` should answer instead. Once the request is out, a timeout or a
-// broken reply throws: the call may already have run, so it is not retried.
-export function shellSocketCall(
-  path: string,
-  fn: string,
-  args: string[],
-  timeoutMs: number = SOCKET_TIMEOUT_MS,
-): Promise<string | null> {
-  const request = encodeShellRequest(fn, args);
-  if (request === null) return Promise.resolve(null);
-  return new Promise((resolve, reject) => {
-    let raw = "";
-    let sent = false;
-    let done = false;
-    const finish = (value: string | null, error?: ShellIpcError) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      if (error) reject(error);
-      else resolve(value);
-    };
-    const failed = (why: string) =>
-      sent
-        ? finish(null, new ShellIpcError("call-failed", `shell ${fn}: ${why}`))
-        : finish(null);
-    const timer = setTimeout(() => failed("the shell is not responding"), timeoutMs);
-    const settle = () => {
-      const reply = parseShellReply(raw);
-      if (reply.kind === "partial") return false;
-      if (reply.kind === "ok") finish(reply.output);
-      else if (reply.kind === "skip") finish(null);
-      else finish(null, new ShellIpcError("call-failed", `shell ${fn}: ${reply.message}`));
-      return true;
-    };
-    Bun.connect({
-      unix: path,
-      socket: {
-        open(socket) {
-          sent = true;
-          socket.write(request);
-        },
-        data(socket, chunk) {
-          raw += chunk.toString();
-          if (settle()) socket.end();
-        },
-        close() {
-          if (!settle()) failed("connection closed before the reply");
-        },
-        error(_socket, e) {
-          failed(e.message);
-        },
-        connectError(_socket, _e) {
-          finish(null);
-        },
-      },
-    }).catch(() => finish(null));
-  });
 }
 
 function notInstalled(): ShellIpcError {

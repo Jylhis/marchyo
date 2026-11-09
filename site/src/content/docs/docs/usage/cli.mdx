@@ -71,7 +71,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 
 ### Shell
 
-Verbs over the running marchyo shell (`marchyo.shell.enable`), used by hypridle, the screensaver, the lock bind and scripts (the other shell binds use Hyprland global shortcuts). Each call goes to the shell's unix socket first and falls back to `qs ipc` when the socket is absent. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
+Verbs over the running marchyo shell (`marchyo.shell.enable`), used by hypridle, the screensaver, the lock bind and scripts (the other shell binds use Hyprland global shortcuts). Each call goes through `qs ipc`. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
 
 | Command | Purpose |
 |---------|---------|

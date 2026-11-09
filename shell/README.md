@@ -19,8 +19,8 @@ summonable **panels** (`Panels/`, toggled from their bar widgets through the
 **build-time, Nix-declared** (the Option A plugin platform): plugins are baked
 into the store shell via `pkgs.mkMarchyoShellPlugin` and never discovered at
 runtime — there is no runtime plugin directory or hot-reload. Native Quickshell
-service bindings plus one action table (reached through an `IpcHandler`, a
-unix socket and Hyprland global shortcuts) cover everything the shell itself
+service bindings plus one action table (reached through an `IpcHandler` and
+Hyprland global shortcuts) cover everything the shell itself
 needs. `shell/compat/` additionally provides an omarchy plugin host API
 (`qs.compat.Ui` / `qs.compat.Commons`) so upstream omarchy bar widgets run
 near-unmodified; see the "Plugins" docs.
@@ -174,8 +174,8 @@ shell/
     WindowPreview.qml  one window: live ScreencopyView + title
 ```
 
-`shell.qml` also holds the shell's one action table and its three entry
-points (an `IpcHandler` with target `shell`, a unix socket and the
+`shell.qml` also holds the shell's one action table and its two entry
+points (an `IpcHandler` with target `shell` and the
 `shell/shortcuts.json` global shortcuts) so Hyprland keybinds and the CLI can
 summon panels and poke the OSD; see [Keybind summons](#keybind-summons) below.
 
@@ -488,16 +488,6 @@ OSD's **primary trigger**; see the OSD section), the state reports
   `hl.dsp.global("marchyo:<name>")` through `hlua.global "<name>"`
   (`lib/hyprland-lua.nix`, which reads the same file and rejects an unlisted
   name at eval time), so a keypress spawns no process.
-- **The unix socket.** The shell listens on
-  `$XDG_RUNTIME_DIR/marchyo-shell-<id>.sock`, where `<id>` is the first 16 hex
-  digits of the md5 of the shell directory and `WAYLAND_DISPLAY` joined by a
-  newline. A request is target, function and arguments split by the ASCII unit
-  separator (0x1f) and ended by the record separator (0x1e), one per
-  connection, at most 4096 characters (enforced while receiving) and sent within 2 s, or the connection closes with `ERR`. The reply is `OK` 0x1f output 0x1e,
-  `SKIP` 0x1e when nothing ran (another target, an unknown function, the
-  wrong argument count), or `ERR` 0x1f message 0x1e. Only the owning user can
-  connect: the runtime directory is 0700 and the socket is 0600. Framing and
-  dispatch live in `Commons/ShellSocket.js`.
 - **The IpcHandler.** `IpcHandler { target: "shell" }` exposes the same
   functions to `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper
   bakes its own `-p`, so the call self-targets the running instance).
@@ -505,10 +495,7 @@ OSD's **primary trigger**; see the OSD section), the state reports
 The `marchyo shell` CLI verbs (`toggle|open <panel>`, `close [<panel>]`,
 `launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`, `bar-state`,
 `dnd-state`, `dismiss [--all]`, `notify-keys`, `dnd [on|off]`,
-`overview [on|off]`, `reload`) try the socket first with a Bun unix socket and
-fall back to `qs ipc` when the socket is absent, refuses the connection, or
-answers `SKIP`. Once a request is out, a timeout (2 s) is reported, not
-retried, because the call may already have run.
+`overview [on|off]`, `reload`) call the IpcHandler through `qs ipc`.
 
 Default binds, wired only while the shell is on: `SUPER+SHIFT+V` audio,
 `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power, `SUPER+SHIFT+M` monitor,
@@ -1080,8 +1067,8 @@ Keep these when touching `shell/`.
 
 - `Bar/` owns no runtime state: every `Process`/`Timer`/`Connections`/`FileView`/`Socket`
   lives in a `Services/` singleton (contract-tested).
-- One action table, `actions` in `shell.qml`; the `IpcHandler { target: "shell" }`,
-  the unix socket and the global shortcuts all dispatch to it (contract-tested).
+- One action table, `actions` in `shell.qml`; the `IpcHandler { target: "shell" }`
+  and the global shortcuts both dispatch to it (contract-tested).
   Compat-shim handlers use per-plugin targets.
 - Long-lived streams restart with backoff keyed on `onRunningChanged` (see
   `Services/Dictation.qml`); a dead stream reports in the tooltip.

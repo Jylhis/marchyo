@@ -167,10 +167,10 @@ rival_shell_target=$(grep -rn --include="*.qml" 'target: *"shell"' "$SHELL_DIR" 
   grep -v "^$shell_qml:" | sed "s|^$ROOT/||")
 check 'only shell.qml claims the IPC target "shell"' "$rival_shell_target"
 
-# One function table: the IpcHandler, the unix socket and the global shortcuts
-# all dispatch to shell.qml's `actions`. The socket runs any table entry the CLI
-# names, so the table and the IpcHandler must list the same functions, or the
-# socket and the `qs ipc` fallback answer the same call differently.
+# One function table: the IpcHandler and the global shortcuts both dispatch to
+# shell.qml's `actions`, so the table and the IpcHandler must list the same
+# functions, or a shortcut and a `qs ipc` call answer the same name
+# differently.
 action_names=$(awk '/readonly property var actions: \(\{/{f=1;next} f&&/^        \}\)$/{f=0} f' "$shell_qml" |
   grep -oE '^            [a-zA-Z]+:' | tr -d ' :' | sort -u)
 handler_names=$(awk '/^    IpcHandler \{/{f=1;next} f&&/^    \}$/{f=0} f' "$shell_qml" |
@@ -187,7 +187,7 @@ while read -r method; do
   grep -qxF "$method" <<<"$action_names" ||
     missing_actions+="the CLI calls shellIpc(\"$method\"), which the actions table does not define"$'\n'
 done <<<"$cli_methods"
-check "every socket-dispatched CLI method exists in the actions table" "$missing_actions"
+check "every CLI-dispatched method exists in the actions table" "$missing_actions"
 
 # Global shortcuts: shell/shortcuts.json is the one list. shell.qml registers
 # each entry and runs its `call` from the actions table; lib/hyprland-lua.nix's

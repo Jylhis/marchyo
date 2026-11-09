@@ -18,7 +18,7 @@ import qs.Services
 // omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
 // Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
 import qs.compat.Ui as Plugin
-import "Commons/ShellSocket.js" as ShellSocket
+import "Commons/Actions.js" as Actions
 import "Commons/Appearance.js" as Appearance
 
 // A Jylhis-themed top bar plus the shell surfaces (OSD, panels, lock,
@@ -29,8 +29,8 @@ import "Commons/Appearance.js" as Appearance
 // first-party Components in `barComponents` below, or to plugin bar-widgets via
 // Commons/PluginIndex — the build-time Option A plugin model (Nix-declared,
 // store-baked; no runtime discovery). Runtime actions live in one function
-// table (`actions` below), reached through the IpcHandler, the unix socket and
-// the Hyprland global shortcuts. See shell/README.md.
+// table (`actions` below), reached through the IpcHandler and the Hyprland
+// global shortcuts. See shell/README.md.
 ShellRoot {
     id: shell
 
@@ -368,10 +368,10 @@ ShellRoot {
     // below the bar on the hovered item's screen (Services/Tooltip holds the state).
     TooltipWindow {}
 
-    // The one function table behind every runtime action. The IpcHandler, the
-    // unix socket and the Hyprland global shortcuts below all dispatch here.
-    // Arguments arrive as strings, and a function's arity is its argument count
-    // (ShellSocket.call rejects a mismatch). Panel summons mirror the
+    // The one function table behind every runtime action. The IpcHandler and
+    // the Hyprland global shortcuts below both dispatch here. Arguments arrive
+    // as strings, and a function's arity is its argument count (Actions.call
+    // rejects a mismatch). Panel summons mirror the
     // in-process bar-widget clicks; the OSD poke is a fallback for the
     // brightness case the native watcher cannot cover on some hosts.
     readonly property var actions: ({
@@ -665,74 +665,15 @@ ShellRoot {
     }
 
     Variants {
-        model: ShellSocket.parseShortcuts(shortcutsFile.text())
+        model: Actions.parseShortcuts(shortcutsFile.text())
 
         GlobalShortcut {
             required property var modelData
             appid: "marchyo"
             name: modelData.name
             description: modelData.description
-            onPressed: ShellSocket.call(shell.actions, modelData.call, modelData.args)
+            onPressed: Actions.call(shell.actions, modelData.call, modelData.args)
         }
-    }
-
-    // The CLI's fast path (core/src/shell-ipc.ts): one request per connection,
-    // framed by Commons/ShellSocket.js. The name hashes this shell's directory
-    // and display, like qs ipc's instance match, so the CLI derives the same
-    // path. Only the owning user can connect: the socket sits in the 0700
-    // XDG_RUNTIME_DIR and is chmodded 0600 once it listens.
-    readonly property string runtimeDir: Quickshell.env("XDG_RUNTIME_DIR") || ""
-    readonly property string socketPath: shell.runtimeDir === "" ? "" : shell.runtimeDir + "/" + ShellSocket.socketName(Quickshell.shellDir, Quickshell.env("WAYLAND_DISPLAY") || "", s => Qt.md5(s))
-
-    SocketServer {
-        active: shell.socketPath !== ""
-        path: shell.socketPath
-        onActiveStatusChanged: {
-            if (active)
-                socketMode.running = true;
-        }
-
-        // An empty split marker hands over raw chunks, so ShellSocket.feed
-        // enforces the size cap before the request is complete.
-        handler: Socket {
-            id: connection
-            property string pending: ""
-            property bool answered: false
-
-            function answer(text: string): void {
-                if (connection.answered)
-                    return;
-                connection.answered = true;
-                connection.pending = "";
-                connection.write(text);
-                connection.flush();
-                connection.connected = false;
-            }
-
-            parser: SplitParser {
-                splitMarker: ""
-                onRead: data => {
-                    const step = ShellSocket.feed(connection.pending, data);
-                    if (!step.done)
-                        connection.pending = step.buffer;
-                    else if (step.error)
-                        connection.answer(ShellSocket.reply("ERR", step.error));
-                    else
-                        connection.answer(ShellSocket.handle(shell.actions, step.record));
-                }
-            }
-
-            property Timer idle: Timer {
-                interval: ShellSocket.IDLE_TIMEOUT_MS
-                running: !connection.answered
-                onTriggered: connection.answer(ShellSocket.reply("ERR", "request timed out"))
-            }
-        }
-    }
-
-    Process {
-        id: socketMode
-        command: [Config.chmod, "0600", shell.socketPath]
     }
 
     Variants {
