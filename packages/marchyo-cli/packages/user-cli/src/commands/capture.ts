@@ -96,7 +96,10 @@ export function recordingMarkerPath(
 const RECORD_SUPERVISOR = [
   'm=$1; shift',
   "set -m",
-  '"$MARCHYO_RECORDER" "$@" &',
+  // A shell without job control (dash, or set -m without a tty) starts a
+  // background job with SIGINT and SIGQUIT ignored, so the stop signal
+  // would never reach the recorder: restore the default dispositions.
+  'env --default-signal=INT,QUIT "$MARCHYO_RECORDER" "$@" &',
   "p=$!",
   `trap 'rm -f "$m"' EXIT`,
   `trap 'kill -INT "$p" 2>/dev/null' INT`,
