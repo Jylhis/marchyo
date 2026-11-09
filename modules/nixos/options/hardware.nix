@@ -10,19 +10,6 @@ in
       description = "Enable Logitech wireless device support (Solaar GUI + udev rules).";
     };
 
-    camlink.enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = ''
-        Relay an Elgato Cam Link 4K (USB 0fd9:0066) as a 1280x720, 30 fps 16:9
-        virtual camera named "Cam Link 4K". Browser meeting apps expect a
-        camera they can open, and the raw capture node is not one. Uses
-        v4l2loopback and v4l2-relayd; the relay starts when the device is
-        plugged in and stops when it is removed. The raw node
-        (`/dev/camlink4k`) is root-only. Marchyo users join the `video` group.
-      '';
-    };
-
     camera.waitForAccess = mkOption {
       type = types.bool;
       default = config.marchyo.desktop.enable;

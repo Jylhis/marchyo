@@ -342,17 +342,7 @@ in
       inherit (pkgs)
         marchyo-shell
         plymouth-marchyo-theme
-        hype
-        signed
-        monologue
-        omarchy-audio-tuner
-        hex-dictation
-        superwhisper
-        amp-desktop
         ;
-    }
-    // selectedNixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-      inherit (pkgs) gliff;
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
@@ -392,18 +382,6 @@ in
       in
       nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
-        build-hype = pkgs.hype;
-        build-signed = pkgs.signed;
-        build-monologue = pkgs.monologue;
-        build-omarchy-audio-tuner = pkgs.omarchy-audio-tuner;
-        build-hex-dictation = pkgs.hex-dictation;
-        # Unfree binaries: instantiate only, so no CI step builds or caches them.
-        eval-superwhisper = pkgs.runCommand "eval-superwhisper" { } ''
-          echo ${builtins.unsafeDiscardStringContext pkgs.superwhisper.drvPath} > $out
-        '';
-        eval-amp-desktop = pkgs.runCommand "eval-amp-desktop" { } ''
-          echo ${builtins.unsafeDiscardStringContext pkgs.amp-desktop.drvPath} > $out
-        '';
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
         build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
           wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"

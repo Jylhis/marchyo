@@ -1,4 +1,4 @@
-var INDICATORS = ["marchyo.screenRecording", "marchyo.reminders", "marchyo.remoteSession",
+var INDICATORS = ["marchyo.screenRecording", "marchyo.reminders",
     "marchyo.dictation", "marchyo.caffeine", "marchyo.dnd", "marchyo.nightLight",
     "marchyo.camera", "marchyo.mic"];
 

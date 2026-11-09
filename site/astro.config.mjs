@@ -81,7 +81,6 @@ export default defineConfig({
             'docs/configuration/menu',
             'docs/configuration/notifications',
             'docs/configuration/dictation',
-            'docs/configuration/audio',
             'docs/configuration/hardware',
             'docs/configuration/power',
             'docs/configuration/performance',

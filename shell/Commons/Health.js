@@ -1,23 +1,7 @@
-// Pure parsers behind the bar's status indicators: remote session, pending
-// update, free disk space and `marchyo doctor` health. Each takes the text of
+// Pure parsers behind the bar's status indicators: pending update, free disk
+// space and `marchyo doctor` health. Each takes the text of
 // one probe and returns a small plain object, so the Services singletons stay
 // thin and the logic is testable headlessly (see Format.js for why).
-
-// Remote-session probe: one "<pid> [peer]" line per gliff-server of this user.
-// A server started over ssh carries the client address; a local one has none.
-function parseRemoteProbe(text) {
-    var peers = [];
-    var active = false;
-    String(text || "").split("\n").forEach(function (line) {
-        var parts = line.trim().split(/\s+/);
-        if (!/^\d+$/.test(parts[0]))
-            return;
-        active = true;
-        if (parts[1] && peers.indexOf(parts[1]) < 0)
-            peers.push(parts[1]);
-    });
-    return {active: active, peers: peers};
-}
 
 // `df -kP <path>` -> {freePercent, availKb} or null on anything unexpected.
 function parseDf(text) {
@@ -88,7 +72,6 @@ function summarizeChecks(checks) {
 // Node (tests) picks these up; QML ignores the guard.
 if (typeof module !== "undefined")
     module.exports = {
-        parseRemoteProbe: parseRemoteProbe,
         parseDf: parseDf,
         diskLow: diskLow,
         formatKb: formatKb,

@@ -34,7 +34,6 @@ singleton Overview 1.0 Overview.qml
 singleton MonitorWorkspaces 1.0 MonitorWorkspaces.qml
 singleton Displays 1.0 Displays.qml
 singleton Elsewhen 1.0 Elsewhen.qml
-singleton RemoteSession 1.0 RemoteSession.qml
 singleton Updates 1.0 Updates.qml
 singleton DiskSpace 1.0 DiskSpace.qml
 singleton Health 1.0 Health.qml

@@ -167,7 +167,7 @@ Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-fl
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.dictation.enable` | `false` | Enable dictation (hold F9 to dictate + an Alt+Space toggle bind) |
-| `marchyo.dictation.backend` | `"superwhisper"` | `superwhisper` (unfree, asserts allowUnfree), `voxtype` or `hex`; see `modules/home/dictation.nix` |
+| `marchyo.dictation.backend` | `"voxtype"` | `voxtype` (the only backend); see `modules/home/voxtype.nix` |
 | `marchyo.dictation.pushToTalk.enable` | `true` | Daemon evdev hold hotkey; adds dictation users to the `input` group |
 | `marchyo.dictation.pushToTalk.key` | `"F9"` | evdev key held to record (e.g. `"SCROLLLOCK"`, `"PAUSE"`, `"F13"`) |
 | `marchyo.dictation.pushToTalk.mode` | `"push_to_talk"` | `"push_to_talk"` (hold) or `"toggle"` (press to start/stop) |

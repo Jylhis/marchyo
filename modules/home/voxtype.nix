@@ -18,7 +18,7 @@ let
   enabled =
     pkgs.stdenv.hostPlatform.isLinux
     && (cfg.enable or false)
-    && (cfg.backend or "superwhisper") == "voxtype";
+    && (cfg.backend or "voxtype") == "voxtype";
 in
 {
   config = lib.mkIf enabled {

@@ -56,4 +56,18 @@ in
   eval-removed-console = testNixOSFails "removed-console" "Quake-style" (withTestUser {
     marchyo.console.enable = false;
   });
+
+  eval-removed-audio-tuner = testNixOSFails "removed-audio-tuner" "speaker tuner" (withTestUser {
+    marchyo.audio.tuner.enable = true;
+  });
+
+  eval-removed-camlink = testNixOSFails "removed-camlink" "Cam Link" (withTestUser {
+    marchyo.hardware.camlink.enable = true;
+  });
+
+  eval-removed-slack-theme-injection =
+    testNixOSFails "removed-slack-theme-injection" "Slack theme"
+      (withTestUser {
+        marchyo.slack.themeInjection.enable = true;
+      });
 }

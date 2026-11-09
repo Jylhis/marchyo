@@ -4,19 +4,15 @@ import { dirname, join } from "node:path";
 import { type Runtime, captureArgv, commandAvailable, data, err, usageError, tr } from "@marchyo/core";
 
 // `marchyo dictation start|stop|toggle|status`: one verb over the dictation
-// backend chosen by marchyo.dictation.backend (superwhisper | voxtype | hex).
+// backend chosen by marchyo.dictation.backend (voxtype).
 // The backend is baked into $XDG_CONFIG_HOME/marchyo/dictation.json.
 
-export type Backend = "superwhisper" | "voxtype" | "hex";
+export type Backend = "voxtype";
 export type Action = "start" | "stop" | "toggle" | "status";
 export type DictationState = "idle" | "recording" | "transcribing" | "stopped" | "unknown";
 
-const BACKENDS: readonly Backend[] = ["superwhisper", "voxtype", "hex"];
+const BACKENDS: readonly Backend[] = ["voxtype"];
 const ACTIONS: readonly Action[] = ["start", "stop", "toggle", "status"];
-
-// Hex control commands exit 3 when no Hex runs and 4 when the clip had no speech.
-const HEX_NOT_RUNNING = 3;
-const HEX_NO_SPEECH = 4;
 
 export type Probe = { code: number; stdout: string };
 
@@ -24,7 +20,6 @@ export type DictationDeps = {
   backend: () => Backend | null;
   run: (argv: string[]) => Promise<Probe>;
   available: (cmd: string) => boolean;
-  paste: (text: string) => Promise<void>;
   lockPath: string;
   lockWaitMs: number;
 };
@@ -46,20 +41,12 @@ export function bakedBackend(path: string = dictationConfigPath()): Backend | nu
   }
 }
 
-async function pasteText(text: string): Promise<void> {
-  const copy = Bun.spawn(["wl-copy"], { stdin: new Blob([text]), stdout: "ignore", stderr: "ignore" });
-  await copy.exited;
-  await Bun.sleep(150);
-  await captureArgv(["wtype", text]);
-}
-
 function defaultDeps(): DictationDeps {
   const stateHome = process.env.XDG_STATE_HOME || join(homedir(), ".local", "state");
   return {
     backend: () => bakedBackend(),
     run: captureArgv,
     available: commandAvailable,
-    paste: pasteText,
     lockPath: join(stateHome, "marchyo", "dictation.lock"),
     lockWaitMs: 5000,
   };
@@ -142,52 +129,8 @@ async function voxtypeState(deps: DictationDeps): Promise<DictationState> {
   return stateFromWord(parseJson(r.stdout)?.class);
 }
 
-async function superwhisperState(deps: DictationDeps): Promise<DictationState> {
-  const r = await deps.run(["superwhisper", "status"]);
-  if (r.code !== 0) return "stopped";
-  const o = parseJson(r.stdout);
-  const phase = o?.phase ?? (o?.status as Record<string, unknown> | undefined)?.phase;
-  return stateFromWord(phase);
-}
-
-async function hexState(deps: DictationDeps): Promise<DictationState> {
-  const r = await deps.run(["hex", "status"]);
-  if (r.code !== 0) return "stopped";
-  const desktop = parseJson(r.stdout)?.desktop as { activity?: { state?: unknown } } | undefined;
-  return stateFromWord(desktop?.activity?.state);
-}
-
-export function stateOf(backend: Backend, deps: DictationDeps): Promise<DictationState> {
-  if (backend === "voxtype") return voxtypeState(deps);
-  if (backend === "superwhisper") return superwhisperState(deps);
-  return hexState(deps);
-}
-
-async function hexStart(deps: DictationDeps): Promise<number> {
-  const first = await deps.run(["hex", "dictation", "start"]);
-  if (first.code !== HEX_NOT_RUNNING) return first.code;
-  const started = await deps.run(["hex", "start"]);
-  if (started.code !== 0) return started.code;
-  return (await deps.run(["hex", "dictation", "start"])).code;
-}
-
-// Hex pastes with a bare Ctrl+V, which terminals ignore, so take the
-// transcript and type it into whatever is focused.
-async function hexStop(deps: DictationDeps): Promise<number> {
-  if ((await hexState(deps)) !== "recording") return 0;
-  const r = await deps.run(["hex", "dictation", "stop", "--print"]);
-  if (r.code === 0) {
-    const text = r.stdout.replace(/\n+$/, "");
-    if (text !== "") await deps.paste(text);
-    return 0;
-  }
-  return r.code === HEX_NO_SPEECH ? 0 : r.code;
-}
-
-async function stopSuperwhisper(deps: DictationDeps): Promise<number> {
-  const active = await deps.run(["systemctl", "--user", "is-active", "--quiet", "superwhisper.service"]);
-  if (active.code !== 0) return 0;
-  return (await deps.run(["superwhisper", "stop"])).code;
+export function stateOf(_backend: Backend, deps: DictationDeps): Promise<DictationState> {
+  return voxtypeState(deps);
 }
 
 async function stopVoxtype(deps: DictationDeps): Promise<number> {
@@ -195,19 +138,9 @@ async function stopVoxtype(deps: DictationDeps): Promise<number> {
   return (await deps.run(["voxtype", "record", "stop"])).code;
 }
 
-async function perform(backend: Backend, action: Exclude<Action, "status">, deps: DictationDeps): Promise<number> {
-  switch (backend) {
-    case "voxtype":
-      if (action === "stop") return stopVoxtype(deps);
-      return (await deps.run(["voxtype", "record", action])).code;
-    case "superwhisper":
-      if (action === "stop") return stopSuperwhisper(deps);
-      return (await deps.run(["superwhisper", action === "start" ? "start" : "record"])).code;
-    case "hex":
-      if (action === "start") return hexStart(deps);
-      if (action === "stop") return hexStop(deps);
-      return (await hexState(deps)) === "recording" ? hexStop(deps) : hexStart(deps);
-  }
+async function perform(_backend: Backend, action: Exclude<Action, "status">, deps: DictationDeps): Promise<number> {
+  if (action === "stop") return stopVoxtype(deps);
+  return (await deps.run(["voxtype", "record", action])).code;
 }
 
 export async function runDictation(

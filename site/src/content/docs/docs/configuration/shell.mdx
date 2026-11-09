@@ -61,7 +61,7 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.bluetooth`, `marchyo.network`, `marchyo.camera`, `marchyo.mic`,
 `marchyo.audio`, `marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`,
 `marchyo.battery`, `marchyo.tailscale`, `marchyo.weather`, `marchyo.lockKeys`,
-`marchyo.remoteSession`, `marchyo.update`, `marchyo.disk`,
+`marchyo.update`, `marchyo.disk`,
 `marchyo.health`, `marchyo.controlCenter`.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
@@ -94,12 +94,9 @@ request.
 
 ### Status indicators
 
-Four self-hiding indicators are registered but not placed by default. Add the
+Three self-hiding indicators are registered but not placed by default. Add the
 ones you want to a bar section; each starts its own slow probe only when placed.
 
-- `marchyo.remoteSession`: red while a `gliff-server` of your user runs, with the
-  ssh client address in the tooltip. A Hyprland screencast event triggers a probe;
-  while a session is active it re-probes every 5 seconds.
 - `marchyo.update`: shows when the nixpkgs revision pinned in the flake lock
   differs from the running system (`marchyo update --check`, local, hourly).
   Run `marchyo upgrade` or `marchyo rebuild` to apply it.

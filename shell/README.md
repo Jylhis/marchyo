@@ -227,7 +227,7 @@ below), so nothing depends on the session `PATH`.
 | WorkspacesWidget | `Quickshell.Hyprland` (per-monitor; persistent 1–5, waybar parity) |
 | ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
 | TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
-| DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream, or a 2 s `marchyo dictation status` poll for superwhisper and hex (click = `marchyo dictation toggle`); baked on/off via `Style.dictationIndicator` |
+| DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = `marchyo dictation toggle`); baked on/off via `Style.dictationIndicator` |
 | CaffeineWidget | `Services/Caffeine` → shell-owned state (one `pgrep` probe at startup, then `marchyo toggle caffeine on\|off` and the CLI's `caffeineChanged` report); lit while a video plays (tooltip `auto: <player>`) |
 | ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |

@@ -223,7 +223,6 @@ export function defaultProbe(
         backend: () => backend,
         run: captureArgv,
         available: commandAvailable,
-        paste: async () => {},
         lockPath: "",
         lockWaitMs: 0,
       }),

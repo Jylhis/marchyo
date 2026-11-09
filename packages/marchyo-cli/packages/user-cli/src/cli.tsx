@@ -1189,22 +1189,9 @@ program
   .option("--to <alias|ip>", "Send to this device (alias, IPv4 or IPv4:port)")
   .option("--pin <pin>", "PIN the receiving device asks for")
   .option("--clipboard", "Copy the file's contents (or a folder's path) instead")
-  .option("--tailscale <peer>", "Send over Taildrop to this tailnet machine")
-  .option("--tailscale-receive", "Save incoming Taildrop files (to [paths], default ~/Downloads)")
-  .action(
-    async (
-      paths: string[],
-      opts: {
-        to?: string;
-        pin?: string;
-        clipboard?: boolean;
-        tailscale?: string;
-        tailscaleReceive?: boolean;
-      },
-    ) => {
-      process.exit(await runShare(rt(), paths, opts));
-    },
-  )
+  .action(async (paths: string[], opts: { to?: string; pin?: string; clipboard?: boolean }) => {
+    process.exit(await runShare(rt(), paths, opts));
+  })
   .addHelpText(
     "after",
     `
@@ -1216,8 +1203,6 @@ Examples:
   $ marchyo share ~/Documents/trip --to Pixel
   $ marchyo share report.pdf --to 192.168.1.20 --json
   $ marchyo share notes.txt --clipboard
-  $ marchyo share photo.jpg --tailscale laptop
-  $ marchyo share --tailscale-receive
 `,
   );
 
@@ -1412,7 +1397,7 @@ program
   .addHelpText(
     "after",
     `
-The backend (Superwhisper, Voxtype or Hex) comes from marchyo.dictation.backend.
+The backend (voxtype) comes from marchyo.dictation.backend.
 Concurrent calls are serialised; status prints idle, recording, transcribing or
 stopped (--json adds the backend name).
 

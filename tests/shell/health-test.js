@@ -27,20 +27,9 @@ test("the module exports its whole public surface to Node", () => {
     "formatKb",
     "parseDf",
     "parseDoctor",
-    "parseRemoteProbe",
     "parseUpdateCheck",
     "summarizeChecks",
   ]);
-});
-
-test("parseRemoteProbe reports sessions and de-duplicated peers", () => {
-  assert.deepEqual(H.parseRemoteProbe(""), { active: false, peers: [] });
-  assert.deepEqual(H.parseRemoteProbe("123 \n"), { active: true, peers: [] });
-  assert.deepEqual(H.parseRemoteProbe("123 10.0.0.5\n456 10.0.0.5\n789 192.168.1.2\n"), {
-    active: true,
-    peers: ["10.0.0.5", "192.168.1.2"],
-  });
-  assert.deepEqual(H.parseRemoteProbe("not a pid line\n"), { active: false, peers: [] });
 });
 
 test("parseDf reads the last df -kP row", () => {

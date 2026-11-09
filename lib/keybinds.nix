@@ -476,17 +476,6 @@ in
 ++ onlyIf (ctx.dictation.enabled && ctx.dictation.toggleKey != null) [
   (dictation ctx.dictation.toggleKey "Dictation toggle" (exec "${cli} dictation toggle"))
 ]
-++ onlyIf ctx.dictation.hold [
-  (dictation ctx.dictation.holdKey "Dictation push-to-talk (hold)" (exec "${cli} dictation start"))
-  (withOpts
-    {
-      release = true;
-      non_consuming = true;
-      ignore_mods = true;
-    }
-    (dictation ctx.dictation.holdKey "Dictation push-to-talk (release)" (exec "${cli} dictation stop"))
-  )
-]
 ++ onlyIf ctx.dictation.statusWindow [
   (dictation "SUPER + SHIFT + H" "Dictation status" (
     execLua ''terminal .. " --class=org.omarchy.voxtype -e voxtype status --follow"''

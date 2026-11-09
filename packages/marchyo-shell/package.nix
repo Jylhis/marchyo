@@ -47,7 +47,7 @@
   dictationIndicator ? false,
   # marchyo.dictation.backend — picks how the indicator learns the state
   # (voxtype's status stream, or `marchyo dictation status` polling).
-  dictationBackend ? "superwhisper",
+  dictationBackend ? "voxtype",
   # marchyo.menus.enable — drives the power panel's menu button (marchyo menu
   # power vs the in-shell app launcher).
   menusEnabled ? true,

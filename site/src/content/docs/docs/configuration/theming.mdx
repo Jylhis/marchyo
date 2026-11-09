@@ -202,19 +202,11 @@ Every theme dir also carries colours for six more applications, generated from t
 - **VS Code, VS Code Insiders, VSCodium and Cursor**: `vscode-theme.json` is installed as the local extension `local.marchyo-theme` (registered in the editor's `extensions.json`, version derived from the colours), and `workbench.colorTheme` is set to `Marchyo` in `settings.json`. The theme file is watched, so open windows restyle. Only editors whose config directory exists are touched.
 - **Obsidian**: `obsidian.css` is written to `<vault>/.obsidian/snippets/marchyo.css` for every vault in Obsidian's vault list, and `marchyo` is added to the vault's enabled snippets. Your own Obsidian theme stays selected.
 - **tmux**: see [tmux](#tmux). The status line, messages, pane borders and pane background follow the theme.
-- **Slack**: `slack.json` holds the colour preferences. They are applied only with `marchyo.slack.themeInjection.enable = true` (below).
+- **Slack**: `slack.json` holds the colour preferences.
 - **fcitx5**: `fcitx5-theme.conf` is linked as the classicui theme `marchyo` (`~/.local/share/fcitx5/themes/marchyo/theme.conf`, with the stock glyphs). `marchyo.theme.enable` makes the fcitx5 module select it, and a switch reloads classicui.
 - **herdr and herdr-app**: `herdr.json` is linked as the custom theme `marchyo` under `~/.config/herdr/themes/` and `~/.config/herdr-app/themes/`. Select it in herdr.
 
 tmux, fcitx5 and herdr read their files through the `current-theme` pointer, so the declarative reset on activation covers them. VS Code, Obsidian and Slack colours live in files the apps own, so `marchyo theme set`, `next` and `generate` write them; they stay on the last applied theme until the next switch.
-
-### Slack theme injection
-
-```nix
-marchyo.slack.themeInjection.enable = true;
-```
-
-Off by default. Slack starts through `marchyo-slack` (the menu entry uses it). The launcher opens Chromium's remote-debugging pipe, with no port or socket, and sets Slack's own colour preferences through its internal preference actions. It follows `~/.local/state/marchyo/slack/theme.json`, which `marchyo theme` updates. Slack can change those internals in any release, so the feature may stop working after an update. The launcher is adapted from Omarchy (MIT).
 
 ### tmux
 

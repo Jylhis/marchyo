@@ -767,7 +767,7 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-The backend (Superwhisper, Voxtype or Hex) comes from marchyo.dictation.backend.
+The backend (voxtype) comes from marchyo.dictation.backend.
 Concurrent calls are serialised; status prints idle, recording, transcribing or
 stopped (--json adds the backend name).
 

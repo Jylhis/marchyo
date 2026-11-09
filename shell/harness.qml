@@ -502,10 +502,6 @@ ShellRoot {
             x: 300
             y: 64
         }
-        RemoteSessionWidget {
-            x: 340
-            y: 64
-        }
         UpdateWidget {
             x: 360
             y: 64

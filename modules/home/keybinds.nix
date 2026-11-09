@@ -21,7 +21,7 @@ let
 
   dictationCfg = marchyoCfg.dictation or { };
   dictationEnabled = dictationCfg.enable or false;
-  dictationBackend = dictationCfg.backend or "superwhisper";
+  dictationBackend = dictationCfg.backend or "voxtype";
 
   emacsCfg = marchyoCfg.emacs or { };
   emacsEnabled = emacsCfg.enable or false;
@@ -38,14 +38,7 @@ let
     dictation = {
       enabled = dictationEnabled;
       toggleKey = dictationCfg.toggleKey or "ALT + SPACE";
-      # voxtype holds F9 through its own evdev hotkey; the other backends get
-      # a press/release pair that starts and stops the recording.
-      hold =
-        dictationEnabled
-        && dictationBackend != "voxtype"
-        && (dictationCfg.pushToTalk.enable or true)
-        && (dictationCfg.pushToTalk.mode or "push_to_talk") == "push_to_talk";
-      holdKey = dictationCfg.pushToTalk.key or "F9";
+      # Push-to-talk (F9) is voxtype's own evdev hotkey, not a Hyprland bind.
       statusWindow =
         dictationEnabled && dictationBackend == "voxtype" && (dictationCfg.statusWindow or true);
     };

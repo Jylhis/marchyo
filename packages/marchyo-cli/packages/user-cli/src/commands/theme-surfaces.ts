@@ -160,7 +160,7 @@ async function syncObsidian(configHome: string, dir: string): Promise<void> {
   }
 }
 
-// The Slack launcher (marchyo.slack.themeInjection) watches this directory,
+// A Slack theme launcher, when one is installed, watches this directory,
 // which it creates; a host without the launcher has none and is skipped.
 async function syncSlack(dir: string): Promise<void> {
   const slackDir = join(stateHome(), "marchyo", "slack");

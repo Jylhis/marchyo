@@ -11,26 +11,11 @@ in
       pushToTalk). Requires a microphone'';
 
     backend = mkOption {
-      type = types.enum [
-        "superwhisper"
-        "voxtype"
-        "hex"
-      ];
-      default = "superwhisper";
-      example = "voxtype";
+      type = types.enum [ "voxtype" ];
+      default = "voxtype";
       description = ''
-        Dictation engine behind `marchyo dictation` and the Alt+Space and F9
-        binds.
-
-        - `superwhisper`: Superwhisper (unfree). Cloud processing is its default
-          mode. To transcribe locally run `superwhisper models select offline`
-          or `offline_lite` (the models download on first use). Requires
-          `nixpkgs.config.allowUnfree`; evaluation fails with a message
-          otherwise.
-        - `voxtype`: voxtype (Whisper, open source). The voxtype options below
-          apply only to this backend.
-        - `hex`: Hex (MIT, closed-source binary). Its speech model downloads once
-          at login.
+        Dictation engine behind `marchyo dictation`, the Alt+Space bind and
+        the F9 hotkey: voxtype (Whisper, open source).
       '';
     };
 
@@ -42,9 +27,7 @@ in
           "hold F9 to dictate"). With the voxtype backend this is the daemon's own
           evdev hotkey: it adds dictation users to the `input` group so the daemon
           can read /dev/input globally, a real privilege (any process the user
-          runs can then observe keystrokes). With the superwhisper and hex
-          backends it is a Hyprland bind pair (start on press, stop on release)
-          and needs no group membership. Set false to rely only on the
+          runs can then observe keystrokes). Set false to rely only on the
           `toggleKey` bind.
         '';
       };
@@ -56,8 +39,6 @@ in
           evdev key name held to record when `pushToTalk.enable` is set. Must be a
           valid Linux evdev key (e.g. "F9", "SCROLLLOCK", "PAUSE", "RIGHTALT",
           "F13"-"F24"), or a numeric keycode with a source prefix (e.g. "WEV_234").
-          With the superwhisper and hex backends the name is bound in Hyprland as
-          written, so use a name Hyprland accepts (an F-key works in both).
         '';
       };
 

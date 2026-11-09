@@ -58,6 +58,21 @@ in
     ] "Local AI (Ollama) is not carried in marchyo; configure services.ollama on the host.")
     (removed
       [
+        "audio"
+        "tuner"
+      ]
+      "The omarchy speaker tuner is not carried in marchyo; tune PipeWire with services.pipewire.extraConfig on the host."
+    )
+    (removed [
+      "hardware"
+      "camlink"
+    ] "The Cam Link 4K relay is not carried in marchyo; configure services.v4l2-relayd on the host.")
+    (removed [
+      "slack"
+      "themeInjection"
+    ] "Slack theme injection is not carried in marchyo; Slack keeps its own theme.")
+    (removed
+      [
         "console"
         "enable"
       ]

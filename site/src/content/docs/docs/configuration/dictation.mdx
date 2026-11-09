@@ -3,44 +3,25 @@ title: Dictation
 description: Push-to-talk voice-to-text for the Wayland desktop
 ---
 
-Marchyo can add voice dictation to the Hyprland desktop. Pick an engine with
-`marchyo.dictation.backend`: **Superwhisper** (the default, proprietary),
-**voxtype** (open source, Whisper) or **Hex**. **Hold `F9`** to dictate
-(push-to-talk) or press **`Alt+Space`** to toggle recording on and off; the
-transcribed text is typed at the cursor.
+Marchyo can add voice dictation to the Hyprland desktop with **voxtype** (open
+source, Whisper). **Hold `F9`** to dictate (push-to-talk) or press
+**`Alt+Space`** to toggle recording on and off; the transcribed text is typed at
+the cursor.
 
 It is **off by default**: it needs a microphone. When enabled, a recording
-indicator joins the top bar for every backend. The voxtype backend adds desktop
-notifications, sound cues and a `Super+Shift+H` status window.
+indicator joins the top bar, with desktop notifications, sound cues and a
+`Super+Shift+H` status window.
 
-## Backends
-
-- **`superwhisper`** (default). Unfree: set `nixpkgs.config.allowUnfree = true`
-  (or admit the package in `allowUnfreePredicate`); otherwise evaluation fails
-  and tells you to allow unfree or choose `voxtype` or `hex`. Marchyo runs the
-  `superwhisper` user service and a login oneshot that runs the package's
-  `setup-user` once per version and moves Superwhisper's own shortcut to
-  `Ctrl+Alt+Space` with no hold shortcut, so it never clashes with marchyo's
-  keys. Cloud processing is the default mode. To transcribe locally run
-  `superwhisper models select offline` (or `offline_lite`); the models download
-  on first use, about 2.2 GB for Offline.
-- **`voxtype`**. The previous behaviour: the daemon's evdev hotkey holds `F9`
-  and the voxtype options below apply.
-- **`hex`**. Runs `hex.service`; a login oneshot installs the speech model once
-  (`hex model install`). Stopping runs `hex dictation stop --print` and types
-  the transcript with `wtype`.
-
-For Superwhisper and Hex, `F9` is a Hyprland bind pair (start on press, stop on
-release) and needs no `input` group. `marchyo dictation start|stop|toggle|status
-[--json]` drives whichever backend is active; the binds call it.
+`marchyo dictation start|stop|toggle|status [--json]` drives the backend; the
+binds call it. The daemon's evdev hotkey holds `F9`.
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.dictation.enable` | `bool` | `false` | Enable dictation (hold `F9` push-to-talk + an `Alt+Space` toggle bind) |
-| `marchyo.dictation.backend` | `enum` | `"superwhisper"` | `"superwhisper"` (unfree), `"voxtype"` or `"hex"`; the options below marked voxtype apply only to `voxtype` |
-| `marchyo.dictation.pushToTalk.enable` | `bool` | `true` | Hold-to-talk on `F9`. voxtype: daemon evdev hotkey (adds users to the `input` group); others: Hyprland press/release binds |
+| `marchyo.dictation.backend` | `enum` | `"voxtype"` | The dictation engine; `"voxtype"` is the only one |
+| `marchyo.dictation.pushToTalk.enable` | `bool` | `true` | Hold-to-talk on `F9`: the daemon's evdev hotkey (adds users to the `input` group) |
 | `marchyo.dictation.pushToTalk.key` | `str` | `"F9"` | evdev key held to record (e.g. `"SCROLLLOCK"`, `"PAUSE"`, `"F13"`) |
 | `marchyo.dictation.pushToTalk.mode` | `str` | `"push_to_talk"` | `"push_to_talk"` (hold) or `"toggle"` (press to start/stop) |
 | `marchyo.dictation.toggleKey` | `str` | `"ALT + SPACE"` | Hyprland bind for `marchyo dictation toggle`; `null` to unbind |

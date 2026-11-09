@@ -54,7 +54,7 @@ let
   # Bakes the dictation bar widget in/out (on when dictation and its indicator are set).
   dictation = (osConfig.marchyo or { }).dictation or { };
   dictationIndicator = (dictation.enable or false) && (dictation.indicator or true);
-  dictationBackend = dictation.backend or "superwhisper";
+  dictationBackend = dictation.backend or "voxtype";
   # Drives the power panel's menu button (marchyo menu power vs the in-shell launcher).
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   # Arm the solaar HID++ fallback only when Logitech support is on; otherwise

@@ -289,14 +289,6 @@ export type ShareOpts = {
   to?: string;
   clipboard?: boolean;
   pin?: string;
-  tailscale?: string;
-  tailscaleReceive?: boolean;
-};
-
-// The tailscale CLI, injectable so tests never touch a tailnet.
-export type TailscaleDeps = {
-  available: () => boolean;
-  run: (argv: string[]) => Promise<{ code: number; stdout: string; stderr: string }>;
 };
 
 // Every effect of `marchyo share` that touches the network, the desktop or a
@@ -312,30 +304,9 @@ export type ShareDeps = {
   notify: (urgency: "low" | "critical", summary: string, body: string) => Promise<void>;
   // Opens the LocalSend app; false when it is not installed.
   openLocalSend: () => boolean;
-  tailscale: TailscaleDeps;
 };
 
 const DISCOVERY_MS = 2000;
-
-export const defaultTailscaleDeps: TailscaleDeps = {
-  available: () => commandAvailable("tailscale"),
-  run: async (argv) => {
-    try {
-      const proc = Bun.spawn(["tailscale", ...argv], {
-        stdout: "pipe",
-        stderr: "pipe",
-        stdin: "ignore",
-      });
-      const [stdout, stderr] = await Promise.all([
-        new Response(proc.stdout).text(),
-        new Response(proc.stderr).text(),
-      ]);
-      return { code: await proc.exited, stdout, stderr };
-    } catch (e) {
-      return { code: 127, stdout: "", stderr: (e as Error).message };
-    }
-  },
-};
 
 export function defaultShareDeps(rt: Runtime): ShareDeps {
   return {
@@ -350,7 +321,6 @@ export function defaultShareDeps(rt: Runtime): ShareDeps {
       return r.code === 0 ? r.stdout : null;
     },
     notify,
-    tailscale: defaultTailscaleDeps,
     openLocalSend: () => {
       if (!commandAvailable("localsend_app")) return false;
       try {
@@ -430,96 +400,6 @@ async function resolvePeer(
   return peers.find((p) => peerLabel(p) === choice) ?? null;
 }
 
-function downloadDir(): string {
-  return process.env.XDG_DOWNLOAD_DIR || join(homedir(), "Downloads");
-}
-
-// Taildrop peers as `tailscale file cp --targets` lists them: "ip<TAB>name<TAB>status".
-async function taildropTargets(deps: ShareDeps): Promise<string[]> {
-  const r = await deps.tailscale.run(["file", "cp", "--targets"]);
-  if (r.code !== 0) return [];
-  return r.stdout
-    .split("\n")
-    .map((l) => l.split("\t")[1]?.trim() ?? "")
-    .filter((n) => n !== "");
-}
-
-async function sendTaildrop(
-  rt: Runtime,
-  files: string[],
-  peer: string,
-  deps: ShareDeps,
-): Promise<number> {
-  const name = peer.split(".")[0]!;
-  const r = await deps.tailscale.run([
-    "file",
-    "cp",
-    "--update-interval=0",
-    "--",
-    ...files,
-    `${peer}:`,
-  ]);
-  if (r.code !== 0) {
-    const msg = r.stderr.trim() || "Taildrop transfer failed";
-    await deps.notify("critical", tr("utilities.share"), `${name}: ${msg}`);
-    err(rt, msg);
-    return 1;
-  }
-  const summary = `sent ${files.length} file(s) to ${name} over Taildrop`;
-  await deps.notify("low", tr("utilities.share"), summary);
-  if (rt.format === "json") data(rt, { share: { taildrop: { peer, files } } }, () => summary);
-  else ok(rt, summary);
-  return 0;
-}
-
-// Saves files waiting in this machine's Taildrop inbox; never blocks.
-async function receiveTaildrop(
-  rt: Runtime,
-  dir: string | undefined,
-  deps: ShareDeps,
-): Promise<number> {
-  const target = dir ?? downloadDir();
-  await mkdir(target, { recursive: true });
-  const r = await deps.tailscale.run(["file", "get", "--conflict=rename", target]);
-  if (r.code !== 0) {
-    err(rt, r.stderr.trim() || "tailscale file get failed");
-    return 1;
-  }
-  const summary = `saved incoming Taildrop files to ${target}`;
-  await deps.notify("low", tr("utilities.taildrop"), summary);
-  ok(rt, summary);
-  return 0;
-}
-
-async function taildropFromMenu(rt: Runtime, deps: ShareDeps): Promise<number> {
-  const picked = await deps.pickPath(false);
-  if (picked === null) return 0;
-  const peers = await taildropTargets(deps);
-  if (peers.length === 0) {
-    err(rt, tr("utilities.noTaildropDevicesFoundOn"));
-    return 1;
-  }
-  const peer = peers.length === 1 ? peers[0]! : await deps.choose("Send to", peers);
-  return peer === null ? 0 : sendTaildrop(rt, [picked], peer, deps);
-}
-
-async function shareViaTaildrop(
-  rt: Runtime,
-  paths: string[],
-  peer: string,
-  deps: ShareDeps,
-): Promise<number> {
-  if (paths.length === 0) {
-    return usageError(rt, tr("utilities.nothingToShare"), "marchyo share <path...> --tailscale <peer>");
-  }
-  const files = (await expandPaths(paths)).flatMap((f) => (f.path === null ? [] : [f.path]));
-  if (files.length === 0) {
-    err(rt, tr("utilities.nothingToSendTheSelection"));
-    return 1;
-  }
-  return sendTaildrop(rt, files, peer, deps);
-}
-
 // Sends files, folders or clipboard text to a nearby LocalSend device
 // (protocol v2, see @marchyo/core/localsend); --clipboard copies instead.
 export async function runShare(
@@ -533,16 +413,6 @@ export async function runShare(
       err(rt, tr("utilities.noSuchFile", p));
       return 1;
     }
-  }
-
-  if (opts.tailscaleReceive || opts.tailscale !== undefined) {
-    if (!deps.tailscale.available()) {
-      err(rt, tr("utilities.tailscaleNotFoundInPath"));
-      return 1;
-    }
-    return opts.tailscaleReceive
-      ? receiveTaildrop(rt, paths[0], deps)
-      : shareViaTaildrop(rt, paths, opts.tailscale!, deps);
   }
 
   if (opts.clipboard) {
@@ -559,13 +429,7 @@ export async function runShare(
     if (!deps.interactive) {
       return usageError(rt, tr("utilities.nothingToShare"), "marchyo share <path...> [--to <alias|ip>]");
     }
-    const choice = await deps.choose(
-      "Share",
-      deps.tailscale.available()
-        ? ["File", "Folder", "Clipboard", "Taildrop"]
-        : ["File", "Folder", "Clipboard"],
-    );
-    if (choice === "Taildrop") return taildropFromMenu(rt, deps);
+    const choice = await deps.choose("Share", ["File", "Folder", "Clipboard"]);
     if (choice === "File" || choice === "Folder") {
       const picked = await deps.pickPath(choice === "Folder");
       if (picked === null) return 0;

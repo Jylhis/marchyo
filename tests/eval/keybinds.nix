@@ -20,7 +20,6 @@ let
   normalizedDuplicates = duplicateChords [
     "ALT + Tab"
     "ALT + SHIFT + Tab"
-    "F9"
   ];
 
   m = combo: action: { inherit combo action; };
@@ -88,8 +87,6 @@ let
     (m "SUPER + SHIFT + ALT + E" "emacs-everywhere")
     (m "SUPER + CTRL + ALT + O" "org-capture")
     (m "ALT + SPACE" "dictation toggle")
-    (m "F9" "dictation start")
-    (m "F9" "dictation stop")
   ];
   # Without the shell, the panel chords open the TUIs.
   shellOffChordMap = [

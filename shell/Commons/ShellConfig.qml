@@ -72,9 +72,6 @@ QtObject {
                     id: "marchyo.reminders"
                 },
                 {
-                    id: "marchyo.remoteSession"
-                },
-                {
                     id: "marchyo.dictation"
                 },
                 {

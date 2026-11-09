@@ -42,8 +42,6 @@ let
     helpers.duplicateChords [
       "ALT + Tab"
       "ALT + SHIFT + Tab"
-      # Push-to-talk: one bind on press (start), one on release (stop).
-      "F9"
     ] (binds hm);
 in
 {

@@ -66,8 +66,6 @@ Each one hides until it has something to show.
 - **Screen recording**: a red icon while a recording runs. Click it to stop.
 - **Reminders**: a count, in the accent colour, while reminders you set with `marchyo reminder`
   are waiting. Hover to see how many are pending.
-- **Remote session**: appears while a gliff session is connected, with the peer
-  address.
 - **Dictation**: a microphone glyph when dictation is on, red while recording and
   in the accent colour while transcribing. Click to start or stop recording. The
   tooltip shows the current state, and warns you if the dictation service stops

@@ -52,7 +52,6 @@ ShellRoot {
             "marchyo.reminders": cReminders,
             "marchyo.tailscale": cTailscale,
             "marchyo.weather": cWeather,
-            "marchyo.remoteSession": cRemoteSession,
             "marchyo.update": cUpdate,
             "marchyo.disk": cDisk,
             "marchyo.health": cHealth,
@@ -115,10 +114,6 @@ ShellRoot {
     Component {
         id: cWeather
         WeatherWidget {}
-    }
-    Component {
-        id: cRemoteSession
-        RemoteSessionWidget {}
     }
     Component {
         id: cUpdate

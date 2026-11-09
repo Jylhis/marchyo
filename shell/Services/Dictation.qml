@@ -13,8 +13,8 @@ import qs.Commons
 // voxtype exits nothing reopens it, so the backoff below restarts it while
 // keeping a permanently-failing command from becoming a spawn loop.
 //
-// superwhisper and hex have no status stream, so `marchyo dictation status` is
-// read on a slow bounded timer, and once right after a toggle from the bar.
+// A backend without a status stream would be read through `marchyo dictation
+// status` on a slow bounded timer, and once right after a toggle from the bar.
 QtObject {
     id: root
 
