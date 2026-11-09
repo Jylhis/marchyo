@@ -5,6 +5,7 @@ let
     home-manager
     ncro
     treefmt-nix
+    disko
     ;
 
   overlay = import ./overlay.nix { inherit inputs; };
@@ -132,7 +133,35 @@ let
       ];
     };
     inherit (home-manager.nixosModules) home-manager;
+    # disko's module, so hosts using lib.diskoLayout need no disko input.
+    disko = disko.nixosModules.disko;
   };
+
+  # Disk layouts under disko/, by file name. Each is a function of its target
+  # disk(s) returning a NixOS module that sets disko.devices; import it next to
+  # nixosModules.disko.
+  diskoLayouts = map (nixpkgs.lib.removeSuffix ".nix") (
+    builtins.attrNames (nixpkgs.lib.filterAttrs (_: t: t == "regular") (builtins.readDir ./disko))
+  );
+  diskoLayout =
+    name: args:
+    if builtins.elem name diskoLayouts then
+      import (./disko + "/${name}.nix") args
+    else
+      throw "marchyo.lib.diskoLayout: unknown layout '${name}' (known: ${builtins.concatStringsSep ", " diskoLayouts})";
+
+  # Installer ISOs (installer/iso-<variant>.nix). Plain NixOS installation
+  # images; they do not import the marchyo modules.
+  mkIso =
+    { system, variant }:
+    nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [ (./installer + "/iso-${variant}.nix") ];
+    };
+  isoVariants = [
+    "minimal"
+    "graphical"
+  ];
 
   homeManagerModules = {
     default = ./modules/home/default.nix;
@@ -183,6 +212,8 @@ in
       mkNixosSystem
       mkHomeConfiguration
       mkPkgs
+      diskoLayout
+      diskoLayouts
       ;
   };
 
@@ -259,7 +290,17 @@ in
         inherit pkgs;
         nixosModule = nixosModules.default;
       };
-    };
+    }
+    # `nix build .#iso-minimal` / `.#iso-graphical` (`just iso`).
+    // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+      builtins.listToAttrs (
+        map (
+          variant:
+          nixpkgs.lib.nameValuePair "iso-${variant}"
+            (mkIso { inherit system variant; }).config.system.build.isoImage
+        ) isoVariants
+      )
+    );
 
   mkChecks =
     { system }:
@@ -272,7 +313,24 @@ in
         ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
+      diskoModule = nixosModules.disko;
+      inherit diskoLayout diskoLayouts;
     }
+    # Evaluate each ISO's drvPath without building it: the string context is
+    # dropped, so the check does not depend on the image.
+    // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+      builtins.listToAttrs (
+        map (
+          variant:
+          nixpkgs.lib.nameValuePair "eval-iso-${variant}" (
+            (mkPkgs system).writeText "eval-iso-${variant}" (
+              builtins.unsafeDiscardStringContext
+                (mkIso { inherit system variant; }).config.system.build.isoImage.drvPath
+            )
+          )
+        ) isoVariants
+      )
+    )
     # The one non-eval check: build the Plymouth theme in both variants. The
     # only place the light variant's asset pipeline (resvg/imagemagick + the
     # package's installCheckPhase) is exercised; CI's toplevel build only bakes

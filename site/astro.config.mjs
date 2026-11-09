@@ -85,7 +85,11 @@ export default defineConfig({
         },
         {
           label: 'Guides',
-          items: ['docs/guides/workstation-template', 'docs/guides/migration'],
+          items: [
+            'docs/guides/installation',
+            'docs/guides/workstation-template',
+            'docs/guides/migration',
+          ],
         },
         {
           label: 'Development',

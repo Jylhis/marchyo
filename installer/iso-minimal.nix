@@ -5,13 +5,10 @@
 # supports both local and remote installations via SSH, and provides helpful
 # guidance for users during the installation process.
 #
-# NOT a flake output: nothing in flake.nix / outputs.nix / the Justfile / CI
-# references this file, so `nix flake check` never evaluates it and it rots
-# silently across nixpkgs bumps (it was carrying two removed package aliases).
-# Evaluate it by hand after updating flake.lock:
+# Flake output packages.x86_64-linux.iso-minimal; `nix flake check` evaluates
+# its drvPath (checks.x86_64-linux.eval-iso-minimal) without building it. Build:
 #
-#   nix-build '<nixpkgs/nixos>' -I nixos-config=installer/iso-minimal.nix \
-#     -A config.system.build.isoImage
+#   just iso minimal   # or: nix build .#iso-minimal
 
 {
   config,

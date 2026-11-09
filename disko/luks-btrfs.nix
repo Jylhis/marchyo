@@ -1,6 +1,12 @@
 # LUKS encrypted BTRFS with subvolumes
 #
-# Usage:
+# From a host flake (see the Installation guide):
+#   imports = [
+#     marchyo.nixosModules.disko
+#     (marchyo.lib.diskoLayout "luks-btrfs" { device = "/dev/nvme0n1"; })
+#   ];
+#
+# Standalone (disko CLI on a single file):
 #   1. Set the disk device: export DISK=/dev/nvme0n1 (or /dev/sda, etc.)
 #   2. Partition: sudo nix run github:nix-community/disko -- --mode disko disko/luks-btrfs.nix --arg device '"'$DISK'"'
 #   3. During partitioning, you'll be prompted to set a LUKS passphrase

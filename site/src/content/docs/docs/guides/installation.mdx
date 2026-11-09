@@ -1,0 +1,76 @@
+---
+title: Installation
+description: Boot an installer ISO, partition with a Marchyo disk layout, and install.
+---
+
+Marchyo ships two installer images and four declarative disk layouts. Both are
+flake outputs, so they track the same nixpkgs as the rest of Marchyo.
+
+## 1. Get an installer ISO
+
+| Output | Contents |
+|--------|----------|
+| `packages.x86_64-linux.iso-minimal` | Text installer with SSH (key-only), `disko`, LUKS and btrfs tools |
+| `packages.x86_64-linux.iso-graphical` | GNOME live session with Calamares, GParted and a browser |
+
+Build one and write it to a USB stick:
+
+```bash
+nix build github:Jylhis/marchyo#iso-minimal   # or #iso-graphical
+sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+From a checkout, `just iso minimal` or `just iso graphical` does the same build.
+
+## 2. Pick a disk layout
+
+| Layout | Disks | What you get |
+|--------|-------|--------------|
+| `simple-uefi` | `device` | ESP, 8 GB swap, ext4 root |
+| `btrfs` | `device` | ESP, btrfs subvolumes (`/`, `/home`, `/nix`, `/persist`, `/var/log`, `/.snapshots`), encrypted swap |
+| `luks-btrfs` | `device` | As `btrfs`, inside LUKS2 (passphrase prompt at boot) |
+| `luks-btrfs-raid1` | `deviceA`, `deviceB` | Two LUKS2 members holding one btrfs RAID1 filesystem |
+
+`marchyo.lib.diskoLayouts` lists the names. Use stable device paths
+(`/dev/disk/by-id/...`) so a reordered bus cannot point a layout at the wrong
+disk.
+
+## 3. Add the layout to your host
+
+Import `nixosModules.disko` (disko's module, so your flake needs no disko input)
+and the layout, called with your disk:
+
+```nix
+nixosConfigurations.myhost = marchyo.lib.mkNixosSystem {
+  system = "x86_64-linux";
+  modules = [
+    marchyo.nixosModules.disko
+    (marchyo.lib.diskoLayout "luks-btrfs" {
+      device = "/dev/disk/by-id/nvme-Samsung_SSD_980_PRO_1TB_XXXX";
+    })
+    ./configuration.nix
+  ];
+};
+```
+
+The layout defines `fileSystems` and swap, so leave those out of
+`hardware-configuration.nix` (generate it with `nixos-generate-config
+--no-filesystems`).
+
+## 4. Partition and install
+
+From the installer, with your flake checked out:
+
+```bash
+# Destroys everything on the layout's disks.
+sudo nix run github:nix-community/disko -- --mode destroy,format,mount --flake .#myhost
+sudo nixos-install --flake .#myhost
+```
+
+disko reads the layout from `nixosConfigurations.myhost`, so the disks you
+partition are the ones your system will mount.
+
+:::caution
+Marchyo does not export `diskoConfigurations` with example disks on purpose:
+running disko against one would wipe whatever disk the example names.
+:::

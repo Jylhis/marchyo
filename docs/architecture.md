@@ -51,8 +51,8 @@ modules/generic/    # Shared helpers (palette, base16 slots, keyboard lib) impor
 packages/           # Custom Nix packages (marchyo-cli, marchyo-shell, plymouth-marchyo-theme, marchyo-wallpapers)
 tests/              # Evaluation-based test suite (no builds required)
 site/               # Astro + Starlight website (landing page + docs, marchyo.org)
-disko/              # Disk partitioning configurations (not wired into flake outputs)
-installer/          # ISO build configs (not wired into flake outputs)
+disko/              # Disk layouts, exported as lib.diskoLayout (+ nixosModules.disko)
+installer/          # Installer ISOs, exported as packages.x86_64-linux.iso-{minimal,graphical}
 templates/workstation/  # Developer workstation template
 ```
 
@@ -61,6 +61,8 @@ templates/workstation/  # Developer workstation template
 - `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and wire in marchyo's nixpkgs, home-manager, overlay and modules. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkHomeConfiguration`, `lib.mkPkgs`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
+- `nixosModules.disko` — Re-exported disko NixOS module; pair with `lib.diskoLayout "<layout>" { device = …; }` (layouts in `lib.diskoLayouts`)
+- `packages.x86_64-linux.iso-{minimal,graphical}` — Installer ISOs from `installer/`
 - `homeManagerModules.default` — Home Manager module only
 - `homeManagerModules._1password` — 1Password Home Manager module
 - `overlays.default` — Nixpkgs overlay (Linux packages wrapped in `optionalAttrs`)

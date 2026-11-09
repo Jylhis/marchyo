@@ -10,6 +10,9 @@
   home-manager,
   nixosModules,
   homeManagerModules,
+  diskoModule,
+  diskoLayout,
+  diskoLayouts,
 }:
 let
   testPkgs = import nixpkgs {
@@ -37,6 +40,9 @@ let
         home-manager
         nixosModules
         homeManagerModules
+        diskoModule
+        diskoLayout
+        diskoLayouts
         ;
       pkgs = testPkgs;
     })

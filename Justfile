@@ -22,6 +22,10 @@ build-nixos config="x86_64":
 build-home config="x86_64-linux":
     nix build .#homeConfigurations.{{config}}.activationPackage
 
+# Build an installer ISO (variant: minimal, graphical; x86_64-linux)
+iso variant="minimal":
+    nix build .#iso-{{variant}}
+
 # Update all inputs: flake.lock -> devenv.yaml + devenv.lock
 update:
     #!/usr/bin/env bash

@@ -43,6 +43,8 @@ The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a syste
 | `lib.mkNixosSystem` | System builder (recommended entry point) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
 | `homeManagerModules.default` | Home Manager module only |
+| `nixosModules.disko` + `lib.diskoLayout` | Declarative disk layouts from `disko/` (see [Installation](/docs/guides/installation/)) |
+| `packages.x86_64-linux.iso-{minimal,graphical}` | Installer ISOs |
 | `legacyPackages.{system}` | nixpkgs + marchyo overlay |
 | `overlays.default` | Nixpkgs overlay |
 | `templates.workstation` | Starter workstation template |
