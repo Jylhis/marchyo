@@ -73,8 +73,6 @@ in
       "flake.lock"
       "devenv.lock"
       "site/bun.lock"
-      # An archived Finnish design doc, kept as written.
-      "docs/ideas/project-os.md"
     ];
     # qmlformat (from Qt's qtdeclarative), edits in place (-i). Absolute command
     # path so it needs no PATH entry in the devenv shell or CI.
