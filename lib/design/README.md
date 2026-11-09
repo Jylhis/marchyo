@@ -1,8 +1,7 @@
 # lib/design — vendored Jylhis design system
 
-The subset of the Jylhis design system (version 6.0.0) that marchyo reads,
-copied from `lib/design` in the j10s monorepo (j10s commit `6d74939000`). Nothing here
-is built from npm or bun: marchyo only reads these files.
+The subset of the Jylhis design system (version 6.0.0) that marchyo reads.
+Nothing here is built from npm or bun: marchyo only reads these files.
 
 | Path | Used by |
 | --- | --- |
@@ -18,7 +17,7 @@ The Ghostty, bat and Emacs `jylhis-{light,dark}` themes are generator output,
 not committed upstream. To refresh everything from a design checkout:
 
 ```sh
-D=../j10s/lib/design            # the design tree
+D=../design                     # a design system checkout
 bun "$D/scripts/generate.mjs" --out /tmp/design-gen
 cp "$D"/nix/{palette,fonts}.nix nix/
 cp "$D"/tokens/{base,light,dark,light-contrast,dark-contrast}.tokens.json tokens/
@@ -30,4 +29,4 @@ cp /tmp/design-gen/platforms/ghostty/jylhis-{light,dark} platforms/ghostty/
 cp /tmp/design-gen/platforms/bat/jylhis-{light,dark}.tmTheme platforms/bat/
 ```
 
-Then update the commit and version above. MIT licensed (`LICENSE`).
+Then update the version above. MIT licensed (`LICENSE`).

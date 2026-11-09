@@ -64,7 +64,7 @@ Entries up to 2026-11 were reconstructed from git history (first commit 2025-09-
 - `marchyo.security.ssh` runs a key-only OpenSSH server (no password, keyboard-interactive or root login), and evaluation fails while a wheel or listed login user has no authorized key, unless sshd uses a user CA or an `AuthorizedKeysCommand`.
 - `marchyo.webapps.presets.m365` and `marchyo.webapps.presets.notion` add Microsoft 365 web apps and Notion, which installs the native Linux app when unfree packages are allowed.
 - Fleet and options UI at marchyo.org/os, with local browser storage and Nix configuration export.
-- Home Manager profile installs split `doc` and `devdoc` outputs, so HTML documentation from packages such as Python is available under the profile. ([f719ddd26a](https://github.com/Jylhis/j10s/commit/f719ddd26a))
+- Home Manager profile installs split `doc` and `devdoc` outputs, so HTML documentation from packages such as Python is available under the profile.
 - The shell registers Hyprland global shortcuts (`marchyo:<name>`, listed in `shell/shortcuts.json`), and `hlua.global` in `lib/hyprland-lua.nix` binds them.
 - The shell listens on a private unix socket (`$XDG_RUNTIME_DIR/marchyo-shell-<id>.sock`), and the CLI's shell calls use it before `qs ipc`.
 - Packages `hype`, `signed`, `monologue`, `gliff` (x86_64 only), `omarchy-audio-tuner`, `hex-dictation` (Hex voice dictation), and the unfree binaries `superwhisper` and `amp-desktop`.
@@ -128,7 +128,7 @@ Entries up to 2026-11 were reconstructed from git history (first commit 2025-09-
 - `__GLX_VENDOR_LIBRARY_NAME`, `GBM_BACKEND` and `LIBVA_DRIVER_NAME=nvidia` are set only when NVIDIA drives the display, not under PRIME offload or reverse sync; `LIBVA_DRIVER_NAME=radeonsi` only when AMD is the primary GPU.
 
 - BBR congestion control with the fq qdisc and TCP MTU probing are on by default, outside `marchyo.performance.tuning.network`.
-- A single `nix/caches.json` is now the binary cache list, and prefetch queries every configured cache and substitutes each path from whichever one has it. ([615cb0478b](https://github.com/Jylhis/j10s/commit/615cb0478b))
+- A single `nix/caches.json` is now the binary cache list, and prefetch queries every configured cache and substitutes each path from whichever one has it.
 - Dependency updates (1 commit).
 - The systemd-boot menu is hidden by default (`boot.loader.timeout = 0`). Hold Space at power-on to open it.
 - Bar items scale on press, animate colour and opacity changes, take a middle click, hide their tooltip when they disappear and warm the tooltip up once per hover run. A one-glyph compact item keeps a fixed slot, so glyph width does not move the bar.
@@ -191,10 +191,10 @@ Entries up to 2026-11 were reconstructed from git history (first commit 2025-09-
 - fcitx5 is configured only when `marchyo.desktop.enable` is set, so headless hosts no longer get the graphical input method.
 - Dead `mediaTools` list removed from `packages.nix`; `hyprmon` declares Linux platforms.
 - The `grok` agent (`marchyo.ai.agents`) installs xAI's Grok Build CLI from llm-agents.nix instead of the unrelated `grok-cli` package.
-- The pre-switch update diff hook and `marchyo diff` call `dix diff`, which dix 3.0 requires. ([c1aec544d2](https://github.com/Jylhis/j10s/commit/c1aec544d2))
-- Ghostty loads a Ghostty-only GTK stylesheet that shrinks its tab bar font without changing the interface font of other GTK apps. ([69169c8b29](https://github.com/Jylhis/j10s/commit/69169c8b29))
+- The pre-switch update diff hook and `marchyo diff` call `dix diff`, which dix 3.0 requires.
+- Ghostty loads a Ghostty-only GTK stylesheet that shrinks its tab bar font without changing the interface font of other GTK apps.
 - Hyprland sets `quirks:skip_non_kms_dmabuf_formats = false`, so a monitor that reconnects on DPMS wake no longer gets Mesa clients such as Ghostty and marchyo-shell disconnected by Hyprland 0.57.0.
-- Printers run driverless: USB printers are served through ipp-usb, and cups-browsed is off by default because its queues stuck at NO_DEST_FOUND while CUPS creates IPP Everywhere queues itself. ([35a4de787a](https://github.com/Jylhis/j10s/commit/35a4de787a))
+- Printers run driverless: USB printers are served through ipp-usb, and cups-browsed is off by default because its queues stuck at NO_DEST_FOUND while CUPS creates IPP Everywhere queues itself.
 
 ### Security
 
@@ -205,293 +205,293 @@ Entries up to 2026-11 were reconstructed from git history (first commit 2025-09-
 
 ### Added
 
-- **Theming without rebuilds:** bat, fzf, hyprlock, console colours (via `setvtrgb`), k9s, lazygit, spotify-player and gdu now switch at runtime from per-theme directories, and `marchyo theme generate` restyles the whole desktop from a wallpaper palette. `marchyo.theme.followWallpaper` makes wallpaper changes generate a matching theme. ([f045fce06a](https://github.com/Jylhis/j10s/commit/f045fce06a), [42c3116e41](https://github.com/Jylhis/j10s/commit/42c3116e41), [a797211626](https://github.com/Jylhis/j10s/commit/a797211626))
-- **Shell palette and panels:** the launcher becomes a prefix-routed command palette (`=` maths, `>theme`, `#` windows, `!` power) with clipboard image thumbnails, a Control Center (SUPER+SHIFT+Q) offers volume and mic sliders plus tiles for Wi-Fi, Bluetooth, Tailscale, DND, caffeine, night light and power profile, and SUPER+grave opens a per-monitor workspace overview with live window previews. The bar gains camera-in-use, lock-key, clock-seconds and battery readouts, a power panel and a segmented style. ([9163f13cb7](https://github.com/Jylhis/j10s/commit/9163f13cb7), [e551702ee6](https://github.com/Jylhis/j10s/commit/e551702ee6), [a74167fe44](https://github.com/Jylhis/j10s/commit/a74167fe44))
-- **Shell settings, plugins and commands:** `marchyo.shell.settings` is a typed submodule with per-monitor overrides, plugins declare typed kinds (bar widget, launcher, daemon) and are pinned in a lock file, new `marchyo shell`, `volume`, `brightness` and `doctor` commands report health with `--json`, and `marchyo share` sends files to LocalSend devices on the LAN. ([4640cdff55](https://github.com/Jylhis/j10s/commit/4640cdff55), [e97d19cfc1](https://github.com/Jylhis/j10s/commit/e97d19cfc1), [6474650517](https://github.com/Jylhis/j10s/commit/6474650517))
-- Dictation discards recordings with no speech, caffeine holds automatically while a video plays, toasts can be driven from the keyboard, a `reduceMotion` option turns off animations, blur and shadows (default in VM guests), and the Trigger menu gains a speed test. ([9e213e830f](https://github.com/Jylhis/j10s/commit/9e213e830f), [b8ffed15f0](https://github.com/Jylhis/j10s/commit/b8ffed15f0), [9505be802c](https://github.com/Jylhis/j10s/commit/9505be802c))
+- **Theming without rebuilds:** bat, fzf, hyprlock, console colours (via `setvtrgb`), k9s, lazygit, spotify-player and gdu now switch at runtime from per-theme directories, and `marchyo theme generate` restyles the whole desktop from a wallpaper palette. `marchyo.theme.followWallpaper` makes wallpaper changes generate a matching theme.
+- **Shell palette and panels:** the launcher becomes a prefix-routed command palette (`=` maths, `>theme`, `#` windows, `!` power) with clipboard image thumbnails, a Control Center (SUPER+SHIFT+Q) offers volume and mic sliders plus tiles for Wi-Fi, Bluetooth, Tailscale, DND, caffeine, night light and power profile, and SUPER+grave opens a per-monitor workspace overview with live window previews. The bar gains camera-in-use, lock-key, clock-seconds and battery readouts, a power panel and a segmented style.
+- **Shell settings, plugins and commands:** `marchyo.shell.settings` is a typed submodule with per-monitor overrides, plugins declare typed kinds (bar widget, launcher, daemon) and are pinned in a lock file, new `marchyo shell`, `volume`, `brightness` and `doctor` commands report health with `--json`, and `marchyo share` sends files to LocalSend devices on the LAN.
+- Dictation discards recordings with no speech, caffeine holds automatically while a video plays, toasts can be driven from the keyboard, a `reduceMotion` option turns off animations, blur and shadows (default in VM guests), and the Trigger menu gains a speed test.
 
 ### Changed
 
-- **Quickshell shell is the default:** `marchyo.desktop.enable` now turns on the in-house shell for bar, launcher, notifications, lock and polkit; the bar spans the screen flush with windows, with the rounded floating pill available as `floatingBar`. The greeter follows the session theme and shakes on a failed login, and the lock screen shows its card only on the focused output. ([6df45de72c](https://github.com/Jylhis/j10s/commit/6df45de72c), [fb49bd5fb2](https://github.com/Jylhis/j10s/commit/fb49bd5fb2), [6b9c357e8a](https://github.com/Jylhis/j10s/commit/6b9c357e8a))
-- Stylix and its flake inputs are removed: lazygit, k9s, spotify-player, Emacs, GNOME fonts and the cursor are themed directly from base16 slots, and Qt apps follow the live GTK theme. ([8ff3a33e18](https://github.com/Jylhis/j10s/commit/8ff3a33e18), [97d74c5f2c](https://github.com/Jylhis/j10s/commit/97d74c5f2c), [e01468a9ea](https://github.com/Jylhis/j10s/commit/e01468a9ea))
-- **Fonts and design:** the desktop moves to Fira Sans, IBM Plex Mono and Jost (after a brief Geist stage) with family names shared through `lib.fonts`, and the design system and docs site are restyled to the flat, bevelled 5.0 and 6.0 looks, gaining an Icon component, form controls, popovers, drawers, a navbar and an `elements.css` that styles plain HTML. ([62eb502581](https://github.com/Jylhis/j10s/commit/62eb502581), [deee8da6ca](https://github.com/Jylhis/j10s/commit/deee8da6ca), [f8a4305d0c](https://github.com/Jylhis/j10s/commit/f8a4305d0c))
-- Desktops run a weekly `nh clean` (ten generations, 14 days) with store optimisation, hugePages tuning uses madvise-only transparent huge pages, and the power menu adds Log out, Lock + suspend, Restart shell and Reboot to firmware. ([a97088bc1b](https://github.com/Jylhis/j10s/commit/a97088bc1b), [c1e5299e4c](https://github.com/Jylhis/j10s/commit/c1e5299e4c), [a8d1b59373](https://github.com/Jylhis/j10s/commit/a8d1b59373))
+- **Quickshell shell is the default:** `marchyo.desktop.enable` now turns on the in-house shell for bar, launcher, notifications, lock and polkit; the bar spans the screen flush with windows, with the rounded floating pill available as `floatingBar`. The greeter follows the session theme and shakes on a failed login, and the lock screen shows its card only on the focused output.
+- Stylix and its flake inputs are removed: lazygit, k9s, spotify-player, Emacs, GNOME fonts and the cursor are themed directly from base16 slots, and Qt apps follow the live GTK theme.
+- **Fonts and design:** the desktop moves to Fira Sans, IBM Plex Mono and Jost (after a brief Geist stage) with family names shared through `lib.fonts`, and the design system and docs site are restyled to the flat, bevelled 5.0 and 6.0 looks, gaining an Icon component, form controls, popovers, drawers, a navbar and an `elements.css` that styles plain HTML.
+- Desktops run a weekly `nh clean` (ten generations, 14 days) with store optimisation, hugePages tuning uses madvise-only transparent huge pages, and the power menu adds Log out, Lock + suspend, Restart shell and Reboot to firmware.
 - Dependency updates (2 commits).
 
 ### Removed
 
-- The Vicinae, noctalia, waybar, mako and SwayOSD fallbacks and the `osd` option are retired, as are the gaming, snapper and hibernation modules and the kmscon console and local Ollama modules added earlier in the month, which give way to upstream NixOS options; the cmus, neomutt and ncspot modules and the litellm gateway backend go too. ([58877d591a](https://github.com/Jylhis/j10s/commit/58877d591a), [a24a367973](https://github.com/Jylhis/j10s/commit/a24a367973), [dd04ad57e1](https://github.com/Jylhis/j10s/commit/dd04ad57e1))
-- nix-darwin support is removed, including `mkDarwinSystem`, the darwin modules and the wallpapper package. ([bc85806f5c](https://github.com/Jylhis/j10s/commit/bc85806f5c))
+- The Vicinae, noctalia, waybar, mako and SwayOSD fallbacks and the `osd` option are retired, as are the gaming, snapper and hibernation modules and the kmscon console and local Ollama modules added earlier in the month, which give way to upstream NixOS options; the cmus, neomutt and ncspot modules and the litellm gateway backend go too.
+- nix-darwin support is removed, including `mkDarwinSystem`, the darwin modules and the wallpapper package.
 
 ### Fixed
 
-- The audio panel no longer flickers, bar widgets no longer vanish, windows no longer tile under the bar and Qt 6.12 no longer turns shell colours black; runtime theme switches no longer break the next Home Manager activation, and Bluetooth enables the ISO socket experiment for LE Audio. ([ec58734c9a](https://github.com/Jylhis/j10s/commit/ec58734c9a), [385cefb220](https://github.com/Jylhis/j10s/commit/385cefb220), [447aec5718](https://github.com/Jylhis/j10s/commit/447aec5718))
+- The audio panel no longer flickers, bar widgets no longer vanish, windows no longer tile under the bar and Qt 6.12 no longer turns shell colours black; runtime theme switches no longer break the next Home Manager activation, and Bluetooth enables the ISO socket experiment for LE Audio.
 
 ### Security
 
-- The ncro cache proxy listens on 127.0.0.1 only, and the CLI moves to zod 4 and the site to current Astro, Starlight and wrangler, clearing the remaining scanner findings. ([a66b77e00f](https://github.com/Jylhis/j10s/commit/a66b77e00f), [18f7479c0a](https://github.com/Jylhis/j10s/commit/18f7479c0a), [4777409a0b](https://github.com/Jylhis/j10s/commit/4777409a0b))
+- The ncro cache proxy listens on 127.0.0.1 only, and the CLI moves to zod 4 and the site to current Astro, Starlight and wrangler, clearing the remaining scanner findings.
 
 ## 2026-09
 
 ### Added
 
-- **Quickshell shell grows up:** a native session lock with in-process PAM, a greeter that replaces tuigreet under cage, an in-shell launcher with fuzzy app search, emoji picker and clipboard history, and a notification centre (SUPER+N) with persistent history and `marchyo.notifications.rules`. With the shell on, idle, sleep and SUPER+L use its lock and SUPER+R opens its launcher. ([10a2f9f324](https://github.com/Jylhis/j10s/commit/10a2f9f324), [f4b7f76624](https://github.com/Jylhis/j10s/commit/f4b7f76624), [32a4345449](https://github.com/Jylhis/j10s/commit/32a4345449))
-- Bar widgets for media, wireless peripheral battery, microphone use, weather, Tailscale, reminders, screen recording, night light and the active window, with panels for weather, Tailscale, Wi-Fi sharing by QR code and per-application audio streams with live peak meters. ([1f696cd453](https://github.com/Jylhis/j10s/commit/1f696cd453), [c8eb94bf26](https://github.com/Jylhis/j10s/commit/c8eb94bf26), [88d05716d8](https://github.com/Jylhis/j10s/commit/88d05716d8))
-- **Live themes:** `marchyo theme set` and `next` restyle GTK and the dconf scheme live from runtime theme directories, `marchyo theme generate` builds a palette from a wallpaper through matugen, and `marchyo.theme.appearance` scales corner radius, animation speed and border contrast. ([64232bad54](https://github.com/Jylhis/j10s/commit/64232bad54), [e9650a6d0e](https://github.com/Jylhis/j10s/commit/e9650a6d0e), [6b3298d2cf](https://github.com/Jylhis/j10s/commit/6b3298d2cf))
-- **Shell plugins:** a `qs.compat` shim runs upstream omarchy Quickshell plugins nearly unmodified, managed with `marchyo plugin add`, `list` and `remove`. ([e179f1337d](https://github.com/Jylhis/j10s/commit/e179f1337d), [5686a2814b](https://github.com/Jylhis/j10s/commit/5686a2814b), [deacfddd5e](https://github.com/Jylhis/j10s/commit/deacfddd5e))
-- `marchyo.monitors` declares monitor layout as typed data, `marchyo.defaults.excludePackages` trims default bundles, opt-in gaming (Steam, Gamescope), ddcutil and fwupd modules arrive, dictation gains jargon replacements and spoken punctuation, and Hyprland hides the cursor while typing. ([7679054e10](https://github.com/Jylhis/j10s/commit/7679054e10), [fcd186d4b9](https://github.com/Jylhis/j10s/commit/fcd186d4b9), [2bdf12fd40](https://github.com/Jylhis/j10s/commit/2bdf12fd40))
-- An on-demand security suite adds a lynis hardening VM test, an SBOM app and a vulnerability scan, and the ncro cache router fronts a single `marchyo.nix.caches` list. ([286292167b](https://github.com/Jylhis/j10s/commit/286292167b), [ea1f61f546](https://github.com/Jylhis/j10s/commit/ea1f61f546))
+- **Quickshell shell grows up:** a native session lock with in-process PAM, a greeter that replaces tuigreet under cage, an in-shell launcher with fuzzy app search, emoji picker and clipboard history, and a notification centre (SUPER+N) with persistent history and `marchyo.notifications.rules`. With the shell on, idle, sleep and SUPER+L use its lock and SUPER+R opens its launcher.
+- Bar widgets for media, wireless peripheral battery, microphone use, weather, Tailscale, reminders, screen recording, night light and the active window, with panels for weather, Tailscale, Wi-Fi sharing by QR code and per-application audio streams with live peak meters.
+- **Live themes:** `marchyo theme set` and `next` restyle GTK and the dconf scheme live from runtime theme directories, `marchyo theme generate` builds a palette from a wallpaper through matugen, and `marchyo.theme.appearance` scales corner radius, animation speed and border contrast.
+- **Shell plugins:** a `qs.compat` shim runs upstream omarchy Quickshell plugins nearly unmodified, managed with `marchyo plugin add`, `list` and `remove`.
+- `marchyo.monitors` declares monitor layout as typed data, `marchyo.defaults.excludePackages` trims default bundles, opt-in gaming (Steam, Gamescope), ddcutil and fwupd modules arrive, dictation gains jargon replacements and spoken punctuation, and Hyprland hides the cursor while typing.
+- An on-demand security suite adds a lynis hardening VM test, an SBOM app and a vulnerability scan, and the ncro cache router fronts a single `marchyo.nix.caches` list.
 
 ### Changed
 
-- marchyo adopts the single-theme jylhis-design 3.0.0 (`jylhis-dark` and `jylhis-light`), and scheme YAML comes from a fetched flake input so evaluation no longer forces a build. ([bcd05a2071](https://github.com/Jylhis/j10s/commit/bcd05a2071), [f1a0a562b6](https://github.com/Jylhis/j10s/commit/f1a0a562b6), [25ffe294e7](https://github.com/Jylhis/j10s/commit/25ffe294e7))
-- Development tools default to rootless Podman with Docker CLI compatibility, and desktop-only modules gate on `marchyo.desktop.enable` with `mkDefault` service defaults. ([ece272dfee](https://github.com/Jylhis/j10s/commit/ece272dfee), [5b43d624a0](https://github.com/Jylhis/j10s/commit/5b43d624a0))
-- The jotain Emacs integration is dropped, so the default editor is plain Emacs with `emacsclient` as `EDITOR` and `VISUAL`. ([9a0502e580](https://github.com/Jylhis/j10s/commit/9a0502e580))
+- marchyo adopts the single-theme jylhis-design 3.0.0 (`jylhis-dark` and `jylhis-light`), and scheme YAML comes from a fetched flake input so evaluation no longer forces a build.
+- Development tools default to rootless Podman with Docker CLI compatibility, and desktop-only modules gate on `marchyo.desktop.enable` with `mkDefault` service defaults.
+- The jotain Emacs integration is dropped, so the default editor is plain Emacs with `emacsclient` as `EDITOR` and `VISUAL`.
 - Dependency updates (1 commit).
 
 ### Removed
 
-- The `marchyo.ai` namespace (OpenRouter settings, per-user AI tooling, MCP wiring), the `llm-agents` input, the `openviking` and `pi` packages, and the vendored worktrunk module in favour of Home Manager's `programs.worktrunk`. ([6f8c3e5c6b](https://github.com/Jylhis/j10s/commit/6f8c3e5c6b), [dd6376a100](https://github.com/Jylhis/j10s/commit/dd6376a100), [5f6f0edf9c](https://github.com/Jylhis/j10s/commit/5f6f0edf9c))
+- The `marchyo.ai` namespace (OpenRouter settings, per-user AI tooling, MCP wiring), the `llm-agents` input, the `openviking` and `pi` packages, and the vendored worktrunk module in favour of Home Manager's `programs.worktrunk`.
 
 ### Fixed
 
-- Shell fixes: greeter and launcher crash loops, a black login screen, caffeine indicator flicker, per-monitor duplicate probes and the network widget's IP address; runtime theme colours reach Hyprland through `hl.config`, since `hyprctl keyword` did nothing under the Lua parser. ([73bb5426bc](https://github.com/Jylhis/j10s/commit/73bb5426bc), [4c10b9cc49](https://github.com/Jylhis/j10s/commit/4c10b9cc49), [970186c942](https://github.com/Jylhis/j10s/commit/970186c942))
-- Snapshot limits no longer prune daily snapshots, disko layouts require an explicit target device, light-variant rebuilds no longer hit dconf conflicts, and gaming no longer breaks aarch64 evaluation. ([4bee27a97d](https://github.com/Jylhis/j10s/commit/4bee27a97d), [1982d89b75](https://github.com/Jylhis/j10s/commit/1982d89b75), [9f32c63042](https://github.com/Jylhis/j10s/commit/9f32c63042))
+- Shell fixes: greeter and launcher crash loops, a black login screen, caffeine indicator flicker, per-monitor duplicate probes and the network widget's IP address; runtime theme colours reach Hyprland through `hl.config`, since `hyprctl keyword` did nothing under the Lua parser.
+- Snapshot limits no longer prune daily snapshots, disko layouts require an explicit target device, light-variant rebuilds no longer hit dconf conflicts, and gaming no longer breaks aarch64 evaluation.
 
 ## 2026-08
 
 ### Added
 
-- **Quickshell shell:** an opt-in `marchyo.shell` top bar themed from the Jylhis tokens reaches waybar parity (workspaces, tray, audio, battery, network, Bluetooth, CPU, caffeine, DND and dictation widgets with tooltips and tray menus). Enabling it retires waybar, SwayOSD and mako: the shell draws its own volume and brightness overlay, owns notifications and opens panels for audio, network, battery and system monitoring. ([ead48f9b6f](https://github.com/Jylhis/j10s/commit/ead48f9b6f), [109f9e6416](https://github.com/Jylhis/j10s/commit/109f9e6416), [2dc69411df](https://github.com/Jylhis/j10s/commit/2dc69411df))
-- A `marchyo.launcher` module runs the Vicinae launcher on SUPER+R with generated themes, and a caffeine keep-awake toggle sits on SUPER+CTRL+K with a bar indicator. ([81906602f5](https://github.com/Jylhis/j10s/commit/81906602f5), [edfd1356b0](https://github.com/Jylhis/j10s/commit/edfd1356b0))
-- An end-user manual with fifteen chapters is published under `/manual` on the documentation site. ([2803b79afb](https://github.com/Jylhis/j10s/commit/2803b79afb))
-- `marchyo.identity` unifies user and group declarations across NixOS and darwin, with per-person identity files. ([8633b848a3](https://github.com/Jylhis/j10s/commit/8633b848a3))
+- **Quickshell shell:** an opt-in `marchyo.shell` top bar themed from the Jylhis tokens reaches waybar parity (workspaces, tray, audio, battery, network, Bluetooth, CPU, caffeine, DND and dictation widgets with tooltips and tray menus). Enabling it retires waybar, SwayOSD and mako: the shell draws its own volume and brightness overlay, owns notifications and opens panels for audio, network, battery and system monitoring.
+- A `marchyo.launcher` module runs the Vicinae launcher on SUPER+R with generated themes, and a caffeine keep-awake toggle sits on SUPER+CTRL+K with a bar indicator.
+- An end-user manual with fifteen chapters is published under `/manual` on the documentation site.
+- `marchyo.identity` unifies user and group declarations across NixOS and darwin, with per-person identity files.
 
 ### Changed
 
-- Hyprland settings move from hyprlang to the Lua renderer, reshaping binds, window rules and startup hooks. ([9923dea9b8](https://github.com/Jylhis/j10s/commit/9923dea9b8))
+- Hyprland settings move from hyprlang to the Lua renderer, reshaping binds, window rules and startup hooks.
 
 ### Removed
 
-- The self-tracking telemetry stack (auditd, Vector, ActivityWatch, atuin, WakaTime) and its `marchyo.tracking` options, plus aichat, the Kitty and Xournal++ modules and the zeal docs browser. ([4a07583bc6](https://github.com/Jylhis/j10s/commit/4a07583bc6), [86cd0cb979](https://github.com/Jylhis/j10s/commit/86cd0cb979), [75a0fc2a75](https://github.com/Jylhis/j10s/commit/75a0fc2a75))
-- Bash is the only configured login shell, with the zsh and fish integrations removed, and the deprecated `marchyo.inputMethod` options are gone, so setting them is an error. ([8188ee9991](https://github.com/Jylhis/j10s/commit/8188ee9991), [f76e9a5884](https://github.com/Jylhis/j10s/commit/f76e9a5884))
+- The self-tracking telemetry stack (auditd, Vector, ActivityWatch, atuin, WakaTime) and its `marchyo.tracking` options, plus aichat, the Kitty and Xournal++ modules and the zeal docs browser.
+- Bash is the only configured login shell, with the zsh and fish integrations removed, and the deprecated `marchyo.inputMethod` options are gone, so setting them is an error.
 
 ### Fixed
 
-- Hyprland no longer exports an unexpanded `XDG_DATA_DIRS` literal that hid most applications from the launcher, and the `marchyo-shell` service no longer crash-loops on startup. ([84438074fa](https://github.com/Jylhis/j10s/commit/84438074fa), [e29a1e0366](https://github.com/Jylhis/j10s/commit/e29a1e0366))
-- aerc headers are readable in the light theme, desktop journal warnings are silenced, wf-recorder builds against ffmpeg 8, and the docs search page clears stale results. ([7989b7665b](https://github.com/Jylhis/j10s/commit/7989b7665b), [64fb8da3e9](https://github.com/Jylhis/j10s/commit/64fb8da3e9), [9e4109f476](https://github.com/Jylhis/j10s/commit/9e4109f476))
+- Hyprland no longer exports an unexpanded `XDG_DATA_DIRS` literal that hid most applications from the launcher, and the `marchyo-shell` service no longer crash-loops on startup.
+- aerc headers are readable in the light theme, desktop journal warnings are silenced, wf-recorder builds against ffmpeg 8, and the docs search page clears stale results.
 
 ### Security
 
-- Users are no longer added to the root-equivalent docker group by default; `containers.backend` and `dockerGroup` make it an explicit opt-in. ([2e8f2528e5](https://github.com/Jylhis/j10s/commit/2e8f2528e5))
+- Users are no longer added to the root-equivalent docker group by default; `containers.backend` and `dockerGroup` make it an explicit opt-in.
 
 ## 2026-07
 
 ### Added
 
-- **marchyo CLI:** a Bun-built `marchyo` CLI (status, theme, rebuild, update, rollback, gc, diff, debug) and the `marchyoctl` developer CLI are introduced, then reach 1.0 with a frozen command surface, snapshot tests, completions and a man page. ([2736ce4a42](https://github.com/Jylhis/j10s/commit/2736ce4a42), [4a29323954](https://github.com/Jylhis/j10s/commit/4a29323954), [d041d27082](https://github.com/Jylhis/j10s/commit/d041d27082))
-- A runtime-first change engine lets `marchyo theme`, `toggle`, `capture`, `menu`, `launch`, `monitor`, `reminder`, `font`, `install`, `remove` and `security enroll` act on the running desktop and restore overrides at startup, replacing the earlier shell scripts. ([c5857d37fe](https://github.com/Jylhis/j10s/commit/c5857d37fe), [437afcf1ef](https://github.com/Jylhis/j10s/commit/437afcf1ef), [d6cc5c6776](https://github.com/Jylhis/j10s/commit/d6cc5c6776))
-- **Omarchy-style desktop:** a central menu (SUPER+ALT+Space), a power menu, a terminal screensaver, do-not-disturb with a bar indicator, web apps with launch keys, OCR and colour-picker screenshots, universal copy and paste binds, and a dark/light theme toggle. ([e1bfef122d](https://github.com/Jylhis/j10s/commit/e1bfef122d), [5fda613031](https://github.com/Jylhis/j10s/commit/5fda613031), [68a549e2a4](https://github.com/Jylhis/j10s/commit/68a549e2a4))
-- Opt-in push-to-talk dictation with voxtype and Whisper (hold-to-talk on F9), Waybar recording indicator and GPU or CPU builds. ([948b18eb67](https://github.com/Jylhis/j10s/commit/948b18eb67), [5b94bff54a](https://github.com/Jylhis/j10s/commit/5b94bff54a), [23284b851b](https://github.com/Jylhis/j10s/commit/23284b851b))
-- Service and hardware options: `marchyo.services.localsend` and `tailscale`, `marchyo.power.hibernation`, `marchyo.performance.kernel`, `marchyo.security.fingerprint` and `fido2`, `marchyo.bees` deduplication and a `nixosModules.hardware` re-export. ([bb2a1154c1](https://github.com/Jylhis/j10s/commit/bb2a1154c1), [14a1888791](https://github.com/Jylhis/j10s/commit/14a1888791), [9ccfe461d3](https://github.com/Jylhis/j10s/commit/9ccfe461d3))
-- A static Astro and Starlight documentation site replaces the Mintlify pages, with a man-page landing page, a paper and roast theme toggle, and package and option search backed by a Cloudflare D1 index. ([8845d5ce4c](https://github.com/Jylhis/j10s/commit/8845d5ce4c), [c39ede5fb1](https://github.com/Jylhis/j10s/commit/c39ede5fb1), [cd7e709ae5](https://github.com/Jylhis/j10s/commit/cd7e709ae5))
-- `marchyo.theme.themes` defines runtime-switchable themes and `marchyo.theme.fontScale` (default 1.25x) scales every text surface. ([c7b8a8ac6b](https://github.com/Jylhis/j10s/commit/c7b8a8ac6b), [bb48e50179](https://github.com/Jylhis/j10s/commit/bb48e50179))
+- **marchyo CLI:** a Bun-built `marchyo` CLI (status, theme, rebuild, update, rollback, gc, diff, debug) and the `marchyoctl` developer CLI are introduced, then reach 1.0 with a frozen command surface, snapshot tests, completions and a man page.
+- A runtime-first change engine lets `marchyo theme`, `toggle`, `capture`, `menu`, `launch`, `monitor`, `reminder`, `font`, `install`, `remove` and `security enroll` act on the running desktop and restore overrides at startup, replacing the earlier shell scripts.
+- **Omarchy-style desktop:** a central menu (SUPER+ALT+Space), a power menu, a terminal screensaver, do-not-disturb with a bar indicator, web apps with launch keys, OCR and colour-picker screenshots, universal copy and paste binds, and a dark/light theme toggle.
+- Opt-in push-to-talk dictation with voxtype and Whisper (hold-to-talk on F9), Waybar recording indicator and GPU or CPU builds.
+- Service and hardware options: `marchyo.services.localsend` and `tailscale`, `marchyo.power.hibernation`, `marchyo.performance.kernel`, `marchyo.security.fingerprint` and `fido2`, `marchyo.bees` deduplication and a `nixosModules.hardware` re-export.
+- A static Astro and Starlight documentation site replaces the Mintlify pages, with a man-page landing page, a paper and roast theme toggle, and package and option search backed by a Cloudflare D1 index.
+- `marchyo.theme.themes` defines runtime-switchable themes and `marchyo.theme.fontScale` (default 1.25x) scales every text surface.
 
 ### Changed
 
-- **Jylhis Design System v2:** cool grounds, bronze accent, Zilla Slab, Hanken Grotesk and Plex Mono across generated targets, with variants renamed Field and Sheet and an animated Plymouth splash. ([489b6ce50a](https://github.com/Jylhis/j10s/commit/489b6ce50a), [a9b00cffe4](https://github.com/Jylhis/j10s/commit/a9b00cffe4), [a2a43e072f](https://github.com/Jylhis/j10s/commit/a2a43e072f))
-- Bash becomes the default login shell on every platform, screenshot binds move to Super+S, the scratchpad to Super+D, and Waybar clicks open floating popups. ([9133baa9e8](https://github.com/Jylhis/j10s/commit/9133baa9e8), [60741b92ea](https://github.com/Jylhis/j10s/commit/60741b92ea), [9e682d8645](https://github.com/Jylhis/j10s/commit/9e682d8645))
+- **Jylhis Design System v2:** cool grounds, bronze accent, Zilla Slab, Hanken Grotesk and Plex Mono across generated targets, with variants renamed Field and Sheet and an animated Plymouth splash.
+- Bash becomes the default login shell on every platform, screenshot binds move to Super+S, the scratchpad to Super+D, and Waybar clicks open floating popups.
 - Dependency updates (3 commits).
 
 ### Removed
 
-- The GitHub Pages docs workflow and the `docs`, `docs-options` and `docs-lib` package outputs, a breaking change for consumers. ([c7fd4c7586](https://github.com/Jylhis/j10s/commit/c7fd4c7586))
+- The GitHub Pages docs workflow and the `docs`, `docs-options` and `docs-lib` package outputs, a breaking change for consumers.
 
 ### Fixed
 
-- The crash-prone iwd Wi-Fi backend gives way to NetworkManager's default, the starship prompt renders on bash again, and the jotain daemon opens GUI frames from a cold start. ([9451f3dcda](https://github.com/Jylhis/j10s/commit/9451f3dcda), [028bf8b82e](https://github.com/Jylhis/j10s/commit/028bf8b82e), [3450068668](https://github.com/Jylhis/j10s/commit/3450068668))
+- The crash-prone iwd Wi-Fi backend gives way to NetworkManager's default, the starship prompt renders on bash again, and the jotain daemon opens GUI frames from a cold start.
 
 ## 2026-06
 
 ### Added
 
-- Opt-in `marchyo.performance.tuning` (BBR, NVMe scheduling, dirty pages, huge pages) and a two-disk btrfs RAID1 disko template over per-device LUKS2. ([f8aa41df7f](https://github.com/Jylhis/j10s/commit/f8aa41df7f), [a843212f86](https://github.com/Jylhis/j10s/commit/a843212f86))
-- A bring-your-own-key `marchyo.ai` desktop with pi and Claude Code clients, OpenRouter routing and Agent Skills. ([07d90e71e3](https://github.com/Jylhis/j10s/commit/07d90e71e3))
-- A nix-on-droid terminal configuration and `lib.mkNixosSystem`, `mkDarwinSystem` and `mkNixOnDroidConfiguration` builders. ([a85c88a726](https://github.com/Jylhis/j10s/commit/a85c88a726), [4c7a555b9e](https://github.com/Jylhis/j10s/commit/4c7a555b9e), [0773caaae4](https://github.com/Jylhis/j10s/commit/0773caaae4))
-- Token-derived wallpapers, a searchable keybinding cheat sheet (SUPER+K), hardened SSH defaults and trash-cli. ([fa263d3aac](https://github.com/Jylhis/j10s/commit/fa263d3aac), [4c57e6d39f](https://github.com/Jylhis/j10s/commit/4c57e6d39f), [5d4b29ffc7](https://github.com/Jylhis/j10s/commit/5d4b29ffc7))
+- Opt-in `marchyo.performance.tuning` (BBR, NVMe scheduling, dirty pages, huge pages) and a two-disk btrfs RAID1 disko template over per-device LUKS2.
+- A bring-your-own-key `marchyo.ai` desktop with pi and Claude Code clients, OpenRouter routing and Agent Skills.
+- A nix-on-droid terminal configuration and `lib.mkNixosSystem`, `mkDarwinSystem` and `mkNixOnDroidConfiguration` builders.
+- Token-derived wallpapers, a searchable keybinding cheat sheet (SUPER+K), hardened SSH defaults and trash-cli.
 
 ### Changed
 
-- Terminal tools replace GUI defaults (btop, qalc, yazi, spotify-player, aerc), and the Hyprland desktop takes a tmux-style look with square corners and flat panes. ([f8e100b6d2](https://github.com/Jylhis/j10s/commit/f8e100b6d2), [c3356eb207](https://github.com/Jylhis/j10s/commit/c3356eb207), [173990db74](https://github.com/Jylhis/j10s/commit/173990db74))
-- Jotain Emacs becomes the real default editor, and Wayland modules apply only on Linux with desktop enabled. ([1a937331f9](https://github.com/Jylhis/j10s/commit/1a937331f9), [a0a5455ed0](https://github.com/Jylhis/j10s/commit/a0a5455ed0))
+- Terminal tools replace GUI defaults (btop, qalc, yazi, spotify-player, aerc), and the Hyprland desktop takes a tmux-style look with square corners and flat panes.
+- Jotain Emacs becomes the real default editor, and Wayland modules apply only on Linux with desktop enabled.
 - Dependency updates (2 commits).
 
 ### Fixed
 
-- Mako runs as the notification daemon again, and enabled users join the onepassword group. ([7a56367d5e](https://github.com/Jylhis/j10s/commit/7a56367d5e), [689e0a0d2c](https://github.com/Jylhis/j10s/commit/689e0a0d2c))
-- The OpenViking key is injected safely, and x86_64-darwin evaluates against matching stable inputs. ([724173d155](https://github.com/Jylhis/j10s/commit/724173d155), [6aaab15749](https://github.com/Jylhis/j10s/commit/6aaab15749))
+- Mako runs as the notification daemon again, and enabled users join the onepassword group.
+- The OpenViking key is injected safely, and x86_64-darwin evaluates against matching stable inputs.
 
 ### Security
 
-- Screenshot and tracking privacy filters are hardened, password managers are skipped regardless of case, and disabled users lose trusted and docker access. ([59645a80ec](https://github.com/Jylhis/j10s/commit/59645a80ec), [bf6ed3ff8f](https://github.com/Jylhis/j10s/commit/bf6ed3ff8f))
+- Screenshot and tracking privacy filters are hardened, password managers are skipped regardless of case, and disabled users lose trusted and docker access.
 
 ## 2026-05
 
 ### Added
 
-- A `marchyo.emacs` namespace runs a PGTK daemon with Hyprland focus movement, a scratchpad frame and org-capture binds. ([5216732fed](https://github.com/Jylhis/j10s/commit/5216732fed))
-- Laurel audit logging to Vector and Loki, per-editor WakaTime options, and darwin defaults with Homebrew casks plus opt-in Solaar and Slack modules. ([e692e6afce](https://github.com/Jylhis/j10s/commit/e692e6afce), [8803821443](https://github.com/Jylhis/j10s/commit/8803821443), [2c951afe5b](https://github.com/Jylhis/j10s/commit/2c951afe5b))
-- fzf file and directory widgets with previews, zoxide in place of cd, and delta as the git pager. ([f9bf018359](https://github.com/Jylhis/j10s/commit/f9bf018359))
+- A `marchyo.emacs` namespace runs a PGTK daemon with Hyprland focus movement, a scratchpad frame and org-capture binds.
+- Laurel audit logging to Vector and Loki, per-editor WakaTime options, and darwin defaults with Homebrew casks plus opt-in Solaar and Slack modules.
+- fzf file and directory widgets with previews, zoxide in place of cd, and delta as the git pager.
 
 ### Changed
 
-- Theming moves to the Jylhis Design System, with a shared palette helper driving the console, Ghostty, mako, GTK and fzf, Literata and JetBrains Mono fonts, and the design consumed as a proper flake. ([0e1d88e5db](https://github.com/Jylhis/j10s/commit/0e1d88e5db), [104deb63ba](https://github.com/Jylhis/j10s/commit/104deb63ba), [2bdbee67fd](https://github.com/Jylhis/j10s/commit/2bdbee67fd))
-- The default keyboard layout becomes us(altgr-intl) with Compose on the Menu key, and modules, options and tests are auto-discovered from their directories. ([d766d72ef7](https://github.com/Jylhis/j10s/commit/d766d72ef7), [349501772d](https://github.com/Jylhis/j10s/commit/349501772d))
-- Nixpkgs, home-manager and nix-darwin are pinned to the 26.05 release branches. ([66a37b746b](https://github.com/Jylhis/j10s/commit/66a37b746b))
+- Theming moves to the Jylhis Design System, with a shared palette helper driving the console, Ghostty, mako, GTK and fzf, Literata and JetBrains Mono fonts, and the design consumed as a proper flake.
+- The default keyboard layout becomes us(altgr-intl) with Compose on the Menu key, and modules, options and tests are auto-discovered from their directories.
+- Nixpkgs, home-manager and nix-darwin are pinned to the 26.05 release branches.
 
 ### Removed
 
-- The Starship prompt module, and the wofi launcher module in favour of Vicinae. ([a0748ee1ed](https://github.com/Jylhis/j10s/commit/a0748ee1ed), [104deb63ba](https://github.com/Jylhis/j10s/commit/104deb63ba))
+- The Starship prompt module, and the wofi launcher module in favour of Vicinae.
 
 ### Fixed
 
-- Hyprland config tracks removed options, and darwin evaluation works with Linux-only theme modules. ([c18501b22d](https://github.com/Jylhis/j10s/commit/c18501b22d), [b1ad2c2416](https://github.com/Jylhis/j10s/commit/b1ad2c2416))
+- Hyprland config tracks removed options, and darwin evaluation works with Linux-only theme modules.
 
 ## 2026-04
 
 ### Added
 
-- Opt-in `marchyo.tracking`: local-first activity collectors for shell, desktop, editor, git and system, aggregated into a weekly analysis report with optional local LLM insights, plus atuin, ActivityWatch and WakaTime wiring. ([a0363e0e1f](https://github.com/Jylhis/j10s/commit/a0363e0e1f), [b7bfac0d5b](https://github.com/Jylhis/j10s/commit/b7bfac0d5b), [caf066e64a](https://github.com/Jylhis/j10s/commit/caf066e64a))
-- A generated documentation site of module option and library function references, and Darwin, standalone Home Manager and aarch64 NixOS configurations. ([9304a21e5c](https://github.com/Jylhis/j10s/commit/9304a21e5c), [508517c297](https://github.com/Jylhis/j10s/commit/508517c297))
-- A shared zsh configuration with completion and history search. ([debd408486](https://github.com/Jylhis/j10s/commit/debd408486))
+- Opt-in `marchyo.tracking`: local-first activity collectors for shell, desktop, editor, git and system, aggregated into a weekly analysis report with optional local LLM insights, plus atuin, ActivityWatch and WakaTime wiring.
+- A generated documentation site of module option and library function references, and Darwin, standalone Home Manager and aarch64 NixOS configurations.
+- A shared zsh configuration with completion and history search.
 
 ### Changed
 
-- Ghostty replaces kitty as the default terminal. ([08fe5ded43](https://github.com/Jylhis/j10s/commit/08fe5ded43))
-- Nix logic moves into `default.nix`, `overlay.nix` and `treefmt.nix` with a `Justfile` for common tasks. ([0a90d523a8](https://github.com/Jylhis/j10s/commit/0a90d523a8))
+- Ghostty replaces kitty as the default terminal.
+- Nix logic moves into `default.nix`, `overlay.nix` and `treefmt.nix` with a `Justfile` for common tasks.
 - Dependency updates (1 commit).
 
 ### Removed
 
-- The worktrunk module, whose import-from-derivation broke cross-architecture evaluation. ([e916b10844](https://github.com/Jylhis/j10s/commit/e916b10844))
+- The worktrunk module, whose import-from-derivation broke cross-architecture evaluation.
 
 ### Fixed
 
-- Ghostty alt+1 to alt+9 tab bindings work on Linux GTK, and tracking analysis uses UTC and no longer double-counts active time. ([1b23d7daa4](https://github.com/Jylhis/j10s/commit/1b23d7daa4), [d60e7074d8](https://github.com/Jylhis/j10s/commit/d60e7074d8))
-- Chrome and Spotify defaults fall back sensibly on non-x86_64 Linux. ([44b3f320d7](https://github.com/Jylhis/j10s/commit/44b3f320d7))
+- Ghostty alt+1 to alt+9 tab bindings work on Linux GTK, and tracking analysis uses UTC and no longer double-counts active time.
+- Chrome and Spotify defaults fall back sensibly on non-x86_64 Linux.
 
 ## 2026-03
 
 ### Added
 
-- `marchyo.defaults` picks browser, editors, players, file manager and email, with jotain available as an editor choice. ([c4a6b922d4](https://github.com/Jylhis/j10s/commit/c4a6b922d4), [ac9c540055](https://github.com/Jylhis/j10s/commit/ac9c540055))
-- `marchyo.keyboard.composeKey` and a keyboard guide, JACK audio, XDG user directories and a Mintlify documentation site. ([e1b8eb330f](https://github.com/Jylhis/j10s/commit/e1b8eb330f), [036290b4ba](https://github.com/Jylhis/j10s/commit/036290b4ba), [e6d96d00e1](https://github.com/Jylhis/j10s/commit/e6d96d00e1))
-- A `marchyo-config` Claude Code skill is installed for managed users in development mode. ([c6ba793708](https://github.com/Jylhis/j10s/commit/c6ba793708))
+- `marchyo.defaults` picks browser, editors, players, file manager and email, with jotain available as an editor choice.
+- `marchyo.keyboard.composeKey` and a keyboard guide, JACK audio, XDG user directories and a Mintlify documentation site.
+- A `marchyo-config` Claude Code skill is installed for managed users in development mode.
 
 ### Changed
 
-- Hyprland starts via UWSM with early-loaded NVIDIA modules, the desktop profile enables dconf and Nautilus support, and worktrunk is enabled only in development mode. ([22fa88b24b](https://github.com/Jylhis/j10s/commit/22fa88b24b), [1c2308318c](https://github.com/Jylhis/j10s/commit/1c2308318c), [55a48436e8](https://github.com/Jylhis/j10s/commit/55a48436e8))
+- Hyprland starts via UWSM with early-loaded NVIDIA modules, the desktop profile enables dconf and Nautilus support, and worktrunk is enabled only in development mode.
 
 ### Security
 
-- CPU mitigations stay on unless `marchyo.performance.disableMitigations` is set, and `accept-flake-config` is no longer enabled. ([7b98a1e5f4](https://github.com/Jylhis/j10s/commit/7b98a1e5f4), [4aa65a0055](https://github.com/Jylhis/j10s/commit/4aa65a0055), [ee26a7e7ae](https://github.com/Jylhis/j10s/commit/ee26a7e7ae))
+- CPU mitigations stay on unless `marchyo.performance.disableMitigations` is set, and `accept-flake-config` is no longer enabled.
 
 ### Fixed
 
-- The `testNixOS` helper throws when any assertion fails, and deprecation warnings are silenced. ([72c45da851](https://github.com/Jylhis/j10s/commit/72c45da851), [3374cb921d](https://github.com/Jylhis/j10s/commit/3374cb921d))
+- The `testNixOS` helper throws when any assertion fails, and deprecation warnings are silenced.
 
 ## 2026-02
 
 ### Added
 
-- A noctalia-shell input and the worktrunk tool as a Home Manager module with a TOML `settings` option. ([4be692f419](https://github.com/Jylhis/j10s/commit/4be692f419), [57f2a44271](https://github.com/Jylhis/j10s/commit/57f2a44271), [317c8a0d0a](https://github.com/Jylhis/j10s/commit/317c8a0d0a))
-- A development VM app that boots a QEMU marchyo VM. ([e3ab108348](https://github.com/Jylhis/j10s/commit/e3ab108348))
+- A noctalia-shell input and the worktrunk tool as a Home Manager module with a TOML `settings` option.
+- A development VM app that boots a QEMU marchyo VM.
 
 ### Changed
 
-- Git defaults gain histogram diffs, prune on fetch, autosquash and autostash, and binary caching moves to the jylhis cachix cache. ([6037fd7d77](https://github.com/Jylhis/j10s/commit/6037fd7d77), [5c141381e2](https://github.com/Jylhis/j10s/commit/5c141381e2))
-- Hyprland window rules use the new match syntax. ([9e0bfe7458](https://github.com/Jylhis/j10s/commit/9e0bfe7458), [d3cb886fca](https://github.com/Jylhis/j10s/commit/d3cb886fca))
+- Git defaults gain histogram diffs, prune on fetch, autosquash and autostash, and binary caching moves to the jylhis cachix cache.
+- Hyprland window rules use the new match syntax.
 
 ### Removed
 
-- The Dropbox module, and the FlakeHub and Determinate inputs. ([78e9386efe](https://github.com/Jylhis/j10s/commit/78e9386efe), [4f4aba50cc](https://github.com/Jylhis/j10s/commit/4f4aba50cc))
+- The Dropbox module, and the FlakeHub and Determinate inputs.
 
 ### Fixed
 
-- A picosvg patch lets its tests pass with skia-pathops 0.9 and later. ([386d94f494](https://github.com/Jylhis/j10s/commit/386d94f494))
+- A picosvg patch lets its tests pass with skia-pathops 0.9 and later.
 
 ## 2026-01
 
 ### Added
 
-- GPU vendor options for Intel, AMD and NVIDIA with PRIME offload, sync and reverse-sync modes, and NVIDIA Wayland environment for Hyprland. ([26da8d02ec](https://github.com/Jylhis/j10s/commit/26da8d02ec), [70a2817a0b](https://github.com/Jylhis/j10s/commit/70a2817a0b))
-- Default applications and gvfs through an XDG module, plus theme and keyboard assertions and `LLM.md`, an assistant-oriented usage guide. ([8ade217716](https://github.com/Jylhis/j10s/commit/8ade217716), [7fdda947d6](https://github.com/Jylhis/j10s/commit/7fdda947d6), [5391866165](https://github.com/Jylhis/j10s/commit/5391866165))
+- GPU vendor options for Intel, AMD and NVIDIA with PRIME offload, sync and reverse-sync modes, and NVIDIA Wayland environment for Hyprland.
+- Default applications and gvfs through an XDG module, plus theme and keyboard assertions and `LLM.md`, an assistant-oriented usage guide.
 
 ### Changed
 
-- Lib and module tests evaluate purely instead of building toplevels. ([f1b2e1cf21](https://github.com/Jylhis/j10s/commit/f1b2e1cf21))
+- Lib and module tests evaluate purely instead of building toplevels.
 
 ### Fixed
 
-- Mako urgency settings no longer produce an unparsable config. ([8e637a02b5](https://github.com/Jylhis/j10s/commit/8e637a02b5))
+- Mako urgency settings no longer produce an unparsable config.
 
 ## 2025-12
 
 ### Added
 
-- aarch64-linux is included in flake systems, with platform-gated settings. ([d90da03048](https://github.com/Jylhis/j10s/commit/d90da03048))
+- aarch64-linux is included in flake systems, with platform-gated settings.
 
 ## 2025-11
 
 ### Added
 
-- fcitx5 input method support with Waybar status, later unified under `marchyo.keyboard.layouts` with Chinese, Japanese and Korean IME support. ([1f76daf1ad](https://github.com/Jylhis/j10s/commit/1f76daf1ad), [eda14c6058](https://github.com/Jylhis/j10s/commit/eda14c6058), [838f9539e4](https://github.com/Jylhis/j10s/commit/838f9539e4))
-- A screenshot module for Hyprland, GNOME colour-scheme and GTK theme matching, and keyboard layout options. ([5b4985e0bc](https://github.com/Jylhis/j10s/commit/5b4985e0bc), [5a1c7c0e95](https://github.com/Jylhis/j10s/commit/5a1c7c0e95), [c6cf2c8281](https://github.com/Jylhis/j10s/commit/c6cf2c8281))
+- fcitx5 input method support with Waybar status, later unified under `marchyo.keyboard.layouts` with Chinese, Japanese and Korean IME support.
+- A screenshot module for Hyprland, GNOME colour-scheme and GTK theme matching, and keyboard layout options.
 
 ### Changed
 
-- fcitx5 is off by default and shares input state across windows. ([7ea2a2cfaf](https://github.com/Jylhis/j10s/commit/7ea2a2cfaf), [38fe6e8f6b](https://github.com/Jylhis/j10s/commit/38fe6e8f6b))
+- fcitx5 is off by default and shares input state across windows.
 
 ### Fixed
 
-- A Hyprland picture-in-picture rule error, the renamed libva-vdpau-driver package, Home Manager git options and the greeter command lookup. ([51c43a2e1c](https://github.com/Jylhis/j10s/commit/51c43a2e1c), [fd16916fd6](https://github.com/Jylhis/j10s/commit/fd16916fd6), [8f6f64712f](https://github.com/Jylhis/j10s/commit/8f6f64712f))
+- A Hyprland picture-in-picture rule error, the renamed libva-vdpau-driver package, Home Manager git options and the greeter command lookup.
 
 ## 2025-10
 
 ### Added
 
-- **Option layer:** `marchyo.profile` presets (base, desktop, developer, gaming, server) with hostname and stateVersion options, `marchyo.btrfs` subvolume, compression and scrub settings, and `marchyo.firewall` port rules. ([73b4b3dbee](https://github.com/Jylhis/j10s/commit/73b4b3dbee), [1a7505fc13](https://github.com/Jylhis/j10s/commit/1a7505fc13), [41a9fa60d9](https://github.com/Jylhis/j10s/commit/41a9fa60d9))
-- Opt-in sops-nix secrets, Prometheus and Grafana monitoring, kernel and systemd hardening and BTRFS root rollback. ([86dea13c5c](https://github.com/Jylhis/j10s/commit/86dea13c5c))
-- Installation tooling: minimal and graphical installer ISOs, disko layouts (UEFI, LUKS with btrfs), install scripts and workstation and minimal flake templates. ([95790f2338](https://github.com/Jylhis/j10s/commit/95790f2338), [861103a0af](https://github.com/Jylhis/j10s/commit/861103a0af), [cacf32c727](https://github.com/Jylhis/j10s/commit/cacf32c727))
-- Documentation and helper scripts: README, configuration guide, modules reference, troubleshooting guide, examples, `update.sh`, `rollback.sh` and `health-check.sh`. ([2877d96ea0](https://github.com/Jylhis/j10s/commit/2877d96ea0), [b75668c7f7](https://github.com/Jylhis/j10s/commit/b75668c7f7), [6ded6337eb](https://github.com/Jylhis/j10s/commit/6ded6337eb))
-- `marchyo.lib.mkNixosSystem`, a colourscheme system built on nix-colors Base16 and the Modus schemes, and Vicinae and btop modules. ([fab2d47039](https://github.com/Jylhis/j10s/commit/fab2d47039), [18ac8725a5](https://github.com/Jylhis/j10s/commit/18ac8725a5), [060bde5a37](https://github.com/Jylhis/j10s/commit/060bde5a37))
-- Cachix, SSH, virtualization, tmux, git-advanced, Neovim and VS Code modules, a first-boot welcome, a hyprmon monitor TUI, and a Waybar language indicator for the Hyprland keyboard layout. ([1371aaa727](https://github.com/Jylhis/j10s/commit/1371aaa727), [5740bb7461](https://github.com/Jylhis/j10s/commit/5740bb7461), [de415cabac](https://github.com/Jylhis/j10s/commit/de415cabac))
+- **Option layer:** `marchyo.profile` presets (base, desktop, developer, gaming, server) with hostname and stateVersion options, `marchyo.btrfs` subvolume, compression and scrub settings, and `marchyo.firewall` port rules.
+- Opt-in sops-nix secrets, Prometheus and Grafana monitoring, kernel and systemd hardening and BTRFS root rollback.
+- Installation tooling: minimal and graphical installer ISOs, disko layouts (UEFI, LUKS with btrfs), install scripts and workstation and minimal flake templates.
+- Documentation and helper scripts: README, configuration guide, modules reference, troubleshooting guide, examples, `update.sh`, `rollback.sh` and `health-check.sh`.
+- `marchyo.lib.mkNixosSystem`, a colourscheme system built on nix-colors Base16 and the Modus schemes, and Vicinae and btop modules.
+- Cachix, SSH, virtualization, tmux, git-advanced, Neovim and VS Code modules, a first-boot welcome, a hyprmon monitor TUI, and a Waybar language indicator for the Hyprland keyboard layout.
 
 ### Changed
 
-- Legacy base, desktop and developer profiles are removed, and desktop and development settings follow their enable options. ([0a6a7eed0b](https://github.com/Jylhis/j10s/commit/0a6a7eed0b))
-- Locale and timezone come from marchyo options, firmware is enabled by default, and the workstation template builds through `mkNixosSystem`. ([90a31b8494](https://github.com/Jylhis/j10s/commit/90a31b8494), [520b2eb01c](https://github.com/Jylhis/j10s/commit/520b2eb01c), [95741c812f](https://github.com/Jylhis/j10s/commit/95741c812f))
-- Neovim moves from nixvim to plain `programs.neovim`, and Home Manager backs up overwritten files with a `.backup` extension. ([dfbe213037](https://github.com/Jylhis/j10s/commit/dfbe213037), [d04a3a3fce](https://github.com/Jylhis/j10s/commit/d04a3a3fce))
+- Legacy base, desktop and developer profiles are removed, and desktop and development settings follow their enable options.
+- Locale and timezone come from marchyo options, firmware is enabled by default, and the workstation template builds through `mkNixosSystem`.
+- Neovim moves from nixvim to plain `programs.neovim`, and Home Manager backs up overwritten files with a `.backup` extension.
 - Dependency updates (1 commit).
 
 ### Removed
 
-- The 1Password shell plugins input, iwd Wi-Fi backend and impala TUI, and the flake-parts module layer. ([fb8dcac767](https://github.com/Jylhis/j10s/commit/fb8dcac767), [caab57a841](https://github.com/Jylhis/j10s/commit/caab57a841), [eab34c743f](https://github.com/Jylhis/j10s/commit/eab34c743f))
+- The 1Password shell plugins input, iwd Wi-Fi backend and impala TUI, and the flake-parts module layer.
 
 ### Fixed
 
-- Waybar no longer spawns duplicate instances after sleep, home modules apply their colour theme unconditionally, and the Vicinae theme file generates correctly. ([2682071b18](https://github.com/Jylhis/j10s/commit/2682071b18), [922887ef2b](https://github.com/Jylhis/j10s/commit/922887ef2b), [0d0598a8ad](https://github.com/Jylhis/j10s/commit/0d0598a8ad))
+- Waybar no longer spawns duplicate instances after sleep, home modules apply their colour theme unconditionally, and the Vicinae theme file generates correctly.
 
 ## 2025-09
 
 ### Added
 
-- The first NixOS and Home Manager module set for a Hyprland desktop: Waybar, kitty, Ghostty, hyprlock, mako, wofi, fonts, audio and graphics. ([01f058c694](https://github.com/Jylhis/j10s/commit/01f058c694), [59121ef8d1](https://github.com/Jylhis/j10s/commit/59121ef8d1))
-- A Marchyo Plymouth boot splash, CUPS printing, a hyprpaper wallpaper module and Home Manager git and shell modules. ([309d510ee9](https://github.com/Jylhis/j10s/commit/309d510ee9), [cb2469240d](https://github.com/Jylhis/j10s/commit/cb2469240d), [a88b47d8ea](https://github.com/Jylhis/j10s/commit/a88b47d8ea))
-- `marchyo.*` options for users plus desktop, development, media and office feature flags. ([e100d48950](https://github.com/Jylhis/j10s/commit/e100d48950))
-- A CI workflow running `nix flake check` with Cachix pushes and FlakeHub rolling releases. ([24fdcc604a](https://github.com/Jylhis/j10s/commit/24fdcc604a))
+- The first NixOS and Home Manager module set for a Hyprland desktop: Waybar, kitty, Ghostty, hyprlock, mako, wofi, fonts, audio and graphics.
+- A Marchyo Plymouth boot splash, CUPS printing, a hyprpaper wallpaper module and Home Manager git and shell modules.
+- `marchyo.*` options for users plus desktop, development, media and office feature flags.
+- A CI workflow running `nix flake check` with Cachix pushes and FlakeHub rolling releases.
 
 ### Changed
 
-- Inputs resolve through FlakeHub tarballs and Hyprland stops forcing Wayland backends for GDK, Qt and Electron apps. ([1080557886](https://github.com/Jylhis/j10s/commit/1080557886), [63934c1d20](https://github.com/Jylhis/j10s/commit/63934c1d20))
-- NetworkManager is configured to use the iwd Wi-Fi backend. ([e43e3773cb](https://github.com/Jylhis/j10s/commit/e43e3773cb), [4c5d72a7ac](https://github.com/Jylhis/j10s/commit/4c5d72a7ac))
+- Inputs resolve through FlakeHub tarballs and Hyprland stops forcing Wayland backends for GDK, Qt and Electron apps.
+- NetworkManager is configured to use the iwd Wi-Fi backend.
