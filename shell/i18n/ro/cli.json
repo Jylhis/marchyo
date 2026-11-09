@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Conectat la %1.",
+  "launch.notFoundInPath": "%1 nu a fost găsit în PATH",
+  "utilities.reminder": "Memento",
+  "utilities.battery": "Baterie %1%",
+  "utilities.battery2": "Baterie",
+  "utilities.transcode": "Transcodează",
+  "utilities.share": "Partajează",
+  "toggles.enabled": "Activat",
+  "toggles.suspend": "Suspendă"
+}

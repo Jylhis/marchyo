@@ -5,7 +5,7 @@
   ...
 }:
 let
-  # Desktop-gated, so inert on darwin and headless hosts.
+  # Desktop-gated, so inert on headless hosts.
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   # modules/nixos/desktop-config.nix turns the shell on with the desktop; an
@@ -23,8 +23,13 @@ let
       map pruneSettings v
     else
       v;
-  shellSettings = pruneSettings (((osConfig.marchyo or { }).shell or { }).settings or { });
+  diskWarnPercent = ((osConfig.marchyo or { }).shell or { }).diskWarnPercent or 10;
+  shellSettings = lib.recursiveUpdate (pruneSettings (
+    ((osConfig.marchyo or { }).shell or { }).settings or { }
+  )) (lib.optionalAttrs (diskWarnPercent != 10) { health.diskWarnPercent = diskWarnPercent; });
 
+  devPlugins = ((osConfig.marchyo or { }).shell or { }).devPlugins.enable or false;
+  barPlugin = ((osConfig.marchyo or { }).shell or { }).barPlugin or null;
   shellPlugins = ((osConfig.marchyo or { }).shell or { }).plugins or [ ];
 
   # CLI-added plugins arrive as raw pinned git specs; build each here (Linux pkgs,
@@ -37,7 +42,15 @@ let
     pkgs.mkMarchyoShellPlugin (
       {
         src = pkgs.fetchgit { inherit (p) url rev hash; };
-        inherit (p) id kinds entryPoints;
+        inherit (p)
+          id
+          kinds
+          entryPoints
+          keepLoaded
+          replaces
+          barWidget
+          siblings
+          ;
         prefix = p.prefix or null;
         source = { inherit (p) url rev; };
       }
@@ -51,7 +64,8 @@ let
   # Bakes the dictation bar widget in/out (on when dictation and its indicator are set).
   dictation = (osConfig.marchyo or { }).dictation or { };
   dictationIndicator = (dictation.enable or false) && (dictation.indicator or true);
-  # Drives the battery widget's click target (marchyo menu power vs vicinae toggle).
+  dictationBackend = dictation.backend or "superwhisper";
+  # Drives the power panel's menu button (marchyo menu power vs the in-shell launcher).
   menusEnabled = (osConfig.marchyo or { }).menus.enable or true;
   # Arm the solaar HID++ fallback only when Logitech support is on; otherwise
   # the shell never polls solaar.
@@ -64,12 +78,20 @@ let
   notifRules = map (r: lib.filterAttrs (_n: v: v != "") r) (
     (osConfig.marchyo or { }).notifications.rules or [ ]
   );
+  notifOpts = (osConfig.marchyo or { }).notifications or { };
+  notifStackBySender = notifOpts.stackBySender or true;
+  notifDetectCodes = notifOpts.detectCodes or true;
+  notifPassApps = notifOpts.passApps or [ "marchyo" ];
+  language = (osConfig.marchyo or { }).language or "en";
+  perMonitorWorkspaces = ((osConfig.marchyo or { }).workspaces or { }).perMonitor or true;
+  monitorPersist = ((osConfig.marchyo or { }).monitorPanel or { }).persist or true;
   appearance = (osConfig.marchyo or { }).theme.appearance or { };
   cornerRadiusScale = appearance.cornerRadiusScale or 1.0;
   uiScale = appearance.uiScale or 1.0;
   animationSpeed = appearance.animationSpeed or 1.0;
   highContrast = appearance.highContrast or false;
-  floatingBar = appearance.floatingBar or true;
+  reduceMotion = appearance.reduceMotion or false;
+  floatingBar = appearance.floatingBar or false;
   surfaceAlpha = appearance.surfaceAlpha or 0.85;
   # Theme + scale the store package at build time (no activation-time file writes).
   shellPkg = pkgs.marchyo-shell.override {
@@ -77,16 +99,26 @@ let
     inherit
       fontScale
       dictationIndicator
+      dictationBackend
       menusEnabled
       peripheralsFallback
       notifRules
+      notifStackBySender
+      notifDetectCodes
+      notifPassApps
       cornerRadiusScale
       uiScale
       animationSpeed
+      reduceMotion
       highContrast
       floatingBar
       surfaceAlpha
       tailscaleEnabled
+      language
+      perMonitorWorkspaces
+      monitorPersist
+      devPlugins
+      barPlugin
       ;
     plugins = shellPlugins ++ builtExtraPlugins;
   };

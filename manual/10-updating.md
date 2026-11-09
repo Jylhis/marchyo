@@ -37,8 +37,6 @@ nix flake update marchyo
 sudo nixos-rebuild switch --flake .#yourhost
 ```
 
-On a Mac it's `darwin-rebuild switch --flake .#yourhost` instead.
-
 :::note
 `nix flake update` rewrites `flake.lock`, the file that records exactly what your
 system is built from. Commit it after an update — that's what makes the change

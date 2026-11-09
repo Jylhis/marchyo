@@ -5,16 +5,12 @@
   ...
 }:
 let
+  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
+  dpmsOn = hlua.hyprDispatch ''dpms({ action = "on" })'';
+  dpmsOff = hlua.hyprDispatch ''dpms({ action = "off" })'';
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   screensaverEnabled = (osConfig.marchyo or { }).screensaver.enable or true;
-  hibernation = (osConfig.marchyo or { }).power.hibernation or { };
-  hibernationEnabled = hibernation.enable or false;
-  idleSleepCmd =
-    if hibernation.suspendThenHibernate or true then
-      "systemctl suspend-then-hibernate"
-    else
-      "systemctl suspend";
 
   # With the unified shell on, the in-shell WlSessionLock (`marchyo shell lock`)
   # replaces hyprlock/loginctl as the lock actuation. hypridle stays the single
@@ -35,7 +31,7 @@ in
         general = {
           lock_cmd = if shellEnabled then shellLockCmd else "pidof hyprlock || hyprlock";
           before_sleep_cmd = if shellEnabled then shellLockCmd else "loginctl lock-session";
-          after_sleep_cmd = "hyprctl dispatch dpms on";
+          after_sleep_cmd = dpmsOn;
           inhibit_sleep = 3;
         };
 
@@ -63,15 +59,8 @@ in
             }
             {
               timeout = 330;
-              on-timeout = "hyprctl dispatch dpms off";
-              on-resume = "hyprctl dispatch dpms on";
-            }
-          ]
-          # Sleep after 30 min idle, only when the host opted into hibernation.
-          ++ lib.optionals hibernationEnabled [
-            {
-              timeout = 1800;
-              on-timeout = idleSleepCmd;
+              on-timeout = dpmsOff;
+              on-resume = dpmsOn;
             }
           ];
       };

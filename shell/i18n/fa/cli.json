@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "وارد %1 شدید.",
+  "launch.notFoundInPath": "%1 در PATH یافت نشد",
+  "utilities.reminder": "یادآور",
+  "utilities.battery": "باتری %1%",
+  "utilities.battery2": "باتری",
+  "utilities.transcode": "تبدیل",
+  "utilities.share": "اشتراک‌گذاری",
+  "toggles.enabled": "فعال",
+  "toggles.suspend": "تعلیق"
+}

@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Connecté à %1.",
+  "launch.notFoundInPath": "%1 introuvable dans PATH",
+  "utilities.reminder": "Rappel",
+  "utilities.battery": "Batterie %1%",
+  "utilities.battery2": "Batterie",
+  "utilities.transcode": "Transcoder",
+  "utilities.share": "Partager",
+  "toggles.enabled": "Activé",
+  "toggles.suspend": "Suspendre"
+}

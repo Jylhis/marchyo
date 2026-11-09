@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "تم تسجيل الدخول إلى %1.",
+  "launch.notFoundInPath": "%1 غير موجود في PATH",
+  "utilities.reminder": "تذكير",
+  "utilities.battery": "البطارية %1%",
+  "utilities.battery2": "البطارية",
+  "utilities.transcode": "تحويل الترميز",
+  "utilities.share": "مشاركة",
+  "toggles.enabled": "مفعّل",
+  "toggles.suspend": "تعليق"
+}

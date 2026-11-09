@@ -1,0 +1,21 @@
+"use strict";
+const assert = require("node:assert/strict");
+const M = require("../../shell/Commons/IndicatorLayout.js");
+const entries = ["marchyo.clock", "marchyo.dnd", "marchyo.caffeine", "marchyo.separator",
+  "marchyo.camera", "marchyo.audio"].map(id => ({ id }));
+const groups = M.groupEntries(entries);
+assert.equal(groups.length, 5);
+assert.deepEqual(groups[1].indicators, entries.slice(1, 3));
+assert.equal(groups[2], entries[3]);
+assert.equal(entries.length, 6);
+assert.deepEqual(M.groupEntries([]), []);
+assert.deepEqual(M.activeOrder([2], [true, false, true]), [2, 0]);
+assert.deepEqual(M.activeOrder([2, 0], [true, false, false]), [0]);
+const hidden = M.positions([0, 24, 0], [false, true, false], true);
+const revealed = M.positions([24, 24, 24], [false, true, false], true);
+assert.equal(hidden.total - hidden.offsets[1], revealed.total - revealed.offsets[1]);
+const started = M.positions([24, 24, 24], [true, true, false], true, [1]);
+assert.equal(started.offsets[1], revealed.offsets[1], "new active icon preserves existing target");
+assert.equal(started.offsets[0], 24);
+assert.deepEqual(M.positions([24, 24], [false, true], false).offsets, [24, 0]);
+console.log("indicator-layout: passed");

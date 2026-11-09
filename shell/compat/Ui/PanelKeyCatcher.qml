@@ -1,6 +1,7 @@
 // Vendored from omacom/omarchy @ branch quattro (MIT), the omarchy "Quattro"
 // Quickshell shell, as part of marchyo's omarchy plugin compat shim. Only the
-// `qs.Commons` import is rewritten to `qs.compat.Commons`; the body is upstream.
+// `qs.Ui` / `qs.Commons` imports (-> `qs.compat.*`) and `Color.` reads (->
+// `CompatColor.`) are rewritten; the body is upstream.
 // See shell/compat/LICENSE.omarchy and shell/compat/README.md.
 import QtQuick
 
@@ -9,79 +10,108 @@ import QtQuick
 // (focusSection, selectedIndex, action rules) while the boilerplate
 // key handling lives here.
 //
+// Usage:
+//   Common.KeyboardPanel {
+//     ...
+//     PanelKeyCatcher {
+//       anchors.fill: parent
+//       onMoveRequested: function(dx, dy) { root.moveCursor(dx, dy) }
+//       onActivateRequested: root.activateCursor()
+//       onCloseRequested: root.close()
+//       onDeleteRequested: root.deleteSelected()
+//       onTextKey: function(t, modifiers) { if (t === "r") root.refresh() }
+//
+//       Column { ... panel content ... }
+//     }
+//   }
+//
 // Keys.priority: Keys.BeforeItem means this handler gets keys first,
 // even when a descendant has activeFocus. That's what lets Up/Down
 // arrows drive the cursor instead of being consumed by an inner
 // Flickable's built-in scroll handling. When a panel has an inline
-// editor the panel must set `blocked: editor.activeFocus` so this
-// handler short-circuits and the editor receives keys normally.
+// editor (wifi passphrase, gallery TextField demo) the panel must
+// set `blocked: editor.activeFocus` so this handler short-circuits
+// and the editor receives keys normally.
+//
+// blocked: when true, ALL keys are forwarded to descendants without
+// triggering signals.
 Item {
-    id: root
+  id: root
 
-    property bool blocked: false
+  property bool blocked: false
+  // Panels that let items be reordered set this, and Ctrl+Up/Down (or
+  // Ctrl+k/j) then asks to move the current item instead of the cursor.
+  property bool reorderable: false
+  // And Ctrl+Left/Right (or Ctrl+h/l) sideways, for a panel that arranges in
+  // two dimensions, like the display panel's layout map.
+  property bool reorderableSideways: false
 
-    signal moveRequested(int dx, int dy)
-    signal activateRequested
-    signal returnRequested
-    signal closeRequested
-    signal deleteRequested
-    signal tabRequested(int direction)
-    // The held modifiers ride along, so a panel can tell Alt+T from T.
-    signal textKey(string text, int modifiers)
+  signal moveRequested(int dx, int dy)
+  signal reorderRequested(int dy)
+  signal reorderSidewaysRequested(int dx)
+  signal activateRequested()
+  signal returnRequested()
+  signal closeRequested()
+  signal deleteRequested()
+  signal tabRequested(int direction)
+  // The held modifiers ride along, so a panel can tell Alt+T from T.
+  signal textKey(string text, int modifiers)
 
-    focus: true
-    Keys.priority: Keys.BeforeItem
-    Keys.onPressed: function (event) {
-        if (blocked)
-            return;
-        if (event.key === Qt.Key_Escape) {
-            closeRequested();
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-            tabRequested((event.modifiers & Qt.ShiftModifier) || event.key === Qt.Key_Backtab ? -1 : 1);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Down || event.text === "j") {
-            moveRequested(0, 1);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Up || event.text === "k") {
-            moveRequested(0, -1);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Right || event.text === "l") {
-            moveRequested(1, 0);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Left || event.text === "h") {
-            moveRequested(-1, 0);
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            returnRequested();
-            activateRequested();
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Space) {
-            activateRequested();
-            event.accepted = true;
-            return;
-        }
-        if (event.key === Qt.Key_Delete || event.text === "x" || event.text === "X") {
-            deleteRequested();
-            event.accepted = true;
-            return;
-        }
-        if (event.text && event.text.length === 1) {
-            textKey(event.text, event.modifiers);
-        }
+  focus: true
+  Keys.priority: Keys.BeforeItem
+  Keys.onPressed: function(event) {
+    if (blocked) return
+
+    if (event.key === Qt.Key_Escape) {
+      closeRequested(); event.accepted = true; return
     }
+    if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+      tabRequested((event.modifiers & Qt.ShiftModifier) || event.key === Qt.Key_Backtab ? -1 : 1)
+      event.accepted = true
+      return
+    }
+    if (reorderable && (event.modifiers & Qt.ControlModifier)) {
+      var up = event.key === Qt.Key_Up || event.key === Qt.Key_K
+      var down = event.key === Qt.Key_Down || event.key === Qt.Key_J
+      if (up || down) {
+        reorderRequested(down ? 1 : -1); event.accepted = true; return
+      }
+    }
+    if (reorderableSideways && (event.modifiers & Qt.ControlModifier)) {
+      // In a mirrored (right-to-left) panel, Left moves forward along a row.
+      var forward = event.key === (LayoutMirroring.enabled ? Qt.Key_Left : Qt.Key_Right) || event.key === (LayoutMirroring.enabled ? Qt.Key_H : Qt.Key_L)
+      var back = event.key === (LayoutMirroring.enabled ? Qt.Key_Right : Qt.Key_Left) || event.key === (LayoutMirroring.enabled ? Qt.Key_L : Qt.Key_H)
+      if (forward || back) {
+        reorderSidewaysRequested(forward ? 1 : -1); event.accepted = true; return
+      }
+    }
+    if (event.key === Qt.Key_Down || event.text === "j") {
+      moveRequested(0, 1); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_Up || event.text === "k") {
+      moveRequested(0, -1); event.accepted = true; return
+    }
+    // In a mirrored (right-to-left) panel, Left moves forward along a row.
+    var right = event.key === Qt.Key_Right || event.text === "l"
+    var left = event.key === Qt.Key_Left || event.text === "h"
+    if (LayoutMirroring.enabled ? left : right) {
+      moveRequested(1, 0); event.accepted = true; return
+    }
+    if (LayoutMirroring.enabled ? right : left) {
+      moveRequested(-1, 0); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+      returnRequested()
+      activateRequested(); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_Space) {
+      activateRequested(); event.accepted = true; return
+    }
+    if (event.key === Qt.Key_Delete || event.text === "x" || event.text === "X") {
+      deleteRequested(); event.accepted = true; return
+    }
+    if (event.text && event.text.length === 1) {
+      textKey(event.text, event.modifiers)
+    }
+  }
 }

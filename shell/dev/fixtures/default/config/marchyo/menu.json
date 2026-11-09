@@ -1,0 +1,949 @@
+{
+  "appearance": {
+    "action": "submenu",
+    "aliases": [
+      "look",
+      "style"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-desktop-theme",
+    "label": "Appearance",
+    "order": 40,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "appearance.background": {
+    "action": "submenu",
+    "aliases": [
+      "wallpaper"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-desktop-wallpaper",
+    "label": "Background",
+    "order": 20,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "appearance.background.next": {
+    "action": "exec",
+    "aliases": [
+      "next wallpaper"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "go-next",
+    "label": "Next background",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo bg next",
+    "when": null
+  },
+  "appearance.background.wallpapers": {
+    "action": "provider",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "image-x-generic",
+    "label": "Wallpapers",
+    "order": 10,
+    "provider": "wallpapers",
+    "target": "",
+    "when": null
+  },
+  "appearance.corners": {
+    "action": "submenu",
+    "aliases": [
+      "rounding"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Corners",
+    "order": 50,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "appearance.corners.rounded": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Rounded",
+    "order": 30,
+    "provider": null,
+    "target": "marchyo theme corners rounded",
+    "when": null
+  },
+  "appearance.corners.sharp": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Sharp",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo theme corners sharp",
+    "when": null
+  },
+  "appearance.corners.theme": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Theme default",
+    "order": 10,
+    "provider": null,
+    "target": "marchyo theme corners theme",
+    "when": null
+  },
+  "appearance.font": {
+    "action": "provider",
+    "aliases": [
+      "typeface"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-desktop-font",
+    "label": "Font",
+    "order": 30,
+    "provider": "fonts",
+    "target": "",
+    "when": null
+  },
+  "appearance.gaps": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle gaps --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Window gaps",
+    "order": 60,
+    "provider": null,
+    "target": "marchyo toggle gaps",
+    "when": null
+  },
+  "appearance.motion": {
+    "action": "exec",
+    "aliases": [
+      "animations"
+    ],
+    "checked": "test \"$(marchyo toggle reduce-motion --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Reduce motion",
+    "order": 70,
+    "provider": null,
+    "target": "marchyo toggle reduce-motion",
+    "when": null
+  },
+  "appearance.theme": {
+    "action": "provider",
+    "aliases": [
+      "colors",
+      "color scheme"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-desktop-theme",
+    "label": "Theme",
+    "order": 10,
+    "provider": "themes",
+    "target": "",
+    "when": null
+  },
+  "appearance.transparency": {
+    "action": "submenu",
+    "aliases": [
+      "opacity"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Transparency",
+    "order": 40,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "appearance.transparency.glassy": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Glassy",
+    "order": 30,
+    "provider": null,
+    "target": "marchyo theme transparency glassy",
+    "when": null
+  },
+  "appearance.transparency.opaque": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Opaque",
+    "order": 10,
+    "provider": null,
+    "target": "marchyo theme transparency opaque",
+    "when": null
+  },
+  "appearance.transparency.transparent": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Transparent",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo theme transparency transparent",
+    "when": null
+  },
+  "apps": {
+    "action": "provider",
+    "aliases": [
+      "applications",
+      "launch"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "applications-all",
+    "label": "Apps",
+    "order": 10,
+    "provider": "apps",
+    "target": "",
+    "when": null
+  },
+  "capture": {
+    "action": "submenu",
+    "aliases": [
+      "screen",
+      "grab"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "camera-photo",
+    "label": "Capture",
+    "order": 20,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "capture.annotate": {
+    "action": "exec",
+    "aliases": [
+      "edit screenshot",
+      "markup"
+    ],
+    "checked": null,
+    "description": "Take a screenshot and annotate it in satty",
+    "disabled": false,
+    "icon": "draw-freehand",
+    "label": "Screenshot with annotation",
+    "order": 20,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture screenshot --edit",
+    "when": null
+  },
+  "capture.color": {
+    "action": "exec",
+    "aliases": [
+      "color picker",
+      "eyedropper"
+    ],
+    "checked": null,
+    "description": "Copy the hex value of a screen pixel",
+    "disabled": false,
+    "icon": "color-select",
+    "label": "Pick color",
+    "order": 70,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture color",
+    "when": null
+  },
+  "capture.ocr": {
+    "action": "exec",
+    "aliases": [
+      "ocr",
+      "text recognition"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "edit-find",
+    "label": "Copy text from screen",
+    "order": 60,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture ocr",
+    "when": null
+  },
+  "capture.record": {
+    "action": "exec",
+    "aliases": [
+      "screen recording",
+      "screencast"
+    ],
+    "checked": null,
+    "description": "Select an area and start recording",
+    "disabled": false,
+    "icon": "media-record",
+    "label": "Record screen",
+    "order": 30,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture record",
+    "when": "! pgrep -f gpu-screen-recorder >/dev/null"
+  },
+  "capture.record-audio": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "Select an area and record it with desktop audio",
+    "disabled": false,
+    "icon": "audio-input-microphone",
+    "label": "Record screen with audio",
+    "order": 40,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture record --audio desktop",
+    "when": "! pgrep -f gpu-screen-recorder >/dev/null"
+  },
+  "capture.record-stop": {
+    "action": "exec",
+    "aliases": [
+      "end recording"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "media-playback-stop",
+    "label": "Stop recording",
+    "order": 50,
+    "provider": null,
+    "target": "marchyo capture record",
+    "when": "pgrep -f gpu-screen-recorder >/dev/null"
+  },
+  "capture.screenshot": {
+    "action": "exec",
+    "aliases": [
+      "screen shot",
+      "screengrab"
+    ],
+    "checked": null,
+    "description": "Select an area and save the screenshot",
+    "disabled": false,
+    "icon": "camera-photo",
+    "label": "Screenshot",
+    "order": 10,
+    "provider": null,
+    "target": "sleep 0.2; marchyo capture screenshot",
+    "when": null
+  },
+  "hardware": {
+    "action": "submenu",
+    "aliases": [
+      "devices"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "computer",
+    "label": "Hardware",
+    "order": 50,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "hardware.audio": {
+    "action": "exec",
+    "aliases": [
+      "sound",
+      "volume"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "audio-card",
+    "label": "Audio",
+    "order": 10,
+    "provider": null,
+    "target": "marchyo shell open audio",
+    "when": null
+  },
+  "hardware.bluetooth": {
+    "action": "terminal",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "bluetooth",
+    "label": "Bluetooth",
+    "order": 30,
+    "provider": null,
+    "target": "bluetui",
+    "when": null
+  },
+  "hardware.display": {
+    "action": "exec",
+    "aliases": [
+      "brightness",
+      "screen"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "video-display",
+    "label": "Display",
+    "order": 40,
+    "provider": null,
+    "target": "marchyo shell open display",
+    "when": null
+  },
+  "hardware.monitors": {
+    "action": "terminal",
+    "aliases": [
+      "outputs",
+      "resolution"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "video-display",
+    "label": "Monitors",
+    "order": 50,
+    "provider": null,
+    "target": "hyprmon",
+    "when": null
+  },
+  "hardware.network": {
+    "action": "exec",
+    "aliases": [
+      "wifi",
+      "wi-fi",
+      "ethernet"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "network-wireless",
+    "label": "Network",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo shell open network",
+    "when": null
+  },
+  "hardware.power-profile": {
+    "action": "provider",
+    "aliases": [
+      "performance",
+      "battery"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "battery",
+    "label": "Power profile",
+    "order": 60,
+    "provider": "power-profiles",
+    "target": "",
+    "when": null
+  },
+  "setup": {
+    "action": "submenu",
+    "aliases": [
+      "configure"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-other",
+    "label": "Setup",
+    "order": 70,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "setup.agents": {
+    "action": "provider",
+    "aliases": [
+      "ai"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "applications-development",
+    "label": "Agents",
+    "order": 20,
+    "provider": "agents",
+    "target": "",
+    "when": null
+  },
+  "setup.keys": {
+    "action": "launcher",
+    "aliases": [
+      "keybindings",
+      "shortcuts",
+      "hotkeys"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "input-keyboard",
+    "label": "Keyboard cheat sheet",
+    "order": 30,
+    "provider": null,
+    "target": "keys",
+    "when": null
+  },
+  "setup.language": {
+    "action": "provider",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-desktop-locale",
+    "label": "Language",
+    "order": 10,
+    "provider": "languages",
+    "target": "",
+    "when": null
+  },
+  "share": {
+    "action": "terminal",
+    "aliases": [
+      "send file",
+      "localsend"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "emblem-shared",
+    "label": "Share",
+    "order": 80,
+    "provider": null,
+    "target": "marchyo share",
+    "when": null
+  },
+  "system": {
+    "action": "submenu",
+    "aliases": [
+      "power"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-shutdown",
+    "label": "System",
+    "order": 60,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "system.doctor": {
+    "action": "terminal",
+    "aliases": [
+      "diagnose",
+      "health check"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "dialog-information",
+    "label": "Doctor",
+    "order": 100,
+    "provider": null,
+    "target": "marchyo doctor",
+    "when": null
+  },
+  "system.firmware": {
+    "action": "exec",
+    "aliases": [
+      "bios",
+      "uefi"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "cpu",
+    "label": "Reboot to firmware",
+    "order": 70,
+    "provider": null,
+    "target": "marchyo reboot --firmware",
+    "when": null
+  },
+  "system.hibernate": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-suspend-hibernate",
+    "label": "Hibernate",
+    "order": 40,
+    "provider": null,
+    "target": "marchyo hibernate",
+    "when": "test -e /etc/marchyo/hibernation"
+  },
+  "system.lock": {
+    "action": "exec",
+    "aliases": [
+      "lock screen"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-lock-screen",
+    "label": "Lock",
+    "order": 10,
+    "provider": null,
+    "target": "marchyo lock",
+    "when": null
+  },
+  "system.lock-suspend": {
+    "action": "exec",
+    "aliases": [],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-suspend",
+    "label": "Lock and suspend",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo lock; marchyo suspend",
+    "when": null
+  },
+  "system.logout": {
+    "action": "exec",
+    "aliases": [
+      "sign out",
+      "exit session"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-log-out",
+    "label": "Log out",
+    "order": 50,
+    "provider": null,
+    "target": "marchyo logout",
+    "when": null
+  },
+  "system.reboot": {
+    "action": "exec",
+    "aliases": [
+      "restart"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-reboot",
+    "label": "Reboot",
+    "order": 60,
+    "provider": null,
+    "target": "marchyo reboot",
+    "when": null
+  },
+  "system.restart-shell": {
+    "action": "exec",
+    "aliases": [
+      "reload shell"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "view-refresh",
+    "label": "Restart shell",
+    "order": 90,
+    "provider": null,
+    "target": "marchyo shell reload",
+    "when": null
+  },
+  "system.shutdown": {
+    "action": "exec",
+    "aliases": [
+      "power off",
+      "turn off"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-shutdown",
+    "label": "Shutdown",
+    "order": 80,
+    "provider": null,
+    "target": "marchyo shutdown",
+    "when": null
+  },
+  "system.suspend": {
+    "action": "exec",
+    "aliases": [
+      "sleep",
+      "standby"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "system-suspend",
+    "label": "Suspend",
+    "order": 30,
+    "provider": null,
+    "target": "marchyo suspend",
+    "when": null
+  },
+  "toggle": {
+    "action": "submenu",
+    "aliases": [
+      "switch",
+      "settings"
+    ],
+    "checked": null,
+    "description": "",
+    "disabled": false,
+    "icon": "preferences-system",
+    "label": "Toggle",
+    "order": 30,
+    "provider": null,
+    "target": "",
+    "when": null
+  },
+  "toggle.animations": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle animations --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Animations",
+    "order": 100,
+    "provider": null,
+    "target": "marchyo toggle animations",
+    "when": null
+  },
+  "toggle.caffeine": {
+    "action": "exec",
+    "aliases": [
+      "keep awake",
+      "stay awake"
+    ],
+    "checked": "test \"$(marchyo toggle caffeine --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Caffeine",
+    "order": 30,
+    "provider": null,
+    "target": "marchyo toggle caffeine",
+    "when": null
+  },
+  "toggle.crash-capture": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle crash-capture --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Crash capture",
+    "order": 150,
+    "provider": null,
+    "target": "marchyo toggle crash-capture",
+    "when": null
+  },
+  "toggle.fullscreen-desktop": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle fullscreen-desktop --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Fullscreen desktop",
+    "order": 120,
+    "provider": null,
+    "target": "marchyo toggle fullscreen-desktop",
+    "when": null
+  },
+  "toggle.gaps": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle gaps --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Window gaps",
+    "order": 80,
+    "provider": null,
+    "target": "marchyo toggle gaps",
+    "when": null
+  },
+  "toggle.idle": {
+    "action": "exec",
+    "aliases": [
+      "hypridle"
+    ],
+    "checked": "test \"$(marchyo toggle idle --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Idle lock",
+    "order": 40,
+    "provider": null,
+    "target": "marchyo toggle idle",
+    "when": null
+  },
+  "toggle.nightlight": {
+    "action": "exec",
+    "aliases": [
+      "blue light",
+      "hyprsunset"
+    ],
+    "checked": "test \"$(marchyo toggle nightlight --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Night light",
+    "order": 10,
+    "provider": null,
+    "target": "marchyo toggle nightlight",
+    "when": null
+  },
+  "toggle.notifications": {
+    "action": "exec",
+    "aliases": [
+      "do not disturb",
+      "dnd"
+    ],
+    "checked": "test \"$(marchyo toggle notifications --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Notifications",
+    "order": 20,
+    "provider": null,
+    "target": "marchyo toggle notifications",
+    "when": null
+  },
+  "toggle.reduce-motion": {
+    "action": "exec",
+    "aliases": [
+      "motion"
+    ],
+    "checked": "test \"$(marchyo toggle reduce-motion --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Reduce motion",
+    "order": 110,
+    "provider": null,
+    "target": "marchyo toggle reduce-motion",
+    "when": null
+  },
+  "toggle.screensaver": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle screensaver --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Screensaver",
+    "order": 60,
+    "provider": null,
+    "target": "marchyo toggle screensaver",
+    "when": null
+  },
+  "toggle.suspend": {
+    "action": "exec",
+    "aliases": [
+      "auto suspend"
+    ],
+    "checked": "test \"$(marchyo toggle suspend --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Automatic sleep",
+    "order": 50,
+    "provider": null,
+    "target": "marchyo toggle suspend",
+    "when": null
+  },
+  "toggle.touchpad": {
+    "action": "exec",
+    "aliases": [
+      "trackpad"
+    ],
+    "checked": "test \"$(marchyo toggle touchpad --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Touchpad",
+    "order": 130,
+    "provider": null,
+    "target": "marchyo toggle touchpad",
+    "when": null
+  },
+  "toggle.touchscreen": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle touchscreen --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Touchscreen",
+    "order": 140,
+    "provider": null,
+    "target": "marchyo toggle touchscreen",
+    "when": null
+  },
+  "toggle.transparency": {
+    "action": "exec",
+    "aliases": [],
+    "checked": "test \"$(marchyo toggle transparency --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Transparency",
+    "order": 90,
+    "provider": null,
+    "target": "marchyo toggle transparency",
+    "when": null
+  },
+  "toggle.waybar": {
+    "action": "exec",
+    "aliases": [
+      "status bar"
+    ],
+    "checked": "test \"$(marchyo toggle waybar --status)\" = on",
+    "description": "",
+    "disabled": false,
+    "icon": "",
+    "label": "Top bar",
+    "order": 70,
+    "provider": null,
+    "target": "marchyo toggle waybar",
+    "when": null
+  }
+}

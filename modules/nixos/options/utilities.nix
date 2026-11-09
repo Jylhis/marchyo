@@ -1,6 +1,5 @@
-# Omarchy-parity "Trigger" utility toggles. Platform-neutral declarations only
-# (the darwin set imports this namespace too); configuration lives in the
-# desktop-gated modules/home/utilities.nix.
+# Omarchy-parity "Trigger" utility toggles. Declarations only;
+# configuration lives in the desktop-gated modules/home/utilities.nix.
 { lib, ... }:
 let
   inherit (lib) mkOption types;

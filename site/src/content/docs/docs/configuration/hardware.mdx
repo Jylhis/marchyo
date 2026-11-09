@@ -11,6 +11,8 @@ management) by default. Some peripheral-specific support is opt-in.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `marchyo.hardware.logitech.enable` | `false` | Logitech wireless device support (Solaar GUI + udev rules) |
+| `marchyo.hardware.camlink.enable` | `false` | Elgato Cam Link 4K relayed as a 16:9 virtual camera |
+| `marchyo.hardware.camera.waitForAccess` | desktop | Delay WirePlumber at login until camera devices are accessible |
 | `marchyo.hardware.ddc.enable` | `true` | DDC/CI external-monitor brightness (ddcutil, i2c bus + group), desktop-only |
 
 ## Logitech wireless
@@ -26,6 +28,31 @@ management GUI:
 
 This turns on `hardware.logitech.wireless` with the graphical Solaar tool, so
 you can pair devices and tune per-device settings.
+
+## Elgato Cam Link 4K
+
+```nix
+{
+  marchyo.hardware.camlink.enable = true;
+}
+```
+
+The Cam Link 4K (USB `0fd9:0066`) exposes a raw capture node that browser
+meeting apps cannot use. Marchyo relays it through `v4l2-relayd` as a
+1280x720, 30 fps virtual camera called "Cam Link 4K" (`v4l2loopback` with
+`exclusive_caps=1`). A udev rule starts the relay when the device is plugged in
+and systemd stops it when the device goes away. The raw node is
+`/dev/camlink4k`, readable by root only, and Marchyo users join the `video`
+group.
+
+## Camera access at login
+
+libcamera opens each camera's media device once, when WirePlumber starts. At
+login the user manager can start WirePlumber a moment before logind grants the
+session access to the seat's devices, which leaves the camera missing until
+WirePlumber restarts. With `marchyo.hardware.camera.waitForAccess` (on with the
+desktop), WirePlumber waits up to five seconds for the `uaccess` media devices
+to become readable. Opt out with `marchyo.hardware.camera.waitForAccess = false`.
 
 ## External-monitor brightness (DDC/CI)
 

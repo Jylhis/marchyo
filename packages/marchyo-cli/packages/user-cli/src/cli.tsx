@@ -10,6 +10,7 @@ import {
 } from "@marchyo/core";
 import { runStatus } from "./commands/status.tsx";
 import {
+  runBgList,
   runBgNext,
   runBgSet,
   runThemeGenerate,
@@ -30,8 +31,10 @@ import {
   runShellBar,
   runShellBarState,
   runShellDismiss,
+  runShellNotifyKeys,
   runShellDnd,
   runShellDndState,
+  runShellGallery,
   runShellLauncher,
   runShellLock,
   runShellLockState,
@@ -43,17 +46,40 @@ import { runBrightness, runVolume } from "./commands/media.ts";
 import { runRuntimeRestore, runRuntimeStatus } from "./commands/runtime.ts";
 import { runToggle } from "./commands/toggle.ts";
 import {
+  runThemeBarBackground,
+  runThemeBarPosition,
+  runThemeCorners,
+  runThemeGaps,
+  runThemeIcons,
+  runThemeTransparency,
+} from "./commands/appearance.ts";
+import {
+  runBarBackground,
+  runBarList,
+  runBarMove,
+  runBarPosition,
+  runBarPut,
+  runBarRemove,
+  runBarReset,
+  runBarSet,
+} from "./commands/bar.ts";
+import { runWindow } from "./commands/window.ts";
+import {
   runCaptureColor,
   runCaptureOcr,
   runCaptureRecord,
   runCaptureScreenshot,
 } from "./commands/capture.ts";
-import { runKeybindings, runMenu } from "./commands/menu.ts";
+import { runKeybindings, runMenu, runMenuInput, runMenuSelect } from "./commands/menu.ts";
 import {
   runFocusOrLaunch,
   runLaunch,
+  runMonitorClamshell,
   runMonitorLaptopToggle,
+  runMonitorReset,
+  runMonitorSave,
   runMonitorScaleCycle,
+  runMonitorWorkspacesReset,
   runZoom,
 } from "./commands/launch.ts";
 import {
@@ -62,6 +88,7 @@ import {
   runLogout,
   runPowerprofile,
   runReboot,
+  runRebootFirmware,
   runShutdown,
   runSuspend,
 } from "./commands/power.ts";
@@ -73,7 +100,15 @@ import {
   runShare,
   runTranscode,
 } from "./commands/utilities.ts";
-import { runFontCurrent, runFontList, runFontSet } from "./commands/font.ts";
+import {
+  type FontKind,
+  runFontCurrent,
+  runFontList,
+  runFontSet,
+} from "./commands/font.ts";
+import { DB_PRESETS, devLanguages, runDevDb, runDevInit } from "./commands/dev.ts";
+import { runDictation } from "./commands/dictation.ts";
+import { runLanguage } from "./commands/language.ts";
 import {
   runInstall,
   runRemove,
@@ -83,11 +118,31 @@ import {
 } from "./commands/declarative.ts";
 import {
   runPluginAdd,
+  runPluginDev,
   runPluginList,
   runPluginRemove,
   runPluginUpdate,
+  runPluginValidate,
 } from "./commands/plugin.ts";
 import { runCompletion } from "./commands/completion.ts";
+import { runNetworkPortal } from "./commands/network.ts";
+import {
+  runAccountAdd,
+  runAccountCopy,
+  runAccountImport,
+  runAccountList,
+  runAccountMode,
+  runAccountRemove,
+  runAccountRename,
+  runAccountUse,
+  runAgentCrash,
+  runAgentUsage,
+} from "./commands/agent.ts";
+import { runNotify } from "./commands/notify.ts";
+import { splitNotifyArgv } from "./notify-argv.ts";
+import { runWhatsNew } from "./commands/whatsnew.ts";
+import { runSetup, runSetupFix } from "./commands/setup.ts";
+import { attachExamples } from "./examples.ts";
 import { VERSION } from "./version.ts";
 
 const program = new Command();
@@ -246,6 +301,131 @@ Examples:
   });
 
 theme
+  .command("transparency")
+  .description("Show or set window transparency live (opaque|transparent|glassy)")
+  .argument("[mode]", "opaque | transparent | glassy (omit to list)")
+  .option("--revert", "Undo: back to the declarative transparency")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral; marchyo.theme.appearance.transparency is the
+declarative default.
+
+Examples:
+  $ marchyo theme transparency glassy
+  $ marchyo theme transparency --revert
+`,
+  )
+  .action(async (mode: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runThemeTransparency(rt(), mode, opts));
+  });
+
+theme
+  .command("corners")
+  .description("Show or set window corners live (theme|sharp|rounded)")
+  .argument("[mode]", "theme | sharp | rounded (omit to list)")
+  .option("--revert", "Undo: back to the declarative corners")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral; marchyo.theme.appearance.corners is the declarative
+default.
+
+Examples:
+  $ marchyo theme corners rounded
+  $ marchyo theme corners --revert
+`,
+  )
+  .action(async (mode: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runThemeCorners(rt(), mode, opts));
+  });
+
+theme
+  .command("gaps")
+  .description("Show or set window gaps (on|off); persist with --apply")
+  .argument("[state]", "on | off (omit to show the modes)")
+  .option("--apply", "Also persist marchyo.theme.appearance.gaps and rebuild")
+  .option("--revert", "Undo: back to the declarative gaps")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral by default; marchyo.theme.appearance.gaps is the
+declarative default. "marchyo toggle gaps" flips the same setting live.
+
+Examples:
+  $ marchyo theme gaps on
+  $ marchyo theme gaps off --apply
+  $ marchyo theme gaps --revert
+`,
+  )
+  .action(
+    async (
+      state: string | undefined,
+      opts: { apply?: boolean; revert?: boolean },
+    ) => {
+      process.exit(await runThemeGaps(rt(), state, opts));
+    },
+  );
+
+theme
+  .command("bar-position")
+  .description("Show or set the shell bar position live (top|bottom)")
+  .argument("[position]", "top | bottom (omit to list)")
+  .option("--revert", "Undo: back to the declarative position")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral; written to the shell style file the shell watches.
+
+Examples:
+  $ marchyo theme bar-position bottom
+  $ marchyo theme bar-position --revert
+`,
+  )
+  .action(async (position: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runThemeBarPosition(rt(), position, opts));
+  });
+
+theme
+  .command("bar-background")
+  .description("Show or set the shell bar background live (opaque|glassy|clear)")
+  .argument("[mode]", "opaque | glassy | clear (omit to list)")
+  .option("--revert", "Undo: back to the declarative background")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral; written to the shell style file the shell watches.
+
+Examples:
+  $ marchyo theme bar-background glassy
+  $ marchyo theme bar-background --revert
+`,
+  )
+  .action(async (mode: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runThemeBarBackground(rt(), mode, opts));
+  });
+
+theme
+  .command("icons")
+  .description("List installed icon themes or set the icon theme live")
+  .argument("[name]", "an icon theme directory name (omit to list)")
+  .option("--revert", "Undo: back to the declarative icon theme")
+  .addHelpText(
+    "after",
+    `
+Live and ephemeral (dconf); the declarative default is gtk.iconTheme.
+
+Examples:
+  $ marchyo theme icons
+  $ marchyo theme icons Papirus-Dark
+  $ marchyo theme icons --revert
+`,
+  )
+  .action(async (name: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runThemeIcons(rt(), name, opts));
+  });
+
+theme
   .command("generate")
   .description("Generate and apply a theme from a wallpaper image (matugen)")
   .argument("[image]", "path to a wallpaper image")
@@ -294,8 +474,24 @@ Examples:
     process.exit(await runBgSet(rt(), path ?? "", opts));
   });
 
+bg.command("list")
+  .description("List selectable wallpapers (theme, package and ~/Pictures/Wallpapers)")
+  .addHelpText(
+    "after",
+    `
+--format json prints [{ path, name, source: theme|package|user, current }].
+
+Examples:
+  $ marchyo bg list
+  $ marchyo bg list --format json
+`,
+  )
+  .action(async () => {
+    process.exit(await runBgList(rt()));
+  });
+
 bg.command("next")
-  .description("Cycle through the wallpaper package's images")
+  .description("Cycle through the selectable wallpapers (see bg list)")
   .addHelpText(
     "after",
     `
@@ -327,16 +523,20 @@ program
   .command("update")
   .description("Update flake inputs (nix flake update) in the detected flake")
   .option("-n, --dry-run", "Print the command instead of running it")
+  .option("--check", "Only report whether the flake lock pins a newer nixpkgs than the running system")
   .addHelpText(
     "after",
     `
 Examples:
   $ marchyo update
   $ marchyo update --dry-run
+  $ marchyo update --check --json
 `,
   )
-  .action(async (opts: { dryRun?: boolean }) => {
-    process.exit(await runUpdate(rt(), { dryRun: opts.dryRun ?? false }));
+  .action(async (opts: { dryRun?: boolean; check?: boolean }) => {
+    process.exit(
+      await runUpdate(rt(), { dryRun: opts.dryRun ?? false, check: opts.check ?? false }),
+    );
   });
 
 program
@@ -475,6 +675,14 @@ shellCmd
   });
 
 shellCmd
+  .command("gallery")
+  .description("Open the Ui gallery panel (dev), optionally at one section")
+  .argument("[section]", "states | buttons | inputs | choices | panel | popups | dialogs")
+  .action(async (section: string | undefined) => {
+    process.exit(await runShellGallery(rt(), section));
+  });
+
+shellCmd
   .command("launcher")
   .description("Toggle the launcher in a mode")
   .argument("<mode>", "apps | emoji | clipboard")
@@ -535,6 +743,13 @@ shellCmd
   });
 
 shellCmd
+  .command("notify-keys")
+  .description("Control the notification toasts from the keyboard")
+  .action(async () => {
+    process.exit(await runShellNotifyKeys(rt()));
+  });
+
+shellCmd
   .command("dnd")
   .description("Toggle do-not-disturb, or set it on/off")
   .argument("[state]", "on | off (omit to flip)")
@@ -558,6 +773,7 @@ Examples:
   $ marchyo shell toggle audio
   $ marchyo shell close notifications
   $ marchyo shell launcher emoji
+  $ marchyo shell gallery buttons
   $ marchyo shell dnd on
   $ marchyo shell bar off
   $ marchyo shell bar-state
@@ -590,20 +806,22 @@ Examples:
 program
   .command("brightness")
   .description("Step the backlight brightness")
-  .argument("<action>", "up | down")
+  .argument("<action>", "up | down (toggle with --keyboard)")
+  .option("--keyboard", "Act on the keyboard backlight (up | down | toggle)")
   .addHelpText(
     "after",
     `
 With the marchyo shell installed: brightnessctl, then an OSD poke over
 shell IPC. Without it: swayosd-client when installed, else brightnessctl.
-brightnessctl steps 5%.
+brightnessctl steps 5%. --keyboard steps the *kbd_backlight* LED by 10%.
 
 Examples:
   $ marchyo brightness up
+  $ marchyo brightness --keyboard toggle
 `,
   )
-  .action(async (action: string) => {
-    process.exit(await runBrightness(rt(), action));
+  .action(async (action: string, opts: { keyboard?: boolean }) => {
+    process.exit(await runBrightness(rt(), action, opts));
   });
 
 program
@@ -611,17 +829,21 @@ program
   .description("Flip a desktop toggle live (gaps, nightlight, waybar, …)")
   .argument(
     "<name>",
-    "gaps | transparency | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | caffeine | hybrid-gpu",
+    "gaps | transparency | animations | reduce-motion | fullscreen-desktop | nightlight | waybar | touchpad | touchscreen | idle | screensaver | notifications | suspend | caffeine | crash-capture | hybrid-gpu",
   )
   .argument("[state]", "on | off (omit to flip)")
-  .option("--apply", "Also persist declaratively and rebuild (hybrid-gpu only)")
+  .option(
+    "--apply",
+    "Also persist declaratively and rebuild (hybrid-gpu, reduce-motion)",
+  )
   .option("--revert", "Undo: back to the declarative default")
   .option("--status", "Print the current state instead of toggling")
   .addHelpText(
     "after",
     `
-Toggles are live and ephemeral (reset on activation); hybrid-gpu is
---apply-only. --status is scriptable (used by the waybar indicator).
+Toggles are live, and "marchyo runtime restore" replays them. hybrid-gpu
+is --apply-only; reduce-motion also takes --apply. --status is scriptable
+(used by the waybar indicator).
 
 Examples:
   $ marchyo toggle nightlight
@@ -696,11 +918,85 @@ capture
   });
 
 program
+  .command("window")
+  .description("Window utilities: pop out, close all, tiled fullscreen")
+  .argument("<action>", "pop | close-all | tiled-fullscreen")
+  .addHelpText(
+    "after",
+    `
+pop floats, centres and pins the focused tile (and puts it back). Gaps
+and the fullscreen desktop are toggles: marchyo toggle gaps|fullscreen-desktop.
+
+Examples:
+  $ marchyo window pop
+  $ marchyo window close-all
+`,
+  )
+  .action(async (action: string) => {
+    process.exit(await runWindow(rt(), action));
+  });
+
+const menu = program
   .command("menu")
-  .description("Open the central system menu (gum TUI)")
-  .argument("[submenu]", "power (the power/session menu)")
-  .action(async (submenu: string | undefined) => {
-    process.exit(await runMenu(rt(), submenu));
+  .description("Open the command menu in the marchyo shell (gum TUI fallback)")
+  .argument("[route]", "dotted menu id: capture, appearance.theme, system, power (default: root)")
+  .option("--tui", "use the gum terminal menu instead of the shell")
+  .addHelpText(
+    "after",
+    `
+The shell opens the menu when it is running; an unknown route opens the root.
+Without the shell, or with --tui, power and system open the power menu,
+appearance the appearance menu, and anything else the main menu.
+
+Examples:
+  $ marchyo menu
+  $ marchyo menu capture
+  $ marchyo menu appearance.theme
+  $ marchyo menu power --tui
+`,
+  )
+  .action(async (route: string | undefined, opts: { tui?: boolean }) => {
+    process.exit(await runMenu(rt(), route, opts));
+  });
+
+menu
+  .command("select")
+  .description("dmenu-style picker: rows on stdin, the choice on stdout")
+  .option("--prompt <text>", "prompt text")
+  .option("--multiple", "allow several choices; prints a JSON array")
+  .option("--selected <value...>", "values that start selected")
+  .option("--width <px>", "menu width in pixels")
+  .option("--maxheight <px>", "maximum list height in pixels")
+  .option("--on-change <json>", "JSON argv array to run when the highlighted row changes")
+  .option("--change-key <key>", "key that triggers --on-change")
+  .option("--tui", "fall back to gum when the shell is not reachable")
+  .addHelpText(
+    "after",
+    `
+Rows are TAB separated: label, glyph label, label subtext, or glyph label
+subtext. With two fields the first is a glyph when it has at most two
+characters. A chosen row prints its label, or label TAB subtext. Exit 1 on
+cancel, 2 when the shell is not reachable.
+`,
+  )
+  .action(async (_opts, cmd: Command) => {
+    process.exit(await runMenuSelect(rt(), cmd.optsWithGlobals()));
+  });
+
+menu
+  .command("input")
+  .description("Prompt for a line of text in the shell and print it")
+  .option("--prompt <text>", "prompt text")
+  .option("--width <px>", "menu width in pixels")
+  .option("--tui", "fall back to gum when the shell is not reachable")
+  .addHelpText(
+    "after",
+    `
+Exit 1 on cancel, 2 when the shell is not reachable.
+`,
+  )
+  .action(async (_opts, cmd: Command) => {
+    process.exit(await runMenuInput(rt(), cmd.optsWithGlobals()));
   });
 
 program
@@ -713,7 +1009,7 @@ program
 program
   .command("launch")
   .description("Launch an app detached (file-manager opens at the focused cwd)")
-  .argument("<app>", "command name, or 'file-manager'")
+  .argument("<app>", "command name, or file-manager | browser | terminal | floating-terminal")
   .argument("[args...]", "arguments passed through")
   .action(async (app: string, args: string[]) => {
     process.exit(await runLaunch(rt(), app, args));
@@ -754,6 +1050,40 @@ monitor
     process.exit(await runMonitorLaptopToggle(rt()));
   });
 
+monitor
+  .command("clamshell")
+  .description("Lid switch handler: hide the laptop panel while an external display is on")
+  .argument("<state>", "on (lid closed) | off (lid open)")
+  .action(async (state: string) => {
+    process.exit(await runMonitorClamshell(rt(), state));
+  });
+
+monitor
+  .command("reset")
+  .description("Forget the display panel's saved settings")
+  .action(async () => {
+    process.exit(await runMonitorReset(rt()));
+  });
+
+monitor
+  .command("save")
+  .description("Print the current display layout")
+  .option("--nix", "as a marchyo.monitors snippet")
+  .action(async (opts: { nix?: boolean }) => {
+    process.exit(await runMonitorSave(rt(), opts));
+  });
+
+const monitorWorkspaces = monitor
+  .command("workspaces")
+  .description("Per-monitor workspace blocks (marchyo.workspaces.perMonitor)");
+
+monitorWorkspaces
+  .command("reset")
+  .description("Forget which workspace block each monitor owns")
+  .action(async () => {
+    process.exit(await runMonitorWorkspacesReset(rt()));
+  });
+
 program
   .command("lock")
   .description("Lock the screen (shell or hyprlock)")
@@ -785,8 +1115,9 @@ program
 program
   .command("reboot")
   .description("Reboot the system")
-  .action(async () => {
-    process.exit(await runReboot(rt()));
+  .option("--firmware", "reboot into the UEFI firmware setup")
+  .action(async (opts: { firmware?: boolean }) => {
+    process.exit(await (opts.firmware ? runRebootFirmware(rt()) : runReboot(rt())));
   });
 
 program
@@ -872,10 +1203,18 @@ program
   .option("--to <alias|ip>", "Send to this device (alias, IPv4 or IPv4:port)")
   .option("--pin <pin>", "PIN the receiving device asks for")
   .option("--clipboard", "Copy the file's contents (or a folder's path) instead")
+  .option("--tailscale <peer>", "Send over Taildrop to this tailnet machine")
+  .option("--tailscale-receive", "Save incoming Taildrop files (to [paths], default ~/Downloads)")
   .action(
     async (
       paths: string[],
-      opts: { to?: string; pin?: string; clipboard?: boolean },
+      opts: {
+        to?: string;
+        pin?: string;
+        clipboard?: boolean;
+        tailscale?: string;
+        tailscaleReceive?: boolean;
+      },
     ) => {
       process.exit(await runShare(rt(), paths, opts));
     },
@@ -891,18 +1230,21 @@ Examples:
   $ marchyo share ~/Documents/trip --to Pixel
   $ marchyo share report.pdf --to 192.168.1.20 --json
   $ marchyo share notes.txt --clipboard
+  $ marchyo share photo.jpg --tailscale laptop
+  $ marchyo share --tailscale-receive
 `,
   );
 
 const font = program
   .command("font")
-  .description("Terminal font: list, current, or runtime switch");
+  .description("Terminal and UI fonts: list, current, or runtime switch");
 
 font
   .command("list")
-  .description("List installed monospace font families")
-  .action(async () => {
-    process.exit(await runFontList(rt()));
+  .description("List installed font families (monospace by default)")
+  .option("--kind <kind>", "mono | ui | all", "mono")
+  .action(async (opts: { kind: FontKind }) => {
+    process.exit(await runFontList(rt(), opts.kind));
   });
 
 font
@@ -914,11 +1256,239 @@ font
 
 font
   .command("set")
-  .description("Switch the terminal font live (ghostty override include)")
+  .description("Switch the terminal or UI font live")
   .argument("[family]", "font family name (omit with --revert)")
+  .option("--kind <kind>", "mono (ghostty) | ui (GTK and shell) | all", "mono")
   .option("--revert", "Back to the declarative font")
-  .action(async (family: string | undefined, opts: { revert?: boolean }) => {
-    process.exit(await runFontSet(rt(), family, opts));
+  .action(
+    async (family: string | undefined, opts: { revert?: boolean; kind: FontKind }) => {
+      process.exit(await runFontSet(rt(), family, opts));
+    },
+  );
+
+const bar = program
+  .command("bar")
+  .description("Edit the shell bar live: widgets, sections, position, background")
+  .addHelpText(
+    "after",
+    `
+Edits are recorded in $XDG_STATE_HOME/marchyo/shell/bar-layout.json and applied
+by the shell over the layout from marchyo.shell.settings; "marchyo bar reset"
+returns to that layout. Sections: left, centerBegin, center, centerEnd, right.
+Widget ids are listed in the shell configuration reference.
+`,
+  );
+
+bar
+  .command("list")
+  .description("Show the recorded bar layout edits")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bar list
+  $ marchyo bar list --format json
+`,
+  )
+  .action(async () => {
+    process.exit(await runBarList(rt()));
+  });
+
+bar
+  .command("put")
+  .description("Move or add a widget in a bar section")
+  .argument("<id>", "widget id, for example marchyo.cpu")
+  .argument("<section>", "left | centerBegin | center | centerEnd | right")
+  .option("--at <index>", "position in the section (default: the end)")
+  .addHelpText(
+    "after",
+    `
+A widget already on the bar moves and keeps its settings; a separator
+(marchyo.separator) is added instead of moved.
+
+Examples:
+  $ marchyo bar put marchyo.cpu left
+  $ marchyo bar put marchyo.dnd centerEnd --at 0
+`,
+  )
+  .action(async (id: string, section: string, opts: { at?: string }) => {
+    process.exit(await runBarPut(rt(), id, section, opts));
+  });
+
+bar
+  .command("move")
+  .description("Shift a widget along its section")
+  .argument("<id>", "widget id")
+  .argument("<direction>", "left (towards the start) | right")
+  .argument("[count]", "places to move (default 1)")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bar move marchyo.cpu left
+  $ marchyo bar move marchyo.battery right 2
+`,
+  )
+  .action(async (id: string, direction: string, count: string | undefined) => {
+    process.exit(await runBarMove(rt(), id, direction, count));
+  });
+
+bar
+  .command("remove")
+  .description("Take a widget off the bar")
+  .argument("<id>", "widget id")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bar remove marchyo.media
+`,
+  )
+  .action(async (id: string) => {
+    process.exit(await runBarRemove(rt(), id));
+  });
+
+bar
+  .command("set")
+  .description("Replace a bar section with the listed widgets")
+  .argument("<section>", "left | centerBegin | center | centerEnd | right")
+  .argument("[ids...]", "widget ids in order (none empties the section)")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bar set center marchyo.clock
+  $ marchyo bar set centerEnd marchyo.dnd marchyo.caffeine
+  $ marchyo bar set centerBegin
+`,
+  )
+  .action(async (section: string, ids: string[]) => {
+    process.exit(await runBarSet(rt(), section, ids));
+  });
+
+bar
+  .command("reset")
+  .description("Drop every recorded bar layout edit")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo bar reset
+`,
+  )
+  .action(async () => {
+    process.exit(await runBarReset(rt()));
+  });
+
+bar
+  .command("background")
+  .description("Show or set the bar background (opaque|glassy|clear)")
+  .argument("[mode]", "opaque | glassy | clear (omit to list)")
+  .option("--revert", "Undo: back to the declarative background")
+  .addHelpText(
+    "after",
+    `
+Same as "marchyo theme bar-background". Double-clicking empty bar space
+steps through the modes.
+
+Examples:
+  $ marchyo bar background glassy
+  $ marchyo bar background --revert
+`,
+  )
+  .action(async (mode: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runBarBackground(rt(), mode, opts));
+  });
+
+bar
+  .command("position")
+  .description("Show or set the bar position (top|bottom)")
+  .argument("[position]", "top | bottom (omit to list)")
+  .option("--revert", "Undo: back to the declarative position")
+  .addHelpText(
+    "after",
+    `
+Same as "marchyo theme bar-position".
+
+Examples:
+  $ marchyo bar position bottom
+  $ marchyo bar position --revert
+`,
+  )
+  .action(async (position: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runBarPosition(rt(), position, opts));
+  });
+
+const dev = program
+  .command("dev")
+  .description("Project dev environments: devenv templates and database services");
+
+dev
+  .command("init")
+  .description("Write a devenv.nix, devenv.yaml and .envrc for a language")
+  .argument("<lang>", `one of: ${devLanguages().join(", ")}`)
+  .option("--force", "overwrite existing files")
+  .addHelpText(
+    "after",
+    `
+Writes into the current directory and refuses to replace existing devenv.nix,
+devenv.yaml or .envrc files unless --force is given.
+
+Examples:
+  $ marchyo dev init go
+  $ marchyo dev init python --force
+`,
+  )
+  .action(async (lang: string, opts: { force?: boolean }) => {
+    process.exit(await runDevInit(rt(), lang, opts));
+  });
+
+dev
+  .command("db")
+  .description("Add a devenv database service to the devenv.nix in this directory")
+  .argument("<engine>", `one of: ${Object.keys(DB_PRESETS).join(", ")}`)
+  .addHelpText(
+    "after",
+    `
+Safe to repeat: an engine that is already configured is left alone. A
+devenv.nix of an unexpected shape is refused and left untouched.
+
+Examples:
+  $ marchyo dev db postgres
+  $ marchyo dev db redis
+`,
+  )
+  .action(async (engine: string) => {
+    process.exit(await runDevDb(rt(), engine));
+  });
+
+program
+  .command("dictation")
+  .description("Start, stop or toggle voice dictation on the configured backend")
+  .argument("<action>", "start | stop | toggle | status")
+  .addHelpText(
+    "after",
+    `
+The backend (Superwhisper, Voxtype or Hex) comes from marchyo.dictation.backend.
+Concurrent calls are serialised; status prints idle, recording, transcribing or
+stopped (--json adds the backend name).
+
+Examples:
+  $ marchyo dictation toggle
+  $ marchyo dictation status --json
+`,
+  )
+  .action(async (action: string) => {
+    process.exit(await runDictation(rt(), action));
+  });
+
+program
+  .command("language")
+  .description("Show or set marchyo's display language (shell and CLI strings)")
+  .argument("[code]", "language code, or 'list' (omit to show the current one)")
+  .option("--revert", "Drop the runtime override, back to marchyo.language")
+  .action(async (code: string | undefined, opts: { revert?: boolean }) => {
+    process.exit(await runLanguage(rt(), code, opts));
   });
 
 program
@@ -937,6 +1507,30 @@ program
   .option("-n, --dry-run", "Print the state change without writing or rebuilding")
   .action(async (feature: string, opts: { dryRun?: boolean }) => {
     process.exit(await runRemove(rt(), feature, opts));
+  });
+
+const network = program
+  .command("network")
+  .description("Network helpers (captive-portal sign-in)");
+
+network
+  .command("portal")
+  .description("Open the captive-portal sign-in window and wait until online")
+  .option("--uri <url>", "Page to open (default: marchyo.network.connectivityCheck.uri)")
+  .option("--browser <cmd>", "Chromium-family browser (default: the webapps browser)")
+  .addHelpText(
+    "after",
+    `
+Pauses an active Tailscale exit node, opens the check URI in a browser app
+window, polls NetworkManager every 2s (every 15s after 5 minutes) until
+connectivity is full, then closes the window and restores the exit node.
+
+Examples:
+  $ marchyo network portal
+`,
+  )
+  .action(async (opts: { uri?: string; browser?: string }) => {
+    process.exit(await runNetworkPortal(rt(), opts));
   });
 
 const webapp = program
@@ -1009,6 +1603,25 @@ plugin
     process.exit(await runPluginRemove(rt(), id, opts));
   });
 
+plugin
+  .command("validate")
+  .description("Check a plugin checkout against the manifest rules the build enforces")
+  .argument("<dir>", "plugin directory (holds manifest.json)")
+  .option("--omarchy-first-party", "allow the reserved omarchy.* id namespace (vendored omarchy plugins)")
+  .action(async (dir: string, opts: { omarchyFirstParty?: boolean }) => {
+    process.exit(await runPluginValidate(rt(), dir, opts));
+  });
+
+plugin
+  .command("dev")
+  .description("Load a plugin checkout into the running shell without a rebuild (dev hosts only)")
+  .argument("<dir>", "plugin directory (the plugin id with --remove)")
+  .option("-w, --watch", "sync again whenever the checkout changes")
+  .option("--remove", "unload the dev plugin with this id")
+  .action(async (dir: string, opts: { watch?: boolean; remove?: boolean }) => {
+    process.exit(await runPluginDev(rt(), dir, opts));
+  });
+
 const security = program
   .command("security")
   .description("Security enrollment helpers");
@@ -1049,9 +1662,9 @@ runtime
   .addHelpText(
     "after",
     `
-Idempotent and best-effort; unknown or failing overrides are skipped
-with a warning. Wired as a Hyprland exec-once so overrides survive
-compositor restarts within a system generation.
+Restores the saved theme or Nix default, then the remaining overrides.
+Failures are reported and return a nonzero status; independent overrides
+still run. Runs at session start and after Home Manager activation.
 
 Examples:
   $ marchyo runtime restore
@@ -1059,6 +1672,158 @@ Examples:
   )
   .action(async () => {
     process.exit(await runRuntimeRestore(rt()));
+  });
+
+const agent = program
+  .command("agent")
+  .description("Inspect the AI coding agents in use on this machine");
+
+agent
+  .command("usage")
+  .description("Show agent usage limits and token totals (refreshes the agents panel data)")
+  .option("--force", "rescan transcripts now instead of reusing a scan up to 20 s old")
+  .addHelpText(
+    "after",
+    `
+Limits come from each provider (Claude Code, Codex, GitHub Copilot, and Z.ai and
+OpenRouter when ZAI_API_KEY or OPENROUTER_API_KEY is set) and are
+probed at most every 15 seconds; tokens come from local transcripts. The result
+is cached in $XDG_STATE_HOME/marchyo/agents/usage.json without credentials.
+
+Examples:
+  $ marchyo agent usage
+  $ marchyo agent usage --json | jq '.agents[] | select(.ready)'
+`,
+  )
+  .action(async (opts: { force?: boolean }) => {
+    process.exit(await runAgentUsage(rt(), opts));
+  });
+
+agent
+  .command("crash")
+  .description("Diagnose a crashed process with the default coding agent ($AI_AGENT)")
+  .argument("<pid>", "PID from `coredumpctl list`")
+  .argument("[comm]", "process name")
+  .argument("[exe]", "executable path")
+  .argument("[signal]", "signal name")
+  .argument("[timestamp]", "COREDUMP_TIMESTAMP in microseconds, to tell dumps of a reused PID apart")
+  .addHelpText(
+    "after",
+    `
+Starts $AI_AGENT with a prompt that points at the diagnose-crash skill, in its
+most restricted approval mode. Outside a terminal (a click on the crash
+notification) the agent opens in a new window. The crash watcher
+(marchyo.ai.crashCapture) runs this from its notification.
+
+Examples:
+  $ marchyo agent crash 1516893
+  $ marchyo agent crash 1516893 firefox /nix/store/...-firefox/bin/firefox SIGSEGV
+`,
+  )
+  .action(async (pid: string, comm?: string, exe?: string, signal?: string, timestamp?: string) => {
+    const rest = [comm ?? "unknown", exe ?? "unknown", signal ?? "unknown", timestamp];
+    process.exit(await runAgentCrash(rt(), pid, rest.filter((v) => v !== undefined)));
+  });
+
+const account = agent
+  .command("account")
+  .description("Keep several Claude Code, Codex and Grok sign-ins and choose one per launch")
+  .addHelpText(
+    "after",
+    `
+The first login stays in ~/.claude, ~/.codex or ~/.grok. An added account
+keeps only its credentials in $XDG_STATE_HOME/marchyo/agents/accounts/<provider>/<id>/
+and links history, settings, skills and sessions to the first home. The
+claude, codex and grok wrappers start new sessions as the active account
+(CLAUDE_CONFIG_DIR, CODEX_HOME, GROK_HOME). Running sessions keep their account.
+`,
+  );
+
+account
+  .command("list [provider]")
+  .description("List the accounts per provider with their last known limits")
+  .action(async (prov?: string) => {
+    process.exit(await runAccountList(rt(), prov));
+  });
+
+account
+  .command("add <provider> [label]")
+  .description("Sign in to another account with the provider's own login")
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ marchyo agent account add claude Work
+  $ marchyo agent account add codex
+`,
+  )
+  .action(async (prov: string, label?: string) => {
+    process.exit(await runAccountAdd(rt(), prov, label));
+  });
+
+account
+  .command("use <provider> [account]")
+  .description("Choose the account new sessions use (default: the next one)")
+  .action(async (prov: string, target?: string) => {
+    process.exit(await runAccountUse(rt(), prov, target));
+  });
+
+account
+  .command("remove <provider> <account>")
+  .description("Forget an added account (its local home only; no logout)")
+  .action(async (prov: string, target: string) => {
+    process.exit(await runAccountRemove(rt(), prov, target));
+  });
+
+account
+  .command("rename <provider> <account> <label...>")
+  .description("Give an account a new name")
+  .action(async (prov: string, target: string, label: string[]) => {
+    process.exit(await runAccountRename(rt(), prov, target, label));
+  });
+
+account
+  .command("mode <provider> [mode] [threshold]")
+  .description("Show or set the switch mode (manual|auto) and threshold percent (50-100)")
+  .addHelpText(
+    "after",
+    `
+manual: at the threshold, the shell offers a one-click switch.
+auto:   at the threshold, new sessions move to the account with the most headroom.
+
+Examples:
+  $ marchyo agent account mode claude auto 90
+`,
+  )
+  .action(async (prov: string, mode?: string, threshold?: string) => {
+    process.exit(await runAccountMode(rt(), prov, mode, threshold));
+  });
+
+account
+  .command("copy <ssh-host> [providers...]")
+  .description("Copy the signed-in accounts to another marchyo machine over ssh")
+  .option("--replace", "overwrite accounts the other machine has signed in already")
+  .addHelpText(
+    "after",
+    `
+The credentials go over ssh stdin, never on a command line, and land with
+mode 0600 in 0700 directories. Before it replaces a sign-in it asks.
+
+Examples:
+  $ marchyo agent account copy laptop
+  $ marchyo agent account copy user@desktop claude
+`,
+  )
+  .action(async (host: string, provs: string[], opts: { replace?: boolean }) => {
+    process.exit(await runAccountCopy(rt(), host, provs, opts));
+  });
+
+account
+  .command("import")
+  .description("Receive accounts from `marchyo agent account copy` on stdin")
+  .option("--replace", "overwrite accounts signed in here already")
+  .action(async (opts: { replace?: boolean }) => {
+    process.exit(await runAccountImport(rt(), opts));
   });
 
 program
@@ -1069,4 +1834,97 @@ program
     process.exit(await runCompletion(rt(), program, target, VERSION));
   });
 
+program
+  .command("notify")
+  .description("Send a desktop notification, optionally with click actions")
+  .usage("[options] <headline> [description] [--exec <program> [args...] | --action <label> <program> [words...]... [--with <args...>]]")
+  .argument("[args...]", "headline, description and flags (read untouched, not by commander)")
+  .allowUnknownOption()
+  .allowExcessArguments()
+  .addHelpText(
+    "after",
+    `
+Flags (before the headline, or after the description):
+  --app-name <app>           sender name (default marchyo-action)
+  -g, --glyph <glyph>        icon glyph shown on the card
+  -u, --urgency <level>      low (default) | normal | critical
+  -i, --icon <icon>          icon name
+  -t, --expire-time <ms>     lifetime in milliseconds
+  -r, --replace-id <id>      replace an earlier notification
+  -p, --print-id             print the id of the new notification
+  --transient                keep the card out of history
+  --image <path-or-uri>      image shown on the card
+  --exec <program> [args...] run on click; takes the rest of the line
+  --action <label> <program> [words...]
+                             a button (up to 3); the first also runs on click
+  --with <args...>           arguments appended to every action
+
+Each flag also takes the --flag=value form. The click command needs
+$XDG_RUNTIME_DIR: the shell runs it only when the notification carries a
+one-time token the command wrote there. A glyph needs the token too.
+`,
+  )
+  .action(async (_args: string[], _opts: unknown, cmd: Command) => {
+    process.exit(await runNotify(rt(), cmd.args));
+  });
+
+program
+  .command("whats-new")
+  .description("Show what the Marchyo NEWS gained since you last looked")
+  .option("--notify", "send one notification when NEWS changed (used by a user unit at login)")
+  .option("--mark-seen", "record the current NEWS as seen")
+  .addHelpText(
+    "after",
+    `
+--json prints { changed, hash, entries, summary }; summary is the dix
+comparison of the last two system generations (at most 40 lines).
+
+Examples:
+  $ marchyo whats-new
+  $ marchyo whats-new --json
+  $ marchyo whats-new --mark-seen
+`,
+  )
+  .action(async (opts: { notify?: boolean; markSeen?: boolean }) => {
+    process.exit(await runWhatsNew(rt(), opts));
+  });
+
+const setup = program
+  .command("setup")
+  .description("First-login checklist: git, SSH, security keys, language, theme, agent, dictation")
+  .option("--done", "mark the checklist finished (hides the welcome)")
+  .option("--welcome", "send the one-time welcome notification (used by a user unit at login)")
+  .addHelpText(
+    "after",
+    `
+Each item is done, todo or skip (not applicable here). --json prints
+{ items: [{ id, title, status, detail, fix }], doneFlag }.
+
+Examples:
+  $ marchyo setup
+  $ marchyo setup --json
+  $ marchyo setup fix git
+`,
+  )
+  .action(async (opts: { done?: boolean; welcome?: boolean }) => {
+    process.exit(await runSetup(rt(), opts));
+  });
+
+setup
+  .command("fix")
+  .description("Run the interactive fix for one checklist item")
+  .argument("<id>", "git | ssh | fido2 | fingerprint | language | keyboard | theme | agent | dictation")
+  .action(async (id: string) => {
+    process.exit(await runSetupFix(rt(), id));
+  });
+
+attachExamples(program);
+// `notify` reads its own flags and would lose them to commander; hand them
+// over untouched, after any global options. Only a lone --help is left to
+// commander.
+const notifyArgv = splitNotifyArgv(process.argv.slice(2));
+if (notifyArgv !== null && !(notifyArgv.rest.length === 1 && notifyArgv.rest[0] === "--help")) {
+  program.parseOptions(notifyArgv.globals);
+  process.exit(await runNotify(rt(), notifyArgv.rest));
+}
 await program.parseAsync(process.argv);

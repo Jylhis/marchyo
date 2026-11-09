@@ -9,7 +9,7 @@
 # semantic token name to "#rrggbb".
 { lib }:
 let
-  hexByte = import ./hex-byte.nix { inherit lib; };
+  hexByte = lib.fromHexString;
   consoleTable = import ./console-table.nix { inherit lib; };
   tmTheme = import ./base16-tmtheme.nix { inherit lib; };
 
@@ -25,49 +25,61 @@ let
       4
     ];
 
-  # Token -> base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
-  # base16 attrset; the extras get the closest slot by role, which for a tinted
-  # scheme is lossy (border/syn-comment collapse onto text-faint's base03,
-  # accent-hover onto accent's base09, accent-subtle onto bg-subtle's base01).
-  # selection-bg, destructive and the syn-* extras take the slot the base16
-  # styling guidelines name for their role: base02 "Selection Background",
-  # base08 "Variables" and "Diff Deleted" (the red slot), base09 "Integers",
-  # base0C "Support" (built-ins), base0D "Functions". `cursor` shares
-  # accent's slot because it is the same hex as accent; two tokens with one
-  # build hex but different slots make a surface hex swap ambiguous. A token
-  # absent from this table (contour, decorator, scrim, syn-docstring: no
-  # base16 role) keeps its build-variant hex. Shipped to the CLI as
-  # `tokenSlots` in every theme dir's palette.json.
+  # Token -> base16 slot, by role as in jylhis-palette.nix's base16 attrset
+  # (mirrors BASE16 in lib/design/scripts/lib/terminal.mjs, design-desktop(7)):
+  # base00 bg, base01 bg-subtle, base02 selection-bg, base03 text-faint, base04
+  # text-muted, base05 text, base06 text-heading, base07 text-heading again,
+  # base08 status-err, base09 syn-number, base0A status-warn, base0B
+  # syn-string, base0C syn-type, base0D syn-function, base0E syn-keyword, base0F
+  # syn-docstring. base07 is "The Lightest Foreground" (ANSI 15, bright white),
+  # so no ground takes it and text-heading keeps base06.
+  # Extras take the slot of the role they share a hex with: since design 5.0
+  # accent, link, rule and focus-ring (light) are the ink, so they take base05
+  # (text); accent-hover is text-heading (base06), accent-subtle is selection-bg
+  # (base02). Two tokens with one build hex but different slots would make a
+  # surface hex swap ambiguous, so the aliases follow their target. Lossy
+  # leftovers: surface and surface-raised fall to base01 (nearest ground),
+  # border to base03 and border-strong to base04, destructive to base08 (the
+  # red slot). Tokens with no base16 role are left out and keep their
+  # build-variant hex: primary and its on-/hi/lo/edge shades, cursor (an alias
+  # of primary), the bevels, the chart colours, scrim, status-info,
+  # link-underline-hover. That is the least surprising choice: the signal is
+  # the design's own and a tinted scheme has no counterpart for it. Shipped to
+  # the CLI as `tokenSlots` in every theme dir's palette.json.
   tokenSlots = {
     bg = "base00";
     "bg-subtle" = "base01";
-    surface = "base02";
-    "surface-raised" = "base07";
+    surface = "base01";
+    "surface-raised" = "base01";
     "text-faint" = "base03";
     "text-muted" = "base04";
     text = "base05";
     "text-heading" = "base06";
     "status-err" = "base08";
-    accent = "base09";
-    cursor = "base09";
+    "syn-number" = "base09";
     "status-warn" = "base0A";
     "syn-string" = "base0B";
     "syn-type" = "base0C";
-    "status-info" = "base0D";
+    "syn-function" = "base0D";
     "syn-keyword" = "base0E";
-    brand = "base0F";
+    "syn-docstring" = "base0F";
+    accent = "base05";
+    link = "base05";
+    rule = "base05";
+    "chart-ink" = "base05";
+    brand = "base05";
+    contour = "base04";
+    decorator = "base04";
     border = "base03";
     "border-strong" = "base04";
-    "accent-hover" = "base09";
-    "accent-subtle" = "base01";
+    "accent-hover" = "base06";
+    "accent-subtle" = "base02";
     "status-ok" = "base0B";
     "syn-comment" = "base03";
     "selection-bg" = "base02";
     destructive = "base08";
     "syn-variable" = "base08";
-    "syn-number" = "base09";
     "syn-builtin" = "base0C";
-    "syn-function" = "base0D";
   };
 
   # Token resolver for a base16 scheme: the slot when tokenSlots maps the
@@ -86,7 +98,9 @@ let
     general:col.inactive_border ${rgba (resolve "border-strong") "ff"}
   '';
 
-  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix.
+  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix
+  # and emitFzf in lib/design/scripts/lib/terminal.mjs. Links are ink, so a
+  # match is marked by weight and underline, not hue.
   # `green` is the ANSI green the `marker` role uses.
   fzfOptsText =
     resolve: green:
@@ -94,15 +108,15 @@ let
     + lib.concatStringsSep "," [
       "fg:${resolve "text"}"
       "bg:${resolve "bg"}"
-      "hl:${resolve "accent"}"
+      "hl:${resolve "text"}:underline:bold"
       "fg+:${resolve "text-heading"}"
-      "bg+:${resolve "accent-subtle"}"
-      "hl+:${resolve "accent-hover"}"
+      "bg+:${resolve "selection-bg"}"
+      "hl+:${resolve "text-heading"}:underline:bold"
       "info:${resolve "text-muted"}"
       "marker:${green}"
-      "prompt:${resolve "accent"}"
-      "spinner:${resolve "accent"}"
-      "pointer:${resolve "accent"}"
+      "prompt:${resolve "text"}"
+      "spinner:${resolve "text-muted"}"
+      "pointer:${resolve "rule"}"
       "header:${resolve "text-muted"}"
       "border:${resolve "border"}"
       "separator:${resolve "border"}"
@@ -398,6 +412,327 @@ let
         background-color: "${s.base00}"
   '';
 
+  # Application theme surfaces (VS Code family, Obsidian, tmux, Slack, fcitx5,
+  # herdr), all from base16 slots. JSON surfaces go through builtins.toJSON
+  # (sorted keys); core/src/matugen.ts ports each one byte for byte.
+  jsonText = v: builtins.toJSON v + "\n";
+
+  vscodeAnsiNames = [
+    "Black"
+    "Red"
+    "Green"
+    "Yellow"
+    "Blue"
+    "Magenta"
+    "Cyan"
+    "White"
+    "BrightBlack"
+    "BrightRed"
+    "BrightGreen"
+    "BrightYellow"
+    "BrightBlue"
+    "BrightMagenta"
+    "BrightCyan"
+    "BrightWhite"
+  ];
+
+  # A complete VS Code colour theme. The generated extension ships it as
+  # themes/marchyo-color-theme.json.
+  vscodeThemeText =
+    variant: s:
+    let
+      token = scope: foreground: {
+        inherit scope;
+        settings = { inherit foreground; };
+      };
+      terminal = lib.listToAttrs (
+        lib.zipListsWith (n: c: lib.nameValuePair "terminal.ansi${n}" c) vscodeAnsiNames (tty16FromSlots s)
+      );
+    in
+    jsonText {
+      name = "Marchyo";
+      type = variant;
+      semanticHighlighting = true;
+      colors = {
+        "foreground" = s.base05;
+        "focusBorder" = s.base0D;
+        "descriptionForeground" = s.base04;
+        "errorForeground" = s.base08;
+        "selection.background" = s.base02;
+        "editor.background" = s.base00;
+        "editor.foreground" = s.base05;
+        "editor.selectionBackground" = s.base02;
+        "editor.lineHighlightBackground" = s.base01;
+        "editor.findMatchBackground" = s.base02;
+        "editorCursor.foreground" = s.base05;
+        "editorLineNumber.foreground" = s.base03;
+        "editorLineNumber.activeForeground" = s.base05;
+        "editorIndentGuide.background1" = s.base01;
+        "editorWhitespace.foreground" = s.base03;
+        "editorGroupHeader.tabsBackground" = s.base01;
+        "editorWidget.background" = s.base01;
+        "activityBar.background" = s.base01;
+        "activityBar.foreground" = s.base05;
+        "activityBar.inactiveForeground" = s.base04;
+        "activityBarBadge.background" = s.base0D;
+        "activityBarBadge.foreground" = s.base00;
+        "sideBar.background" = s.base01;
+        "sideBar.foreground" = s.base05;
+        "sideBarSectionHeader.background" = s.base01;
+        "statusBar.background" = s.base01;
+        "statusBar.foreground" = s.base05;
+        "statusBar.noFolderBackground" = s.base01;
+        "titleBar.activeBackground" = s.base01;
+        "titleBar.activeForeground" = s.base05;
+        "titleBar.inactiveBackground" = s.base00;
+        "tab.activeBackground" = s.base00;
+        "tab.activeForeground" = s.base05;
+        "tab.inactiveBackground" = s.base01;
+        "tab.inactiveForeground" = s.base04;
+        "tab.border" = s.base00;
+        "panel.background" = s.base00;
+        "panel.border" = s.base03;
+        "panelTitle.activeForeground" = s.base05;
+        "input.background" = s.base01;
+        "input.foreground" = s.base05;
+        "input.border" = s.base03;
+        "button.background" = s.base0D;
+        "button.foreground" = s.base00;
+        "dropdown.background" = s.base01;
+        "dropdown.foreground" = s.base05;
+        "list.activeSelectionBackground" = s.base02;
+        "list.activeSelectionForeground" = s.base05;
+        "list.hoverBackground" = s.base01;
+        "list.highlightForeground" = s.base0D;
+        "textLink.foreground" = s.base0D;
+        "badge.background" = s.base0D;
+        "badge.foreground" = s.base00;
+        "terminal.background" = s.base00;
+        "terminal.foreground" = s.base05;
+        "terminal.selectionBackground" = s.base02;
+        "terminalCursor.foreground" = s.base05;
+      }
+      // terminal;
+      tokenColors = [
+        (token [ "comment" "punctuation.definition.comment" ] s.base03)
+        (token [ "string" "constant.other.symbol" ] s.base0B)
+        (token [ "constant.numeric" "constant.language" "constant" ] s.base09)
+        (token [ "keyword" "storage.type" "storage.modifier" ] s.base0E)
+        (token [ "keyword.operator" "punctuation" ] s.base05)
+        (token [ "entity.name.function" "support.function" ] s.base0D)
+        (token [ "entity.name.type" "entity.name.class" "support.type" "support.class" ] s.base0A)
+        (token [ "variable" "variable.parameter" "entity.name.tag" "invalid" ] s.base08)
+        (token [ "entity.other.attribute-name" ] s.base09)
+      ];
+    };
+
+  # CSS snippet: Obsidian loads it from <vault>/.obsidian/snippets/.
+  obsidianCssText = s: ''
+    .theme-dark,
+    .theme-light {
+      --background-primary: ${s.base00};
+      --background-primary-alt: ${s.base01};
+      --background-secondary: ${s.base01};
+      --background-secondary-alt: ${s.base00};
+      --background-modifier-border: ${s.base03};
+      --text-normal: ${s.base05};
+      --text-muted: ${s.base04};
+      --text-faint: ${s.base03};
+      --text-selection: ${s.base02};
+      --text-link: ${s.base0D};
+      --text-accent: ${s.base0D};
+      --text-accent-hover: ${s.base0D};
+      --interactive-accent: ${s.base0D};
+      --interactive-accent-hover: ${s.base0D};
+      --text-error: ${s.base08};
+      --text-success: ${s.base0B};
+      --code-normal: ${s.base0C};
+      --tag-color: ${s.base0C};
+      --text-title-h1: ${s.base08};
+      --text-title-h2: ${s.base0B};
+      --text-title-h3: ${s.base0A};
+      --text-title-h4: ${s.base0D};
+      --text-title-h5: ${s.base0E};
+      --text-title-h6: ${s.base0E};
+      --graph-line: ${s.base03};
+      --graph-node: ${s.base0D};
+    }
+  '';
+
+  # Status line, messages, pane borders and pane background. Sourced from the
+  # tmux config (build-time copy first, current-theme copy after it).
+  tmuxConfText = s: ''
+    set -g status-style "fg=${s.base05},bg=${s.base01}"
+    set -g message-style "fg=${s.base05},bg=${s.base02}"
+    set -g message-command-style "fg=${s.base05},bg=${s.base02}"
+    set -g mode-style "fg=${s.base05},bg=${s.base02}"
+    set -g pane-border-style "fg=${s.base03}"
+    set -g pane-active-border-style "fg=${s.base0D}"
+    set -g window-style "fg=${s.base05},bg=${s.base00}"
+    set -g window-active-style "fg=${s.base05},bg=${s.base00}"
+    set -g window-status-style "fg=${s.base04},bg=${s.base01}"
+    set -g window-status-current-style "fg=${s.base00},bg=${s.base0D},bold"
+    set -g window-status-activity-style "fg=${s.base0A},bg=${s.base01}"
+    set -g window-status-bell-style "fg=${s.base08},bg=${s.base01}"
+    set -g clock-mode-colour "${s.base0D}"
+    set -g display-panes-colour "${s.base04}"
+    set -g display-panes-active-colour "${s.base0D}"
+  '';
+
+  # Slack colour preferences (mode, sidebar background, accent, ok, error),
+  # applied by the opt-in launcher (modules/nixos/slack.nix).
+  slackJsonText =
+    variant: s:
+    jsonText {
+      mode = variant;
+      background = s.base00;
+      accent = s.base0D;
+      green = s.base0B;
+      red = s.base08;
+    };
+
+  # fcitx5 classicui theme; the svg glyphs are linked in beside it.
+  fcitx5ThemeText = s: ''
+    [Metadata]
+    Name=Marchyo
+    Version=1
+    Author=Marchyo
+    Description=Generated from the current Marchyo theme
+    ScaleWithDPI=True
+
+    [InputPanel]
+    NormalColor=${s.base05}
+    HighlightCandidateColor=${s.base00}
+    HighlightColor=${s.base00}
+    HighlightBackgroundColor=${s.base0D}
+    PageButtonAlignment=Last Candidate
+
+    [InputPanel/TextMargin]
+    Left=12
+    Right=12
+    Top=8
+    Bottom=8
+
+    [InputPanel/ContentMargin]
+    Left=6
+    Right=6
+    Top=6
+    Bottom=6
+
+    [InputPanel/Background]
+    Color=${s.base00}
+    BorderColor=${s.base02}
+    BorderWidth=2
+
+    [InputPanel/Background/Margin]
+    Left=2
+    Right=2
+    Top=2
+    Bottom=2
+
+    [InputPanel/Highlight]
+    Color=${s.base0D}
+
+    [InputPanel/Highlight/Margin]
+    Left=8
+    Right=8
+    Top=5
+    Bottom=5
+
+    [InputPanel/PrevPage]
+    Image=prev.svg
+
+    [InputPanel/PrevPage/ClickMargin]
+    Left=6
+    Right=6
+    Top=5
+    Bottom=5
+
+    [InputPanel/NextPage]
+    Image=next.svg
+
+    [InputPanel/NextPage/ClickMargin]
+    Left=6
+    Right=6
+    Top=5
+    Bottom=5
+
+    [Menu]
+    NormalColor=${s.base05}
+    HighlightCandidateColor=${s.base00}
+
+    [Menu/Background]
+    Color=${s.base00}
+    BorderColor=${s.base02}
+    BorderWidth=2
+
+    [Menu/Background/Margin]
+    Left=2
+    Right=2
+    Top=2
+    Bottom=2
+
+    [Menu/ContentMargin]
+    Left=6
+    Right=6
+    Top=6
+    Bottom=6
+
+    [Menu/CheckBox]
+    Image=radio.svg
+
+    [Menu/SubMenu]
+    Image=arrow.svg
+
+    [Menu/Highlight]
+    Color=${s.base0D}
+
+    [Menu/Highlight/Margin]
+    Left=8
+    Right=8
+    Top=5
+    Bottom=5
+
+    [Menu/Separator]
+    Color=${s.base03}
+
+    [Menu/TextMargin]
+    Left=12
+    Right=12
+    Top=8
+    Bottom=8
+  '';
+
+  # herdr and herdr-app custom theme (the app's palette format).
+  herdrJsonText =
+    s:
+    let
+      ansi = tty16FromSlots s;
+    in
+    jsonText {
+      background = s.base00;
+      foreground = s.base05;
+      selection = s.base02;
+      cursor = builtins.elemAt ansi 15;
+      inherit ansi;
+      colors = {
+        accent = s.base0D;
+        accent_foreground = s.base00;
+        solid = s.base0D;
+        solid_foreground = s.base00;
+      };
+    };
+
+  # File name -> text for every application surface of one theme.
+  appSurfaceTexts = variant: s: {
+    "vscode-theme.json" = vscodeThemeText variant s;
+    "obsidian.css" = obsidianCssText s;
+    "tmux.conf" = tmuxConfText s;
+    "slack.json" = slackJsonText variant s;
+    "fcitx5-theme.conf" = fcitx5ThemeText s;
+    "herdr.json" = herdrJsonText s;
+  };
+
   # Expected output for the CLI parity fixture: every generator `marchyo theme
   # generate` ports, applied to a base16 palette and the build-variant token
   # hexes the CLI reads from palette.json.
@@ -424,6 +759,7 @@ let
       "lazygit.yml" = lazygitText base16;
       "spotify-player-theme.toml" = spotifyPlayerThemeText base16;
       "gdu.yaml" = gduText base16;
+      surfaces = appSurfaceTexts "dark" base16;
       shade = shadeRgba (resolve "text");
       tokens = lib.genAttrs (lib.attrNames tokens) resolve;
     };
@@ -448,6 +784,14 @@ in
     lazygitText
     spotifyPlayerThemeText
     gduText
+    jsonText
+    vscodeThemeText
+    obsidianCssText
+    tmuxConfText
+    slackJsonText
+    fcitx5ThemeText
+    herdrJsonText
+    appSurfaceTexts
     parityExpected
     ;
 }

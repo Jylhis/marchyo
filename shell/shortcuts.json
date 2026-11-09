@@ -1,0 +1,87 @@
+[
+  { "name": "panel.audio", "call": "togglePanel", "args": ["audio"], "description": "Toggle the audio panel" },
+  { "name": "panel.network", "call": "togglePanel", "args": ["network"], "description": "Toggle the network panel" },
+  { "name": "panel.power", "call": "togglePanel", "args": ["power"], "description": "Toggle the power panel" },
+  { "name": "panel.monitor", "call": "togglePanel", "args": ["monitor"], "description": "Toggle the monitor panel" },
+  { "name": "panel.display", "call": "togglePanel", "args": ["display"], "description": "Toggle the display panel" },
+  { "name": "panel.agents", "call": "togglePanel", "args": ["agents"], "description": "Toggle the AI agents panel" },
+  {
+    "name": "panel.controlcenter",
+    "call": "togglePanel",
+    "args": ["controlcenter"],
+    "description": "Toggle the Control Center"
+  },
+  {
+    "name": "panel.notifications",
+    "call": "togglePanel",
+    "args": ["notifications"],
+    "description": "Toggle the notification centre"
+  },
+  { "name": "panel.gallery", "call": "togglePanel", "args": ["gallery"], "description": "Toggle the Ui gallery" },
+  { "name": "panel.whatsnew", "call": "togglePanel", "args": ["whatsnew"], "description": "Toggle what changed" },
+  { "name": "panel.setup", "call": "togglePanel", "args": ["setup"], "description": "Toggle the first-login setup checklist" },
+  { "name": "panel.elsewhen", "call": "togglePanel", "args": ["elsewhen"], "description": "Toggle the world clock" },
+  { "name": "panel.bluetooth", "call": "togglePanel", "args": ["bluetooth"], "description": "Toggle the Bluetooth panel" },
+  { "name": "panel.speedtest", "call": "togglePanel", "args": ["speedtest"], "description": "Toggle the speed test" },
+  { "name": "panel.dropbox", "call": "togglePanel", "args": ["dropbox"], "description": "Toggle the Dropbox panel" },
+  { "name": "panel.themes", "call": "togglePanel", "args": ["themes"], "description": "Toggle the theme picker" },
+  {
+    "name": "panel.backgrounds",
+    "call": "togglePanel",
+    "args": ["backgrounds"],
+    "description": "Toggle the wallpaper picker"
+  },
+  { "name": "overview", "call": "toggleOverview", "args": [], "description": "Toggle the window overview" },
+  { "name": "bar", "call": "toggleBar", "args": [], "description": "Toggle the top bar" },
+  { "name": "launcher.apps", "call": "toggleLauncher", "args": ["apps"], "description": "Toggle the app launcher" },
+  { "name": "launcher.emoji", "call": "toggleLauncher", "args": ["emoji"], "description": "Toggle the emoji picker" },
+  {
+    "name": "launcher.clipboard",
+    "call": "toggleLauncher",
+    "args": ["clipboard"],
+    "description": "Toggle the clipboard history"
+  },
+  { "name": "launcher.keys", "call": "toggleLauncher", "args": ["keys"], "description": "Toggle the keybinding cheat sheet" },
+  { "name": "menu", "call": "toggleMenu", "args": [""], "description": "Toggle the command menu" },
+  { "name": "menu.capture", "call": "toggleMenu", "args": ["capture"], "description": "Open the capture menu" },
+  { "name": "menu.toggle", "call": "toggleMenu", "args": ["toggle"], "description": "Open the toggle menu" },
+  { "name": "menu.theme", "call": "toggleMenu", "args": ["appearance.theme"], "description": "Open the theme menu" },
+  {
+    "name": "menu.background",
+    "call": "toggleMenu",
+    "args": ["appearance.background"],
+    "description": "Open the background menu"
+  },
+  { "name": "menu.hardware", "call": "toggleMenu", "args": ["hardware"], "description": "Open the hardware menu" },
+  { "name": "menu.system", "call": "toggleMenu", "args": ["system"], "description": "Open the system menu" },
+  { "name": "launcher.theme", "call": "toggleLauncher", "args": ["theme"], "description": "Toggle the theme list" },
+  { "name": "launcher.font", "call": "toggleLauncher", "args": ["font"], "description": "Toggle the font list" },
+  { "name": "notifications.dismiss", "call": "dismissLast", "args": [], "description": "Dismiss the last notification" },
+  {
+    "name": "notifications.dismissAll",
+    "call": "clearNotifications",
+    "args": [],
+    "description": "Dismiss all notifications"
+  },
+  {
+    "name": "notifications.keyboard",
+    "call": "notifyKeyboard",
+    "args": [],
+    "description": "Control notifications with the keyboard"
+  },
+  { "name": "notifications.act", "call": "actNewest", "args": [], "description": "Act on the newest notification" },
+  {
+    "name": "notifications.dismissOne",
+    "call": "dismissOne",
+    "args": [],
+    "description": "Dismiss the newest notification only"
+  },
+  {
+    "name": "notifications.silence",
+    "call": "silence",
+    "args": [],
+    "description": "Silence notifications (toggle do-not-disturb)"
+  },
+  { "name": "dnd", "call": "toggleDnd", "args": [], "description": "Toggle do-not-disturb" },
+  { "name": "lockKeys", "call": "refreshLockKeys", "args": [], "description": "Re-read the Caps Lock and Num Lock state" }
+]

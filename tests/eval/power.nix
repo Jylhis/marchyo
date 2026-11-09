@@ -1,29 +1,63 @@
 { helpers, ... }:
 let
-  inherit (helpers) testNixOS testNixOSFails withTestUser;
+  inherit (helpers)
+    testNixOS
+    testNixOSCheck
+    testNixOSFails
+    withTestUser
+    ;
+  login = c: c.services.logind.settings.Login;
 in
 {
-  # Hibernation enabled with a resume device evaluates cleanly.
-  eval-hibernation = testNixOS "hibernation" (withTestUser {
-    marchyo.power.hibernation = {
-      enable = true;
-      resumeDevice = "/dev/disk/by-label/swap";
-    };
-  });
+  eval-power-defaults = testNixOSCheck "power-defaults" (
+    c:
+    (login c).HandleLidSwitch == "suspend"
+    && (login c).HandleLidSwitchExternalPower == "suspend"
+    && (login c).HandleLidSwitchDocked == "ignore"
+    && !(c.environment.etc ? "marchyo/hibernation")
+  ) (withTestUser { });
 
-  # suspend-then-hibernate opted out still evaluates cleanly.
-  eval-hibernation-no-sth = testNixOS "hibernation-no-sth" (withTestUser {
-    marchyo.power.hibernation = {
-      enable = true;
-      resumeDevice = "/dev/disk/by-label/swap";
-      suspendThenHibernate = false;
-    };
-  });
+  eval-power-lid-custom =
+    testNixOSCheck "power-lid-custom"
+      (
+        c:
+        (login c).HandleLidSwitch == "hibernate"
+        && (login c).HandleLidSwitchExternalPower == "lock"
+        && (login c).HandleLidSwitchDocked == "suspend"
+      )
+      (withTestUser {
+        marchyo.power.lid = {
+          onBattery = "hibernate";
+          onAC = "lock";
+          docked = "suspend";
+        };
+      });
 
-  # Enabling hibernation without a resume device trips the assertion.
-  eval-hibernation-missing-resume-device =
-    testNixOSFails "hibernation-missing-resume-device" "marchyo.power.hibernation.resumeDevice"
+  eval-power-hibernation =
+    testNixOSCheck "power-hibernation"
+      (
+        c:
+        c.boot.resumeDevice == "/dev/disk/by-uuid/0f0c0a5e-0000-4000-8000-000000000000"
+        && c.systemd.sleep.settings.Sleep.HibernateDelaySec == "30min"
+        && (login c).HandleLidSwitch == "suspend-then-hibernate"
+        && c.environment.etc ? "marchyo/hibernation"
+      )
+      (withTestUser {
+        marchyo.power.hibernation = {
+          enable = true;
+          resumeDevice = "/dev/disk/by-uuid/0f0c0a5e-0000-4000-8000-000000000000";
+          suspendThenHibernateDelay = "30min";
+        };
+      });
+
+  eval-power-hibernation-needs-swap =
+    testNixOSFails "power-hibernation-needs-swap" "marchyo.power.hibernation.enable needs"
       (withTestUser {
         marchyo.power.hibernation.enable = true;
       });
+
+  eval-power-hibernation-swap-device = testNixOS "power-hibernation-swap-device" (withTestUser {
+    marchyo.power.hibernation.enable = true;
+    swapDevices = [ { device = "/dev/disk/by-label/swap"; } ];
+  });
 }

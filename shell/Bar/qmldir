@@ -26,3 +26,8 @@ WeatherWidget 1.0 WeatherWidget.qml
 ControlCenterWidget 1.0 ControlCenterWidget.qml
 CameraWidget 1.0 CameraWidget.qml
 LockKeysWidget 1.0 LockKeysWidget.qml
+AgentsWidget 1.0 AgentsWidget.qml
+RemoteSessionWidget 1.0 RemoteSessionWidget.qml
+UpdateWidget 1.0 UpdateWidget.qml
+DiskWidget 1.0 DiskWidget.qml
+HealthWidget 1.0 HealthWidget.qml

@@ -2,17 +2,11 @@
 let
   inherit (inputs)
     nixpkgs
-    nixpkgs-stable
     home-manager
-    home-manager-stable
     home-manager-droid
-    nix-darwin
-    nix-darwin-stable
     nix-on-droid
     nixos-hardware
-    vicinae
     ncro
-    noctalia
     sops-nix
     treefmt-nix
     ;
@@ -21,28 +15,11 @@ let
 
   overlayList = [ overlay ];
 
-  # Single source of truth for the per-system input set, and the ONLY place the
-  # x86_64-darwin special-case is decided (the builders below and legacyPackages
-  # all flow through it). x86_64-darwin is the last nixpkgs release supporting
-  # Intel macOS (26.11 drops it), so it rides stable nixos-26.05 with the
-  # matching release-branch home-manager / nix-darwin; everything else
-  # rides unstable.
-  inputsFor =
-    system:
-    if system == "x86_64-darwin" then
-      {
-        nixpkgs = nixpkgs-stable;
-        home-manager = home-manager-stable;
-        nix-darwin = nix-darwin-stable;
-      }
-    else
-      {
-        inherit
-          nixpkgs
-          home-manager
-          nix-darwin
-          ;
-      };
+  # Single source of truth for the per-system input set (the builders below and
+  # legacyPackages all flow through it).
+  inputsFor = _system: {
+    inherit nixpkgs home-manager;
+  };
 
   mkPkgs =
     system:
@@ -97,29 +74,6 @@ let
         ];
       };
       services.getty.autologinUser = "developer";
-    };
-
-  sharedDarwinConfig =
-    { pkgs, ... }:
-    {
-      nixpkgs.config.allowUnfree = true;
-      system.stateVersion = 6;
-
-      environment.systemPackages = [
-        pkgs.ghostty-bin.terminfo
-      ];
-
-      marchyo = {
-        development.enable = true;
-        users.developer = {
-          fullname = "Marchyo Developer";
-          email = "dev@example.org";
-        };
-      };
-
-      users.users.developer = {
-        home = "/Users/developer";
-      };
     };
 
   # Mock osConfig for standalone HM configs: the minimum structure HM modules
@@ -179,16 +133,10 @@ let
       pkgs = mkPkgs system;
       extraSpecialArgs = {
         osConfig = mockOsConfig;
-        inherit
-          inputs
-          noctalia
-          vicinae
-          ;
+        inherit inputs;
       };
       modules = [
         homeManagerModules.default
-        noctalia.homeModules.default
-        vicinae.homeManagerModules.default
         sops-nix.homeManagerModules.sops
         {
           home.username = "developer";
@@ -202,16 +150,10 @@ let
     home-manager = {
       useGlobalPkgs = true;
       sharedModules = [
-        noctalia.homeModules.default
-        vicinae.homeManagerModules.default
         sops-nix.homeManagerModules.sops
       ];
       extraSpecialArgs = {
-        inherit
-          inputs
-          noctalia
-          vicinae
-          ;
+        inherit inputs;
       };
     };
   };
@@ -222,14 +164,9 @@ let
         home-manager.nixosModules.home-manager
         hmSharedConfig
         sops-nix.nixosModules.sops
-        # Declares programs.vicinae.input-server: the cap_dac_override wrapper
-        # the launcher needs to inject keystrokes. Upstream defaults it ON, so
-        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* (so
-        # importing this module alone does not install the capability).
-        vicinae.nixosModules.default
         # ncro service options; enablement is gated by marchyo.nix.router.enable
         # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service),
-        # deliberately absent from mkDarwinModules and hmSharedConfig.
+        # deliberately absent from hmSharedConfig.
         ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }
 
@@ -241,25 +178,6 @@ let
     # lazy, so unused ones cost nothing). A host imports its profile directly:
     #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
     hardware = nixos-hardware.nixosModules;
-  };
-
-  # Darwin module set, parameterized by which home-manager darwin module to
-  # bake in so each darwinConfiguration pairs its nixpkgs with the matching HM
-  # (release branches assume their matching nixpkgs):
-  #   aarch64 → unstable nixpkgs  + home-manager (master)
-  #   x86_64  → nixos-26.05 stable + home-manager-stable (release-26.05)
-  mkDarwinModules = hmDarwinModule: {
-    imports = [
-      hmDarwinModule
-      hmSharedConfig
-      { nixpkgs.overlays = overlayList; }
-
-      ./modules/darwin/default.nix
-    ];
-  };
-
-  darwinModules = {
-    default = mkDarwinModules home-manager.darwinModules.home-manager;
   };
 
   homeManagerModules = {
@@ -275,7 +193,7 @@ let
 
   # Batteries-included system builders: a consumer that adds only `marchyo` as
   # an input builds any system with these, with nixpkgs / home-manager /
-  # nix-darwin / overlay / modules selected automatically via inputsFor.
+  # overlay / modules selected automatically via inputsFor.
 
   # allowUnfree is set plainly, not via a priority wrapper: nixpkgs.config is a
   # freeform attrset, so mkDefault/mkForce would leak through to nixpkgs
@@ -301,62 +219,6 @@ let
           // config;
         }
       ]
-      ++ modules;
-    };
-
-  # Darwin builder: selects the nix-darwin / home-manager modules
-  # matching the system's nixpkgs. `overlays`/`config` are the consumer's
-  # additions on top of marchyo's overlayList / allowUnfree.
-  #
-  # For x86_64-darwin nix-darwin is handed an externally-built stable pkgs and
-  # the shared modules' config/overlays are mkForce-cleared (nix-darwin rejects
-  # nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and config
-  # therefore must be baked INTO that instantiation here; setting them via a
-  # module would be silently cleared.
-  mkDarwinSystem =
-    {
-      system,
-      modules ? [ ],
-      specialArgs ? { },
-      overlays ? [ ],
-      config ? { },
-    }:
-    let
-      sel = inputsFor system;
-      cfg = {
-        allowUnfree = true;
-      }
-      // config;
-    in
-    sel.nix-darwin.lib.darwinSystem {
-      inherit system specialArgs;
-      modules = [
-        (mkDarwinModules sel.home-manager.darwinModules.home-manager)
-      ]
-      ++ (
-        if system == "x86_64-darwin" then
-          [
-            (
-              { lib, ... }:
-              {
-                nixpkgs.pkgs = import sel.nixpkgs {
-                  inherit system;
-                  overlays = overlayList ++ overlays;
-                  config = cfg;
-                };
-                nixpkgs.config = lib.mkForce { };
-                nixpkgs.overlays = lib.mkForce [ ];
-              }
-            )
-          ]
-        else
-          [
-            {
-              nixpkgs.overlays = overlays;
-              nixpkgs.config = cfg;
-            }
-          ]
-      )
       ++ modules;
     };
 
@@ -394,7 +256,6 @@ in
 {
   inherit
     nixosModules
-    darwinModules
     homeManagerModules
     nixOnDroidModules
     ;
@@ -404,7 +265,6 @@ in
   lib = {
     inherit
       mkNixosSystem
-      mkDarwinSystem
       mkNixOnDroidConfiguration
       mkHomeConfiguration
       inputsFor
@@ -445,26 +305,8 @@ in
     };
   };
 
-  darwinConfigurations = {
-    aarch64 = mkDarwinSystem {
-      system = "aarch64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-aarch64"; }
-      ];
-    };
-    x86_64 = mkDarwinSystem {
-      system = "x86_64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-x86-64"; }
-      ];
-    };
-  };
-
   # Standalone Home Manager configurations (Linux only: many HM modules depend
-  # on Wayland/Hyprland and are not darwin-compatible; darwin home-manager is
-  # tested through darwinConfigurations instead).
+  # on Wayland/Hyprland).
   homeConfigurations = {
     "x86_64-linux" = mkHomeConfiguration {
       system = "x86_64-linux";
@@ -494,15 +336,26 @@ in
       };
     in
     {
-      inherit (pkgs) marchyo-wallpapers marchyo-cli;
+      inherit (pkgs) marchyo-wallpapers marchyo-cli marchyo-agent-skills;
     }
     // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
-        hyprmon
         marchyo-shell
+        marchyo-omarchy-shims
         plymouth-marchyo-theme
+        hype
+        signed
+        monologue
+        omarchy-audio-tuner
+        hex-dictation
+        superwhisper
+        amp-desktop
         ;
-
+    }
+    // selectedNixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
+      inherit (pkgs) gliff;
+    }
+    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       # NixOS VM security test: boots a Marchyo system and runs a lynis host
       # hardening audit (plus the vuls collector) inside it. Deliberately kept
       # out of `checks`: it boots a VM (needs KVM) and is run locally on demand
@@ -512,9 +365,6 @@ in
         inherit pkgs;
         nixosModule = nixosModules.default;
       };
-    }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-      inherit (pkgs) wallpapper;
     };
 
   mkChecks =
@@ -527,10 +377,6 @@ in
         home-manager
         nix-on-droid
         home-manager-droid
-        # nix-darwin evaluates fine on Linux, so the checks exercise the darwin
-        # module set (incl. the curated HM wiring) through the same builder
-        # consumers use.
-        mkDarwinSystem
         ;
       nixosModules = nixosModules.default;
       homeManagerModules = homeManagerModules.default;
@@ -547,6 +393,94 @@ in
       in
       nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
+        build-hype = pkgs.hype;
+        build-signed = pkgs.signed;
+        build-monologue = pkgs.monologue;
+        build-omarchy-audio-tuner = pkgs.omarchy-audio-tuner;
+        build-hex-dictation = pkgs.hex-dictation;
+        # Unfree binaries: instantiate only, so no CI step builds or caches them.
+        eval-superwhisper = pkgs.runCommand "eval-superwhisper" { } ''
+          echo ${builtins.unsafeDiscardStringContext pkgs.superwhisper.drvPath} > $out
+        '';
+        eval-amp-desktop = pkgs.runCommand "eval-amp-desktop" { } ''
+          echo ${builtins.unsafeDiscardStringContext pkgs.amp-desktop.drvPath} > $out
+        '';
+        # The omarchy-* shims build (shellcheck runs on each) and ship every
+        # command the plan names.
+        build-omarchy-shims = pkgs.runCommand "check-omarchy-shims" { } ''
+          for c in omarchy-shell omarchy-bar omarchy-notification-send \
+            omarchy-menu-select omarchy-menu-input omarchy-launch-browser \
+            omarchy-launch-terminal omarchy-launch-floating-terminal-with-presentation \
+            omarchy-default-agent omarchy-cmd-present omarchy-pkg-present \
+            omarchy-launch-editor omasnap omarchy-font-list omarchy-font-current \
+            omarchy-font-set omarchy-powerprofiles-list omarchy-powerprofiles-set \
+            omarchy-language; do
+            test -x "${pkgs.marchyo-omarchy-shims}/bin/$c" || { echo "FAIL: shim $c missing"; exit 1; }
+          done
+          PATH="${pkgs.marchyo-omarchy-shims}/bin:$PATH"
+          omarchy-cmd-present sh || { echo "FAIL: omarchy-cmd-present sh"; exit 1; }
+          if omarchy-cmd-present no-such-command-xyz; then echo "FAIL: cmd-present true for a missing command"; exit 1; fi
+
+          # pkg-present: a binary on the profile counts, a regex or an empty name does not.
+          mkdir -p home/.nix-profile/bin && touch home/.nix-profile/bin/present-pkg
+          HOME="$PWD/home" omarchy-pkg-present present-pkg || { echo "FAIL: pkg-present missed a profile binary"; exit 1; }
+          if omarchy-pkg-present . ""; then echo "FAIL: pkg-present accepted a regex or empty name"; exit 1; fi
+          if omarchy-pkg-present no-such-pkg-xyz; then echo "FAIL: pkg-present true for a missing package"; exit 1; fi
+
+          # bar set: concurrent writers must not lose keys.
+          export XDG_STATE_HOME="$PWD/state"
+          for k in a b c d e f g h; do
+            omarchy-bar set acme.p "$k" 1 --json &
+          done
+          wait
+          n=$(${pkgs.jq}/bin/jq '."acme.p" | length' "$XDG_STATE_HOME/marchyo/shell/plugin-settings.json")
+          [ "$n" = 8 ] || { echo "FAIL: omarchy-bar kept $n of 8 keys"; exit 1; }
+          touch "$out"
+        '';
+
+        # A shell with an omarchy panel plugin baked in: the index lists it, its
+        # QML went through the compat rewrite, and the wrapper carries the shims.
+        build-marchyo-shell-plugins =
+          let
+            shell = pkgs.marchyo-shell.override {
+              plugins = with pkgs.marchyo-shell-plugins; [
+                omarchy-speedtest
+                omarchy-menu
+                omarchy-emojis
+                omarchy-clipboard
+              ];
+              devPlugins = true;
+            };
+          in
+          pkgs.runCommand "check-marchyo-shell-plugins" { nativeBuildInputs = [ pkgs.jq ]; } ''
+            root="${shell}/share/marchyo/shell"
+            grep -q '"omarchy.speedtest"' "$root/Commons/PluginIndex.qml" \
+              || { echo "FAIL: PluginIndex.qml does not list omarchy.speedtest"; exit 1; }
+            grep -q '../plugins/omarchy.speedtest/Panel.qml' "$root/Commons/PluginIndex.qml" \
+              || { echo "FAIL: PluginIndex.qml entry point path"; exit 1; }
+            grep -q 'import qs.compat.Ui' "$root/plugins/omarchy.speedtest/Panel.qml" \
+              || { echo "FAIL: plugin imports were not rewritten onto qs.compat"; exit 1; }
+            if grep -qE 'import qs\.(Ui|Commons)\b' "$root/plugins/omarchy.speedtest/Panel.qml"; then
+              echo "FAIL: plugin still imports marchyo's own qs.Ui/qs.Commons"; exit 1
+            fi
+            grep -q 'devPlugins: true' "$root/Commons/Config.qml" \
+              || { echo "FAIL: Config.devPlugins not baked"; exit 1; }
+            jq -e '.plugins[] | select(.id == "omarchy.speedtest" and .kinds == ["panel"])' \
+              "$root/plugins.lock.json" >/dev/null || { echo "FAIL: lock entry"; exit 1; }
+            wrapper="${shell}/bin/marchyo-shell"
+            grep -q 'OMARCHY_PATH' "$wrapper" || { echo "FAIL: OMARCHY_PATH not set by the wrapper"; exit 1; }
+            grep -q 'marchyo-omarchy-shims' "$wrapper" || { echo "FAIL: shims not on the wrapper PATH"; exit 1; }
+            test -f "$root/compat/omarchy/default/i18n/en/shell.json" || { echo "FAIL: compat catalogs"; exit 1; }
+            for s in bin/omarchy-menu-emoji-insert bin/omarchy-clipboard-open shell/plugins/clipboard/capture.sh; do
+              test -x "$root/compat/omarchy/$s" || { echo "FAIL: $s not executable"; exit 1; }
+              head -1 "$root/compat/omarchy/$s" | grep -q "^#!${builtins.storeDir}/" \
+                || { echo "FAIL: $s shebang not patched"; exit 1; }
+            done
+            jq -e '.plugins[] | select(.id == "omarchy.menu")' "$root/plugins.lock.json" >/dev/null \
+              || { echo "FAIL: omarchy.menu lock entry"; exit 1; }
+            touch "$out"
+          '';
+
         build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
         build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
           wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
@@ -581,8 +515,8 @@ in
               nativeBuildInputs = [ pkgs.nodejs ];
             }
             ''
-              mkdir -p src/shell src/tests
-              cp -r ${./shell/Commons} src/shell/Commons
+              mkdir -p src/tests
+              cp -r ${./shell} src/shell
               cp -r ${./tests/shell} src/tests/shell
               cd src
               # Globbed, not listed: a new *-test.js must not be able to sit in
@@ -597,25 +531,6 @@ in
               touch "$out"
             '';
 
-        # site/src/pages/search.astro's option table is hand-maintained with no
-        # generator, so nothing stops it drifting from the options tree. This is
-        # the guard.
-        site-option-paths =
-          pkgs.runCommand "check-site-option-paths"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              # Only the parents: `cp -r dir target` nests when target exists.
-              mkdir -p src/tests src/site/src
-              cp -r ${./tests/site} src/tests/site
-              cp -r ${./site/src/pages} src/site/src/pages
-              cp -r ${./modules} src/modules
-              cd src
-              node tests/site/option-paths-test.js
-              touch "$out"
-            '';
-
         # theme-runtime.nix's activation reset and the CLI's relink targets are
         # hand-maintained on opposite sides of a language boundary; a CLI target
         # missing from the Nix list breaks the next activation.
@@ -626,9 +541,14 @@ in
             }
             ''
               # Only the parents: `cp -r dir target` nests when target exists.
-              mkdir -p src/tests src/modules src/packages/marchyo-cli/packages/user-cli/src
+              mkdir -p src/tests src/modules src/lib \
+                src/packages/marchyo-cli/packages/user-cli/src \
+                src/packages/marchyo-cli/packages/core
               cp -r ${./tests/cli} src/tests/cli
               cp -r ${./modules/home} src/modules/home
+              cp ${./lib/theme-generators.nix} src/lib/theme-generators.nix
+              cp -r ${./packages/marchyo-cli/packages/core/src} \
+                src/packages/marchyo-cli/packages/core/src
               cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
                 src/packages/marchyo-cli/packages/user-cli/src/commands
               cd src

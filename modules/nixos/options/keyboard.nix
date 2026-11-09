@@ -1,6 +1,7 @@
-{ lib, ... }:
+{ lib, config, ... }:
 let
   inherit (lib) mkOption types;
+  xkbCompose = import ../../../lib/xkb-compose.nix;
 in
 {
   options.marchyo.keyboard = {
@@ -31,6 +32,8 @@ in
                     "pinyin"
                     "mozc"
                     "hangul"
+                    "chewing"
+                    "cangjie"
                     "unicode"
                   ]
                 );
@@ -41,6 +44,8 @@ in
                   - pinyin: Chinese input (requires fcitx5-chinese-addons)
                   - mozc: Japanese input (requires fcitx5-mozc)
                   - hangul: Korean input (requires fcitx5-hangul)
+                  - chewing: Traditional Chinese Zhuyin input (requires fcitx5-chewing)
+                  - cangjie: Hong Kong Cangjie 5 input (requires fcitx5-table-extra)
                   - unicode: Unicode character picker
                   When null, layout uses direct keyboard input.
                 '';
@@ -71,6 +76,8 @@ in
           { layout = "cn"; ime = "pinyin"; }     # Chinese with Pinyin IME
           { layout = "jp"; ime = "mozc"; }       # Japanese with Mozc IME
           { layout = "kr"; ime = "hangul"; }     # Korean with Hangul IME
+          { layout = "us"; ime = "chewing"; }    # Zhuyin on a US keyboard
+          { layout = "us"; ime = "cangjie"; }    # Cangjie 5 on a US keyboard
         ]
       '';
       description = ''
@@ -85,8 +92,10 @@ in
         - { layout = "cn"; ime = "pinyin"; } → Chinese keyboard with Pinyin input
         - { layout = "us"; variant = "intl"; } → US international with dead keys
 
-        When an entry includes 'ime', the input method engine will be automatically
-        activated when you switch to that layout using Super+Space.
+        When an entry includes 'ime', the engine is added to the fcitx5 group
+        after the keyboard layouts. Input starts in the keyboard layout (Latin);
+        a lone Shift toggles between the engine and Latin, and the keys in
+        'imeTriggerKey' cycle through the layouts and then the engines.
 
         All inputs are managed by fcitx5 for consistent behavior across the desktop.
         Basic layouts are also configured in XKB for TTY/console compatibility.
@@ -132,14 +141,34 @@ in
       '';
     };
 
+    legacyBinds = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Restore the pre-4.5 marchyo Hyprland bind layout: Super+L locks,
+        panels sit on Super+Shift, the console on Super+Ctrl+grave and the
+        overview on Super+grave. The default follows the Omarchy 4.5 planes:
+        Super for the system, Super+Shift for apps, Super+Ctrl for panels and
+        menus, Super+Ctrl+Alt for quick actions. Kept for one release.
+      '';
+    };
+
     composeKey = mkOption {
       type = types.nullOr types.nonEmptyStr;
-      default = "menu";
-      example = "rwin";
+      default = if xkbCompose.remapsCaps config.marchyo.keyboard.options then "menu" else "shift-caps";
+      defaultText = lib.literalMD ''
+        `"menu"` when `marchyo.keyboard.options` remaps Caps Lock, else `"shift-caps"`
+      '';
+      example = "menu";
       description = ''
         Sets the XKB Compose key for typing special characters.
         Common values:
-        - menu: Menu key (default)
+        - shift-caps: Shift+Caps Lock (default; Caps Lock keeps its normal
+          job). Applies to Hyprland only: the console and X keep no compose
+          key, so set "menu" for a compose key there. It cannot be combined
+          with an option that remaps Caps Lock (ctrl:swapcaps, ctrl:nocaps,
+          caps:escape); the default is then "menu"
+        - menu: Menu key
         - ralt: Right Alt key
         - rwin: Right Super/Windows key
         - caps: Caps Lock key
@@ -157,15 +186,14 @@ in
 
     autoActivateIME = mkOption {
       type = types.bool;
-      default = true;
-      example = false;
+      default = false;
+      example = true;
       description = ''
-        Automatically activate IME when switching to a layout with ime specified.
+        Start with the input method engine active (fcitx5 ActiveByDefault).
 
-        When true (default): Switching to Chinese layout automatically activates Pinyin.
-        When false: User must manually trigger IME with imeTriggerKey after switching layout.
-
-        Recommended: true (provides seamless language switching experience)
+        When false (default): input starts in Latin and the engine is
+        switched on with a lone Shift or imeTriggerKey.
+        When true: the engine is active as soon as a text field gets focus.
       '';
     };
 
@@ -177,12 +205,45 @@ in
         "Alt+grave"
       ];
       description = ''
-        Key combinations to manually toggle IME activation on/off.
+        Key combinations that cycle through the keyboard layouts and then
+        the input method engines of the fcitx5 group, and back to the first
+        layout. They are added to the fcitx5 trigger keys beside Super+Space.
 
-        Use this to disable IME for a layout that has IME configured,
-        or to activate Unicode picker independent of layout.
+        Default: Super+I
+      '';
+    };
 
-        Default: Super+I toggles IME for current input method
+    fnMode = mkOption {
+      type = types.nullOr (
+        types.enum [
+          "media"
+          "function"
+        ]
+      );
+      default = null;
+      example = "media";
+      description = ''
+        What the top row of the keyboard sends by default, for drivers that
+        keep Fn-lock on the host (hid_apple, hid_asus, asus_wmi):
+        - media: media keys; Fn gives F1-F12
+        - function: F1-F12; Fn gives the media keys
+        - null: leave the firmware or driver default
+
+        Keyboards that keep Fn-lock in their firmware ignore this option.
+        The hid_asus and asus_wmi drivers read it at load time, so it takes
+        effect at the next boot.
+      '';
+    };
+
+    backlight.enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Bind the keyboard backlight keys (XF86KbdBrightnessUp/Down,
+        XF86KbdLightOnOff, and Ctrl plus the display brightness keys) to
+        `marchyo brightness --keyboard`. Does nothing on machines without a
+        `*kbd_backlight*` LED. systemd-backlight saves and restores the level
+        across reboots, so no extra service is needed.
       '';
     };
   };

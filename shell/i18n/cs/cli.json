@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Přihlášeno k %1.",
+  "launch.notFoundInPath": "%1 nenalezen v PATH",
+  "utilities.reminder": "Připomínka",
+  "utilities.battery": "Baterie %1%",
+  "utilities.battery2": "Baterie",
+  "utilities.transcode": "Překódovat",
+  "utilities.share": "Sdílet",
+  "toggles.enabled": "Zapnuto",
+  "toggles.suspend": "Uspat"
+}

@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Sessão iniciada em %1.",
+  "launch.notFoundInPath": "%1 não encontrado no PATH",
+  "utilities.reminder": "Lembrete",
+  "utilities.battery": "Bateria %1%",
+  "utilities.battery2": "Bateria",
+  "utilities.transcode": "Converter",
+  "utilities.share": "Partilhar",
+  "toggles.enabled": "Ativado",
+  "toggles.suspend": "Suspender"
+}

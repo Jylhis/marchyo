@@ -10,7 +10,6 @@
   home-manager,
   home-manager-droid,
   nix-on-droid,
-  mkDarwinSystem,
   nixosModules,
   homeManagerModules,
   nixosHardwareModules,
@@ -28,7 +27,6 @@ let
       nixosModules
       nix-on-droid
       home-manager-droid
-      mkDarwinSystem
       ;
   };
 

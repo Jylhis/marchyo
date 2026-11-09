@@ -2,6 +2,8 @@
 let
   inherit (lib) mkOption types;
 
+  repoCaches = (builtins.fromJSON (builtins.readFile ./caches.json)).caches;
+
   cacheType = types.submodule {
     options = {
       url = mkOption {
@@ -27,36 +29,9 @@ in
   options.marchyo.nix = {
     caches = mkOption {
       type = types.listOf cacheType;
-      default = [
-        {
-          url = "https://jylhis.cachix.org";
-          publicKey = "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE=";
-        }
-        {
-          url = "https://nix-community.cachix.org";
-          publicKey = "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=";
-        }
-        {
-          url = "https://vicinae.cachix.org";
-          publicKey = "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc=";
-        }
-        {
-          url = "https://devenv.cachix.org";
-          publicKey = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
-        }
-        {
-          url = "https://numtide.cachix.org";
-          publicKey = "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE=";
-        }
-        {
-          url = "https://hyprland.cachix.org";
-          publicKey = "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=";
-        }
-        {
-          url = "https://cache.numtide.com";
-          publicKey = "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=";
-        }
-      ];
+      # caches.json is plain data so other tooling can read the same list.
+      default = map (c: { inherit (c) url publicKey; }) repoCaches;
+      defaultText = lib.literalMD "the entries of `caches.json` next to this module";
       description = ''
         Single source of truth for the binary caches marchyo trusts. Each entry's
         `url` populates `nix.settings.substituters` /`trusted-substituters` and its
@@ -76,7 +51,7 @@ in
           fronts the binary caches. When on, `http://localhost:<port>` is prepended
           to `nix.settings.substituters` (the caches in `marchyo.nix.caches` stay as
           direct fallbacks) and ncro routes each request to the fastest reachable
-          upstream. NixOS only — darwin and nix-on-droid ignore this and talk to the
+          upstream. NixOS only; nix-on-droid ignores this and talk to the
           caches directly.
         '';
       };

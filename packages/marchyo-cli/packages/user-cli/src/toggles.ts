@@ -6,6 +6,7 @@ import {
   type ChangeSpec,
   type State,
   captureArgv,
+  hyprctlEvalArgv,
   hyprctlGetOptionArgv,
   hyprctlKeywordArgv,
   hyprlandAvailable,
@@ -16,7 +17,20 @@ import {
   shellInstalled,
   shellIpc,
   systemctlUserArgv,
+  tr,
 } from "@marchyo/core";
+import {
+  clearReduceMotion,
+  declarativeAppearance,
+  fullscreenDesktopLua,
+  reduceMotionState,
+  reduceMotionStateDelete,
+  reduceMotionStateWrite,
+  setAnimations,
+  setGaps,
+  setReduceMotion,
+  setTransparency,
+} from "./commands/appearance.ts";
 
 // The runtime toggles. Each entry provides: a live-state probe (used
 // by `toggle <name> --status` and flip-with-no-argument), on/off actuation
@@ -43,7 +57,8 @@ type ToggleDef = {
   setOff: (ctx: ChangeContext) => Promise<void>;
   // Declarative default restore (runtimeRevert).
   revert: (ctx: ChangeContext) => Promise<void>;
-  // Only hybrid-gpu persists; everything else is runtime-only.
+  // Only hybrid-gpu is --apply-only; reduce-motion persists optionally and
+  // everything else is runtime-only.
   applyOnly?: boolean;
   stateWrite?: (prev: State, on: boolean) => State;
   stateDelete?: (prev: State) => State;
@@ -154,6 +169,27 @@ async function shellCall(
   }
 }
 
+// Night light is on when hyprsunset runs warmer than the shell's 6000K
+// identity point. A failed probe (hyprsunset not running) reads as off.
+export function nightlightOnFrom(r: { code: number; stdout: string }): boolean {
+  if (r.code !== 0) return false;
+  const m = r.stdout.match(/[0-9]+/);
+  return m !== null && Number.parseInt(m[0], 10) < 6000;
+}
+
+// Tell the shell the state hyprsunset actually reached, not the requested
+// one: re-probe briefly until it matches `want`, then report what it reads.
+async function reportNightlight(want: boolean, capture: Capture = captureArgv): Promise<void> {
+  if (!shellInstalled()) return;
+  let on = false;
+  for (let i = 0; i < 5; i++) {
+    on = nightlightOnFrom(await capture(["hyprctl", "hyprsunset", "temperature"]));
+    if (on === want) break;
+    await Bun.sleep(100);
+  }
+  await shellCall(() => shellIpc("nightlightChanged", on ? "on" : "off"));
+}
+
 // A shell toggle's "on"/"off" reply as a boolean; null for anything else.
 function onOff(reply: string | null): boolean | null {
   if (reply === "on") return true;
@@ -168,72 +204,97 @@ const pickTouchscreen = (section: "mice" | "touch", _name: string): boolean =>
 
 export const TOGGLES: ToggleDef[] = [
   {
-    // "on" = spaced tiles (omarchy look); marchyo's declarative default is
-    // the zero-gap tmux grid.
+    // "on" = spaced tiles (omarchy look); the declarative default is
+    // marchyo.theme.appearance.gaps (the zero-gap tmux grid unless set).
     name: "gaps",
     defaultOn: false,
     probe: async (capture) => {
       const v = await getOptionFloat(capture, "general:gaps_out");
       return v === null ? null : v > 0;
     },
-    setOn: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_in", "5"));
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_out", "10"));
-    },
-    setOff: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_in", "0"));
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_out", "0"));
-    },
-    revert: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_in", "0"));
-      await safeExec(ctx, hyprctlKeywordArgv("general:gaps_out", "0"));
-    },
+    setOn: (ctx) => setGaps(ctx, true),
+    setOff: (ctx) => setGaps(ctx, false),
+    revert: (ctx) => setGaps(ctx, declarativeAppearance().gaps),
   },
   {
+    // "on" = transparent windows, "off" = opaque; the three-way choice is
+    // `marchyo theme transparency`.
     name: "transparency",
     defaultOn: false,
     probe: async (capture) => {
       const v = await getOptionFloat(capture, "decoration:active_opacity");
       return v === null ? null : v < 1;
     },
+    setOn: (ctx) => setTransparency(ctx, "transparent"),
+    setOff: (ctx) => setTransparency(ctx, "opaque"),
+    revert: (ctx) => setTransparency(ctx, declarativeAppearance().transparency),
+  },
+  {
+    name: "animations",
+    defaultOn: false,
+    probe: async (capture) => {
+      const v = await getOptionFloat(capture, "animations:enabled");
+      return v === null ? null : v > 0;
+    },
+    setOn: (ctx) => setAnimations(ctx, true),
+    setOff: (ctx) => setAnimations(ctx, false),
+    revert: (ctx) => setAnimations(ctx, declarativeAppearance().animations),
+  },
+  {
+    // "on" = the shell runs every transition at 0 ms. The shell watches its
+    // style file (core shell-style.ts), so the toggle needs no IPC and
+    // survives a shell restart. --apply persists
+    // marchyo.theme.appearance.reduceMotion; --revert drops the style key so
+    // the declarative value applies again.
+    name: "reduce-motion",
+    defaultOn: false,
+    probe: async () => reduceMotionState(),
+    setOn: () => setReduceMotion(true),
+    setOff: () => setReduceMotion(false),
+    revert: () => clearReduceMotion(),
+    stateWrite: reduceMotionStateWrite,
+    stateDelete: reduceMotionStateDelete,
+  },
+  {
+    // Hide the bar and drop gaps, borders and rounding together.
+    name: "fullscreen-desktop",
+    defaultOn: false,
+    probe: async (capture) => {
+      const v = await getOptionFloat(capture, "general:border_size");
+      return v === null ? null : v === 0;
+    },
     setOn: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("decoration:active_opacity", "0.90"));
-      await safeExec(
-        ctx,
-        hyprctlKeywordArgv("decoration:inactive_opacity", "0.80"),
-      );
+      await toggleByName("waybar")!.setOff(ctx);
+      await safeExec(ctx, hyprctlEvalArgv(fullscreenDesktopLua(true)));
     },
     setOff: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("decoration:active_opacity", "1.0"));
-      await safeExec(
-        ctx,
-        hyprctlKeywordArgv("decoration:inactive_opacity", "1.0"),
-      );
+      await toggleByName("waybar")!.setOn(ctx);
+      await safeExec(ctx, hyprctlEvalArgv(fullscreenDesktopLua(false)));
     },
     revert: async (ctx) => {
-      await safeExec(ctx, hyprctlKeywordArgv("decoration:active_opacity", "1.0"));
-      await safeExec(
-        ctx,
-        hyprctlKeywordArgv("decoration:inactive_opacity", "1.0"),
-      );
+      await toggleByName("waybar")!.revert(ctx);
+      await safeExec(ctx, hyprctlEvalArgv(fullscreenDesktopLua(false)));
     },
   },
   {
-    // hyprsunset runtime override, 4000K warm / 6500K neutral. No query
-    // interface, so state rides the recorded override.
+    // 4000K warm / 6500K neutral over IPC to hyprsunset.service; starting a
+    // second hyprsunset would take the CTM slot from the service.
     name: "nightlight",
     defaultOn: false,
     probe: async () => null,
     setOn: async (ctx) => {
-      await safeExec(ctx, ["hyprsunset", "--temperature", "4000"]);
-      await notify(ctx, "Nightlight", "On (4000K)");
+      await safeExec(ctx, ["hyprctl", "hyprsunset", "temperature", "4000"]);
+      await reportNightlight(true);
+      await notify(ctx, tr("toggles.nightlight"), tr("toggles.on"));
     },
     setOff: async (ctx) => {
-      await safeExec(ctx, ["hyprsunset", "--temperature", "6500"]);
-      await notify(ctx, "Nightlight", "Off");
+      await safeExec(ctx, ["hyprctl", "hyprsunset", "temperature", "6500"]);
+      await reportNightlight(false);
+      await notify(ctx, tr("toggles.nightlight"), tr("toggles.off"));
     },
     revert: async (ctx) => {
-      await safeExec(ctx, ["hyprsunset", "--temperature", "6500"]);
+      await safeExec(ctx, ["hyprctl", "hyprsunset", "temperature", "6500"]);
+      await reportNightlight(false);
     },
   },
   {
@@ -283,14 +344,30 @@ export const TOGGLES: ToggleDef[] = [
     probe: (capture) => unitActive(capture, "hypridle.service"),
     setOn: async (ctx) => {
       await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
-      await notify(ctx, "Idle lock", "Enabled");
+      await notify(ctx, tr("toggles.idleLock"), tr("toggles.enabled"));
     },
     setOff: async (ctx) => {
       await safeExec(ctx, systemctlUserArgv("stop", "hypridle.service"));
-      await notify(ctx, "Idle lock", "Disabled — screen will stay awake");
+      await notify(ctx, tr("toggles.idleLock"), tr("toggles.disabledScreenWillStayAwake"));
     },
     revert: async (ctx) => {
       await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
+    },
+  },
+  {
+    name: "crash-capture",
+    defaultOn: true,
+    probe: (capture) => unitActive(capture, "marchyo-crash-watch.service"),
+    setOn: async (ctx) => {
+      await safeExec(ctx, systemctlUserArgv("start", "marchyo-crash-watch.service"));
+      await notify(ctx, tr("toggles.crashCapture"), tr("toggles.enabled"));
+    },
+    setOff: async (ctx) => {
+      await safeExec(ctx, systemctlUserArgv("stop", "marchyo-crash-watch.service"));
+      await notify(ctx, tr("toggles.crashCapture"), tr("toggles.crashCaptureOff"));
+    },
+    revert: async (ctx) => {
+      await safeExec(ctx, systemctlUserArgv("start", "marchyo-crash-watch.service"));
     },
   },
   {
@@ -368,7 +445,7 @@ export const TOGGLES: ToggleDef[] = [
     },
     setOn: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", SUSPEND_INHIBIT_TAG]);
-      await notify(ctx, "Suspend", "Automatic sleep allowed");
+      await notify(ctx, tr("toggles.suspend"), tr("toggles.automaticSleepAllowed"));
     },
     setOff: async (ctx) => {
       try {
@@ -387,7 +464,7 @@ export const TOGGLES: ToggleDef[] = [
       } catch {
         // systemd-inhibit unavailable
       }
-      await notify(ctx, "Suspend", "Automatic sleep inhibited");
+      await notify(ctx, tr("toggles.suspend"), tr("toggles.automaticSleepInhibited"));
     },
     revert: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", SUSPEND_INHIBIT_TAG]);
@@ -422,22 +499,27 @@ export const TOGGLES: ToggleDef[] = [
       } catch {
         // systemd-inhibit unavailable
       }
-      if (!shellInstalled()) {
+      if (shellInstalled()) {
+        await shellCall(() => shellIpc("caffeineChanged", "on"));
+      } else {
         await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
       }
-      await notify(ctx, "Caffeine", "On — screen and sleep kept awake");
+      await notify(ctx, tr("toggles.caffeine"), tr("toggles.onScreenAndSleepKept"));
     },
     setOff: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", CAFFEINE_INHIBIT_TAG]);
       await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
-      if (!shellInstalled()) {
+      if (shellInstalled()) {
+        await shellCall(() => shellIpc("caffeineChanged", "off"));
+      } else {
         await safeExec(ctx, ["pkill", "-SIGRTMIN+8", "waybar"]);
       }
-      await notify(ctx, "Caffeine", "Off — normal idle behaviour restored");
+      await notify(ctx, tr("toggles.caffeine"), tr("toggles.offNormalIdleBehaviourRestored"));
     },
     revert: async (ctx) => {
       await safeExec(ctx, ["pkill", "-f", CAFFEINE_INHIBIT_TAG]);
       await safeExec(ctx, systemctlUserArgv("start", "hypridle.service"));
+      if (shellInstalled()) await shellCall(() => shellIpc("caffeineChanged", "off"));
     },
   },
   {

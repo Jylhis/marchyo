@@ -1,25 +1,28 @@
 # Runtime theme switching, build-time asset layer.
 #
-# The declarative build-time variant (marchyo.theme.variant) stays the source
-# of truth; this module additionally materializes every theme in
+# The declarative build-time variant (marchyo.theme.variant) supplies the
+# default; this module additionally materializes every theme in
 # marchyo.theme.themes as runtime-swappable asset dirs plus a manifest the
-# `marchyo theme` CLI reads. The switch is an ephemeral overlay: the next
-# activation resets every surface (and ~/.config/marchyo/current-theme) back
-# to the declarative default. bat, fzf, starship, hyprlock, console, k9s,
-# lazygit, spotify-player and gdu have runtime emitters too; Qt follows the GTK
-# relink; plymouth and ncspot (whose theme sits inline in config.toml, with no
-# include) stay on the build-time default until rebuild.
+# `marchyo theme` CLI reads. The switch is an overlay on the declarative
+# default: every activation first resets the relinked surfaces (and
+# ~/.config/marchyo/current-theme) to the build-time state, then replays the
+# stored runtime overrides with `marchyo runtime restore`. bat, fzf, starship,
+# hyprlock, console, k9s, lazygit, spotify-player, gdu, btop, kitty, foot,
+# alacritty, helix, neovim and emacs have runtime emitters too; Qt follows the
+# GTK relink; plymouth stays on the build-time default until rebuild, and the
+# Chromium policy is root-owned, so it carries the build-time colour only.
 #
-# The dual-variant mako/waybar/gtk sources are derived from the resolved Home
-# Manager config by translating the build variant's semantic-token hexes to
-# the other variant's, so edits to those modules flow into both variants
-# automatically. ANSI hexes are excluded (several collide with semantic tokens
-# but map differently, and don't appear in these surfaces).
+# The dual-variant gtk source is derived from the resolved Home Manager config
+# by translating the build variant's semantic-token hexes to the other
+# variant's, so edits to that module flow into both variants automatically.
+# ANSI hexes are excluded (several collide with semantic tokens but map
+# differently, and don't appear in this surface).
 #
 # Every theme dir also ships palette.json (token -> hex plus token -> base16
-# slot), and the build-variant dir ships templates/ with the same three
-# surfaces as placeholders, which `marchyo theme generate` fills from a
-# matugen palette. The generators shared with the CLI live in
+# slot), preview.png (palette card), a wallpapers/ dir (the theme's own
+# wallpapers beside the default wallpaper.png), and the build-variant dir ships
+# templates/ with the same surfaces as placeholders, which `marchyo theme
+# generate` fills from a matugen palette. The generators shared with the CLI live in
 # lib/theme-generators.nix.
 {
   config,
@@ -33,6 +36,7 @@ let
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
   themeCfg = (osConfig.marchyo or { }).theme or { };
   themeEnabled = themeCfg.enable or true;
+  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
   buildVariant = themeCfg.variant or "dark";
   otherVariant = if buildVariant == "dark" then "light" else "dark";
 
@@ -49,7 +53,7 @@ let
   buildHexes = hexesFor buildVariant;
 
   # shade_color is the one decimal-literal colour the hex swap cannot reach: the
-  # generated gtk css carries `rgba(<text rgb>, 0.08)` (mako/waybar carry none).
+  # generated gtk css carries `rgba(<text rgb>, 0.08)`.
   # Translate it to the target palette's text rgb alongside the hex swap — for
   # the jylhis other variant (textFor) and every base16 scheme (swapGtkToScheme).
   gen = import ../../lib/theme-generators.nix { inherit lib; };
@@ -70,7 +74,7 @@ let
   # the palette is never a false positive.
   #
   # A colour literal is a `#` hex run whose following char is not an identifier
-  # char, so a waybar CSS id selector (`#cpu`, `#battery`) — a `#` run butting
+  # char, so a CSS id selector (`#cpu`, `#battery`) — a `#` run butting
   # straight into more letters — is not mistaken for a colour. A shorthand or
   # 8-digit hex colour therefore still counts and, not being a 6-digit token
   # hex, is reported as unswappable.
@@ -120,33 +124,66 @@ let
 
   swapToOther = recolorWith "jylhis ${buildVariant}->${otherVariant}" (hexesFor otherVariant);
 
-  # Applied to mako/waybar/gtk; swapShade is a no-op on the first two (they
-  # carry no shade literal), so a uniform path is safe.
+  # Fill a {{token:<name>}} / {{shade}} template from a token resolver. Every
+  # placeholder names a token, so this never maps a hex back to a role: two
+  # tokens that share a hex in one variant and split in another (ink is text,
+  # rule and link by day) still fill correctly.
+  fillTemplate =
+    resolve: text:
+    lib.concatMapStrings (
+      part:
+      if builtins.isString part then
+        part
+      else if builtins.head part == "shade" then
+        shadeRgba (resolve "text")
+      else
+        resolve (builtins.elemAt part 1)
+    ) (builtins.split "[{][{](shade|token:([a-z0-9-]+))[}][}]" text);
+
+  # The design ships each GTK sheet and the same sheet as a template
+  # (platforms/gtk/jylhis.css.in). When the resolved GTK CSS carries the
+  # design's build-variant sheet (the default, see jylhis-theme.nix), that
+  # part becomes the template and only the text around it (a consumer's own
+  # extraCss) goes through the guarded hex swap. A consumer who replaced the
+  # sheet keeps the swap for the whole text.
+  designGtk = name: builtins.readFile "${pkgs.jylhis-design-src}/platforms/gtk/${name}";
+  designSheet = designGtk "jylhis-${buildVariant}.css";
+  hexTemplate =
+    label: text:
+    builtins.replaceStrings [ (shadeRgba palettes.${buildVariant}.hex.text) ] [ "{{shade}}" ] (
+      builtins.replaceStrings buildHexes (map (n: "{{token:${n}}}") tokenNames) (
+        assertRecolorable "template ${label}" templateSlotTos text
+      )
+    );
+  gtkTemplate =
+    let
+      parts = lib.splitString designSheet gtkCss;
+    in
+    if gtkCss != null && builtins.length parts == 2 then
+      hexTemplate "gtk prefix" (builtins.head parts)
+      + designGtk "jylhis.css.in"
+      + hexTemplate "gtk suffix" (builtins.elemAt parts 1)
+    else
+      null;
+
   textFor =
     v: text:
     if v == buildVariant then text else swapShade palettes.${otherVariant}.hex.text (swapToOther text);
-
-  # Resolved single-variant sources to translate. Both are marchyo-owned (no
-  # Stylix), so every color in them is a semantic-token hex. If a consumer
-  # overrides waybar's style with a path instead of a string, that surface is
-  # left build-time.
-  makoText =
-    if config.services.mako.enable && config.xdg.configFile ? "mako/config" then
-      config.xdg.configFile."mako/config".text
+  gtkFor =
+    v:
+    if v == buildVariant then
+      gtkCss
+    else if gtkTemplate != null then
+      fillTemplate (jylhisResolve v) gtkTemplate
     else
-      null;
-  waybarStyle =
-    if config.programs.waybar.enable && lib.isString config.programs.waybar.style then
-      config.programs.waybar.style
-    else
-      null;
+      textFor v gtkCss;
 
   # Resolved GTK user CSS (what HM installs as gtk-3.0/gtk.css). Design 3.0.0
   # supplies per-polarity stylesheets (no .dark custom-prop block, no
   # light-baked top level), so the resolved text is already valid for both
-  # GTK3 and GTK4 and translating it to another theme is the same
-  # semantic-token hex swap mako/waybar use below. Consumers overriding
-  # gtk.gtk3.extraCss to "" leave this surface build-time.
+  # GTK3 and GTK4 and translating it to another theme is a semantic-token hex
+  # swap. Consumers overriding gtk.gtk3.extraCss to "" leave this surface
+  # build-time.
   gtkCss =
     if config.xdg.configFile ? "gtk-3.0/gtk.css" then
       config.xdg.configFile."gtk-3.0/gtk.css".text
@@ -225,6 +262,77 @@ let
     );
     "gdu.yaml" = pkgs.writeText "marchyo-theme-${label}-gdu.yaml" (gen.gduText slots);
   };
+  # Application surfaces (VS Code, Obsidian, tmux, Slack, fcitx5, herdr), from
+  # the same slots. tmux, fcitx5 and herdr read them through the current-theme
+  # pointer; the CLI copies the VS Code, Obsidian and Slack files on a switch.
+  appSurfaceFiles =
+    label: variant: slots:
+    lib.mapAttrs (name: text: pkgs.writeText "marchyo-theme-${label}-${name}" text) (
+      gen.appSurfaceTexts variant slots
+    );
+  # Terminal, editor and browser surfaces (btop, kitty, foot, alacritty, helix,
+  # neovim, emacs, chromium policy) from the same slots; lib/theme-surfaces.nix.
+  surfaces = import ../../lib/theme-surfaces.nix { inherit lib gen; };
+  editorSurfaceFiles =
+    label: slots:
+    lib.mapAttrs (name: text: pkgs.writeText "marchyo-theme-${label}-${name}" text) (
+      surfaces.texts slots
+    );
+
+  # preview.png: the palette card rendered by resvg with the design system's
+  # Fira Sans and IBM Plex Mono (no system fonts in the sandbox).
+  designFonts = import "${pkgs.jylhis-design-src}/nix/fonts.nix";
+  previewFor =
+    {
+      name,
+      variant,
+      slots,
+    }:
+    pkgs.runCommand "marchyo-theme-${name}-preview.png"
+      {
+        nativeBuildInputs = [ pkgs.resvg ];
+        svg = pkgs.writeText "marchyo-theme-${name}-preview.svg" (
+          surfaces.previewSvg {
+            inherit name variant;
+            s = slots;
+            sans = designFonts.body;
+            mono = designFonts.mono;
+          }
+        );
+      }
+      ''
+        resvg --width 480 --height 270 --skip-system-fonts \
+          ${
+            lib.concatMapStringsSep " " (p: "--use-fonts-dir ${p}/share/fonts") (designFonts.packages pkgs)
+          } \
+          "$svg" "$out"
+      '';
+
+  # wallpapers/: store symlinks named by the file's own name (a bare store path
+  # carries its hash as the name prefix).
+  wallpaperLinks =
+    paths:
+    lib.listToAttrs (
+      map (
+        p:
+        let
+          str = toString p;
+          base = baseNameOf str;
+        in
+        lib.nameValuePair (builtins.unsafeDiscardStringContext (
+          if dirOf str == builtins.storeDir then builtins.substring 33 (-1) base else base
+        )) p
+      ) paths
+    );
+  wallpapersDirFor =
+    label: paths: pkgs.linkFarm "marchyo-theme-${label}-wallpapers" (wallpaperLinks paths);
+  # The Jylhis pair lists the generated patterns beside the default grid.
+  packageWallpapers =
+    v:
+    lib.filter (p: !lib.hasSuffix "jylhis-grid-${v}.png" p) (
+      (wallpaperPackage.forPolarity or (_: [ ])) v
+    );
+
   # The build-variant dir is the declarative state, so it carries the slots
   # the build-time modules use (marchyo.theme.scheme when set); the other
   # variant carries the Jylhis pair's own slots.
@@ -248,27 +356,16 @@ let
   # its own build hex when it has none), so every token sharing a build hex
   # fills identically and the first token name per hex is a safe placeholder.
   templateSlotTos = map (n: tokenSlots.${n} or palettes.${buildVariant}.hex.${n}) tokenNames;
-  templateFor =
-    label: text:
-    builtins.replaceStrings [ (shadeRgba palettes.${buildVariant}.hex.text) ] [ "{{shade}}" ] (
-      builtins.replaceStrings buildHexes (map (n: "{{token:${n}}}") tokenNames) (
-        assertRecolorable "template ${label}" templateSlotTos text
-      )
-    );
   templateFiles =
-    lib.optionalAttrs (makoText != null) {
-      "templates/mako.conf" = pkgs.writeText "marchyo-theme-template-mako.conf" (
-        templateFor "mako" makoText
+    lib.optionalAttrs (gtkCss != null) {
+      "templates/gtk.css" = pkgs.writeText "marchyo-theme-template-gtk.css" (
+        if gtkTemplate != null then gtkTemplate else hexTemplate "gtk" gtkCss
       );
     }
-    // lib.optionalAttrs (waybarStyle != null) {
-      "templates/waybar.css" = pkgs.writeText "marchyo-theme-template-waybar.css" (
-        templateFor "waybar" waybarStyle
-      );
-    }
-    // lib.optionalAttrs (gtkCss != null) {
-      "templates/gtk.css" = pkgs.writeText "marchyo-theme-template-gtk.css" (templateFor "gtk" gtkCss);
-    };
+    // lib.mapAttrs' (
+      name: text:
+      lib.nameValuePair "templates/${name}" (pkgs.writeText "marchyo-theme-template-${name}" text)
+    ) surfaces.templates;
 
   themeDirFor =
     v:
@@ -287,14 +384,8 @@ let
         # Path template mirrors wallpaperFile in modules/home/hyprland.nix.
         "wallpaper.png" = "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${v}.png";
       }
-      // lib.optionalAttrs (makoText != null) {
-        "mako.conf" = pkgs.writeText "marchyo-theme-${v}-mako.conf" (textFor v makoText);
-      }
-      // lib.optionalAttrs (waybarStyle != null) {
-        "waybar.css" = pkgs.writeText "marchyo-theme-${v}-waybar.css" (textFor v waybarStyle);
-      }
       // lib.optionalAttrs (gtkCss != null) {
-        "gtk.css" = pkgs.writeText "marchyo-theme-${v}-gtk.css" (textFor v gtkCss);
+        "gtk.css" = pkgs.writeText "marchyo-theme-${v}-gtk.css" (gtkFor v);
       }
       // lib.optionalAttrs (batConfig != null) {
         "bat.conf" = pkgs.writeText "marchyo-theme-${v}-bat.conf" (batConfigWithTheme "jylhis-${v}");
@@ -316,6 +407,16 @@ let
         );
       }
       // slotSurfaceFiles v (jylhisSlots v)
+      // appSurfaceFiles v v (jylhisSlots v)
+      // editorSurfaceFiles v (jylhisSlots v)
+      // {
+        "preview.png" = previewFor {
+          name = "jylhis-${v}";
+          variant = v;
+          slots = jylhisSlots v;
+        };
+        wallpapers = wallpapersDirFor v (lib.optionals wallpaperEnabled (packageWallpapers v));
+      }
       // lib.optionalAttrs (v == buildVariant) templateFiles
     );
 
@@ -333,12 +434,12 @@ let
     inherit lib;
   };
 
-  # kebab-case token -> camelCase, shared with the Color.qml generator in
+  # kebab-case token -> camelCase, shared with the Colors.qml generator in
   # packages/marchyo-shell/package.nix so colors.json keys and generated
-  # Color.qml property names can never drift apart.
-  toCamel = import ../../lib/camel-case.nix { inherit lib; };
+  # Colors.qml property names can never drift apart.
+  toCamel = lib.toCamelCase;
 
-  # Palette subset the shell's Color.qml exposes (semantic tokens minus the
+  # Palette subset the shell's Colors.qml exposes (semantic tokens minus the
   # syntax-highlighting ones — same filter package.nix applies), camelCased.
   shellTokenNames = lib.filter (n: !lib.hasPrefix "syn-" n) tokenNames;
   jylhisShellColors =
@@ -358,7 +459,12 @@ let
   swapToScheme =
     scheme: recolorWith "scheme ${scheme.name}" (map (schemeHexForToken scheme) tokenNames);
   # gtk also carries the shade literal; map it to the scheme's text (base05).
-  swapGtkToScheme = scheme: text: swapShade scheme.slots.base05 (swapToScheme scheme text);
+  swapGtkToScheme =
+    scheme: text:
+    if gtkTemplate != null then
+      fillTemplate (schemeHexForToken scheme) gtkTemplate
+    else
+      swapShade scheme.slots.base05 (swapToScheme scheme text);
 
   fzfOptsForScheme = scheme: gen.fzfOptsText (schemeHexForToken scheme) scheme.slots.base0B;
   hyprlockColorsForScheme = scheme: gen.hyprlockVarsFor (schemeHexForToken scheme);
@@ -391,16 +497,6 @@ let
           else
             "${wallpaperPackage}/share/marchyo/wallpapers/jylhis-grid-${scheme.variant}.png";
       }
-      // lib.optionalAttrs (makoText != null) {
-        "mako.conf" = pkgs.writeText "marchyo-theme-${scheme.name}-mako.conf" (
-          swapToScheme scheme makoText
-        );
-      }
-      // lib.optionalAttrs (waybarStyle != null) {
-        "waybar.css" = pkgs.writeText "marchyo-theme-${scheme.name}-waybar.css" (
-          swapToScheme scheme waybarStyle
-        );
-      }
       // lib.optionalAttrs (gtkCss != null) {
         "gtk.css" = pkgs.writeText "marchyo-theme-${scheme.name}-gtk.css" (swapGtkToScheme scheme gtkCss);
       }
@@ -426,6 +522,16 @@ let
         );
       }
       // slotSurfaceFiles scheme.name scheme.slots
+      // appSurfaceFiles scheme.name scheme.variant scheme.slots
+      // editorSurfaceFiles scheme.name scheme.slots
+      // {
+        "preview.png" = previewFor {
+          inherit (scheme) name variant slots;
+        };
+        wallpapers = wallpapersDirFor scheme.name (
+          lib.optionals wallpaperEnabled (scheme.wallpapers or [ ])
+        );
+      }
     );
 
   themeList =
@@ -490,7 +596,19 @@ let
     ) (lib.filter (t: t.scheme != null) resolvedThemes)
   );
 
+  fcitx5Glyphs = [
+    "arrow"
+    "next"
+    "prev"
+    "radio"
+  ];
+
   manifest = builtins.toJSON {
+    defaultTheme = {
+      name = "jylhis-${buildVariant}";
+      variant = buildVariant;
+      dir = "${themeDirs.${buildVariant}}";
+    };
     themes = map (t: {
       inherit (t) name variant;
       dir = "${t.dir}";
@@ -537,10 +655,18 @@ in
         runtimeSurfaces = [
           "${config.xdg.configHome}/gtk-3.0/gtk.css"
           "${config.xdg.configHome}/gtk-4.0/gtk.css"
+          # The CLI still relinks these two when a theme dir carries them
+          # (tests/cli/theme-surfaces-test.js keeps this list a superset).
           "${config.xdg.configHome}/mako/config"
           "${config.xdg.configHome}/waybar/style.css"
           "${config.xdg.configHome}/bat/config"
           "${config.xdg.configHome}/k9s/skins/jylhis.yaml"
+          "${config.xdg.configHome}/btop/themes/marchyo.theme"
+          "${config.xdg.configHome}/kitty/marchyo-theme.conf"
+          "${config.xdg.configHome}/foot/marchyo-theme.ini"
+          "${config.xdg.configHome}/alacritty/marchyo-theme.toml"
+          "${config.xdg.configHome}/helix/themes/marchyo.toml"
+          "${config.xdg.dataHome}/nvim/site/colors/marchyo.lua"
           "${config.xdg.configHome}/marchyo/current-theme"
         ];
       in
@@ -555,13 +681,61 @@ in
       ''
     );
 
-    # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
-    xdg.configFile."marchyo/current-theme".source = themeDirs.${buildVariant};
+    # Replay the stored runtime overrides once the declarative state is back in
+    # place. Best effort: it never fails the activation. An activation has no
+    # session environment, so the running Hyprland instance (newest live
+    # socket), the Wayland socket and the user bus come from the runtime dir.
+    home.activation.restoreRuntimeOverrides = lib.mkIf cliEnabled (
+      lib.hm.dag.entryAfter
+        [
+          "writeBoundary"
+          "linkGeneration"
+          "dconfSettings"
+          "reloadSystemd"
+        ]
+        ''
+          if [ -z "''${DRY_RUN:-}" ]; then
+            rt="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            if [ -d "$rt/hypr" ]; then
+              sig=$(find "$rt/hypr" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %f\n' |
+                sort -rn | while read -r _ name; do
+                  if [ -S "$rt/hypr/$name/.socket.sock" ]; then echo "$name"; break; fi
+                done)
+              [ -z "$sig" ] || export HYPRLAND_INSTANCE_SIGNATURE="$sig"
+            fi
+            wl=$(find "$rt" -maxdepth 1 -name 'wayland-[0-9]*' -type s -printf '%f\n' 2>/dev/null | sort | head -n 1)
+            [ -z "$wl" ] || export WAYLAND_DISPLAY="$wl"
+            [ ! -S "$rt/bus" ] || export DBUS_SESSION_BUS_ADDRESS="unix:path=$rt/bus"
+            export XDG_RUNTIME_DIR="$rt"
+            ${pkgs.coreutils}/bin/timeout 60 ${lib.getExe pkgs.marchyo-cli} runtime restore \
+              || echo "marchyo runtime restore failed (ignored)" >&2
+          fi
+        ''
+    );
 
-    # Manifest for the CLI (`marchyo theme list/set/next`, and `bg` reads
-    # followWallpaper from it). Listing the dirs also roots them in the
-    # profile closure, so switching stays a symlink swap.
-    xdg.dataFile."marchyo/themes/manifest.json".text = manifest;
+    # Pointer to the active variant's assets; the CLI repoints it (ln -sfn) at runtime.
+
+    # herdr and herdr-app read their custom theme through the pointer; the
+    # fcitx5 classicui theme (modules/nixos/fcitx5.nix selects it) does too,
+    # with the stock glyphs beside it.
+    xdg.configFile = {
+      "marchyo/current-theme".source = themeDirs.${buildVariant};
+      "herdr/themes/marchyo.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/herdr.json";
+      "herdr-app/themes/marchyo.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/herdr.json";
+    };
+    xdg.dataFile = {
+      # Manifest for the CLI (`marchyo theme list/set/next`, and `bg` reads
+      # followWallpaper from it). Listing the dirs also roots them in the
+      # profile closure, so switching stays a symlink swap.
+      "marchyo/themes/manifest.json".text = manifest;
+      "fcitx5/themes/marchyo/theme.conf".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/fcitx5-theme.conf";
+    }
+    // lib.genAttrs (map (g: "fcitx5/themes/marchyo/${g}.svg") fcitx5Glyphs) (p: {
+      source = "${pkgs.fcitx5}/share/fcitx5/themes/default/${lib.removeSuffix ".svg" (baseNameOf p)}.svg";
+    });
 
     # Optional (`?`) include: ghostty processes config-file includes after the
     # main file, so this `theme` overrides the build-time one (ghostty.nix).

@@ -1,0 +1,10 @@
+{
+  "animations": true,
+  "corners": "theme",
+  "fontName": "Fira Sans 15",
+  "gaps": false,
+  "iconTheme": "Adwaita",
+  "reduceMotion": false,
+  "shellGlass": true,
+  "transparency": "opaque"
+}

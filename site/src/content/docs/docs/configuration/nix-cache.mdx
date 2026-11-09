@@ -43,7 +43,7 @@ direct fallbacks (Nix dedups and routes by priority, so the local proxy wins).
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.nix.router.enable` | `bool` | `true` | Run ncro and front the caches with it |
-| `marchyo.nix.router.port` | `port` | `4200` | Port ncro listens on / the prepended `localhost` substituter |
+| `marchyo.nix.router.port` | `port` | `4200` | Port ncro listens on (127.0.0.1 only) / the prepended `localhost` substituter |
 | `marchyo.nix.router.netrcFile` | `nullable path` | `null` | netrc file for authenticating to private upstreams (e.g. a sops-generated `/etc/nix/netrc`) |
 | `marchyo.nix.router.extraUpstreams` | `list of str` | `[ "https://cache.nixos.org" ]` | Extra upstream URLs to route through ncro that are not in `marchyo.nix.caches` |
 

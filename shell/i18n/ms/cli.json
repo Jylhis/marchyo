@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Telah log masuk ke %1.",
+  "launch.notFoundInPath": "%1 tidak ditemui dalam PATH",
+  "utilities.reminder": "Peringatan",
+  "utilities.battery": "Bateri %1%",
+  "utilities.battery2": "Bateri",
+  "utilities.transcode": "Transkod",
+  "utilities.share": "Kongsi",
+  "toggles.enabled": "Didayakan",
+  "toggles.suspend": "Tidur"
+}

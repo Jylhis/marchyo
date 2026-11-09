@@ -5,7 +5,6 @@
   nixosModules,
   nix-on-droid,
   home-manager-droid,
-  mkDarwinSystem,
   ...
 }:
 rec {
@@ -152,48 +151,6 @@ rec {
         "pass"
     );
 
-  # Evaluates a nix-darwin config through the same `lib.mkDarwinSystem`
-  # builder consumers use (nix-darwin evaluates fine on Linux, so this runs in
-  # the regular Linux checks) and deep-forces `check eval.config`, mirroring
-  # testNixOSCheck. This is the only automated darwin coverage — keep at least
-  # one test exercising the curated HM wiring in modules/darwin/home.nix.
-  # testDarwinCheckFor takes the darwin system explicitly so both the unstable
-  # (aarch64) and stable-26.05 (x86_64) input trios can be exercised.
-  testDarwinCheckFor =
-    system: name: check: config:
-    pkgs.writeText "eval-darwin-${name}" (
-      let
-        eval = mkDarwinSystem {
-          inherit system;
-          modules = [ config ];
-        };
-        failedAssertions = builtins.filter (x: !x.assertion) eval.config.assertions;
-        failedMessages = map (x: x.message) failedAssertions;
-        result = check eval.config;
-      in
-      if failedAssertions != [ ] then
-        throw "FAIL: ${name}: unexpected assertion failure(s): ${builtins.concatStringsSep "; " failedMessages}"
-      else if !(builtins.deepSeq result result) then
-        throw "FAIL: ${name}: predicate returned false"
-      else
-        "pass"
-    );
-
-  testDarwinCheck = testDarwinCheckFor "aarch64-darwin";
-
-  # Minimal nix-darwin configuration with a marchyo test user (the darwin
-  # analog of withTestUser; darwin needs no bootloader/filesystem stanzas).
-  withDarwinTestUser =
-    extraConfig:
-    lib.recursiveUpdate {
-      system.stateVersion = 6;
-      marchyo.users.testuser = {
-        enable = true;
-        fullname = "Test User";
-        email = "test@example.com";
-      };
-    } extraConfig;
-
   # Flatten a Hyprland Lua settings entry (a bind `{ _args = [...]; }`, a
   # window rule, a monitor spec, ...) into one searchable string, so tests can
   # keep asserting with `hasInfix` the way they did against the old hyprlang
@@ -230,6 +187,25 @@ rec {
       in
       args != [ ] && builtins.head args == keys && lib.hasInfix needle (hyprEntryText e)
     ) entries;
+
+  # A Lua bind chord in one spelling: modifiers upper-case and sorted, the key
+  # lower-case, so "SUPER + SHIFT + CTRL + A" and "SUPER + CTRL + SHIFT + a"
+  # compare equal.
+  normalizeChord = (import ../lib/hyprland-lua.nix { inherit lib; }).normalizeKeys;
+
+  # Every chord bound more than once across `entries`, minus the `allowed`
+  # chords that are bound twice on purpose (a press/release pair, a chained
+  # dispatch).
+  duplicateChords =
+    allowed: entries:
+    let
+      chords = map normalizeChord (
+        lib.filter (c: c != null) (map (e: builtins.head (e._args or [ null ])) entries)
+      );
+      counts = lib.foldl' (acc: c: acc // { ${c} = (acc.${c} or 0) + 1; }) { } chords;
+      dupes = lib.attrNames (lib.filterAttrs (_: n: n > 1) counts);
+    in
+    lib.subtractLists (map normalizeChord allowed) dupes;
 
   # Minimal NixOS configuration required for a config to evaluate.
   minimalConfig = {

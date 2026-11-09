@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "已登入 %1。",
+  "launch.notFoundInPath": "在 PATH 中找不到 %1",
+  "utilities.reminder": "提醒",
+  "utilities.battery": "電池 %1%",
+  "utilities.battery2": "電池",
+  "utilities.transcode": "轉碼",
+  "utilities.share": "分享",
+  "toggles.enabled": "已啟用",
+  "toggles.suspend": "睡眠"
+}

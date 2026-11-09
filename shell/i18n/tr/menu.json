@@ -1,0 +1,22 @@
+{
+  "menu.network": "Ağ",
+  "menu.speedTest": "Hız Testi",
+  "menu.lock": "Kilitle",
+  "menu.suspend": "Uyku",
+  "menu.hibernate": "Hazırda Beklet",
+  "menu.reboot": "Yeniden Başlat",
+  "menu.shutdown": "Kapat",
+  "menu.style": "Stil",
+  "menu.theme": "Tema",
+  "menu.background": "Arka Plan",
+  "menu.font": "Yazı Tipi",
+  "menu.setup": "Ayarlar",
+  "menu.audio": "Ses",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Tetikle",
+  "menu.appearance": "Görünüm",
+  "menu.system": "Sistem",
+  "menu.learn": "Öğren",
+  "menu.screenshot": "Ekran Görüntüsü",
+  "menu.share": "Paylaş"
+}

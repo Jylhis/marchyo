@@ -8,6 +8,7 @@ import {
   info,
   data,
   type Runtime,
+  tr,
 } from "@marchyo/core";
 import { requireFlake } from "./require-flake.ts";
 import { runRebuild } from "./rebuild.ts";
@@ -37,14 +38,14 @@ export async function runUpgrade(
   }
 
   if (!commandAvailable("nix")) {
-    err(rt, "nix not found in PATH");
+    err(rt, tr("update.nixNotFoundInPath"));
     return 1;
   }
 
-  info(rt, `updating flake inputs in ${flake.path} (${flake.source}) ...`);
+  info(rt, tr("update.updatingFlakeInputsIn", flake.path, flake.source));
   const updateCode = await runArgv(updateArgv, { noInput: rt.noInput });
   if (updateCode !== 0) {
-    err(rt, `nix flake update failed (exit ${updateCode}); skipping rebuild`);
+    err(rt, tr("upgrade.nixFlakeUpdateFailedExit", updateCode));
     return updateCode;
   }
 

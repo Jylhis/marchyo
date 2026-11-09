@@ -46,7 +46,17 @@ in
         virtualisation.podman.enable = true;
       });
 
-  # All toggles, including the aggressive hugePages + compute opt-ins.
+  # An explicit disableMitigations = true with a container runtime is an
+  # acknowledged trade-off and must not warn.
+  eval-performance-mitigations-explicit-silent =
+    testNixOSCheck "performance-mitigations-explicit-silent"
+      (c: !(builtins.any (w: lib.hasInfix "CPU mitigations are disabled" w) c.warnings))
+      (withTestUser {
+        virtualisation.podman.enable = true;
+        marchyo.performance.disableMitigations = true;
+      });
+
+  # All toggles, including the aggressive compute opt-in.
   eval-performance-tuning-all = testNixOS "performance-tuning-all" (withTestUser {
     marchyo.performance.tuning = {
       enable = true;

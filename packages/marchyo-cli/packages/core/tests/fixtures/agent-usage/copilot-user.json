@@ -1,0 +1,15 @@
+{
+  "login": "redacted",
+  "copilot_plan": "individual_pro",
+  "quota_reset_date_utc": "2026-12-01T00:00:00Z",
+  "quota_snapshots": {
+    "chat": { "unlimited": true, "entitlement": 0, "remaining": 0 },
+    "completions": { "unlimited": true, "entitlement": 0, "remaining": 0 },
+    "premium_interactions": {
+      "unlimited": false,
+      "entitlement": 300,
+      "remaining": 225,
+      "percent_remaining": 75
+    }
+  }
+}

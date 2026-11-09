@@ -13,7 +13,10 @@ in
       addUpstreamPublicKeys = true;
       netrcFile = lib.mkIf (cfg.router.netrcFile != null) cfg.router.netrcFile;
       settings = {
-        server.listen = ":${toString cfg.router.port}";
+        # Loopback only: the proxy serves this host's nix-daemon, nobody else.
+        server.listen = "127.0.0.1:${toString cfg.router.port}";
+        # Info logs every "nar attempt won", thousands a day.
+        logging.level = lib.mkDefault "warn";
         upstreams =
           map (
             c: { inherit (c) url; } // lib.optionalAttrs (c.publicKey != null) { public_key = c.publicKey; }

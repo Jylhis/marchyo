@@ -54,7 +54,6 @@ marchyo.media.enable = lib.mkDefault true;
 ## Adding a New Module
 
 1. Create the file in `modules/nixos/`, `modules/home/`, or `modules/generic/` — auto-discovery picks it up on the next eval (no import edit needed for nixos/home).
-   - For `modules/darwin/`, add the import to `modules/darwin/default.nix` manually (curated subset).
 2. Define any new options in a file under `modules/nixos/options/` — auto-discovery picks them up. Use an existing namespace file or create a new one (`mychunk.nix`) declaring `options.marchyo.<namespace>`.
 3. Add an evaluation test in the appropriate `tests/eval/<feature>.nix`, or create a new file there:
 

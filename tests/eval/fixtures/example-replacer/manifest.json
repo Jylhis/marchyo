@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "example.audio",
+  "name": "Example audio",
+  "version": "1.0.0",
+  "kinds": ["panel"],
+  "replaces": ["panel.audio", "polkit"],
+  "entryPoints": {
+    "panel": "Panel.qml"
+  }
+}

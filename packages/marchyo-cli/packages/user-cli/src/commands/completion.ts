@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { type Runtime, usageError } from "@marchyo/core";
+import { type Runtime, usageError, tr } from "@marchyo/core";
 
 // Shell completions + man page, generated from the live commander tree so
 // they can never drift from the actual surface. package.nix runs the
@@ -181,7 +181,7 @@ export async function runCompletion(
     default:
       return usageError(
         rt,
-        `unknown completion target: "${target}"`,
+        tr("completion.unknownCompletionTarget", target),
         "marchyo completion <bash|zsh|fish|man>",
       );
   }

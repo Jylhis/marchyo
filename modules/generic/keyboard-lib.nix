@@ -1,5 +1,31 @@
 {
   /**
+    CJK input method engines: fontconfig language tag and Noto CJK region.
+  */
+  cjkImes = {
+    mozc = {
+      lang = "ja";
+      region = "JP";
+    };
+    hangul = {
+      lang = "ko";
+      region = "KR";
+    };
+    pinyin = {
+      lang = "zh-cn";
+      region = "SC";
+    };
+    chewing = {
+      lang = "zh-tw";
+      region = "TC";
+    };
+    cangjie = {
+      lang = "zh-hk";
+      region = "HK";
+    };
+  };
+
+  /**
     Normalize a keyboard layout entry to the canonical attrset form.
 
     Accepts either a layout code string or an attrset that may omit optional
@@ -17,7 +43,7 @@
       - `layout` (string): XKB layout code.
       - `variant` (string, optional): XKB variant. Defaults to `""`.
       - `ime` (string or null, optional): fcitx5 IME engine
-        (`"pinyin"`, `"mozc"`, `"hangul"`, …). Defaults to `null`.
+        (`"pinyin"`, `"mozc"`, `"hangul"`, `"chewing"`, `"cangjie"`, …). Defaults to `null`.
       - `label` (string or null, optional): Human-readable label. Defaults
         to `null`.
 

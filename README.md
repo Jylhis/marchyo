@@ -13,7 +13,7 @@ A modular NixOS configuration flake providing a curated set of system and home-m
 ## Quick Start
 
 Marchyo is batteries-included: add it as your **only** input and let
-`marchyo.lib.mkNixosSystem` / `mkDarwinSystem` select the correct nixpkgs,
+`marchyo.lib.mkNixosSystem` selects the correct nixpkgs,
 home-manager, overlay and marchyo modules for your system. No separate
 `nixpkgs` input is needed.
 
@@ -36,14 +36,6 @@ home-manager, overlay and marchyo modules for your system. No separate
         }
       ];
     };
-
-    # macOS works the same way. On x86_64-darwin marchyo transparently pins the
-    # stable nixos-26.05 set (the last release supporting Intel macOS); other
-    # systems ride unstable.
-    # darwinConfigurations.mymac = marchyo.lib.mkDarwinSystem {
-    #   system = "x86_64-darwin";
-    #   modules = [ ./darwin.nix ];
-    # };
   };
 }
 ```
@@ -94,7 +86,7 @@ marchyo.theme = {
 };
 ```
 
-The dark variant uses the Jylhis Dark palette; the light variant uses Jylhis Light (both modes of the single theme in [Jylhis Design System](https://github.com/jylhis/design) `themes/jylhis.json`). Set `marchyo.theme.scheme = "<name>"` to use a `base16-schemes` scheme instead.
+The dark variant uses the Jylhis Dark palette; the light variant uses Jylhis Light (both modes of the single theme in [Jylhis Design System](https://github.com/jylhis/design) `tokens/`). Set `marchyo.theme.scheme = "<name>"` to use a `base16-schemes` scheme instead.
 
 **For complete documentation of all available options, see the [Marchyo documentation](https://marchyo.org/docs).**
 

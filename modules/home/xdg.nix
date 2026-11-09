@@ -42,11 +42,10 @@ let
     thunar = "thunar.desktop";
   };
 
-  # TUI mail clients ship a Terminal=true desktop file with a mailto handler;
+  # The TUI mail client ships a Terminal=true desktop file with a mailto handler;
   # web/null clients get none and fall back to the browser.
   emailDesktopFiles = {
     aerc = "aerc.desktop";
-    neomutt = "neomutt.desktop";
   };
 
   browser = defaults.browser or null;
@@ -60,7 +59,7 @@ let
   editorDesktop = lib.optional (
     editor != null && builtins.hasAttr editor editorDesktopFiles
   ) editorDesktopFiles.${editor};
-  # TUI players (e.g. cmus) have no single-file MIME handler; hasAttr-guard so
+  # A player without a desktop-file entry has no MIME handler; hasAttr-guard so
   # selecting one simply registers no association instead of failing eval.
   videoDesktop = lib.optional (
     videoPlayer != null && builtins.hasAttr videoPlayer videoPlayerDesktopFiles
@@ -103,7 +102,7 @@ let
     "inode/directory" = fileManagerDesktop;
   };
 
-  # mailto: aerc/neomutt get their own desktop file; gmail/outlook (and any
+  # mailto: aerc gets its own desktop file; gmail/outlook (and any
   # client without a desktop file) fall back to opening in the browser.
   emailMimeTypes =
     if email == null then

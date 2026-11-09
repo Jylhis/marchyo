@@ -2,7 +2,7 @@
 # full modules/home set is imported) must produce NO Wayland desktop-shell
 # config when marchyo.desktop.enable is off. This is what lets a headless host
 # build through lib.mkNixosSystem + marchyo.users.* instead of opting out of
-# marchyo's HM entirely. The same guards make the modules inert on darwin.
+# marchyo's HM entirely.
 {
   helpers,
   lib,
@@ -30,11 +30,8 @@ in
       hm = hmOf { marchyo.desktop.enable = false; };
       offenders =
         lib.optional hm.wayland.windowManager.hyprland.enable "hyprland"
-        ++ lib.optional hm.programs.waybar.enable "waybar"
         ++ lib.optional hm.programs.hyprlock.enable "hyprlock"
         ++ lib.optional hm.services.hypridle.enable "hypridle"
-        ++ lib.optional hm.programs.vicinae.enable "vicinae"
-        ++ lib.optional hm.programs.noctalia.enable "noctalia"
         ++ lib.optional (hm.systemd.user.services ? marchyo-shell) "marchyo-shell";
     in
     pkgs.writeText "eval-headless-no-wayland" (
@@ -45,7 +42,7 @@ in
     );
 
   # desktop enabled => the same modules ARE configured (the guard does not
-  # over-gate the normal desktop path): the shell by default, waybar as the
+  # over-gate the normal desktop path): the shell by default, hyprlock as the
   # marchyo.shell.enable = false fallback.
   eval-desktop-enables-wayland =
     let
@@ -59,9 +56,9 @@ in
       if !(hm.wayland.windowManager.hyprland.enable && hm.systemd.user.services ? marchyo-shell) then
         throw "FAIL: desktop enabled but hyprland/marchyo-shell were not configured"
       else if
-        !(fallbackHm.wayland.windowManager.hyprland.enable && fallbackHm.programs.waybar.enable)
+        !(fallbackHm.wayland.windowManager.hyprland.enable && fallbackHm.programs.hyprlock.enable)
       then
-        throw "FAIL: desktop enabled with the shell off but hyprland/waybar were not configured"
+        throw "FAIL: desktop enabled with the shell off but hyprland/hyprlock were not configured"
       else
         "pass"
     );
@@ -71,13 +68,40 @@ in
   eval-hyprland-hides-cursor-on-key-press =
     let
       hm = hmOf { marchyo.desktop.enable = true; };
-      misc = hm.wayland.windowManager.hyprland.settings.config.misc or { };
+      cursor = hm.wayland.windowManager.hyprland.settings.config.cursor or { };
     in
     pkgs.writeText "eval-hyprland-hides-cursor-on-key-press" (
-      if misc.hide_cursor_on_key_press or false == true then
+      if cursor.hide_on_key_press or false == true then
         "pass"
       else
-        "FAIL: misc.hide_cursor_on_key_press is not true"
+        throw "FAIL: cursor.hide_on_key_press is not true"
+    );
+
+  # Non-KMS dmabuf formats stay in the feedback so hotplug keeps Mesa clients connected.
+  eval-hyprland-keeps-non-kms-dmabuf-formats =
+    let
+      hm = hmOf { marchyo.desktop.enable = true; };
+      quirks = hm.wayland.windowManager.hyprland.settings.config.quirks or { };
+    in
+    pkgs.writeText "eval-hyprland-keeps-non-kms-dmabuf-formats" (
+      if (quirks.skip_non_kms_dmabuf_formats or true) == false then
+        "pass"
+      else
+        throw "FAIL: quirks.skip_non_kms_dmabuf_formats is not false"
+    );
+
+  # A restarted shell can take back a session lock its predecessor held
+  # (Services/Lock.qml stranded-lock recovery).
+  eval-hyprland-allows-session-lock-restore =
+    let
+      hm = hmOf { marchyo.desktop.enable = true; };
+      misc = hm.wayland.windowManager.hyprland.settings.config.misc or { };
+    in
+    pkgs.writeText "eval-hyprland-allows-session-lock-restore" (
+      if misc.allow_session_lock_restore or false == true then
+        "pass"
+      else
+        throw "FAIL: misc.allow_session_lock_restore is not true"
     );
 
   # The NixOS half of the same contract. The tests above only inspect Home

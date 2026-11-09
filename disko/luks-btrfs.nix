@@ -33,8 +33,7 @@
 # sizing below covers that once the encryption question is solved). To get
 # working hibernation, either put swap inside the encryption (LVM-on-LUKS or a
 # btrfs swapfile in the LUKS container) or accept plaintext swap by setting
-# randomEncryption = false — then point marchyo.power.hibernation.resumeDevice
-# at the swap device.
+# randomEncryption = false — then point boot.resumeDevice at the swap device.
 
 # No default: --mode disko repartitions and mkfs the target with no prompt,
 # so falling back to /dev/sda would silently wipe whatever disk happens to be

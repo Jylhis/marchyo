@@ -16,7 +16,7 @@ Provider {
     providerId: "calc"
     prefix: Providers.prefixFor("calc")
     selectOnEmpty: true
-    emptyText: root.expression.length === 0 ? "type an expression" : "no result"
+    emptyText: root.expression.length === 0 ? I18n.t("launcher.calcType") : I18n.t("launcher.calcNoResult")
 
     readonly property string expression: root.query.trim()
 

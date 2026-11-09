@@ -21,10 +21,10 @@ in
         type = types.bool;
         default = true;
         description = ''
-          Cross-WM directional focus: SUPER+ALT+H/J/K/L tries
+          Cross-WM directional focus: SUPER+CTRL+ALT+H/J/K/L tries
           `windmove-*` inside Emacs first and falls through to
-          `hyprctl dispatch movefocus` when at the frame edge.
-          SUPER+ALT+SHIFT+H/J/K/L does the same for window swap.
+          `hl.dsp.focus` (via `hyprctl dispatch`) when at the frame edge.
+          SUPER+CTRL+ALT+SHIFT+H/J/K/L does the same for window swap.
         '';
       };
     };
@@ -56,7 +56,7 @@ in
         type = types.bool;
         default = true;
         description = ''
-          SUPER+CTRL+E captures the focused text field into a temporary
+          SUPER+SHIFT+ALT+E captures the focused text field into a temporary
           Emacs frame via emacs-everywhere.
         '';
       };
@@ -68,7 +68,7 @@ in
         default = true;
         description = ''
           Register `x-scheme-handler/org-protocol` and bind
-          SUPER+SHIFT+C to `(org-capture)`.
+          SUPER+CTRL+ALT+O to `(org-capture)`.
         '';
       };
     };

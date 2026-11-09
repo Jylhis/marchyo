@@ -1,0 +1,2607 @@
+[
+  {
+    "id": "marchyo.ai.context.embeddingModel",
+    "name": "marchyo.ai.context.embeddingModel",
+    "description": "OpenRouter embedding model slug used by OpenViking.",
+    "option_type": "string",
+    "default_value": "\"openai/text-embedding-3-small\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.context.enable",
+    "name": "marchyo.ai.context.enable",
+    "description": "Install OpenViking (`ov`), a local context database for AI agents, and\npoint its embeddings at OpenRouter. Data stays under workspacePath.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.context.service.enable",
+    "name": "marchyo.ai.context.service.enable",
+    "description": "Run the OpenViking HTTP server as a per-user systemd service.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.context.workspacePath",
+    "name": "marchyo.ai.context.workspacePath",
+    "description": "OpenViking workspace dir, relative to $HOME (kept local/inspectable).",
+    "option_type": "string",
+    "default_value": "\".openviking/workspace\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.enable",
+    "name": "marchyo.ai.enable",
+    "description": "Whether to enable BYOK AI tooling and desktop integration.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.local.enable",
+    "name": "marchyo.ai.local.enable",
+    "description": "Enable a local inference engine. NOT YET IMPLEMENTED — declared so the\noption is stable. Enabling it currently fails an assertion. Use the\nOpenRouter provider instead (see marchyo.ai.openrouter).",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.mcp.enable",
+    "name": "marchyo.ai.mcp.enable",
+    "description": "Wire MCP tool servers (e.g. mcp-nixos, for grounded NixOS attr/option\nlookups) into the MCP-capable clients.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.mcp.nixos.enable",
+    "name": "marchyo.ai.mcp.nixos.enable",
+    "description": "Enable the mcp-nixos server (run via uvx).",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.openrouter.apiKeyFile",
+    "name": "marchyo.ai.openrouter.apiKeyFile",
+    "description": "Runtime path to a file containing the OpenRouter API key. The key is\nread at shell startup and exported as OPENROUTER_API_KEY, so it never\nenters the Nix store. Typically this points at a sops-nix secret path\n(e.g. config.sops.secrets.\"openrouter-api-key\".path). Required when\nmarchyo.ai.enable is true.",
+    "option_type": "null or absolute path",
+    "default_value": "null",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.openrouter.baseUrl",
+    "name": "marchyo.ai.openrouter.baseUrl",
+    "description": "OpenRouter OpenAI-compatible API base URL.",
+    "option_type": "string",
+    "default_value": "\"https://openrouter.ai/api/v1\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.openrouter.defaultModel",
+    "name": "marchyo.ai.openrouter.defaultModel",
+    "description": "Fallback default model slug used when routing is disabled. When\nmarchyo.ai.routing.enable is true, per-tool models come from the\nrouting table instead.",
+    "option_type": "string",
+    "default_value": "\"anthropic/claude-sonnet-4\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.provider",
+    "name": "marchyo.ai.provider",
+    "description": "AI service provider. Only \"openrouter\" is supported for now; the enum\nis reserved so more providers (and local inference) can be added later.",
+    "option_type": "value \"openrouter\" (singular enum)",
+    "default_value": "\"openrouter\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.enable",
+    "name": "marchyo.ai.routing.enable",
+    "description": "Route different tasks to different models. Defaults pin the\nfrontier/reasoning buckets and lean on openrouter/auto + the\n:nitro/:floor variant suffixes elsewhere so quarterly slug churn is\nabsorbed. All defaults are mkDefault — override any bucket. Slugs are\nstarting points; verify against OpenRouter's live model list.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks",
+    "name": "marchyo.ai.routing.tasks",
+    "description": "Task bucket -> model + fallback chain.",
+    "option_type": "attribute set of (submodule)",
+    "default_value": "{\n  budget = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"deepseek/deepseek-v3.2:floor\";\n      priority = 1000;\n    };\n  };\n  everydayCoding = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openai/gpt-5.5\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-sonnet-4.6\";\n      priority = 1000;\n    };\n  };\n  fast = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-flash:nitro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-haiku-4.5:nitro\";\n      priority = 1000;\n    };\n  };\n  frontier = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openai/gpt-5.5\"\n        \"google/gemini-3.1-pro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-opus-4.8\";\n      priority = 1000;\n    };\n  };\n  local = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"openrouter/auto\";\n      priority = 1000;\n    };\n  };\n  longContext = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-flash\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"minimax/minimax-m3\";\n      priority = 1000;\n    };\n  };\n  reasoning = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"google/gemini-3.1-pro\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-fable-5\";\n      priority = 1000;\n    };\n  };\n  summarize = {\n    fallbacks = {\n      _type = \"override\";\n      content = [\n        \"x-ai/grok-4.1-fast\"\n        \"openrouter/auto\"\n      ];\n      priority = 1000;\n    };\n    model = {\n      _type = \"override\";\n      content = \"anthropic/claude-haiku-4.5\";\n      priority = 1000;\n    };\n  };\n}",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>._module.args",
+    "name": "marchyo.ai.routing.tasks.<name>._module.args",
+    "description": "Additional arguments passed to each module in addition to ones\nlike `lib`, `config`,\nand `pkgs`, `modulesPath`.\n\nThis option is also available to all submodules. Submodules do not\ninherit args from their parent module, nor do they provide args to\ntheir parent module or sibling submodules. The sole exception to\nthis is the argument `name` which is provided by\nparent modules to a submodule and contains the attribute name\nthe submodule is bound to, or a unique generated name if it is\nnot bound to an attribute.\n\nSome arguments are already passed by default, of which the\nfollowing *cannot* be changed with this option:\n- {var}`lib`: The nixpkgs library.\n- {var}`config`: The results of all options after merging the values from all modules together.\n- {var}`options`: The options declared in all modules.\n- {var}`specialArgs`: The `specialArgs` argument passed to `evalModules`.\n- All attributes of {var}`specialArgs`\n\n  Whereas option values can generally depend on other option values\n  thanks to laziness, this does not apply to `imports`, which\n  must be computed statically before anything else.\n\n  For this reason, callers of the module system can provide `specialArgs`\n  which are available during import resolution.\n\n  For NixOS, `specialArgs` includes\n  {var}`modulesPath`, which allows you to import\n  extra modules from the nixpkgs package tree without having to\n  somehow make the module aware of the location of the\n  `nixpkgs` or NixOS directories.\n  ```\n  { modulesPath, ... }: {\n    imports = [\n      (modulesPath + \"/profiles/minimal.nix\")\n    ];\n  }\n  ```\n\nFor NixOS, the default value for this option includes at least this argument:\n- {var}`pkgs`: The nixpkgs package set according to\n  the {option}`nixpkgs.pkgs` option.",
+    "option_type": "lazy attribute set of raw value",
+    "default_value": "{ }",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>._module.check",
+    "name": "marchyo.ai.routing.tasks.<name>._module.check",
+    "description": "Whether to check whether all option definitions have matching declarations.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>._module.freeformType",
+    "name": "marchyo.ai.routing.tasks.<name>._module.freeformType",
+    "description": "If set, merge all definitions that don't have an associated option\ntogether using this type. The result then gets combined with the\nvalues of all declared options to produce the final `\nconfig` value.\n\nIf this is `null`, definitions without an option\nwill throw an error unless {option}`_module.check` is\nturned off.",
+    "option_type": "null or optionType",
+    "default_value": "null",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>._module.specialArgs",
+    "name": "marchyo.ai.routing.tasks.<name>._module.specialArgs",
+    "description": "Externally provided module arguments that can't be modified from\nwithin a configuration, but can be used in module imports.",
+    "option_type": "unspecified value",
+    "default_value": "",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>.fallbacks",
+    "name": "marchyo.ai.routing.tasks.<name>.fallbacks",
+    "description": "Ordered OpenRouter fallback slugs. Consumed as OpenRouter's native\n`models` array (auto-failover on error/rate-limit/downtime).",
+    "option_type": "list of string",
+    "default_value": "[\n  \"openrouter/auto\"\n]",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tasks.<name>.model",
+    "name": "marchyo.ai.routing.tasks.<name>.model",
+    "description": "Primary OpenRouter model slug for this task bucket.",
+    "option_type": "string",
+    "default_value": "",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.routing.tools",
+    "name": "marchyo.ai.routing.tools",
+    "description": "Which task bucket each OpenRouter-backed client defaults to. (claude-code\nis Anthropic-native and not routed here.)",
+    "option_type": "attribute set of string",
+    "default_value": "{\n  aichat = \"everydayCoding\";\n  pi = \"everydayCoding\";\n}",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.skills.clients",
+    "name": "marchyo.ai.skills.clients",
+    "description": "Clients to surface vendored skills to (native fallback per client).",
+    "option_type": "list of (one of \"claude-code\", \"pi\", \"aichat\")",
+    "default_value": "[\n  \"claude-code\"\n  \"pi\"\n  \"aichat\"\n]",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.skills.enable",
+    "name": "marchyo.ai.skills.enable",
+    "description": "Install a curated, vendored subset of the Jylhis/skills marketplace as\nAgent Skills (SKILL.md), surfaced to all clients (claude-code + pi\nshare the standard) and loaded into OpenViking when context is enabled.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.ai.tooling.enable",
+    "name": "marchyo.ai.tooling.enable",
+    "description": "Install the AI client CLIs (aichat, pi, claude-code) for the user and\nwire the OpenRouter-backed ones to the provider. On by default when\nmarchyo.ai is enabled. (claude-code speaks the Anthropic API and is not\nwired to OpenRouter; it comes from llm-agents.nix, which also packages\ncodex/gemini-cli/goose/crush/… via the overlay for future opt-in.)",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.autoTimezone.enable",
+    "name": "marchyo.autoTimezone.enable",
+    "description": "Whether to enable automatic timezone updates from your location (services.automatic-timezoned\nvia geoclue2). Opt-in and off by default. When enabled it overrides the\nstatic marchyo.timezone; a warning is emitted if marchyo.timezone was also\nchanged from its default.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "network",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.enable",
+    "name": "marchyo.bees.enable",
+    "description": "Whether to enable block-level deduplication for btrfs via the bees daemon\n(`services.beesd`). Bees is a background daemon that finds and removes\nduplicate extents across a btrfs filesystem, reclaiming space at the\nblock level. It only works on btrfs, needs a persistent hash table\n(sized by `hashTableSizeMB`), and reads all data on the filesystem, so\nenable it deliberately per host. Declare at least one entry in\n`marchyo.bees.filesystems`.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems",
+    "name": "marchyo.bees.filesystems",
+    "description": "btrfs filesystems to run bees deduplication on, keyed by an arbitrary\nname. Each entry is forwarded to `services.beesd.filesystems.<name>`.\nThere is no default filesystem — the `spec` (UUID/label/path) is\nhost-specific, so you must name at least one when `enable = true`.",
+    "option_type": "attribute set of (submodule)",
+    "default_value": "{ }",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>._module.args",
+    "name": "marchyo.bees.filesystems.<name>._module.args",
+    "description": "Additional arguments passed to each module in addition to ones\nlike `lib`, `config`,\nand `pkgs`, `modulesPath`.\n\nThis option is also available to all submodules. Submodules do not\ninherit args from their parent module, nor do they provide args to\ntheir parent module or sibling submodules. The sole exception to\nthis is the argument `name` which is provided by\nparent modules to a submodule and contains the attribute name\nthe submodule is bound to, or a unique generated name if it is\nnot bound to an attribute.\n\nSome arguments are already passed by default, of which the\nfollowing *cannot* be changed with this option:\n- {var}`lib`: The nixpkgs library.\n- {var}`config`: The results of all options after merging the values from all modules together.\n- {var}`options`: The options declared in all modules.\n- {var}`specialArgs`: The `specialArgs` argument passed to `evalModules`.\n- All attributes of {var}`specialArgs`\n\n  Whereas option values can generally depend on other option values\n  thanks to laziness, this does not apply to `imports`, which\n  must be computed statically before anything else.\n\n  For this reason, callers of the module system can provide `specialArgs`\n  which are available during import resolution.\n\n  For NixOS, `specialArgs` includes\n  {var}`modulesPath`, which allows you to import\n  extra modules from the nixpkgs package tree without having to\n  somehow make the module aware of the location of the\n  `nixpkgs` or NixOS directories.\n  ```\n  { modulesPath, ... }: {\n    imports = [\n      (modulesPath + \"/profiles/minimal.nix\")\n    ];\n  }\n  ```\n\nFor NixOS, the default value for this option includes at least this argument:\n- {var}`pkgs`: The nixpkgs package set according to\n  the {option}`nixpkgs.pkgs` option.",
+    "option_type": "lazy attribute set of raw value",
+    "default_value": "{ }",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>._module.check",
+    "name": "marchyo.bees.filesystems.<name>._module.check",
+    "description": "Whether to check whether all option definitions have matching declarations.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>._module.freeformType",
+    "name": "marchyo.bees.filesystems.<name>._module.freeformType",
+    "description": "If set, merge all definitions that don't have an associated option\ntogether using this type. The result then gets combined with the\nvalues of all declared options to produce the final `\nconfig` value.\n\nIf this is `null`, definitions without an option\nwill throw an error unless {option}`_module.check` is\nturned off.",
+    "option_type": "null or optionType",
+    "default_value": "null",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>._module.specialArgs",
+    "name": "marchyo.bees.filesystems.<name>._module.specialArgs",
+    "description": "Externally provided module arguments that can't be modified from\nwithin a configuration, but can be used in module imports.",
+    "option_type": "unspecified value",
+    "default_value": "",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>.extraOptions",
+    "name": "marchyo.bees.filesystems.<name>.extraOptions",
+    "description": "Extra command-line options passed to the bees daemon.",
+    "option_type": "list of string",
+    "default_value": "[ ]",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>.hashTableSizeMB",
+    "name": "marchyo.bees.filesystems.<name>.hashTableSizeMB",
+    "description": "Hash table size in MB (must be a multiple of 16). A larger table\nrecognises smaller duplicate extents but uses more RAM: ~1024 MB per\n16 KiB granularity per TB of data is a common rule of thumb. The\ndefault (1024) recognises 16 KiB blocks; 4096 allows 4 KiB extents.",
+    "option_type": "signed integer",
+    "default_value": "1024",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>.spec",
+    "name": "marchyo.bees.filesystems.<name>.spec",
+    "description": "Identifier for the btrfs filesystem to deduplicate, in the same\n`findmnt` syntax as `fileSystems.<name>.device` — a `key=value` pair\n(`UUID=…`, `LABEL=…`, `PARTUUID=…`) or a mount path. A bare path also\nadds a systemd ordering dependency on the mount.",
+    "option_type": "string",
+    "default_value": "",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.bees.filesystems.<name>.verbosity",
+    "name": "marchyo.bees.filesystems.<name>.verbosity",
+    "description": "Log verbosity as a syslog keyword or level (`emerg`, `alert`, `crit`,\n`err`, `warning`, `notice`, `info`, `debug`, `trace`, or a numeric\n0–8). Forwarded to `services.beesd.filesystems.<name>.verbosity`.",
+    "option_type": "string",
+    "default_value": "\"info\"",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.cli.enable",
+    "name": "marchyo.cli.enable",
+    "description": "Whether to install the `marchyo` user CLI system-wide. The CLI lets\nend users inspect their Marchyo configuration, toggle settings, and\nwrap nixos-rebuild. Setting changes are persisted to\n/etc/marchyo/cli-state.json and merged into config.marchyo.* with\nlib.mkDefault priority by the cli-state module.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "shell",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.darwin.wallpaper.enable",
+    "name": "marchyo.darwin.wallpaper.enable",
+    "description": "Whether to enable generated light/dark macOS wallpaper.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.darwin.wallpaper.outputName",
+    "name": "marchyo.darwin.wallpaper.outputName",
+    "description": "Generated dynamic wallpaper filename.",
+    "option_type": "string",
+    "default_value": "\"marchyo-dynamic.heic\"",
+    "category": "desktop",
+    "platforms": [
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.darwin.wallpaper.package",
+    "name": "marchyo.darwin.wallpaper.package",
+    "description": "Package providing generated Marchyo wallpaper images.",
+    "option_type": "package",
+    "default_value": "\"pkgs.marchyo-wallpapers\"",
+    "category": "desktop",
+    "platforms": [
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.darwin.wallpaper.scaling",
+    "name": "marchyo.darwin.wallpaper.scaling",
+    "description": "desktoppr scaling mode for the generated wallpaper.",
+    "option_type": "one of \"fill\", \"stretch\", \"center\", \"fit\"",
+    "default_value": "\"fill\"",
+    "category": "desktop",
+    "platforms": [
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.darwin.wallpaper.stateDirectory",
+    "name": "marchyo.darwin.wallpaper.stateDirectory",
+    "description": "Per-user directory where the generated HEIC wallpaper is written.",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaultLocale",
+    "name": "marchyo.defaultLocale",
+    "description": "System default locale",
+    "option_type": "string",
+    "default_value": "\"en_US.UTF-8\"",
+    "category": "network",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.audioPlayer",
+    "name": "marchyo.defaults.audioPlayer",
+    "description": "Default audio player for local files. \"mpv\" (the default) opens audio\nfiles headlessly and is registered as the system default for audio\nMIME types. \"cmus\" is a TUI library player with no single-file MIME\nhandler: selecting it installs cmus via its Home-Manager module but\nleaves audio files without a registered opener (launch it manually).\nSet to null to skip audio player management.",
+    "option_type": "null or one of \"mpv\", \"cmus\", \"vlc\", \"amberol\"",
+    "default_value": "\"mpv\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.browser",
+    "name": "marchyo.defaults.browser",
+    "description": "Default web browser. Installed automatically when desktop is enabled\nand registered as the system default for HTTP/HTTPS links.\nSet to null to skip browser management.",
+    "option_type": "null or one of \"brave\", \"google-chrome\", \"firefox\", \"chromium\"",
+    "default_value": "\"google-chrome\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.editor",
+    "name": "marchyo.defaults.editor",
+    "description": "Default graphical text editor ($VISUAL). Installed automatically when\ndesktop is enabled and registered as the system default for plain text\nfiles. Set to null to skip editor management.\n\"jotain\" (the default, Jylhis's Emacs config) installs via its\nservices.jotain Home-Manager module; marchyo sets $VISUAL to its\njotain-visual wrapper. Switch to \"emacs\", \"vscode\", etc. to use a\nstandard editor instead.",
+    "option_type": "null or one of \"emacs\", \"jotain\", \"vscode\", \"vscodium\", \"zed\"",
+    "default_value": "\"jotain\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.email",
+    "name": "marchyo.defaults.email",
+    "description": "Default email client. Defaults to \"aerc\", a TUI mail client (mailto\nlinks open it in a terminal); \"neomutt\" is an alternative TUI client.\nBoth install via their Home-Manager modules and require account\nconfiguration before use. \"gmail\" and \"outlook\" are web apps opened\nin the browser (no package installed). Set to null to skip email\nmanagement.",
+    "option_type": "null or one of \"aerc\", \"neomutt\", \"gmail\", \"outlook\"",
+    "default_value": "\"aerc\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.fileManager",
+    "name": "marchyo.defaults.fileManager",
+    "description": "Default graphical file manager. Installed automatically when desktop\nis enabled and registered as the system default for directory MIME\ntypes. Set to null to skip file manager management.",
+    "option_type": "null or one of \"nautilus\", \"thunar\"",
+    "default_value": "\"nautilus\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.imageEditor",
+    "name": "marchyo.defaults.imageEditor",
+    "description": "Default image editor. Installed automatically when desktop is enabled.\nSet to null to skip image editor management.",
+    "option_type": "null or one of \"pinta\", \"gimp\", \"krita\"",
+    "default_value": "\"pinta\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.musicPlayer",
+    "name": "marchyo.defaults.musicPlayer",
+    "description": "Default music client bound to the Hyprland Super+M keybind. Defaults\nto \"spotify-player\", a TUI Spotify client launched in a floating\nterminal; \"ncspot\" is an alternative TUI client. Both install via\ntheir Home-Manager modules when selected. \"spotify\" is the GUI app,\nalways installed on x86_64 (see modules/nixos/media.nix); selecting it\nhere only binds Super+M to it. Set to null to skip music player\nmanagement.",
+    "option_type": "null or one of \"spotify-player\", \"ncspot\", \"spotify\"",
+    "default_value": "\"spotify-player\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.terminalEditor",
+    "name": "marchyo.defaults.terminalEditor",
+    "description": "Default terminal text editor ($EDITOR). Installed automatically when\ndesktop is enabled. Set to null to skip terminal editor management.\n\"jotain\" (the default, Jylhis's Emacs config) installs via its\nservices.jotain Home-Manager module; marchyo sets $EDITOR to its\njotain-editor wrapper. Switch to \"emacs\", \"neovim\", etc. to use a\nstandard editor instead.",
+    "option_type": "null or one of \"emacs\", \"jotain\", \"neovim\", \"helix\", \"nano\"",
+    "default_value": "\"jotain\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.terminalFileManager",
+    "name": "marchyo.defaults.terminalFileManager",
+    "description": "Default terminal file manager. Installed automatically when desktop\nis enabled. Set to null to skip terminal file manager management.",
+    "option_type": "null or one of \"yazi\", \"ranger\", \"lf\"",
+    "default_value": "\"yazi\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.defaults.videoPlayer",
+    "name": "marchyo.defaults.videoPlayer",
+    "description": "Default video player. Installed automatically when desktop is enabled\nand registered as the system default for video MIME types.\nSet to null to skip video player management.",
+    "option_type": "null or one of \"mpv\", \"vlc\", \"celluloid\"",
+    "default_value": "\"mpv\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.desktop.enable",
+    "name": "marchyo.desktop.enable",
+    "description": "Enable desktop environment (Hyprland, Wayland, fonts, etc.)",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.development.enable",
+    "name": "marchyo.development.enable",
+    "description": "Enable development tools (Docker, buildah, gh, etc.)",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.audioFeedback",
+    "name": "marchyo.dictation.audioFeedback",
+    "description": "Play start/stop sound cues via voxtype's built-in `[audio.feedback]`.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.enable",
+    "name": "marchyo.dictation.enable",
+    "description": "Whether to enable push-to-talk voice dictation (voxtype + Whisper) for the Wayland desktop.\nRuns the voxtype daemon as a user service. By default recording is driven\nby holding F9 (the daemon's evdev push-to-talk hotkey, see pushToTalk) and\ncan also be toggled with Super+Ctrl+X under Hyprland (see toggleKey);\ntranscribed text is typed at the cursor. Requires a microphone. The\npush-to-talk hotkey adds dictation users to the `input` group so the daemon\ncan read /dev/input (see modules/nixos/dictation.nix). The first recording\ndownloads the Whisper model (~1.5 GB) unless preloadModel pulls it at\nactivation time.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.gpu",
+    "name": "marchyo.dictation.gpu",
+    "description": "Use the GPU-accelerated (Vulkan) voxtype build (`pkgs.voxtype-vulkan`)\nfor Whisper inference. Vulkan covers NVIDIA, AMD and Intel in one binary\nand falls back to CPU when no Vulkan device is present, so it is safe to\nleave on. Set false to use the CPU-only build (`pkgs.voxtype`) - e.g. to\navoid the heavier source build on a host with no usable GPU.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.indicator",
+    "name": "marchyo.dictation.indicator",
+    "description": "Show a recording-state segment on Waybar, driven by\n`voxtype status --follow`. Set false to keep dictation but drop the bar\nindicator.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.language",
+    "name": "marchyo.dictation.language",
+    "description": "Spoken language passed to Whisper. \"auto\" detects per utterance (handles\nmultilingual speech); set a fixed ISO code like \"en\" to skip detection.",
+    "option_type": "string",
+    "default_value": "\"auto\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.model",
+    "name": "marchyo.dictation.model",
+    "description": "Whisper model voxtype loads for transcription. large-v3-turbo is\nmultilingual and fast; smaller models (e.g. base, small) trade accuracy\nfor a smaller download and lower latency.",
+    "option_type": "string",
+    "default_value": "\"large-v3-turbo\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.notify",
+    "name": "marchyo.dictation.notify",
+    "description": "Emit desktop notifications (mako) on recording start/stop and on\ntranscription, via voxtype's built-in `[output.notification]`.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.preloadModel",
+    "name": "marchyo.dictation.preloadModel",
+    "description": "Pre-download the Whisper model at activation time via voxtype's\nmodel-loader service instead of on first recording. The fetch still needs\nnetwork access when the loader runs, so it is off by default (a pure\n`nixos-rebuild` never blocks on the network).",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.pushToTalk.enable",
+    "name": "marchyo.dictation.pushToTalk.enable",
+    "description": "Enable voxtype's built-in evdev hotkey (hold `pushToTalk.key` to record,\nrelease to transcribe). This is the omarchy-style \"hold F9 to dictate\"\ninteraction. Enabling it adds dictation users to the `input` group so the\ndaemon can read /dev/input globally - a real privilege (any process the\nuser runs can then observe keystrokes). Set false to rely only on the\nHyprland `toggleKey` bind (`voxtype record toggle`), which needs no group\nmembership.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.pushToTalk.key",
+    "name": "marchyo.dictation.pushToTalk.key",
+    "description": "evdev key name held to record when `pushToTalk.enable` is set. Must be a\nvalid Linux evdev key (e.g. \"F9\", \"SCROLLLOCK\", \"PAUSE\", \"RIGHTALT\",\n\"F13\"-\"F24\"), or a numeric keycode with a source prefix (e.g. \"WEV_234\").",
+    "option_type": "string",
+    "default_value": "\"F9\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.pushToTalk.mode",
+    "name": "marchyo.dictation.pushToTalk.mode",
+    "description": "Behavior of the daemon hotkey. \"push_to_talk\" records while `key` is held\nand transcribes on release; \"toggle\" starts on the first press and stops\non the next.",
+    "option_type": "one of \"push_to_talk\", \"toggle\"",
+    "default_value": "\"push_to_talk\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.statusWindow",
+    "name": "marchyo.dictation.statusWindow",
+    "description": "Bind Super+Shift+H under Hyprland to open a floating terminal streaming\n`voxtype status --follow`, and register its window rule.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.dictation.toggleKey",
+    "name": "marchyo.dictation.toggleKey",
+    "description": "Hyprland bind spec (\"MODS, key\") wired to `voxtype record toggle`, matching\nomarchy's Super+Ctrl+X toggle. Drives the same daemon state as the\npush-to-talk hotkey. Set to null to bind no compositor toggle.",
+    "option_type": "null or string",
+    "default_value": "\"SUPER CTRL, X\"",
+    "category": "ai",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.enable",
+    "name": "marchyo.emacs.enable",
+    "description": "Whether to enable Marchyo Emacs daemon and Hyprland integration.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.eventListener.enable",
+    "name": "marchyo.emacs.eventListener.enable",
+    "description": "Subscribe to the Hyprland `.socket2.sock` event stream from\nEmacs and run hooks on workspace/window changes.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.everywhere.enable",
+    "name": "marchyo.emacs.everywhere.enable",
+    "description": "SUPER+CTRL+E captures the focused text field into a temporary\nEmacs frame via emacs-everywhere.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.orgProtocol.enable",
+    "name": "marchyo.emacs.orgProtocol.enable",
+    "description": "Register `x-scheme-handler/org-protocol` and bind\nSUPER+SHIFT+C to `(org-capture)`.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.package",
+    "name": "marchyo.emacs.package",
+    "description": "Emacs package to use for the user daemon. Defaults to the\nWayland-native pgtk build.",
+    "option_type": "package",
+    "default_value": "pkgs.emacs-pgtk",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.scratchpad.enable",
+    "name": "marchyo.emacs.scratchpad.enable",
+    "description": "SUPER+Z toggles an emacsclient frame titled\n`emacs-scratchpad` onto the `magic` special workspace.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.emacs.windmove.enable",
+    "name": "marchyo.emacs.windmove.enable",
+    "description": "Cross-WM directional focus: SUPER+ALT+H/J/K/L tries\n`windmove-*` inside Emacs first and falls through to\n`hyprctl dispatch movefocus` when at the frame edge.\nSUPER+ALT+SHIFT+H/J/K/L does the same for window swap.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "editor",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.nvidia.open",
+    "name": "marchyo.graphics.nvidia.open",
+    "description": "Use NVIDIA's open-source kernel modules.\nRecommended for Turing (RTX 20xx) and newer GPUs.\nRequired for RTX 50xx series.\nSet to false for older GPUs (Maxwell, Pascal, Volta).",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.nvidia.powerManagement",
+    "name": "marchyo.graphics.nvidia.powerManagement",
+    "description": "Enable experimental power management for NVIDIA GPUs.\nMay improve battery life on laptops but can cause issues on some systems.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.prime.amdgpuBusId",
+    "name": "marchyo.graphics.prime.amdgpuBusId",
+    "description": "PCI bus ID of the AMD integrated GPU.\nFind with: lspci | grep -E 'VGA|3D' | grep AMD\nFormat: PCI:bus:device:function (convert hex to decimal)",
+    "option_type": "string",
+    "default_value": "\"\"",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.prime.enable",
+    "name": "marchyo.graphics.prime.enable",
+    "description": "Enable NVIDIA PRIME for hybrid graphics laptops.\nRequires both an integrated GPU (intel or amd) and nvidia in vendors.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.prime.intelBusId",
+    "name": "marchyo.graphics.prime.intelBusId",
+    "description": "PCI bus ID of the Intel integrated GPU.\nFind with: lspci | grep -E 'VGA|3D' | grep Intel\nFormat: PCI:bus:device:function (convert hex to decimal)",
+    "option_type": "string",
+    "default_value": "\"\"",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.prime.mode",
+    "name": "marchyo.graphics.prime.mode",
+    "description": "PRIME render mode:\n- \"offload\": On-demand rendering (default, power efficient).\n  Use `nvidia-offload <command>` to run apps on dGPU.\n- \"sync\": Always use discrete GPU (best performance, more power).\n- \"reverse-sync\": iGPU for display, dGPU for compute.",
+    "option_type": "one of \"offload\", \"sync\", \"reverse-sync\"",
+    "default_value": "\"offload\"",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.prime.nvidiaBusId",
+    "name": "marchyo.graphics.prime.nvidiaBusId",
+    "description": "PCI bus ID of the NVIDIA discrete GPU.\nFind with: lspci | grep -E 'VGA|3D' | grep NVIDIA\nFormat: PCI:bus:device:function (convert hex to decimal)",
+    "option_type": "string",
+    "default_value": "\"\"",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.graphics.vendors",
+    "name": "marchyo.graphics.vendors",
+    "description": "GPU vendors present in the system.\n- \"intel\": Intel integrated graphics (iGPU)\n- \"amd\": AMD GPUs (integrated or discrete)\n- \"nvidia\": NVIDIA discrete GPUs\n\nFor hybrid graphics laptops, specify both vendors (e.g., [\"intel\" \"nvidia\"]).\nWhen empty, Intel packages are applied on x86_64 for backward compatibility.\n\nFind your GPU with: lspci | grep -E 'VGA|3D'",
+    "option_type": "list of (one of \"intel\", \"amd\", \"nvidia\")",
+    "default_value": "[ ]",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.hardware.logitech.enable",
+    "name": "marchyo.hardware.logitech.enable",
+    "description": "Enable Logitech wireless device support (Solaar GUI + udev rules).",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "graphics",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.inputMethod.enable",
+    "name": "marchyo.inputMethod.enable",
+    "description": "REMOVED: This option has been removed in favor of marchyo.keyboard.layouts.\n\nPlease migrate your configuration:\n\nOLD:\n  marchyo.inputMethod.enable = true;\n  marchyo.inputMethod.enableCJK = true;\n  marchyo.keyboard.layouts = [\"us\" \"fi\"];\n\nNEW:\n  marchyo.keyboard.layouts = [\n    \"us\"\n    \"fi\"\n    { layout = \"cn\"; ime = \"pinyin\"; }  # For Chinese input\n    # { layout = \"jp\"; ime = \"mozc\"; }  # For Japanese input\n    # { layout = \"kr\"; ime = \"hangul\"; }  # For Korean input\n  ];\n\nSee CLAUDE.md for complete documentation.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.inputMethod.enableCJK",
+    "name": "marchyo.inputMethod.enableCJK",
+    "description": "INERT: This option has no effect. Add CJK layouts to marchyo.keyboard.layouts instead.\n\nExample:\n  marchyo.keyboard.layouts = [\n    \"us\"\n    { layout = \"cn\"; ime = \"pinyin\"; }  # Chinese\n    { layout = \"jp\"; ime = \"mozc\"; }    # Japanese\n    { layout = \"kr\"; ime = \"hangul\"; }  # Korean\n  ];\n\nThis option is kept only to avoid evaluation errors for consumers who\nhaven't migrated yet. It will be removed in a future release.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.inputMethod.triggerKey",
+    "name": "marchyo.inputMethod.triggerKey",
+    "description": "INERT: This option has no effect. Use marchyo.keyboard.imeTriggerKey instead.\n\nThis option is kept only to avoid evaluation errors for consumers who\nhaven't migrated yet. It will be removed in a future release.",
+    "option_type": "list of string",
+    "default_value": "[\n  \"Super+I\"\n  \"Zenkaku_Hankaku\"\n  \"Hangul\"\n]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keybindingsHelp.enable",
+    "name": "marchyo.keybindingsHelp.enable",
+    "description": "Whether to enable on-screen Hyprland keybinding cheat sheet (SUPER+K).",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.autoActivateIME",
+    "name": "marchyo.keyboard.autoActivateIME",
+    "description": "Automatically activate IME when switching to a layout with ime specified.\n\nWhen true (default): Switching to Chinese layout automatically activates Pinyin.\nWhen false: User must manually trigger IME with imeTriggerKey after switching layout.\n\nRecommended: true (provides seamless language switching experience)",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.composeKey",
+    "name": "marchyo.keyboard.composeKey",
+    "description": "Sets the XKB Compose key for typing special characters.\nCommon values:\n- menu: Menu key (default)\n- ralt: Right Alt key\n- rwin: Right Super/Windows key\n- caps: Caps Lock key\n- null: Disable compose key\n\nNote: `ralt` is intentionally not the default because the default\nlayout `us(altgr-intl)` needs Right Alt as AltGr (ISO_Level3_Shift)\nfor AltGr-based typography (e.g., AltGr+- → en dash, AltGr+Shift+- →\nem dash). If you change layouts to a plain `us` you can set this\nback to `\"ralt\"`.\n\nSet to null to disable the compose key entirely.",
+    "option_type": "null or non-empty string",
+    "default_value": "\"menu\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.imeTriggerKey",
+    "name": "marchyo.keyboard.imeTriggerKey",
+    "description": "Key combinations to manually toggle IME activation on/off.\n\nUse this to disable IME for a layout that has IME configured,\nor to activate Unicode picker independent of layout.\n\nDefault: Super+I toggles IME for current input method",
+    "option_type": "list of string",
+    "default_value": "[\n  \"Super+I\"\n]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.layouts",
+    "name": "marchyo.keyboard.layouts",
+    "description": "List of keyboard layouts and input methods.\n\nEach entry can be:\n- A string: Simple keyboard layout code (e.g., \"us\", \"fi\", \"de\")\n- An attribute set: Advanced configuration with optional IME\n\nExamples:\n- \"us\" → US English keyboard\n- { layout = \"cn\"; ime = \"pinyin\"; } → Chinese keyboard with Pinyin input\n- { layout = \"us\"; variant = \"intl\"; } → US international with dead keys\n\nWhen an entry includes 'ime', the input method engine will be automatically\nactivated when you switch to that layout using Super+Space.\n\nAll inputs are managed by fcitx5 for consistent behavior across the desktop.\nBasic layouts are also configured in XKB for TTY/console compatibility.",
+    "option_type": "list of (string or (submodule))",
+    "default_value": "[\n  {\n    layout = \"us\";\n    variant = \"altgr-intl\";\n  }\n  \"fi\"\n]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.options",
+    "name": "marchyo.keyboard.options",
+    "description": "XKB keyboard options for fcitx5 keyboard layouts.\nDefault enables Super+Space for layout/input method switching.\n\nCommon options:\n- grp:win_space_toggle: Use Super+Space to switch inputs (Win = Super key)\n- ctrl:swapcaps: Swap Caps Lock and Left Control\n- ctrl:nocaps: Make Caps Lock another Control key\n- caps:escape: Map Caps Lock to Escape\n- compose:ralt: Use Right Alt as Compose key\n\nFor a complete list of available options, see:\n- NixOS manual: https://nixos.org/manual/nixos/stable/index.html#sec-xserver-keyboard\n- XKB configuration: /usr/share/X11/xkb/rules/base.lst (on any Linux system)\n- xkeyboard-config docs: https://www.freedesktop.org/wiki/Software/XKeyboardConfig/",
+    "option_type": "list of string",
+    "default_value": "[\n  \"grp:win_space_toggle\"\n]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.keyboard.variant",
+    "name": "marchyo.keyboard.variant",
+    "description": "DEPRECATED: Use layout variant in marchyo.keyboard.layouts instead.\nExample: { layout = \"us\"; variant = \"intl\"; }\n\nThis option only applies to the first layout when using simple string list.\nIt is kept for backward compatibility but may be removed in a future release.",
+    "option_type": "string",
+    "default_value": "\"\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.media.enable",
+    "name": "marchyo.media.enable",
+    "description": "Enable media applications (Spotify, MPV, etc.)",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.menus.enable",
+    "name": "marchyo.menus.enable",
+    "description": "Power/session and central system menus (auto-enabled with desktop).",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.office.enable",
+    "name": "marchyo.office.enable",
+    "description": "Enable office applications (LibreOffice, Papers, etc.)",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.osd.enable",
+    "name": "marchyo.osd.enable",
+    "description": "On-screen display for volume/brightness via SwayOSD (auto-enabled with\ndesktop). When enabled, the SwayOSD server runs as a user service and\nthe Hyprland volume/brightness media keys route through\n`swayosd-client`, showing an overlay on change. Set false to keep the\nsilent wpctl/brightnessctl bindings.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.disableMitigations",
+    "name": "marchyo.performance.disableMitigations",
+    "description": "Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) for maximum performance.\nWARNING: This reduces security. Only enable on trusted single-user workstations\nwhere maximum performance is required (e.g., gaming, benchmarking).\nDo NOT enable if running untrusted code or containers.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.kernel",
+    "name": "marchyo.performance.kernel",
+    "description": "Kernel variant to boot.\n\n- `\"default\"` — leave `boot.kernelPackages` unmanaged (the nixpkgs\n  default kernel, or whatever the host sets).\n- `\"latest\"` — newest mainline kernel (`linuxPackages_latest`); best\n  hardware support, shortest support window.\n- `\"zen\"` — ZEN kernel (`linuxPackages_zen`); tuned for desktop\n  interactivity and low latency.\n- `\"xanmod\"` — XanMod kernel (`linuxPackages_xanmod_latest`); mainline\n  with performance-oriented patches (gaming/workstation).\n- `\"lts\"` — long-term-support kernel (`linuxPackages`); most\n  conservative choice for servers and stable hosts.\n\nThe mapping is applied with `lib.mkDefault`, so a host can still set\n`boot.kernelPackages` directly to override it.",
+    "option_type": "one of \"default\", \"latest\", \"zen\", \"xanmod\", \"lts\"",
+    "default_value": "\"default\"",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.compute.enable",
+    "name": "marchyo.performance.tuning.compute.enable",
+    "description": "Relax resource limits for trusted single-user compute/CUDA hosts: PAM\nloginLimits granting @users unlimited memlock (GPU memory pinning), real-time\npriority, 1M open files and unlimited processes, plus kernel.sched_rt_runtime_us=-1.\n\nSECURITY/STABILITY SENSITIVE — only enable on trusted single-user machines\nwhere you control every process. Off by default.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.enable",
+    "name": "marchyo.performance.tuning.enable",
+    "description": "Enable kernel/sysctl/IO performance tuning for throughput-oriented\nworkloads.\n\nTurning this on enables the broadly-safe sub-toggles (network, nvme,\nmemory) by default. The aggressive toggles (hugePages, compute) stay\noff and must be opted into explicitly.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.hugePages.enable",
+    "name": "marchyo.performance.tuning.hugePages.enable",
+    "description": "Enable 2 MiB transparent huge pages always (transparent_hugepage=always,\nhugepagesz=2M). Improves TLB performance for large allocations but can\nhurt latency-sensitive and interactive desktop workloads. Off by default.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.memory.dirtyBackgroundBytes",
+    "name": "marchyo.performance.tuning.memory.dirtyBackgroundBytes",
+    "description": "vm.dirty_background_bytes — dirty-page threshold at which the kernel\nstarts background writeback.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "67108864",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.memory.dirtyBytes",
+    "name": "marchyo.performance.tuning.memory.dirtyBytes",
+    "description": "vm.dirty_bytes — absolute dirty-page threshold that forces synchronous\nwriteback. Absolute byte limits avoid the large dirty-page buildup and\nlatency spikes that ratio-based defaults cause on high-RAM machines.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "268435456",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.memory.enable",
+    "name": "marchyo.performance.tuning.memory.enable",
+    "description": "Virtual-memory tuning: lower swappiness, keep filesystem metadata\ncached, and cap dirty-page writeback by absolute byte thresholds (see\ndirtyBytes/dirtyBackgroundBytes). Broadly safe. Defaults to tuning.enable.",
+    "option_type": "boolean",
+    "default_value": "config.marchyo.performance.tuning.enable",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.network.enable",
+    "name": "marchyo.performance.tuning.network.enable",
+    "description": "Network stack tuning: BBR congestion control (loads the tcp_bbr module),\nTCP Fast Open, MTU probing, larger socket buffers and backlogs.\nBroadly safe and beneficial. Defaults to the value of tuning.enable.",
+    "option_type": "boolean",
+    "default_value": "config.marchyo.performance.tuning.enable",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.performance.tuning.nvme.enable",
+    "name": "marchyo.performance.tuning.nvme.enable",
+    "description": "NVMe SSD I/O tuning via udev rules: no-op scheduler, larger read-ahead\nand max request size. Safe for NVMe SSDs. Defaults to tuning.enable.",
+    "option_type": "boolean",
+    "default_value": "config.marchyo.performance.tuning.enable",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.power.hibernation.enable",
+    "name": "marchyo.power.hibernation.enable",
+    "description": "Whether to enable hibernation (suspend-to-disk) support.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.power.hibernation.resumeDevice",
+    "name": "marchyo.power.hibernation.resumeDevice",
+    "description": "Device path for boot.resumeDevice — the swap device the kernel resumes\nfrom. Required for hibernate-to-disk; the device needs swap >= RAM to\nhold the hibernation image.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.power.hibernation.suspendThenHibernate",
+    "name": "marchyo.power.hibernation.suspendThenHibernate",
+    "description": "Use suspend-then-hibernate for lid close and idle: the machine\nsuspends first (fast wake) and hibernates after a delay (zero power\ndraw on longer breaks). Set false to keep plain suspend for lid/idle\nand hibernate only on explicit request.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "performance",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.reminders.enable",
+    "name": "marchyo.reminders.enable",
+    "description": "Gum-driven desktop reminders: `marchyo-reminder-set`/`-show`/`-clear`\n(Super+Ctrl+R chords) schedule one-shot `systemd-run --user` timers\nthat fire a critical notification, logged under\n`$XDG_STATE_HOME/marchyo/reminders`. Part of the desktop cascade -\nonly active when `marchyo.desktop.enable` is set; set to `false` to\nopt out of the scripts and their keybindings.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.screensaver.enable",
+    "name": "marchyo.screensaver.enable",
+    "description": "tte-based (terminaltexteffects) terminal screensaver launched on idle.\nAuto-enabled with `marchyo.desktop.enable` (the option only takes\neffect on a desktop); set false to opt out of the idle screensaver\nwhile keeping the rest of the desktop stack.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.screenshot.directory",
+    "name": "marchyo.screenshot.directory",
+    "description": "Directory where screenshots will be saved",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  },
+  {
+    "id": "marchyo.screenshot.enable",
+    "name": "marchyo.screenshot.enable",
+    "description": "Whether to enable Screenshot functionality for Hyprland.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  },
+  {
+    "id": "marchyo.screenshot.enableAnnotation",
+    "name": "marchyo.screenshot.enableAnnotation",
+    "description": "Enable satty for screenshot annotation",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  },
+  {
+    "id": "marchyo.screenshot.enableOcr",
+    "name": "marchyo.screenshot.enableOcr",
+    "description": "Enable tesseract OCR (select a region, extract text to clipboard)",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  },
+  {
+    "id": "marchyo.security.fido2.enable",
+    "name": "marchyo.security.fido2.enable",
+    "description": "Whether to enable FIDO2/U2F hardware security key authentication via pam_u2f.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.security.fingerprint.enable",
+    "name": "marchyo.security.fingerprint.enable",
+    "description": "Whether to enable fingerprint authentication via fprintd (PAM integration is automatic).",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.security.firewall.enable",
+    "name": "marchyo.security.firewall.enable",
+    "description": "Whether the firewall is on by default. `networking.firewall.enable`\ndefaults to this value (via `mkDefault`), so setting it `false` is a\nreal off-switch — NixOS itself would otherwise leave the firewall\nenabled. Hosts can still override `networking.firewall.enable`\ndirectly in either direction. Service modules (avahi, LocalSend,\ntailscale) keep registering their ports/interfaces regardless; those\nonly take effect when the firewall ends up enabled.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.services.localsend.enable",
+    "name": "marchyo.services.localsend.enable",
+    "description": "Enable LocalSend file sharing (auto-enabled with the desktop). When the\ndesktop is enabled this installs the LocalSend app and opens TCP/UDP\nport 53317 on the LAN so other devices can discover this host. Set to\nfalse to keep the desktop but skip LocalSend and its open port.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "network",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.services.tailscale.enable",
+    "name": "marchyo.services.tailscale.enable",
+    "description": "Whether to enable the Tailscale mesh VPN daemon and open the firewall for its traffic.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "network",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.snapshots.btrfs",
+    "name": "marchyo.snapshots.btrfs",
+    "description": "Whether the root filesystem is btrfs. When true, snapper is configured\nfor the `/` subvolume (a `/.snapshots` subvolume must exist on the host).\nSet false on ext4/zfs hosts to skip all btrfs-specific config.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.snapshots.enable",
+    "name": "marchyo.snapshots.enable",
+    "description": "Whether to enable automatic filesystem snapshots via snapper (timeline + cleanup). Assumes a\nbtrfs root by default; on a non-btrfs host set `btrfs = false` to disable\nall btrfs-specific configuration (snapper only works on btrfs, so the\nmodule then does nothing but warn).",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.snapshots.subvolume",
+    "name": "marchyo.snapshots.subvolume",
+    "description": "Subvolume snapper takes timeline snapshots of.",
+    "option_type": "string",
+    "default_value": "\"/\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.snapshots.timelineLimits",
+    "name": "marchyo.snapshots.timelineLimits",
+    "description": "Number-cleanup timeline retention limits passed to snapper.",
+    "option_type": "attribute set of signed integer",
+    "default_value": "{\n  daily = 7;\n  hourly = 5;\n  monthly = 0;\n  weekly = 0;\n  yearly = 0;\n}",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.enable",
+    "name": "marchyo.theme.enable",
+    "description": "Enable Stylix theming system",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.fontScale",
+    "name": "marchyo.theme.fontScale",
+    "description": "Global font-size multiplier applied system-wide. Scales every text\nsurface (Stylix applications/terminal/desktop/popups, the terminal,\nwaybar, notifications, the lock screen, the launcher, GTK apps and the\nTTY console) from a single number. 1.0 restores the historical sizes;\nvalues above 1.0 make everything larger for HiDPI/accessibility.",
+    "option_type": "integer or floating point number between 0.5 and 4.0 (both inclusive)",
+    "default_value": "1.25",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.scheme",
+    "name": "marchyo.theme.scheme",
+    "description": "Override the base16 color scheme. When set, takes precedence over the\nJylhis palette derived from `variant`. Must match a `.yaml` file under\nthe `base16-schemes` package (e.g. \"nord\", \"nord-light\",\n\"gruvbox-dark-medium\"). When null, the Jylhis palette is used.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.themes",
+    "name": "marchyo.theme.themes",
+    "description": "Themes available for runtime switching (`marchyo theme set/next`).\nEach listed theme's desktop assets are pre-built into the system\nclosure so switching is an instant symlink swap. `jylhis-dark` and\n`jylhis-light` are the Jylhis Design System variants; any other\nname must match a `.yaml` file under the `base16-schemes` package\n(e.g. \"nord\", \"gruvbox-dark-hard\"). This does not change the\nbuild-time default — see `variant`/`scheme` for that.",
+    "option_type": "list of string",
+    "default_value": "[\n  \"jylhis-dark\"\n  \"jylhis-light\"\n]",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.variant",
+    "name": "marchyo.theme.variant",
+    "description": "Theme variant preference (light or dark).\nSelects the Jylhis Design System palette derived from tokens.json:\n- \"dark\" uses Jylhis Field\n- \"light\" uses Jylhis Sheet\nOverride with `marchyo.theme.scheme` to use a base16-schemes YAML instead.",
+    "option_type": "one of \"light\", \"dark\"",
+    "default_value": "\"dark\"",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.wallpaper.enable",
+    "name": "marchyo.theme.wallpaper.enable",
+    "description": "Enable the generated Marchyo grid wallpaper where supported.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.theme.wallpaper.package",
+    "name": "marchyo.theme.wallpaper.package",
+    "description": "Package providing generated Marchyo wallpaper assets.",
+    "option_type": "package",
+    "default_value": "\"pkgs.marchyo-wallpapers\"",
+    "category": "theme",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.timezone",
+    "name": "marchyo.timezone",
+    "description": "System timezone",
+    "option_type": "string",
+    "default_value": "\"Europe/Zurich\"",
+    "category": "network",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.enable",
+    "name": "marchyo.tracking.aggregation.enable",
+    "description": "Enable the Vector log shipper reading JSONL collectors and\n(optionally) forwarding them to a Loki endpoint.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.enable",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.enable",
+    "description": "Ship Marchyo tracking data to Grafana Cloud. When true, Vector\nforwards parsed JSONL events to Grafana Cloud Loki using basic\nauth, and can optionally scrape the local node_exporter and push\nhost metrics to Grafana Cloud Mimir via Prometheus remote_write.\nCredentials are read from `environmentFile` so tokens never enter\nthe Nix store.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.environmentFile",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.environmentFile",
+    "description": "Path to a systemd `EnvironmentFile` loaded by the Vector service.\nMust define `GRAFANA_CLOUD_LOKI_TOKEN`, and when\n`prometheus.enable = true`, `GRAFANA_CLOUD_PROM_TOKEN`.\n\nThe same Cloud Access Policy token can be used for both if it has\nthe `logs:write` and `metrics:write` scopes. The file is read at\nservice start and never enters the Nix store.",
+    "option_type": "null or absolute path",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.loki.endpoint",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.loki.endpoint",
+    "description": "Grafana Cloud Loki base URL, without the `/loki/api/v1/push`\nsuffix; Vector appends it.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.loki.userId",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.loki.userId",
+    "description": "Grafana Cloud Loki instance/user ID, shown as \"User\" on the\n\"Send Logs\" details page.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.prometheus.enable",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.prometheus.enable",
+    "description": "Also ship host metrics to Grafana Cloud Mimir via Prometheus\nremote_write. Enables `services.prometheus.exporters.node` on\n127.0.0.1:9100 and wires Vector to scrape it.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.prometheus.endpoint",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.prometheus.endpoint",
+    "description": "Grafana Cloud Mimir remote_write URL, including\n`/api/prom/push`.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.grafanaCloud.prometheus.userId",
+    "name": "marchyo.tracking.aggregation.grafanaCloud.prometheus.userId",
+    "description": "Grafana Cloud Mimir instance/user ID, shown as \"User\" on the\n\"Send Metrics\" details page.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.aggregation.lokiEndpoint",
+    "name": "marchyo.tracking.aggregation.lokiEndpoint",
+    "description": "URL of an existing self-hosted Loki ingest endpoint. When null,\nVector is configured with a blackhole sink (no egress) so local\nJSONL sources still validate and can be swapped later. Mutually\nexclusive with `aggregation.grafanaCloud.enable`.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.analysis.acceleration",
+    "name": "marchyo.tracking.analysis.acceleration",
+    "description": "Hardware acceleration backend for llama-server. When null the CPU\nbuild is used. Set to \"cuda\" or \"rocm\" for GPU inference.",
+    "option_type": "null or one of \"cuda\", \"rocm\"",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.analysis.enable",
+    "name": "marchyo.tracking.analysis.enable",
+    "description": "Enable weekly aggregated activity analysis across all tracking\nsources (shell, git, desktop, editor, file changes).\n\nWhen marchyo.tracking.analysis.model is null (default), a\nstats-only org-mode report is generated. When a GGUF model path\nis provided, llama-server is started and the report includes an\nAI-generated insights section.\n\nThis module is NOT auto-enabled by marchyo.tracking.enable and\nmust be opted into explicitly.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.analysis.model",
+    "name": "marchyo.tracking.analysis.model",
+    "description": "Filesystem path to a GGUF model file for llama-server.\nWhen null, analysis produces a stats-only report without LLM insights.\n\nThe model must be in GGUF format (used by llama.cpp). Choose a\nmodel based on your available hardware:\n\nCPU-only (8 GB+ RAM):\n  - Qwen2.5-3B-Instruct (Q4_K_M, ~2 GB)\n  - Phi-3-mini-4k-instruct (Q4_K_M, ~2.3 GB)\n\nGPU with 8 GB VRAM:\n  - Qwen2.5-7B-Instruct (Q4_K_M, ~4.7 GB)\n  - Mistral-7B-Instruct (Q4_K_M, ~4.4 GB)\n\nGPU with 16 GB+ VRAM:\n  - Qwen2.5-14B-Instruct (Q4_K_M, ~8.9 GB)\n\nDownload from https://huggingface.co — search for the model name\nwith \"GGUF\" and pick the Q4_K_M quantisation (good balance of\nquality and size). Example using curl:\n\n  curl -L -o ~/models/qwen2.5-7b-q4_k_m.gguf \\\n    \"https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m.gguf\"\n\nThen set:\n  marchyo.tracking.analysis.model = \"/home/you/models/qwen2.5-7b-q4_k_m.gguf\";\n  marchyo.tracking.analysis.acceleration = \"cuda\"; # if using GPU",
+    "option_type": "null or absolute path",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.analysis.port",
+    "name": "marchyo.tracking.analysis.port",
+    "description": "Port for the local llama-server used by analysis.",
+    "option_type": "16 bit unsigned integer; between 0 and 65535 (both inclusive)",
+    "default_value": "8012",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.authHeaderFile",
+    "name": "marchyo.tracking.claudeCode.authHeaderFile",
+    "description": "Path to a file whose contents are the value of\n`OTEL_EXPORTER_OTLP_HEADERS`, for example:\n\n    Authorization=Basic <base64(instanceId:token)>\n\nThe file is read at Home Manager activation and by interactive\nshell init; its contents never enter the Nix store. Keep it readable\nonly by the owning user.",
+    "option_type": "null or absolute path",
+    "default_value": "null",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.enable",
+    "name": "marchyo.tracking.claudeCode.enable",
+    "description": "Configure Claude Code to emit OpenTelemetry metrics and logs to an\nOTLP endpoint, such as Grafana Cloud's OTLP gateway. For every\nMarchyo user, writes ~/.claude/settings.json with an `env` block\nand exports the same variables via Home Manager session variables\nplus interactive shell init. Requires `authHeaderFile` when enabled.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.logExportIntervalMs",
+    "name": "marchyo.tracking.claudeCode.logExportIntervalMs",
+    "description": "Value for OTEL_LOGS_EXPORT_INTERVAL.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "5000",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.metricExportIntervalMs",
+    "name": "marchyo.tracking.claudeCode.metricExportIntervalMs",
+    "description": "Value for OTEL_METRIC_EXPORT_INTERVAL.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "10000",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.otlpEndpoint",
+    "name": "marchyo.tracking.claudeCode.otlpEndpoint",
+    "description": "OTLP gateway URL. For Grafana Cloud, choose the region-specific\ngateway nearest to the stack.",
+    "option_type": "string",
+    "default_value": "\"https://otlp-gateway-prod-eu-west-0.grafana.net/otlp\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.claudeCode.protocol",
+    "name": "marchyo.tracking.claudeCode.protocol",
+    "description": "OTLP transport protocol used by Claude Code.",
+    "option_type": "one of \"http/protobuf\", \"grpc\"",
+    "default_value": "\"http/protobuf\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.dataDir",
+    "name": "marchyo.tracking.dataDir",
+    "description": "Path (relative to the user's home) where JSONL event streams are\nwritten by tracking collectors.",
+    "option_type": "string",
+    "default_value": "\".local/share/personal-data\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.desktop.enable",
+    "name": "marchyo.tracking.desktop.enable",
+    "description": "Enable ActivityWatch with the Wayland-native `awatcher` watcher for\nwindow focus and idle tracking. Default `aw-watcher-window` is X11\nonly and deliberately not used.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.desktop.screenshots.enable",
+    "name": "marchyo.tracking.desktop.screenshots.enable",
+    "description": "Enable periodic JPEG screenshots via grim for later OCR and\nactivity review. Sensitive windows (password managers) are\nskipped by a hyprctl classname filter.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.desktop.screenshots.interval",
+    "name": "marchyo.tracking.desktop.screenshots.interval",
+    "description": "Interval between screenshots (systemd time span).",
+    "option_type": "string",
+    "default_value": "\"2min\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.desktop.screenshots.retentionDays",
+    "name": "marchyo.tracking.desktop.screenshots.retentionDays",
+    "description": "Number of days to retain screenshots before deletion by tmpfiles.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "30",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.enable",
+    "name": "marchyo.tracking.editor.enable",
+    "description": "Enable wakapi (self-hosted WakaTime) on 127.0.0.1 for editor\nheartbeats and install wakatime-cli system-wide.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.brave.enable",
+    "name": "marchyo.tracking.editor.plugins.brave.enable",
+    "description": "Enable WakaTime tracking for Brave browser.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.chrome.enable",
+    "name": "marchyo.tracking.editor.plugins.chrome.enable",
+    "description": "Enable WakaTime tracking for Google Chrome.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.chromium.enable",
+    "name": "marchyo.tracking.editor.plugins.chromium.enable",
+    "description": "Enable WakaTime tracking for Chromium.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.emacs.enable",
+    "name": "marchyo.tracking.editor.plugins.emacs.enable",
+    "description": "Enable WakaTime tracking for Emacs via wakatime-mode.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.firefox.enable",
+    "name": "marchyo.tracking.editor.plugins.firefox.enable",
+    "description": "Enable WakaTime tracking for Firefox.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.helix.enable",
+    "name": "marchyo.tracking.editor.plugins.helix.enable",
+    "description": "Enable WakaTime tracking for Helix.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.neovim.enable",
+    "name": "marchyo.tracking.editor.plugins.neovim.enable",
+    "description": "Enable WakaTime tracking for Neovim via vim-wakatime.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.vim.enable",
+    "name": "marchyo.tracking.editor.plugins.vim.enable",
+    "description": "Enable WakaTime tracking for Vim via vim-wakatime.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.vscode.enable",
+    "name": "marchyo.tracking.editor.plugins.vscode.enable",
+    "description": "Enable WakaTime tracking for VS Code.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.vscodium.enable",
+    "name": "marchyo.tracking.editor.plugins.vscodium.enable",
+    "description": "Enable WakaTime tracking for VS Codium.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.plugins.zed.enable",
+    "name": "marchyo.tracking.editor.plugins.zed.enable",
+    "description": "Enable WakaTime tracking for Zed.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.editor.port",
+    "name": "marchyo.tracking.editor.port",
+    "description": "Port for the local wakapi service.",
+    "option_type": "16 bit unsigned integer; between 0 and 65535 (both inclusive)",
+    "default_value": "3000",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.enable",
+    "name": "marchyo.tracking.enable",
+    "description": "Enable the local-first self-tracking stack.\n\nWhen true, enables the full local-first self-tracking stack:\nshell history (atuin), desktop focus (ActivityWatch), editor\nheartbeats (wakapi), git activity, system file-watch,\n**kernel auditd (execve + per-user ~/.config write watch)**, log\naggregation (Vector), and weekly LLM analysis. All collectors\ndefault to enabled via `lib.mkDefault`; set any sub-option to\nfalse to opt out.\n\nScreenshot capture (`marchyo.tracking.desktop.screenshots.enable`)\ndefaults to false and must be enabled explicitly.\n\nAuditd is intentionally part of the cascade — disable it with\n`marchyo.tracking.system.auditd = false` if you don't want\n/var/log/audit growing in the background. See `marchyo.tracking.system.auditd*`\noptions for tuning (backlog, rotation, ruleset lock, early-boot).\n\nAll data stays on disk under the user's home directory or\n/var/lib. No network egress unless the aggregation sink is\nexplicitly configured.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.git.enable",
+    "name": "marchyo.tracking.git.enable",
+    "description": "Enable a daily per-user git activity scan that aggregates commits\nacross repos under ~/Developer into a JSONL stream.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.git.scanRoot",
+    "name": "marchyo.tracking.git.scanRoot",
+    "description": "Directory (relative to $HOME) to scan for git repositories.",
+    "option_type": "string",
+    "default_value": "\"Developer\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.shell.enable",
+    "name": "marchyo.tracking.shell.enable",
+    "description": "Enable shell history tracking via atuin with local-only storage.\nCaptures command, ns timestamp, duration, exit code, cwd, hostname\nand session. No sync server configured.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditd",
+    "name": "marchyo.tracking.system.auditd",
+    "description": "Enable auditd with execve and config-change rules for process\nexecution tracking. Writes to /var/log/audit.\n\nWhen `marchyo.tracking.aggregation.enable = true` is also set,\nlaurel is wired in as an audisp plugin to convert audit records\nto JSON Lines under /var/log/laurel/ for the Vector pipeline.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdBacklogLimit",
+    "name": "marchyo.tracking.system.auditdBacklogLimit",
+    "description": "Kernel audit ringbuffer size (`security.audit.backlogLimit`).\nDefault 65536 (kernel default is 8192). Raise if `auditctl -s`\nreports lost > 0 under burst.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "65536",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdEarlyBoot",
+    "name": "marchyo.tracking.system.auditdEarlyBoot",
+    "description": "Add `audit=1 audit_backlog_limit=<auditdBacklogLimit>` to the\nkernel cmdline so events from before auditd loads its rules\nare captured. Opt-in: a reboot is required to take effect.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdFailureMode",
+    "name": "marchyo.tracking.system.auditdFailureMode",
+    "description": "Action when the audit ringbuffer overflows. Maps to\n`security.audit.failureMode`.",
+    "option_type": "one of \"silent\", \"printk\", \"panic\"",
+    "default_value": "\"printk\"",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdLockRules",
+    "name": "marchyo.tracking.system.auditdLockRules",
+    "description": "Append `-e 2` to lock the loaded ruleset and make loginuid\nimmutable. Requires a reboot to change rules afterwards, so\nopt-in only.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdMaxLogFileMB",
+    "name": "marchyo.tracking.system.auditdMaxLogFileMB",
+    "description": "Maximum size of a single audit log file in MB before rotation.\nMaps to auditd.conf `max_log_file`.",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "128",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.auditdNumLogs",
+    "name": "marchyo.tracking.system.auditdNumLogs",
+    "description": "Number of rotated audit log files to keep. Maps to auditd.conf\n`num_logs`. Combined with `auditdMaxLogFileMB`, this caps disk\nusage at roughly maxLogFileMB * (numLogs + 1).",
+    "option_type": "positive integer, meaning >0",
+    "default_value": "16",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.tracking.system.fileWatch",
+    "name": "marchyo.tracking.system.fileWatch",
+    "description": "Enable a per-user inotify-based file change watcher covering\n~/Developer and ~/.config, writing JSONL to the data dir.\n\nNote: the ~/.config watch overlaps with the auditd\n`config_changes` rule when `system.auditd = true`. The two\nobservers see different things (kernel audit captures\nattributable syscalls; inotify catches in-kernel fs events the\naudit subsystem may filter), so both are kept by default.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "development",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users",
+    "name": "marchyo.users",
+    "description": "Marchyo user configuration.\nDefines users with associated metadata like fullname and email.",
+    "option_type": "attribute set of (submodule)",
+    "default_value": "{ }",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>._module.args",
+    "name": "marchyo.users.<name>._module.args",
+    "description": "Additional arguments passed to each module in addition to ones\nlike `lib`, `config`,\nand `pkgs`, `modulesPath`.\n\nThis option is also available to all submodules. Submodules do not\ninherit args from their parent module, nor do they provide args to\ntheir parent module or sibling submodules. The sole exception to\nthis is the argument `name` which is provided by\nparent modules to a submodule and contains the attribute name\nthe submodule is bound to, or a unique generated name if it is\nnot bound to an attribute.\n\nSome arguments are already passed by default, of which the\nfollowing *cannot* be changed with this option:\n- {var}`lib`: The nixpkgs library.\n- {var}`config`: The results of all options after merging the values from all modules together.\n- {var}`options`: The options declared in all modules.\n- {var}`specialArgs`: The `specialArgs` argument passed to `evalModules`.\n- All attributes of {var}`specialArgs`\n\n  Whereas option values can generally depend on other option values\n  thanks to laziness, this does not apply to `imports`, which\n  must be computed statically before anything else.\n\n  For this reason, callers of the module system can provide `specialArgs`\n  which are available during import resolution.\n\n  For NixOS, `specialArgs` includes\n  {var}`modulesPath`, which allows you to import\n  extra modules from the nixpkgs package tree without having to\n  somehow make the module aware of the location of the\n  `nixpkgs` or NixOS directories.\n  ```\n  { modulesPath, ... }: {\n    imports = [\n      (modulesPath + \"/profiles/minimal.nix\")\n    ];\n  }\n  ```\n\nFor NixOS, the default value for this option includes at least this argument:\n- {var}`pkgs`: The nixpkgs package set according to\n  the {option}`nixpkgs.pkgs` option.",
+    "option_type": "lazy attribute set of raw value",
+    "default_value": "{ }",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>._module.check",
+    "name": "marchyo.users.<name>._module.check",
+    "description": "Whether to check whether all option definitions have matching declarations.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>._module.freeformType",
+    "name": "marchyo.users.<name>._module.freeformType",
+    "description": "If set, merge all definitions that don't have an associated option\ntogether using this type. The result then gets combined with the\nvalues of all declared options to produce the final `\nconfig` value.\n\nIf this is `null`, definitions without an option\nwill throw an error unless {option}`_module.check` is\nturned off.",
+    "option_type": "null or optionType",
+    "default_value": "null",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>._module.specialArgs",
+    "name": "marchyo.users.<name>._module.specialArgs",
+    "description": "Externally provided module arguments that can't be modified from\nwithin a configuration, but can be used in module imports.",
+    "option_type": "unspecified value",
+    "default_value": "",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.email",
+    "name": "marchyo.users.<name>.email",
+    "description": "Your email address",
+    "option_type": "string",
+    "default_value": "",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.enable",
+    "name": "marchyo.users.<name>.enable",
+    "description": "If set to false, the user account will not have any Marchyo stuff.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.fullname",
+    "name": "marchyo.users.<name>.fullname",
+    "description": "Your full name",
+    "option_type": "string",
+    "default_value": "",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.name",
+    "name": "marchyo.users.<name>.name",
+    "description": "The name of the user account.\nUse `users.users.{name}.name` to reference it.",
+    "option_type": "string",
+    "default_value": "\"‹name›\"",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.uid",
+    "name": "marchyo.users.<name>.uid",
+    "description": "Numeric user id. On NixOS this sets `users.users.<name>.uid`.\nOn nix-darwin, providing the uid opts the user into\n`users.knownUsers` so marchyo can manage the login shell (bash)\ndeclaratively. It must match the account's existing uid (the first\nmacOS user is 501) — a mismatch aborts nix-darwin activation.\nWhen unset, the login shell on macOS is left unmanaged; bash is\nstill registered in /etc/shells for a manual `chsh`.",
+    "option_type": "null or signed integer",
+    "default_value": "null",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.wakatimeApiKey",
+    "name": "marchyo.users.<name>.wakatimeApiKey",
+    "description": "WakaTime API key for editor heartbeat tracking.\n\n::: {.warning}\nThis value is written verbatim into the Nix store and is therefore\nreadable by every local user and process. Prefer\n{option}`wakatimeApiKeyFile`, which keeps the secret out of the store.\n:::\n\nWhen set together with marchyo.tracking.editor.enable, a\n~/.wakatime.cfg is generated and WAKATIME_API_KEY is exported.",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.users.<name>.wakatimeApiKeyFile",
+    "name": "marchyo.users.<name>.wakatimeApiKeyFile",
+    "description": "Path to a user-readable file containing the WakaTime API key for\neditor heartbeat tracking. Preferred over {option}`wakatimeApiKey`\nbecause the key is read at home-manager activation time and never\nenters the world-readable Nix store. When set together with\nmarchyo.tracking.editor.enable, a ~/.wakatime.cfg is generated.",
+    "option_type": "null or absolute path",
+    "default_value": "null",
+    "category": "security",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.utilities.enable",
+    "name": "marchyo.utilities.enable",
+    "description": "Quick-info and media utilities for the desktop: date/time and battery\nnotifications (`marchyo-notify-datetime`/`-battery`,\nSuper+Ctrl+Alt+T/B), the `marchyo-transcode` ffmpeg menu\n(Super+Ctrl+Period) and the `marchyo-share` clipboard helper (no\nkeybinding - reached via the central menu). Part of the desktop\ncascade - only active when `marchyo.desktop.enable` is set; set to\n`false` to opt out of the scripts and their keybindings.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps",
+    "name": "marchyo.webapps.apps",
+    "description": "Web apps to register. Each becomes a `.desktop` entry launching the\nbrowser in app mode; entries with a `key` also get a Hyprland\nkeybinding (omarchy-style, default chord SUPER+SHIFT). Override the whole\nlist to customise; the default mirrors a common omarchy subset. Only used\nwhen `enable = true`.",
+    "option_type": "list of (submodule)",
+    "default_value": "[\n  {\n    key = \"A\";\n    name = \"ChatGPT\";\n    url = \"https://chatgpt.com/\";\n  }\n  {\n    key = \"G\";\n    name = \"GitHub\";\n    url = \"https://github.com/\";\n  }\n  {\n    key = \"Y\";\n    name = \"YouTube\";\n    url = \"https://youtube.com/\";\n  }\n  {\n    key = \"W\";\n    name = \"WhatsApp\";\n    url = \"https://web.whatsapp.com/\";\n  }\n  {\n    name = \"Discord\";\n    url = \"https://discord.com/channels/@me\";\n  }\n  {\n    key = \"Z\";\n    name = \"Zoom\";\n    url = \"https://app.zoom.us/wc/home\";\n  }\n  {\n    key = \"X\";\n    name = \"X\";\n    url = \"https://x.com/\";\n  }\n  {\n    key = \"P\";\n    name = \"Google Photos\";\n    url = \"https://photos.google.com/\";\n  }\n  {\n    name = \"Google Calendar\";\n    url = \"https://calendar.google.com/\";\n  }\n  {\n    name = \"Gmail\";\n    url = \"https://mail.google.com/\";\n  }\n]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*._module.args",
+    "name": "marchyo.webapps.apps.*._module.args",
+    "description": "Additional arguments passed to each module in addition to ones\nlike `lib`, `config`,\nand `pkgs`, `modulesPath`.\n\nThis option is also available to all submodules. Submodules do not\ninherit args from their parent module, nor do they provide args to\ntheir parent module or sibling submodules. The sole exception to\nthis is the argument `name` which is provided by\nparent modules to a submodule and contains the attribute name\nthe submodule is bound to, or a unique generated name if it is\nnot bound to an attribute.\n\nSome arguments are already passed by default, of which the\nfollowing *cannot* be changed with this option:\n- {var}`lib`: The nixpkgs library.\n- {var}`config`: The results of all options after merging the values from all modules together.\n- {var}`options`: The options declared in all modules.\n- {var}`specialArgs`: The `specialArgs` argument passed to `evalModules`.\n- All attributes of {var}`specialArgs`\n\n  Whereas option values can generally depend on other option values\n  thanks to laziness, this does not apply to `imports`, which\n  must be computed statically before anything else.\n\n  For this reason, callers of the module system can provide `specialArgs`\n  which are available during import resolution.\n\n  For NixOS, `specialArgs` includes\n  {var}`modulesPath`, which allows you to import\n  extra modules from the nixpkgs package tree without having to\n  somehow make the module aware of the location of the\n  `nixpkgs` or NixOS directories.\n  ```\n  { modulesPath, ... }: {\n    imports = [\n      (modulesPath + \"/profiles/minimal.nix\")\n    ];\n  }\n  ```\n\nFor NixOS, the default value for this option includes at least this argument:\n- {var}`pkgs`: The nixpkgs package set according to\n  the {option}`nixpkgs.pkgs` option.",
+    "option_type": "lazy attribute set of raw value",
+    "default_value": "{ }",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*._module.check",
+    "name": "marchyo.webapps.apps.*._module.check",
+    "description": "Whether to check whether all option definitions have matching declarations.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*._module.freeformType",
+    "name": "marchyo.webapps.apps.*._module.freeformType",
+    "description": "If set, merge all definitions that don't have an associated option\ntogether using this type. The result then gets combined with the\nvalues of all declared options to produce the final `\nconfig` value.\n\nIf this is `null`, definitions without an option\nwill throw an error unless {option}`_module.check` is\nturned off.",
+    "option_type": "null or optionType",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*._module.specialArgs",
+    "name": "marchyo.webapps.apps.*._module.specialArgs",
+    "description": "Externally provided module arguments that can't be modified from\nwithin a configuration, but can be used in module imports.",
+    "option_type": "unspecified value",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*.icon",
+    "name": "marchyo.webapps.apps.*.icon",
+    "description": "Icon name (freedesktop theme) or absolute path. Defaults to the\ngeneric `applications-internet` web icon. Marchyo never fetches\nfavicons at build time, so set this per app for a branded icon —\neither a theme icon name already shipped by an installed icon theme,\nor a path to an icon file from your own configuration (e.g.\n`icon = \"${./icons/myapp.png}\";`).",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*.key",
+    "name": "marchyo.webapps.apps.*.key",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)\nand of the keys used by the default app set (A, G, P, W, X, Y, Z).",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*.modifiers",
+    "name": "marchyo.webapps.apps.*.modifiers",
+    "description": "Hyprland modifier chord prefixing `key`.",
+    "option_type": "string",
+    "default_value": "\"SUPER SHIFT\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*.name",
+    "name": "marchyo.webapps.apps.*.name",
+    "description": "Display name shown in launchers (also used, slugified, as the .desktop id).",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.apps.*.url",
+    "name": "marchyo.webapps.apps.*.url",
+    "description": "URL opened in the browser's standalone app mode (`--app=`).",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.browser",
+    "name": "marchyo.webapps.browser",
+    "description": "Chromium-family browser used to launch web apps. `null` follows\n`marchyo.defaults.browser` when it is chromium-based, otherwise falls\nback to chromium.",
+    "option_type": "null or one of \"brave\", \"google-chrome\", \"chromium\"",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.enable",
+    "name": "marchyo.webapps.enable",
+    "description": "Whether to enable web apps as standalone desktop windows. Generates freedesktop `.desktop`\nentries that launch a chromium-family browser with `--app=<url>`, so a\nsite opens as its own window (no tabs/chrome), plus a Hyprland keybinding\nfor every app that declares a `key` (omarchy-style, default SUPER+SHIFT).\nRequires the desktop feature and is auto-enabled (`lib.mkDefault`) when\n`marchyo.desktop.enable` is on — set to `false` to opt out. If the\nselected `marchyo.defaults.browser` is not chromium-based (e.g. firefox),\nchromium is pulled in for app mode.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps",
+    "name": "marchyo.webapps.extraApps",
+    "description": "Additional web apps appended to `apps`. Kept separate so additive\nsources (notably `marchyo webapp add`, which persists here through\nthe marchyoCliState sidecar at mkDefault priority) never replace\nthe default set the way overriding `apps` does.",
+    "option_type": "list of (submodule)",
+    "default_value": "[ ]",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*._module.args",
+    "name": "marchyo.webapps.extraApps.*._module.args",
+    "description": "Additional arguments passed to each module in addition to ones\nlike `lib`, `config`,\nand `pkgs`, `modulesPath`.\n\nThis option is also available to all submodules. Submodules do not\ninherit args from their parent module, nor do they provide args to\ntheir parent module or sibling submodules. The sole exception to\nthis is the argument `name` which is provided by\nparent modules to a submodule and contains the attribute name\nthe submodule is bound to, or a unique generated name if it is\nnot bound to an attribute.\n\nSome arguments are already passed by default, of which the\nfollowing *cannot* be changed with this option:\n- {var}`lib`: The nixpkgs library.\n- {var}`config`: The results of all options after merging the values from all modules together.\n- {var}`options`: The options declared in all modules.\n- {var}`specialArgs`: The `specialArgs` argument passed to `evalModules`.\n- All attributes of {var}`specialArgs`\n\n  Whereas option values can generally depend on other option values\n  thanks to laziness, this does not apply to `imports`, which\n  must be computed statically before anything else.\n\n  For this reason, callers of the module system can provide `specialArgs`\n  which are available during import resolution.\n\n  For NixOS, `specialArgs` includes\n  {var}`modulesPath`, which allows you to import\n  extra modules from the nixpkgs package tree without having to\n  somehow make the module aware of the location of the\n  `nixpkgs` or NixOS directories.\n  ```\n  { modulesPath, ... }: {\n    imports = [\n      (modulesPath + \"/profiles/minimal.nix\")\n    ];\n  }\n  ```\n\nFor NixOS, the default value for this option includes at least this argument:\n- {var}`pkgs`: The nixpkgs package set according to\n  the {option}`nixpkgs.pkgs` option.",
+    "option_type": "lazy attribute set of raw value",
+    "default_value": "{ }",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*._module.check",
+    "name": "marchyo.webapps.extraApps.*._module.check",
+    "description": "Whether to check whether all option definitions have matching declarations.",
+    "option_type": "boolean",
+    "default_value": "true",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*._module.freeformType",
+    "name": "marchyo.webapps.extraApps.*._module.freeformType",
+    "description": "If set, merge all definitions that don't have an associated option\ntogether using this type. The result then gets combined with the\nvalues of all declared options to produce the final `\nconfig` value.\n\nIf this is `null`, definitions without an option\nwill throw an error unless {option}`_module.check` is\nturned off.",
+    "option_type": "null or optionType",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*._module.specialArgs",
+    "name": "marchyo.webapps.extraApps.*._module.specialArgs",
+    "description": "Externally provided module arguments that can't be modified from\nwithin a configuration, but can be used in module imports.",
+    "option_type": "unspecified value",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*.icon",
+    "name": "marchyo.webapps.extraApps.*.icon",
+    "description": "Icon name (freedesktop theme) or absolute path. Defaults to the\ngeneric `applications-internet` web icon. Marchyo never fetches\nfavicons at build time, so set this per app for a branded icon —\neither a theme icon name already shipped by an installed icon theme,\nor a path to an icon file from your own configuration (e.g.\n`icon = \"${./icons/myapp.png}\";`).",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*.key",
+    "name": "marchyo.webapps.extraApps.*.key",
+    "description": "Hyprland key (the part after the modifiers) that launches this app.\n`null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT\nbinds (C, D, E, H, I, O, S are taken, plus workspace digits/arrows/Tab)\nand of the keys used by the default app set (A, G, P, W, X, Y, Z).",
+    "option_type": "null or string",
+    "default_value": "null",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*.modifiers",
+    "name": "marchyo.webapps.extraApps.*.modifiers",
+    "description": "Hyprland modifier chord prefixing `key`.",
+    "option_type": "string",
+    "default_value": "\"SUPER SHIFT\"",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*.name",
+    "name": "marchyo.webapps.extraApps.*.name",
+    "description": "Display name shown in launchers (also used, slugified, as the .desktop id).",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.webapps.extraApps.*.url",
+    "name": "marchyo.webapps.extraApps.*.url",
+    "description": "URL opened in the browser's standalone app mode (`--app=`).",
+    "option_type": "string",
+    "default_value": "",
+    "category": "desktop",
+    "platforms": [
+      "nixos",
+      "nix-darwin"
+    ]
+  },
+  {
+    "id": "marchyo.xournalpp.enable",
+    "name": "marchyo.xournalpp.enable",
+    "description": "Whether to enable Xournal++ note-taking application.",
+    "option_type": "boolean",
+    "default_value": "false",
+    "category": "desktop",
+    "platforms": [
+      "home-manager"
+    ]
+  }
+]

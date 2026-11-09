@@ -14,13 +14,13 @@ BarItem {
     shown: Tailscale.installed
     onClicked: PanelManager.toggle("tailscale", root)
     text: Tailscale.exitNodeActive ? "󰖂" : (Tailscale.running ? "󰖂" : "󰖃")
-    textColor: Tailscale.running ? (Tailscale.exitNodeActive ? Color.accent : Color.statusOk) : Color.textMuted
+    textColor: Tailscale.running ? (Tailscale.exitNodeActive ? Colors.accent : Colors.statusOk) : Colors.textMuted
     tooltipText: {
         if (!Tailscale.running)
-            return "Tailscale disconnected";
+            return I18n.t("tailscale.tooltipDown");
         const who = Tailscale.selfName + (Tailscale.selfIp !== "" ? " (" + Tailscale.selfIp + ")" : "");
         if (Tailscale.exitNodeActive)
-            return "Tailscale: " + who + "\nExit node: " + Tailscale.exitNodeName;
-        return "Tailscale: " + who;
+            return I18n.t("tailscale.tooltipExit", who, Tailscale.exitNodeName);
+        return I18n.t("tailscale.tooltip", who);
     }
 }

@@ -1,0 +1,53 @@
+---
+title: Power
+description: Hibernation, lid close actions and clamshell mode
+---
+
+## Available options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.power.hibernation.enable` | `false` | Hibernation with suspend-then-hibernate |
+| `marchyo.power.hibernation.resumeDevice` | `null` | Device that holds the hibernation image (`boot.resumeDevice`) |
+| `marchyo.power.hibernation.suspendThenHibernateDelay` | `"2h"` | Sleep time before a suspended machine hibernates |
+| `marchyo.power.lid.onBattery` | `"suspend"` | Lid close action on battery |
+| `marchyo.power.lid.onAC` | `"suspend"` | Lid close action on external power |
+| `marchyo.power.lid.docked` | `"ignore"` | Lid close action while docked or with an external display |
+
+Lid actions accept the logind values: `ignore`, `poweroff`, `reboot`, `halt`,
+`kexec`, `suspend`, `hibernate`, `hybrid-sleep`, `suspend-then-hibernate` and
+`lock`.
+
+## Hibernation
+
+```nix
+{
+  swapDevices = [ { device = "/dev/disk/by-partlabel/swap"; } ];
+  marchyo.power.hibernation = {
+    enable = true;
+    resumeDevice = "/dev/disk/by-partlabel/swap";
+    suspendThenHibernateDelay = "2h";
+  };
+}
+```
+
+With hibernation on:
+
+- `boot.resumeDevice` and systemd `HibernateDelaySec` are set.
+- A `suspend` lid action and the suspend key become `suspend-then-hibernate`.
+- The power menus (`Super + Escape`, the `!` launcher prefix and `marchyo menu power`) list Hibernate. They hide it otherwise.
+
+The evaluation fails unless `swapDevices`, `resumeDevice` or `boot.resumeDevice`
+exists. The swap device must be at least as large as RAM. A swap file also needs
+`boot.kernelParams = [ "resume_offset=..." ]` on the host.
+
+## Lid close and clamshell
+
+`marchyo.power.lid` maps to `services.logind.settings.Login.HandleLidSwitch`,
+`HandleLidSwitchExternalPower` and `HandleLidSwitchDocked`. Each is set with
+`lib.mkDefault`, so a host can still override logind directly.
+
+Hyprland also handles the lid switch. Closing the lid with an external display
+enabled turns the laptop panel off (`marchyo monitor clamshell on`). Opening the
+lid turns it back on (`marchyo monitor clamshell off`). With no external display
+the panel stays on and logind applies the lid action.

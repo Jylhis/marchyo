@@ -1,0 +1,552 @@
+/*
+ * elements.css — Jylhis Design System: every standard HTML element, bare.
+ *
+ * Plain markup (a Markdown page, a form, a CMS body) looks like the system
+ * with no class names. colors_and_type.css owns body, h1–h4, links, inline
+ * code and blockquote's hanging punctuation; this file covers the rest.
+ *
+ * Every selector sits inside :where(), so it has zero specificity: any class,
+ * any component and any site rule on a bare element wins. Tokens only, no
+ * literals. styles.css imports it; a site that only wants the type sheet can
+ * import it next to colors_and_type.css. Spec: design(7) Elements.
+ */
+
+/* ── Bevel ──────────────────────────────────────────────── */
+/* Border-colour shorthands for the pressable bevel; components.css restates
+   them so either sheet works alone. */
+:root,
+[data-mode] {
+  --ds-bevel-raised: var(--color-bevel-hi) var(--color-bevel-lo) var(--color-bevel-edge)
+    var(--color-bevel-hi);
+  --ds-bevel-pressed: var(--color-bevel-lo) var(--color-bevel-hi) var(--color-bevel-hi)
+    var(--color-bevel-lo);
+  --ds-bevel-primary: var(--color-primary-hi) var(--color-primary-lo) var(--color-primary-edge)
+    var(--color-primary-hi);
+  --ds-bevel-primary-pressed: var(--color-primary-lo) var(--color-primary-hi)
+    var(--color-primary-hi) var(--color-primary-lo);
+}
+
+/* ── Box and page ───────────────────────────────────────── */
+:where(body) {
+  margin: 0;
+  background-color: var(--color-bg);
+}
+:where(img, picture, video, canvas, svg, iframe, embed, object) {
+  max-width: 100%;
+}
+:where(img, video) {
+  height: auto;
+}
+:where(iframe) {
+  border: var(--border-hairline) solid var(--color-border);
+}
+/* hidden="until-found" stays out: the browser hides it with content-visibility
+   so find-in-page and fragment links can reveal it; display: none would not. */
+:where([hidden]:not([hidden="until-found" i])) {
+  display: none;
+}
+
+/* ── Flow ───────────────────────────────────────────────── */
+/* One rhythm: blocks have no top margin and an md gap below, so the space
+   between two blocks never doubles. The last child of a box keeps none. */
+:where(p, ul, ol, dl, blockquote, pre, figure, table, details:not([class]), fieldset, address, hr) {
+  margin-block: 0 var(--space-md);
+}
+:where(h1, h2, h3, h4, h5, h6) {
+  margin-block: var(--space-xl) var(--space-sm);
+}
+:where(h1:first-child, h2:first-child, h3:first-child, h4:first-child, h5:first-child, h6:first-child),
+:where(article, section, main, aside, header, footer, div) > :where(:first-child) {
+  margin-block-start: 0;
+}
+:where(article, section, main, aside, header, footer, div, li, dd, td, blockquote, figure) >
+  :where(:last-child) {
+  margin-block-end: 0;
+}
+:where(p, li, dd, blockquote, figcaption) {
+  overflow-wrap: break-word;
+}
+
+/* h5 and h6 are run-in labels: the lowercase mono voice, not a smaller h4. */
+:where(h5, h6) {
+  font: var(--type-label);
+  color: var(--color-text-heading);
+}
+:where(h6) {
+  color: var(--color-text-muted);
+}
+:where(small) {
+  font-size: max(0.85em, var(--type-floor));
+}
+:where(strong, b) {
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+:where(em, i, cite, dfn, var) {
+  font-style: italic;
+}
+:where(cite) {
+  color: var(--color-text-muted);
+}
+:where(dfn) {
+  font-weight: 600;
+}
+:where(q) {
+  quotes: "“" "”" "‘" "’";
+}
+:where(abbr[title]) {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--color-text-muted);
+  text-underline-offset: 0.15em;
+  cursor: help;
+}
+:where(mark) {
+  color: var(--color-text-heading);
+  background-color: var(--color-bg-subtle);
+  padding: 0 0.15em;
+  border-radius: var(--radius);
+}
+:where(del, s) {
+  color: var(--color-text-muted);
+  text-decoration-color: var(--color-status-err);
+}
+:where(ins) {
+  text-decoration: underline;
+  text-decoration-color: var(--color-status-ok);
+  text-underline-offset: 0.15em;
+}
+:where(sub, sup) {
+  font-size: max(0.75em, var(--type-floor));
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+:where(sup) {
+  top: -0.5em;
+}
+:where(sub) {
+  bottom: -0.25em;
+}
+:where(time, data) {
+  font-variant-numeric: tabular-nums;
+}
+:where(address) {
+  font-style: normal;
+}
+
+/* ── Lists ──────────────────────────────────────────────── */
+:where(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+/* Component lists (Navbar, Tag, Steps, EntryGrid) reset this margin in
+   components.css; a classed Markdown list (a task list) keeps it. */
+:where(li) {
+  margin-block: 0 var(--space-2xs);
+}
+:where(li > ul, li > ol) {
+  margin-block: var(--space-2xs) 0;
+}
+:where(ul > li)::marker {
+  color: var(--color-text-muted);
+}
+:where(ol > li)::marker {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  color: var(--color-text-muted);
+}
+/* A description list reads as a key/value sheet: mono keys, prose values. */
+:where(dt) {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  color: var(--color-label);
+  margin-block-start: var(--space-sm);
+}
+:where(dt:first-child) {
+  margin-block-start: 0;
+}
+:where(dd) {
+  margin: 0 0 var(--space-xs);
+}
+
+/* ── Quotes, rules, figures ─────────────────────────────── */
+:where(blockquote) {
+  margin-inline: 0;
+  padding-inline-start: var(--space-md);
+  border-inline-start: var(--border-focus) solid var(--color-border-strong);
+  color: var(--color-text);
+}
+:where(blockquote) :where(cite, footer) {
+  display: block;
+  margin-block-start: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+:where(hr) {
+  border: 0;
+  border-block-start: var(--border-rule) solid var(--color-rule);
+  margin-block: var(--space-xl);
+}
+:where(figure) {
+  margin-inline: 0;
+}
+:where(figcaption) {
+  margin-block-start: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  color: var(--color-text-muted);
+}
+
+/* ── Code ───────────────────────────────────────────────── */
+/* Inline code is in colors_and_type.css; a block is the CodeBlock look. */
+:where(pre) {
+  font-family: var(--font-mono);
+  font-size: var(--type-code-size);
+  line-height: 1.55;
+  color: var(--color-code-text);
+  background-color: var(--color-code-bg);
+  border: var(--border-hairline) solid var(--color-code-border);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  overflow-x: auto;
+  tab-size: 2;
+}
+:where(pre code) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+:where(kbd) {
+  font-family: var(--font-mono);
+  font-size: max(0.75em, var(--type-floor));
+  font-weight: 500;
+  padding: 0 0.375rem;
+  border: var(--border-hairline) solid;
+  border-color: var(--ds-bevel-raised);
+  border-bottom-width: 2px;
+  border-radius: var(--radius);
+  background-color: var(--color-bevel-face);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+:where(kbd kbd) {
+  border: 0;
+  padding: 0;
+}
+:where(samp) {
+  font-family: var(--font-mono);
+  font-size: max(0.85em, var(--type-floor));
+  color: var(--color-syntax-string);
+}
+:where(var) {
+  font-family: var(--font-mono);
+  color: var(--color-text-heading);
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+/* A bare table takes the Table component's rules and header. Wrap a wide one
+   in .ds-table-scroll, or use the Table component for the phone stack. */
+:where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  font-variant-numeric: tabular-nums;
+  border-block-start: var(--border-rule) solid var(--color-rule);
+}
+/* A table is data, so it takes the mono face; the ink rule above the head
+   and a hairline under every row are its whole structure. */
+:where(caption) {
+  text-align: start;
+  font: var(--type-label);
+  color: var(--color-text-muted);
+  padding-block-end: var(--space-sm);
+}
+:where(th, td) {
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  text-align: start;
+  vertical-align: top;
+  border-block-end: var(--border-hairline) solid var(--color-border);
+}
+:where(th) {
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+:where(thead th) {
+  font: var(--type-label);
+  color: var(--color-label);
+  vertical-align: bottom;
+}
+:where(tbody tr:last-child > *) {
+  border-block-end: var(--border-rule) solid var(--color-rule);
+}
+:where(tfoot td, tfoot th) {
+  border-block-end: 0;
+  border-block-start: var(--border-rule) solid var(--color-rule);
+}
+
+/* ── Forms ──────────────────────────────────────────────── */
+/* The one reset that reaches classed controls too: they take the page font
+   and ink instead of the browser's, and lose the default margin. */
+:where(input, button, textarea, select, optgroup) {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+:where(label:not([class])) {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+}
+/* Text-like inputs, textarea:not([class]) and select:not([class]): the Field input. */
+:where(
+    input:not([class]):not([type="checkbox"], [type="radio"], [type="range"], [type="color"],
+        [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"],
+        [type="hidden"]),
+    textarea:not([class]),
+    select:not([class])
+  ) {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+  background-color: var(--color-surface-raised);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  padding: 0 var(--space-sm);
+  min-height: var(--control-h);
+  max-width: 100%;
+  transition: border-color var(--transition-fast);
+}
+:where(textarea:not([class])) {
+  min-height: 6rem;
+  padding: var(--space-sm);
+  line-height: 1.5;
+  resize: vertical;
+}
+:where(select:not([class]):not([multiple], [size])) {
+  cursor: pointer;
+}
+:where(input:not([class]):focus, textarea:not([class]):focus, select:not([class]):focus) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+:where(input:not([class]), textarea:not([class]))::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+:where(input:not([class]):disabled, textarea:not([class]):disabled, select:not([class]):disabled, button:not([class]):disabled) {
+  color: var(--color-text-faint);
+  background-color: var(--color-bg-subtle);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+:where(
+    input:not([class])[aria-invalid="true"],
+    textarea:not([class])[aria-invalid="true"],
+    select:not([class])[aria-invalid="true"],
+    input:not([class]):user-invalid,
+    textarea:not([class]):user-invalid,
+    select:not([class]):user-invalid
+  ) {
+  border-color: var(--color-status-err);
+}
+:where([type="checkbox"]:not([class]), [type="radio"]:not([class]), [type="range"]:not([class]), progress, meter) {
+  accent-color: var(--color-rule);
+}
+:where([type="checkbox"]:not([class]), [type="radio"]:not([class])) {
+  width: 1.125rem;
+  height: 1.125rem;
+  vertical-align: -0.2em;
+  cursor: pointer;
+}
+:where([type="range"]:not([class])) {
+  width: 100%;
+  min-height: var(--control-h);
+  cursor: pointer;
+}
+:where([type="color"]:not([class])) {
+  inline-size: var(--control-h);
+  block-size: var(--control-h);
+  padding: var(--space-2xs);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  background-color: var(--color-surface-raised);
+  cursor: pointer;
+}
+:where([type="file"]:not([class])) {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  max-width: 100%;
+}
+/* Buttons: the hybrid bevel. A plain button is a ghost key (bevel face, lit
+   top-left); a submit button is the form's one primary fill. Pressing inverts
+   the bevel and sinks the key 1px; a disabled button is flat. */
+:where(button:not([class]), [type="button"]:not([class]), [type="submit"]:not([class]), [type="reset"]:not([class])),
+:where([type="file"]:not([class]))::file-selector-button {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-bottom-width: var(--border-bevel-edge);
+  border-color: var(--ds-bevel-raised);
+  border-radius: var(--radius);
+  padding: 0 var(--space-md);
+  min-height: var(--control-h);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-press);
+}
+:where([type="file"]:not([class]))::file-selector-button {
+  margin-inline-end: var(--space-sm);
+}
+:where(
+    button:not([class]):hover:enabled,
+    [type="button"]:not([class]):hover:enabled,
+    [type="reset"]:not([class]):hover:enabled
+  ),
+:where([type="file"]:not([class]):hover)::file-selector-button {
+  color: var(--color-text-heading);
+}
+:where(
+    button:not([class]):active:enabled,
+    [type="button"]:not([class]):active:enabled,
+    [type="submit"]:not([class]):active:enabled,
+    [type="reset"]:not([class]):active:enabled
+  ) {
+  border-bottom-width: var(--border-bevel);
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+:where(
+    button:not([class]):disabled,
+    [type="button"]:not([class]):disabled,
+    [type="submit"]:not([class]):disabled,
+    [type="reset"]:not([class]):disabled
+  ) {
+  border-width: var(--border-hairline);
+  border-color: var(--color-border);
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text-faint);
+  transform: none;
+}
+/* The submit button is the form's primary action. */
+:where([type="submit"]:not([class]):enabled) {
+  font-weight: 600;
+  color: var(--color-primary-foreground);
+  background-color: var(--color-primary);
+  border-color: var(--ds-bevel-primary);
+}
+:where([type="submit"]:not([class]):active:enabled) {
+  border-color: var(--ds-bevel-primary-pressed);
+}
+:where(fieldset) {
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  margin-inline: 0;
+  min-width: 0;
+}
+/* Class-less only: a component legend (RadioGroup) keeps its own voice. */
+:where(legend:not([class])) {
+  font: var(--type-label);
+  color: var(--color-label);
+  padding-inline: var(--space-xs);
+}
+:where(output) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-heading);
+}
+/* Phones zoom into any input:not([class]) under 16px: hold the text at 1rem there. */
+@media (pointer: coarse) {
+  :where(input:not([class]), textarea:not([class]), select:not([class])) {
+    font-size: max(1rem, var(--type-ui-size));
+  }
+}
+
+/* ── Progress and meter ─────────────────────────────────── */
+:where(progress, meter) {
+  display: inline-block;
+  inline-size: min(100%, 16rem);
+  block-size: 0.75rem;
+  vertical-align: middle;
+}
+
+/* ── Disclosure and dialog ──────────────────────────────── */
+/* Class-less only: Accordion and the Navbar menu are <details> with their own
+   look, and must not pick up these borders or the open-state padding. */
+:where(details:not([class])) {
+  border-block: var(--border-hairline) solid var(--color-border);
+}
+:where(details:not([class]) + details:not([class])) {
+  border-block-start: 0;
+  margin-block-start: calc(-1 * var(--space-md));
+}
+:where(summary:not([class])) {
+  min-height: var(--touch-min);
+  padding-block: var(--space-sm);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  cursor: pointer;
+}
+/* The native marker, in the mono voice. A site that hides it (list-style:
+   none) or draws its own keeps doing so. */
+:where(summary:not([class]))::marker {
+  content: "+  ";
+  font-family: var(--font-mono);
+  color: var(--color-label);
+}
+:where(details[open] > summary:not([class]))::marker {
+  content: "−  ";
+}
+:where(details:not([class])[open]) {
+  padding-block-end: var(--space-md);
+}
+/* Class-less only: Modal and Drawer are <dialog> with their own frame, and a
+   docked Drawer must not take this radius, shadow or scroll box. */
+:where(dialog:not([class])) {
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2 * var(--space-md)));
+  max-height: calc(100dvh - 2 * var(--space-md));
+  overflow: auto;
+  padding: var(--space-lg);
+  color: var(--color-surface-raised-foreground);
+  background-color: var(--color-surface-raised);
+  border: var(--border-rule) solid var(--color-rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+}
+:where(dialog:not([class]))::backdrop {
+  background: var(--color-scrim);
+}
+:where([popover]) {
+  color: var(--color-surface-raised-foreground);
+  background-color: var(--color-surface-raised);
+  border: var(--border-rule) solid var(--color-rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* ── Touch ──────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  :where(button:not([class]), [type="button"]:not([class]), [type="submit"]:not([class]), [type="reset"]:not([class]), select:not([class]), summary:not([class])) {
+    min-height: var(--touch-min);
+  }
+  :where(label:has(> [type="checkbox"], > [type="radio"])) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: var(--touch-min);
+  }
+}

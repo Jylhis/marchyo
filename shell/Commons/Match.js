@@ -73,7 +73,7 @@ function escapeHtml(s) {
 
 // Build a Text.StyledText string with the matched characters wrapped in a
 // coloured span. `color` is an "#rrggbb" string supplied by the caller (QML
-// passes Color.accent.toString()); every character is HTML-escaped first so a
+// passes Colors.accent.toString()); every character is HTML-escaped first so a
 // name containing "&" or "<" can never break the markup.
 function highlight(text, positions, color) {
     var s = String(text == null ? "" : text);

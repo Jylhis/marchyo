@@ -10,9 +10,7 @@ let
     assertTest
     testNixOS
     testNixOSCheck
-    testDarwinCheckFor
     withTestUser
-    withDarwinTestUser
     ;
 
   # The manifest text intentionally carries store-path context (it roots
@@ -25,6 +23,26 @@ let
         cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text
     );
   manifestOf = cfg: (manifestFileOf cfg).themes;
+
+  # jylhis-dark's text colour (base05) from the design tokens, with the
+  # evaluated config's overlays applied (they provide jylhis-design-src).
+  darkTextOf =
+    cfg:
+    "#"
+    + (import ../../modules/generic/jylhis-palette.nix {
+      inherit lib;
+      pkgs = pkgs.appendOverlays cfg.nixpkgs.overlays;
+      variant = "dark";
+    }).base16.base05;
+
+  darkBgOf =
+    cfg:
+    "#"
+    + (import ../../modules/generic/jylhis-palette.nix {
+      inherit lib;
+      pkgs = pkgs.appendOverlays cfg.nixpkgs.overlays;
+      variant = "dark";
+    }).base16.base00;
 
   # A desktop config with followWallpaper set to `value` (null leaves it at
   # the option default).
@@ -85,7 +103,7 @@ in
   });
 
   # The same on the marchyo.shell.enable = false fallback, which themes
-  # waybar / mako / hyprlock directly.
+  # hyprlock directly.
   eval-themes-light-desktop-shell-off = testNixOS "themes-light-desktop-shell-off" (withTestUser {
     marchyo = {
       desktop.enable = true;
@@ -97,14 +115,6 @@ in
     };
   });
 
-  # HM's gtk3 module and marchyo's gtk.colorScheme both write dconf
-  # `org/gnome/desktop/interface color-scheme`; under the light variant their
-  # values diverge (HM's gtk3.nix: "prefer-light" vs marchyo's mkForce), and
-  # the merge throws only when the value is forced — i.e. on a real
-  # `nixos-rebuild switch`, not in lazily-evaluated eval tests. Forcing the
-  # value here makes the conflict a build-time failure. (Historically this
-  # also caught the same collision with Stylix's gnome target, pre-retirement;
-  # the marchyo-vs-HM half is what remains worth pinning.)
   eval-themes-light-dconf-color-scheme =
     testNixOSCheck "themes-light-dconf-color-scheme"
       (
@@ -115,6 +125,7 @@ in
       (withTestUser {
         marchyo = {
           desktop.enable = true;
+          cli.enable = false;
           theme = {
             enable = true;
             variant = "light";
@@ -248,10 +259,9 @@ in
 
   # `marchyo theme generate` inputs: the build-variant dir (the current-theme
   # pointer) ships palette.json with the full token map (syn-* included) and
-  # the slot table, plus the mako/waybar/gtk templates (mako and waybar exist
-  # only with marchyo.shell.enable = false, so the shell is off here). Read from
-  # the linkFarm's `entries` passthru, so nothing is built; forcing the manifest
-  # also instantiates the nord dir (and its palette.json).
+  # the slot table, plus the gtk template. Read from the linkFarm's `entries`
+  # passthru, so nothing is built; forcing the manifest also instantiates the
+  # nord dir (and its palette.json).
   eval-themes-generate-assets =
     testNixOSCheck "themes-generate-assets"
       (
@@ -266,19 +276,16 @@ in
           "palette.json"
           "hyprlock-colors.conf"
           "console.txt"
-          "templates/mako.conf"
-          "templates/waybar.css"
           "templates/gtk.css"
         ]
         && palette.tokens ? "syn-keyword"
         && palette.tokenSlots.bg == "base00"
-        && lib.hasInfix "{{token:bg}}" buildEntries."templates/mako.conf".text
+        && lib.hasInfix "{{token:" buildEntries."templates/gtk.css".text
         && lib.hasInfix "{{shade}}" buildEntries."templates/gtk.css".text
         && nord != null
       )
       (withTestUser {
         marchyo.desktop.enable = true;
-        marchyo.shell.enable = false;
         marchyo.theme.themes = [
           "jylhis-dark"
           "nord"
@@ -288,7 +295,7 @@ in
   # Base16-slot TUI surfaces on the runtime layer: every theme dir ships the
   # k9s skin, lazygit overlay, spotify-player theme.toml and gdu.yaml, and the
   # apps read them through the current-theme pointer (k9s/gdu/spotify-player
-  # via links, lazygit via LG_CONFIG_FILE). #d1d4dc is jylhis-dark's base05.
+  # via links, lazygit via LG_CONFIG_FILE), in jylhis-dark's base05.
   eval-themes-tui-slot-surfaces =
     testNixOSCheck "themes-tui-slot-surfaces"
       (
@@ -296,6 +303,7 @@ in
         let
           hm = cfg.home-manager.users.testuser;
           e = hm.xdg.configFile."marchyo/current-theme".source.entries;
+          fg = darkTextOf cfg;
           # mkOutOfStoreSymlink: a runCommand whose build links to the target.
           linksTo =
             f: target:
@@ -303,10 +311,10 @@ in
               hm.xdg.configFile.${f}.source.buildCommand or ""
             );
         in
-        lib.hasInfix ''fgColor: "#d1d4dc"'' e."k9s-skin.yaml".text
-        && lib.hasInfix ''defaultFgColor: ["#d1d4dc"]'' e."lazygit.yml".text
-        && lib.hasInfix ''foreground = "#d1d4dc"'' e."spotify-player-theme.toml".text
-        && lib.hasInfix ''text-color: "#d1d4dc"'' e."gdu.yaml".text
+        lib.hasInfix ''fgColor: "${fg}"'' e."k9s-skin.yaml".text
+        && lib.hasInfix ''defaultFgColor: ["${fg}"]'' e."lazygit.yml".text
+        && lib.hasInfix ''foreground = "${fg}"'' e."spotify-player-theme.toml".text
+        && lib.hasInfix ''text-color: "${fg}"'' e."gdu.yaml".text
         && linksTo "k9s/skins/jylhis.yaml" "k9s-skin.yaml"
         && linksTo "gdu/gdu.yaml" "gdu.yaml"
         && linksTo "spotify-player/theme.toml" "spotify-player-theme.toml"
@@ -342,7 +350,7 @@ in
   # Build check (`just check` only evaluates it): a scheme dir resolves each
   # token through its base16 slot, so nord's palette.json and colors.json take
   # selection-bg from nord's base02 (#434c5e) and destructive from base08
-  # (#bf616a), while contour (no base16 role) keeps the Jylhis dark hex.
+  # (#bf616a), while scrim (no base16 role) keeps the Jylhis dark hex.
   build-themes-scheme-token-slots =
     let
       cfg =
@@ -366,13 +374,13 @@ in
     pkgs.runCommand "check-themes-scheme-token-slots" { nativeBuildInputs = [ pkgs.jq ]; } ''
       jdir=$(jq -r '.themes[] | select(.name == "jylhis-dark") | .dir' ${manifest})
       ndir=$(jq -r '.themes[] | select(.name == "nord") | .dir' ${manifest})
-      contour=$(jq -r '.tokens.contour' "$jdir/palette.json")
+      scrim=$(jq -r '.tokens.scrim' "$jdir/palette.json")
       jq -e '.tokens."selection-bg" == "#434c5e" and .tokens.destructive == "#bf616a"
         and .tokenSlots."selection-bg" == "base02"' "$ndir/palette.json" >/dev/null \
         || { echo "FAIL: nord palette.json selection-bg/destructive not on base02/base08"; exit 1; }
-      jq -e --arg c "$contour" '.colors.selectionBg == "#434c5e" and .colors.contour == $c' \
+      jq -e --arg c "$scrim" '.colors.selectionBg == "#434c5e" and .colors.scrim == $c' \
         "$ndir/colors.json" >/dev/null \
-        || { echo "FAIL: nord colors.json selectionBg not base02 or contour not the Jylhis hex"; exit 1; }
+        || { echo "FAIL: nord colors.json selectionBg not base02 or scrim not the Jylhis hex"; exit 1; }
       touch "$out"
     '';
 
@@ -383,9 +391,10 @@ in
         cfg:
         let
           hm = cfg.home-manager.users.testuser;
+          fg = darkTextOf cfg;
         in
-        hm.programs.k9s.skins.jylhis.k9s.body.fgColor == "#d1d4dc"
-        && lib.hasInfix ''text-color: "#d1d4dc"'' (hm.xdg.configFile."gdu/gdu.yaml".text or "")
+        hm.programs.k9s.skins.jylhis.k9s.body.fgColor == fg
+        && lib.hasInfix ''text-color: "${fg}"'' (hm.xdg.configFile."gdu/gdu.yaml".text or "")
         && !(hm.home.sessionVariables ? LG_CONFIG_FILE)
       )
       (withTestUser {
@@ -416,13 +425,40 @@ in
     !(builtins.tryEval (builtins.deepSeq (evalManifest [ "definitely-not-a-scheme" ]) true)).success
   ) "unknown theme name did not fail evaluation";
 
+  # base07 is ANSI 15 (bright white) for every base16 consumer, so the Jylhis
+  # pair sets it to the token ANSI 15 (text-heading), never a ground. The
+  # design's validate-tokens.mjs holds that ink at 7:1 on bg in both modes.
+  # The harness pkgs has no marchyo overlay, so a module computes the check
+  # with the evaluated config's pkgs and exposes it as an /etc text.
+  eval-themes-base07-is-ansi15 =
+    testNixOSCheck "themes-base07-is-ansi15"
+      (cfg: cfg.environment.etc."marchyo-test-base07".text == "ok")
+      {
+        imports = [
+          (withTestUser { })
+          (
+            { pkgs, ... }:
+            let
+              ok =
+                variant:
+                let
+                  p = import ../../modules/generic/jylhis-palette.nix { inherit pkgs lib variant; };
+                in
+                p.base16.base07 == builtins.elemAt p.ansi16 15
+                && p.base16.base07 != lib.removePrefix "#" p.hex."surface-raised";
+            in
+            {
+              environment.etc."marchyo-test-base07".text = if ok "dark" && ok "light" then "ok" else "bad";
+            }
+          )
+        ];
+      };
+
   # marchyo.theme.fontScale scales every font surface from one knob. With
   # desktop on, this also exercises the directly-themed surfaces (the shell /
   # ghostty / gtk / console) that read the scale. 2.0x doubles the
   # base size (12 -> 24); the GNOME interface fonts (modules/home/jylhis-theme.nix,
-  # previously Stylix's gnome target) carry the same math. The launcher scales
-  # the same way but is asserted in tests/eval/launcher.nix, which owns its
-  # font keys.
+  # previously Stylix's gnome target) carry the same math.
   eval-theme-fontscale =
     testNixOSCheck "theme-fontscale"
       (
@@ -431,8 +467,8 @@ in
           hm = cfg.home-manager.users.testuser;
         in
         hm.gtk.font.size == 24
-        && hm.dconf.settings."org/gnome/desktop/interface".document-font-name == "Zilla Slab 23"
-        && hm.dconf.settings."org/gnome/desktop/interface".monospace-font-name == "BlexMono Nerd Font 24"
+        && hm.dconf.settings."org/gnome/desktop/interface".document-font-name == "Fira Sans 23"
+        && hm.dconf.settings."org/gnome/desktop/interface".monospace-font-name == "IBM Plex Mono 24"
       )
       (withTestUser {
         marchyo.desktop.enable = true;
@@ -440,9 +476,9 @@ in
       });
 
   # The slot-driven long tail (previously Stylix targets) is marchyo-owned:
-  # lazygit/k9s/ncspot/spotify-player/gdu theme from
+  # lazygit/k9s/spotify-player/gdu theme from
   # modules/generic/theme-slots.nix, the cursor is complete, and Emacs loads
-  # the design system's own themes. Spot-checks jylhis-dark base05 (#d1d4dc).
+  # the design system's own themes. Spot-checks jylhis-dark base05.
   eval-theme-slot-surfaces =
     testNixOSCheck "theme-slot-surfaces"
       (
@@ -450,7 +486,7 @@ in
         let
           hm = cfg.home-manager.users.testuser;
         in
-        hm.programs.lazygit.settings.gui.theme.defaultFgColor == [ "#d1d4dc" ]
+        hm.programs.lazygit.settings.gui.theme.defaultFgColor == [ (darkTextOf cfg) ]
         && hm.programs.k9s.settings.ui.skin == "jylhis"
         && hm.xdg.configFile ? "k9s/skins/jylhis.yaml"
         && hm.xdg.configFile ? "gdu/gdu.yaml"
@@ -477,24 +513,239 @@ in
         marchyo.theme.scheme = "nord";
       });
 
-  # modules/darwin/home.nix imports a curated subset of modules/home; on
-  # darwin there is no runtime theme layer, so those surfaces keep their
-  # build-time colours. Both input trios are checked: aarch64 (unstable) and
-  # x86_64 (stable 26.05). (Historically these also pinned the Stylix target
-  # opt-outs; stylix is retired and marchyo owns every surface.)
-  eval-themes-darwin-buildtime-colors =
-    testDarwinCheckFor "aarch64-darwin" "themes-darwin-buildtime-colors"
+  # Application surfaces on the runtime layer: the Jylhis dirs (themeDirFor)
+  # carry VS Code, Obsidian, tmux, Slack, fcitx5 and herdr files in jylhis-dark's
+  # base05, tmux/herdr/fcitx5 read them through the current-theme pointer, and
+  # the fcitx5 module selects the generated theme.
+  eval-themes-app-surfaces =
+    testNixOSCheck "themes-app-surfaces"
       (
         cfg:
         let
           hm = cfg.home-manager.users.testuser;
+          e = hm.xdg.configFile."marchyo/current-theme".source.entries;
+          fg = darkTextOf cfg;
+          linksTo =
+            files: f: target:
+            lib.hasInfix "${hm.xdg.configHome}/marchyo/current-theme/${target} " (
+              files.${f}.source.buildCommand or ""
+            );
+          classicui = cfg.i18n.inputMethod.fcitx5.settings.addons.classicui.globalSection;
         in
-        (hm.programs.fzf.colors or { }) != { } && hm.xdg.configFile ? "ghostty/themes/jylhis-dark"
+        lib.hasInfix ''"editor.foreground":"${fg}"'' e."vscode-theme.json".text
+        && lib.hasInfix ''"type":"dark"'' e."vscode-theme.json".text
+        && lib.hasInfix "--text-normal: ${fg};" e."obsidian.css".text
+        && lib.hasInfix ''status-style "fg=${fg},'' e."tmux.conf".text
+        && lib.hasInfix ''"mode":"dark"'' e."slack.json".text
+        && lib.hasInfix "NormalColor=${fg}" e."fcitx5-theme.conf".text
+        && lib.hasInfix ''"foreground":"${fg}"'' e."herdr.json".text
+        && linksTo hm.xdg.configFile "herdr/themes/marchyo.json" "herdr.json"
+        && linksTo hm.xdg.configFile "herdr-app/themes/marchyo.json" "herdr.json"
+        && linksTo hm.xdg.dataFile "fcitx5/themes/marchyo/theme.conf" "fcitx5-theme.conf"
+        && classicui.Theme == "marchyo"
       )
-      (withDarwinTestUser { });
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.tmux.enable = true;
+      });
 
-  eval-themes-darwin-stable-buildtime-colors =
-    testDarwinCheckFor "x86_64-darwin" "themes-darwin-stable-buildtime-colors"
-      (cfg: (cfg.home-manager.users.testuser.programs.fzf.colors or { }) != { })
-      (withDarwinTestUser { });
+  # Light build: the same surfaces take the light polarity.
+  eval-themes-app-surfaces-light =
+    testNixOSCheck "themes-app-surfaces-light"
+      (
+        cfg:
+        let
+          e = cfg.home-manager.users.testuser.xdg.configFile."marchyo/current-theme".source.entries;
+        in
+        lib.hasInfix ''"type":"light"'' e."vscode-theme.json".text
+        && lib.hasInfix ''"mode":"light"'' e."slack.json".text
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.theme.variant = "light";
+      });
+
+  # Build check (`just check` only evaluates it): a catalog scheme dir
+  # (mkSchemeThemeDir) and an inline theme dir carry every application surface,
+  # byte-identical to the generators the CLI ports (the parity fixture slots
+  # for the inline dir).
+  build-themes-app-surfaces =
+    let
+      gen = import ../../lib/theme-generators.nix { inherit lib; };
+      fixture = builtins.fromJSON (
+        builtins.readFile ../../packages/marchyo-cli/packages/core/tests/fixtures/theme-parity.json
+      );
+      cfg =
+        (lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            (withTestUser {
+              marchyo.desktop.enable = true;
+              marchyo.theme.themes = [
+                "jylhis-dark"
+                "nord"
+                {
+                  name = "inline";
+                  variant = "dark";
+                  slots = fixture.base16;
+                }
+              ];
+            })
+          ];
+        }).config;
+      manifest =
+        pkgs.writeText "themes-manifest.json"
+          cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
+      files = builtins.attrNames (gen.appSurfaceTexts "dark" fixture.base16);
+    in
+    pkgs.runCommand "check-themes-app-surfaces" { nativeBuildInputs = [ pkgs.jq ]; } ''
+      ndir=$(jq -r '.themes[] | select(.name == "nord") | .dir' ${manifest})
+      idir=$(jq -r '.themes[] | select(.name == "inline") | .dir' ${manifest})
+      ${lib.concatMapStrings (f: ''
+        test -f "$ndir/${f}" || { echo "FAIL: nord dir lacks ${f}"; exit 1; }
+        cmp ${pkgs.writeText "expected-${f}" fixture.expected.surfaces.${f}} "$idir/${f}" \
+          || { echo "FAIL: inline dir ${f} differs from the generator"; exit 1; }
+      '') files}
+      grep -q '"editor.background":"#2e3440"' "$ndir/vscode-theme.json" \
+        || { echo "FAIL: nord vscode theme not on base00"; exit 1; }
+      grep -q 'status-style "fg=#e5e9f0,bg=#3b4252"' "$ndir/tmux.conf" \
+        || { echo "FAIL: nord tmux.conf not on base05/base01"; exit 1; }
+      touch "$out"
+    '';
+
+  # Terminal and editor surfaces: the dark build dir carries every file (foot
+  # without `#`), the placeholder templates, the preview card and the
+  # wallpapers dir; btop reads its theme through the current-theme pointer.
+  # No Chrome policy pins a colour, so Chrome follows the portal colour scheme.
+  eval-themes-editor-surfaces =
+    testNixOSCheck "themes-editor-surfaces"
+      (
+        cfg:
+        let
+          hm = cfg.home-manager.users.testuser;
+          e = hm.xdg.configFile."marchyo/current-theme".source.entries;
+          bg = darkBgOf cfg;
+          bare = lib.removePrefix "#" bg;
+        in
+        lib.hasInfix ''theme[main_bg]="${bg}"'' e."btop.theme".text
+        && lib.hasInfix "background ${bg}" e."kitty.conf".text
+        && lib.hasInfix "background=${bare}" e."foot-theme.ini".text
+        && !(lib.hasInfix "#" e."foot-theme.ini".text)
+        && lib.hasInfix ''background = "${bg}"'' e."alacritty-theme.toml".text
+        && lib.hasInfix ''base00 = "${bg}"'' e."helix-theme.toml".text
+        && lib.hasInfix ''base00 = "${bg}"'' e."nvim-theme.lua".text
+        && lib.hasInfix ''(bg "${bg}")'' e."emacs-theme.el".text
+        && lib.hasInfix "{{token:bg}}" e."templates/kitty.conf".text
+        && lib.hasInfix "background={{bare:bg}}" e."templates/foot-theme.ini".text
+        && lib.all (f: e ? "templates/${f}") [
+          "btop.theme"
+          "alacritty-theme.toml"
+          "helix-theme.toml"
+          "nvim-theme.lua"
+          "emacs-theme.el"
+        ]
+        && e ? "preview.png"
+        && e ? wallpapers
+        && hm.programs.btop.settings.color_theme == "marchyo"
+        && hm.xdg.configFile ? "btop/themes/marchyo.theme"
+        && !(cfg.environment.etc ? "opt/chrome/policies/managed/extra.json")
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
+  # marchyo.theme.appearance.gaps: off keeps the zero-gap grid, on gives the
+  # gapped layout; the declarative value and the icon theme reach appearance.json.
+  eval-themes-appearance-gaps =
+    let
+      hmFor =
+        extra:
+        (lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            (withTestUser (lib.recursiveUpdate { marchyo.desktop.enable = true; } extra))
+          ];
+        }).config.home-manager.users.testuser;
+      off = hmFor { };
+      on = hmFor { marchyo.theme.appearance.gaps = true; };
+      json = hm: builtins.fromJSON hm.xdg.configFile."marchyo/appearance.json".text;
+      gapsIn = hm: hm.wayland.windowManager.hyprland.settings.config.general.gaps_in;
+      gapsOut = hm: hm.wayland.windowManager.hyprland.settings.config.general.gaps_out;
+    in
+    pkgs.writeText "eval-themes-appearance-gaps" (
+      if
+        gapsIn off == 0
+        && gapsOut off == 0
+        && !(json off).gaps
+        && gapsIn on == 5
+        && gapsOut on == 10
+        && (json on).gaps
+        && (json off).iconTheme == "Adwaita"
+        && lib.hasPrefix "Fira Sans " (json off).fontName
+      then
+        "pass"
+      else
+        throw "FAIL: marchyo.theme.appearance.gaps does not drive the hyprland gaps and appearance.json"
+    );
+
+  # marchyo.theme.themes.[].wallpapers: the files appear under wallpapers/ of
+  # the theme dir (named by their own file name) beside the default wallpaper.png,
+  # and every dir carries a rendered 480x270 preview.png.
+  build-themes-wallpapers-preview =
+    let
+      extra = pkgs.writeText "extra-wall.png" "not-a-real-png";
+      fixture = builtins.fromJSON (
+        builtins.readFile ../../packages/marchyo-cli/packages/core/tests/fixtures/theme-parity.json
+      );
+      cfg =
+        (lib.nixosSystem {
+          inherit (pkgs.stdenv.hostPlatform) system;
+          modules = [
+            nixosModules
+            (withTestUser {
+              marchyo.desktop.enable = true;
+              marchyo.theme.themes = [
+                "jylhis-dark"
+                "nord"
+                {
+                  name = "inline";
+                  variant = "light";
+                  slots = fixture.base16;
+                  wallpapers = [ "${extra}" ];
+                }
+              ];
+            })
+          ];
+        }).config;
+      manifest =
+        pkgs.writeText "themes-manifest.json"
+          cfg.home-manager.users.testuser.xdg.dataFile."marchyo/themes/manifest.json".text;
+    in
+    pkgs.runCommand "check-themes-wallpapers-preview"
+      {
+        nativeBuildInputs = [
+          pkgs.jq
+          pkgs.file
+        ];
+      }
+      ''
+        for name in jylhis-dark nord inline; do
+          d=$(jq -r --arg n "$name" '.themes[] | select(.name == $n) | .dir' ${manifest})
+          test -d "$d/wallpapers" || { echo "FAIL: $name has no wallpapers dir"; exit 1; }
+          file -L "$d/preview.png" | grep -q 'PNG image data, 480 x 270' \
+            || { echo "FAIL: $name preview.png is not a 480x270 PNG"; exit 1; }
+        done
+        d=$(jq -r '.themes[] | select(.name == "inline") | .dir' ${manifest})
+        test -e "$d/wallpapers/extra-wall.png" \
+          || { echo "FAIL: inline wallpapers dir lacks extra-wall.png"; exit 1; }
+        d=$(jq -r '.themes[] | select(.name == "jylhis-dark") | .dir' ${manifest})
+        for k in dots bands contour; do
+          test -e "$d/wallpapers/jylhis-$k-dark.png" \
+            || { echo "FAIL: jylhis-dark wallpapers lacks $k"; exit 1; }
+        done
+        test -e "$d/wallpaper.png" || { echo "FAIL: jylhis-dark lost wallpaper.png"; exit 1; }
+        touch "$out"
+      '';
 }

@@ -24,6 +24,13 @@ export const StateSchema = z
         // base16-schemes name (maps to marchyo.theme.scheme); absent when
         // a Jylhis variant is selected.
         scheme: z.string().optional(),
+        // Maps to marchyo.theme.appearance.{gaps,reduceMotion}.
+        appearance: z
+          .object({
+            gaps: z.boolean().optional(),
+            reduceMotion: z.boolean().optional(),
+          })
+          .optional(),
       })
       .optional(),
     graphics: z
@@ -81,6 +88,10 @@ export const StateSchema = z
                 version: z.string().optional(),
                 // Launcher query prefix, set for plugins of kind "launcher".
                 prefix: z.string().optional(),
+                keepLoaded: z.boolean().optional(),
+                replaces: z.array(z.string()).optional(),
+                barWidget: z.record(z.string(), z.unknown()).optional(),
+                siblings: z.array(z.record(z.string(), z.unknown())).optional(),
               })
               .strict(),
           )
@@ -137,6 +148,12 @@ export function mergeState(prev: State, patch: State): State {
   const merged: State = { ...prev, ...patch };
   if (prev.theme || patch.theme) {
     merged.theme = { ...prev.theme, ...patch.theme };
+    if (prev.theme?.appearance || patch.theme?.appearance) {
+      merged.theme.appearance = {
+        ...prev.theme?.appearance,
+        ...patch.theme?.appearance,
+      };
+    }
   }
   if (prev.graphics || patch.graphics) {
     merged.graphics = { ...prev.graphics, ...patch.graphics };

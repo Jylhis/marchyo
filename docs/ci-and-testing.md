@@ -7,7 +7,6 @@
 just check               # Lint + eval checks (nix flake check, statix, deadnix)
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
 just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
-just build-darwin        # Build reference nix-darwin configuration
 just build-nix-on-droid  # Build reference Android config (uses --impure; nix-on-droid needs builtins.storePath)
 just update              # Update all inputs: flake.lock -> devenv.lock
 just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
@@ -24,7 +23,7 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available test
 devenv shell             # Enter development shell (no experimental features needed)
 ```
 
-There is no way to run a single test in isolation; `nix flake check` runs them all: fast evaluation-only checks, plus a handful of small `runCommand` checks (the `build-plymouth-theme-{dark,light}` theme builds, the shell JS/contract suites, and the `site-option-paths` guard).
+There is no way to run a single test in isolation; `nix flake check` runs them all: fast evaluation-only checks, plus a handful of small `runCommand` checks (the `build-plymouth-theme-{dark,light}` theme builds, the shell JS/contract suites).
 
 ## Testing
 
@@ -32,7 +31,7 @@ Tests in `tests/` are fast evaluation-based checks (no builds required). Two cat
 - **Module tests** (`tests/eval/*.nix`, auto-discovered): verify NixOS configs evaluate without errors for various feature combinations (minimal/feature-flags, themes, keyboard, graphics, defaults, hyprland config check).
 - **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
 
-A few `outputs.nix` `mkChecks` entries are not eval-only. The `build-plymouth-theme-{dark,light}` checks (Linux only) build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`. The `site-option-paths` check guards `site/src/pages/search.astro`'s hand-maintained option table against drift from the options tree.
+A few `outputs.nix` `mkChecks` entries are not eval-only. The `build-plymouth-theme-{dark,light}` checks (Linux only) build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`.
 
 ### Quickshell shell tests (`tests/shell/`, Linux only)
 
@@ -41,7 +40,7 @@ The QML tree in `shell/` gets two headless suites, wired into `mkChecks` alongsi
 - **`shell-format-unit`** — runs the pure-JS suites over `shell/Commons/*.js`: `format-test.js`, `notify-test.js`, `launcher-test.js`, and `peripherals-test.js`. Each `Commons/*.js` is a plain module with a CommonJS guard so QML imports it unchanged while Node can load it.
 - **`shell-contracts`** — `bash tests/shell/contracts-test.sh`, static cross-file agreements that QML only resolves at runtime: qmldir completeness, `Bar/` widgets owning no `Process`/`Timer`/`Connections` (they are instantiated once per monitor), every `Services/` component being a singleton, every `Config.<tool>` being baked by `packages/marchyo-shell/package.nix`, and every shell IPC function name resolving to a function in `shell.qml`: each `shellIpc("<fn>")` call in the CLI sources (`modules/home/` reaches the shell only through `marchyo shell` verbs).
 
-Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them. Background and rationale: [`TODO.md`](../TODO.md).
+Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them.
 
 All changes must pass `just check` (or `nix flake check`).
 
@@ -56,7 +55,7 @@ All changes must pass `just check` (or `nix flake check`).
 
 `.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
 1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
-2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. `x86_64-darwin` is intentionally omitted — Nixpkgs 26.05 is the last release to support it and `aarch64-darwin` covers evaluation equivalently.
+2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux` and `aarch64-linux`.
 3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.

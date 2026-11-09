@@ -6,5 +6,5 @@ import qs.Commons
 Rectangle {
     implicitWidth: 1
     implicitHeight: Math.round(Style.barHeight * 0.5)
-    color: Color.border
+    color: Colors.border
 }

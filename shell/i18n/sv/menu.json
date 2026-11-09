@@ -1,0 +1,22 @@
+{
+  "menu.network": "Nätverk",
+  "menu.speedTest": "Hastighetstest",
+  "menu.lock": "Lås",
+  "menu.suspend": "Viloläge",
+  "menu.hibernate": "Dvala",
+  "menu.reboot": "Starta om",
+  "menu.shutdown": "Stäng av",
+  "menu.style": "Stil",
+  "menu.theme": "Tema",
+  "menu.background": "Bakgrund",
+  "menu.font": "Typsnitt",
+  "menu.setup": "Installation",
+  "menu.audio": "Ljud",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Utlös",
+  "menu.appearance": "Utseende",
+  "menu.system": "System",
+  "menu.learn": "Lär",
+  "menu.screenshot": "Skärmbild",
+  "menu.share": "Dela"
+}

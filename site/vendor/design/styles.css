@@ -1,0 +1,11 @@
+/*
+ * styles.css — Jylhis Design System entry point.
+ * Import this one file to get everything: tokens, fonts, type helpers,
+ * bare HTML elements and the components.
+ */
+
+@import url("colors_and_type.css");
+@import url("elements.css");
+@import url("density.css");
+@import url("motion.css");
+@import url("components/components.css");

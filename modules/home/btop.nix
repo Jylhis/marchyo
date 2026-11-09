@@ -1,11 +1,25 @@
 {
+  config,
   lib,
+  pkgs,
+  osConfig ? { },
   ...
 }:
 let
-  inherit (lib) mkMerge;
+  inherit (lib) mkIf mkMerge;
+
+  # The theme dir's btop.theme is reached through the current-theme pointer
+  # (theme-runtime.nix), so a runtime theme switch needs no relink.
+  themed =
+    pkgs.stdenv.hostPlatform.isLinux
+    && ((osConfig.marchyo or { }).desktop.enable or false)
+    && ((osConfig.marchyo or { }).theme.enable or true);
 in
 {
+  xdg.configFile."btop/themes/marchyo.theme" = mkIf themed {
+    source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/marchyo/current-theme/btop.theme";
+  };
+
   programs.btop = {
     enable = true;
     settings = mkMerge [
@@ -84,6 +98,7 @@ in
         custom_gpu_name4 = "";
         custom_gpu_name5 = "";
       }
+      (mkIf themed { color_theme = "marchyo"; })
     ];
   };
 }

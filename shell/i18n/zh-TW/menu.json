@@ -1,0 +1,22 @@
+{
+  "menu.network": "網路",
+  "menu.speedTest": "測速",
+  "menu.lock": "鎖定",
+  "menu.suspend": "睡眠",
+  "menu.hibernate": "休眠",
+  "menu.reboot": "重新開機",
+  "menu.shutdown": "關機",
+  "menu.style": "風格",
+  "menu.theme": "主題",
+  "menu.background": "背景",
+  "menu.font": "字型",
+  "menu.setup": "設定",
+  "menu.audio": "音訊",
+  "menu.bluetooth": "藍牙",
+  "menu.trigger": "觸發",
+  "menu.appearance": "外觀",
+  "menu.system": "系統",
+  "menu.learn": "學習",
+  "menu.screenshot": "螢幕截圖",
+  "menu.share": "分享"
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "example.panel",
+  "name": "Example panel",
+  "version": "1.0.0",
+  "kinds": ["panel", "menu"],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "Panel.qml",
+    "menu": "Menu.qml"
+  }
+}

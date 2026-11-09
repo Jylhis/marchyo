@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Logget inn på %1.",
+  "launch.notFoundInPath": "%1 ikke funnet i PATH",
+  "utilities.reminder": "Påminnelse",
+  "utilities.battery": "Batteri %1%",
+  "utilities.battery2": "Batteri",
+  "utilities.transcode": "Omkod",
+  "utilities.share": "Del",
+  "toggles.enabled": "Aktivert",
+  "toggles.suspend": "Hvile"
+}

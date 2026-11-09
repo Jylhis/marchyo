@@ -1,0 +1,22 @@
+{
+  "menu.network": "Sieť",
+  "menu.speedTest": "Test rýchlosti",
+  "menu.lock": "Zamknúť",
+  "menu.suspend": "Uspať",
+  "menu.hibernate": "Hibernácia",
+  "menu.reboot": "Reštartovať",
+  "menu.shutdown": "Vypnúť",
+  "menu.style": "Štýl",
+  "menu.theme": "Téma",
+  "menu.background": "Pozadie",
+  "menu.font": "Písmo",
+  "menu.setup": "Nastavenie",
+  "menu.audio": "Zvuk",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Akcie",
+  "menu.appearance": "Vzhľad",
+  "menu.system": "Systém",
+  "menu.learn": "Učiť sa",
+  "menu.screenshot": "Snímka obrazovky",
+  "menu.share": "Zdieľať"
+}

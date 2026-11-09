@@ -5,8 +5,6 @@
   ...
 }:
 let
-  # Guarded with option checks because nix-darwin has no
-  # programs.bash.shellAliases.
   baseAliases = {
     ls = "eza -lh --group-directories-first --icons=auto";
     lsa = "ls -a";
@@ -24,7 +22,7 @@ let
     gcad = "git commit -a --amend";
   };
   # Copy-on-write (reflink) where the filesystem supports it; `=auto` falls
-  # back to a full copy elsewhere. GNU coreutils only; macOS ships BSD cp.
+  # back to a full copy elsewhere. GNU coreutils only.
   cpAlias = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     cp = "cp --reflink=auto";
   };

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "example.spacer",
+  "name": "Spacer",
+  "version": "1.0.0",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Spacer.qml"
+  },
+  "barWidget": {
+    "displayName": "Spacer",
+    "allowMultiple": true,
+    "defaultSection": "left"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "menu.network": "Network",
+  "menu.speedTest": "Test ng Bilis",
+  "menu.lock": "I-lock",
+  "menu.suspend": "I-suspend",
+  "menu.hibernate": "Hibernate",
+  "menu.reboot": "I-reboot",
+  "menu.shutdown": "I-shutdown",
+  "menu.style": "Estilo",
+  "menu.theme": "Tema",
+  "menu.background": "Background",
+  "menu.font": "Font",
+  "menu.setup": "Pag-setup",
+  "menu.audio": "Audio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Mag-trigger",
+  "menu.appearance": "Hitsura",
+  "menu.system": "Sistema",
+  "menu.learn": "Matuto",
+  "menu.screenshot": "Screenshot",
+  "menu.share": "Ibahagi"
+}

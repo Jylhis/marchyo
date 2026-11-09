@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Wayland
 import qs.Commons
 import qs.Services
+import "../Commons/SessionLock.js" as SessionLock
 
 // The lock surface: a compositor-level ext-session-lock-v1 lock with in-process
 // PAM auth (Services/Lock owns the state machine). Instantiated exactly once, as
@@ -16,7 +17,34 @@ import qs.Services
 WlSessionLock {
     id: lockRoot
 
-    locked: Lock.locked
+    // Latched request: raised once Lock.locked is set AND a real output is
+    // stable (Lock.screensReady), dropped only by a real unlock. A later
+    // hotplug must never release a held lock, so screensReady going false
+    // while requested changes nothing. Imperative rather than a binding so
+    // the latch cannot read its own value.
+    property bool requested: false
+    locked: requested
+
+    function syncRequest() {
+        if (!Lock.locked)
+            lockRoot.requested = false;
+        else if (Lock.screensReady)
+            lockRoot.requested = true;
+    }
+
+    Component.onCompleted: syncRequest()
+
+    readonly property var requestWatch: Connections {
+        target: Lock
+
+        function onLockedChanged() {
+            lockRoot.syncRequest();
+        }
+
+        function onScreensReadyChanged() {
+            lockRoot.syncRequest();
+        }
+    }
 
     // Gate on `secure`, not `locked`: only once the compositor confirms every
     // screen is covered is it safe to start the PAM conversation and focus
@@ -33,21 +61,28 @@ WlSessionLock {
 
         // The output that owns the interactive card. Every output stays locked
         // (protocol), but only one shows the password field.
-        readonly property bool isFocused: Lock.focusScreen.length === 0 || surface.screen.name === Lock.focusScreen
+        // `screen` is null while the surface's output is being replaced.
+        readonly property string screenName: surface.screen ? surface.screen.name : ""
+        readonly property bool isFocused: Lock.focusScreen.length === 0 || surface.screenName === Lock.focusScreen
 
         // Opaque by construction: the surface color is what the compositor shows
         // if the QML scene fails, never bind a translucent value.
-        color: Color.bg
+        color: Colors.bg
 
         // Shake geometry for a rejected password (local: lock-only, not themed).
         readonly property int shakeDistance: Style.fontSize
-        readonly property int shakeStep: Math.max(1, Math.round(Style.animationDuration / 3))
+        readonly property int shakeStep: Math.max(1, Math.round(Style.duration(Style.motionFast) / 3))
 
         // Move the card to this output and give its field keyboard focus.
         function claimCard() {
-            if (!surface.isFocused)
-                Lock.focusScreen = surface.screen.name;
+            if (!surface.isFocused && surface.screenName.length > 0)
+                Lock.focusScreen = surface.screenName;
             input.forceActiveFocus();
+        }
+
+        function ignoreRepeat(event): bool {
+            const editing = event.key === Qt.Key_Backspace || event.key === Qt.Key_Delete;
+            return SessionLock.ignoreRepeat(event.isAutoRepeat, editing);
         }
 
         // Pointer absorption: every button, hover, wheel and pinch on this
@@ -73,7 +108,7 @@ WlSessionLock {
             id: backdrop
 
             anchors.fill: parent
-            color: Color.bg
+            color: Colors.bg
 
             // Keyboard absorption: keys the field does not consume (Tab,
             // Escape, function keys) and every key on an output without the
@@ -84,6 +119,8 @@ WlSessionLock {
             focus: true
             Keys.onPressed: event => {
                 event.accepted = true;
+                if (surface.ignoreRepeat(event))
+                    return;
                 const moved = !surface.isFocused;
                 surface.claimCard();
                 const printable = event.text.length > 0 && event.text.charCodeAt(0) >= 32 && (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0;
@@ -101,7 +138,7 @@ WlSessionLock {
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatDateTime(Clock.date, "HH:mm")
-                    color: Color.text
+                    color: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize * 4
                 }
@@ -109,7 +146,7 @@ WlSessionLock {
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: Qt.formatDateTime(Clock.date, "ddd d MMMM yyyy")
-                    color: Color.textMuted
+                    color: Colors.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                 }
@@ -121,7 +158,7 @@ WlSessionLock {
                     anchors.horizontalCenter: parent.horizontalCenter
                     visible: surface.isFocused && text.length > 0
                     text: Lock.failed ? Lock.failureText : Lock.message
-                    color: Lock.failed || Lock.messageIsError ? Color.statusErr : Color.textMuted
+                    color: Lock.failed || Lock.messageIsError ? Colors.statusErr : Colors.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }
@@ -133,10 +170,10 @@ WlSessionLock {
                     visible: surface.isFocused
                     width: Style.fontSize * 24
                     height: Style.fontSize * 2.5
-                    color: Color.surface
+                    color: Colors.surface
                     radius: 0
                     border.width: 2
-                    border.color: Lock.failed || Lock.messageIsError ? Color.statusErr : Color.borderStrong
+                    border.color: Lock.failed || Lock.messageIsError ? Colors.statusErr : Colors.borderStrong
 
                     // Shake offset: a Translate leaves the Column's anchoring
                     // intact. Driven only by the explicit animation below (no
@@ -185,8 +222,8 @@ WlSessionLock {
                         anchors.margins: Style.paddingH * 2
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
-                        color: Color.text
-                        selectionColor: Color.accent
+                        color: Lock.maskInput ? "transparent" : Colors.text
+                        selectionColor: Colors.accent
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSize
                         echoMode: Lock.maskInput ? TextInput.Password : TextInput.Normal
@@ -195,6 +232,16 @@ WlSessionLock {
                         // the field.
                         readOnly: Lock.busy
                         opacity: readOnly ? 0.6 : 1
+                        Keys.onPressed: event => {
+                            const control = (event.modifiers & Qt.ControlModifier) !== 0;
+                            const escape = event.key === Qt.Key_Escape;
+                            if (surface.ignoreRepeat(event)) {
+                                event.accepted = true;
+                            } else if (escape || (event.key === Qt.Key_U && control)) {
+                                input.clear();
+                                event.accepted = true;
+                            }
+                        }
 
                         // Focus always returns to the field on the card's
                         // output (deferred so a focus hand-off in flight
@@ -214,10 +261,22 @@ WlSessionLock {
                     }
 
                     Text {
+                        anchors.fill: input
+                        visible: Lock.maskInput && !Lock.busy
+                        text: "●".repeat(input.text.length)
+                        color: Colors.text
+                        verticalAlignment: Text.AlignVCenter
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.fontSize
+                        minimumPixelSize: 1
+                        fontSizeMode: Text.HorizontalFit
+                    }
+
+                    Text {
                         anchors.centerIn: parent
-                        visible: input.text.length === 0 && !input.readOnly
-                        text: "Password"
-                        color: Color.textFaint
+                        visible: input.text.length === 0 || Lock.busy
+                        text: I18n.t(Lock.busy ? "polkit.checking" : "polkit.password")
+                        color: Colors.textFaint
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSize
                     }

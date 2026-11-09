@@ -1,0 +1,22 @@
+{
+  "menu.network": "ජාලය",
+  "menu.speedTest": "වේග පරීක්ෂණය",
+  "menu.lock": "අගුලු දාන්න",
+  "menu.suspend": "අත්හිටුවන්න",
+  "menu.hibernate": "ශිශිරතරණය",
+  "menu.reboot": "නැවත අරඹන්න",
+  "menu.shutdown": "වසන්න",
+  "menu.style": "විලාසය",
+  "menu.theme": "තේමාව",
+  "menu.background": "පසුබිම",
+  "menu.font": "ෆොන්ටය",
+  "menu.setup": "සැකසුම",
+  "menu.audio": "ශ්‍රව්‍ය",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "ක්‍රියාත්මක",
+  "menu.appearance": "පෙනුම",
+  "menu.system": "පද්ධතිය",
+  "menu.learn": "ඉගෙන ගන්න",
+  "menu.screenshot": "තිර රුව",
+  "menu.share": "බෙදාගන්න"
+}

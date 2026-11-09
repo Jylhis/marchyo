@@ -1,6 +1,18 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (lib) mkOption types;
+  # Guests usually render on the CPU (llvmpipe), where animation and blur cost every frame.
+  isGuest =
+    config.services.qemuGuest.enable
+    || config.services.spice-vdagentd.enable
+    || config.virtualisation.vmware.guest.enable
+    || config.virtualisation.virtualbox.guest.enable
+    || config.virtualisation.hypervGuest.enable;
 in
 {
   options.marchyo.theme = {
@@ -19,7 +31,7 @@ in
       example = "light";
       description = ''
         Theme variant preference (light or dark).
-        Selects the Jylhis Design System palette derived from themes/jylhis.json:
+        Selects the Jylhis Design System palette derived from the lib/design tokens:
         - "dark" uses Jylhis Dark (the "Negative" mode)
         - "light" uses Jylhis Light (the "Print" mode)
         Override with `marchyo.theme.scheme` to use a scheme from the
@@ -51,7 +63,7 @@ in
                   strings. This is the universal palette contract: an omarchy
                   `colors.toml` or a matugen-generated palette both map onto it,
                   and every runtime surface (the shell's colors.json, ghostty,
-                  Hyprland borders, mako, waybar, GTK) is derived from these.
+                  Hyprland borders, GTK) is derived from these.
                 '';
               };
               wallpaper = mkOption {
@@ -60,6 +72,15 @@ in
                 description = ''
                   Wallpaper for this theme. Defaults to the Jylhis grid of
                   matching polarity when unset.
+                '';
+              };
+              wallpapers = mkOption {
+                type = types.listOf types.path;
+                default = [ ];
+                description = ''
+                  Further wallpapers of this theme, listed in the theme
+                  directory's `wallpapers/` and offered by `marchyo bg list`
+                  while the theme is active. `wallpaper` stays the default.
                 '';
               };
             };
@@ -86,7 +107,7 @@ in
         - `"jylhis-dark"` / `"jylhis-light"` — the Jylhis Design System variants;
         - any other string — the name of a `.yaml` in the tinted-schemes
           catalog's `base16/` directory (e.g. `"nord"`, `"gruvbox-dark-hard"`);
-        - an inline base16 theme `{ name; variant; slots; wallpaper?; }` — the
+        - an inline base16 theme `{ name; variant; slots; wallpaper?; wallpapers?; }` — the
           catalog machinery, so an arbitrary palette (an omarchy theme, a
           matugen result, your own) can be added without shipping it upstream.
 
@@ -127,7 +148,7 @@ in
       example = 1.0;
       description = ''
         Global font-size multiplier applied system-wide. Scales every text
-        surface (the GTK/Qt interface fonts, the terminal, waybar,
+        surface (the GTK/Qt interface fonts, the terminal, the bar,
         notifications, the lock screen, the launcher, GTK apps and the
         TTY console) from a single number. 1.0 restores the historical sizes;
         values above 1.0 make everything larger for HiDPI/accessibility.
@@ -136,12 +157,13 @@ in
 
     # Shell appearance scale axes, independent of the palette. Affect only the
     # Quickshell shell (marchyo.shell); neutral defaults reproduce the strip-bar
-    # look. The style axes below (floatingBar, surfaceAlpha) are Caelestia-
-    # inspired and deliberately non-neutral by default.
+    # look. Of the style axes below, floatingBar defaults off (the flush strip
+    # fits the gapless tmux-style grid); surfaceAlpha is Caelestia-inspired
+    # and deliberately non-neutral by default.
     appearance = {
       floatingBar = mkOption {
         type = types.bool;
-        default = true;
+        default = false;
         description = ''
           Float the bar as a detached rounded pill with gaps to the screen
           edges, instead of the full-width strip. Also lifts panels, toasts,
@@ -189,6 +211,79 @@ in
         description = ''
           Shell animation speed multiplier. Higher is faster (durations shrink);
           the shell exposes the resulting duration as Style.animationDuration.
+        '';
+      };
+
+      reduceMotion = mkOption {
+        type = types.bool;
+        default = isGuest;
+        defaultText = lib.literalExpression "true when a VM guest service is enabled";
+        example = true;
+        description = ''
+          Draw nothing just for show: turns off Hyprland animations, blur and
+          shadows, makes windows opaque, and sets the shell's animation
+          duration to 0. Defaults to on in a VM guest (QEMU guest agent, SPICE,
+          VMware, VirtualBox or Hyper-V guest services), where rendering runs
+          on the CPU.
+        '';
+      };
+
+      transparency = mkOption {
+        type = types.enum [
+          "opaque"
+          "transparent"
+          "glassy"
+        ];
+        default = "opaque";
+        example = "glassy";
+        description = ''
+          How see-through windows are. `opaque` keeps app windows solid.
+          `transparent` makes them translucent. `glassy` also blurs what is
+          behind windows and the shell's layer surfaces (the glass bar);
+          the bar's own translucency follows `surfaceAlpha`. `reduceMotion`
+          overrides this and keeps windows opaque. Switch live with
+          `marchyo theme transparency`.
+        '';
+      };
+
+      corners = mkOption {
+        type = types.enum [
+          "theme"
+          "sharp"
+          "rounded"
+        ];
+        default = "theme";
+        example = "rounded";
+        description = ''
+          Window corners. `theme` keeps the flat, square panes of the tmux-style
+          grid. `sharp` forces square corners. `rounded` rounds window corners.
+          Switch live with `marchyo theme corners`.
+        '';
+      };
+
+      animations = mkOption {
+        type = types.enum [
+          "auto"
+          "on"
+          "off"
+        ];
+        default = "auto";
+        example = "off";
+        description = ''
+          Hyprland animations. `auto` keeps the default (on with the shell,
+          off otherwise or with `reduceMotion`) and turns animations off at
+          session start when `systemd-detect-virt -q` reports a VM. `on` and
+          `off` force the state. Switch live with `marchyo toggle animations`.
+        '';
+      };
+
+      gaps = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Space between tiled windows and the screen edge (5 px between
+          windows, 10 px outside). Off keeps the gapless tmux-style grid.
+          Switch live with `marchyo theme gaps`.
         '';
       };
 

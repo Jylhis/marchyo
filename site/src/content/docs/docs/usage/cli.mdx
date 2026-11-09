@@ -3,13 +3,13 @@ title: The marchyo CLI
 description: One control surface for the whole desktop — runtime toggles, theme switching, capture, session helpers, and declarative system management
 ---
 
-Every marchyo system ships the `marchyo` CLI (`marchyo.cli.enable`, default `true`). It is the single control surface for the desktop: the Hyprland keybindings, waybar click actions, and menus all dispatch through it, and you can drive the same actions from any terminal.
+Every marchyo system ships the `marchyo` CLI (`marchyo.cli.enable`, default `true`). It is the single control surface for the desktop: the Hyprland keybindings, the shell bar, and menus all dispatch through it, and you can drive the same actions from any terminal.
 
 ## The change model: runtime-first
 
 Every *mutating* desktop command follows one three-mode contract:
 
-- **default = runtime** — the change applies live (hyprctl, systemd user units, symlink swaps) and is recorded as an ephemeral override in `~/.local/state/marchyo/runtime.json`. Instant, no rebuild. Overrides survive compositor restarts (`marchyo runtime restore` runs as a Hyprland `exec-once`) but reset on the next `nixos-rebuild` activation.
+- **default = runtime** — the change applies live (hyprctl, systemd user units, symlink swaps) and is recorded as an ephemeral override in `~/.local/state/marchyo/runtime.json`. Instant, no rebuild. Overrides survive compositor restarts and home-manager activations: `marchyo runtime restore` replays them (theme first, then wallpaper, fonts, appearance and toggles) from a Hyprland `exec-once` and after every activation, and never fails the activation. `--apply` or `--revert` drops an override.
 - **`--apply`** — additionally persists the change to `/etc/marchyo/cli-state.json` and runs `nixos-rebuild switch`. Survives reboot; hand-written flake configuration still wins (the sidecar merges at `lib.mkDefault` priority).
 - **`--revert`** — undoes: drops the runtime override, restores the declarative value live, and deletes + rebuilds any persisted key.
 
@@ -37,7 +37,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 |---------|---------|
 | `marchyo status` | Dashboard of current config + system info |
 | `marchyo rebuild [-n]` | `nixos-rebuild switch --impure --flake` against the detected flake |
-| `marchyo update [-n]` | `nix flake update` in the detected flake |
+| `marchyo update [-n] [--check]` | `nix flake update` in the detected flake; `--check` only reports whether the lock pins a newer nixpkgs than the running system |
 | `marchyo upgrade [-n]` | Update inputs, then rebuild |
 | `marchyo rollback [-n]` | Switch to the previous generation |
 | `marchyo gc [--delete-older-than 14d]` | Collect Nix garbage |
@@ -53,20 +53,31 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 | `marchyo theme get` | Active theme |
 | `marchyo theme set <name> [--apply\|--revert]` | Live switch (`dark`/`light` alias the Jylhis pair) |
 | `marchyo theme next` | Cycle the manifest |
-| `marchyo bg set <path>` / `bg next` | Wallpaper set / cycle (runtime-only) |
+| `marchyo theme gaps [on\|off] [--apply\|--revert]` | Window gaps; `--apply` persists `marchyo.theme.appearance.gaps` |
+| `marchyo theme transparency\|corners [mode] [--revert]` | Window transparency and corners (runtime-only) |
+| `marchyo theme bar-position [top\|bottom]` / `theme bar-background [opaque\|glassy\|clear]` | Shell bar placement and background (runtime-only, written to the shell style file) |
+| `marchyo bar put <id> <section> [--at N]` / `move <id> left\|right [n]` / `remove <id>` / `set <section> [ids...]` | Edit the shell bar layout live (sections: `left`, `centerBegin`, `center`, `centerEnd`, `right`); recorded in `bar-layout.json` and replayed by `runtime restore` |
+| `marchyo bar list` / `bar reset` | Show the recorded edits / drop them |
+| `marchyo bar background [mode]` / `bar position [pos]` | Same as `theme bar-background` / `theme bar-position` |
+| `marchyo theme icons [name] [--revert]` | List installed icon themes, or set one live (dconf); `--revert` restores `gtk.iconTheme` |
+| `marchyo bg set <path>` / `bg next` | Wallpaper set / cycle through `bg list` (runtime-only) |
+| `marchyo bg list [--format json]` | Selectable wallpapers: the active theme's own, the wallpaper package's and `~/Pictures/Wallpapers`, as `[{path, name, source, current}]` |
+
+`theme list --format json` also reports each theme's `preview` (palette card) and `wallpaper` paths when its directory ships them. Shell-side style (reduce motion, UI font, bar position and background) lives in `$XDG_STATE_HOME/marchyo/shell/style.json`, which the shell watches; an absent key means the declarative default.
 
 ### Toggles
 
-`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu` (the last is `--apply`-only — it changes hardware configuration, persisting `marchyo.graphics.prime.enable`). With the shell enabled, `waybar` and `notifications` `--status` read the live bar/DND state over shell IPC (falling back to the recorded runtime override when the shell is not running).
+`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `animations`, `reduce-motion`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu`. `hybrid-gpu` is `--apply`-only: it changes hardware configuration, persisting `marchyo.graphics.prime.enable`. `reduce-motion` also takes `--apply` and persists `marchyo.theme.appearance.reduceMotion`. With the shell enabled, `waybar` and `notifications` `--status` read the live bar/DND state over shell IPC (falling back to the recorded runtime override when the shell is not running).
 
 ### Shell
 
-Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprland binds, hypridle, and the screensaver. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
+Verbs over the running marchyo shell (`marchyo.shell.enable`), used by hypridle, the screensaver, the lock bind and scripts (the other shell binds use Hyprland global shortcuts). Each call goes to the shell's unix socket first and falls back to `qs ipc` when the socket is absent. Each exits `1` with a hint when `marchyo-shell` is not installed or not running, and prints the shell's reply (`--json`: `{"function", "reply"}`).
 
 | Command | Purpose |
 |---------|---------|
 | `marchyo shell toggle\|open <panel>` | Toggle or open a panel (`controlcenter`, `audio`, `network`, `power`, `monitor`, `notifications`, …) |
 | `marchyo shell close [<panel>]` | Close the named panel when it is open, or whichever panel is open |
+| `marchyo shell gallery [section]` | Open the Ui gallery panel (dev): every shell control in every state. Sections: `states`, `buttons`, `inputs`, `choices`, `panel`, `popups`, `dialogs` |
 | `marchyo shell launcher <mode>` | Toggle the launcher in a mode (`apps`, `emoji`, `clipboard`) |
 | `marchyo shell bar [on\|off]` | Toggle or set the top bar |
 | `marchyo shell overview [on\|off]` | Toggle, open (`on`) or close (`off`) the window overview |
@@ -75,6 +86,7 @@ Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprl
 | `marchyo shell bar-state` | Print `on` or `off` (the top bar) |
 | `marchyo shell dnd-state` | Print `on` or `off` (do-not-disturb) |
 | `marchyo shell dismiss [--all]` | Dismiss the newest notification toast (`--all`: every toast) |
+| `marchyo shell notify-keys` | Control the notification toasts from the keyboard |
 | `marchyo shell dnd [on\|off]` | Toggle or set do-not-disturb |
 | `marchyo shell reload` | Reload the shell's QML in place |
 
@@ -85,7 +97,7 @@ Verbs over the running marchyo shell (`marchyo.shell.enable`), used by the Hyprl
 | `marchyo volume up\|down\|mute [--mic]` | Step (5%, capped at 100%) or mute the default sink, or the default source with `--mic` |
 | `marchyo brightness up\|down` | Step the backlight 5% |
 
-With the shell installed these run silent `wpctl` / `brightnessctl` and the shell OSD shows the level (brightness through an `osdShow` IPC poke). Without it they use `swayosd-client` when SwayOSD is installed, else plain `wpctl` / `brightnessctl`.
+With the shell installed these run silent `wpctl` / `brightnessctl` and the shell OSD shows the level (brightness through an `osdShow` IPC poke). Without it they run plain `wpctl` / `brightnessctl`.
 
 ### Capture
 
@@ -100,13 +112,13 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 
 | Command | Purpose |
 |---------|---------|
-| `marchyo menu [power]` | Central system menu / power menu (gum TUIs) |
+| `marchyo menu [power]` | Central system menu / power menu (gum TUIs); **Trigger > Speed test** measures network (`speedtest-go`) or disk (`fio`) speed |
 | `marchyo keybindings` | Searchable live keybinding cheatsheet |
 | `marchyo launch <app>` | Detached launch (`file-manager` opens at the focused terminal's cwd) |
 | `marchyo focus-or-launch <class> [cmd…]` | Focus an existing window or launch |
 | `marchyo zoom in\|out\|reset` | Cursor zoom |
-| `marchyo monitor scale-cycle\|laptop-toggle` | Monitor scale / laptop panel |
-| `marchyo lock` / `logout` / `suspend` / `hibernate` / `reboot` / `shutdown` | Session & power |
+| `marchyo monitor scale-cycle\|laptop-toggle\|clamshell on\|off` | Monitor scale / laptop panel / lid handler |
+| `marchyo lock` / `logout` / `suspend` / `hibernate` / `reboot` / `shutdown` | Session & power. In a Hyprland session, `logout`, `reboot` and `shutdown` run in a transient `systemd-run --user` unit (at most 30 s) that closes every window, waits up to 2 s for the apps to exit, then ends the session (`uwsm stop`) or runs `systemctl reboot\|poweroff --no-wall`; `shutdown` holds a sleep, idle and lid-switch inhibitor meanwhile |
 | `marchyo powerprofile get\|list\|set <p>` | Power profiles |
 
 ### Utilities
@@ -117,7 +129,14 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 | `marchyo info datetime\|battery` | Quick-info notifications |
 | `marchyo transcode [file] [--to mp4\|webm\|gif] [--ascii]` | Media transcode (ffmpeg / tte) |
 | `marchyo share [paths…] [--to <alias\|ip>] [--pin <pin>] [--clipboard]` | Send files, folders or clipboard text to a LocalSend device |
-| `marchyo font list\|current\|set <family> [--revert]` | Runtime terminal-font switch (ghostty) |
+| `marchyo share [paths…] --tailscale <peer>` / `marchyo share --tailscale-receive [dir]` | Send files over Taildrop, or save incoming Taildrop files |
+| `marchyo font list [--kind mono\|ui\|all]` | Installed font families; `--format json` adds `kind` and the `current` mono and UI fonts |
+| `marchyo font set <family> [--kind mono\|ui\|all] [--revert]` | Runtime font switch: `mono` is the ghostty override, `ui` the GTK `font-name` plus the shell font |
+| `marchyo font current` | The active terminal font |
+| `marchyo dev init <lang> [--force]` | Write `devenv.nix`, `devenv.yaml` and `.envrc` for a language (go, rust, python, node, bun, deno, ruby, elixir, java, zig, php, dotnet, ocaml, clojure, scala) |
+| `marchyo dev db <engine>` | Add a devenv database service (postgres, mysql, mariadb, redis, mongodb) to `devenv.nix`; repeating it changes nothing |
+| `marchyo agent usage [--force]` | AI agent usage limits and token totals; refreshes the agents panel data (see [Agent usage](/docs/configuration/feature-flags/#agent-usage)) |
+| `marchyo agent account list\|add\|use\|remove\|rename\|mode\|copy` | Several Claude Code, Codex and Grok accounts (see [Agent accounts](/docs/configuration/feature-flags/#agent-accounts)) |
 
 #### Sharing with LocalSend
 
@@ -130,7 +149,21 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 - With no paths, a gum menu picks a file, a folder, or the current clipboard text (sent as a LocalSend message).
 - `--json` prints the result (`{"share": {"peer": …, "status": "sent", "sent": n, "skipped": n}}`).
 
+#### Taildrop
+
+With Tailscale installed (`marchyo.services.tailscale.enable`), `marchyo share` also sends over [Taildrop](https://tailscale.com/kb/1106/taildrop):
+
+- `marchyo share photo.pdf --tailscale laptop` runs `tailscale file cp` to the named tailnet machine. Folders are expanded to their regular files.
+- `marchyo share --tailscale-receive [dir]` saves the files waiting in the Taildrop inbox to `dir` (default `~/Downloads`) without overwriting, and exits.
+- The interactive share menu lists **Taildrop** when the `tailscale` command exists; it picks a file, then a peer from `tailscale file cp --targets`.
+
 The receiver has to accept the transfer; desktop notifications report when it is accepted, declined, and finished. Discovery uses UDP multicast on port 53317 and falls back to scanning the local /24 subnet, so sending also works with `marchyo.services.localsend.openFirewall = false`. `Share` is also listed under **Trigger** in `marchyo menu`.
+
+### Dictation
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo dictation start\|stop\|toggle\|status [--json]` | Drive the configured dictation backend (`marchyo.dictation.backend`) |
 
 ### Declarative management
 
@@ -142,7 +175,7 @@ The receiver has to accept the transfer; desktop notifications report when it is
 
 ### Plumbing
 
-`marchyo runtime status` lists active overrides; `marchyo runtime restore` replays them (wired at session start). `marchyo completion bash|zsh|fish|man` emits completions and the man page — installed with the package.
+`marchyo runtime status` lists active overrides; `marchyo runtime restore` replays them (wired at session start and after every home-manager activation). `marchyo completion bash|zsh|fish|man` emits completions and the man page — installed with the package.
 
 ## Standard flags & conventions
 

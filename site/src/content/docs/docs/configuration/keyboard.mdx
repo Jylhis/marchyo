@@ -11,7 +11,7 @@ Out of the box:
 
 - `layouts = [ { layout = "us"; variant = "altgr-intl"; } "fi" ]`
 - `options = [ "grp:win_space_toggle" ]` (Super+Space switches layout/IME)
-- `composeKey = "menu"`
+- `composeKey = "shift-caps"`
 
 The `altgr-intl` variant ("English (US, intl., AltGr dead keys)") behaves like a plain US layout for the unmodified keys — `'`, `"`, `` ` ``, `~`, `^` produce their normal characters, **not** dead keys. The international characters live behind the AltGr modifier (Right Alt).
 
@@ -75,10 +75,12 @@ marchyo.keyboard.layouts = [
   { layout = "cn"; ime = "pinyin"; }   # Chinese with Pinyin
   { layout = "jp"; ime = "mozc"; }     # Japanese with Mozc
   { layout = "kr"; ime = "hangul"; }   # Korean with Hangul
+  { layout = "us"; ime = "chewing"; }  # Traditional Chinese with Zhuyin
+  { layout = "us"; ime = "cangjie"; }  # Hong Kong Cangjie 5
 ];
 ```
 
-When an entry includes `ime`, the input method engine is automatically activated when you switch to that layout.
+When an entry includes `ime`, the engine is added to the fcitx5 group after the keyboard layouts. Input starts in Latin (the keyboard layout), not in the engine. Korean (`layout = "kr"` with `hangul`) uses the `kr104` variant.
 
 ### Available IMEs
 
@@ -87,6 +89,8 @@ When an entry includes `ime`, the input method engine is automatically activated
 | `"pinyin"` | Chinese | `qt6Packages.fcitx5-chinese-addons` |
 | `"mozc"` | Japanese | `fcitx5-mozc` |
 | `"hangul"` | Korean | `fcitx5-hangul` |
+| `"chewing"` | Traditional Chinese (Zhuyin) | `fcitx5-chewing` |
+| `"cangjie"` | Hong Kong Chinese (Cangjie 5) | `fcitx5-table-extra` |
 | `"unicode"` | Unicode picker | — |
 
 Required packages are installed automatically when an IME is specified.
@@ -119,12 +123,13 @@ marchyo.keyboard.options = [
 The compose key lets you type special characters via key sequences (e.g., Compose + `'` + `e` = `é`).
 
 ```nix
-marchyo.keyboard.composeKey = "menu";  # Default: Menu key
+marchyo.keyboard.composeKey = "menu";  # Menu key (default: "shift-caps")
 ```
 
 | Value | Key |
 |-------|-----|
-| `"menu"` | Menu key (default) |
+| `"shift-caps"` | Shift+Caps Lock (default; Hyprland only) |
+| `"menu"` | Menu key |
 | `"ralt"` | Right Alt — avoid when using `us(altgr-intl)` or `us(intl)` (it needs Right Alt as AltGr) |
 | `"rwin"` | Right Super/Windows |
 | `"caps"` | Caps Lock |
@@ -132,21 +137,59 @@ marchyo.keyboard.composeKey = "menu";  # Default: Menu key
 
 ## IME behavior
 
-### Auto-activation
+### Latin by default
 
-By default, switching to a layout with an IME activates it automatically. Disable this to require manual activation:
+Input methods are off when a text field gets focus. Set `autoActivateIME = true` to start with the engine active:
 
 ```nix
-marchyo.keyboard.autoActivateIME = false;
+marchyo.keyboard.autoActivateIME = true;
 ```
 
-### Manual IME toggle
+### Switching
 
-Configure a key to manually toggle IME on/off:
+- A lone Shift (left or right) toggles between the current engine and Latin.
+- `Super+Space` and every key in `imeTriggerKey` cycle through the keyboard layouts first, then the engines.
 
 ```nix
 marchyo.keyboard.imeTriggerKey = [ "Super+I" ];   # Default
 ```
+
+### CJK fonts
+
+When an `ime` of `mozc`, `hangul`, `pinyin`, `chewing` or `cangjie` is configured, Noto CJK is installed and fontconfig appends the matching region to the `sans-serif`, `serif` and `monospace` families:
+
+- `mozc`: JP (`ja`)
+- `hangul`: KR (`ko`)
+- `pinyin`: SC (`zh-cn`)
+- `chewing`: TC (`zh-tw`)
+- `cangjie`: HK (`zh-hk`)
+
+Text tagged with a language gets that language's forms. Untagged text uses the region of the first configured engine.
+
+## Fn mode
+
+```nix
+marchyo.keyboard.fnMode = "media";     # top row sends media keys, Fn gives F1-F12
+marchyo.keyboard.fnMode = "function";  # top row sends F1-F12, Fn gives media keys
+```
+
+`null` (default) leaves the firmware or driver default. This writes `hid_apple fnmode` (1 = media keys first, 2 = F-keys first) and `hid_asus` / `asus_wmi` `fnlock_default` to modprobe. Keyboards that keep Fn-lock in firmware ignore it. `hid_asus` and `asus_wmi` read it at load time, so it applies after a reboot.
+
+## Keyboard backlight
+
+`marchyo.keyboard.backlight.enable` (default `true`) binds `XF86KbdBrightnessUp/Down`, `XF86KbdLightOnOff` and `Ctrl` plus the display brightness keys to `marchyo brightness --keyboard up|down|toggle`. It acts on the first `*kbd_backlight*` LED and shows the shell OSD when the shell is installed. The level survives reboots through the stock `systemd-backlight@leds:*` service, so nothing extra is installed.
+
+## Legacy hotkeys
+
+```nix
+marchyo.keyboard.legacyBinds = true;
+```
+
+The default Hyprland binds follow the Omarchy 4.5 planes (see [Keybindings](/docs/usage/hotkeys/)). `legacyBinds` restores the previous marchyo chords for one release: `Super+L` locks, the panels sit on `Super+Shift`, the console on `Super+Ctrl+grave` and the overview on `Super+grave`.
+
+## Shift+Caps Lock as Compose
+
+The default. Caps Lock stays Caps Lock and Shift+Caps Lock sends Compose. Marchyo installs a symbols file and an evdev rules extension in `/etc/xkb` and exports `XKB_CONFIG_EXTRA_PATH=/etc/xkb`, which libxkbcommon (Hyprland) reads. The console and X server do not see the option, so they get no compose key. The change applies to new sessions.
 
 ## Full example
 
@@ -161,7 +204,7 @@ marchyo.keyboard = {
   ];
   options = [ "grp:win_space_toggle" ];
   composeKey = "menu";
-  autoActivateIME = true;
+  autoActivateIME = false;
   imeTriggerKey = [ "Super+I" ];
 };
 ```
@@ -178,6 +221,9 @@ marchyo.keyboard = {
 |--------|------|---------|-------------|
 | `marchyo.keyboard.layouts` | list of strings or attrsets | `[{ layout = "us"; variant = "altgr-intl"; } "fi"]` | Keyboard layouts and input methods |
 | `marchyo.keyboard.options` | list of strings | `["grp:win_space_toggle"]` | XKB keyboard options |
-| `marchyo.keyboard.composeKey` | string or null | `"menu"` | Compose key |
-| `marchyo.keyboard.autoActivateIME` | bool | `true` | Auto-activate IME on layout switch |
-| `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Manual IME toggle keys |
+| `marchyo.keyboard.composeKey` | string or null | `"shift-caps"` | Compose key (Shift+Caps Lock by default) |
+| `marchyo.keyboard.fnMode` | `"media"`, `"function"` or null | `null` | Top-row default for Apple/ASUS keyboards |
+| `marchyo.keyboard.backlight.enable` | bool | `true` | Keyboard backlight key binds |
+| `marchyo.keyboard.legacyBinds` | bool | `false` | Pre-4.5 marchyo hotkey layout |
+| `marchyo.keyboard.autoActivateIME` | bool | `false` | Start with the IME engine active |
+| `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Keys that cycle layouts, then engines |

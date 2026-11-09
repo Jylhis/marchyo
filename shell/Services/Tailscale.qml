@@ -32,7 +32,7 @@ QtObject {
         if (root.lastExit === 0)
             return "";
         const line = root.actionStderr.split("\n").map(l => l.trim()).filter(l => l.length > 0)[0];
-        return line || ("tailscale exited " + root.lastExit);
+        return line || I18n.t("tailscale.exited", root.lastExit);
     }
     // Full refusal text for the detail panel (includes the CLI's operator hint).
     readonly property string lastErrorDetail: root.lastExit === 0 ? "" : (root.actionStderr.trim() || root.lastError)

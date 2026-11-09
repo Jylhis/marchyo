@@ -1,9 +1,16 @@
 # The closed set of shell plugin kinds, each mapped to the manifest
 # entryPoints key that carries its QML file. Pure data with no arguments, so
 # plugin.nix and the platform-neutral option declarations in
-# modules/nixos/options/shell.nix both import it.
+# modules/nixos/options/shell.nix both import it. `bar`, `panel`, `menu`,
+# `overlay` and `service` are the omarchy kinds; `launcher` and `daemon` are
+# marchyo's own (a launcher prefix provider and a headless instance).
 {
   "bar-widget" = "barWidget";
   launcher = "launcher";
   daemon = "daemon";
+  bar = "bar";
+  panel = "panel";
+  menu = "menu";
+  overlay = "overlay";
+  service = "service";
 }

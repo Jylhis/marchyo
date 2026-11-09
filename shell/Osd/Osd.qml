@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import qs.Commons
+import "../Commons/OsdModel.js" as OsdModel
 import qs.Services
 
 // The shell's on-screen display: a small bottom-centred overlay that flashes the
@@ -25,17 +26,23 @@ Scope {
     property int percent: 0
     property bool hasBar: true
     property bool shown: false
+    property bool animateLevel: false
+    property string kind: ""
+    readonly property string glyph: OsdModel.iconFor(root.kind, root.percent)
 
     // Suppress the initial binding storm: the watchers only drive the OSD once the
     // first values have settled, so the shell never flashes an OSD at startup.
     property bool primed: false
 
-    function show(label, percent, hasBar) {
+    function show(label, percent, hasBar, kind) {
+        root.animateLevel = root.shown;
+        root.kind = kind || (label === I18n.t("osd.brightness") ? "brightness" : "");
         root.label = label;
         root.percent = Math.max(0, Math.min(150, percent));
         root.hasBar = hasBar;
         root.shown = true;
         hideTimer.restart();
+        Qt.callLater(() => root.animateLevel = root.shown);
     }
 
     Timer {
@@ -57,9 +64,11 @@ Scope {
         if (!root.primed || !root.sinkAudio)
             return;
         if (root.sinkAudio.muted)
-            root.show("MUTE", 0, false);
-        else
-            root.show("VOL", Math.round(root.sinkAudio.volume * 100), true);
+            root.show(I18n.t("osd.mute"), 0, false, "mute");
+        else {
+            const percent = Math.round(root.sinkAudio.volume * 100);
+            root.show(I18n.t("osd.volume"), percent, true, "volume");
+        }
     }
 
     Connections {
@@ -80,9 +89,11 @@ Scope {
             // Show the mic's level while live (a bar), a plain card when muted,
             // mirroring the sink case instead of an empty unmute card.
             if (root.sourceAudio.muted)
-                root.show("MIC MUTE", 0, false);
-            else
-                root.show("MIC", Math.round(root.sourceAudio.volume * 100), true);
+                root.show(I18n.t("osd.micMute"), 0, false, "micMute");
+            else {
+                const percent = Math.round(root.sourceAudio.volume * 100);
+                root.show(I18n.t("osd.mic"), percent, true, "mic");
+            }
         }
     }
 
@@ -120,13 +131,16 @@ Scope {
             if (!root.primed)
                 return;
             const cur = parseInt(brightnessFile.text().trim());
-            if (!isNaN(cur) && root.brightnessMax > 0)
-                root.show("BRT", Math.round(100 * cur / root.brightnessMax), true);
+            if (!isNaN(cur) && root.brightnessMax > 0) {
+                const percent = Math.round(100 * cur / root.brightnessMax);
+                root.show(I18n.t("osd.brightness"), percent, true, "brightness");
+            }
         }
     }
 
     PanelWindow {
-        visible: root.shown
+        id: osdWindow
+        visible: root.shown || card.opacity > 0
         // One OSD for the seat, shown on the focused output. Nothing summons it
         // from a particular bar (the watchers and the osdShow IPC drive it), so
         // the focused monitor is the meaningful screen.
@@ -144,29 +158,64 @@ Scope {
         // Never intercept clicks: the OSD is a readout, not a control.
         mask: Region {}
 
+        Component.onCompleted: Dev.register("osd", osdWindow, card)
+
         implicitWidth: card.implicitWidth
         implicitHeight: card.implicitHeight
 
         Rectangle {
             id: card
             anchors.fill: parent
+            opacity: root.shown ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Style.duration(Style.motionFast)
+                }
+            }
             radius: Style.osdRadius
-            color: Qt.alpha(Color.surface, Style.surfaceAlpha)
-            border.color: Color.border
+            color: Qt.alpha(Colors.surface, Style.surfaceAlpha)
+            border.color: Colors.border
             border.width: 1
 
             implicitWidth: content.implicitWidth + Style.osdPad * 2
             implicitHeight: content.implicitHeight + Style.osdPad * 2
+
+            FontMetrics {
+                id: metrics
+                font.family: Style.fontFamily
+                font.pixelSize: Style.fontSize
+            }
 
             Row {
                 id: content
                 anchors.centerIn: parent
                 spacing: Style.spacing * 2
 
+                Item {
+                    visible: root.glyph.length > 0
+                    readonly property var glyphWidths: {
+                        const glyphs = ["", "", "", "", "󰍭", "󰍬", "󰍹"];
+                        return glyphs.map(g => metrics.tightBoundingRect(g).width);
+                    }
+                    width: Math.ceil(Math.max(...glyphWidths)) + Style.spacing
+                    height: metrics.height
+                    anchors.verticalCenter: parent.verticalCenter
+                    Text {
+                        readonly property rect ink: metrics.tightBoundingRect(root.glyph)
+                        x: (parent.width - ink.width) / 2 - ink.x
+                        y: (parent.height - ink.height) / 2 - ink.y - metrics.ascent
+                        text: root.glyph
+                        color: Colors.text
+                        font: metrics.font
+                    }
+                }
+
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, Style.osdBarWidth * 2)
+                    elide: Text.ElideRight
                     text: root.label
-                    color: Color.textMuted
+                    color: Colors.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                 }
@@ -177,7 +226,7 @@ Scope {
                     width: Style.osdBarWidth
                     height: Style.osdBarHeight
                     radius: height / 2
-                    color: Color.bgSubtle
+                    color: Colors.bgSubtle
 
                     Rectangle {
                         anchors.left: parent.left
@@ -187,11 +236,12 @@ Scope {
                         width: parent.width * Math.min(100, root.percent) / 100
                         height: parent.height
                         radius: height / 2
-                        color: Color.accent
+                        color: Colors.accent
 
                         Behavior on width {
+                            enabled: root.animateLevel && !Style.reduceMotion
                             NumberAnimation {
-                                duration: 120
+                                duration: Style.duration(120)
                             }
                         }
                     }
@@ -200,8 +250,12 @@ Scope {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.hasBar
-                    text: root.percent + "%"
-                    color: Color.text
+                    width: Math.ceil(Math.max(...Array.from({
+                        length: 10
+                    }, (_, i) => metrics.advanceWidth(I18n.formatNumber(i * 111, 0) + "%"))))
+                    horizontalAlignment: Text.AlignRight
+                    text: I18n.formatNumber(root.percent, 0) + "%"
+                    color: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                 }

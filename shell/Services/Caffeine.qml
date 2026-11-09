@@ -4,14 +4,15 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.Commons
 
-// Shared caffeine (keep-awake) state: ONE 5s pgrep probe for the whole seat.
-// A singleton (not per-widget) because the bar is built once per screen, so a
-// Timer + Process in the widget would poll once per monitor for one seat-global
-// answer.
+// Shared caffeine (keep-awake) state, owned by the shell: one pgrep probe at
+// startup, then toggle() and the CLI's `caffeineChanged` IPC call keep it
+// current. A singleton (not per-widget) because the bar is built once per
+// screen.
 //
 // Two independent inhibit sources:
 // - manual: `marchyo toggle caffeine` (stops hypridle and holds a tagged
-//   sleep:idle inhibitor). Only toggle() and the CLI change it.
+//   sleep:idle inhibitor). toggle() runs it with an explicit on/off, and the
+//   CLI reports every change back to the shell.
 // - auto (video): while an MPRIS player that looks like video is Playing, the
 //   shell holds its own `systemd-inhibit --what=idle` under a distinct tag.
 //   hypridle honours logind idle inhibitors (ignore_systemd_inhibit defaults to
@@ -64,26 +65,39 @@ QtObject {
 
     readonly property bool autoActive: autoSource !== null
     // Display name for the tooltip ("auto: <player>"); empty when auto is off.
-    readonly property string autoPlayer: autoSource ? (autoSource.identity || autoSource.desktopEntry || "media player") : ""
+    readonly property string autoPlayer: autoSource ? (autoSource.identity || autoSource.desktopEntry || I18n.t("caffeine.mediaPlayer")) : ""
 
     function toggle() {
+        if (toggleProc.running)
+            return;
+        const next = !root.manual;
+        root.manual = next;
+        toggleProc.command = [Config.marchyo, "toggle", "caffeine", next ? "on" : "off"];
         toggleProc.running = true;
     }
 
+    function setManual(on: bool): void {
+        root.manual = on;
+    }
+
+    // One probe at startup picks up an inhibitor held across a shell restart.
+    // The [m] bracket stops this pgrep's own argv from matching its pattern
+    // (a bare pattern self-matches and pins the widget "on"); only the real
+    // --why=marchyo-caffeine-inhibit inhibitor matches.
     readonly property var probe: Process {
         id: probe
-        // The [m] bracket stops this pgrep's own argv from matching its pattern
-        // (a bare pattern self-matches and pins the widget "on"); only the real
-        // --why=marchyo-caffeine-inhibit inhibitor matches.
+        running: true
         command: [Config.pgrep, "-f", "[m]archyo-caffeine-inhibit"]
         onExited: code => root.manual = (code === 0)
     }
 
-    // Re-probes on exit rather than guessing the new state.
+    // A failed actuation re-probes instead of keeping the optimistic state.
     readonly property var toggleProc: Process {
         id: toggleProc
-        command: [Config.marchyo, "toggle", "caffeine"]
-        onExited: probe.running = true
+        onExited: code => {
+            if (code !== 0)
+                probe.running = true;
+        }
     }
 
     // The auto inhibitor: held for as long as the process runs; Quickshell
@@ -95,13 +109,5 @@ QtObject {
         id: autoInhibit
         running: root.autoActive
         command: [Config.systemctl.replace(/systemctl$/, "systemd-inhibit"), "--what=idle", "--who=marchyo", "--why=marchyo-video-inhibit", "sleep", "infinity"]
-    }
-
-    readonly property var poll: Timer {
-        interval: 5000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: probe.running = true
     }
 }

@@ -1,5 +1,6 @@
+import { mkdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
   type Runtime,
   captureArgv,
@@ -10,6 +11,7 @@ import {
   ok,
   runArgv,
   usageError,
+  tr,
 } from "@marchyo/core";
 
 // Stateless capture actions: screenshot / record / ocr / color.
@@ -24,7 +26,7 @@ type Audio = (typeof AUDIO)[number];
 
 function require(rt: Runtime, tool: string): boolean {
   if (commandAvailable(tool)) return true;
-  err(rt, `${tool} not found in PATH (is marchyo.desktop enabled?)`);
+  err(rt, tr("capture.notFoundInPathIs", tool));
   return false;
 }
 
@@ -51,7 +53,7 @@ export async function runCaptureScreenshot(
   if (!TARGETS.includes(target)) {
     return usageError(
       rt,
-      `invalid target: "${opts.target}"`,
+      tr("capture.invalidTarget", opts.target),
       `marchyo capture screenshot --target <${TARGETS.join("|")}>`,
     );
   }
@@ -77,6 +79,39 @@ export async function runCaptureScreenshot(
 
 export type RecordOpts = { audio?: string };
 
+// The marker the shell's ScreenRecording service watches. It exists exactly
+// while a recorder this command started runs.
+export function recordingMarkerPath(
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  return env.XDG_RUNTIME_DIR ? join(env.XDG_RUNTIME_DIR, "marchyo", "recording") : null;
+}
+
+// A small sh supervisor holds the marker while the recorder runs. It starts
+// the recorder in the background, forwards INT/TERM/HUP to it, waits until it
+// has finalized and exited (crash included), then removes the marker. `set -m`
+// keeps the background recorder's SIGINT from being ignored. The recorder
+// comes from $MARCHYO_RECORDER, so the supervisor's own command line never
+// matches `pgrep -f gpu-screen-recorder`.
+const RECORD_SUPERVISOR = [
+  'm=$1; shift',
+  "set -m",
+  '"$MARCHYO_RECORDER" "$@" &',
+  "p=$!",
+  `trap 'rm -f "$m"' EXIT`,
+  `trap 'kill -INT "$p" 2>/dev/null' INT`,
+  `trap 'kill -TERM "$p" 2>/dev/null' TERM HUP`,
+  ': > "$m"',
+  "s=0",
+  'while kill -0 "$p" 2>/dev/null; do wait "$p"; s=$?; done',
+  'exit "$s"',
+].join("\n");
+
+export function recorderArgv(argv: string[], marker: string | null): string[] {
+  if (marker === null) return argv;
+  return ["sh", "-c", RECORD_SUPERVISOR, "marchyo-record", marker, ...argv.slice(1)];
+}
+
 // gpu-screen-recorder on a slurp-selected region; a second invocation
 // stops and finalizes the mp4.
 export async function runCaptureRecord(
@@ -87,7 +122,7 @@ export async function runCaptureRecord(
   if (!AUDIO.includes(audio)) {
     return usageError(
       rt,
-      `invalid audio source: "${opts.audio}"`,
+      tr("capture.invalidAudioSource", opts.audio),
       `marchyo capture record --audio <${AUDIO.join("|")}>`,
     );
   }
@@ -101,14 +136,14 @@ export async function runCaptureRecord(
     await runArgv(notifySendArgv("Screen recording", `Saved to ${recdir}`)).catch(
       () => 0,
     );
-    ok(rt, `recording saved to ${recdir}`);
+    ok(rt, tr("capture.recordingSavedTo", recdir));
     return 0;
   }
 
   if (!require(rt, "gpu-screen-recorder") || !require(rt, "slurp")) return 1;
   const region = await captureArgv(["slurp", "-f", "%wx%h+%x+%y"]);
   if (region.code !== 0 || region.stdout.trim() === "") {
-    info(rt, "selection cancelled");
+    info(rt, tr("capture.selectionCancelled"));
     return 0;
   }
   await runArgv(["mkdir", "-p", recdir]);
@@ -129,21 +164,24 @@ export async function runCaptureRecord(
     "-o",
     out,
   ];
+  const marker = recordingMarkerPath();
   try {
-    const proc = Bun.spawn(argv, {
+    if (marker !== null) mkdirSync(dirname(marker), { recursive: true, mode: 0o700 });
+    const proc = Bun.spawn(recorderArgv(argv, marker), {
+      env: { ...process.env, MARCHYO_RECORDER: argv[0] },
       stdout: "ignore",
       stderr: "ignore",
       stdin: "ignore",
     });
     proc.unref();
   } catch {
-    err(rt, "failed to start gpu-screen-recorder");
+    err(rt, tr("capture.failedToStartGpuScreen"));
     return 1;
   }
   await runArgv(notifySendArgv("Screen recording", "Recording started")).catch(
     () => 0,
   );
-  ok(rt, `recording to ${out} (run again to stop)`);
+  ok(rt, tr("capture.recordingToRunAgainTo", out));
   return 0;
 }
 
@@ -156,7 +194,7 @@ export async function runCaptureOcr(rt: Runtime): Promise<number> {
     "-c",
     "grimblast --freeze save area - | tesseract - - | wl-copy",
   ]);
-  if (code === 0) ok(rt, "text copied to clipboard");
+  if (code === 0) ok(rt, tr("capture.textCopiedToClipboard"));
   return code;
 }
 

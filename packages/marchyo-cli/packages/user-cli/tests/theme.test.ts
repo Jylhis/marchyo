@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import parity from "../../core/tests/fixtures/theme-parity.json";
 import { hyprctlEvalArgv, hyprctlKeywordArgv } from "@marchyo/core";
 import {
   hyprlandConfigLua,
@@ -126,33 +127,8 @@ describe("generateThemeChangeBase.runtimeApply", () => {
     ),
   });
   const palette = {
-    tokens: {
-      bg: "#0c0f14",
-      text: "#d1d4dc",
-      accent: "#f5a351",
-      "accent-hover": "#ffb063",
-      "accent-subtle": "#281604",
-      "border-strong": "#3f4754",
-      border: "#242c37",
-      surface: "#1c1f24",
-      "status-err": "#ff8271",
-      "text-heading": "#e7ebf2",
-      "text-muted": "#878b91",
-      "syn-variable": "#00a3ee",
-    },
-    tokenSlots: {
-      bg: "base00",
-      text: "base05",
-      accent: "base09",
-      "accent-hover": "base09",
-      "accent-subtle": "base01",
-      "border-strong": "base04",
-      border: "base03",
-      surface: "base02",
-      "status-err": "base08",
-      "text-heading": "base06",
-      "text-muted": "base04",
-    },
+    tokens: parity.palette.tokens,
+    tokenSlots: parity.palette.tokenSlots,
   };
 
   const write = (path: string, text: string): void => {
@@ -180,6 +156,17 @@ describe("generateThemeChangeBase.runtimeApply", () => {
       "@define-color shade_color {{shade}};\n@define-color fg {{token:text}};\n",
     );
     write(join(buildDir, "bat.conf"), "--theme=jylhis-dark\n--style=plain\n");
+    for (const f of [
+      "btop.theme",
+      "kitty.conf",
+      "foot-theme.ini",
+      "alacritty-theme.toml",
+      "helix-theme.toml",
+      "nvim-theme.lua",
+      "emacs-theme.el",
+    ]) {
+      write(join(buildDir, "templates", f), `bg={{token:bg}} fg={{token:text}}\n`);
+    }
     write(image, "png");
 
     const pointer = join(
@@ -205,18 +192,28 @@ describe("generateThemeChangeBase.runtimeApply", () => {
   // Bun.spawn resolves binaries against the environment the process started
   // with, so the stub PATH and XDG dirs need a child process: a driver that
   // calls runtimeApply with a recording exec seam and prints the result.
-  function runGenerate(value: string): { applied: unknown; execs: string[][] } {
+  function runGenerate(
+    value: string,
+    restore = false,
+    failPreference = false,
+  ): { applied: unknown; execs: string[][] } {
     const driver = join(root, "driver.ts");
     writeFileSync(
       driver,
       `import { buildRuntime } from ${JSON.stringify(runtimeModule)};
-import { generateThemeChangeBase } from ${JSON.stringify(themeModule)};
+import { generateThemeChangeBase, restoreEffectiveTheme } from ${JSON.stringify(themeModule)};
 const execs: string[][] = [];
-const applied = await generateThemeChangeBase.runtimeApply({
+const ctx = {
   rt: buildRuntime({ quiet: true }, {}, false),
-  exec: async (argv) => { execs.push(argv); return 0; },
+  exec: async (argv: string[]) => {
+    execs.push(argv);
+    return ${failPreference} && argv[0] === "dconf" ? 1 : 0;
+  },
   value: ${JSON.stringify(value)},
-});
+};
+const applied = ${restore
+  ? "await restoreEffectiveTheme(ctx, { \"theme.generate\": ctx.value })"
+  : "await generateThemeChangeBase.runtimeApply(ctx)"};
 console.log(JSON.stringify({ applied, execs }));
 `,
     );
@@ -248,21 +245,34 @@ console.log(JSON.stringify({ applied, execs }));
     const dir = join(dirs.state, "marchyo", "generated-theme");
     expect(readdirSync(dir).sort()).toEqual(
       [
+        "alacritty-theme.toml",
         "bat.conf",
+        "btop.theme",
         "colors.json",
         "console.txt",
+        "emacs-theme.el",
+        "fcitx5-theme.conf",
+        "foot-theme.ini",
         "fzf.opts",
         "gdu.yaml",
         "ghostty.conf",
         "gtk.css",
+        "helix-theme.toml",
+        "herdr.json",
         "hyprland.conf",
         "hyprlock-colors.conf",
         "k9s-skin.yaml",
+        "kitty.conf",
         "lazygit.yml",
         "mako.conf",
+        "nvim-theme.lua",
+        "obsidian.css",
         "palette.json",
+        "slack.json",
         "spotify-player-theme.toml",
+        "tmux.conf",
         "variant",
+        "vscode-theme.json",
         "wallpaper.png",
         "waybar.css",
       ].sort(),
@@ -271,17 +281,28 @@ console.log(JSON.stringify({ applied, execs }));
 
     expect(read("variant")).toBe("dark\n");
     expect(read("mako.conf")).toBe(`background-color=${slots.base00}\n`);
-    // syn-variable has no slot: it keeps the build hex.
     expect(read("waybar.css")).toBe(
-      `#cpu { color: ${slots.base09}; border-color: #00a3ee; }\n`,
+      `#cpu { color: ${slots.base05}; border-color: ${slots.base08}; }\n`,
     );
     expect(read("gtk.css")).toBe(
       "@define-color shade_color rgba(160, 176, 5, 0.08);\n" +
         `@define-color fg ${slots.base05};\n`,
     );
-    for (const f of ["mako.conf", "waybar.css", "gtk.css"]) {
+    for (const f of [
+      "mako.conf",
+      "waybar.css",
+      "gtk.css",
+      "btop.theme",
+      "kitty.conf",
+      "foot-theme.ini",
+      "alacritty-theme.toml",
+      "helix-theme.toml",
+      "nvim-theme.lua",
+      "emacs-theme.el",
+    ]) {
       expect(read(f)).not.toContain("{{");
     }
+    expect(read("kitty.conf")).toBe(`bg=${slots.base00} fg=${slots.base05}\n`);
     expect(read("hyprlock-colors.conf")).toContain("$bg = rgba(a0b000ff)");
     expect(read("console.txt").trim().split("\n")).toHaveLength(3);
     expect(read("bat.conf")).toBe("--theme=marchyo-generated\n--style=plain\n");
@@ -295,10 +316,10 @@ console.log(JSON.stringify({ applied, execs }));
     expect(read("gdu.yaml")).toContain(`text-color: "${slots.base05}"`);
     expect(JSON.parse(read("colors.json")).colors).toEqual({
       bg: slots.base00,
-      accentHover: slots.base09,
-      synVariable: "#00a3ee",
+      accentHover: slots.base06,
+      synVariable: slots.base08,
     });
-    expect(JSON.parse(read("palette.json")).tokens.accent).toBe(slots.base09);
+    expect(JSON.parse(read("palette.json")).tokens.accent).toBe(slots.base05);
     expect(readlinkSync(join(dir, "wallpaper.png"))).toBe(image);
 
     // bat: tmTheme registered and the cache rebuilt before activation.
@@ -323,6 +344,38 @@ console.log(JSON.stringify({ applied, execs }));
       expect(readlinkSync(join(dirs.config, link)).startsWith(dir)).toBe(true);
     }
     expect(execs).toContainEqual(["setvtrgb", join(dir, "console.txt")]);
+
+    // Terminal and editor surfaces: relinked at the generated dir, reloaded.
+    for (const [file, link] of [
+      ["btop.theme", join(dirs.config, "btop/themes/marchyo.theme")],
+      ["kitty.conf", join(dirs.config, "kitty/marchyo-theme.conf")],
+      ["foot-theme.ini", join(dirs.config, "foot/marchyo-theme.ini")],
+      ["alacritty-theme.toml", join(dirs.config, "alacritty/marchyo-theme.toml")],
+      ["helix-theme.toml", join(dirs.config, "helix/themes/marchyo.toml")],
+      ["nvim-theme.lua", join(dirs.data, "nvim/site/colors/marchyo.lua")],
+    ] as const) {
+      expect(readlinkSync(link)).toBe(join(dir, file));
+    }
+    expect(execs).toContainEqual(["pkill", "-USR2", "-x", "btop"]);
+    expect(execs).toContainEqual([
+      "kitty", "@", "set-colors", "-a", "-c", join(dir, "kitty.conf"),
+    ]);
+    expect(execs.some((a) => a[0] === "emacsclient")).toBe(true);
+  });
+
+  test("restores generated selections and preserves active assets on preference failure", () => {
+    const value = JSON.stringify({ image, variant: "dark" });
+    const { applied, execs } = runGenerate(value, true);
+    expect(applied).toBe(true);
+    expect(execs).toContainEqual([
+      "dconf", "write", "/org/gnome/desktop/interface/color-scheme", "'prefer-dark'",
+    ]);
+    const colors = join(dirs.state, "marchyo", "generated-theme", "colors.json");
+    const before = readFileSync(colors, "utf8");
+    expect(() => runGenerate(
+      JSON.stringify({ image, variant: "light" }), true, true,
+    )).toThrow("Cannot set the desktop preference");
+    expect(readFileSync(colors, "utf8")).toBe(before);
   });
 
   test("Material outline/container roles override the base16 fallback", () => {
@@ -337,7 +390,7 @@ console.log(JSON.stringify({ applied, execs }));
 
     runGenerate(value);
     expect(tokensOf().border).toBe(slots.base03);
-    expect(tokensOf()["accent-subtle"]).toBe(slots.base01);
+    expect(tokensOf()["accent-subtle"]).toBe(slots.base02);
 
     const node = (dark: string) => ({
       dark: { color: dark },

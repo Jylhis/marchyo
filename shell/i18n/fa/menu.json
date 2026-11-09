@@ -1,0 +1,22 @@
+{
+  "menu.network": "شبکه",
+  "menu.speedTest": "تست سرعت",
+  "menu.lock": "قفل",
+  "menu.suspend": "تعلیق",
+  "menu.hibernate": "خواب زمستانی",
+  "menu.reboot": "راه‌اندازی مجدد",
+  "menu.shutdown": "خاموش",
+  "menu.style": "ظاهر",
+  "menu.theme": "تم",
+  "menu.background": "پس‌زمینه",
+  "menu.font": "قلم",
+  "menu.setup": "تنظیمات",
+  "menu.audio": "صدا",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "اجرا",
+  "menu.appearance": "ظاهر",
+  "menu.system": "سیستم",
+  "menu.learn": "آموزش",
+  "menu.screenshot": "عکس صفحه",
+  "menu.share": "اشتراک‌گذاری"
+}

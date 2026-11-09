@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Aangemeld bij %1.",
+  "launch.notFoundInPath": "%1 niet gevonden in PATH",
+  "utilities.reminder": "Herinnering",
+  "utilities.battery": "Batterij %1%",
+  "utilities.battery2": "Batterij",
+  "utilities.transcode": "Transcoderen",
+  "utilities.share": "Delen",
+  "toggles.enabled": "Ingeschakeld",
+  "toggles.suspend": "Slaapstand"
+}

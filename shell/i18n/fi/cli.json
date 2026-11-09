@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Kirjautunut palveluun %1.",
+  "launch.notFoundInPath": "%1 ei löydy PATH:sta",
+  "utilities.reminder": "Muistutus",
+  "utilities.battery": "Akku %1%",
+  "utilities.battery2": "Akku",
+  "utilities.transcode": "Muunna",
+  "utilities.share": "Jaa",
+  "toggles.enabled": "Käytössä",
+  "toggles.suspend": "Lepotila"
+}

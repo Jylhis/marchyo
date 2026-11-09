@@ -1,5 +1,5 @@
-# Evaluation tests for modules/home/omarchy-binds.nix (TODO.md:
-# monitor controls, connectivity TUIs, app-launch binds).
+# Evaluation tests for modules/home/omarchy-binds.nix (monitor
+# controls, connectivity TUIs, app-launch binds).
 {
   helpers,
   lib,
@@ -33,23 +33,18 @@ let
   hasPackage = hm: n: lib.any (p: lib.getName p == n) hm.home.packages;
 
   # Chords deliberately bound twice: Hyprland runs every bind for a chord in
-  # order, and these pair a window cycle with a raise
-  # (modules/home/hyprland.nix, "Cycle to next window" / "Reveal active window
-  # on top"). Anything else bound twice is two features fighting over one chord.
-  chainedChords = [
-    "ALT + Tab"
-    "ALT + SHIFT + Tab"
-  ];
-
-  # Every chord bound more than once, across the whole generated bind list.
+  # order, and these pair a window cycle with a raise (lib/keybinds.nix,
+  # "Cycle to next window" / "Reveal active window on top"). Anything else
+  # bound twice is two features fighting over one chord. Chords compare with
+  # modifiers in any order.
   duplicateChords =
     hm:
-    let
-      chords = lib.filter (c: c != null) (map (e: builtins.head (e._args or [ null ])) (binds hm));
-      counts = lib.foldl' (acc: c: acc // { ${c} = (acc.${c} or 0) + 1; }) { } chords;
-      dupes = lib.attrNames (lib.filterAttrs (_: n: n > 1) counts);
-    in
-    lib.subtractLists chainedChords dupes;
+    helpers.duplicateChords [
+      "ALT + Tab"
+      "ALT + SHIFT + Tab"
+      # Push-to-talk: one bind on press (start), one on release (stop).
+      "F9"
+    ] (binds hm);
 in
 {
   # Desktop + development on: monitor-control, connectivity, and app-launch
@@ -65,11 +60,14 @@ in
       if
         hasBind hm "SUPER + backslash" "marchyo monitor scale-cycle"
         && hasBind hm "SUPER + CTRL + Delete" "marchyo monitor laptop-toggle"
-        && hasBind hm "SUPER + CTRL + A" "--class=org.omarchy.wiremix -e wiremix"
-        && hasBind hm "SUPER + CTRL + B" "--class=org.omarchy.bluetui -e bluetui"
-        && hasBind hm "SUPER + CTRL + W" "--class=org.omarchy.nmtui -e nmtui"
+        && hasBind hm "switch:on:Lid Switch" "marchyo monitor clamshell on"
+        && hasBind hm "switch:off:Lid Switch" "marchyo monitor clamshell off"
+        && hasBind hm "SUPER + CTRL + A" "marchyo:panel.audio"
+        && hasBind hm "SUPER + CTRL + B" "marchyo:panel.bluetooth"
+        && hasBind hm "SUPER + CTRL + SHIFT + B" "--class=org.omarchy.bluetui -e bluetui"
+        && hasBind hm "SUPER + CTRL + N" "marchyo:panel.network"
+        && hasBind hm "SUPER + CTRL + W" "marchyo bg next"
         && hasBind hm "SUPER + ALT + return" "-e tmux new -A -s Work"
-        && hasBind hm "SUPER + ALT + D" "-e lazydocker"
         && hasBind hm "SUPER + ALT + SHIFT + F" "marchyo launch file-manager"
         && hasPackage hm "xdg-utils"
         && hasPackage hm "tmux"
@@ -79,19 +77,19 @@ in
         throw "FAIL: desktop+development enabled but an omarchy-binds keybinding or backing package is missing"
     );
 
-  # Development off (the default): the Docker TUI bind follows the same gate as
-  # lazydocker itself, while the rest of the binds stay present.
-  eval-omarchy-binds-no-development =
+  # No Docker TUI bind: lazydocker is not installed or bound by default.
+  eval-omarchy-binds-no-lazydocker =
     let
       hm = hmFor (evalWith {
         marchyo.desktop.enable = true;
+        marchyo.development.enable = true;
       });
     in
-    pkgs.writeText "eval-omarchy-binds-no-development" (
+    pkgs.writeText "eval-omarchy-binds-no-lazydocker" (
       if hasBindText hm "marchyo monitor scale-cycle" && !(hasBindText hm "lazydocker") then
         "pass"
       else
-        throw "FAIL: development disabled but the Docker TUI bind is present (or the other binds are missing)"
+        throw "FAIL: the Docker TUI bind is present, or the other binds are missing"
     );
 
   # Desktop off (default): none of the omarchy-binds contributions leak.
@@ -124,9 +122,12 @@ in
             # desktop.enable is what makes the Hyprland HM module produce any
             # binds at all — without it this assertion is vacuous.
             desktop.enable = true;
+            development.enable = true;
             emacs.enable = true;
             dictation.enable = true;
             webapps.enable = true;
+            console.enable = true;
+            ai.herdr.enable = true;
           };
         })
       );

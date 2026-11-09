@@ -12,9 +12,26 @@ in
     pkgs.jq
     pkgs.bun
     marchyo-cli
+    pkgs.statix
+    pkgs.deadnix
     # Qt QML tooling for editing shell/ (.qml): qmlls (LSP), qmlformat, qmllint.
     pkgs.qt6.qtdeclarative
+    # Shell sandbox (shell/dev/sandbox, shell/dev/shot).
+    pkgs.grim
+    pkgs.bubblewrap
+    pkgs.dbus
+    pkgs.glib
+    pkgs.pipewire
+    pkgs.wireplumber
+    (pkgs.python3.withPackages (ps: [
+      ps.python-dbusmock
+      ps.pygobject3
+    ]))
   ];
+
+  # The shell sandbox resolves themed icons from this theme, the one
+  # modules/home/gtk.nix sets, instead of the host's profile.
+  env.MARCHYO_SANDBOX_ICONS = "${pkgs.adwaita-icon-theme}/share:${pkgs.hicolor-icon-theme}/share";
 
   # qmlls/qmllint/qmlformat (all invoked with `-E' or from this env) resolve
   # Quickshell.* and QtQuick* imports from QML_IMPORT_PATH. Quickshell installs

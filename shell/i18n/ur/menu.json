@@ -1,0 +1,21 @@
+{
+  "menu.network": "نیٹ ورک",
+  "menu.speedTest": "رفتار ٹیسٹ",
+  "menu.lock": "لاک کریں",
+  "menu.suspend": "معطل کریں",
+  "menu.hibernate": "ہائبرنیٹ",
+  "menu.reboot": "ری بوٹ کریں",
+  "menu.shutdown": "بند کریں",
+  "menu.style": "اسٹائل",
+  "menu.theme": "تھیم",
+  "menu.background": "پس منظر",
+  "menu.font": "فونٹ",
+  "menu.setup": "سیٹ اپ",
+  "menu.audio": "آڈیو",
+  "menu.trigger": "ٹریگر",
+  "menu.appearance": "ظاہری شکل",
+  "menu.system": "سسٹم",
+  "menu.learn": "سیکھیں",
+  "menu.screenshot": "اسکرین شاٹ",
+  "menu.share": "شیئر کریں"
+}

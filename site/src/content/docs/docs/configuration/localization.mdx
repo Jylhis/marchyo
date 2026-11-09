@@ -9,6 +9,7 @@ description: Configure timezone and locale settings
 |--------|------|---------|-------------|
 | `marchyo.timezone` | `string` | `"Europe/Zurich"` | System timezone |
 | `marchyo.defaultLocale` | `string` | `"en_US.UTF-8"` | System default locale |
+| `marchyo.language` | `enum` | derived from `marchyo.defaultLocale` | Display language of the Marchyo shell and CLI strings |
 | `marchyo.autoTimezone.enable` | `bool` | `false` | Update the timezone automatically from your location |
 
 ## Example
@@ -19,6 +20,28 @@ description: Configure timezone and locale settings
   marchyo.defaultLocale = "de_DE.UTF-8";
 }
 ```
+
+## Display language
+
+`marchyo.language` sets the language of Marchyo's own UI: the shell panels and the `marchyo` CLI messages. The default follows `marchyo.defaultLocale` (`fi_FI.UTF-8` gives `fi`, `pt_BR.UTF-8` gives `pt-BR`) and falls back to `"en"` when the locale has no entry in the registry. Strings without a translation show in English.
+
+```nix
+{
+  marchyo.defaultLocale = "fi_FI.UTF-8";
+  marchyo.language = "fi"; # optional, same as the derived default
+}
+```
+
+The system `LANG` changes only when you rebuild. `marchyo language` changes the Marchyo UI live, without a rebuild:
+
+```bash
+marchyo language          # show the current language
+marchyo language list     # list the supported codes
+marchyo language de       # switch the shell and CLI to German
+marchyo language --revert # back to marchyo.language
+```
+
+The command stores a runtime override that survives rebuilds and `marchyo runtime restore`; `--revert` drops it. Other programs keep following `LANG`.
 
 ## Automatic timezone
 

@@ -27,9 +27,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Color.bgSubtle
+        color: Colors.bgSubtle
         border.width: root.selected ? 2 : Style.borderWidth
-        border.color: root.selected ? Color.accent : Color.border
+        border.color: root.selected ? Colors.accent : Colors.border
     }
 
     ScreencopyView {
@@ -50,7 +50,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         text: root.window.cls
-        color: Color.textMuted
+        color: Colors.textMuted
         font.family: Style.fontFamily
         font.pixelSize: Style.fontSizeSmall
     }
@@ -63,7 +63,7 @@ Item {
         anchors.margins: preview.anchors.margins
         visible: root.height > 3 * Style.fontSizeSmall
         height: title.implicitHeight + Style.spacing
-        color: Qt.alpha(Color.bg, 0.8)
+        color: Qt.alpha(Colors.bg, 0.8)
 
         Text {
             id: title
@@ -74,7 +74,7 @@ Item {
             anchors.rightMargin: Style.spacing
             elide: Text.ElideRight
             text: root.window.title
-            color: root.selected ? Color.accent : Color.text
+            color: root.selected ? Colors.accent : Colors.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
         }

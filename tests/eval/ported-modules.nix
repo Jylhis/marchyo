@@ -10,6 +10,14 @@ in
     }
   );
 
+  eval-slack-theme-injection = testNixOS "slack-theme-injection" (
+    minimalConfig
+    // {
+      programs.slack.enable = true;
+      marchyo.slack.themeInjection.enable = true;
+    }
+  );
+
   eval-slack-settings = testNixOS "slack-settings" (
     minimalConfig
     // {

@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# Screenshot one shell surface in the sandbox (dev/sandbox), starting it when needed.
+set -euo pipefail
+
+dev_dir=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+sandbox=$dev_dir/sandbox
+
+die() {
+  echo "shot: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<USAGE >&2
+usage: shot SURFACE [--state KEY=VALUE]... [--ipc 'TARGET FUNCTION ARGS']...
+            [--out PATH] [--grab] [--fixture NAME] [--timeout SECONDS]
+SURFACE: launcher[:MODE] | menu[:ROUTE] | panel:ID | overview | screen | NAME
+KEY: query (launcher text), select (launcher row index)
+USAGE
+  exit 2
+}
+
+ipc() { "$sandbox" ipc call "$@"; }
+
+wait_settled() {
+  local deadline=$((SECONDS + timeout))
+  until [[ $(ipc dev settled) == yes ]]; do
+    ((SECONDS < deadline)) || die "shell did not settle in ${timeout}s"
+    sleep 0.1
+  done
+}
+
+suffix() { [[ $1 == *:* ]] && echo "${1#*:}" || echo "${2:-}"; }
+
+# Open SURFACE and print the name it registers with the dev target.
+open_surface() {
+  case $1 in
+    launcher | launcher:*)
+      ipc shell openLauncher "$(suffix "$1" apps)" >/dev/null
+      echo launcher
+      ;;
+    menu | menu:*)
+      ipc shell openMenu "$(suffix "$1")" >/dev/null
+      echo launcher
+      ;;
+    panel:*)
+      ipc shell openPanel "${1#panel:}" >/dev/null
+      echo "$1"
+      ;;
+    overview)
+      ipc shell openOverview >/dev/null
+      echo overview:SHOT
+      ;;
+    *) echo "$1" ;;
+  esac
+}
+
+apply_state() {
+  local key=${1%%=*} value=${1#*=}
+  case $key in
+    query) ipc dev setLauncherQuery "$value" ;;
+    select) ipc dev launcherSelect "$value" ;;
+    *) die "unknown state key $key" ;;
+  esac >/dev/null
+}
+
+grab() {
+  local name=$1 out=$2 tmp=$R/grab.png deadline=$((SECONDS + timeout)) result
+  rm -f "$tmp"
+  result=$(ipc dev grab "$name" "$tmp")
+  while [[ $result == pending ]]; do
+    ((SECONDS < deadline)) || die "grab of $name timed out"
+    sleep 0.1
+    result=$(ipc dev grabResult)
+  done
+  [[ $result == ok ]] || die "grab of $name: $result"
+  mv "$tmp" "$out"
+}
+
+crop() {
+  local name=$1 out=$2 rect origin
+  rect=$(ipc dev surfaces | jq -er --arg n "$name" '.[$n] // empty') ||
+    die "surface $name is not visible (dev surfaces: $(ipc dev surfaces))"
+  origin=$("$sandbox" hyprctl -j monitors |
+    jq -er --argjson r "$rect" '.[] | select(.name == $r.output) | "\(.x) \(.y)"')
+  read -r ox oy <<<"$origin"
+  grim -g "$(jq -r --argjson x "$ox" --argjson y "$oy" \
+    '"\(.x + $x),\(.y + $y) \(.width)x\(.height)"' <<<"$rect")" "$out"
+}
+
+# QML warnings and errors the shell logged since the previous shot.
+new_warnings() {
+  local log=$R/shell.log mark=$R/shot.mark from=0 size
+  [[ -r $mark ]] && from=$(<"$mark")
+  size=$(stat -c %s "$log")
+  ((size >= from)) || from=0
+  tail -c +"$((from + 1))" "$log" | grep -E "WARN|ERROR" | awk '!seen[$0]++' || true
+  echo "$size" >"$mark"
+}
+
+surface=${1:-}
+[[ -n $surface && $surface != -* ]] || usage
+shift
+states=() calls=() out='' use_grab=0 fixture=default timeout=10
+while (($#)); do
+  case $1 in
+    --state) states+=("${2:?--state needs KEY=VALUE}") && shift ;;
+    --ipc) calls+=("${2:?--ipc needs a call}") && shift ;;
+    --out) out=${2:?--out needs a path} && shift ;;
+    --grab) use_grab=1 ;;
+    --fixture) fixture=${2:?--fixture needs a name} && shift ;;
+    --timeout) timeout=${2:?--timeout needs seconds} && shift ;;
+    *) usage ;;
+  esac
+  shift
+done
+((use_grab)) || command -v grim >/dev/null || die "grim not on PATH (use devenv shell)"
+
+"$sandbox" status >/dev/null 2>&1 || "$sandbox" up --fixture "$fixture" >&2
+eval "$("$sandbox" env)"
+R=$XDG_RUNTIME_DIR
+deadline=$((SECONDS + timeout))
+until ipc shell ping >/dev/null 2>&1; do
+  ((SECONDS < deadline)) || die "shell IPC did not answer in ${timeout}s"
+  sleep 0.2
+done
+
+ipc shell closeLauncher >/dev/null
+ipc shell closePanels >/dev/null
+ipc shell closeOverview >/dev/null
+wait_settled
+
+name=$(open_surface "$surface")
+for call in "${calls[@]}"; do
+  read -ra words <<<"$call"
+  ipc "${words[@]}" >/dev/null
+done
+for state in "${states[@]}"; do apply_state "$state"; done
+wait_settled
+
+if [[ -z $out ]]; then
+  dir=${XDG_CACHE_HOME:-$HOME/.cache}/marchyo-shell-sandbox
+  mkdir -p "$dir"
+  out=$dir/${name//[:\/]/-}.png
+fi
+if [[ $name == screen ]]; then
+  grim -o SHOT "$out"
+elif ((use_grab)); then
+  grab "$name" "$out"
+else
+  crop "$name" "$out"
+fi
+echo "$out"
+new_warnings >&2

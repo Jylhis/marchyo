@@ -13,7 +13,6 @@ Feature flags are the primary way to configure Marchyo. Each flag enables a grou
 | `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
 | `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
 | `marchyo.office.enable` | `false` | Office applications (Papers document viewer, Obsidian, Xournal++) |
-| `marchyo.gaming.enable` | `false` | Gaming bundle (Steam, GameMode, Gamescope, MangoHUD, Lutris, Heroic) — desktop-only, opt-in |
 
 ## Cascading defaults
 
@@ -39,6 +38,18 @@ Since these use `lib.mkDefault`, you can override them:
 }
 ```
 
+## Boot menu
+
+Marchyo sets `boot.loader.timeout` to `0`, so systemd-boot skips the menu and boots the default entry. Hold <kbd>Space</kbd> at power-on to open the menu.
+
+A timeout stored in an EFI variable overrides `boot.loader.timeout`. A host that set one from the menu keeps the menu visible for that many seconds.
+
+This is a default, so a host can choose its own value:
+
+```nix
+boot.loader.timeout = 3;
+```
+
 ## Desktop environment
 
 When `marchyo.desktop.enable = true`, Marchyo configures:
@@ -48,7 +59,7 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Bluetooth** — Enabled and configured
 - **Fonts** — Curated set of fonts including Nerd Fonts
 - **Theming** — Jylhis design-system theming across GTK, Qt, terminals, TUIs, and Emacs, with runtime theme switching
-- **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps the discrete stack: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent
+- **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps only hyprlock and hyprpolkitagent, with no bar, OSD or notification daemon
 - **Terminal emulator** — Ghostty
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/docs/configuration/default-apps/)
 
@@ -61,6 +72,12 @@ When `marchyo.development.enable = true`, Marchyo configures:
 - **Virtualization** via QEMU/KVM (libvirtd), with virt-manager and virt-viewer
 - **Build tools** — GNU Make, CMake, GCC, pkg-config
 - **Utilities** — direnv (with nix-direnv), jq, yq, network debugging tools (nmap, tcpdump, netcat)
+
+Marchyo does not install OBS Studio, Kdenlive or lazydocker. To add one, list it in `environment.systemPackages`:
+
+```nix
+environment.systemPackages = with pkgs; [ obs-studio lazydocker ];
+```
 
 :::note
 Shell enhancements are not gated on `development.enable`: fzf, ripgrep, fd, and
@@ -116,24 +133,89 @@ marchyo.development.enable = true;
 marchyo.defaults.aiAgent = "claude-code";  # installs the CLI, $AI_AGENT = "claude"
 ```
 
-## Gaming
+To install more agents, list them in `marchyo.ai.agents`. The default agent
+joins the list automatically. The list installs with or without
+`development.enable`.
 
-When `marchyo.gaming.enable = true` **and** the desktop is enabled, Marchyo
-configures:
-
-- **Steam** with Remote Play firewall ports, the Steam hardware udev rules, and
-  the Xbox controller driver (`xpadneo`)
-- **GameMode** and **Gamescope** for performance and upscaling
-- **MangoHUD** performance overlay
-- **Lutris** and **Heroic** launchers plus **ProtonUp-Qt**
-
-Gaming is not auto-enabled by the desktop, so a plain desktop stays lean. Steam
-pulls in 32-bit graphics and is x86_64-only, so on other architectures the flag
-has no effect.
+| Option | Default | Choices |
+|--------|---------|---------|
+| `marchyo.ai.agents` | `[]` | `"claude-code"`, `"codex"`, `"opencode"`, `"grok"`, `"gemini"`, `"copilot"` |
 
 ```nix
-{
-  marchyo.desktop.enable = true;
-  marchyo.gaming.enable = true;
-}
+marchyo.ai.agents = [ "claude-code" "codex" ];
+```
+
+#### Agent usage
+
+`marchyo agent usage` shows the usage limits and the token totals of the
+agents signed in on this machine. The agents panel (global shortcut
+`marchyo:panel.agents`, no default bind) and the `marchyo.agents` bar widget
+show the same data. The widget shows the limit that is closest to its end.
+
+- Claude Code: the 5-hour and weekly limits from Anthropic's OAuth usage
+  endpoint, with the token from `~/.claude/.credentials.json` (or
+  `$CLAUDE_CONFIG_DIR`).
+- Codex: the rate limits from `codex app-server` (`account/rateLimits/read`).
+  Codex reads its own sign-in.
+- GitHub Copilot: the monthly premium-request allowance from GitHub, with a
+  token from `COPILOT_QUOTA_TOKEN`, `GH_TOKEN`, `GITHUB_TOKEN` or
+  `gh auth token`. It runs only when `~/.copilot` exists.
+- Tokens: today and the last 30 days, from Claude Code transcripts, Codex
+  rollouts (also `.jsonl.zst`) and the opencode database.
+
+The CLI reads credentials at runtime only. It sends a token only to the
+provider's HTTPS host and refuses redirects. The result goes to
+`$XDG_STATE_HOME/marchyo/agents/usage.json` (mode 0600) without credentials.
+Limits are probed at most every 15 seconds, and a transcript scan is reused
+for 20 seconds (`--force` rescans). A failed check keeps the last limits and
+shows the error. The shell refreshes when the panel opens, then every 5
+minutes while the panel or the widget is visible.
+
+#### Agent accounts
+
+You can keep more than one Claude Code, Codex or Grok subscription signed in.
+The first login stays where the CLI puts it (`~/.claude`, `~/.codex`,
+`~/.grok`) and is the primary account. Each added account gets a home in
+`$XDG_STATE_HOME/marchyo/agents/accounts/<provider>/<id>/`. That home holds
+only the account's credentials. History, settings, skills, projects and
+sessions are symlinks to the primary home, so `claude --continue` finds the
+same conversations after a switch.
+
+```sh
+marchyo agent account add claude Work   # signs in with `claude auth login`
+marchyo agent account list              # accounts and their last limits
+marchyo agent account use claude work   # new sessions start as Work
+marchyo agent account mode claude auto 90
+marchyo agent account copy laptop       # copies the sign-ins over ssh
+```
+
+- Selection: `marchyo.ai.accounts.enable` (default `true`) installs `claude`,
+  `codex` and `grok` as wrappers. A wrapper reads the active account from
+  `$XDG_STATE_HOME/marchyo/agents/accounts/<provider>.json` and sets
+  `CLAUDE_CONFIG_DIR`, `CODEX_HOME` or `GROK_HOME` before it starts the CLI.
+  Subprocesses keep the account of their session, and running sessions do not
+  change when you switch. An explicit `CLAUDE_CONFIG_DIR` (or `CODEX_HOME`,
+  `GROK_HOME`) wins. The real CLIs are `claude-unwrapped`, `codex-unwrapped`
+  and `grok-unwrapped`.
+- Limits: `marchyo agent usage` probes each account in its own home. The
+  agents panel lists the accounts of each provider with their limits and a
+  button that switches new sessions.
+- Switching: the registry keeps a mode and a threshold (50 to 100, default
+  95). In `manual` mode, when the active account crosses the threshold, a
+  notification and the panel offer a switch to the account with the most
+  headroom. In `auto` mode new sessions move there, and a notification tells
+  you.
+- Copy: `copy <ssh-host>` sends only the credential files over the ssh stdin
+  to `marchyo agent account import` on the other machine. Files arrive with
+  mode 0600 in 0700 directories. If the other machine has an account signed
+  in already, the command asks before it replaces it (`--replace` skips the
+  question).
+- Remove: `remove <provider> <account>` deletes the account's local home only.
+  It does not log out, because a logout revokes the sign-in on every machine.
+  It refuses while a running session uses that account.
+
+To turn the wrappers off:
+
+```nix
+marchyo.ai.accounts.enable = false;
 ```

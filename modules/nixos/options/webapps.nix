@@ -32,12 +32,13 @@ let
         description = ''
           Hyprland key (the part after the modifiers) that launches this app.
           `null` binds no key. Pick one free of marchyo's existing SUPER+SHIFT
-          binds (B, C, D, E, H, I, L, M, N, O, S, T, V are taken, plus
-          minus/equal/comma/period/SPACE/Print/Tab and the workspace
+          binds (C, D, E, H, I, L, M, O, Q, S, T are taken, plus
+          minus/equal/comma/SPACE/Print/Tab/grave and the workspace
           digits/arrows) and of the keys used by the default app set
-          (A, G, P, W, X, Y, Z). T is org-capture, from
-          modules/home/emacs.nix, and only bound when marchyo.emacs is on;
-          L is theme cycling, from modules/home/hyprland.nix.
+          (A, G, P, W, X, Y, Z). With `marchyo.keyboard.legacyBinds` and
+          the shell on, B, N and V are taken too (power, network and audio
+          panels). A key on a chord marchyo binds is dropped with a
+          warning. The bind table is lib/keybinds.nix.
         '';
       };
       modifiers = mkOption {
@@ -137,6 +138,28 @@ in
         keybinding (omarchy-style, default chord SUPER+SHIFT). Override the whole
         list to customise; the default mirrors a common omarchy subset. Only used
         when `enable = true`.
+      '';
+    };
+
+    presets = {
+      m365.enable = lib.mkEnableOption ''
+        Microsoft 365 web apps (Outlook, Word, Excel, PowerPoint, Teams and
+        OneDrive) merged into the effective app list. Their entries have no
+        launch key.
+      '';
+
+      google.enable = lib.mkEnableOption ''
+        Google Workspace web apps (Gmail, Calendar, Drive, Docs, Sheets,
+        Slides, Meet, Chat, Keep, Forms, Sites, Contacts and Tasks) merged into
+        the effective app list. Their entries have no launch key. An app of the
+        same name already in `apps` or `extraApps` keeps its own entry.
+      '';
+
+      notion.enable = lib.mkEnableOption ''
+        Notion. On x86_64-linux with `nixpkgs.config.allowUnfree` set, this
+        installs `notion-app-enhanced`. Otherwise it adds a Notion web app for
+        https://www.notion.so/ to the effective app list. The web app has no
+        launch key.
       '';
     };
 

@@ -1,9 +1,16 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Commons
+import qs.compat.Commons as Compat
+import qs.compat.Ui as CUi
+import qs.compat.Services as CSvc
 import qs.Ui
 import qs.Bar
+import qs.Launcher
 import qs.Services
+import qs.Plugins
+import "Commons/DevTools.js" as DevTools
 
 // Offscreen type-check harness (`just -f shell/Justfile check`): instantiates
 // the Ui primitives and every Bar/ widget — the non-window components of the
@@ -20,9 +27,67 @@ ShellRoot {
         width: 1280
         height: 96
 
+        // The runtime style file and picker singletons load with the harness so
+        // the assertions below see them settled.
+        readonly property var styleService: RuntimeStyle
+        readonly property var pickerService: Pickers
+
         // Pull in the lock service singleton (PAM state machine; the
         // WlSessionLock surface itself needs a compositor, like the panels).
         readonly property var lockService: Lock
+
+        // The top-level types shell.qml declares.
+        readonly property list<string> shellWindowFiles: [
+            "Osd/Osd.qml",
+            "Lock/LockScreen.qml",
+            "Panels/AudioPanel.qml",
+            "Panels/NetworkPanel.qml",
+            "Panels/PowerPanel.qml",
+            "Panels/MonitorPanel.qml",
+            "Panels/DisplayPanel.qml",
+            "Panels/WeatherPanel.qml",
+            "Panels/AgentsPanel.qml",
+            "Panels/ElsewhenPanel.qml",
+            "Panels/TailscalePanel.qml",
+            "Panels/WifiQrPanel.qml",
+            "Panels/BluetoothPanel.qml",
+            "Panels/SpeedtestPanel.qml",
+            "Panels/DropboxPanel.qml",
+            "Panels/GalleryPanel.qml",
+            "Panels/WhatsNewPanel.qml",
+            "Panels/SetupPanel.qml",
+            "Panels/ImagePicker.qml",
+            "Notifications/NotificationCenter.qml",
+            "Panels/ControlCenter.qml",
+            "Launcher/LauncherWindow.qml",
+            "Plugins/PluginLayer.qml",
+            "Overview/OverviewLayer.qml",
+            "Notifications/NotificationDaemon.qml",
+            "Polkit/PolkitDialog.qml",
+            "Ui/TooltipWindow.qml"
+        ]
+
+        // Launcher providers are plain QtObjects, so they load offscreen even
+        // though LauncherWindow (a PanelWindow) does not.
+        readonly property list<QtObject> launcherProviders: [
+            AppsProvider {},
+            CalcProvider {},
+            ClipboardProvider {},
+            EmojiProvider {},
+            FontProvider {},
+            PowerProvider {},
+            MenuProvider {
+                id: harnessMenu
+            },
+            KeysProvider {
+                id: harnessKeys
+            },
+            DmenuProvider {
+                id: harnessDmenu
+            },
+            ThemeProvider {},
+            WindowsProvider {}
+        ]
 
         // Flips a late-shown harness widget visible after load (see
         // cHarnessLate): the regression probe for a slot that starts hidden.
@@ -142,6 +207,56 @@ ShellRoot {
             barWidth: 1280
         }
 
+        // The centre group: `center` sits at the exact middle and the two
+        // flanking sections hang off its edges, so a late-appearing widget in
+        // centerBegin never moves the anchor.
+        Item {
+            id: centerGroup
+            x: 200
+            y: 128
+            width: 600
+            height: 28
+
+            BarSection {
+                id: sectionCenter
+                anchors.centerIn: parent
+                section: "center"
+                entriesOverride: [
+                    {
+                        id: "marchyo.clock"
+                    }
+                ]
+                resolve: id => harnessRoot.harnessResolve[id] || null
+                configure: (item, entry) => {}
+            }
+            BarSection {
+                id: sectionCenterBegin
+                anchors.right: sectionCenter.left
+                anchors.verticalCenter: parent.verticalCenter
+                section: "centerBegin"
+                entriesOverride: [
+                    {
+                        id: "marchyo.theme"
+                    }
+                ]
+                resolve: id => harnessRoot.harnessResolve[id] || null
+                configure: (item, entry) => {}
+            }
+            BarSection {
+                id: sectionCenterEnd
+                anchors.left: sectionCenter.right
+                anchors.verticalCenter: parent.verticalCenter
+                section: "centerEnd"
+                entriesOverride: [
+                    {
+                        id: "marchyo.audio"
+                    }
+                ]
+                resolve: id => harnessRoot.harnessResolve[id] || null
+                configure: (item, entry) => {}
+            }
+        }
+
         // Assertions over the section above: widgets must actually RENDER, not
         // just load, and a slot hidden at load must reappear when its widget
         // turns shown (the theme-toggle regression). The Justfile check fails
@@ -202,6 +317,20 @@ ShellRoot {
                 // invisible forever).
                 if (!slots[7].visible || !shownOf(slots[7]))
                     fail("late-shown widget stayed collapsed: slot visible=" + slots[7].visible + " item=" + shownOf(slots[7]));
+                // Centre group: the anchor stays centred while its neighbours
+                // (the late widget on the begin side, audio on the end side)
+                // grow outwards from its edges.
+                sectionCenter.ensurePolished();
+                sectionCenterBegin.ensurePolished();
+                sectionCenterEnd.ensurePolished();
+                if (Math.abs(sectionCenter.x + sectionCenter.width / 2 - centerGroup.width / 2) > 0.5)
+                    fail("centre anchor moved: x=" + sectionCenter.x + " w=" + sectionCenter.width);
+                if (Math.abs(sectionCenterBegin.x + sectionCenterBegin.width - sectionCenter.x) > 0.5)
+                    fail("centerBegin does not end at the anchor's left edge");
+                if (Math.abs(sectionCenterEnd.x - (sectionCenter.x + sectionCenter.width)) > 0.5)
+                    fail("centerEnd does not start at the anchor's right edge");
+                if (sectionCenterBegin.width <= 0 || sectionCenterEnd.width <= 0)
+                    fail("centre neighbours collapsed: begin=" + sectionCenterBegin.width + " end=" + sectionCenterEnd.width);
                 for (let i = 0; i < slots.length; i++) {
                     const md = slots[i].modelData;
                     console.log("ASSERT-INFO idx=" + i + " id=" + (md ? md.id : "?") + " slot.visible=" + slots[i].visible + " item.visible=" + shownOf(slots[i]));
@@ -246,7 +375,7 @@ ShellRoot {
                 // Hover on the segmented bar: a BarItem inside the segmented
                 // section takes the section's hover colour, which differs from
                 // both segment tones; one in the flat section keeps
-                // Color.surface.
+                // Colors.surface.
                 const segItem = widgetOf(segSlots[0]);
                 const flatItem = widgetOf(slots[0]);
                 if (!segItem || !Qt.colorEqual(segItem.hoverColor, sectionSegmented.segmentHover))
@@ -255,8 +384,44 @@ ShellRoot {
                     fail("segmented hover colour equals a segment tone: " + sectionSegmented.segmentHover);
                 if (Qt.colorEqual(sectionSegmented.segmentToneEven, sectionSegmented.segmentToneOdd))
                     fail("segment tones are identical: " + sectionSegmented.segmentToneEven);
-                if (!flatItem || !Qt.colorEqual(flatItem.hoverColor, Color.surface))
+                if (!flatItem || !Qt.colorEqual(flatItem.hoverColor, Colors.surface))
                     fail("flat BarItem hover colour changed: " + (flatItem ? flatItem.hoverColor : "no item"));
+                // The colour singletons must resolve to the theme, not to a
+                // same-named type from another module (Qt 6.12 added a
+                // QtQuick `Color` that shadowed the old Commons/Color).
+                if (!Qt.colorEqual(Colors.text, Theme.palette.text) || !Qt.colorEqual(Colors.bg, Theme.palette.bg))
+                    fail("Colors does not follow Theme.palette (singleton shadowed?): text=" + Colors.text + " bg=" + Colors.bg);
+                if (!Qt.colorEqual(Compat.CompatColor.foreground, Theme.palette.text))
+                    fail("compat CompatColor does not follow Theme.palette: foreground=" + Compat.CompatColor.foreground);
+                // The lock gate and stranded-lock recovery must exist and
+                // must not lock on their own.
+                if (typeof Lock.screensReady !== "boolean" || typeof Lock.strandedResolved !== "boolean")
+                    fail("Lock lost screensReady/strandedResolved");
+                if (Lock.locked)
+                    fail("Lock locked itself at startup without an orphaned compositor lock");
+                if (typeof Screens.realCount !== "number")
+                    fail("Screens.realCount missing");
+                // The dev hooks are inert without their environment variables.
+                if (Dev.enabled || Dev.noMotion || Dev.outputOverride !== "" || Dev.ipc.enabled)
+                    fail("Dev hooks are active without MARCHYO_SHELL_* set");
+                if (Screens.pin("DP-1") !== "DP-1" || Screens.pin("") !== "")
+                    fail("Screens.pin changed an output without MARCHYO_SHELL_OUTPUT");
+                if (Dev.surfaces() !== "{}" || Dev.setLauncherQuery("x") !== "closed" || Dev.settled() === "")
+                    fail("Dev IPC functions are not inert");
+                RuntimeStyle.apply("");
+                if (Style.motionRuntimeOff || Style.duration(Style.motionFast) <= 0)
+                    fail("durations are zero without MARCHYO_SHELL_NO_MOTION");
+                if (DevTools.pickOutput("SHOT", ["DP-1", "SHOT"], "DP-1") !== "SHOT" || DevTools.pickOutput("SHOT", ["DP-1"], "DP-1") !== "DP-1")
+                    fail("DevTools.pickOutput is wrong");
+                // The string layer loads its catalogs; the dev tree bakes English.
+                if (I18n.t("audio.title") !== "Audio")
+                    fail("I18n.t(audio.title) = " + I18n.t("audio.title"));
+                if (I18n.t("power.charger", 65) !== "Charger  65 W")
+                    fail("I18n.t hole substitution failed");
+                if (I18n.t("no.such.key") !== "no.such.key")
+                    fail("I18n.t does not return the key for a missing key");
+                if (I18n.tn("audio.applications", 2, 2) !== "2 applications")
+                    fail("I18n.tn plural selection failed");
                 console.log("ASSERT-DONE");
             }
         }
@@ -345,11 +510,438 @@ ShellRoot {
             x: 300
             y: 64
         }
+        RemoteSessionWidget {
+            x: 340
+            y: 64
+        }
+        UpdateWidget {
+            x: 360
+            y: 64
+        }
+        DiskWidget {
+            x: 380
+            y: 64
+        }
+        HealthWidget {
+            x: 440
+            y: 64
+        }
         PanelSlider {
             x: 0
             y: 64
             width: 200
             value: 0.5
+        }
+
+        // The native Ui kit (Ui/*.qml): every control instantiated and driven
+        // through its keyboard-facing API, then asserted after the settle.
+        Item {
+            id: kit
+            y: 100
+            width: 400
+            height: 400
+
+            property int clicks: 0
+            property int toggles: 0
+            property int picks: 0
+            property int confirms: 0
+            property string groupValue: "a"
+
+            Button {
+                id: kitButton
+                text: "button"
+                onClicked: kit.clicks++
+            }
+            ButtonGroup {
+                id: kitGroup
+                y: 30
+                options: ["a", "b", "c"]
+                value: kit.groupValue
+                onChanged: v => kit.groupValue = v
+            }
+            Toggle {
+                id: kitToggle
+                y: 60
+                label: "toggle"
+                onToggled: kit.toggles++
+            }
+            FilterInput {
+                id: kitFilter
+                y: 100
+                text: "abc"
+            }
+            Dropdown {
+                id: kitDropdown
+                y: 130
+                options: [
+                    {
+                        value: "x",
+                        label: "ex"
+                    },
+                    {
+                        value: "y",
+                        label: "why"
+                    }
+                ]
+                value: "x"
+                onActivated: kit.picks++
+            }
+            SearchableDropdown {
+                id: kitSearch
+                y: 170
+                options: ["oslo", "osaka", "lima"]
+            }
+            PanelHero {
+                y: 210
+                title: "hero"
+            }
+            PanelSectionHeader {
+                y: 250
+                text: "section"
+            }
+            PanelSeparator {
+                y: 270
+                width: 100
+            }
+            PanelActionButton {
+                y: 280
+                text: "action"
+            }
+            PopupCard {
+                y: 310
+                title: "card"
+                PopupMenuRow {
+                    text: "row"
+                    checked: true
+                }
+            }
+            PointerMoveGate {
+                id: kitGate
+            }
+            ConfirmDialog {
+                id: kitDialog
+                title: "dialog"
+                onConfirmed: kit.confirms++
+            }
+        }
+
+        Timer {
+            interval: 900
+            running: true
+            onTriggered: {
+                const fail = m => console.log("ASSERT-FAIL " + m);
+                const states = ["normal", "hover", "focus", "selected", "pressed"];
+                for (const st of states) {
+                    const c = Style.control(st);
+                    if (!c || c.borderWidth < 1 || c.fillAlpha <= 0)
+                        fail("Style.control(" + st + ") is incomplete");
+                }
+                if (Style.control("focus").borderWidth <= Style.control("normal").borderWidth)
+                    fail("the focus ring is not wider than the hairline");
+
+                if (Style.duration(Style.motionFast) <= 0)
+                    fail("Style.duration is 0 with motion on");
+                Style.motionRuntimeOff = true;
+                if (Style.duration(Style.motionFast) !== 0)
+                    fail("Style.duration ignores the runtime reduce-motion switch");
+                Style.motionRuntimeOff = false;
+                Style.compositorAnimationsOff = true;
+                if (Style.duration(Style.motionFast) !== 0)
+                    fail("Style.duration ignores Hyprland animations:enabled");
+                Style.compositorAnimationsOff = false;
+
+                kitButton.activate();
+                if (kit.clicks !== 1)
+                    fail("Button.activate did not click");
+                kitToggle.activate();
+                if (kit.toggles !== 1)
+                    fail("Toggle.activate did not emit toggled");
+                kitGroup.step(1);
+                if (kit.groupValue !== "b")
+                    fail("ButtonGroup.step did not move the choice");
+
+                kitDropdown.openList();
+                if (!kitDropdown.open)
+                    fail("Dropdown.openList did not open");
+                kitDropdown.pick(1);
+                if (kitDropdown.value !== "y" || kit.picks !== 1 || kitDropdown.open)
+                    fail("Dropdown.pick did not choose and close");
+                kitSearch.openList();
+                kitSearch.query = "os";
+                if (kitSearch.shown.length !== 2)
+                    fail("SearchableDropdown did not filter to two rows");
+
+                kitSearch.openList();
+                kitSearch.closeList();
+                if (kitSearch.filterFocused)
+                    fail("closing a searchable dropdown left the filter focused");
+
+                kitFilter.clear();
+                if (kitFilter.text !== "")
+                    fail("FilterInput.clear left text behind");
+
+                kitDialog.open = true;
+                kitDialog.confirm();
+                if (kit.confirms !== 1 || kitDialog.open)
+                    fail("ConfirmDialog.confirm did not emit and close");
+                if (kitDialog.activeFocus || kitDialog.enabled)
+                    fail("a closed ConfirmDialog is still focusable");
+
+                kitGate.hold();
+                if (Pointer.moved)
+                    fail("PointerMoveGate.hold left the pointer marked as moved");
+                kitGate.release();
+
+                // Runtime style: a parsed style.json lands in Style, and an
+                // empty file restores the baked defaults.
+                RuntimeStyle.apply('{"reduceMotion":true,"uiFont":"Harness Sans","barPosition":"bottom","barBackground":"clear"}');
+                if (!Style.motionRuntimeOff || Style.duration(Style.motionFast) !== 0)
+                    fail("RuntimeStyle reduceMotion did not reach Style.duration");
+                if (Style.fontFamily !== "Harness Sans")
+                    fail("RuntimeStyle uiFont did not reach Style.fontFamily: " + Style.fontFamily);
+                if (!Style.barBottom || Style.barAlpha !== 0)
+                    fail("RuntimeStyle bar switches did not reach Style: " + Style.barPosition + " " + Style.barAlpha);
+                RuntimeStyle.apply("{}");
+                if (Style.motionRuntimeOff || Style.fontFamily !== Style.baseFontFamily || Style.barBottom || Style.barBackground !== "")
+                    fail("RuntimeStyle did not restore the baked defaults");
+
+                // Picker data and thumbnails: rows are lists, an unknown image
+                // falls back to itself, a generated thumbnail replaces it.
+                if (!Array.isArray(Pickers.rows("themes")) || !Array.isArray(Pickers.rows("backgrounds")))
+                    fail("Pickers.rows is not a list");
+                if (Thumbnails.sourceFor("") !== "" || Thumbnails.sourceFor("/w/a.png") !== "file:///w/a.png")
+                    fail("Thumbnails.sourceFor did not fall back to the full image");
+                Thumbnails.take("/w/a.png\t/c/t.png");
+                if (Thumbnails.sourceFor("/w/a.png") !== "file:///c/t.png")
+                    fail("Thumbnails.take did not register the thumbnail");
+                Thumbnails.map = ({});
+            }
+        }
+
+        // The omarchy plugin compat host (shell/compat): every Ui type that
+        // loads offscreen is instantiated plainly; the window-based ones need
+        // a layer-shell compositor, so they are only compiled and bound-checked
+        // through their Component. The Services facades are the callback
+        // holders PluginHost wires up.
+        Item {
+            id: compatKit
+            y: 520
+            width: 400
+            height: 400
+
+            readonly property var windowTypes: ["KeyboardPanel", "OverlayWindow", "PopupCard", "SpeedTestOverlay"]
+
+            CUi.BarIconButton {}
+            CUi.BarIconContent {}
+            CUi.BarIndicator {}
+            CUi.BarWidget {}
+            CUi.BorderOverlay {}
+            CUi.BorderSurface {}
+            CUi.Button {
+                id: cButton
+                text: "compat"
+            }
+            CUi.ButtonGroup {
+                options: ["a", "b"]
+                value: "a"
+            }
+            CUi.ConfirmDialog {
+                message: "compat"
+            }
+            CUi.CursorSurface {}
+            CUi.Dropdown {
+                options: [
+                    {
+                        value: "x",
+                        label: "ex"
+                    }
+                ]
+                value: "x"
+            }
+            CUi.FilterInput {}
+            CUi.IconContentBounds {}
+            CUi.MultiSelect {
+                options: ["a", "b"]
+            }
+            CUi.NumberField {}
+            CUi.OpticalGlyph {}
+            CUi.PanelActionButton {
+                iconText: "x"
+            }
+            CUi.PanelController {}
+            CUi.PanelHero {
+                title: "compat"
+            }
+            CUi.PanelKeyCatcher {}
+            CUi.Panel {}
+            CUi.PanelSectionHeader {
+                text: "compat"
+            }
+            CUi.PanelSeparator {}
+            CUi.PanelSlider {
+                value: 0.5
+            }
+            CUi.PanelToolTip {}
+            CUi.PluginBarApi {
+                pluginId: "harness.plugin"
+                moduleName: "harness"
+            }
+            CUi.PointerMoveGate {}
+            CUi.PopupMenuRow {
+                text: "compat"
+            }
+            CUi.SearchableDropdown {
+                options: ["a", "b"]
+            }
+            CUi.SizedImage {}
+            CUi.TextField {}
+            CUi.Toggle {
+                label: "compat"
+            }
+            CUi.ToggleSwitch {}
+            CUi.WidgetButton {}
+
+            CSvc.PluginShellApi {
+                id: cShellApi
+                pluginId: "harness.plugin"
+            }
+            CSvc.PluginAppLibraryApi {
+                id: cAppApi
+                ownerPluginId: "harness.plugin"
+            }
+            CSvc.PluginBarStateApi {
+                id: cBarStateApi
+            }
+            CSvc.PluginBarWidgetRegistryApi {
+                id: cBarRegistryApi
+            }
+            CSvc.PluginRegistryApi {
+                id: cRegistryApi
+            }
+            Compat.Translations {
+                id: cStrings
+                directory: Qt.resolvedUrl("compat/omarchy/default/i18n")
+            }
+        }
+
+        // The plugin layer starts its services and loads nothing without plugins.
+        PluginLayer {
+            id: pluginLayer
+        }
+
+        Timer {
+            interval: 1100
+            running: true
+            onTriggered: {
+                const fail = m => console.log("ASSERT-FAIL " + m);
+                for (const name of compatKit.windowTypes) {
+                    const c = Qt.createComponent(Qt.resolvedUrl("compat/Ui/" + name + ".qml"));
+                    // A PanelWindow root cannot be created without a compositor
+                    // backend; that is the only error a clean compile ends in.
+                    const err = c.errorString().replace(/^.*No PanelWindow backend loaded\.\s*/, "");
+                    if (c.status !== Component.Ready && err !== "")
+                        fail("compat Ui/" + name + " did not compile: " + c.errorString());
+                }
+
+                // The shell's own windows cannot be created offscreen either,
+                // but compiling each file still catches QML compile errors.
+                for (const f of harnessRoot.shellWindowFiles) {
+                    const w = Qt.createComponent(Qt.resolvedUrl(f));
+                    const stray = w.errorString().split("\n").filter(l => l.trim() !== "" && l.indexOf("No PanelWindow backend loaded") === -1 && !/Type \w+ unavailable/.test(l));
+                    if (stray.length > 0)
+                        fail(f + " did not compile: " + stray.join("; "));
+                }
+
+                // An omarchy plugin, rewritten like the build does, resolves its
+                // compat imports even from outside the shell tree (the dev
+                // loader's case). The panel's root window cannot be created
+                // offscreen, so only a clean compile counts.
+                const pluginDir = Quickshell.env("HARNESS_PLUGIN_DIR");
+                if (pluginDir) {
+                    const pc = Qt.createComponent("file://" + pluginDir + "/Panel.qml");
+                    const stray = pc.errorString().split("\n").filter(l => l.trim() !== "" && l.indexOf("No PanelWindow backend loaded") === -1 && !/Type \w+ unavailable/.test(l));
+                    if (pc.status !== Component.Ready && (stray.length > 0 || pc.errorString().indexOf("No PanelWindow backend loaded") === -1))
+                        fail("rewritten omarchy plugin did not compile: " + pc.errorString());
+                    console.log("ASSERT-INFO omarchy plugin compile status=" + pc.status);
+                }
+
+                // The menu, cheat sheet and dmenu providers load without their
+                // data files and answer with empty result lists.
+                if (!Array.isArray(harnessMenu.results) || !Array.isArray(harnessKeys.results) || !Array.isArray(harnessDmenu.results))
+                    fail("menu providers did not produce result lists");
+                Launcher.openMenu("appearance.theme");
+                if (Launcher.mode !== "menu" || Launcher.menuRoute !== "appearance.theme" || !Launcher.menuUp() || Launcher.menuRoute !== "appearance")
+                    fail("Launcher menu route stack misbehaves: " + Launcher.menuRoute);
+                Launcher.close();
+                if (Launcher.menuRoute !== "")
+                    fail("closing the launcher kept the menu route");
+
+                // The plugin host has nothing to host without plugins and
+                // refuses what it does not know.
+                if (PluginHost.summon("no.such", "{}") !== false || PluginHost.toggle("no.such", "") !== false)
+                    fail("PluginHost summoned an unknown plugin");
+                if (PluginHost.call("no.such", "x", "") !== "unknown" || PluginHost.togglePanelAt("right", "1") !== "unknown")
+                    fail("PluginHost answered for an unknown plugin");
+                if (PluginHost.shellFor("no.such") !== null || PluginHost.rescan() !== "disabled")
+                    fail("PluginHost facade or rescan misbehaves without plugins");
+                if (PluginHost.customBar || !pluginLayer.servicesReady)
+                    fail("PluginLayer did not start cleanly without plugins");
+                const hostedApps = PluginHost.appLibraryFor("harness.menu");
+                if (hostedApps._apps.target !== DesktopEntries.applications)
+                    fail("the plugin app library does not follow DesktopEntries.applications");
+                hostedApps.destroy();
+
+                // The facades are inert until PluginHost wires their callbacks.
+                if (cShellApi.summon("x") !== false || cShellApi.serviceFor("x") !== null || cShellApi.isPluginOpen("x") !== false)
+                    fail("PluginShellApi is not inert without callbacks");
+                if (cAppApi.sortedEntries("").length !== 0 || cAppApi.entryName(null) !== "")
+                    fail("PluginAppLibraryApi is not inert without callbacks");
+
+                // omarchy's catalogs are read from OMARCHY_PATH (set by the
+                // Justfile and the wrapper); marchyo's strings are the fallback.
+                if (Compat.I18n.t("speedtest.download") !== "DOWNLOAD")
+                    fail("compat I18n.t(speedtest.download) = " + Compat.I18n.t("speedtest.download"));
+                if (Compat.I18n.t("power.charger") === "power.charger")
+                    fail("compat I18n.t does not fall back to marchyo's catalog");
+                if (Compat.I18n.t("no.such.key") !== "no.such.key" || Compat.I18n.t("no.such.key", "fb") !== "fb")
+                    fail("compat I18n.t does not fall back to the key or the caller's text");
+                if (Compat.I18n.formatNumber(13.14, 1) !== "13.1")
+                    fail("compat I18n.formatNumber = " + Compat.I18n.formatNumber(13.14, 1));
+                if (typeof Compat.I18n.rightToLeft !== "boolean" || Compat.I18n.language !== I18n.language)
+                    fail("compat I18n language/rightToLeft do not follow marchyo's I18n");
+
+                // The Style/CompatColor/Util surface the vendored Ui kit and
+                // omarchy's own plugins read.
+                const need = (obj, label, names) => {
+                    for (const n of names)
+                        if (obj[n] === undefined)
+                            fail("compat " + label + "." + n + " is undefined");
+                };
+                need(Compat.Style, "Style", ["normalFillFor", "hoverFillFor", "selectedFillFor", "focusFillFor", "pressedFillFor", "selectionFillFor", "controlFill", "normalBorderWidth", "hoverStateColor", "selectedStateColor", "hoverFill", "easeOut", "duration", "reduceMotion", "space", "spaceReal", "cornerRadius", "gapsOut"]);
+                need(Compat.Style.spacing, "Style.spacing", ["xxs", "xs", "sm", "md", "huge", "controlPaddingX", "controlPaddingY", "controlHeight", "controlGap", "labelGap", "rowGap", "rowPaddingX", "popupRowHeight", "popupPadding", "hairline", "dropdownWidth", "searchableDropdownWidth", "searchablePopupMinHeight", "numberFieldWidth", "inputPaddingY"]);
+                need(Compat.Style.font, "Style.font", ["family", "caption", "bodySmall", "body", "subtitle", "heading", "title", "display", "icon"]);
+                need(Compat.Style.bar, "Style.bar", ["iconSize", "iconSlot", "iconCanvas", "iconFont", "statusSlot", "sizeHorizontal"]);
+                for (const role of ["bar", "popups", "tooltip", "notifications", "menu", "polkit", "lock", "imagePicker"])
+                    if (Compat.CompatColor[role] === undefined)
+                        fail("compat CompatColor." + role + " is undefined");
+                need(Compat.CompatColor, "CompatColor", ["accent", "foreground", "muted", "urgent", "background"]);
+                need(Compat.CompatColor.popups, "CompatColor.popups", ["background", "border", "text"]);
+                need(Compat.CompatColor.tooltip, "CompatColor.tooltip", ["background", "border", "text"]);
+                if (Compat.Style.duration(Style.motionFast) <= 0)
+                    fail("compat Style.duration is 0 with motion on");
+                Style.motionRuntimeOff = true;
+                if (Compat.Style.duration(Style.motionFast) !== 0 || !Compat.Style.reduceMotion)
+                    fail("compat Style ignores marchyo's reduce-motion switch");
+                Style.motionRuntimeOff = false;
+                if (Compat.Style.space(10) < 1)
+                    fail("compat Style.space(10) < 1");
+                if (Compat.Border.canUseNative(Compat.Border.controlSpec("hover-cursor")) !== true || Compat.Border.needsOverlay(Compat.Border.controlSpec("focus")) !== false)
+                    fail("compat Border.controlSpec is not a native flat border");
+                if (Math.abs(Compat.Util.alpha("#ffffff", 0.5).a - 0.5) > 0.01)
+                    fail("compat Util.alpha");
+                if (cStrings.t("none.such", "x") !== "x")
+                    fail("compat Translations.t");
+            }
         }
 
         // The Control Center tile model (Services/QuickToggles): every entry
@@ -377,6 +969,170 @@ ShellRoot {
                         console.log("ASSERT-FAIL QuickToggles." + t.key + ".toggle is not a function");
                 }
             }
+        }
+    }
+
+    Component {
+        id: ghostC
+        GhostNotification {}
+    }
+
+    FileView {
+        id: tokenWriter
+        path: Quickshell.statePath("harness-notify-token")
+        blockWrites: true
+        printErrors: false
+    }
+
+    // NotificationState with restored-style notifications: DND pass and hold,
+    // history redaction and the transient hint, and the exec-token gate.
+    Timer {
+        interval: 1200
+        running: true
+        onTriggered: {
+            const fail = m => console.log("ASSERT-FAIL " + m);
+            const NS = NotificationState;
+            const mk = (app, summary, hints) => ghostC.createObject(null, {
+                    "appName": app,
+                    "summary": summary,
+                    "body": "",
+                    "hints": hints,
+                    "urgency": 1
+                });
+            NS.nonceDir = Quickshell.statePath("harness-nonce");
+            const nonce = (hex, content) => {
+                tokenWriter.path = NS.nonceDir + "/" + hex;
+                tokenWriter.setText(content !== undefined ? content : hex);
+                return hex;
+            };
+            const tok = h => ({
+                    "marchyo-token": h
+                });
+            const argvOf = n => JSON.stringify(NS.execArgvOf(n));
+            const n1 = nonce("ab".repeat(32));
+            if (NS.tokenOk({}) || NS.tokenOk(tok("short")) || NS.tokenOk(tok("ef".repeat(32))))
+                fail("a missing, short or unwritten token was accepted");
+            nonce("cd".repeat(32), "not-the-name");
+            if (NS.tokenOk(tok("cd".repeat(32))))
+                fail("a token file with other content was accepted");
+            if (!NS.tokenOk(tok(n1)))
+                fail("a written one-time token was not accepted");
+            if (NS.tokenOk(tok(n1)))
+                fail("a one-time token was accepted twice");
+            nonce(n1);
+            if (NS.tokenOk(tok(n1)))
+                fail("a spent token was accepted again after its file came back");
+
+            // A trusted card, then an update from another bus client that relabels
+            // it: Quickshell applies replaces_id in place, without a new signal.
+            const exec = (argv, token) => ({
+                    "marchyo-exec-argv": JSON.stringify(argv),
+                    "marchyo-token": token
+                });
+            NS.clearAll();
+            NS.clearHistory();
+            const card = mk("marchyo-action", "Reboot", exec(["a", "b"], nonce("11".repeat(32))));
+            NS.show(card);
+            if (argvOf(card) !== "[\"a\",\"b\"]")
+                fail("a trusted exec argv was not honoured");
+            card.summary = "Download finished";
+            card.hints = {
+                "marchyo-exec-argv": "[\"evil\"]"
+            };
+            NS.flushRefresh();
+            if (NS.execArgvOf(card) !== null || NS.deedsOf(card).length !== 0)
+                fail("an untrusted relabel kept or gained a command");
+            if (NS.history[0].summary !== "Download finished")
+                fail("the history entry did not follow the update");
+
+            // The same relabel that replays the card's old hints and token.
+            const card2 = mk("marchyo-action", "Reboot", exec(["a", "b"], nonce("12".repeat(32))));
+            NS.show(card2);
+            card2.summary = "Download finished";
+            NS.flushRefresh();
+            if (NS.execArgvOf(card2) !== null)
+                fail("a spent token kept a command alive across a text-only update");
+
+            // `marchyo notify -r`: a new token with a new command takes over.
+            const card3 = mk("marchyo-action", "Old", exec(["old"], nonce("13".repeat(32))));
+            NS.show(card3);
+            card3.summary = "New";
+            card3.hints = exec(["new", "x"], nonce("14".repeat(32)));
+            NS.flushRefresh();
+            if (argvOf(card3) !== "[\"new\",\"x\"]")
+                fail("a trusted replacement did not install its new command");
+            card3.hints = {};
+            NS.flushRefresh();
+            if (NS.execArgvOf(card3) !== null)
+                fail("a replacement without a command kept the old one");
+
+            // A glyph is drawn only for a token-proved sender.
+            const glyph = (summary, token) => mk("Chat", summary, Object.assign({
+                    "marchyo-glyph": "G"
+                }, token ? tok(token) : {}));
+            const plain = glyph("plain");
+            const proved = glyph("proved", nonce("15".repeat(32)));
+            NS.show(plain);
+            NS.show(proved);
+            if (NS.rowOf(plain).glyph !== "" || NS.rowOf(proved).glyph !== "G")
+                fail("the glyph was not gated on the token");
+
+            // A held notification keeps its vetted command through do-not-disturb.
+            NS.clearAll();
+            NS.setDnd(true);
+            const held = mk("Chat", "held", exec(["h"], nonce("16".repeat(32))));
+            NS.show(held);
+            if (NS.queued.length !== 1)
+                fail("do-not-disturb did not hold a notification with a command");
+            NS.setDnd(false);
+            if (argvOf(held) !== "[\"h\"]")
+                fail("a held notification lost its command when released");
+
+            // A restored toast never carries a command, even a well-formed one.
+            NS.clearAll();
+            NS.restoreLive("[{\"key\":\"evil\",\"app\":\"marchyo-action\",\"summary\":\"Reboot\",\"execArgv\":\"[\\\"sh\\\",\\\"-c\\\",\\\"id\\\"]\"}]");
+            if (NS.entries.length !== 1 || NS.execArgvOf(NS.entries[0].n) !== null)
+                fail("a restored toast carried a command");
+            NS.clearAll();
+            NS.setDnd(true);
+            const unproved = {
+                "marchyo-exec-argv": "[\"marchyo\",\"shell\",\"open\",\"setup\"]",
+                "marchyo-token": "0".repeat(64)
+            };
+            const own = mk("marchyo-action", "Welcome", unproved);
+            NS.show(own);
+            if (NS.entries.length !== 1)
+                fail("marchyo-action did not pass do-not-disturb");
+            if (NS.execArgvOf(own) !== null)
+                fail("an exec argv was honoured without the session token");
+            const code = mk("Chat", "Your verification code is 482913", {});
+            NS.show(code);
+            if (JSON.stringify(NS.history[0]).indexOf("482913") >= 0)
+                fail("a verification code reached the history");
+            const quiet = mk("Chat", "quiet", {});
+            NS.show(quiet);
+            if (!NS.queued.some(q => q.n === quiet))
+                fail("do-not-disturb did not hold a plain notification");
+            if (NS.history[0].silenced !== true)
+                fail("a silenced row is not marked in the history");
+            const count = NS.history.length;
+            NS.show(mk("Chat", "transient", {
+                "transient": true
+            }));
+            if (NS.history.length !== count)
+                fail("a transient notification was recorded");
+            NS.setDnd(false);
+            NS.clearAll();
+            NS.restoreLive("[{\"key\":\"r1\",\"app\":\"Chat\",\"summary\":\"back\",\"urgency\":1},{\"key\":\"r2\",\"app\":\"Disk\",\"summary\":\"full\",\"urgency\":2}]");
+            if (NS.entries.length !== 2)
+                fail("restored live toasts: expected 2, got " + NS.entries.length);
+            else if (NS.entries[0].n.summary !== "full" || NS.entries[0].deadline !== 0)
+                fail("a restored critical toast must stay until dismissed");
+            else if (NS.entries[1].deadline <= Date.now() || NS.entries[1].deadline > Date.now() + 21000)
+                fail("a restored toast does not get the 20 s grace");
+            NS.clearAll();
+            NS.clearHistory();
+            console.log("ASSERT-NOTIFY-DONE");
         }
     }
 

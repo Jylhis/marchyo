@@ -38,17 +38,17 @@
   # ISO metadata
   image.fileName = lib.mkForce "marchyo-installer-minimal-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
 
-  # Enable SSH for remote installation
+  # Key-only SSH for remote installation: a password-reachable root on a
+  # live image is a remote-root hole. Add your own key to reach the image.
   services.openssh = {
     enable = true;
     settings = {
-      PermitRootLogin = "yes";
-      PasswordAuthentication = true;
+      PermitRootLogin = "prohibit-password";
+      PasswordAuthentication = false;
     };
   };
 
-  # Set a known root password for SSH access (change after first login!)
-  # users.users.root.initialPassword = "marchyo";
+  # users.users.root.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAA... you@host" ];
 
   # Essential installation tools
   environment.systemPackages = with pkgs; [

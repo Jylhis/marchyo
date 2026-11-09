@@ -1,5 +1,5 @@
 # Base16 slot palette for the long-tail surfaces marchyo themes directly
-# (lazygit, k9s, ncspot, spotify-player, gdu): the apps whose config formats
+# (lazygit, k9s, spotify-player, gdu): the apps whose config formats
 # take raw colors rather than semantic tokens. Resolves the same choice the
 # retired Stylix base16Scheme made: the Jylhis pair by variant, or
 # marchyo.theme.scheme from the tinted-schemes catalog. Returns

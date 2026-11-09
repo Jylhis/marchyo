@@ -1,0 +1,22 @@
+{
+  "menu.network": "নেটওয়ার্ক",
+  "menu.speedTest": "গতি পরীক্ষা",
+  "menu.lock": "লক",
+  "menu.suspend": "সাসপেন্ড",
+  "menu.hibernate": "হাইবারনেট",
+  "menu.reboot": "রিবুট",
+  "menu.shutdown": "শাটডাউন",
+  "menu.style": "স্টাইল",
+  "menu.theme": "থিম",
+  "menu.background": "পটভূমি",
+  "menu.font": "ফন্ট",
+  "menu.setup": "সেটআপ",
+  "menu.audio": "অডিও",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "ট্রিগার",
+  "menu.appearance": "চেহারা",
+  "menu.system": "সিস্টেম",
+  "menu.learn": "শিখুন",
+  "menu.screenshot": "স্ক্রিনশট",
+  "menu.share": "শেয়ার"
+}

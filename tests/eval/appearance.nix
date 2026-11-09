@@ -10,7 +10,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser hyprEntriesText;
+  inherit (helpers) withTestUser hyprEntriesText hyprHasBind;
 
   evalWith =
     extra:
@@ -41,18 +41,18 @@ in
         throw "FAIL: marchyo.theme.appearance defaults are not neutral"
     );
 
-  # Style axes are deliberately non-neutral: the Caelestia-inspired look
-  # (floating pill bar, translucent surfaces) is the default, and the strip /
-  # opaque look is the opt-out.
+  # Style axes: the flush strip bar is the default (it fits the gapless grid),
+  # and translucent surfaces stay on; the floating pill and the opaque look
+  # are opt-ins.
   eval-appearance-style-defaults =
     let
       a = (evalWith { }).config.marchyo.theme.appearance;
     in
     pkgs.writeText "eval-appearance-style-defaults" (
-      if a.floatingBar && a.surfaceAlpha == 0.85 then
+      if !a.floatingBar && a.surfaceAlpha == 0.85 then
         "pass"
       else
-        throw "FAIL: marchyo.theme.appearance style defaults should be floatingBar + surfaceAlpha 0.85"
+        throw "FAIL: marchyo.theme.appearance style defaults should be the strip bar + surfaceAlpha 0.85"
     );
 
   # Glass: with the shell on and surfaceAlpha below 1, Hyprland must enable the
@@ -92,6 +92,30 @@ in
         throw "FAIL: surfaceAlpha = 1.0 should keep blur off and register no blur layer rule"
     );
 
+  # Reduced motion defaults on in a VM guest and off on bare metal; when on it
+  # drops compositor animations and blur.
+  eval-appearance-reduce-motion =
+    let
+      host = (evalWith { marchyo.shell.enable = true; }).config;
+      guest =
+        (evalWith {
+          marchyo.shell.enable = true;
+          services.qemuGuest.enable = true;
+        }).config;
+      settings = guest.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+    in
+    pkgs.writeText "eval-appearance-reduce-motion" (
+      if
+        !host.marchyo.theme.appearance.reduceMotion
+        && guest.marchyo.theme.appearance.reduceMotion
+        && !settings.config.animations.enabled
+        && !(settings.config.decoration.blur.enabled or false)
+      then
+        "pass"
+      else
+        throw "FAIL: reduceMotion should default on in a VM guest and disable animations and blur"
+    );
+
   # Non-neutral axes are accepted and the shell evaluates with them.
   eval-appearance-threaded =
     let
@@ -112,5 +136,160 @@ in
         "pass"
       else
         throw "FAIL: appearance axes set but the shell did not evaluate with them"
+    );
+
+  # Window appearance defaults reproduce the flat look: opaque windows, square
+  # corners, auto animations (on with the shell, decided against a VM at start).
+  eval-appearance-window-defaults =
+    let
+      cfg = (evalWith { marchyo.shell.enable = true; }).config;
+      a = cfg.marchyo.theme.appearance;
+      hm = cfg.home-manager.users.testuser;
+      settings = hm.wayland.windowManager.hyprland.settings;
+      decoration = settings.config.decoration;
+      startup = hyprEntriesText settings.on;
+    in
+    pkgs.writeText "eval-appearance-window-defaults" (
+      if
+        a.transparency == "opaque"
+        && a.corners == "theme"
+        && a.animations == "auto"
+        && decoration.rounding == 0
+        && !(decoration ? active_opacity)
+        && settings.config.animations.enabled
+        && lib.hasInfix "marchyo-vm-animations-off" startup
+        && hm.xdg.configFile ? "marchyo/appearance.json"
+      then
+        "pass"
+      else
+        throw "FAIL: window appearance defaults are not the flat opaque look with auto animations"
+    );
+
+  # Forced animation states: no VM check is wired, and the compositor state follows.
+  eval-appearance-animations-forced =
+    let
+      settingsFor =
+        mode:
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.theme.appearance.animations = mode;
+        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+      off = settingsFor "off";
+      on = settingsFor "on";
+      noShell =
+        (evalWith { marchyo.theme.appearance.animations = "on"; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+    in
+    pkgs.writeText "eval-appearance-animations-forced" (
+      if
+        !off.config.animations.enabled
+        && on.config.animations.enabled
+        && noShell.config.animations.enabled
+        && !lib.hasInfix "marchyo-vm-animations-off" (hyprEntriesText off.on)
+        && !lib.hasInfix "marchyo-vm-animations-off" (hyprEntriesText on.on)
+      then
+        "pass"
+      else
+        throw "FAIL: animations = on/off should force the state and skip the VM check"
+    );
+
+  # Transparent: translucent windows without blur (shell off, so no shell glass).
+  eval-appearance-transparent =
+    let
+      settings =
+        (evalWith {
+          marchyo.shell.enable = false;
+          marchyo.theme.appearance.transparency = "transparent";
+        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+      decoration = settings.config.decoration;
+    in
+    pkgs.writeText "eval-appearance-transparent" (
+      if
+        decoration.active_opacity == 0.92
+        && decoration.inactive_opacity == 0.85
+        && !(decoration.blur.enabled or false)
+      then
+        "pass"
+      else
+        throw "FAIL: transparent windows should be translucent without blur"
+    );
+
+  # Glassy: blur on, translucent windows, and windows are no longer opted out of blur.
+  eval-appearance-glassy =
+    let
+      settings =
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.theme.appearance.transparency = "glassy";
+        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+      decoration = settings.config.decoration;
+      windowRules = hyprEntriesText settings.window_rule;
+      layerRules = hyprEntriesText settings.layer_rule;
+    in
+    pkgs.writeText "eval-appearance-glassy" (
+      if
+        decoration.blur.enabled
+        && decoration.active_opacity == 0.92
+        && !lib.hasInfix "no_blur=true" windowRules
+        && lib.hasInfix "blur=true" layerRules
+      then
+        "pass"
+      else
+        throw "FAIL: glassy should blur windows and the shell without a no_blur window rule"
+    );
+
+  # Reduced motion wins over glassy: opaque windows, no blur.
+  eval-appearance-glassy-reduce-motion =
+    let
+      settings =
+        (evalWith {
+          marchyo.shell.enable = true;
+          marchyo.theme.appearance = {
+            transparency = "glassy";
+            reduceMotion = true;
+          };
+        }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+    in
+    pkgs.writeText "eval-appearance-glassy-reduce-motion" (
+      if
+        !(settings.config.decoration.blur.enabled or false)
+        && !(settings.config.decoration ? active_opacity)
+      then
+        "pass"
+      else
+        throw "FAIL: reduceMotion should keep windows opaque and unblurred even with glassy"
+    );
+
+  # Rounded corners round the windows; sharp stays square.
+  eval-appearance-corners =
+    let
+      decorationFor =
+        mode:
+        (evalWith { marchyo.theme.appearance.corners = mode; })
+        .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.config.decoration;
+      rounded = decorationFor "rounded";
+      sharp = decorationFor "sharp";
+    in
+    pkgs.writeText "eval-appearance-corners" (
+      if rounded.rounding == 6 && rounded.rounding_power == 3 && sharp.rounding == 0 then
+        "pass"
+      else
+        throw "FAIL: corners = rounded should round windows and sharp keep them square"
+    );
+
+  # Window utilities: the pop-out bind and the recentre-on-monitor-move hook.
+  eval-appearance-window-utilities =
+    let
+      settings =
+        (evalWith { }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+    in
+    pkgs.writeText "eval-appearance-window-utilities" (
+      if
+        hyprHasBind settings.bind "SUPER + ALT + O" "marchyo window pop"
+        && lib.hasInfix "window.move_to_workspace" (hyprEntriesText settings.on)
+      then
+        "pass"
+      else
+        throw "FAIL: the pop-out bind or the monitor-move recentre hook is missing"
     );
 }

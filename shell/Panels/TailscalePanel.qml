@@ -10,13 +10,13 @@ import qs.Services
 Panel {
     id: root
     panelId: "tailscale"
-    title: "Tailscale"
+    title: I18n.t("tailscale.title")
 
     body: [
         Text {
             Layout.fillWidth: true
-            text: Tailscale.running ? "Connected" : "Disconnected"
-            color: Tailscale.running ? Color.statusOk : Color.textFaint
+            text: Tailscale.running ? I18n.t("tailscale.connected") : I18n.t("tailscale.disconnected")
+            color: Tailscale.running ? Colors.statusOk : Colors.textFaint
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
         },
@@ -24,7 +24,7 @@ Panel {
             Layout.fillWidth: true
             visible: Tailscale.running && Tailscale.selfName !== ""
             text: Tailscale.selfName + (Tailscale.selfIp !== "" ? "  " + Tailscale.selfIp : "")
-            color: Color.textMuted
+            color: Colors.textMuted
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
             elide: Text.ElideRight
@@ -32,20 +32,15 @@ Panel {
         Text {
             Layout.fillWidth: true
             visible: Tailscale.exitNodeActive
-            text: "Exit node: " + Tailscale.exitNodeName
-            color: Color.accent
+            text: I18n.t("tailscale.exitNode", Tailscale.exitNodeName)
+            color: Colors.accent
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
             elide: Text.ElideRight
         },
-        Text {
-            Layout.fillWidth: true
+        PanelSectionHeader {
             visible: Tailscale.running && Tailscale.peers.length > 0
-            text: "Peers"
-            color: Color.textHeading
-            font.family: Style.fontFamily
-            font.pixelSize: Style.fontSizeSmall
-            font.bold: true
+            text: I18n.t("tailscale.peers")
         },
         Repeater {
             model: Tailscale.peers
@@ -58,7 +53,7 @@ Panel {
                 Text {
                     Layout.preferredWidth: Style.panelWidth * 0.45
                     text: modelData.name
-                    color: Color.text
+                    color: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                     elide: Text.ElideRight
@@ -68,24 +63,25 @@ Panel {
                 }
                 Text {
                     text: modelData.ip
-                    color: Color.textMuted
+                    color: Colors.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }
             }
         },
-        PanelButton {
+        Toggle {
             Layout.fillWidth: true
             visible: Tailscale.controllable
-            text: Tailscale.busy ? "..." : (Tailscale.running ? "Disconnect" : "Connect")
-            active: Tailscale.running
-            onClicked: Tailscale.setUp(!Tailscale.running)
+            label: Tailscale.busy ? "…" : I18n.t("tailscale.title")
+            checked: Tailscale.running
+            enabled: !Tailscale.busy
+            onToggled: value => Tailscale.setUp(value)
         },
         Text {
             Layout.fillWidth: true
             visible: Tailscale.lastErrorDetail !== ""
             text: Tailscale.lastErrorDetail
-            color: Color.statusErr
+            color: Colors.statusErr
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
             wrapMode: Text.Wrap

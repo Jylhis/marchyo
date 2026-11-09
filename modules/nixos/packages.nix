@@ -54,8 +54,6 @@ let
     quickshell
   ];
 
-  mediaTools = with pkgs; [ ];
-
   officeTools = with pkgs; [
     obsidian
     xournalpp
@@ -65,7 +63,6 @@ let
     docker-compose
     buildah
     skopeo
-    lazydocker
 
     gh
   ];
@@ -81,7 +78,6 @@ in
       shellTools
       ++ tuiTools
       ++ (lib.optionals cfg.desktop.enable desktopTools)
-      ++ (lib.optionals cfg.media.enable mediaTools)
       ++ (lib.optionals cfg.office.enable officeTools)
       ++ (lib.optionals cfg.development.enable devTools)
     );

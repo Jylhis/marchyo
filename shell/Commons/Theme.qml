@@ -8,7 +8,7 @@ import "Paths.js" as Paths
 //
 // modules/home/theme-runtime.nix materializes a colors.json (name, variant,
 // palette) in every theme dir behind the ~/.config/marchyo/current-theme
-// pointer; `marchyo theme set/next` repoints it. Commons/Color.qml
+// pointer; `marchyo theme set/next` repoints it. Commons/Colors.qml
 // delegates its tokens here (the bar live-recolors, matching waybar's
 // runtime-switch behavior) and Bar/ThemeWidget shows/cycles the theme.
 //
@@ -17,7 +17,7 @@ import "Paths.js" as Paths
 // (packages/marchyo-shell/package.nix) regenerates this file with the host's
 // build-time variant hex-swapped into the fallback block.
 //
-// Lives in Commons/ (not Services/) on purpose: the generated Color.qml
+// Lives in Commons/ (not Services/) on purpose: the generated Colors.qml
 // references it, and Commons referencing Services would close a module
 // import cycle (Services singletons import qs.Commons).
 QtObject {
@@ -38,6 +38,7 @@ QtObject {
             textHeading: "#e7ebf2",
             textFaint: "#5d6067",
             accent: "#f5a351",
+            focusRing: "#f5a351",
             accentHover: "#ffb063",
             accentSubtle: "#281604",
             brand: "#f8763a",
@@ -86,6 +87,10 @@ QtObject {
     readonly property var fileView: FileView {
         id: fileView
         path: root.themePath()
+        // Makes the text() read in Component.onCompleted below actually
+        // block; without it the first read returns "" and the fallback paints
+        // the first frame.
+        blockLoading: true
         watchChanges: true
         // A missing colors.json is an expected state (no marchyo desktop /
         // pre-Milestone-1 pointer): stay quiet, apply() keeps the fallback.

@@ -1,0 +1,22 @@
+{
+  "menu.network": "வலையமைப்பு",
+  "menu.speedTest": "வேக சோதனை",
+  "menu.lock": "பூட்டு",
+  "menu.suspend": "இடைநிறுத்து",
+  "menu.hibernate": "உறக்கம்",
+  "menu.reboot": "மறுதொடக்கம்",
+  "menu.shutdown": "அணை",
+  "menu.style": "பாணி",
+  "menu.theme": "தீம்",
+  "menu.background": "பின்னணி",
+  "menu.font": "எழுத்துரு",
+  "menu.setup": "அமைப்பு",
+  "menu.audio": "ஒலி",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "தூண்டு",
+  "menu.appearance": "தோற்றம்",
+  "menu.system": "கணினி",
+  "menu.learn": "கற்க",
+  "menu.screenshot": "திரைப்பிடிப்பு",
+  "menu.share": "பகிர்"
+}

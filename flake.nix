@@ -2,8 +2,7 @@
   description = "Marchyo";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -12,21 +11,6 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-    # nix-darwin / home-manager track master so they pair with the unstable
-    # primary nixpkgs (release branches assume their matching nixpkgs).
-    # darwinConfigurations.x86_64 instead pins its package set to nixos-26.05, so
-    # it uses the matching *-stable release-branch inputs below; nix-darwin
-    # enforces this with a hard build assertion, home-manager with a warning.
-    nix-darwin = {
-      url = "github:LnL7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # Stable nix-darwin (nix-darwin-26.05) to pair with nixpkgs-stable for
-    # darwinConfigurations.x86_64. Must NOT follow the unstable primary.
-    nix-darwin-stable = {
-      url = "github:LnL7/nix-darwin/nix-darwin-26.05";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
-    };
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,13 +18,6 @@
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-    # Stable home-manager (release-26.05) to pair with nixpkgs-stable, used only
-    # by darwinConfigurations.x86_64. Must NOT follow the unstable primary
-    # (release branches assume their matching nixpkgs).
-    home-manager-stable = {
-      url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
     };
     # nix-on-droid (Android terminal). Pinned to the latest prerelease with a
     # dedicated home-manager input matching it (the prerelease expects HM 24.05).
@@ -62,19 +39,11 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    vicinae = {
-      url = "github:vicinaehq/vicinae";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # ncro (Nix Cache Route Optimizer): local HTTP proxy routing binary-cache
     # requests to the fastest reachable upstream. Gated behind
     # marchyo.nix.router.enable.
     ncro = {
       url = "github:manic-systems/ncro";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     jylhis-design = {
@@ -90,11 +59,6 @@
       url = "github:tinted-theming/schemes";
       flake = false;
     };
-    wallpapper-src = {
-      url = "github:mczachurski/wallpapper/1.7.4";
-      flake = false;
-    };
-
   };
 
   nixConfig = {
@@ -115,11 +79,9 @@
     {
       inherit (marchyo)
         nixosModules
-        darwinModules
         homeManagerModules
         nixOnDroidModules
         nixosConfigurations
-        darwinConfigurations
         homeConfigurations
         nixOnDroidConfigurations
         overlays

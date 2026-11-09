@@ -13,7 +13,7 @@ modules/
   nix-on-droid/   # nix-on-droid (Android terminal) modules
   generic/        # Shared modules imported by nixos, home, and darwin
 lib/              # Flake helpers (system list, module auto-discovery)
-packages/         # Custom Nix packages (hyprmon, marchyo-cli, marchyo-wallpapers,
+packages/         # Custom Nix packages (marchyo-cli, marchyo-wallpapers,
                   # plymouth-marchyo-theme, wallpapper)
 overlay.nix       # Nixpkgs overlay (single file at the repo root)
 tests/            # Evaluation-based test suite
@@ -112,8 +112,6 @@ The keyboard/IME system is the most complex cross-module pattern:
 | `nix-on-droid` | Android terminal environment (own pinned nixpkgs) |
 | `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
-| `vicinae` | Application launcher on the `marchyo.shell.enable = false` fallback (the shell has its own) |
-| `noctalia` | noctalia-shell, a Wayland desktop shell |
 | `sops-nix` | Secrets management |
 | `jylhis-design` | Jylhis design system — theme tokens and assets |
 | `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |

@@ -2,6 +2,9 @@ pragma Singleton
 import QtQuick
 import QtQml.Models
 import Quickshell.Services.Pipewire
+import Quickshell.Services.Mpris
+import qs.Commons
+import "../Commons/AudioDevices.js" as Devices
 
 // Shared Pipewire bindings for AudioWidget, the audio panel, and the OSD. One
 // PwObjectTracker keeps every tracked node live: the audio properties never
@@ -48,6 +51,7 @@ QtObject {
 
     // Selectable output devices for the panel's sink picker.
     property var sinks: []
+    property var sources: []
 
     // Per-app playback streams for the panel's per-app volume + meters.
     property var appStreams: []
@@ -101,6 +105,11 @@ QtObject {
         return out;
     }
 
+    function collectSources(): var {
+        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        return nodes.filter(n => n && !n.isStream && n.type === PwNodeType.AudioSource);
+    }
+
     // Same membership check (same objects, same order) as a cheap change
     // guard: assigning an equal array to a var property still emits, so the
     // comparison decides whether to assign at all.
@@ -118,6 +127,9 @@ QtObject {
         const s = root.collectSinks();
         if (!root.sameMembers(root.sinks, s))
             root.sinks = s;
+        const inputs = root.collectSources();
+        if (!root.sameMembers(root.sources, inputs))
+            root.sources = inputs;
         const o = root.collectStreams(PwNodeType.AudioOutStream);
         if (!root.sameMembers(root.appStreams, o))
             root.appStreams = o;
@@ -155,10 +167,8 @@ QtObject {
     }
 
     function streamLabel(n) {
-        if (!n)
-            return "";
-        const p = n.properties || {};
-        return p["application.name"] || n.description || n.nickname || n.name || "app";
+        const players = Mpris.players ? Mpris.players.values : [];
+        return Devices.streamLabel(n, players, root.appStreams) || I18n.t("audio.stream");
     }
 
     readonly property var tracker: PwObjectTracker {
@@ -168,7 +178,8 @@ QtObject {
                 list.push(root.sink);
             if (root.source)
                 list.push(root.source);
-            return list.concat(root.appStreams).concat(root.inCandidates);
+            return list.concat(root.sinks).concat(root.sources).concat(root.appStreams).concat(
+                        root.inCandidates);
         }
     }
 }

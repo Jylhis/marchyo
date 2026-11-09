@@ -9,15 +9,18 @@
 let
   inherit (helpers) withTestUser hyprHasBind hyprEntriesText;
 
-  hasVoxtypeBind = binds: lib.hasInfix "voxtype record toggle" (hyprEntriesText binds);
   hasStatusBind = binds: lib.hasInfix "voxtype status --follow" (hyprEntriesText binds);
-  # The toggle bind matches omarchy's Super+Ctrl+X (marchyo.dictation.toggleKey).
-  hasToggleKeyBind = binds: hyprHasBind binds "SUPER + CTRL + X" "voxtype record toggle";
-  hasVoxtypeModule =
-    hm: lib.elem "custom/voxtype" (builtins.elemAt hm.programs.waybar.settings 0).modules-right;
+  # Alt+Space toggles through the backend-neutral verb (marchyo.dictation.toggleKey).
+  hasToggleKeyBind = binds: hyprHasBind binds "ALT + SPACE" "dictation toggle";
+  hasHoldBinds =
+    binds:
+    hyprHasBind binds "F9" "dictation start"
+    && hyprHasBind binds "F9" "dictation stop"
+    && lib.hasInfix "release=true" (hyprEntriesText binds);
+  # The shell bakes the dictation indicator into its package, so the flag shows
+  # up as a different shell store path.
+  shellExec = hm: toString hm.systemd.user.services.marchyo-shell.Service.ExecStart;
 
-  # The indicator assertions read the waybar segment, so these tests pin the
-  # marchyo.shell.enable = false fallback; the shell bar draws its own.
   evalWith =
     extra:
     lib.nixosSystem {
@@ -27,31 +30,31 @@ let
         (withTestUser (
           lib.recursiveUpdate {
             marchyo.desktop.enable = true;
-            marchyo.shell.enable = false;
             home-manager.users.testuser.imports = [ homeManagerModules ];
           } extra
         ))
       ];
     };
+  voxtypeEval =
+    extra: evalWith (lib.recursiveUpdate { marchyo.dictation.backend = "voxtype"; } extra);
 in
 {
-  # Dictation on: voxtype service enabled, the Super+Ctrl+X toggle bound, the
+  # Dictation on: voxtype service enabled, the Alt+Space toggle bound, the
   # daemon push-to-talk hotkey (hold F9) configured, dictation user in the
-  # `input` group, and the full UI layer present (waybar indicator, status-window
-  # bind, notifications, audio).
+  # `input` group, and the full UI layer present (status-window bind,
+  # notifications, audio).
   eval-dictation-enabled =
     let
-      cfg = (evalWith { marchyo.dictation.enable = true; }).config;
+      cfg = (voxtypeEval { marchyo.dictation.enable = true; }).config;
       hm = cfg.home-manager.users.testuser;
       s = hm.services.voxtype.settings;
     in
     pkgs.writeText "eval-dictation-enabled" (
       if
         hm.services.voxtype.enable
-        && hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bind
+        && !hasHoldBinds hm.wayland.windowManager.hyprland.settings.bind
         && hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bind
         && hasStatusBind hm.wayland.windowManager.hyprland.settings.bind
-        && hasVoxtypeModule hm
         && s.output.notification.on_recording_start
         && s.audio.feedback.enabled
         && s.hotkey.enabled
@@ -62,7 +65,7 @@ in
       then
         "pass"
       else
-        throw "FAIL: dictation enabled but a UI surface (bind, waybar module, notification, audio), the F9 push-to-talk hotkey, the input-group membership, or the GPU (Vulkan) voxtype build is missing/wrong"
+        throw "FAIL: dictation enabled but a UI surface (bind, notification, audio), the F9 push-to-talk hotkey, the input-group membership, or the GPU (Vulkan) voxtype build is missing/wrong"
     );
 
   # Push-to-talk opt-out: the daemon evdev hotkey is disabled and the user does
@@ -70,7 +73,7 @@ in
   eval-dictation-pushtotalk-off =
     let
       cfg =
-        (evalWith {
+        (voxtypeEval {
           marchyo.dictation.enable = true;
           marchyo.dictation.pushToTalk.enable = false;
         }).config;
@@ -92,7 +95,7 @@ in
   eval-dictation-gpu-off =
     let
       hm =
-        (evalWith {
+        (voxtypeEval {
           marchyo.dictation.enable = true;
           marchyo.dictation.gpu = false;
         }).config.home-manager.users.testuser;
@@ -104,21 +107,18 @@ in
         throw "FAIL: dictation.gpu = false but the CPU-only voxtype build is not selected"
     );
 
-  # Dictation off (default) on a desktop: no voxtype service, no dictation bind,
-  # no waybar indicator.
+  # Dictation off (default) on a desktop: no voxtype service, no dictation bind.
   eval-dictation-disabled =
     let
       hm = (evalWith { }).config.home-manager.users.testuser;
     in
     pkgs.writeText "eval-dictation-disabled" (
       if
-        (!hm.services.voxtype.enable)
-        && (!hasVoxtypeBind hm.wayland.windowManager.hyprland.settings.bind)
-        && (!hasVoxtypeModule hm)
+        (!hm.services.voxtype.enable) && (!hasToggleKeyBind hm.wayland.windowManager.hyprland.settings.bind)
       then
         "pass"
       else
-        throw "FAIL: dictation disabled but voxtype service, toggle bind or waybar module present"
+        throw "FAIL: dictation disabled but voxtype service or toggle bind present"
     );
 
   # Depth options: on-demand model loading + GPU isolation reach whisper
@@ -126,7 +126,7 @@ in
   eval-dictation-depth-settings =
     let
       s =
-        (evalWith {
+        (voxtypeEval {
           marchyo.dictation.enable = true;
           marchyo.dictation.onDemandModel = true;
           marchyo.dictation.gpuIsolation = true;
@@ -153,7 +153,7 @@ in
   eval-dictation-no-text-by-default =
     let
       s =
-        (evalWith { marchyo.dictation.enable = true; })
+        (voxtypeEval { marchyo.dictation.enable = true; })
         .config.home-manager.users.testuser.services.voxtype.settings;
     in
     pkgs.writeText "eval-dictation-no-text-by-default" (
@@ -168,7 +168,7 @@ in
   eval-dictation-silence-gate-default =
     let
       s =
-        (evalWith { marchyo.dictation.enable = true; })
+        (voxtypeEval { marchyo.dictation.enable = true; })
         .config.home-manager.users.testuser.services.voxtype.settings;
     in
     pkgs.writeText "eval-dictation-silence-gate-default" (
@@ -188,7 +188,7 @@ in
     let
       settingsFor =
         gate:
-        (evalWith {
+        (voxtypeEval {
           marchyo.dictation.enable = true;
           marchyo.dictation.silenceGate = gate;
         }).config.home-manager.users.testuser.services.voxtype.settings;
@@ -212,19 +212,26 @@ in
         throw "FAIL: silenceGate backend/threshold/minSpeechMs did not reach voxtype [vad], or enable = false left it on"
     );
 
-  # Indicator opt-out: dictation stays enabled but the waybar segment drops out.
+  # Indicator opt-out: dictation stays enabled but the shell is built without
+  # the bar indicator, the same shell as with dictation off.
   eval-dictation-indicator-off =
     let
-      hm =
-        (evalWith {
-          marchyo.dictation.enable = true;
-          marchyo.dictation.indicator = false;
-        }).config.home-manager.users.testuser;
+      hmFor = extra: (voxtypeEval extra).config.home-manager.users.testuser;
+      off = hmFor {
+        marchyo.dictation.enable = true;
+        marchyo.dictation.indicator = false;
+      };
+      on = hmFor { marchyo.dictation.enable = true; };
+      disabled = hmFor { };
     in
     pkgs.writeText "eval-dictation-indicator-off" (
-      if hm.services.voxtype.enable && (!hasVoxtypeModule hm) then
-        "pass"
+      if !off.services.voxtype.enable then
+        throw "FAIL: indicator disabled but the voxtype service is off"
+      else if shellExec off != shellExec disabled then
+        throw "FAIL: indicator disabled but the shell still bakes the dictation indicator"
+      else if shellExec on == shellExec disabled then
+        throw "FAIL: dictation enabled but the shell does not bake the dictation indicator"
       else
-        throw "FAIL: indicator disabled but custom/voxtype still on the bar (or service off)"
+        "pass"
     );
 }

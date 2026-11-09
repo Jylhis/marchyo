@@ -144,7 +144,7 @@ ShellRoot {
     FloatingWindow {
         id: surface
 
-        color: Color.bg
+        color: Colors.bg
 
         // Greeter-local geometry. Deliberately NOT added to Commons/Style.qml —
         // the bar/OSD/panel dimensions there are scaled by fontScale; the
@@ -244,7 +244,7 @@ ShellRoot {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatDateTime(root.clock.date, "HH:mm")
-                color: Color.textHeading
+                color: Colors.textHeading
                 font.family: Style.fontFamily
                 font.pixelSize: surface.clockSize
             }
@@ -252,7 +252,7 @@ ShellRoot {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatDateTime(root.clock.date, "ddd d MMMM yyyy")
-                color: Color.textFaint
+                color: Colors.textFaint
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
             }
@@ -269,8 +269,8 @@ ShellRoot {
                 width: surface.fieldWidth + surface.cardPad * 2
                 height: cardColumn.implicitHeight + surface.cardPad * 2
                 radius: Style.panelRadius
-                color: Color.surface
-                border.color: Color.border
+                color: Colors.surface
+                border.color: Colors.border
                 border.width: 1
 
                 Column {
@@ -282,7 +282,7 @@ ShellRoot {
 
                     Text {
                         text: "marchyo"
-                        color: Color.accent
+                        color: Colors.accent
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSizeSmall
                     }
@@ -293,8 +293,8 @@ ShellRoot {
                         width: surface.fieldWidth
                         height: surface.fieldHeight
                         radius: Style.panelRadius
-                        color: Color.bgSubtle
-                        border.color: userField.activeFocus ? Color.accent : Color.borderStrong
+                        color: Colors.bgSubtle
+                        border.color: userField.activeFocus ? Colors.accent : Colors.borderStrong
                         border.width: 1
                         visible: !root.sessionActive
 
@@ -304,8 +304,8 @@ ShellRoot {
                             anchors.margins: 8
                             verticalAlignment: TextInput.AlignVCenter
                             clip: true
-                            color: Color.text
-                            selectionColor: Color.selectionBg
+                            color: Colors.text
+                            selectionColor: Colors.selectionBg
                             font.family: Style.fontFamily
                             font.pixelSize: surface.fieldFont
                             text: root.username
@@ -330,7 +330,7 @@ ShellRoot {
                         Text {
                             width: parent.width
                             text: root.prompt
-                            color: Color.textMuted
+                            color: Colors.textMuted
                             elide: Text.ElideRight
                             font.family: Style.fontFamily
                             font.pixelSize: Style.fontSizeSmall
@@ -340,8 +340,8 @@ ShellRoot {
                             width: surface.fieldWidth
                             height: surface.fieldHeight
                             radius: Style.panelRadius
-                            color: Color.bgSubtle
-                            border.color: secretField.activeFocus ? Color.accent : Color.borderStrong
+                            color: Colors.bgSubtle
+                            border.color: secretField.activeFocus ? Colors.accent : Colors.borderStrong
                             border.width: 1
 
                             TextInput {
@@ -350,8 +350,8 @@ ShellRoot {
                                 anchors.margins: 8
                                 verticalAlignment: TextInput.AlignVCenter
                                 clip: true
-                                color: Color.text
-                                selectionColor: Color.selectionBg
+                                color: Colors.text
+                                selectionColor: Colors.selectionBg
                                 font.family: Style.fontFamily
                                 font.pixelSize: surface.fieldFont
                                 echoMode: root.echoResponse ? TextInput.Normal : TextInput.Password
@@ -375,7 +375,7 @@ ShellRoot {
                                     id: caret
                                     width: 2 * surface.s
                                     height: secretField.cursorRectangle.height > 0 ? secretField.cursorRectangle.height : 18 * surface.s
-                                    color: Color.accent
+                                    color: Colors.accent
                                     x: secretField.cursorRectangle.x
                                     y: secretField.cursorRectangle.y
                                     visible: secretField.activeFocus
@@ -407,7 +407,7 @@ ShellRoot {
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible: root.sessionActive && !root.awaitingResponse
                         text: "authenticating…"
-                        color: Color.textFaint
+                        color: Colors.textFaint
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSizeSmall
                     }
@@ -417,7 +417,7 @@ ShellRoot {
                         width: surface.fieldWidth
                         visible: root.error !== ""
                         text: root.error
-                        color: Color.statusErr
+                        color: Colors.statusErr
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         font.family: Style.fontFamily
@@ -427,7 +427,7 @@ ShellRoot {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: root.sessionActive ? "esc cancel" : "enter log in"
-                        color: Color.textFaint
+                        color: Colors.textFaint
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSizeSmall
                     }
@@ -460,15 +460,15 @@ ShellRoot {
         width: pbLabel.implicitWidth + Style.paddingH * 4
         height: surface.fieldHeight
         radius: Style.panelRadius
-        color: pbMouse.containsMouse ? Color.surfaceRaised : Color.bgSubtle
-        border.color: Color.border
+        color: pbMouse.containsMouse ? Colors.surfaceRaised : Colors.bgSubtle
+        border.color: Colors.border
         border.width: 1
 
         Text {
             id: pbLabel
             anchors.centerIn: parent
             text: pb.label
-            color: Color.textMuted
+            color: Colors.textMuted
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
         }

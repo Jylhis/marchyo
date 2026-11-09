@@ -18,8 +18,8 @@ in your configuration and rebuild:
 marchyo.theme.variant = "light";
 ```
 
-Both variants share the same palette family — a cool, near-neutral ground with a
-single bronze accent — so switching between them feels like the same desktop at a
+Both variants share the same palette family — a neutral grey ground with a
+single orange accent — so switching between them feels like the same desktop at a
 different time of day, not a different desktop. Syntax highlighting in your editor
 and terminal uses the Modus color sets, so code reads the same everywhere.
 
@@ -48,11 +48,18 @@ marchyo.theme.themes = [
 ];
 ```
 
-Now `marchyo theme set nord` is instant. One thing to know: a runtime switch is
-*ephemeral*. It changes the directly-themed surfaces — terminal, bar, launcher,
-notifications, wallpaper — live, but the next rebuild resets everything to whatever
-`variant` says. Runtime switching is for trying things and matching your mood; the
-declarative `variant` is your real default.
+Marchyo owns the effective theme: the saved selection takes precedence over the Nix default.
+Activation and session startup restore that selection, or the default when no override exists.
+The selection supplies application assets and the desktop light/dark preference.
+Home Manager does not independently reset that preference while runtime theming is enabled.
+A failed preference update stops the switch before application links change.
+The saved selection stays unchanged.
+Use `--revert` to restore the Nix default, or `--apply` to make the selection declarative.
+Browsers keep the build-time colour, because their policy files are system-owned.
+Each theme also has a palette preview card and, optionally, its own wallpapers.
+
+`marchyo runtime restore` reports failures and returns a nonzero status.
+It continues restoring independent overrides.
 
 ## Fonts
 
@@ -75,13 +82,18 @@ say, the bar and the terminal stay right.
 
 ## Wallpaper
 
-A generated Marchyo wallpaper is set for you and follows the active theme. To turn it
-off, or point at your own wallpaper assets:
+A generated Marchyo wallpaper is set for you and follows the active theme. Marchyo
+draws four patterns, a grid, dots, diagonal bands and contour lines, in a light and a
+dark variant from the design tokens; the grid is the default. To turn the set off, or
+point at your own wallpaper assets:
 
 ```nix
 marchyo.theme.wallpaper.enable = false;
 ```
 
 You can also change the wallpaper at runtime with `marchyo bg set <path>` or cycle
-with `marchyo bg next`, though like a runtime theme switch, that lasts only until the
-next rebuild.
+with `marchyo bg next`; like a runtime theme switch, it is replayed after a rebuild until
+you revert it. An inline theme can list further wallpapers of its own with
+`marchyo.theme.themes.[].wallpapers`.
+
+<!-- Assisted-by: Codex:gpt-6 -->

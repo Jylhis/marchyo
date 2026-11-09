@@ -41,15 +41,25 @@ marchyo theme list           # switchable themes, active one marked
 marchyo theme set <name>     # switch now (dark / light alias the Jylhis pair)
 marchyo theme next           # cycle
 marchyo bg set <path>        # set the wallpaper
-marchyo bg next              # cycle wallpapers
+marchyo bg list              # selectable wallpapers (theme, package, ~/Pictures/Wallpapers)
+marchyo bg next              # cycle that list
+marchyo theme gaps on        # window gaps (--apply keeps it)
+marchyo theme bar-position bottom
+marchyo theme bar-background glassy
+marchyo bar put marchyo.cpu centerBegin   # edit the bar layout live (marchyo bar --help)
+marchyo theme icons          # installed icon themes; give a name to set one
 ```
+
+Runtime changes survive a home-manager activation: `marchyo runtime restore` replays them.
 
 ### Toggles
 
 `marchyo toggle <name>` flips a desktop feature on or off, live. The switches include
-`gaps`, `transparency`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
-`screensaver`, `notifications`, `suspend`, and `caffeine` (keep the machine awake).
-`waybar` shows or hides the top bar, which is the shell bar unless the shell is off.
+`gaps`, `transparency`, `animations`, `reduce-motion` (make shell transitions instant; takes `--apply`),
+`nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
+`screensaver`, `notifications`, `suspend`, `caffeine` (keep the machine awake), and
+`crash-capture` (the crash notifications, see [Crash diagnosis](#crash-diagnosis)).
+`waybar` shows or hides the shell top bar.
 Add `--status` to check one, or `--apply` to make it permanent:
 
 ```bash
@@ -59,6 +69,54 @@ marchyo toggle gaps off --apply      # and keep it that way
 
 One more switch, `hybrid-gpu`, changes hardware configuration and has no live mode, so
 it only works with `--apply` (for example `marchyo toggle hybrid-gpu on --apply`).
+
+### Crash diagnosis
+
+When a program of yours dumps core, a notification offers **Diagnose**. The action
+runs `marchyo agent crash <pid>`, which starts your default AI agent (`$AI_AGENT`) in
+a terminal with the `diagnose-crash` skill, in its most restricted approval mode and
+in its own transient unit. The crash values reach the agent quoted and marked as
+untrusted. You can also run it by hand against any PID from `coredumpctl list`. The watcher is on while a desktop and an AI agent are
+installed. Silence it for the session with `marchyo toggle crash-capture off`, or for
+good with `marchyo.ai.crashCapture.enable = false`; `marchyo.ai.crashCapture.ignore`
+skips programs by name.
+
+The same agents get the `marchyo`, `marchyo-plugin` and `diagnose-crash` skills in
+their skill directories (`marchyo.ai.skills.enable`).
+
+### Notifications, what changed, first-login setup
+
+```bash
+marchyo notify "Build done" "Open it" -g 󰄬 --exec xdg-open ./out   # click runs the command
+marchyo notify "Deploy?" -u critical --action Yes ./deploy --action No true
+marchyo whats-new [--json]   # NEWS entries you have not seen, and the last switch
+marchyo setup [--json]       # the first-login checklist; "marchyo setup fix git" fixes one item
+```
+
+`marchyo notify` takes the same flags as omarchy's `omarchy-notification-send`. Its
+`--exec` and `--action` commands run as argument lists, never through a shell, and
+only for notifications sent by `marchyo notify` itself: each one carries a
+one-time token that no other application can use. The program cannot start with a
+dash, a command has at most 32 words of 4096 characters, and a button needs a
+label. A glyph (`-g`) needs the token too. Open the panels with
+`marchyo shell open whatsnew` and `marchyo shell open setup`; a notification does so
+for you when NEWS changes and on your first login (`Super + Ctrl + U` and
+`Super + Ctrl + H` toggle them).
+
+### Shell plugins
+
+```bash
+marchyo plugin add <git-url>     # pin a plugin; a rebuild bakes it in
+marchyo plugin list
+marchyo plugin validate ~/src/my-plugin
+marchyo plugin dev ~/src/my-plugin --watch
+```
+
+`validate` runs the build's manifest checks on a checkout, including sibling
+`*.manifest.json` files. `dev` loads a checkout into the running shell without a
+rebuild, but only on a host that set `marchyo.shell.devPlugins.enable = true`. Dev
+plugins are unreviewed code that runs unsandboxed inside the shell, so leave the
+option off on every other host.
 
 ### Capture
 
@@ -72,12 +130,18 @@ marchyo capture color      # color picker, hex to clipboard
 ### Menus, launching, and session
 
 ```bash
-marchyo menu [power]         # the central system menu, or the power menu
-marchyo keybindings          # searchable cheat sheet
+marchyo menu [route]         # the command menu, e.g. capture or appearance.theme
+marchyo menu --tui           # the gum menu, for when the shell is down
+marchyo keybindings          # searchable cheat sheet (also Super + K in the shell)
 marchyo launch <app>         # launch an app detached from the terminal
 marchyo lock                 # also: logout, suspend, hibernate, reboot, shutdown
 marchyo powerprofile set <p> # power-saver / balanced / performance
 ```
+
+`marchyo menu select` and `marchyo menu input` are a dmenu mode for scripts: the rows
+come on stdin, the choice goes to stdout, and a cancel exits 1 (2 when the shell is
+not reachable). The menu entries come from `marchyo.menu.entries`; add your own in
+`~/.config/marchyo/menu.local.json`.
 
 ### Utilities
 
@@ -85,8 +149,22 @@ marchyo powerprofile set <p> # power-saver / balanced / performance
 marchyo reminder set|show|clear     # reminders on lightweight timers
 marchyo info datetime|battery       # quick pop-up notifications
 marchyo transcode [file] [--to mp4|webm|gif]
+marchyo font list --kind ui         # families to pick from (mono | ui | all)
 marchyo font set <family>           # switch the terminal font live
+marchyo font set <family> --kind ui # switch the UI font (GTK and shell)
 ```
+
+### Project dev environments
+
+```bash
+marchyo dev init <lang>      # write devenv.nix, devenv.yaml and .envrc here
+marchyo dev db <engine>      # add a devenv database service to devenv.nix
+```
+
+`dev init` knows go, rust, python, node, bun, deno, ruby, elixir, java, zig, php, dotnet,
+ocaml, clojure and scala. It refuses to replace existing files unless you pass `--force`.
+`dev db` takes postgres, mysql, mariadb, redis or mongodb, can be repeated safely, and
+leaves a `devenv.nix` of an unexpected shape untouched.
 
 ### Managing the system
 

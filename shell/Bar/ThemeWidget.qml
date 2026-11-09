@@ -12,8 +12,8 @@ BarItem {
     shown: Theme.known
     compact: true
     text: Theme.variant === "light" ? "󰖙" : "󰖔"
-    textColor: Color.textMuted
-    tooltipText: Theme.name.length > 0 ? "Theme: " + Theme.name + " — click to cycle" : "Cycle theme"
+    textColor: Colors.textMuted
+    tooltipText: Theme.name.length > 0 ? I18n.t("theme.tooltipNamed", Theme.name) : I18n.t("theme.tooltipCycle")
 
     onClicked: Theme.toggle()
 }

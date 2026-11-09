@@ -1,6 +1,10 @@
 pragma Singleton
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pam
+import qs.Commons
+import "../Commons/SessionLock.js" as SessionLock
 
 // Seat-global lock state + PAM auth machine for the lock surface (rendered by
 // Lock/LockScreen.qml; driven over IPC from shell.qml).
@@ -13,8 +17,99 @@ import Quickshell.Services.Pam
 QtObject {
     id: root
 
-    // Drives WlSessionLock.locked in LockScreen.
+    // Drives WlSessionLock.locked in LockScreen (gated by screensReady there).
     property bool locked: false
+
+    // True once at least one real output has been stable for screenSettleMs.
+    // LockScreen requests the compositor lock only then: a WlSessionLock that
+    // locks while outputs are being replaced asks for a lock surface on an
+    // output Hyprland has already torn down, a fatal protocol error.
+    readonly property int screenSettleMs: 300
+    property bool screensReady: false
+
+    readonly property var screenSettle: Timer {
+        id: screenSettle
+
+        interval: root.screenSettleMs
+        onTriggered: root.screensReady = Screens.realCount > 0
+    }
+
+    function handleScreensChanged() {
+        root.screensReady = false;
+        screenSettle.restart();
+        // A monitor still coming up has no workspace and cannot answer yet.
+        strandedRetry.rearm();
+        root.checkStranded();
+    }
+
+    readonly property var screenWatch: Connections {
+        target: Quickshell
+
+        function onScreensChanged() {
+            root.handleScreensChanged();
+        }
+    }
+
+    // Stranded-lock recovery. ext-session-lock outlives its client: if the
+    // shell exits while locked, Hyprland keeps the session locked, and a new
+    // shell starts with locked = false. Read the compositor's state and take
+    // the lock back (misc.allow_session_lock_restore permits it). marchyo-shell
+    // is the only locker when the shell is enabled, so a held lock is its own.
+    property bool strandedResolved: false
+
+    function checkStranded() {
+        if (root.strandedResolved || strandedProbe.running)
+            return;
+        if (root.locked) {
+            root.strandedResolved = true;
+            return;
+        }
+        strandedProbe.running = true;
+    }
+
+    readonly property var strandedProbe: Process {
+        id: strandedProbe
+
+        command: [Config.hyprctl, "-j", "monitors"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const state = SessionLock.lockState(text);
+                if (state === "unknown")
+                    return; // strandedRetry asks again
+                root.strandedResolved = true;
+                if (state === "locked" && !root.locked) {
+                    console.warn("Lock: compositor holds an orphaned session lock; recovering");
+                    root.lock();
+                }
+            }
+        }
+    }
+
+    // Covers the compositor settling after a restart; screen changes re-arm it.
+    readonly property var strandedRetry: Timer {
+        id: strandedRetry
+
+        readonly property int budget: 20
+        property int remaining: budget
+
+        function rearm() {
+            if (!root.strandedResolved)
+                remaining = budget;
+        }
+
+        interval: 500
+        repeat: true
+        running: !root.strandedResolved && remaining > 0
+        onTriggered: {
+            remaining -= 1;
+            root.checkStranded();
+        }
+    }
+
+    Component.onCompleted: {
+        screenSettle.start();
+        root.checkStranded();
+    }
 
     // Screen name whose password field takes keyboard focus once the lock is
     // secure (set by LockScreen from Screens.focusedName on secureChanged).

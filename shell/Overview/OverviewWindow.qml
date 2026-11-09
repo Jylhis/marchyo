@@ -33,6 +33,8 @@ PanelWindow {
         bottom: true
     }
 
+    Component.onCompleted: Dev.register("overview:" + root.screenName, root, content)
+
     Loader {
         id: content
         anchors.fill: parent
@@ -54,7 +56,7 @@ PanelWindow {
 
             Rectangle {
                 anchors.fill: parent
-                color: Qt.alpha(Color.scrim, 0.45)
+                color: Qt.alpha(Colors.scrim, 0.45)
             }
 
             readonly property int gap: Style.panelPad
@@ -69,9 +71,9 @@ PanelWindow {
                 width: Math.min(Style.launcherWidth, parent.width - 2 * body.gap)
                 implicitHeight: query.implicitHeight + Style.panelPad
                 radius: Style.panelRadius
-                color: Qt.alpha(Color.bg, Style.surfaceAlpha)
+                color: Qt.alpha(Colors.bg, Style.surfaceAlpha)
                 border.width: Style.borderWidth
-                border.color: query.activeFocus ? Color.accent : Color.border
+                border.color: query.activeFocus ? Colors.accent : Colors.border
 
                 // Swallow clicks so they do not reach the dismiss area.
                 MouseArea {
@@ -82,9 +84,9 @@ PanelWindow {
                     id: query
                     anchors.fill: parent
                     anchors.margins: Style.panelPad / 2
-                    color: Color.text
-                    selectionColor: Color.selectionBg
-                    selectedTextColor: Color.text
+                    color: Colors.text
+                    selectionColor: Colors.selectionBg
+                    selectedTextColor: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                     clip: true
@@ -96,8 +98,8 @@ PanelWindow {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: query.text.length === 0
-                        text: "Search windows"
-                        color: Color.textMuted
+                        text: I18n.t("overview.search")
+                        color: Colors.textMuted
                         font: query.font
                     }
 
@@ -150,8 +152,8 @@ PanelWindow {
             Text {
                 anchors.centerIn: parent
                 visible: Overview.groups.length === 0
-                text: "no workspaces"
-                color: Color.textMuted
+                text: I18n.t("overview.noWorkspaces")
+                color: Colors.textMuted
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
             }

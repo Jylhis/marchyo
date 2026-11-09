@@ -52,6 +52,55 @@ marchyo.monitors = [
 ];
 ```
 
-## Interactive tweaks
+## Per-monitor workspaces
 
-For one-off, live adjustments (drag-to-arrange, quick scale changes) use `hyprmon` from the monitor menu. Those changes apply immediately but do not persist across a rebuild; entries in `marchyo.monitors` do.
+`marchyo.workspaces.perMonitor` (default `true`) gives every monitor its own workspaces 1–10.
+Hyprland numbers workspaces globally, so each monitor owns a block of ten ids: the first monitor 1–10, the next 11–20, and so on.
+`Super + 1…0` go to a slot in the focused monitor's block, and each bar labels its monitor's workspaces 1–10.
+
+- A block belongs to the physical monitor, matched by make, model and serial, not by connector. A monitor gets the same block each time it comes back.
+- The laptop panel (`eDP*`, `LVDS*`, `DSI*`) takes the first free block. When `marchyo.monitors` is set, its enabled outputs claim blocks in list order first.
+- When a monitor is unplugged, its workspaces with windows join the block of the monitor they land on. They return, under their old numbers, when it comes back.
+
+The assignment is kept in `$XDG_STATE_HOME/marchyo/monitors/workspaces` (and `workspaces-merged` for the moved workspaces).
+To start again, run:
+
+```sh
+marchyo monitor workspaces reset
+```
+
+This removes both files and reloads Hyprland, which gives the monitors plugged in now new blocks.
+
+```nix
+marchyo.workspaces.perMonitor = false;  # one global set of workspaces
+```
+
+## Display panel
+
+The shell's display panel (global shortcut `panel.display`) shows one display at a time, with a button per display when there are several.
+It sets:
+
+- on/off, so long as another display stays on
+- brightness: the laptop panel through `brightnessctl`, external monitors through `ddcutil` (see `marchyo.hardware.ddc`)
+- scale, snapped to values the resolution divides into whole pixels
+- resolution: the native one, then smaller modes of the same aspect ratio down to 1080p
+- refresh rate, when the display offers a rate above 60 Hz at that resolution
+- rotation: right-click a display in the layout map to turn it 0, 90, 180 and 270 degrees
+- Extend or Mirror, for the built-in panel and the external displays
+
+With more than one display the layout map appears. Drag a display to a side of another to place it. Dragging never leaves displays overlapping.
+When a resolution, scale or rotation change makes a display larger or smaller, the displays next to it shift in the same step.
+
+### Saved settings
+
+The panel applies a change to Hyprland at once and saves it to `$XDG_STATE_HOME/marchyo/monitors/settings`, one line per display, keyed by make, model and serial rather than by connector, so a dock that renames its ports keeps each monitor's settings.
+Hyprland loads the file after `marchyo.monitors`, so a choice made in the panel wins over the declarative entry, and a monitor that is plugged in later gets its saved settings.
+
+The file is runtime state. It survives rebuilds, unlike `marchyo.monitors`.
+
+- `marchyo monitor reset` deletes the file and reloads Hyprland, so `marchyo.monitors` decides again.
+- `marchyo monitor save --nix` prints the current layout as a `marchyo.monitors` snippet, to make it declarative.
+
+```nix
+marchyo.monitorPanel.persist = false;  # the panel changes the session only; the file is not read or written
+```

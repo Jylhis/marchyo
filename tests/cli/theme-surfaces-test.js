@@ -105,4 +105,49 @@ test("every surface the CLI relinks is reset before HM's collision check", () =>
   );
 });
 
+// Application surfaces (VS Code, Obsidian, tmux, Slack, fcitx5, herdr): the
+// CLI's file list, the Nix generator table, both Nix theme-dir builders and the
+// CLI's generate/activate legs must all name the same set.
+const genSource = fs.readFileSync(path.join(root, "lib", "theme-generators.nix"), "utf8");
+const surfacesSource = fs.readFileSync(
+  path.join(root, "packages", "marchyo-cli", "packages", "core", "src", "theme-surfaces.ts"),
+  "utf8",
+);
+
+function cliSurfaceFiles() {
+  const block = surfacesSource.match(/APP_SURFACE_FILES\s*=\s*\[([\s\S]*?)\]\s*as const/);
+  return block ? [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [];
+}
+
+function nixSurfaceFiles() {
+  const block = genSource.match(/appSurfaceTexts\s*=\s*variant:\s*s:\s*\{([\s\S]*?)\n  \};/);
+  return block ? [...block[1].matchAll(/"([^"]+)"\s*=/g)].map((m) => m[1]) : [];
+}
+
+test("the CLI and the Nix generators ship the same application surfaces", () => {
+  const cli = cliSurfaceFiles();
+  assert.ok(cli.length >= 6, `expected at least 6 CLI surfaces, found ${cli.join(", ")}`);
+  assert.deepEqual([...nixSurfaceFiles()].sort(), [...cli].sort());
+});
+
+test("both theme-dir builders emit the application surfaces", () => {
+  const uses = nixSource.match(/\/\/ appSurfaceFiles /g) ?? [];
+  assert.equal(uses.length, 2, "themeDirFor and mkSchemeThemeDir must each merge appSurfaceFiles");
+});
+
+test("the CLI generates and activates the application surfaces", () => {
+  assert.match(tsSource, /appSurfaceTexts\(variant, base16\)/, "theme generate lost the surfaces");
+  assert.match(tsSource, /activateAppSurfaces\(/, "activateThemeDir lost the surfaces leg");
+});
+
+test("herdr, herdr-app, fcitx5 and tmux read the surfaces through current-theme", () => {
+  for (const f of ["herdr/themes/marchyo.json", "herdr-app/themes/marchyo.json"]) {
+    assert.ok(nixSource.includes(`"${f}"`), `theme-runtime.nix does not link ${f}`);
+  }
+  assert.ok(nixSource.includes("current-theme/herdr.json"));
+  assert.ok(nixSource.includes("fcitx5/themes/marchyo/theme.conf"));
+  const tmuxSource = fs.readFileSync(path.join(root, "modules", "home", "tmux.nix"), "utf8");
+  assert.ok(tmuxSource.includes("current-theme/tmux.conf"), "tmux.nix does not source the pointer");
+});
+
 console.log("# " + passed + " passed");

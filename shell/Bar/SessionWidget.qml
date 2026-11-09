@@ -3,5 +3,5 @@ import qs.Commons
 
 BarItem {
     text: "marchyo"
-    textColor: Color.accent
+    textColor: Colors.accent
 }

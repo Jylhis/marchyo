@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "%1 இல் உள்நுழைந்தீர்கள்.",
+  "launch.notFoundInPath": "%1 PATH இல் காணப்படவில்லை",
+  "utilities.reminder": "நினைவூட்டல்",
+  "utilities.battery": "பேட்டரி %1%",
+  "utilities.battery2": "மின்கலம்",
+  "utilities.transcode": "மாற்றுக்குறியீடு",
+  "utilities.share": "பகிர்",
+  "toggles.enabled": "இயக்கப்பட்டது",
+  "toggles.suspend": "இடைநிறுத்து"
+}

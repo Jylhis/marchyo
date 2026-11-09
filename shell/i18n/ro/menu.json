@@ -1,0 +1,22 @@
+{
+  "menu.network": "Rețea",
+  "menu.speedTest": "Test viteză",
+  "menu.lock": "Blochează",
+  "menu.suspend": "Suspendă",
+  "menu.hibernate": "Hibernare",
+  "menu.reboot": "Repornește",
+  "menu.shutdown": "Oprește",
+  "menu.style": "Stil",
+  "menu.theme": "Temă",
+  "menu.background": "Fundal",
+  "menu.font": "Font",
+  "menu.setup": "Configurare",
+  "menu.audio": "Audio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Declanșator",
+  "menu.appearance": "Aspect",
+  "menu.system": "Sistem",
+  "menu.learn": "Învață",
+  "menu.screenshot": "Captură de ecran",
+  "menu.share": "Partajează"
+}

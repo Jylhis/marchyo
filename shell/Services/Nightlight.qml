@@ -3,22 +3,34 @@ import QtQuick
 import Quickshell.Io
 import qs.Commons
 
-// Shared night-light state: ONE seat-wide probe of the hyprsunset colour
-// temperature (`hyprctl hyprsunset temperature`). Below the identity point
-// (6000K) the screen is warmed, i.e. night light is on. Actuation goes through
-// `marchyo toggle nightlight` (4000K warm / 6500K neutral) so shell, keybinds,
-// and CLI share one source of truth. A singleton: the widget is a per-monitor
-// view, this state is seat-global.
+// Shared night-light state, owned by the shell: one probe of the hyprsunset
+// colour temperature (`hyprctl hyprsunset temperature`) at startup, then
+// toggle() and the CLI's `nightlightChanged` IPC call keep it current. Below
+// the identity point (6000K) the screen is warmed, i.e. night light is on.
+// Actuation goes through `marchyo toggle nightlight on|off` (4000K warm /
+// 6500K neutral). A singleton: the widget is a per-monitor view, this state is
+// seat-global.
 QtObject {
     id: root
 
     // Warm/neutral threshold; kept in sync with the CLI's 4000K/6500K pair.
     readonly property int identityTemp: 6000
+    readonly property int warmTemp: 4000
+    readonly property int neutralTemp: 6500
     property int temperature: 6500
     readonly property bool enabled: root.temperature < root.identityTemp
 
     function toggle() {
+        if (toggleProc.running)
+            return;
+        const next = !root.enabled;
+        root.setEnabled(next);
+        toggleProc.command = [Config.marchyo, "toggle", "nightlight", next ? "on" : "off"];
         toggleProc.running = true;
+    }
+
+    function setEnabled(on: bool): void {
+        root.temperature = on ? root.warmTemp : root.neutralTemp;
     }
 
     // Live temperature probe. `hyprctl hyprsunset temperature` prints a number
@@ -67,15 +79,11 @@ QtObject {
     // indicator reflects the daemon, not a guess.
     readonly property var toggleProc: Process {
         id: toggleProc
-        command: [Config.marchyo, "toggle", "nightlight"]
-        onExited: root.runProbe()
+        onExited: code => {
+            if (code !== 0)
+                root.runProbe();
+        }
     }
 
-    readonly property var poll: Timer {
-        interval: 5000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.runProbe()
-    }
+    Component.onCompleted: root.runProbe()
 }

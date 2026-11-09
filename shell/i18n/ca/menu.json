@@ -1,0 +1,22 @@
+{
+  "menu.network": "Xarxa",
+  "menu.speedTest": "Prova de velocitat",
+  "menu.lock": "Bloqueja",
+  "menu.suspend": "Suspèn",
+  "menu.hibernate": "Hiberna",
+  "menu.reboot": "Reinicia",
+  "menu.shutdown": "Apaga",
+  "menu.style": "Estil",
+  "menu.theme": "Tema",
+  "menu.background": "Fons",
+  "menu.font": "Tipus de lletra",
+  "menu.setup": "Configuració",
+  "menu.audio": "Àudio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Activa",
+  "menu.appearance": "Aparença",
+  "menu.system": "Sistema",
+  "menu.learn": "Aprèn",
+  "menu.screenshot": "Captura de pantalla",
+  "menu.share": "Comparteix"
+}

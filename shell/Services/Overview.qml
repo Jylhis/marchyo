@@ -129,7 +129,8 @@ QtObject {
         if (!address)
             return;
         root.close();
-        Hyprland.dispatch("focuswindow address:" + address);
+        const addr = String(address).startsWith("0x") ? address : "0x" + address;
+        Hyprland.dispatch("hl.dsp.focus({ window = \"address:" + addr + "\" })");
     }
 
     function activateSelected() {
@@ -139,7 +140,7 @@ QtObject {
     // Switch to a workspace (a click on a tile's empty area) and close.
     function goToWorkspace(id) {
         root.close();
-        Hyprland.dispatch("workspace " + id);
+        Hyprland.dispatch("hl.dsp.focus({ workspace = " + Number(id) + " })");
     }
 
     // Keyboard navigation: `delta` windows along the order (Tab, Left/Right)

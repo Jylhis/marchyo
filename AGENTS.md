@@ -4,11 +4,11 @@ Tool-agnostic guidance for AI agents working in this repository. This file is th
 
 ## What this repository is
 
-Marchyo is a modular NixOS configuration flake with Home Manager, nix-darwin, and nix-on-droid support. Consumers build systems with `marchyo.lib.mkNixosSystem` / `mkDarwinSystem` / `mkNixOnDroidConfiguration`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website.
+Marchyo is a modular NixOS configuration flake with Home Manager and nix-on-droid support. Consumers build systems with `marchyo.lib.mkNixosSystem` / `mkNixOnDroidConfiguration`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; after a design change run `just ds-sync` (the `design-copies` check fails until you do).
 
 ## Declarative only — never suggest imperative changes
 
-This is a declarative NixOS configuration. Never suggest imperative package installs or ad-hoc system mutation (`nix-env -i`, `nix profile install`, `apt`, `pip install --user`, editing dotfiles in `$HOME` by hand, `systemctl enable` on the host). The correct change is always: edit the Nix modules in this repo, then rebuild (`nixos-rebuild switch`, `darwin-rebuild switch`, or the reference builds below). If a package or service is missing, add it to the appropriate module.
+This is a declarative NixOS configuration. Never suggest imperative package installs or ad-hoc system mutation (`nix-env -i`, `nix profile install`, `apt`, `pip install --user`, editing dotfiles in `$HOME` by hand, `systemctl enable` on the host). The correct change is always: edit the Nix modules in this repo, then rebuild (`nixos-rebuild switch` or the reference builds below). If a package or service is missing, add it to the appropriate module.
 
 ## Development and essential commands
 
@@ -18,7 +18,6 @@ Enter `devenv shell`; it provides Nix tooling, `just`, `jq`, Bun, the CLI, and Q
 just check               # Linux: nix flake check --no-build, then statix + deadnix
 just fmt                 # nix fmt via treefmt
 just build-nixos         # reference NixOS config; optional config=x86_64|aarch64
-just build-darwin        # reference Darwin config; optional config=aarch64|x86_64
 just build-home          # standalone HM config; optional config=<supported system>
 just build-nix-on-droid  # Android config; recipe supplies required --impure
 just verify              # check shared revisions in flake.lock and devenv.lock
@@ -32,8 +31,7 @@ just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host o
 ## Adding or removing modules
 
 - `modules/nixos/` and `modules/home/` are **auto-discovered** via `lib/discover-modules.nix`: every `.nix` file in the directory (plus any subdirectory containing a `default.nix`) is imported automatically. Adding or removing a module is a one-file change — never edit an import list for these.
-- `modules/darwin/default.nix` is a **hand-curated** import list (darwin-safe subset; Wayland/systemd/desktop modules are NixOS-only). Add imports there manually, and keep it curated.
-- `modules/generic/` holds modules shared by nixos, darwin, and home.
+- `modules/generic/` holds modules shared by nixos and home.
 - `modules/nix-on-droid/` is a small separate tree on HM 24.05 — do not import `modules/home/*`, `modules/nixos/options`, or the overlay there.
 - Option declarations go in `modules/nixos/options/` (one file per logical namespace, auto-discovered), declaring `options.marchyo.<namespace>`.
 
@@ -47,10 +45,6 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 - Use `lib.mkDefault` for defaults downstream configurations can override; use `lib.mkMerge` to combine multiple `mkIf` branches.
 - Home Manager modules read NixOS config via optional `{ osConfig ? {}, ... }` and `osConfig.marchyo or {}`.
 
-## Darwin eval gate — keep option declarations platform-neutral
-
-`modules/darwin/default.nix` imports the **shared** option namespace `modules/nixos/options/`, and CI evaluates nix-darwin configurations on Linux (`tests/eval/shell.nix` via `lib.mkDarwinSystem`). Therefore every file under `modules/nixos/options/` is evaluated on Darwin: option declarations must stay platform-neutral — no Linux-only package references, NixOS-module imports, or Linux-specific `types`/defaults in declarations. Put platform-specific behavior in implementation modules, not in options. The overlay follows the same rule: Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
-
 ## Testing
 
 - `tests/eval/*.nix` is auto-discovered. Each file receives helpers plus `lib`/`pkgs`/module sets and returns an attrset of named tests; every new module or option needs a `testNixOS` eval test, normally merged with `withTestUser`.
@@ -60,8 +54,14 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 ## QML shell pitfalls
 
 - `Bar/` widgets are instantiated per monitor: seat-global state, processes, and timers belong in singleton components under `Services/`; keep each directory's `qmldir` complete.
-- `Commons/Color.qml`, `Style.qml`, and `Config.qml` are usable source defaults but the Nix package regenerates them with theme values and store paths; change the generators in `packages/marchyo-shell/package.nix` when changing baked output.
-- Run QML tools inside `devenv shell`; its `.devenv/qml-modules/qs` alias is required because qmlls' Quickshell mirror lacks `qmldir` files.
+- `Commons/Colors.qml`, `Style.qml`, and `Config.qml` are usable source defaults but the Nix package regenerates them with theme values and store paths; change the generators in `packages/marchyo-shell/package.nix` when changing baked output.
+- Run QML tools inside `devenv shell`; its `$DEVENV_STATE/qml/modules/qs` alias (`languages.qml`) is required because qmlls' Quickshell mirror lacks `qmldir` files.
+- To check a QML change on screen, run `shell/dev/shot SURFACE` from `devenv shell`, or call the
+  `marchyo-shell` MCP `screenshot` tool. It runs the tree's shell in an isolated nested Hyprland
+  and never touches the live session or the `marchyo-shell` service.
+- `shell/dev/sandbox down` stops the sandbox and every process it started.
+- Never start Hyprland without a parent `WAYLAND_DISPLAY`: it takes the DRM seat and aborts.
+- Never use `pkill -f` to stop sandbox processes; it can match live session processes.
 
 ## Formatting and commits
 
@@ -71,3 +71,15 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 - Keep `site/src/content/docs/docs/configuration/` in sync when changing options under `modules/nixos/options/`.
 - `TODO.md` lists only open work. When an item is done, delete it from `TODO.md` in the same commit.
 - Docs and code comments describe the current state only: no history (what changed, what was replaced, commit refs) and no backstory or motivation. Git holds history.
+
+## New theme surfaces
+
+- Emit the surface from the single palette source in all three places that build a theme dir:
+  `theme-runtime.nix` (Jylhis pair), its `mkSchemeThemeDir` (catalog/inline), and the CLI
+  `generateThemeChangeBase` (matugen); the relink/reload leg goes in `activateThemeDir`.
+- Stay IFD-free: pure string templating from `palette.hex` / base16 slots, never `readFile` of
+  a built derivation such as `pkgs.jylhis-themes` (referencing it as a path is fine).
+- Add a `testNixOS` assertion in `tests/eval/themes.nix` and update
+  `site/src/content/docs/docs/configuration/theming.mdx`.
+- If a surface needs a role with no palette token, report it as a `pkgs.jylhis-design-src`
+  gap instead of inventing it locally.

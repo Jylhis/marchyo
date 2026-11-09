@@ -1,0 +1,39 @@
+---
+title: Audio
+description: Speaker tuning for laptops
+---
+
+Laptop speakers sound thin without a voicing curve. `marchyo.audio.tuner`
+installs the `omarchy-audio-tuner` tools and can apply a shipped tuning.
+
+## Available options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.audio.tuner.enable` | `false` | Install `omarchy-audio-tuner` (`measure`, `fit`, `generate`, `compare`) |
+| `marchyo.audio.tuner.profile` | `null` | Shipped tuning to apply |
+
+## Applying a tuning
+
+```nix
+{
+  marchyo.audio.tuner = {
+    enable = true;
+    profile = "dell-xps-2026";
+  };
+}
+```
+
+Shipped profiles: `dell-xps-2026` (XPS 14 and 16, SKU 0DB9 and 0DBA),
+`asus-proart-p14-n1x` and `asus-zenbook-a16-ux3607oa`. Each is a chain of
+biquad filters and a lookahead limiter, taken from Omarchy.
+
+The `marchyo-speaker-tuning` user service waits for the profile's speaker sink,
+hosts the chain as its own PipeWire client (`pipewire -c`), and makes the
+`omarchy_speaker_tuning` sink the default output. A bad graph stops only this
+service, not PipeWire. A profile needs PipeWire, which `marchyo.desktop.enable`
+turns on. Do not run EasyEffects alongside a tuning: it moves streams to its
+own sink and bypasses the chain.
+
+To author a tuning for another laptop, run `omarchy-audio-tuner` (see its
+README in the package's `share/doc`).

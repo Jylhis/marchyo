@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Bei %1 angemeldet.",
+  "launch.notFoundInPath": "%1 nicht in PATH gefunden",
+  "utilities.reminder": "Erinnerung",
+  "utilities.battery": "Akku %1%",
+  "utilities.battery2": "Akku",
+  "utilities.transcode": "Transkodieren",
+  "utilities.share": "Teilen",
+  "toggles.enabled": "Aktiviert",
+  "toggles.suspend": "Standby"
+}

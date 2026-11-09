@@ -10,7 +10,6 @@
 }:
 let
   inherit (lib) mkIf;
-  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && (osConfig.marchyo.desktop.enable or false);
   enabled = desktopEnabled && (osConfig.marchyo.menus.enable or true);
 in
@@ -25,12 +24,8 @@ in
       bluetui
       hyprmon
       power-profiles-daemon # powerprofilesctl
-    ];
-
-    # Merges with the bind lists from other home modules; both combos verified free.
-    wayland.windowManager.hyprland.settings.bind = [
-      (hlua.bindd "SUPER + Escape" "Power menu" (hlua.execInTerminal "marchyo menu power"))
-      (hlua.bindd "SUPER + ALT + Space" "System menu" (hlua.execInTerminal "marchyo menu"))
+      speedtest-go # Trigger > Speed test > Network
+      fio # Trigger > Speed test > Disk
     ];
   };
 }

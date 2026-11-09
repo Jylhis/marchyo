@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Umeingia kwenye %1.",
+  "launch.notFoundInPath": "%1 haikupatikana katika PATH",
+  "utilities.reminder": "Kikumbusho",
+  "utilities.battery": "Betri %1%",
+  "utilities.battery2": "Betri",
+  "utilities.transcode": "Geuza msimbo",
+  "utilities.share": "Shiriki",
+  "toggles.enabled": "Imewashwa",
+  "toggles.suspend": "Sitisha"
+}

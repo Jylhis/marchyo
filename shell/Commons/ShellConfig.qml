@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "Paths.js" as Paths
 import "MonitorConfig.js" as MonitorConfig
+import "BarOverlay.js" as BarOverlay
 
 // Runtime shell configuration: the one shell.json read for the whole seat.
 //
@@ -18,6 +19,11 @@ import "MonitorConfig.js" as MonitorConfig
 // shipped before it became config-driven, so a host with no shell.json — or an
 // empty one — looks identical. shell.qml resolves each entry's `id` to a
 // widget Component (first-party) or a plugin bar-widget (Commons/PluginIndex).
+//
+// Runtime layout edits (`marchyo bar put|set|remove|shift|reset`) live in
+// $XDG_STATE_HOME/marchyo/shell/bar-layout.json; Commons/BarOverlay.js applies
+// them over the layout resolved below, for every output. shell.json stays
+// generated and read-only.
 //
 // Per-monitor overrides live in the same file under `monitors.<output>`;
 // Commons/MonitorConfig.js resolves them (always-global keys stay global).
@@ -42,21 +48,14 @@ QtObject {
                     id: "marchyo.activeWindow"
                 }
             ],
+            centerBegin: [],
             center: [
                 {
                     id: "marchyo.clock"
                 }
             ],
+            centerEnd: [],
             right: [
-                {
-                    id: "marchyo.screenRecording"
-                },
-                {
-                    id: "marchyo.reminders"
-                },
-                {
-                    id: "marchyo.separator"
-                },
                 {
                     id: "marchyo.tray"
                 },
@@ -67,19 +66,28 @@ QtObject {
                     id: "marchyo.separator"
                 },
                 {
+                    id: "marchyo.screenRecording"
+                },
+                {
+                    id: "marchyo.reminders"
+                },
+                {
+                    id: "marchyo.remoteSession"
+                },
+                {
                     id: "marchyo.dictation"
                 },
                 {
                     id: "marchyo.caffeine"
                 },
                 {
-                    id: "marchyo.theme"
-                },
-                {
                     id: "marchyo.dnd"
                 },
                 {
                     id: "marchyo.separator"
+                },
+                {
+                    id: "marchyo.theme"
                 },
                 {
                     id: "marchyo.keyboardLayout"
@@ -123,6 +131,8 @@ QtObject {
             ]
         })
 
+    readonly property var battery: config.battery || ({})
+
     // Parsed shell.json (empty object until first read).
     property var config: ({})
 
@@ -135,16 +145,19 @@ QtObject {
     // shell restarts. Merged at load (not live) to avoid rebuilding the bar.
     property var pluginSettings: ({})
 
+    // Runtime layout edits (bar-layout.json), parsed by BarOverlay.parseOps.
+    property var barOps: []
+
     // Effective global bar layout: the file's bar.layout when present, else
-    // the default. Each section falls back independently so a partial override
-    // is still valid.
-    readonly property var bar: MonitorConfig.barLayout(root.config, "", root.defaultBar)
+    // the default, with the runtime edits applied. Each section falls back
+    // independently so a partial override is still valid.
+    readonly property var bar: root.barFor("")
 
     // Effective bar layout for one output: the global layout with that
     // output's `monitors.<name>.bar.layout` sections merged over it. Reads
     // root.config, so a binding calling it re-evaluates on every re-read.
     function barFor(output: string): var {
-        return MonitorConfig.barLayout(root.config, output, root.defaultBar);
+        return BarOverlay.apply(MonitorConfig.barLayout(root.config, output, root.defaultBar), root.barOps);
     }
 
     // Bar style for one output ("flat" | "segmented"): the resolved
@@ -164,6 +177,10 @@ QtObject {
 
     function pluginSettingsPath(): string {
         return Paths.xdgDir(Quickshell.env("XDG_STATE_HOME"), Quickshell.env("HOME"), "/.local/state") + "/marchyo/shell/plugin-settings.json";
+    }
+
+    function barLayoutPath(): string {
+        return Paths.xdgDir(Quickshell.env("XDG_STATE_HOME"), Quickshell.env("HOME"), "/.local/state") + "/marchyo/shell/bar-layout.json";
     }
 
     function applyPluginSettings(text: string): void {
@@ -211,6 +228,18 @@ QtObject {
         onFileChanged: pluginSettingsView.reload()
     }
 
+    // Runtime layout edits. The CLI replaces the file atomically, so the watch
+    // is re-armed by the reload; a deleted file reads as no edits.
+    readonly property var barLayoutView: FileView {
+        id: barLayoutView
+        path: root.barLayoutPath()
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.barOps = BarOverlay.parseOps(barLayoutView.text())
+        onLoadFailed: root.barOps = []
+        onFileChanged: barLayoutView.reload()
+    }
+
     // The generator writes shell.json via an atomic replace, so the watched
     // inode changes and inotify misses it — one cheap 5s poll covers that,
     // exactly as Commons/Theme.qml does for colors.json.
@@ -221,6 +250,7 @@ QtObject {
         onTriggered: {
             fileView.reload();
             root.apply(fileView.text());
+            barLayoutView.reload();
         }
     }
 
@@ -229,5 +259,6 @@ QtObject {
     Component.onCompleted: {
         root.apply(fileView.text());
         root.applyPluginSettings(pluginSettingsView.text());
+        root.barOps = BarOverlay.parseOps(barLayoutView.text());
     }
 }

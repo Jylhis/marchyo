@@ -86,10 +86,27 @@ in
     marchyo.shell.enable = false;
   };
 
+  # Global workspace numbering (marchyo.workspaces.perMonitor = false): the
+  # per-monitor Lua module is not loaded and the workspace rule returns.
+  check-home-hyprland-config-global-workspaces = mkVerifyConfig "check-hyprland-config-global-ws" {
+    marchyo.workspaces.perMonitor = false;
+  };
+
   # Same verification with the shell on (the desktop default), which adds the
   # curve, animation leaves and per-namespace layer rules.
   check-home-hyprland-config-shell = mkVerifyConfig "check-hyprland-config-shell" {
     marchyo.shell.enable = true;
+  };
+
+  # Appearance options (glassy windows, rounded corners, forced animations plus the
+  # pop-out window hook) render a config Hyprland accepts.
+  check-home-hyprland-config-appearance = mkVerifyConfig "check-hyprland-config-appearance" {
+    marchyo.shell.enable = true;
+    marchyo.theme.appearance = {
+      transparency = "glassy";
+      corners = "rounded";
+      animations = "on";
+    };
   };
 
   # Shell on: animations run on the popin bezier and the shell namespaces get
@@ -159,7 +176,7 @@ in
         ];
       };
       hm = eval.config.home-manager.users.testuser;
-      hasBind = lib.hasInfix "marchyo keybindings" (
+      hasBind = lib.hasInfix "marchyo:launcher.keys" (
         hyprEntriesText hm.wayland.windowManager.hyprland.settings.bind
       );
       hasPkg = lib.any (p: lib.hasInfix "fzf" (p.name or "")) hm.home.packages;
@@ -186,7 +203,7 @@ in
           })
         ];
       };
-      hasBind = lib.hasInfix "marchyo keybindings" (
+      hasBind = lib.hasInfix "marchyo:launcher.keys" (
         hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind
       );
     in
@@ -220,11 +237,11 @@ in
       newBinds = [
         "hl.dsp.group.toggle()"
         "into_group"
-        "follow = false"
-        "hl.dsp.workspace.move("
+        # Per-monitor workspaces (the default): silent move and workspace move.
+        "move_window(1, false)"
+        "move_to_monitor("
         "hl.dsp.window.resize({ x = -100"
         "marchyo zoom in"
-        "marchyo toggle nightlight"
         "marchyo toggle idle"
         "marchyo toggle caffeine"
         "marchyo capture record"
@@ -240,7 +257,7 @@ in
       missingPkgs = lib.filter (n: !hasPkg n) wrappers;
 
       # Monitor focus relocated: no SUPER+comma/period focusmonitor bind remains,
-      # the CTRL+ALT+Tab focus bind exists, and comma/period drive emoji/notifications.
+      # the CTRL+ALT+Tab focus bind exists, and comma drives notifications.
       focusmonitorMoved = !(hyprHasBind bind "SUPER + comma" "hl.dsp.focus({ monitor");
       hasCtrlAltMonitor = hyprHasBind bind "CTRL + ALT + TAB" ''hl.dsp.focus({ monitor = "+1" })'';
       hasEmoji = hasBindText "Emoji picker";

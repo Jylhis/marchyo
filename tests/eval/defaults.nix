@@ -49,12 +49,13 @@ in
     };
   });
 
-  # TUI-flipped defaults: spotify-player (music), cmus (audio), aerc (email).
+  # TUI defaults: spotify-player (music) and aerc (email) install via their
+  # Home-Manager modules, not environment.systemPackages, which exercises the
+  # defaults.nix hasAttr guards.
   eval-defaults-tui = testNixOS "defaults-tui" (withTestUser {
     marchyo.desktop.enable = true;
     marchyo.defaults = {
       musicPlayer = "spotify-player";
-      audioPlayer = "cmus";
       email = "aerc";
     };
   });
@@ -86,18 +87,6 @@ in
         marchyo.theme.variant = "light";
         marchyo.defaults.email = "aerc";
       });
-
-  # The other module-backed selections: ncspot (music), cmus (audio), neomutt
-  # (email). Exercises the defaults.nix hasAttr guards (these install via their
-  # Home-Manager modules, not environment.systemPackages).
-  eval-defaults-tui-alt = testNixOS "defaults-tui-alt" (withTestUser {
-    marchyo.desktop.enable = true;
-    marchyo.defaults = {
-      musicPlayer = "ncspot";
-      audioPlayer = "cmus";
-      email = "neomutt";
-    };
-  });
 
   # Standard Emacs is the default editor: marchyo installs pkgs.emacs and
   # points $VISUAL/$EDITOR at emacsclient with plain-emacs fallbacks.

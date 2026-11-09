@@ -49,7 +49,7 @@ QtObject {
                 continue;
             const pct = Math.round(d.percentage * 100);
             out.push({
-                name: d.model && d.model.length > 0 ? d.model : "device",
+                name: d.model && d.model.length > 0 ? d.model : I18n.t("peripherals.device"),
                 pct: pct,
                 glyph: root.glyphFor(d.type),
                 low: pct <= root.lowThreshold

@@ -1,6 +1,8 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Services.Polkit
+import qs.Commons
 
 // The session's polkit authentication agent (replaces hyprpolkitagent when the
 // shell is on; see modules/home/marchyo-shell.nix) and the state the dialog
@@ -16,13 +18,21 @@ import Quickshell.Services.Polkit
 QtObject {
     id: root
 
-    readonly property var agent: PolkitAgent {}
+    readonly property bool replaced: PluginIndex.replacementFor("polkit") !== ""
 
-    readonly property bool registered: root.agent.isRegistered
-    readonly property var flow: root.agent.flow
+    // A plugin that replaces "polkit" registers its own agent, so the native
+    // one is not created while a replacement exists.
+    readonly property var agentLoader: LazyLoader {
+        active: !root.replaced
+        component: PolkitAgent {}
+    }
+    readonly property var agent: root.agentLoader.item
+
+    readonly property bool registered: root.agent ? root.agent.isRegistered : false
+    readonly property var flow: root.agent ? root.agent.flow : null
     // A request is on screen from authenticationRequestStarted until it
     // succeeds, is cancelled (by the user or the daemon), or is dismissed.
-    readonly property bool active: root.agent.isActive && root.flow !== null
+    readonly property bool active: root.agent ? root.agent.isActive && root.flow !== null : false
 
     readonly property string message: root.flow ? root.flow.message : ""
     readonly property string iconName: root.flow ? root.flow.iconName : ""

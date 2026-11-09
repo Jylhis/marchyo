@@ -13,7 +13,7 @@ import Base from '../layouts/Base.astro';
     </div>
     <nav class="site-nav">
       <a href="/docs/introduction/">docs</a>
-      <a href="/search/">search</a>
+      <a href="/os/">fleet</a>
       <a href="https://github.com/Jylhis/marchyo">github ⑂</a>
       <button class="theme-toggle" data-theme-toggle aria-label="toggle theme">☾</button>
     </nav>
@@ -124,26 +124,26 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
 
     <section class="man__section">
       <h2 class="man__h">THEMING</h2>
-      <p class="man__lead">Paper and Roast, straight from the <a href="https://github.com/jylhis/design">Jylhis design tokens</a>. The ☾ in the header flips this page the same way <code>marchyo.theme.variant</code> flips your desktop.</p>
+      <p class="man__lead">Paper and Black, straight from the <a href="https://github.com/jylhis/design">Jylhis design tokens</a>. The ☾ in the header flips this page the same way <code>marchyo.theme.variant</code> flips your desktop.</p>
       <div class="swatches">
-        <div class="swatch swatch--paper">
+        <div class="swatch" data-mode="light">
           <div class="swatch__name">☀ paper</div>
-          <div class="swatch__code">variant = <span style="color:#2544bb">"light"</span>;</div>
+          <div class="swatch__code">variant = <span class="swatch__str">"light"</span>;</div>
           <div class="swatch__chips">
-            <span style="background:#f6f8fb;border:1px solid #cfd6de"></span>
-            <span style="background:#23262e"></span>
-            <span style="background:#8a4d00"></span>
-            <span style="background:#cfd6de"></span>
+            <span class="chip chip--bg"></span>
+            <span class="chip chip--text"></span>
+            <span class="chip chip--accent"></span>
+            <span class="chip chip--border"></span>
           </div>
         </div>
-        <div class="swatch swatch--roast">
-          <div class="swatch__name">☾ roast</div>
-          <div class="swatch__code">variant = <span style="color:#79a8ff">"dark"</span>;</div>
+        <div class="swatch" data-mode="dark">
+          <div class="swatch__name">☾ black</div>
+          <div class="swatch__code">variant = <span class="swatch__str">"dark"</span>;</div>
           <div class="swatch__chips">
-            <span style="background:#0d0f14;border:1px solid #2b303b"></span>
-            <span style="background:#d6dae2"></span>
-            <span style="background:#e0a33a"></span>
-            <span style="background:#2b303b"></span>
+            <span class="chip chip--bg"></span>
+            <span class="chip chip--text"></span>
+            <span class="chip chip--accent"></span>
+            <span class="chip chip--border"></span>
           </div>
         </div>
       </div>
@@ -179,7 +179,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
 
   <footer class="site-footer">
     <div class="rule">────────────────────────</div>
-    <div class="colophon">set in literata &amp; jetbrains mono · a personal project by <a href="https://jylhis.com">jylhis</a> · zürich, ch</div>
+    <div class="colophon">set in fira sans &amp; ibm plex mono · a personal project by <a href="https://jylhis.com">jylhis</a> · zürich, ch</div>
   </footer>
 </Base>
 
@@ -194,6 +194,15 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
     padding: 32px 24px 0;
   }
   .brand { display: flex; align-items: baseline; gap: 16px; }
+  .site-header { flex-wrap: wrap; }
+  .site-nav a { white-space: nowrap; }
+  @media (pointer: coarse) {
+    .site-nav a {
+      display: inline-block;
+      padding-block: max(0px, calc((var(--touch-min) - 1lh) / 2));
+      margin-block: min(0px, calc((1lh - var(--touch-min)) / 2));
+    }
+  }
   .site-nav {
     display: flex;
     align-items: baseline;
@@ -214,7 +223,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
     display: flex;
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: var(--type-floor);
     color: var(--color-text-muted);
   }
   .man__section { display: flex; flex-direction: column; gap: 12px; }
@@ -253,7 +262,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
   .man__prose .muted { color: var(--color-text-muted); }
   code {
     font-family: var(--font-mono);
-    font-size: 0.9em;
+    font-size: max(var(--type-floor), 0.9em);
   }
 
   .chip-row { display: flex; justify-content: flex-end; gap: 8px; }
@@ -290,13 +299,19 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
     gap: 10px;
     font-family: var(--font-mono);
   }
-  .swatch--paper { border: 1px solid #cfd6de; background: #f6f8fb; }
-  .swatch--roast { border: 1px solid #2b303b; background: #0d0f14; }
-  .swatch--paper .swatch__name { color: #565a63; }
-  .swatch--paper .swatch__code { color: #12141a; }
-  .swatch--roast .swatch__name { color: #9aa0ab; }
-  .swatch--roast .swatch__code { color: #f2f4f8; }
-  .swatch__name { font-size: 0.8rem; }
+  /* Each swatch scopes its own mode (data-mode), so it shows the real tokens. */
+  .swatch {
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .swatch__name { color: var(--color-text-muted); }
+  .swatch__code { color: var(--color-text-heading); }
+  .swatch__str { color: var(--color-syntax-string); }
+  .chip--bg { background: var(--color-bg); border: 1px solid var(--color-border); }
+  .chip--text { background: var(--color-text); }
+  .chip--accent { background: var(--color-accent); }
+  .chip--border { background: var(--color-border-strong); }
+  .swatch__name { font-size: var(--type-floor); }
   .swatch__code { font-size: 0.95rem; }
   .swatch__chips { display: flex; gap: 6px; }
   .swatch__chips span { width: 22px; height: 22px; border-radius: 2px; }
@@ -308,7 +323,19 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
   }
   .faq details:last-child { border-bottom: 1px solid var(--color-border); }
   .faq summary { font-family: var(--font-mono); font-size: 0.95rem; }
-  .faq__chev { color: var(--color-brand); }
+  /* Touch: FAQ rows, the option listing and the colophon link reach the
+     --touch-min target; listing lines open up to that height. */
+  @media (pointer: coarse) {
+    .faq summary { padding-block: max(0px, calc((var(--touch-min) - 1lh) / 2)); }
+    .ls { line-height: var(--touch-min); }
+    .ls a { display: inline-block; }
+    .colophon a {
+      display: inline-block;
+      padding-block: max(0px, calc((var(--touch-min) - 1lh) / 2));
+      margin-block: min(0px, calc((1lh - var(--touch-min)) / 2));
+    }
+  }
+  .faq__chev { color: var(--color-accent); }
   .faq p {
     margin: 10px 0 0 2ch;
     font-family: var(--font-body);
@@ -340,7 +367,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
   }
   .colophon {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: var(--type-floor);
     color: var(--color-text-muted);
   }
 

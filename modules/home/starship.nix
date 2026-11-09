@@ -1,5 +1,5 @@
 # Starship prompt with the Jylhis design preset. Split out of jylhis-theme.nix
-# (Linux-gated) so the prompt works on darwin too. The upstream jylhis-design
+# (Linux-gated). The upstream jylhis-design
 # starship target stays disabled there so starship.toml is only written here.
 {
   lib,

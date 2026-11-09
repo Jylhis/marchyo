@@ -6,8 +6,8 @@ description: The unified Quickshell shell — runtime config and the plugin plat
 The unified Quickshell shell is the default desktop shell: one long-running
 process that draws the top bar, OSD, panels, notifications, lock, launcher, and
 polkit password dialog. `marchyo.shell.enable` defaults to on with
-`marchyo.desktop.enable`. Setting it to `false` keeps the discrete stack
-instead: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent.
+`marchyo.desktop.enable`. Setting it to `false` keeps only hyprlock and
+hyprpolkitagent, with no bar, OSD or notification daemon.
 
 ## Options
 
@@ -16,7 +16,10 @@ instead: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent.
 | `marchyo.shell.enable` | `true` with desktop | Enable the unified Quickshell shell (`false` keeps the discrete stack) |
 | `marchyo.shell.settings` | `{}` | Runtime config serialized to `~/.config/marchyo/shell.json` |
 | `marchyo.shell.plugins` | `[]` | Shell plugins baked into the store shell (build-time) |
+| `marchyo.shell.devPlugins.enable` | `false` | Let the shell mount dev plugins synced by `marchyo plugin dev` (development hosts only) |
+| `marchyo.shell.barPlugin` | `null` | Id of a `bar` plugin that replaces the built-in bar |
 | `marchyo.shell.extraPlugins` | `[]` | Additive plugin specs (pinned git), managed by `marchyo plugin` |
+| `marchyo.shell.diskWarnPercent` | `10` | Free-space percentage of the Nix store filesystem at or below which `marchyo.disk` appears |
 
 ## Runtime configuration
 
@@ -32,10 +35,12 @@ the file, so the shell's own defaults apply.
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `bar.layout.{left,center,right}` | list of `{ id; settings?; }` | Widget entries for that bar section. A section left unset falls back to the shipped default layout. |
+| `bar.layout.{left,centerBegin,center,centerEnd,right}` | list of `{ id; settings?; }` | Widget entries for that bar section. `center` stays at the middle of the bar, `centerBegin` grows leftwards from it and `centerEnd` rightwards. A section left unset falls back to the shipped default layout. |
 | `bar.style` | `"flat"` or `"segmented"` | Bar look. `segmented` fills each cluster of widgets with a two-tone background (the theme's subtle-background colour and an accent-tinted surface colour) joined by curved edges. Layout is unchanged. Shell default `"flat"`. |
 | `idle.screensaver` | positive int | Seconds of idle before the screensaver (shell default 150). |
 | `idle.lock` | positive int | Seconds of idle before the lock (shell default 300). |
+| `clock.seconds` | bool | Live seconds in the bar clock (shell default `false`); right-click the clock flips it for the session. |
+| `battery.percentage` | bool | Charge number beside the battery glyph (shell default `true`); right-click the widget flips it for the session. |
 | `caffeine.autoVideo` | bool | Hold an idle inhibitor while a video plays (shell default `true`). |
 | `monitors.<output>` | per-output overrides | See [Per-monitor overrides](#per-monitor-overrides). |
 
@@ -58,7 +63,14 @@ First-party widget ids: `marchyo.session`, `marchyo.workspaces`,
 `marchyo.bluetooth`, `marchyo.network`, `marchyo.camera`, `marchyo.mic`,
 `marchyo.audio`, `marchyo.cpu`, `marchyo.powerProfile`, `marchyo.peripherals`,
 `marchyo.battery`, `marchyo.tailscale`, `marchyo.weather`, `marchyo.lockKeys`,
-`marchyo.controlCenter`.
+`marchyo.agents`, `marchyo.remoteSession`, `marchyo.update`, `marchyo.disk`,
+`marchyo.health`, `marchyo.controlCenter`.
+
+`marchyo.agents` shows the AI agent usage limit that is closest to its end and
+opens the agents panel (see
+[Agent usage](/docs/configuration/feature-flags/#agent-usage)). It is
+registered but not placed by default; placing it starts a refresh every 5
+minutes.
 
 `marchyo.screenRecording` (visible only while a recording runs) and
 `marchyo.reminders` (visible only while `marchyo reminder` timers are pending)
@@ -87,6 +99,25 @@ open-network QR when it is unavailable). `marchyo.weather` (current conditions f
 IP-geolocated) is registered but not placed by default; placing it is what
 starts the periodic outbound fetch, so a bar without it makes no network
 request.
+
+### Status indicators
+
+Four self-hiding indicators are registered but not placed by default. Add the
+ones you want to a bar section; each starts its own slow probe only when placed.
+
+- `marchyo.remoteSession`: red while a `gliff-server` of your user runs, with the
+  ssh client address in the tooltip. A Hyprland screencast event triggers a probe;
+  while a session is active it re-probes every 5 seconds.
+- `marchyo.update`: shows when the nixpkgs revision pinned in the flake lock
+  differs from the running system (`marchyo update --check`, local, hourly).
+  Run `marchyo upgrade` or `marchyo rebuild` to apply it.
+- `marchyo.disk`: shows when free space on the filesystem holding `/nix` is at or
+  below `marchyo.shell.diskWarnPercent` (default 10), checked every 5 minutes.
+- `marchyo.health`: shows when `marchyo doctor` reports failing checks (every 15
+  minutes). The tooltip lists them; a click runs `marchyo doctor` in a terminal.
+
+The Power panel has a **rollback** button that runs `marchyo rollback` in a
+terminal.
 
 ### Bar style
 
@@ -132,6 +163,24 @@ These keys are always global; a per-monitor value for them is ignored:
 The overrides are part of the same generated `shell.json`, so a rebuild applies
 them live like the rest of the file.
 
+## Runtime bar layout
+
+`marchyo bar` edits the layout without a rebuild. It records ops (`put`, `move`,
+`remove`, `set`) in `$XDG_STATE_HOME/marchyo/shell/bar-layout.json`; the shell watches
+that file and applies the ops over the layout resolved from `shell.json` (or the
+default) for every output, so `shell.json` stays generated and read-only. A moved
+widget keeps its `settings`. `marchyo bar reset` deletes the file, and `marchyo runtime
+restore` rewrites it after a lost state directory. `marchyo bar background` and
+`marchyo bar position` are the bar-related runtime switches (`marchyo theme
+bar-background` and `bar-position`). Double-clicking empty bar space steps the
+background through opaque, glassy and clear.
+
+The centre of the bar has three sections: `center` (the clock) stays at the middle, and
+`centerBegin` and `centerEnd` grow outwards from its edges.
+
+The `marchyo.tray` entry takes `settings.pinned`, a list of tray ids or titles that
+stay on the bar; every other icon folds behind the `·` drawer button.
+
 ## Control Center
 
 The Control Center is a quick-settings panel: output-volume and microphone
@@ -142,7 +191,7 @@ on click; its chevron opens the matching detail panel (network, Tailscale,
 notifications, power), with a back button to return. Tiles the host cannot offer
 (no Wi-Fi device, no Bluetooth adapter, Tailscale off) are hidden.
 
-Open it with `Super + Shift + Q`, `marchyo shell toggle controlcenter`, or the
+Open it with `Super + Ctrl + O`, `marchyo shell toggle controlcenter`, or the
 `marchyo.controlCenter` bar widget at the right end of the default layout. The
 Tailscale tile needs `marchyo.services.tailscale.enable`, and tailscaled accepts
 connect/disconnect only from root or the tailnet operator. With the shell on,
@@ -151,6 +200,61 @@ attribute name) through `services.tailscale.extraSetFlags`. Tailscale allows one
 operator; pick another with `marchyo.services.tailscale.operator = "alice";` or
 leave it unmanaged with `null`. Without an operator the tile reports the
 refusal.
+
+An Appearance section under the tiles holds a window-gaps toggle, the bar
+position (top or bottom), the bar background (opaque, glassy or clear), a
+reduce-motion toggle, and the **Themes...** and **Wallpapers...** buttons. They
+run `marchyo theme gaps`, `marchyo theme bar-position`,
+`marchyo theme bar-background`, `marchyo toggle reduce-motion` and open the
+pickers below. The shell reads the choices from
+`$XDG_STATE_HOME/marchyo/shell/style.json` (`reduceMotion`, `uiFont`,
+`barPosition`, `barBackground`); a missing key means the declarative default.
+With the bar at the bottom, the panel cards, tooltips, toasts and tray menus
+move to the bottom edge; the volume overlay and the window overview keep their
+top-bar layout.
+
+## Theme and wallpaper pickers
+
+`Super + Ctrl + T` opens the theme picker and `Super + Ctrl + Shift + W` the
+wallpaper picker (`marchyo shell toggle themes` and `backgrounds`). Each shows a
+filter field, a grid and a large preview of the selected item. The arrow keys
+move, `Enter` applies (`marchyo theme set` or `marchyo bg set`) and `Esc`
+closes. A theme without a `preview.png` shows a plain tile with its name.
+Wallpaper thumbnails are cached in `$XDG_CACHE_HOME/marchyo/thumbs`, keyed by
+size and modification time; the full image shows until its thumbnail exists.
+In the launcher, `>font` lists fonts: start with `mono` or `ui` to pick one
+kind.
+
+## Panel keyboard control
+
+A panel opened by a key chord or `marchyo shell open <panel>` takes keyboard
+focus; one opened by clicking a bar widget does not. `Esc` closes the panel,
+`Up`, `Down` and `Tab` move between its controls, and `Enter` or `Space`
+activates the focused control. Hover highlights are ignored while the keyboard
+drives and return when the pointer moves. `marchyo shell gallery [section]` opens
+a dev panel that shows every shell control in every state.
+
+## Elsewhen world clock
+
+Elsewhen is a built-in panel: a coastline map (Natural Earth 110m, public
+domain) with your cities, and one row per city showing local time, weekday,
+UTC offset, the difference to home and the current temperature. Open it with
+`Super + Ctrl + Alt + E` or `marchyo shell toggle elsewhen`.
+
+- Click a row to make that city home (click again to return home to the local
+  zone). Offsets are relative to home.
+- Type in the search field (or press `/`) to look up a place through
+  Open-Meteo geocoding; `Enter` adds the first result.
+- The people button on a row edits a comma-separated list of names shown under
+  the city.
+- `t` flips 12 and 24 hour time, `Alt + T` flips Celsius and Fahrenheit, `Esc`
+  closes.
+
+Zone offsets come from `date` with `TZ=` (the shell's JavaScript engine has no
+`Intl`) and refresh every 5 minutes while the panel is open. The list, home,
+people and the two toggles persist in the shell's state directory
+(`elsewhen.json`). The panel makes network requests to Open-Meteo only while it
+is open.
 
 ## Polkit authentication
 
@@ -176,7 +280,7 @@ Nix-declared, validated, and baked into the store shell. There is no runtime
 plugin directory and no hot-reload — changing the plugin set is a rebuild.
 
 A plugin is a directory with a `manifest.json` (`schemaVersion: 1`, an `id`
-outside the reserved `marchyo.*` namespace, `kinds`, and `entryPoints`) plus its
+outside the reserved `marchyo.*` and `omarchy.*` namespaces, `kinds`, and `entryPoints`) plus its
 QML. Declare one with `pkgs.mkMarchyoShellPlugin`, which validates the manifest
 at build time (matching id, kinds, entry points and prefix, safe relative entry
 points, no symlinks):
@@ -204,6 +308,9 @@ declared kind:
 | `bar-widget` | `barWidget` | A bar item, placed from `marchyo.shell.settings.bar.layout` by its manifest id (e.g. `acme.weather`) |
 | `launcher` | `launcher` | A launcher provider whose root is a `qs.Launcher` `Provider`; typing its `prefix` in the apps palette routes the query to it |
 | `daemon` | `daemon` | A non-visual `Item` or `QtObject`, created once when the shell starts and kept for its lifetime |
+| `panel`, `menu`, `overlay` | same name | An `Item` with `open(payloadJson)` and `close()` that owns its window; loaded when summoned, or at start with `keepLoaded` |
+| `service` | `service` | A headless singleton created at shell start; a panel of the same plugin reads it as `service` |
+| `bar` | `bar` | A full bar that replaces the built-in one when named in `marchyo.shell.barPlugin` |
 
 A launcher plugin sets `prefix` in both its manifest and the
 `mkMarchyoShellPlugin` call. The prefix is required, non-empty, has no
@@ -211,6 +318,29 @@ whitespace, and must not start with `=`, `>`, `#` or `!`, which belong to the
 built-in launcher providers. Plugin ids and prefixes must be unique. A
 launcher or daemon plugin that fails to load is logged and skipped, so the
 rest of the shell keeps running.
+
+A plugin can take over a native component with `replaces`, a list of native
+roles: `panel.<id>` (audio, network, power, monitor, display, weather, agents, elsewhen, tailscale, wifiqr, bluetooth, speedtest, dropbox, gallery), `polkit`, `launcher`, `launcher.emoji` and `launcher.clipboard`. Every opener of a replaced panel (keybinds,
+`marchyo shell open`, menus, bar clicks) summons the plugin instead, and a
+plugin that replaces `polkit` registers the only polkit agent. A role can have
+one plugin. `marchyo.shell.replacedRoles` shows the result. A bar-widget plugin
+opens only from its live bar widget, so put a replacing bar-widget plugin in
+`bar.layout`.
+
+A plugin that replaces a launcher role gets the launcher modes of that role:
+the keybinds, `marchyo menu [route]` and `marchyo shell launcher <mode>` summon
+it instead. `launcher` covers the command menu (a route becomes the
+`{"menu": route}` payload), the apps, font and keys modes and the
+`marchyo menu select|input` requests; `launcher.emoji` and
+`launcher.clipboard` cover the emoji and clipboard modes. The native launcher
+window is not created once all three are replaced, and a replaced
+`launcher.clipboard` stops the cliphist watchers. The omarchy plugins
+`omarchy-menu`, `omarchy-emojis` and `omarchy-clipboard` in
+`pkgs.marchyo-shell-plugins` replace the three roles; with `omarchy-menu`,
+the shell writes `marchyo.menu.entries`, merged with
+`~/.config/marchyo/menu.local.json`, to omarchy's
+`~/.config/omarchy/extensions/omarchy-menu.jsonc`, with the keybinding cheat
+sheet as its `keys` submenu, and rewrites it when either file changes.
 
 ```nix
 (pkgs.mkMarchyoShellPlugin {
@@ -234,6 +364,17 @@ you trust and have read. The build-time model means every plugin in your closure
 is pinned and reviewable in your configuration, not fetched at runtime.
 :::
 
+The manifest also accepts omarchy's optional fields: `keepLoaded`, the
+`barWidget` block (`displayName`, `category`, `allowMultiple`, `defaultSection`,
+`defaults`, `schema`, `settingsForm`), and sibling `*.manifest.json` files, each
+a further plugin id whose entry points are relative to its own directory. List
+siblings in the `siblings` argument of `mkMarchyoShellPlugin`.
+
+Summon a panel, menu or overlay plugin with
+`marchyo-shell ipc call shell summonPlugin <id> '{}'` (also `hidePlugin`,
+`togglePlugin`, `callPlugin <id> <method> <arg>` and `togglePanelAt <section>
+<index>`), or `omarchy-shell shell summon <id>`.
+
 ### Adding plugins with the CLI
 
 `marchyo plugin` is the CLI leg of the same build-time model. It pins a git
@@ -256,10 +397,29 @@ validates the repo's `manifest.json` (schema version, non-reserved id, entry
 points), then writes the pinned spec and rebuilds. Pass `-n`/`--dry-run` to
 print the state change without writing or rebuilding.
 
+`marchyo plugin validate <dir>` runs the build's manifest checks on a checkout.
+
+### Developing a plugin
+
+Set `marchyo.shell.devPlugins.enable = true` on a development host and rebuild
+once. `marchyo plugin dev <dir>` then copies the checkout (with the import
+rewrite applied) into `$XDG_STATE_HOME/marchyo/shell/dev-plugins/<id>`, lists
+it in `index.json` there, and reloads the shell; `--watch` repeats on every
+change and `marchyo plugin dev <id> --remove` unloads it. Only the `bar-widget`,
+`panel`, `overlay`, `menu` and `launcher` kinds load from there, ids in the
+reserved namespaces or equal to a baked plugin's are refused, and `marchyo
+doctor` warns while dev plugins are active.
+
+:::caution
+Dev plugins are unreviewed, unpinned code that runs unsandboxed inside the
+shell with your privileges, and any process of yours can replace them. With the
+option off (the default) the shell never reads the directory.
+:::
+
 ### omarchy plugin compatibility
 
 The shell ships a compatibility layer (`shell/compat`, exposed as the QML
-modules `qs.compat.Ui` / `qs.compat.Commons`) that provides omarchy's "Quattro"
+modules `qs.compat.Ui` / `qs.compat.Commons` / `qs.compat.Services`) that provides omarchy's "Quattro"
 plugin host API — `BarWidget`, `Panel`, `KeyboardPanel`, `PluginBarApi`, the
 `Style`/`Color`/`Border` tokens, and the `omarchy-shell` / `omarchy-bar` CLIs —
 mapped onto marchyo's own bar, theme, and services. This lets an upstream
@@ -267,8 +427,19 @@ omarchy bar widget run near-unmodified: when a plugin is baked in, its
 `import qs.Ui` / `import qs.Commons` lines are rewritten to the compat namespace,
 and the shell injects a marchyo-backed `bar` facade. The compat CLIs and the
 runtime tools omarchy plugins call by bare name (`python3`, `notify-send`,
-`curl`) are added to the shell's PATH only when plugins are declared, so
-plugin-less hosts keep a lean closure.
+`curl`) are added to the shell's PATH only when plugins are declared (or dev
+plugins are on), so plugin-less hosts keep a lean closure. The shims
+(`pkgs.marchyo-omarchy-shims`) include `omarchy-notification-send`
+(`marchyo notify`), `omarchy-menu-select` and `omarchy-menu-input` (`marchyo menu
+select` and `input`), `omarchy-launch-browser`, `-terminal` and
+`-floating-terminal-with-presentation` (`marchyo launch`), `omarchy-default-agent`,
+`omarchy-cmd-present` and `omarchy-pkg-present`. `OMARCHY_PATH` points at the
+shell's `compat/omarchy` directory for omarchy's string catalog.
+
+omarchy's first-party speedtest panels are packaged as
+`pkgs.marchyo-shell-plugins.omarchy-speedtest` and `.omarchy-disk-speedtest`.
+Their measuring binaries are not packaged, so a run ends in the panel's error
+state.
 
 Two omarchy plugins are packaged in this repo and can be imported directly:
 

@@ -1,0 +1,22 @@
+{
+  "menu.network": "Hálózat",
+  "menu.speedTest": "Sebességteszt",
+  "menu.lock": "Zárolás",
+  "menu.suspend": "Felfüggesztés",
+  "menu.hibernate": "Hibernálás",
+  "menu.reboot": "Újraindítás",
+  "menu.shutdown": "Kikapcsolás",
+  "menu.style": "Stílus",
+  "menu.theme": "Téma",
+  "menu.background": "Háttér",
+  "menu.font": "Betűtípus",
+  "menu.setup": "Beállítás",
+  "menu.audio": "Hang",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Indító",
+  "menu.appearance": "Megjelenés",
+  "menu.system": "Rendszer",
+  "menu.learn": "Tanulás",
+  "menu.screenshot": "Képernyőkép",
+  "menu.share": "Megosztás"
+}

@@ -1,7 +1,7 @@
 # Runtime theme-asset layer (modules/home/theme-runtime.nix).
 #
 # Eval-only: forcing the manifest text instantiates every listed theme's
-# asset derivations (incl. the hex-translated mako config and waybar CSS)
+# asset derivations (incl. the hex-translated gtk CSS)
 # for each build-time variant, without building anything. The switching
 # logic itself lives in the marchyo CLI (bun tests cover it). The one
 # exception is `build-theme-runtime-assets`, a build check that materializes
@@ -39,10 +39,28 @@ let
   parityFixture = builtins.fromJSON (
     builtins.readFile ../../packages/marchyo-cli/packages/core/tests/fixtures/theme-parity.json
   );
-  parityExpected = gen.parityExpected {
-    inherit (parityFixture) base16 batThemeName;
-    inherit (parityFixture.palette) tokens;
-  };
+  surfaces = import ../../lib/theme-surfaces.nix { inherit lib gen; };
+  parityExpected =
+    gen.parityExpected {
+      inherit (parityFixture) base16 batThemeName;
+      inherit (parityFixture.palette) tokens;
+    }
+    // {
+      templateSurfaces = {
+        inherit (surfaces) templates;
+        texts = surfaces.texts parityFixture.base16;
+      };
+    };
+
+  surfaceFiles = [
+    "btop.theme"
+    "kitty.conf"
+    "foot-theme.ini"
+    "alacritty-theme.toml"
+    "helix-theme.toml"
+    "nvim-theme.lua"
+    "emacs-theme.el"
+  ];
 
   manifestText = hm: hm.xdg.dataFile."marchyo/themes/manifest.json".text or null;
 
@@ -72,6 +90,11 @@ let
         throw "FAIL: theme-runtime (${variant}): theme manifest not generated"
       else if pointer == null || !(lib.hasInfix "marchyo-theme-${variant}" (toString pointer.source)) then
         throw "FAIL: theme-runtime (${variant}): pointer missing or not targeting ${variant} assets"
+      else if
+        (builtins.fromJSON (builtins.unsafeDiscardStringContext manifest)).defaultTheme.dir
+        != toString pointer.source
+      then
+        throw "FAIL: theme-runtime (${variant}): manifest default differs from declarative pointer"
       else if reset == null then
         throw "FAIL: theme-runtime (${variant}): resetThemeRuntimeSurfaces activation missing"
       else if !(lib.elem "checkLinkTargets" reset.before) then
@@ -94,6 +117,43 @@ in
   eval-theme-runtime-dark = checkVariant "dark";
   eval-theme-runtime-light = checkVariant "light";
 
+  eval-theme-preference-owner =
+    let
+      on = hmFor { };
+      off = hmFor { marchyo.cli.enable = false; };
+      unthemed = hmFor { marchyo.theme.enable = false; };
+      preference = hm: hm.dconf.settings."org/gnome/desktop/interface"."color-scheme" or null;
+    in
+    assert on.gtk.gtk3.colorScheme == null;
+    assert preference on == null;
+    assert preference off == "prefer-dark";
+    assert preference unthemed == "prefer-dark";
+    pkgs.writeText "eval-theme-preference-owner" "pass";
+
+  # The runtime overrides are replayed after every activation, after the
+  # declarative state is back; the step is absent without the CLI.
+  eval-theme-runtime-restore-activation =
+    let
+      on = (hmFor { }).home.activation.restoreRuntimeOverrides or null;
+      off = (hmFor { marchyo.cli.enable = false; }).home.activation ? restoreRuntimeOverrides;
+    in
+    pkgs.writeText "eval-theme-runtime-restore-activation" (
+      if on == null then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides activation missing"
+      else if !(lib.elem "linkGeneration" on.after) then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides not after linkGeneration"
+      else if !(lib.hasInfix "runtime restore" (toString on.data)) then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides does not run `marchyo runtime restore`"
+      else if !(lib.hasInfix "HYPRLAND_INSTANCE_SIGNATURE" (toString on.data)) then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides does not locate the Hyprland instance"
+      else if !(lib.hasInfix "(ignored)" (toString on.data)) then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides can fail the activation"
+      else if off then
+        throw "FAIL: theme-runtime: restoreRuntimeOverrides present with marchyo.cli.enable = false"
+      else
+        "pass"
+    );
+
   # Without the desktop, the module is inert: no manifest, no pointer, no
   # ghostty include leaks into the (still evaluated) ghostty settings, and
   # no surface-reset activation runs.
@@ -107,6 +167,7 @@ in
         && !(hm.xdg.configFile ? "marchyo/current-theme")
         && !(hm.programs.ghostty.settings ? config-file)
         && !(hm.home.activation ? resetThemeRuntimeSurfaces)
+        && !(hm.home.activation ? restoreRuntimeOverrides)
       then
         "pass"
       else
@@ -134,12 +195,10 @@ in
   # the Nix-swapped surfaces of that theme's own dir. `just check` (--no-build)
   # only evaluates this; `nix flake check` / CI builds it. The pointer source
   # and manifest text carry the linkFarm context, so interpolating them into
-  # the script builds the dirs. The mako and waybar surfaces exist only with
-  # marchyo.shell.enable = false, so the shell is off here.
+  # the script builds the dirs.
   build-theme-runtime-assets =
     let
       darkHm = hmFor {
-        marchyo.shell.enable = false;
         marchyo.theme.themes = [
           "jylhis-dark"
           "jylhis-light"
@@ -153,83 +212,101 @@ in
       darkDir = darkHm.xdg.configFile."marchyo/current-theme".source;
       lightDir =
         (hmFor {
-          marchyo.shell.enable = false;
           marchyo.theme.variant = "light";
         }).xdg.configFile."marchyo/current-theme".source;
       manifest = pkgs.writeText "theme-manifest.json" (manifestText darkHm);
       slotsJson = pkgs.writeText "parity-slots.json" (builtins.toJSON parityFixture.base16);
     in
-    pkgs.runCommand "check-theme-runtime-assets" { nativeBuildInputs = [ pkgs.jq ]; } ''
-      for d in ${darkDir} ${lightDir}; do
-        for f in variant colors.json ghostty.conf gtk.css hyprland.conf mako.conf waybar.css \
-          bat.conf fzf.opts hyprlock-colors.conf console.txt palette.json \
-          k9s-skin.yaml lazygit.yml spotify-player-theme.toml gdu.yaml \
-          templates/mako.conf templates/waybar.css templates/gtk.css; do
-          test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
-        done
-        jq -e '(.tokens | has("syn-keyword")) and (.tokenSlots.bg == "base00")' "$d/palette.json" >/dev/null \
-          || { echo "FAIL: $d/palette.json lacks the full token map or tokenSlots"; exit 1; }
-        # Every colour literal in a template is a placeholder, never a build hex
-        # (a `#` hex run followed by an identifier char is a CSS id selector).
-        if grep -En '#[0-9a-fA-F]+([^0-9A-Za-z_-]|$)' "$d"/templates/*; then
-          echo "FAIL: raw hex left in $d/templates"; exit 1
-        fi
-      done
-      grep -q '{{shade}}' ${darkDir}/templates/gtk.css \
-        || { echo "FAIL: gtk template has no {{shade}} placeholder"; exit 1; }
-      parity=$(jq -r '.themes[] | select(.name == "parity") | .dir' ${manifest})
-      test -f "$parity/palette.json" || { echo "FAIL: scheme dir has no palette.json"; exit 1; }
-      test ! -e "$parity/templates" || { echo "FAIL: templates outside the build-variant dir"; exit 1; }
-      for f in mako.conf waybar.css gtk.css; do
-        jq -nrj --rawfile t ${darkDir}/templates/$f \
-          --slurpfile p ${darkDir}/palette.json --slurpfile s ${slotsJson} \
-          --arg shade ${lib.escapeShellArg parityExpected.shade} '
-            def resolve($p; $s; $n): if $p.tokenSlots[$n] then $s[$p.tokenSlots[$n]] else $p.tokens[$n] end;
-            $p[0] as $p | $s[0] as $s
-            | reduce ($p.tokens | keys[]) as $n ($t; gsub("\\{\\{token:" + $n + "\\}\\}"; resolve($p; $s; $n)))
-            | gsub("\\{\\{shade\\}\\}"; $shade)' > filled
-        cmp filled "$parity/$f" || { echo "FAIL: filled template $f differs from the scheme dir"; exit 1; }
-      done
-      # The base16-slot TUI surfaces in a scheme dir are byte-identical to what
-      # `marchyo theme generate` writes for the same slots (the fixture).
-      ${lib.concatMapStrings
-        (f: ''
-          cmp ${pkgs.writeText "expected-${f}" parityExpected.${f}} "$parity/${f}" \
-            || { echo "FAIL: scheme dir ${f} differs from the parity fixture"; exit 1; }
-        '')
-        [
-          "k9s-skin.yaml"
-          "lazygit.yml"
-          "spotify-player-theme.toml"
-          "gdu.yaml"
-        ]
+    pkgs.runCommand "check-theme-runtime-assets"
+      {
+        nativeBuildInputs = [
+          pkgs.jq
+          pkgs.file
+        ];
       }
-      # The jylhis include must name BOTH themes as a ghostty light/dark pair
-      # (identical in both dirs): ghostty resolves it from the system
-      # color-scheme, so the dconf write in `marchyo theme set` restyles open
-      # windows instead of only new ones.
-      for d in ${darkDir} ${lightDir}; do
-        grep -q 'theme = dark:jylhis-dark,light:jylhis-light' "$d/ghostty.conf" \
-          || { echo "FAIL: $d/ghostty.conf is not the theme pair"; exit 1; }
-      done
-      grep -q '"name":"jylhis-dark"' ${darkDir}/colors.json \
-        || { echo "FAIL: dark colors.json name"; exit 1; }
-      grep -q '"variant":"dark"' ${darkDir}/colors.json \
-        || { echo "FAIL: dark colors.json variant"; exit 1; }
-      grep -q '"bg":"#0c0f14"' ${darkDir}/colors.json \
-        || { echo "FAIL: dark colors.json bg hex"; exit 1; }
-      grep -q '"name":"jylhis-light"' ${lightDir}/colors.json \
-        || { echo "FAIL: light colors.json name"; exit 1; }
-      grep -q '"bg":"#f5f8fc"' ${lightDir}/colors.json \
-        || { echo "FAIL: light colors.json bg hex"; exit 1; }
-      grep -q '#0c0f14' ${darkDir}/gtk.css \
-        || { echo "FAIL: dark gtk.css not dark-polarity"; exit 1; }
-      grep -q '#f5f8fc' ${lightDir}/gtk.css \
-        || { echo "FAIL: light gtk.css not light-polarity"; exit 1; }
-      # The dark gtk.css derives shade_color from the text token as a decimal
-      # rgba; the light copy must translate it (not keep the dark literal).
-      grep -q 'rgba(42, 45, 51, 0.08)' ${lightDir}/gtk.css \
-        || { echo "FAIL: light gtk.css shade_color not translated"; exit 1; }
-      touch "$out"
-    '';
+      ''
+        for d in ${darkDir} ${lightDir}; do
+          for f in variant colors.json ghostty.conf gtk.css hyprland.conf \
+            bat.conf fzf.opts hyprlock-colors.conf console.txt palette.json \
+            k9s-skin.yaml lazygit.yml spotify-player-theme.toml gdu.yaml \
+            ${lib.concatStringsSep " " surfaceFiles} preview.png \
+            templates/gtk.css ${lib.concatMapStringsSep " " (f: "templates/${f}") surfaceFiles}; do
+            test -f "$d/$f" || { echo "FAIL: $d/$f missing"; exit 1; }
+          done
+          test -d "$d/wallpapers" || { echo "FAIL: $d/wallpapers missing"; exit 1; }
+          file -L "$d/preview.png" | grep -q 'PNG image data, 480 x 270' \
+            || { echo "FAIL: $d/preview.png is not a 480x270 PNG"; exit 1; }
+          jq -e '(.tokens | has("syn-keyword")) and (.tokenSlots.bg == "base00")' "$d/palette.json" >/dev/null \
+            || { echo "FAIL: $d/palette.json lacks the full token map or tokenSlots"; exit 1; }
+          # Every colour literal in a template is a placeholder, never a build hex
+          # (a `#` hex run followed by an identifier char is a CSS id selector).
+          if grep -En '#[0-9a-fA-F]+([^0-9A-Za-z_-]|$)' "$d"/templates/*; then
+            echo "FAIL: raw hex left in $d/templates"; exit 1
+          fi
+        done
+        grep -q '{{shade}}' ${darkDir}/templates/gtk.css \
+          || { echo "FAIL: gtk template has no {{shade}} placeholder"; exit 1; }
+        # Switching a dark build to light at runtime gives the gtk.css a light
+        # build installs, byte for byte: the design template is filled, never
+        # hex-swapped, so roles that share a hex in one variant still split.
+        other=$(jq -r '.themes[] | select(.name == "jylhis-light") | .dir' ${manifest})
+        cmp "$other/gtk.css" ${lightDir}/gtk.css \
+          || { echo "FAIL: runtime light gtk.css differs from a light build"; exit 1; }
+        parity=$(jq -r '.themes[] | select(.name == "parity") | .dir' ${manifest})
+        test -f "$parity/palette.json" || { echo "FAIL: scheme dir has no palette.json"; exit 1; }
+        test ! -e "$parity/templates" || { echo "FAIL: templates outside the build-variant dir"; exit 1; }
+        for f in gtk.css ${lib.concatStringsSep " " surfaceFiles}; do
+          jq -nrj --rawfile t ${darkDir}/templates/$f \
+            --slurpfile p ${darkDir}/palette.json --slurpfile s ${slotsJson} \
+            --arg shade ${lib.escapeShellArg parityExpected.shade} '
+              def resolve($p; $s; $n): if $p.tokenSlots[$n] then $s[$p.tokenSlots[$n]] else $p.tokens[$n] end;
+              $p[0] as $p | $s[0] as $s
+              | reduce ($p.tokens | keys[]) as $n ($t;
+                  gsub("\\{\\{token:" + $n + "\\}\\}"; resolve($p; $s; $n))
+                  | gsub("\\{\\{bare:" + $n + "\\}\\}"; resolve($p; $s; $n) | ltrimstr("#")))
+              | gsub("\\{\\{shade\\}\\}"; $shade)' > filled
+          cmp filled "$parity/$f" || { echo "FAIL: filled template $f differs from the scheme dir"; exit 1; }
+        done
+        # The base16-slot TUI surfaces in a scheme dir are byte-identical to what
+        # `marchyo theme generate` writes for the same slots (the fixture).
+        ${lib.concatMapStrings
+          (f: ''
+            cmp ${pkgs.writeText "expected-${f}" parityExpected.${f}} "$parity/${f}" \
+              || { echo "FAIL: scheme dir ${f} differs from the parity fixture"; exit 1; }
+          '')
+          [
+            "k9s-skin.yaml"
+            "lazygit.yml"
+            "spotify-player-theme.toml"
+            "gdu.yaml"
+          ]
+        }
+        # The jylhis include must name BOTH themes as a ghostty light/dark pair
+        # (identical in both dirs): ghostty resolves it from the system
+        # color-scheme, so the dconf write in `marchyo theme set` restyles open
+        # windows instead of only new ones.
+        for d in ${darkDir} ${lightDir}; do
+          grep -q 'theme = dark:jylhis-dark,light:jylhis-light' "$d/ghostty.conf" \
+            || { echo "FAIL: $d/ghostty.conf is not the theme pair"; exit 1; }
+        done
+        grep -q '"name":"jylhis-dark"' ${darkDir}/colors.json \
+          || { echo "FAIL: dark colors.json name"; exit 1; }
+        grep -q '"variant":"dark"' ${darkDir}/colors.json \
+          || { echo "FAIL: dark colors.json variant"; exit 1; }
+        grep -q '"bg":"#0b0b0b"' ${darkDir}/colors.json \
+          || { echo "FAIL: dark colors.json bg hex"; exit 1; }
+        grep -q '"name":"jylhis-light"' ${lightDir}/colors.json \
+          || { echo "FAIL: light colors.json name"; exit 1; }
+        grep -q '"bg":"#f4efe4"' ${lightDir}/colors.json \
+          || { echo "FAIL: light colors.json bg hex"; exit 1; }
+        grep -q '#0b0b0b' ${darkDir}/gtk.css \
+          || { echo "FAIL: dark gtk.css not dark-polarity"; exit 1; }
+        grep -q '#f4efe4' ${lightDir}/gtk.css \
+          || { echo "FAIL: light gtk.css not light-polarity"; exit 1; }
+        # The dark gtk.css derives shade_color from the text token as a decimal
+        # rgba; the light copy must translate it (not keep the dark literal).
+        grep -q 'rgba(34, 32, 28, 0.08)' ${lightDir}/gtk.css \
+          || { echo "FAIL: light gtk.css shade_color not translated"; exit 1; }
+        touch "$out"
+      '';
 }

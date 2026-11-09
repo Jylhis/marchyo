@@ -57,8 +57,8 @@ Enable the desktop and you get a complete, themed environment:
   dark or light variant you can switch at runtime.
 - **The `marchyo` CLI** — one command that drives the whole desktop: toggles,
   theme switching, capture, menus, and system management.
-- **More than one machine** — the same configuration builds a NixOS workstation, a
-  nix-darwin Mac, or a nix-on-droid Android terminal.
+- **More than one machine** — the same configuration builds a NixOS workstation or a
+  nix-on-droid Android terminal.
 
 ## Who it's for
 

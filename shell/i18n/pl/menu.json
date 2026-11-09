@@ -1,0 +1,22 @@
+{
+  "menu.network": "Sieć",
+  "menu.speedTest": "Test prędkości",
+  "menu.lock": "Zablokuj",
+  "menu.suspend": "Uśpij",
+  "menu.hibernate": "Hibernacja",
+  "menu.reboot": "Restart",
+  "menu.shutdown": "Wyłącz",
+  "menu.style": "Styl",
+  "menu.theme": "Motyw",
+  "menu.background": "Tło",
+  "menu.font": "Czcionka",
+  "menu.setup": "Ustawienia",
+  "menu.audio": "Dźwięk",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Akcje",
+  "menu.appearance": "Wygląd",
+  "menu.system": "System",
+  "menu.learn": "Nauka",
+  "menu.screenshot": "Zrzut ekranu",
+  "menu.share": "Udostępnij"
+}

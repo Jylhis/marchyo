@@ -11,27 +11,31 @@ let
   cfg = (osConfig.marchyo or { }).webapps or { };
   enabled = desktopEnabled && (cfg.enable or false);
 
-  apps = (cfg.apps or [ ]) ++ (cfg.extraApps or [ ]);
-
-  # Resolve the chromium-family command used for --app mode. Prefer an explicit
-  # marchyo.webapps.browser, else follow marchyo.defaults.browser when it is
-  # chromium-based, else fall back to chromium (and pull it into the profile).
-  chromiumFamily = {
-    brave = "brave";
-    google-chrome = "google-chrome";
-    chromium = "chromium";
+  presetOn = name: ((cfg.presets or { }).${name} or { }).enable or false;
+  webappPresets = import ../../lib/webapp-presets.nix;
+  notionNative =
+    presetOn "notion" && pkgs.config.allowUnfree && pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  emailChoice = ((osConfig.marchyo or { }).defaults or { }).email or null;
+  emailAppName = {
+    gmail = "Gmail";
+    outlook = "Outlook";
   };
-  explicit = cfg.browser or null;
-  defaultBrowser = ((osConfig.marchyo or { }).defaults or { }).browser or null;
-  resolved =
-    if explicit != null then
-      chromiumFamily.${explicit}
-    else if defaultBrowser != null && chromiumFamily ? ${defaultBrowser} then
-      chromiumFamily.${defaultBrowser}
-    else
-      null;
-  browserCmd = if resolved != null then resolved else "chromium";
-  needsChromium = resolved == null;
+  emailApp = lib.optionals (emailChoice != null && emailAppName ? ${emailChoice}) (
+    lib.filter (a: a.name == emailAppName.${emailChoice}) (webappPresets.google ++ webappPresets.m365)
+  );
+  presetApps =
+    lib.optionals (presetOn "m365") webappPresets.m365
+    ++ lib.optionals (presetOn "google") webappPresets.google
+    ++ lib.optional (presetOn "notion" && !notionNative) webappPresets.notion
+    ++ emailApp;
+
+  # Presets go last: listToAttrs keeps the first entry per name, so an app the
+  # user already lists (the default Gmail, say) wins over the preset copy.
+  apps = (cfg.apps or [ ]) ++ (cfg.extraApps or [ ]) ++ presetApps;
+
+  webappBrowser = import ../../lib/webapp-browser.nix { inherit osConfig; };
+  browserCmd = webappBrowser.command;
+  inherit (webappBrowser) needsChromium;
 
   slug = name: lib.toLower (builtins.replaceStrings [ " " "/" ] [ "-" "-" ] name);
 
@@ -49,18 +53,23 @@ let
     };
   };
 
-  # Hyprland launch binds for apps that declare a key (omarchy-style). Reuses
-  # the same resolved browser command as the .desktop entries.
+  # Launch binds (lib/keybinds.nix) for apps that declare a key. Reuses the
+  # same resolved browser command as the .desktop entries.
   keyedApps = builtins.filter (app: (app.key or null) != null) apps;
   # `modifiers` keeps its "SUPER SHIFT" form in the option; luaKeys turns it
   # into the "SUPER + SHIFT + A" the Lua renderer wants.
-  mkBind = app: hlua.bindd (hlua.luaKeys app.modifiers app.key) app.name (hlua.exec (appExec app));
+  mkBind = app: {
+    combo = hlua.luaKeys app.modifiers app.key;
+    inherit (app) name;
+    command = appExec app;
+  };
 in
 {
   config = lib.mkIf enabled {
     xdg.desktopEntries = builtins.listToAttrs (map mkEntry apps);
-    home.packages = lib.optional needsChromium pkgs.chromium;
+    home.packages =
+      lib.optional needsChromium pkgs.chromium ++ lib.optional notionNative pkgs.notion-app-enhanced;
 
-    wayland.windowManager.hyprland.settings.bind = map mkBind keyedApps;
+    marchyo.keybinds.webapps = map mkBind keyedApps;
   };
 }

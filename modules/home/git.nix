@@ -19,6 +19,11 @@ let
 in
 {
   programs = lib.mkIf userConfig.enable {
+    mergiraf = {
+      enable = lib.mkDefault true;
+      enableGitIntegration = lib.mkDefault true;
+      enableJujutsuIntegration = lib.mkDefault true;
+    };
     delta = {
       enable = lib.mkDefault true;
       enableGitIntegration = lib.mkDefault true;
@@ -85,7 +90,7 @@ in
         };
         rerere = {
           enabled = lib.mkDefault true;
-          autoupdate = lib.mkDefault true;
+          autoupdate = lib.mkDefault false;
         };
         tag = {
           sort = lib.mkDefault "version:refname";

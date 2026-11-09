@@ -18,7 +18,7 @@ in
       # would re-expose a root daemon socket, defeating the rootless backend.
       podman = lib.mkIf (backend == "podman") {
         enable = lib.mkDefault true;
-        defaultNetwork.settings.dns_enable = lib.mkDefault true;
+        defaultNetwork.settings.dns_enabled = lib.mkDefault true;
         dockerCompat = true;
       };
 
@@ -36,8 +36,7 @@ in
       ]
       ++ (lib.optionals (backend == "podman") [
         pkgs.podman-tui
-      ])
-      ++ (lib.optionals (backend == "docker") [ pkgs.lazydocker ]);
+      ]);
 
     # The Docker daemon runs as root and its socket is root-owned, so the
     # `docker` group is root-equivalent (a group member can mount and write the

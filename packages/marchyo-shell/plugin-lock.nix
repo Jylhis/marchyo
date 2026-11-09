@@ -5,13 +5,16 @@
 # share/marchyo/shell/plugins.lock.json; `marchyo plugin list` reads it.
 #
 # Also the one place that checks the plugin set as a whole: plugin ids and
-# launcher prefixes must be unique across the shell.
+# launcher prefixes must be unique across the shell, and so must each replaced
+# native role. A plugin's sibling
+# manifests are separate entries (`parent` names the plugin that carries them).
 { lib }:
 plugins:
 let
-  meta = map (p: p.marchyoPlugin) plugins;
-  ids = map (m: m.id) meta;
-  prefixes = lib.filter (x: x != null) (map (m: m.prefix or null) meta);
+  entries = import ./plugin-entries.nix { inherit lib; } plugins;
+  ids = map (e: e.id) entries;
+  prefixes = lib.filter (x: x != null) (map (e: e.prefix) entries);
+  roles = lib.concatMap (e: e.replaces) entries;
   dups = xs: lib.unique (lib.filter (x: lib.count (y: y == x) xs > 1) xs);
 in
 assert lib.assertMsg (
@@ -19,18 +22,24 @@ assert lib.assertMsg (
 ) "marchyo shell plugins: duplicate plugin id(s) ${lib.concatStringsSep ", " (dups ids)}";
 assert lib.assertMsg (dups prefixes == [ ])
   "marchyo shell plugins: duplicate launcher prefix(es) ${lib.concatStringsSep ", " (dups prefixes)}";
+assert lib.assertMsg (dups roles == [ ])
+  "marchyo shell plugins: native role(s) ${lib.concatStringsSep ", " (dups roles)} replaced by more than one plugin";
 {
   lockVersion = 1;
-  plugins = map (p: {
-    inherit (p.marchyoPlugin)
+  plugins = map (e: {
+    inherit (e)
       id
       name
       version
       kinds
       entryPoints
+      prefix
+      storePath
+      source
+      keepLoaded
+      replaces
+      barWidget
+      parent
       ;
-    prefix = p.marchyoPlugin.prefix or null;
-    storePath = "${p}";
-    source = p.marchyoPlugin.source or null;
-  }) plugins;
+  }) entries;
 }

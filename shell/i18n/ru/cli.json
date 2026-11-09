@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Вы вошли в %1.",
+  "launch.notFoundInPath": "%1 не найден в PATH",
+  "utilities.reminder": "Напоминание",
+  "utilities.battery": "Батарея %1%",
+  "utilities.battery2": "Батарея",
+  "utilities.transcode": "Перекодировать",
+  "utilities.share": "Поделиться",
+  "toggles.enabled": "Включено",
+  "toggles.suspend": "Сон"
+}

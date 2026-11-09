@@ -1,0 +1,22 @@
+{
+  "menu.network": "网络",
+  "menu.speedTest": "测速",
+  "menu.lock": "锁定",
+  "menu.suspend": "挂起",
+  "menu.hibernate": "休眠",
+  "menu.reboot": "重启",
+  "menu.shutdown": "关机",
+  "menu.style": "样式",
+  "menu.theme": "主题",
+  "menu.background": "背景",
+  "menu.font": "字体",
+  "menu.setup": "设置",
+  "menu.audio": "音频",
+  "menu.bluetooth": "蓝牙",
+  "menu.trigger": "触发",
+  "menu.appearance": "外观",
+  "menu.system": "系统",
+  "menu.learn": "学习",
+  "menu.screenshot": "截图",
+  "menu.share": "分享"
+}

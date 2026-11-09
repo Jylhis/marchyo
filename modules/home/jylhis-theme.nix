@@ -24,6 +24,8 @@ let
     scale = cfg.fontScale or 1.25;
   };
 
+  inherit (inputs.jylhis-design.lib) fonts;
+
   # Per-polarity GTK stylesheet: the committed snapshot carries the active
   # polarity's @define-colors at top level, so no filtering or hex swap is needed.
   gtkCss = builtins.readFile "${inputs.jylhis-design}/platforms/gtk/jylhis-${mode}.css";
@@ -42,7 +44,7 @@ in
           bat.enable = false;
           mako.enable = false;
           gtk.enable = false;
-          # ghostty themes are installed cross-platform (darwin included) by
+          # ghostty themes are installed by
           # modules/home/ghostty.nix from the same upstream theme files.
           ghostty.enable = false;
           starship.enable = false;
@@ -71,12 +73,12 @@ in
         # (plus the GTK settings.ini); the two dconf keys HM has no options
         # for are written directly.
         gtk.font = lib.mkDefault {
-          name = "Hanken Grotesk";
+          name = fonts.body;
           size = fs.round 12;
         };
         dconf.settings."org/gnome/desktop/interface" = {
-          document-font-name = lib.mkDefault "Zilla Slab ${toString (fs.round 12 - 1)}";
-          monospace-font-name = lib.mkDefault "BlexMono Nerd Font ${toString (fs.round 12)}";
+          document-font-name = lib.mkDefault "${fonts.body} ${toString (fs.round 12 - 1)}";
+          monospace-font-name = lib.mkDefault "${fonts.mono} ${toString (fs.round 12)}";
         };
 
         # Read as text (not readFile of a derivation) to stay IFD-free, and so

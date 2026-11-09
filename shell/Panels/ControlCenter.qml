@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import qs.Ui
 import qs.Commons
@@ -10,12 +12,14 @@ import qs.Services
 // Services/QuickToggles model. A tile click flips its toggle; a tile's chevron
 // opens the existing detail panel (audio, network, power, tailscale,
 // notifications) through PanelManager.openDetail, whose back button returns
-// here. Glyphs are code points because editing tools strip Private Use Area
-// characters from source.
+// here. An Appearance section under the tiles drives window gaps, the bar
+// position and background and reduce-motion through the marchyo CLI, and opens
+// the themes and wallpapers pickers. Glyphs are code points because editing
+// tools strip Private Use Area characters from source.
 Panel {
     id: root
     panelId: "controlcenter"
-    title: "Control Center"
+    title: I18n.t("controlcenter.title")
     cardWidth: Style.controlCenterWidth
 
     readonly property var sinkAudio: Audio.sinkAudio
@@ -23,6 +27,74 @@ Panel {
 
     function glyph(cp: int): string {
         return String.fromCodePoint(cp);
+    }
+
+    // Window gaps have no shell-side state file, so the CLI is asked each
+    // time the panel opens; the toggle then follows the user's clicks.
+    property bool gaps: false
+
+    readonly property var positionOptions: [
+        {
+            value: "top",
+            label: I18n.t("controlcenter.position.top")
+        },
+        {
+            value: "bottom",
+            label: I18n.t("controlcenter.position.bottom")
+        }
+    ]
+
+    readonly property var backgroundOptions: [
+        {
+            value: "opaque",
+            label: I18n.t("controlcenter.background.opaque")
+        },
+        {
+            value: "glassy",
+            label: I18n.t("controlcenter.background.glassy")
+        },
+        {
+            value: "clear",
+            label: I18n.t("controlcenter.background.clear")
+        }
+    ]
+
+    function setGaps(on: bool): void {
+        root.gaps = on;
+        Quickshell.execDetached([Config.marchyo, "theme", "gaps", on ? "on" : "off"]);
+    }
+
+    function setReduceMotion(on: bool): void {
+        Quickshell.execDetached([Config.marchyo, "toggle", "reduce-motion", on ? "on" : "off"]);
+    }
+
+    function setBarPosition(value: string): void {
+        Quickshell.execDetached([Config.marchyo, "theme", "bar-position", value]);
+    }
+
+    function setBarBackground(value: string): void {
+        Quickshell.execDetached([Config.marchyo, "theme", "bar-background", value]);
+    }
+
+    onVisibleChanged: {
+        if (root.visible) {
+            gapsProc.running = false;
+            gapsProc.running = true;
+        }
+    }
+
+    readonly property var gapsProc: Process {
+        id: gapsProc
+        command: [Config.marchyo, "toggle", "gaps", "--status", "--format", "json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.gaps = JSON.parse(text).toggle.on === true;
+                } catch (e) {
+                    root.gaps = false;
+                }
+            }
+        }
     }
 
     function pct(a): string {
@@ -64,7 +136,7 @@ Panel {
             Layout.preferredWidth: Style.panelRowHeight * 1.5
             horizontalAlignment: Text.AlignRight
             text: root.pct(row.level)
-            color: row.muted ? Color.textFaint : Color.text
+            color: row.muted ? Colors.textFaint : Colors.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
         }
@@ -97,7 +169,7 @@ Panel {
             Layout.fillWidth: true
             Layout.preferredHeight: 3
             visible: root.sourceAudio !== null && !root.sourceAudio.muted
-            color: Color.surface
+            color: Colors.surface
 
             PwNodePeakMonitor {
                 id: micPeak
@@ -108,7 +180,7 @@ Panel {
             Rectangle {
                 width: micMeter.width * Math.max(0, Math.min(1, micPeak.peak))
                 height: micMeter.height
-                color: Color.accent
+                color: Colors.accent
             }
         },
         GridLayout {
@@ -121,7 +193,7 @@ Panel {
             Repeater {
                 model: QuickToggles.all
 
-                Rectangle {
+                ControlSurface {
                     id: tile
                     required property var modelData
                     readonly property bool on: tile.modelData.active
@@ -131,10 +203,22 @@ Panel {
                     // Equal preferred widths split the two columns evenly.
                     Layout.preferredWidth: 1
                     Layout.preferredHeight: Style.tileHeight
-                    radius: Style.panelRadius
-                    color: tile.on ? Color.accentSubtle : (tileMouse.containsMouse ? Color.surfaceRaised : Color.bgSubtle)
-                    border.color: tile.on ? Color.accent : Color.border
-                    border.width: Style.borderWidth
+                    selected: tile.on
+                    hot: tileMouse.containsMouse
+                    focused: tile.activeFocus
+                    activeFocusOnTab: true
+
+                    // Enter and Space flip the toggle; Right opens the detail page.
+                    Keys.onPressed: e => {
+                        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter || e.key === Qt.Key_Space) {
+                            tile.modelData.toggle();
+                        } else if (e.key === Qt.Key_Right && tile.modelData.detail !== "") {
+                            PanelManager.openDetail(tile.modelData.detail, root.panelId);
+                        } else {
+                            return;
+                        }
+                        e.accepted = true;
+                    }
 
                     // Whole-tile click flips the toggle. Declared before the
                     // content so the chevron's own MouseArea sits above it.
@@ -154,7 +238,7 @@ Panel {
 
                         Text {
                             text: tile.modelData.icon
-                            color: tile.on ? Color.accent : Color.textMuted
+                            color: tile.on ? Colors.accent : Colors.textMuted
                             font.family: Style.fontFamily
                             font.pixelSize: Style.fontSize + 4
                         }
@@ -166,7 +250,7 @@ Panel {
                             Text {
                                 Layout.fillWidth: true
                                 text: tile.modelData.label
-                                color: Color.text
+                                color: Colors.text
                                 font.family: Style.fontFamily
                                 font.pixelSize: Style.fontSizeSmall
                                 font.bold: true
@@ -175,7 +259,7 @@ Panel {
                             Text {
                                 Layout.fillWidth: true
                                 text: tile.modelData.status
-                                color: Color.textMuted
+                                color: Colors.textMuted
                                 font.family: Style.fontFamily
                                 font.pixelSize: Style.fontSizeSmall
                                 elide: Text.ElideRight
@@ -190,7 +274,7 @@ Panel {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             text: "›"
-                            color: chevronMouse.containsMouse ? Color.accent : Color.textMuted
+                            color: chevronMouse.containsMouse ? Colors.accent : Colors.textMuted
                             font.family: Style.fontFamily
                             font.pixelSize: Style.fontSize + 4
 
@@ -204,6 +288,75 @@ Panel {
                         }
                     }
                 }
+            }
+        },
+        PanelSeparator {},
+        PanelSectionHeader {
+            text: I18n.t("controlcenter.appearance")
+        },
+        Toggle {
+            Layout.fillWidth: true
+            label: I18n.t("controlcenter.gaps")
+            checked: root.gaps
+            onToggled: value => root.setGaps(value)
+        },
+        Text {
+            text: I18n.t("controlcenter.barPosition")
+            color: Colors.textMuted
+            font.family: Style.fontFamily
+            font.pixelSize: Style.fontSizeSmall
+        },
+        ButtonGroup {
+            id: positionGroup
+            Layout.fillWidth: true
+            options: root.positionOptions
+            onChanged: v => root.setBarPosition(v)
+
+            Binding {
+                target: positionGroup
+                property: "value"
+                value: Style.barPosition
+                restoreMode: Binding.RestoreNone
+            }
+        },
+        Text {
+            text: I18n.t("controlcenter.barBackground")
+            color: Colors.textMuted
+            font.family: Style.fontFamily
+            font.pixelSize: Style.fontSizeSmall
+        },
+        ButtonGroup {
+            id: backgroundGroup
+            Layout.fillWidth: true
+            options: root.backgroundOptions
+            onChanged: v => root.setBarBackground(v)
+
+            Binding {
+                target: backgroundGroup
+                property: "value"
+                value: Style.barBackground
+                restoreMode: Binding.RestoreNone
+            }
+        },
+        Toggle {
+            Layout.fillWidth: true
+            label: I18n.t("controlcenter.reduceMotion")
+            checked: RuntimeStyle.reduceMotion || Style.reduceMotion
+            onToggled: value => root.setReduceMotion(value)
+        },
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.spacing
+
+            Button {
+                Layout.fillWidth: true
+                text: I18n.t("controlcenter.themes")
+                onClicked: PanelManager.openDetail("themes", root.panelId)
+            }
+            Button {
+                Layout.fillWidth: true
+                text: I18n.t("controlcenter.wallpapers")
+                onClicked: PanelManager.openDetail("backgrounds", root.panelId)
             }
         }
     ]

@@ -1,0 +1,22 @@
+{
+  "menu.network": "Võrk",
+  "menu.speedTest": "Kiirustest",
+  "menu.lock": "Lukusta",
+  "menu.suspend": "Uinak",
+  "menu.hibernate": "Talveuni",
+  "menu.reboot": "Taaskäivita",
+  "menu.shutdown": "Lülita välja",
+  "menu.style": "Stiil",
+  "menu.theme": "Teema",
+  "menu.background": "Taust",
+  "menu.font": "Kirjatüüp",
+  "menu.setup": "Seaded",
+  "menu.audio": "Heli",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Käivita",
+  "menu.appearance": "Välimus",
+  "menu.system": "Süsteem",
+  "menu.learn": "Õpi",
+  "menu.screenshot": "Ekraanitõmmis",
+  "menu.share": "Jaga"
+}

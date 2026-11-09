@@ -1,6 +1,7 @@
 import QtQuick
 import qs.Commons
 import qs.Services
+import "../Commons/Appearance.js" as Appearance
 
 // A single bar segment: text label with optional hover feedback, click/scroll
 // signals, and a hover tooltip (via the shared Services/Tooltip singleton).
@@ -18,7 +19,9 @@ Rectangle {
     visible: root.shown
 
     property alias text: label.text
-    property color textColor: Color.text
+    // The heading ink once the bar body is see-through, so a label stays
+    // readable over a wallpaper (Appearance.barTextRole).
+    property color textColor: Appearance.barTextRole(Style.barAlpha) === "textHeading" ? Colors.textHeading : Colors.text
     // Hover highlight + pointer cursor; leave false for passive readouts.
     property bool interactive: false
     // Glyph-only widgets take half padding so single icons don't render as
@@ -36,6 +39,7 @@ Rectangle {
 
     signal clicked
     signal rightClicked
+    signal middleClicked
     // Mouse-wheel delta (QWheelEvent.angleDelta.y): > 0 up, < 0 down.
     signal wheel(int delta)
 
@@ -51,13 +55,64 @@ Rectangle {
         return null;
     }
     readonly property var segmentedBar: root.segmentedSection(root.parent)
-    // Hover highlight: Color.surface on the flat bar; on the segmented bar the
+    // Hover highlight: Colors.surface on the flat bar; on the segmented bar the
     // section's hover colour, which differs from both segment tones.
-    readonly property color hoverColor: root.segmentedBar ? root.segmentedBar.segmentHover : Color.surface
+    readonly property color hoverColor: root.segmentedBar ? root.segmentedBar.segmentHover : Colors.surface
 
-    implicitWidth: Math.max(label.implicitWidth, root.reserveText.length > 0 ? reserve.advanceWidth : 0) + root.padH * 2
+    implicitWidth: {
+        if (root.compact && Array.from(root.text).length === 1 && root.reserveText.length === 0)
+            return Style.fontSize + 10;
+        const reservedWidth = root.reserveText.length > 0 ? reserve.advanceWidth : 0;
+        const textWidth = Math.max(label.implicitWidth, reservedWidth);
+        return Math.max(root.compact ? Style.fontSize + 10 : 0, textWidth + root.padH * 2);
+    }
     implicitHeight: Style.barHeight
-    color: (root.interactive && mouse.containsMouse) ? root.hoverColor : "transparent"
+    readonly property bool hovered: root.interactive && mouse.containsMouse
+    readonly property bool tooltipHovered: mouse.containsMouse
+    color: root.hovered ? root.hoverColor : "transparent"
+    // Hover draws the control-state hairline; keyboard focus (Tab, then
+    // Return or Space to activate) draws the 2 px focus ring.
+    border.width: root.hovered ? Style.borderWidth : 0
+    border.color: Style.control("hover").border
+    radius: Style.space("2xs")
+    activeFocusOnTab: root.interactive
+    Keys.onReturnPressed: root.clicked()
+    Keys.onSpacePressed: root.clicked()
+
+    onVisibleChanged: {
+        if (!visible) {
+            hoverDelay.stop();
+            Tooltip.hide(root);
+        }
+    }
+    onShownChanged: {
+        if (!shown) {
+            hoverDelay.stop();
+            Tooltip.hide(root);
+        }
+    }
+    Component.onDestruction: Tooltip.hide(root)
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Style.duration(160)
+        }
+    }
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Style.duration(140)
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: root.activeFocus
+        color: "transparent"
+        radius: root.radius
+        border.width: Style.borderFocus
+        border.color: Style.control("focus").border
+    }
 
     TextMetrics {
         id: reserve
@@ -75,6 +130,18 @@ Rectangle {
         color: root.textColor
         font.family: Style.fontFamily
         font.pixelSize: Style.fontSize
+        scale: root.interactive && mouse.pressed ? 0.9 : 1
+        Behavior on scale {
+            NumberAnimation {
+                duration: Style.duration(160)
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on color {
+            ColorAnimation {
+                duration: Style.duration(160)
+            }
+        }
     }
 
     MouseArea {
@@ -82,25 +149,37 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onClicked: e => {
+            hoverDelay.stop();
             Tooltip.hide();
-            e.button === Qt.RightButton ? root.rightClicked() : root.clicked();
+            if (e.button === Qt.MiddleButton)
+                root.middleClicked();
+            else if (e.button === Qt.RightButton)
+                root.rightClicked();
+            else
+                root.clicked();
         }
         onWheel: e => root.wheel(e.angleDelta.y)
         onContainsMouseChanged: {
-            if (containsMouse && root.tooltipText.length > 0)
-                hoverDelay.restart();
-            else
+            if (containsMouse && root.tooltipText.length > 0) {
+                if (Tooltip.warm)
+                    Tooltip.show(root.tooltipText, root);
+                else
+                    hoverDelay.restart();
+            } else
                 hoverDelay.stop();
             if (!containsMouse)
-                Tooltip.hide();
+                Tooltip.hide(root);
         }
     }
 
     Timer {
         id: hoverDelay
         interval: 350
-        onTriggered: Tooltip.show(root.tooltipText, root)
+        onTriggered: {
+            if (root.visible && mouse.containsMouse)
+                Tooltip.show(root.tooltipText, root);
+        }
     }
 }

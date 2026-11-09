@@ -33,21 +33,48 @@ When `vendors` is empty (default), Intel packages are applied on x86_64 for back
 
 ## NVIDIA options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.graphics.nvidia.open` | `bool` | `true` | Use open-source kernel modules (recommended for RTX 20xx+, required for RTX 50xx) |
-| `marchyo.graphics.nvidia.powerManagement` | `bool` | `false` | Experimental power management (may improve laptop battery life) |
+- `marchyo.graphics.nvidia.generation` (`"turing-or-newer"` or `"pre-turing"`, default `"turing-or-newer"`): the GPU generation. Turing is RTX 20xx and GTX 16xx. Pre-Turing is Maxwell, Pascal and Volta.
+- `marchyo.graphics.nvidia.package` (`"stable"`, `"beta"`, `"production"` or `"legacy_580"`): the driver branch from `boot.kernelPackages.nvidiaPackages`. The default is `"stable"`, or `"legacy_580"` for pre-Turing GPUs.
+- `marchyo.graphics.nvidia.open` (bool): use the open kernel modules. The default is `true` for Turing or newer and `false` for pre-Turing. RTX 50xx requires them.
+- `marchyo.graphics.nvidia.powerManagement` (bool, default `false`): experimental power management (may improve laptop battery life).
+- `marchyo.graphics.nvidia.containerToolkit.enable` (bool): enable `hardware.nvidia-container-toolkit`, so containers get the GPU through CDI (`podman run --device nvidia.com/gpu=all ...`). The default is `true` when `"nvidia"` is in `vendors` and `marchyo.development.enable` is set.
 
 ```nix
 marchyo.graphics.nvidia = {
-  open = true;
+  generation = "turing-or-newer";
+  package = "stable";
   powerManagement = false;
 };
 ```
 
 :::caution
-Set `nvidia.open = false` for older GPUs (Maxwell, Pascal, Volta). The open-source modules only support Turing (RTX 20xx) and newer.
+`nvidia.open = true` with `generation = "pre-turing"` fails evaluation. The open modules support only Turing and newer.
 :::
+
+### NVIDIA environment variables
+
+- `NVD_BACKEND` is `direct` on Turing or newer and `egl` on pre-Turing.
+- `__GLX_VENDOR_LIBRARY_NAME=nvidia` and `GBM_BACKEND=nvidia-drm` are set only when NVIDIA drives the display: NVIDIA is the only GPU, or PRIME runs in `sync` mode.
+- `LIBVA_DRIVER_NAME=nvidia` is set under the same condition, and only on Turing or newer.
+
+In PRIME `offload` and `reverse-sync` modes the integrated GPU drives the display, so these variables stay unset. Forcing them there breaks video in Chromium-based browsers.
+
+## AMD options
+
+- `marchyo.graphics.amd.vaapi.enable` (bool, default `true`): Mesa radeonsi VA-API and VDPAU, plus `vainfo`. `LIBVA_DRIVER_NAME=radeonsi` and `VDPAU_DRIVER=radeonsi` are set only when AMD is the primary GPU (no Intel iGPU, and NVIDIA does not drive the display).
+- `marchyo.graphics.amd.overdrive.enable` (bool, default `false`): set `hardware.amdgpu.overdrive.enable` for overclocking and undervolting tools such as LACT or CoreCtrl.
+- `marchyo.graphics.amd.rocm.enable` (bool, default `false`): the ROCm compute stack. It installs the HIP runtime (`rocmPackages.clr`), links it to `/opt/rocm/hip`, and adds Marchyo users to the `render` and `video` groups. It requires `"amd"` in `vendors`.
+- `marchyo.graphics.amd.rocm.hsaOverrideGfxVersion` (string or null, default `null`): the value of `HSA_OVERRIDE_GFX_VERSION`, for GPUs that ROCm does not officially support (for example `"10.3.0"` for RDNA2 or `"11.0.0"` for RDNA3).
+
+```nix
+marchyo.graphics = {
+  vendors = [ "amd" ];
+  amd.rocm = {
+    enable = true;
+    hsaOverrideGfxVersion = "11.0.0";
+  };
+};
+```
 
 ## NVIDIA PRIME (hybrid graphics)
 
@@ -97,6 +124,18 @@ message if any of these are not met:
 - `prime.nvidiaBusId` must be set
 - `prime.intelBusId` must be set when `"intel"` is in `vendors`
 - `prime.amdgpuBusId` must be set when `"amd"` is the iGPU (i.e. `"amd"` in `vendors` without `"intel"`)
+
+### Integrated-only boot entry
+
+On a hybrid laptop, set `prime.integratedOnlySpecialisation = true` to add an `integrated-only` boot specialisation:
+
+```nix
+marchyo.graphics.prime.integratedOnlySpecialisation = true;
+```
+
+The specialisation turns off PRIME, blacklists the `nvidia`, `nvidia_modeset`, `nvidia_uvm`, `nvidia_drm` and `nouveau` kernel modules, and removes the NVIDIA environment variables and the container toolkit. Use it to save battery when you do not need the discrete GPU.
+
+Select the `integrated-only` entry in the systemd-boot menu. When the menu is hidden (`boot.loader.timeout = 0`), hold Space while the machine boots to show it. The option requires `prime.enable`.
 
 ## Examples
 

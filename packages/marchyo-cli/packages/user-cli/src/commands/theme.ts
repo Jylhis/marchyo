@@ -1,17 +1,20 @@
-import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { readdirSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, dirname, extname, isAbsolute, join, resolve } from "node:path";
 import {
   type ChangeContext,
   type ChangeSpec,
   type Runtime,
   type State,
   type ThemeManifestEntry,
+  type OverrideValue,
   COLOR_SCHEME_KEY,
+  TEMPLATE_SURFACE_FILES,
   THEME_ALIASES,
   applyChange,
   awwwImgArgv,
   captureArgv,
+  clearOverride,
   colorSchemeGvariant,
   currentThemePointerPath,
   data,
@@ -20,6 +23,7 @@ import {
   err,
   GENERATED_BAT_THEME,
   ThemePalette,
+  appSurfaceTexts,
   batCacheBuildArgv,
   batConfigDirArgv,
   batConfigWithTheme,
@@ -27,11 +31,12 @@ import {
   fillTemplate,
   fzfOptsFor,
   ghosttyConfFromBase16,
-  hint,
   hyprctlEvalArgv,
   hyprlandAvailable,
   hyprlandConfFor,
   hyprlockColorsFor,
+  loadRuntimeState,
+  runtimeStatePath,
   gduText,
   k9sSkinText,
   lazygitText,
@@ -60,13 +65,12 @@ import {
   themeAtPointer,
   usageError,
   warn,
+  tr,
 } from "@marchyo/core";
 import type { Variant } from "@marchyo/core";
 import { writeGreeterTheme } from "@marchyo/core";
 import { mkdir, rename, rm, symlink, writeFile } from "node:fs/promises";
-
-// Actuation helpers mirroring modules/home/theme-runtime.nix: same commands,
-// same || true tolerance.
+import { activateAppSurfaces } from "./theme-surfaces.ts";
 
 async function safeExec(
   ctx: ChangeContext,
@@ -131,15 +135,36 @@ export function hyprlandConfigLua(
 }
 
 // Apply a theme dir's assets live. The reload vocabulary deliberately
-// matches theme-runtime.nix's shell script: awww for wallpaper, mako via symlink +
-// makoctl reload, waybar via symlink + user-unit try-restart, Hyprland via
-// `hyprctl eval hl.config(...)` (never `hyprctl keyword`, a no-op under
-// non-legacy parsers, nor `hyprctl reload`, which re-reads the build-time
-// config), low-urgency notify.
+async function updateDesktopPreference(
+  ctx: ChangeContext,
+  entry: Pick<ThemeManifestEntry, "name" | "variant">,
+): Promise<void> {
+  try {
+    const code = await ctx.exec(
+      dconfWriteArgv(COLOR_SCHEME_KEY, colorSchemeGvariant(entry.variant)),
+    );
+    if (code !== 0) throw new Error(`dconf exited ${code}`);
+  } catch (cause) {
+    throw new Error(
+      `Cannot set the desktop preference for '${entry.name}'; check dconf and the user D-Bus session`,
+      { cause },
+    );
+  }
+}
+
 export async function activateThemeDir(
   ctx: ChangeContext,
   entry: ThemeManifestEntry,
 ): Promise<void> {
+  if (existsSync(join(entry.dir, "gtk.css"))) await updateDesktopPreference(ctx, entry);
+  await activateThemeSurfaces(ctx, entry);
+}
+
+async function activateThemeSurfaces(
+  ctx: ChangeContext,
+  entry: ThemeManifestEntry,
+): Promise<void> {
+  const gtk = join(entry.dir, "gtk.css");
   await pointCurrentTheme(entry.dir);
   // The greeter follows the session theme (best-effort, skips silently).
   await writeGreeterTheme(entry.dir);
@@ -167,20 +192,9 @@ export async function activateThemeDir(
     }
   }
 
-  // GTK: relink the user css for both major versions (HM-managed symlinks
-  // until the next activation restores them) and flip the dconf color-scheme
-  // so libadwaita apps restyle live. Newly launched GTK apps read the
-  // swapped css; running GTK3 apps keep their cached style context. Gated
-  // on the theme carrying GTK assets, so headless hosts and test fixtures
-  // never touch a real dconf session.
-  const gtk = join(entry.dir, "gtk.css");
   if (existsSync(gtk)) {
     await relinkConfig(gtk, join(configHome(), "gtk-3.0", "gtk.css"));
     await relinkConfig(gtk, join(configHome(), "gtk-4.0", "gtk.css"));
-    await safeExec(
-      ctx,
-      dconfWriteArgv(COLOR_SCHEME_KEY, colorSchemeGvariant(entry.variant)),
-    );
   }
 
   // bat: relink the per-theme config (a `--theme=<name>` line swap, see
@@ -216,18 +230,46 @@ export async function activateThemeDir(
   const consoleTable = join(entry.dir, "console.txt");
   if (existsSync(consoleTable)) await safeExec(ctx, setvtrgbArgv(consoleTable));
 
-  await safeExec(
-    ctx,
-    notifySendArgv("Theme", `Switched to ${entry.name}`),
+  // VS Code, Obsidian, Slack, tmux and fcitx5 (see theme-surfaces.ts).
+  await activateAppSurfaces(
+    (argv) => safeExec(ctx, argv),
+    configHome(),
+    entry.dir,
+    entry.variant,
+  );
+
+  await safeExec(ctx, notifySendArgv("Theme", `Switched to ${entry.name}`));
+}
+
+async function declarativeTheme(): Promise<ThemeManifestEntry | null> {
+  const manifest = await readThemeManifestFile();
+  return (
+    manifest.defaultTheme ??
+    themeAtPointer(manifest.themes, declarativePointerPath()) ??
+    manifest.themes[0] ??
+    null
   );
 }
 
-// The declarative default (what activation resets to): the HM profile's
-// home-files copy of the pointer, matched against the manifest.
-function declarativeTheme(
-  manifest: ThemeManifestEntry[],
-): ThemeManifestEntry | null {
-  return themeAtPointer(manifest, declarativePointerPath());
+export async function restoreEffectiveTheme(
+  ctx: ChangeContext,
+  overrides: Record<string, OverrideValue>,
+): Promise<boolean> {
+  const selection = overrides["theme.selection"];
+  const generated = overrides["theme.generate"];
+  if (selection !== undefined && generated !== undefined) {
+    throw new Error("Conflicting theme.selection and theme.generate overrides");
+  }
+  if (selection !== undefined) {
+    await themeChangeBase.runtimeApply({ ...ctx, value: selection });
+  } else if (generated !== undefined) {
+    await generateThemeChangeBase.runtimeApply({ ...ctx, value: generated });
+  } else {
+    const entry = await declarativeTheme();
+    if (!entry) return false;
+    await activateThemeDir(ctx, entry);
+  }
+  return true;
 }
 
 // ChangeSpec — registered in changes.ts so `runtime restore` replays theme
@@ -243,11 +285,12 @@ export const themeChangeBase: ChangeSpec = {
     const entry = manifest.find((t) => t.name === name);
     if (!entry) throw new Error(`theme '${name}' not in the manifest`);
     await activateThemeDir(ctx, entry);
+    // A catalog theme replaces a generated one; only the live one is replayed.
+    await clearOverride("theme.generate");
     return name;
   },
   runtimeRevert: async (ctx) => {
-    const manifest = await readThemeManifest();
-    const entry = declarativeTheme(manifest) ?? manifest[0] ?? null;
+    const entry = await declarativeTheme();
     if (entry) await activateThemeDir(ctx, entry);
   },
 };
@@ -255,24 +298,40 @@ export const themeChangeBase: ChangeSpec = {
 function themeSpecFor(entry: ThemeManifestEntry): ChangeSpec {
   return {
     ...themeChangeBase,
-    stateWrite: (prev: State): State => ({
-      ...prev,
-      theme: entry.name.startsWith("jylhis-")
-        ? { variant: entry.variant }
-        : { variant: entry.variant, scheme: entry.name },
-    }),
+    stateWrite: (prev: State): State => {
+      const { scheme: _scheme, ...theme } = prev.theme ?? {};
+      return {
+        ...prev,
+        theme: entry.name.startsWith("jylhis-")
+          ? { ...theme, variant: entry.variant }
+          : { ...theme, variant: entry.variant, scheme: entry.name },
+      };
+    },
     stateDelete: (prev: State): State => {
+      const { variant: _variant, scheme: _scheme, ...theme } = prev.theme ?? {};
       const next = { ...prev };
-      delete next.theme;
+      if (Object.keys(theme).length > 0) next.theme = theme;
+      else delete next.theme;
       return next;
     },
   };
 }
 
+// Absolute paths of the theme dir's palette card and default wallpaper, for
+// the entries that ship them.
+function themeImages(dir: string): { preview?: string; wallpaper?: string } {
+  const images: { preview?: string; wallpaper?: string } = {};
+  const preview = join(dir, "preview.png");
+  const wallpaper = join(dir, "wallpaper.png");
+  if (existsSync(preview)) images.preview = preview;
+  if (existsSync(wallpaper)) images.wallpaper = wallpaper;
+  return images;
+}
+
 export async function runThemeList(rt: Runtime): Promise<number> {
   const manifest = await readThemeManifest(undefined, (m) => warn(rt, m));
   if (manifest.length === 0) {
-    err(rt, "no theme manifest found (is marchyo.desktop.enable set?)");
+    err(rt, tr("theme.noThemeManifestFoundIs"));
     return 1;
   }
   const current = themeAtPointer(manifest);
@@ -283,6 +342,7 @@ export async function runThemeList(rt: Runtime): Promise<number> {
         name: t.name,
         variant: t.variant,
         current: t.name === (current?.name ?? null),
+        ...themeImages(t.dir),
       })),
     },
     () =>
@@ -326,7 +386,7 @@ async function setTheme(
   opts: ThemeSetOpts,
 ): Promise<number> {
   if (opts.rebuild) {
-    warn(rt, "--rebuild is deprecated; use --apply (treated as --apply)");
+    warn(rt, tr("theme.rebuildIsDeprecatedUseApply"));
   }
   const mode = parseChangeFlags(rt, {
     apply: (opts.apply ?? false) || (opts.rebuild ?? false),
@@ -348,7 +408,7 @@ export async function runThemeSet(
     const known = manifest.map((t) => t.name).join(", ");
     return usageError(
       rt,
-      `unknown theme: "${rawName}"`,
+      tr("theme.unknownTheme", rawName),
       manifest.length > 0
         ? `marchyo theme set <${known}>`
         : "enable marchyo.desktop and rebuild to generate the theme manifest",
@@ -364,7 +424,7 @@ export async function runThemeNext(
   const manifest = await readThemeManifest(undefined, (m) => warn(rt, m));
   const entry = nextTheme(manifest, themeAtPointer(manifest));
   if (!entry) {
-    err(rt, "no themes in the manifest");
+    err(rt, tr("theme.noThemesInTheManifest"));
     return 1;
   }
   return setTheme(rt, entry, opts);
@@ -404,13 +464,13 @@ export async function runBgSet(
   if (mode !== "revert" && rawPath === "") {
     return usageError(
       rt,
-      "bg set needs an image path",
+      tr("theme.bgSetNeedsAnImage"),
       "marchyo bg set ~/pictures/wall.png   (or: marchyo bg set --revert)",
     );
   }
   const image = isAbsolute(rawPath) ? rawPath : resolve(rawPath);
   if (mode !== "revert" && !existsSync(image)) {
-    err(rt, `no such image: ${image}`);
+    err(rt, tr("theme.noSuchImage", image));
     return 1;
   }
   const code = await applyChange(rt, bgChangeBase, { mode, value: image });
@@ -434,34 +494,121 @@ async function followWallpaper(rt: Runtime, image: string): Promise<number> {
   } catch (e) {
     warn(
       rt,
-      `wallpaper set, but generating a theme from it failed: ${e instanceof Error ? e.message : String(e)}`,
+      tr("theme.wallpaperSetButGeneratingTheme", e instanceof Error ? e.message : String(e)),
     );
   }
   return 0;
 }
 
+export type Wallpaper = {
+  path: string;
+  name: string;
+  source: "theme" | "package" | "user";
+  current: boolean;
+};
+
+const IMAGE_FILE = /\.(png|jpe?g|webp)$/i;
+
+function realOrNull(p: string): string | null {
+  try {
+    return realpathSync(p);
+  } catch {
+    return null;
+  }
+}
+
+function imagesIn(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+      .filter((f) => IMAGE_FILE.test(f))
+      .sort()
+      .map((f) => join(dir, f));
+  } catch {
+    return [];
+  }
+}
+
+function wallpaperName(path: string): string {
+  const real = realOrNull(path) ?? path;
+  return basename(real, extname(real));
+}
+
+// The wallpaper in effect: the runtime `bg.image` override, else the active
+// theme's own wallpaper.
+async function currentWallpaper(themeDir: string): Promise<string | null> {
+  const state = await loadRuntimeState(runtimeStatePath());
+  const override = state.overrides["bg.image"];
+  if (typeof override === "string" && existsSync(override)) return override;
+  const own = join(themeDir, "wallpaper.png");
+  return existsSync(own) ? own : null;
+}
+
+function themePolarity(themeDir: string): "dark" | "light" | null {
+  try {
+    const v = readFileSync(join(themeDir, "variant"), "utf8").trim();
+    return v === "dark" || v === "light" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+// The wallpaper package ships `<name>-light.png` and `<name>-dark.png`; only
+// the active theme's polarity is offered. Images without a suffix always pass.
+function matchesPolarity(file: string, polarity: "dark" | "light" | null): boolean {
+  const m = /-(light|dark)\.[a-z]+$/i.exec(file);
+  return polarity === null || m === null || m[1]!.toLowerCase() === polarity;
+}
+
+// Every selectable wallpaper, deduplicated by real path in this order: the
+// active theme's own (`wallpaper.png` and `wallpapers/`), the images next to
+// the theme wallpaper's target (the wallpaper package directory, of the theme's
+// polarity), and
+// ~/Pictures/Wallpapers.
+export async function listWallpapers(): Promise<Wallpaper[]> {
+  // The resolved dir, so a recorded path stays valid after the pointer moves.
+  const pointer = currentThemePointerPath();
+  const themeDir = realOrNull(pointer) ?? pointer;
+  const current = await currentWallpaper(themeDir);
+  const currentReal = current === null ? null : realOrNull(current);
+  const seen = new Set<string>();
+  const out: Wallpaper[] = [];
+  const add = (path: string, source: Wallpaper["source"]): void => {
+    const real = realOrNull(path);
+    if (real === null || seen.has(real)) return;
+    seen.add(real);
+    out.push({ path, name: wallpaperName(path), source, current: real === currentReal });
+  };
+
+  const own = join(themeDir, "wallpaper.png");
+  if (existsSync(own)) add(own, "theme");
+  for (const f of imagesIn(join(themeDir, "wallpapers"))) add(f, "theme");
+  const ownReal = realOrNull(own);
+  const polarity = themePolarity(themeDir);
+  if (ownReal !== null) {
+    for (const f of imagesIn(dirname(ownReal))) {
+      if (matchesPolarity(f, polarity)) add(f, "package");
+    }
+  }
+  for (const f of imagesIn(join(homedir(), "Pictures", "Wallpapers"))) add(f, "user");
+  return out;
+}
+
+export async function runBgList(rt: Runtime): Promise<number> {
+  const wallpapers = await listWallpapers();
+  data(rt, wallpapers, () =>
+    wallpapers.map((w) => `${w.current ? "*" : " "} ${w.name} (${w.source}) ${w.path}`).join("\n"),
+  );
+  return 0;
+}
+
 export async function runBgNext(rt: Runtime): Promise<number> {
-  // Cycle the images shipped next to the active theme's wallpaper (the
-  // wallpaper package directory — jylhis-grid-{dark,light} by default,
-  // more if the consumer swaps in a richer package).
-  const current = join(currentThemePointerPath(), "wallpaper.png");
-  if (!existsSync(current)) {
-    err(rt, "no active theme wallpaper to cycle from");
-    hint(rt, "Try: marchyo bg set <image>");
-    return 1;
-  }
-  const real = realpathSync(current);
-  const dir = dirname(real);
-  const images = readdirSync(dir)
-    .filter((f) => /\.(png|jpe?g|webp)$/i.test(f))
-    .sort()
-    .map((f) => join(dir, f));
+  const images = await listWallpapers();
   if (images.length === 0) {
-    err(rt, `no images found in ${dir}`);
+    err(rt, tr("theme.noActiveThemeWallpaperTo"));
     return 1;
   }
-  const idx = images.indexOf(real);
-  const next = images[(idx + 1) % images.length]!;
+  const idx = images.findIndex((w) => w.current);
+  const next = images[(idx + 1) % images.length]!.path;
   const code = await applyChange(rt, bgChangeBase, {
     mode: "runtime",
     value: next,
@@ -477,15 +624,14 @@ export async function runBgNext(rt: Runtime): Promise<number> {
 // through the build-variant dir's palette.json (slot per tokenSlots, else the
 // build hex), except border, border-strong and accent-subtle, which take
 // matugen's Material outline_variant, outline and primary_container when the
-// output carries them; mako/waybar/gtk are filled from that dir's templates/, and bat
+// output carries them; mako, waybar, gtk and the terminal/editor surfaces
+// (TEMPLATE_SURFACE_FILES) are filled from that dir's templates/, and bat
 // gets a generated tmTheme registered in its cache. Runtime-only, like `bg`:
 // a rebuild resets to the declarative theme. The override value is a JSON
 // string carrying the image path and the requested polarity so `runtime
 // restore` can replay it.
 
 type GenerateValue = { image: string; variant: Variant | "auto" };
-
-const TEMPLATED_SURFACES = ["mako.conf", "waybar.css", "gtk.css"] as const;
 
 // The build-variant theme dir, the only one carrying templates/. The HM
 // profile's declarative pointer targets it; manifest dirs are the fallback,
@@ -547,6 +693,9 @@ export const generateThemeChangeBase: ChangeSpec = {
     );
 
     const dir = generatedThemeDirPath();
+    if (existsSync(join(baseDir, "templates", "gtk.css"))) {
+      await updateDesktopPreference(ctx, { name: "generated", variant });
+    }
     await mkdir(dir, { recursive: true });
     const put = (f: string, text: string): Promise<void> =>
       writeAtomic(join(dir, f), text);
@@ -570,10 +719,13 @@ export const generateThemeChangeBase: ChangeSpec = {
     await put("lazygit.yml", lazygitText(base16));
     await put("spotify-player-theme.toml", spotifyPlayerThemeText(base16));
     await put("gdu.yaml", gduText(base16));
+    for (const [file, text] of Object.entries(appSurfaceTexts(variant, base16))) {
+      await put(file, text);
+    }
 
     // A surface the build dir has no template for is disabled declaratively;
     // drop any copy an earlier run left so activateThemeDir skips it.
-    for (const f of TEMPLATED_SURFACES) {
+    for (const f of TEMPLATE_SURFACE_FILES) {
       const template = join(baseDir, "templates", f);
       if (existsSync(template)) {
         await put(f, fillTemplate(readFileSync(template, "utf8"), resolve));
@@ -607,12 +759,12 @@ export const generateThemeChangeBase: ChangeSpec = {
     // reads `wallpaper.png`); relinkConfig gives an atomic symlink swap.
     await relinkConfig(spec.image, join(dir, "wallpaper.png"));
 
-    await activateThemeDir(ctx, { name: "generated", variant, dir });
+    await activateThemeSurfaces(ctx, { name: "generated", variant, dir });
+    await clearOverride("theme.selection");
     return raw;
   },
   runtimeRevert: async (ctx) => {
-    const manifest = await readThemeManifest();
-    const entry = declarativeTheme(manifest) ?? manifest[0] ?? null;
+    const entry = await declarativeTheme();
     if (entry) await activateThemeDir(ctx, entry);
   },
 };
@@ -631,7 +783,7 @@ export async function runThemeGenerate(
   if (opts.light && opts.dark) {
     return usageError(
       rt,
-      "--light and --dark are mutually exclusive",
+      tr("theme.lightAndDarkAreMutually"),
       "pass one of them (or neither to let matugen decide)",
     );
   }
@@ -640,13 +792,13 @@ export async function runThemeGenerate(
   if (mode !== "revert" && rawPath === "") {
     return usageError(
       rt,
-      "theme generate needs an image path",
+      tr("theme.themeGenerateNeedsAnImage"),
       "marchyo theme generate ~/pictures/wall.png   (or: marchyo theme generate --revert)",
     );
   }
   const image = isAbsolute(rawPath) ? rawPath : resolve(rawPath);
   if (mode !== "revert" && !existsSync(image)) {
-    err(rt, `no such image: ${image}`);
+    err(rt, tr("theme.noSuchImage", image));
     return 1;
   }
   const variant: Variant | "auto" = opts.light

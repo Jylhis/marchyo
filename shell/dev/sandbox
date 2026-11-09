@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+# Run the tree's shell in a nested Hyprland inside bubblewrap, so the live session is untouched.
+set -euo pipefail
+
+unit=marchyo-shell-sandbox
+uid=$(id -u)
+pointer=/run/user/$uid/marchyo-shell-sandbox.env
+
+# `sandbox env` exports point XDG_RUNTIME_DIR at the sandbox; the user manager
+# must still be reached through the host runtime dir.
+host() { env XDG_RUNTIME_DIR="/run/user/$uid" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" "$@"; }
+self=$(readlink -f "${BASH_SOURCE[0]}")
+dev_dir=$(dirname "$self")
+shell_dir=$(dirname "$dev_dir")
+
+die() {
+  echo "sandbox: $*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<USAGE
+usage: sandbox up [--window] [--real] [--fixture NAME]
+       sandbox down | status | env
+       sandbox ipc ARGS... | hyprctl ARGS... | log [-f]
+USAGE
+  exit 2
+}
+
+load_state() {
+  [[ -r $pointer ]] || die "not running (no $pointer)"
+  # shellcheck disable=SC1090
+  source "$pointer"
+}
+
+nested_sig() {
+  local d
+  d=$(find "$R/hypr" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -n1)
+  basename "${d:-}"
+}
+
+write_conf() {
+  cat >"$R/hyprland.lua" <<CONF
+hl.monitor({ output = "SHOT", mode = "1920x1080@60", position = "0x0", scale = 1 })
+hl.config({
+  misc = { disable_hyprland_logo = true, disable_splash_rendering = true },
+  animations = { enabled = false },
+  cursor = { invisible = true },
+})
+CONF
+}
+
+# Move the sandbox's host-side window to a silent special workspace.
+park() {
+  local cg pids pid i
+  [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] || return 0
+  cg=/sys/fs/cgroup$(host systemctl --user show -p ControlGroup --value "$unit")
+  for ((i = 0; i < 50; i++)); do
+    pids=$(find "$cg" -name cgroup.procs -exec cat {} + | jq -Rn '[inputs | tonumber]')
+    pid=$(host hyprctl -j clients | jq -r --argjson p "$pids" \
+      '[.[] | select(.class == "aquamarine" and (.pid as $x | $p | index($x)))][0].pid // empty')
+    if [[ -n $pid ]]; then
+      host hyprctl dispatch "hl.dsp.window.move({ workspace = \"special:shell-sandbox\", follow = false, window = \"pid:$pid\" })" >/dev/null
+      echo "parked host window pid $pid on special:shell-sandbox"
+      return 0
+    fi
+    sleep 0.2
+  done
+  echo "sandbox: host window not found, leaving it visible" >&2
+}
+
+cmd_up() {
+  local window=0 real=0 fixture=default
+  while (($#)); do
+    case $1 in
+      --window) window=1 ;;
+      --real) real=1 ;;
+      --fixture)
+        fixture=${2:?--fixture needs a name}
+        shift
+        ;;
+      *) usage ;;
+    esac
+    shift
+  done
+  local host_wl=${WAYLAND_DISPLAY:-}
+  [[ -n $host_wl ]] || die "WAYLAND_DISPLAY unset: Hyprland would grab the DRM seat"
+  [[ $host_wl == /* ]] || host_wl=/run/user/$uid/$host_wl
+  [[ -S $host_wl ]] || die "host wayland socket $host_wl missing: refusing to start Hyprland"
+  [[ -d /run/user/$uid/hypr/${HYPRLAND_INSTANCE_SIGNATURE:-} ]] || die "HYPRLAND_INSTANCE_SIGNATURE is not a host instance (unset the sandbox env first)"
+  if host systemctl --user is-active --quiet "$unit"; then die "already running (sandbox down first)"; fi
+  command -v bwrap >/dev/null || die "bwrap not on PATH (use devenv shell)"
+  [[ -d $dev_dir/fixtures/$fixture ]] || die "no fixture $fixture in $dev_dir/fixtures"
+
+  R=$(mktemp -d "/run/user/$uid/qsdev.XXXX")
+  mkdir -p "$R/home"
+  write_conf
+  printf 'R=%q\n' "$R" >"$pointer"
+
+  host systemd-run --user --unit="$unit" --collect --quiet \
+    --property=KillMode=control-group --property=Delegate=yes \
+    --property="StandardOutput=file:$R/unit.log" --property="StandardError=file:$R/unit.log" \
+    --setenv="PATH=$PATH" --setenv="MARCHYO_SANDBOX_REAL=$real" \
+    --setenv="MARCHYO_SANDBOX_FIXTURE=$fixture" \
+    --setenv="MARCHYO_SANDBOX_ICONS=${MARCHYO_SANDBOX_ICONS:-}" \
+    "$self" _run "$R" "$host_wl"
+
+  local i
+  for ((i = 0; i < 100; i++)); do
+    [[ -n $(nested_sig) && -S $R/hypr/$(nested_sig)/.socket.sock ]] && break
+    sleep 0.2
+  done
+  [[ -n $(nested_sig) ]] || {
+    cat "$R/unit.log" "$R/hypr.log" >&2 || true
+    die "nested Hyprland did not start"
+  }
+  ((window)) || park
+  echo "up: runtime dir $R"
+}
+
+cmd_down() {
+  [[ -r $pointer ]] && load_state || true
+  host systemctl --user stop "$unit" || true
+  if host systemctl --user is-active --quiet "$unit"; then die "unit $unit still active"; fi
+  if [[ -n ${R:-} && $R == /run/user/$uid/qsdev.* ]]; then rm -rf "$R"; fi
+  rm -f "$pointer"
+  echo "down"
+}
+
+cmd_status() {
+  if host systemctl --user is-active --quiet "$unit"; then
+    load_state
+    echo "running: runtime dir $R, hyprland signature $(nested_sig)"
+  else
+    echo "stopped"
+    exit 1
+  fi
+}
+
+cmd_env() {
+  load_state
+  printf 'export XDG_RUNTIME_DIR=%q\nexport WAYLAND_DISPLAY=wayland-1\n' "$R"
+  printf 'export HYPRLAND_INSTANCE_SIGNATURE=%q\n' "$(nested_sig)"
+}
+
+cmd_hyprctl() {
+  load_state
+  XDG_RUNTIME_DIR=$R HYPRLAND_INSTANCE_SIGNATURE=$(nested_sig) exec hyprctl "$@"
+}
+
+cmd_ipc() {
+  load_state
+  XDG_RUNTIME_DIR=$R exec quickshell ipc -p "$shell_dir" "$@"
+}
+
+cmd_log() {
+  load_state
+  if [[ ${1:-} == -f ]]; then exec tail -n +1 -f "$R/shell.log"; fi
+  cat "$R/shell.log"
+}
+
+# Inside the transient unit: wrap everything in bubblewrap.
+cmd_run() {
+  R=$1
+  local host_wl=$2
+  local args=(
+    --unshare-user --unshare-ipc --unshare-pid --unshare-uts
+    --die-with-parent --new-session
+    --ro-bind /nix /nix --ro-bind /etc /etc
+    --ro-bind-try /usr/bin /usr/bin --ro-bind-try /bin /bin
+    --ro-bind-try /run/current-system /run/current-system
+    --ro-bind-try /run/opengl-driver /run/opengl-driver
+    --ro-bind /sys /sys --proc /proc
+    --dev /dev --dev-bind /dev/dri /dev/dri
+    --tmpfs /tmp
+    --bind "$R" "$R" --bind "$host_wl" "$R/host-wayland"
+    --ro-bind "$shell_dir" "$shell_dir"
+    --setenv XDG_RUNTIME_DIR "$R" --setenv HOME "$R/home"
+    --unsetenv DBUS_SESSION_BUS_ADDRESS --unsetenv DBUS_SYSTEM_BUS_ADDRESS
+    --unsetenv HYPRLAND_INSTANCE_SIGNATURE --unsetenv DISPLAY --unsetenv SSH_AUTH_SOCK
+  )
+  if [[ ${MARCHYO_SANDBOX_REAL:-0} == 1 ]]; then
+    args+=(--ro-bind-try /run/dbus/system_bus_socket /run/dbus/system_bus_socket
+      --setenv DBUS_SYSTEM_BUS_ADDRESS unix:path=/run/dbus/system_bus_socket)
+    local pw=/run/user/$uid/pipewire-0
+    [[ ! -S $pw ]] || args+=(--bind "$pw" "$R/pipewire-0")
+    exec bwrap --unshare-cgroup-try "${args[@]}" "$self" _session "$R"
+  fi
+  local cg
+  cg=/sys/fs/cgroup$(sed 's/^0:://' /proc/self/cgroup)
+  exec unshare --user --map-current-user --cgroup \
+    "$self" _scope "$cg" bwrap "${args[@]}" "$self" _session "$R"
+}
+
+# Run CMD in a cgroup named like a logind session scope, so libsystemd finds a session for it.
+cmd_scope() {
+  local cg=$1/session-1.scope
+  shift
+  mkdir "$cg"
+  echo $$ >"$cg/cgroup.procs"
+  exec "$@"
+}
+
+# Inside bubblewrap: private session bus, nested Hyprland, then the shell.
+cmd_session() {
+  R=$1
+  exec dbus-run-session -- "$self" _guest "$R"
+}
+
+guest_env() {
+  export XDG_CONFIG_HOME=$R/home/config XDG_STATE_HOME=$R/home/state XDG_CACHE_HOME=$R/home/cache
+  export TZDIR=/etc/zoneinfo QT_QPA_PLATFORMTHEME=gtk3
+  local fixture=$dev_dir/fixtures/${MARCHYO_SANDBOX_FIXTURE:-default}
+  [[ ! -d $fixture/config ]] || cp -rT "$fixture/config" "$XDG_CONFIG_HOME"
+  mkdir -p "$XDG_CONFIG_HOME/gtk-3.0"
+  printf '[Settings]\ngtk-icon-theme-name=Adwaita\n' >"$XDG_CONFIG_HOME/gtk-3.0/settings.ini"
+  [[ -z ${MARCHYO_SANDBOX_ICONS:-} ]] || export XDG_DATA_DIRS="$MARCHYO_SANDBOX_ICONS:${XDG_DATA_DIRS:-}"
+  export PATH="$dev_dir/stubs:$PATH"
+  if [[ ${MARCHYO_SANDBOX_REAL:-0} != 1 ]]; then
+    # shellcheck disable=SC1091
+    source "$dev_dir/system-bus"
+    system_bus_up "$fixture"
+  fi
+}
+
+cmd_guest() {
+  R=$1
+  local hp qs sig i
+  guest_env
+  WAYLAND_DISPLAY="$R/host-wayland" Hyprland -c "$R/hyprland.lua" >"$R/hypr.log" 2>&1 &
+  hp=$!
+  trap 'kill $hp ${qs:-} 2>/dev/null || true' EXIT
+  for ((i = 0; i < 100; i++)); do
+    sig=$(nested_sig)
+    [[ -n $sig && -S $R/hypr/$sig/.socket.sock && -S $R/hypr/$sig/.socket2.sock ]] && break
+    sleep 0.2
+  done
+  export HYPRLAND_INSTANCE_SIGNATURE=$sig
+  sleep 1
+  hyprctl output create headless SHOT >/dev/null
+  # Monitor rules apply only to outputs present at config load.
+  hyprctl reload >/dev/null
+  export WAYLAND_DISPLAY=wayland-1
+  export MARCHYO_SHELL_DEV=1 MARCHYO_SHELL_OUTPUT=SHOT
+  quickshell -p "$shell_dir" >"$R/shell.log" 2>&1 &
+  qs=$!
+  wait -n "$hp" "$qs" || true
+}
+
+sub=${1:-}
+shift || true
+case $sub in
+  up) cmd_up "$@" ;;
+  down) cmd_down ;;
+  status) cmd_status ;;
+  env) cmd_env ;;
+  ipc) cmd_ipc "$@" ;;
+  log) cmd_log "$@" ;;
+  hyprctl) cmd_hyprctl "$@" ;;
+  _run) cmd_run "$@" ;;
+  _scope) cmd_scope "$@" ;;
+  _session) cmd_session "$@" ;;
+  _guest) cmd_guest "$@" ;;
+  *) usage ;;
+esac

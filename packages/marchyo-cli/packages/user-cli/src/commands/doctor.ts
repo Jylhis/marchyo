@@ -1,4 +1,5 @@
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type PluginLock,
   type Runtime,
@@ -6,14 +7,18 @@ import {
   captureArgv,
   commandAvailable,
   data,
+  devPluginsDir,
   hyprlandAvailable,
+  notifyNonceDir,
   readBakedToolPaths,
   readPluginLock,
   readState,
   shellConfigQmlPath,
+  shellDevPluginsEnabled,
   shellInstalled,
   shellIpc,
 } from "@marchyo/core";
+import { type SheetEntry, keybindingsSheetPath } from "./menu.ts";
 import { pendingPlugins } from "./plugin.ts";
 
 // `marchyo doctor`: health checks for the live session. Each check is PASS,
@@ -86,6 +91,51 @@ async function checkPlugins(): Promise<Check> {
   return checkPluginLock(lock, state.shell?.extraPlugins ?? []);
 }
 
+// Panels whose shortcut `lib/keybinds.nix` must bind, keyed by the cheat
+// sheet description.
+export const REQUIRED_PANEL_BINDS = ["Ui gallery (developer)"] as const;
+
+export function checkPanelBinds(installed: boolean, sheet: SheetEntry[] | null): Check {
+  const name = "shell panel binds";
+  if (!installed) return skip(name, "marchyo-shell not installed");
+  if (sheet === null) return skip(name, "no keybindings.json (Hyprland binds not generated)");
+  const missing = REQUIRED_PANEL_BINDS.filter(
+    (d) => !sheet.some((e) => e.group === "Panels" && e.description === d),
+  );
+  return missing.length === 0
+    ? pass(name, `${REQUIRED_PANEL_BINDS.length} required bind present`)
+    : warn(name, `no bind for: ${missing.join(", ")}; rebuild`);
+}
+
+function readSheet(): SheetEntry[] | null {
+  try {
+    return JSON.parse(readFileSync(keybindingsSheetPath(), "utf8")) as SheetEntry[];
+  } catch {
+    return null;
+  }
+}
+
+// The dev plugin loader is a development convenience: warn while it mounts
+// unreviewed code.
+export function checkDevPlugins(enabled: boolean, loaded: string[]): Check {
+  const name = "dev plugins";
+  if (!enabled) return skip(name, "dev plugin loader is off");
+  return loaded.length === 0
+    ? pass(name, "dev plugin loader is on, none loaded")
+    : warn(name, `unreviewed code in the shell: ${loaded.join(", ")}`);
+}
+
+function devPluginIds(): string[] {
+  try {
+    const parsed = JSON.parse(readFileSync(join(devPluginsDir(), "index.json"), "utf8")) as {
+      plugins?: { id?: string }[];
+    };
+    return (parsed.plugins ?? []).map((p) => p.id ?? "?");
+  } catch {
+    return [];
+  }
+}
+
 async function checkHyprland(): Promise<Check> {
   const name = "hyprland ipc";
   if (!hyprlandAvailable()) return skip(name, "not inside a Hyprland session");
@@ -111,6 +161,39 @@ async function checkShell(): Promise<Check> {
   } catch (e) {
     return fail(name, (e as Error).message);
   }
+}
+
+// The directory `marchyo notify` writes its one-time tokens to must be private
+// to this user, or another account could mint a click command.
+export function checkNotifyNonceDir(
+  dir: string | null,
+  uid: number | undefined = process.getuid?.(),
+): Check {
+  const name = "notification tokens";
+  if (dir === null) return skip(name, "XDG_RUNTIME_DIR is not set");
+  let st;
+  try {
+    st = lstatSync(dir);
+  } catch {
+    return skip(name, "no click-command notification sent yet");
+  }
+  if (!st.isDirectory()) return fail(name, `${dir} is not a plain directory`);
+  if (uid !== undefined && st.uid !== uid) return fail(name, `${dir} belongs to another user`);
+  if ((st.mode & 0o077) !== 0) {
+    return fail(name, `${dir} is open to others (mode ${(st.mode & 0o777).toString(8)}); use 700`);
+  }
+  return pass(name, "private to this user");
+}
+
+async function checkNotifier(): Promise<Check> {
+  const name = "notification service";
+  if (!shellInstalled() || !commandAvailable("busctl")) {
+    return skip(name, "marchyo-shell or busctl not available");
+  }
+  const r = await captureArgv(["busctl", "--user", "status", "org.freedesktop.Notifications"]);
+  return r.code === 0
+    ? pass(name, "a service owns org.freedesktop.Notifications")
+    : warn(name, "nothing owns org.freedesktop.Notifications; is the shell running?");
 }
 
 // Parse `systemctl --user show -p Id,LoadState,ActiveState …` output: blank-
@@ -160,18 +243,23 @@ async function checkUserUnits(): Promise<Check[]> {
 }
 
 export async function collectChecks(): Promise<Check[]> {
-  const [hypr, shell, plugins, units] = await Promise.all([
+  const [hypr, shell, plugins, units, notifier] = await Promise.all([
     checkHyprland(),
     checkShell(),
     checkPlugins(),
     checkUserUnits(),
+    checkNotifier(),
   ]);
   return [
     checkBakedToolPaths(shellInstalled(), shellConfigQmlPath()),
+    checkPanelBinds(shellInstalled(), readSheet()),
+    checkDevPlugins(shellInstalled() && shellDevPluginsEnabled(), devPluginIds()),
     hypr,
     shell,
     plugins,
     ...units,
+    notifier,
+    checkNotifyNonceDir(notifyNonceDir()),
   ];
 }
 

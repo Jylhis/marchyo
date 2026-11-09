@@ -1,0 +1,79 @@
+/*
+ * site.css — the marchyo site's own controls, on top of the vendored
+ * design system in vendor/design
+ * (imported by Base.astro). Everything else comes from the design system.
+ */
+
+/* The design system leaves the page ground to the page. */
+html,
+body {
+  margin: 0;
+  background: var(--color-bg);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.copy-chip {
+  font-family: var(--font-mono);
+  font-size: var(--type-scale-9);
+  padding: 3px 10px;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base);
+}
+.copy-chip:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.copy-chip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.theme-toggle {
+  border: var(--border-hairline) solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--type-scale-8);
+  cursor: pointer;
+  transition:
+    color var(--transition-base),
+    border-color var(--transition-base);
+}
+.theme-toggle:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.theme-toggle:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Touch: the copy chips, the theme toggle and the colophon links reach the
+   --touch-min target. */
+@media (pointer: coarse) {
+  .copy-chip {
+    min-height: var(--touch-min);
+  }
+  .theme-toggle {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+  .colophon a {
+    display: inline-block;
+    padding-block: max(0px, calc((var(--touch-min) - 1lh) / 2));
+    margin-block: min(0px, calc((1lh - var(--touch-min)) / 2));
+  }
+}

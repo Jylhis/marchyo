@@ -26,7 +26,7 @@ Provider {
     highlight: false
     selectOnEmpty: true
     previews: true
-    emptyText: "clipboard history is empty"
+    emptyText: I18n.t("launcher.clipboardEmpty")
 
     readonly property int maxHistory: 500
     readonly property string cacheDir: Quickshell.cacheDir + "/cliphist"

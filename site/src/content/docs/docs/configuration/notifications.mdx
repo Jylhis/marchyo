@@ -6,7 +6,7 @@ description: Notification history and per-sender rules for the in-shell notifica
 The Marchyo shell (on by default with the desktop) owns
 `org.freedesktop.Notifications` and adds a **notification history** and
 **per-sender rules** on top of the live toast stack. With
-`marchyo.shell.enable = false`, mako is the notification daemon and these
+`marchyo.shell.enable = false` there is no notification daemon and these
 options do nothing.
 
 Every notification is snapshotted into a persistent history (stored under the
@@ -14,6 +14,81 @@ Quickshell state directory and reloaded on restart), so a toast you dismissed or
 missed under do-not-disturb is still recoverable. The do-not-disturb bar widget
 shows an unread count and opens the history centre on **right-click**; **`Super+N`**
 toggles the centre, and **`Super+Ctrl+Shift+comma`** clears the live stack.
+**`Super+Alt+comma`** hands the keyboard to the toasts: number keys press a
+toast's buttons, Enter clicks it, Up/Down move between toasts, Delete dismisses,
+and Escape, any choice or ten idle seconds give the keyboard back.
+
+## Decks, actions and codes
+
+Toasts from the same sender stack into a **deck**: the newest card on top with
+the edges of the others behind it. Hover the deck to expand it. Browser
+notifications group per site (taken from the origin hint, a link or a host line
+in the body); everything else groups per application. Identical repeats (same
+application, summary and body) collapse into one toast with a count. Set
+`marchyo.notifications.stackBySender = false` to show every toast on its own.
+
+Clicking a toast runs a chain and stops at the first step that applies: the
+notification's default action, then focusing the sender's window (by process id
+or window class), then opening the first link in the text. Buttons come from the
+notification's own actions.
+
+When the text carries a verification code (4 to 8 digits, or an uppercase
+alphanumeric code, next to a word such as code, OTP or verification in a common
+language), the toast gets a **Copy** button that puts the code on the clipboard.
+Set `marchyo.notifications.detectCodes = false` to turn this off.
+
+The bar bell toggles do-not-disturb on click. While it is on, three kinds of
+notification still show: critical urgency, notifications from the applications in
+`marchyo.notifications.passApps` (default `[ "marchyo" ]`, which covers Marchyo's
+own `notify-send -a marchyo` messages) and notifications with a detected code.
+
+The shell exposes `actNewest` (click the newest toast), `dismissOne` (dismiss the
+newest toast only) and `silence` (toggle do-not-disturb) as IPC functions and as
+the `notifications.act`, `notifications.dismissOne` and `notifications.silence`
+global shortcuts.
+
+## Sending notifications with buttons
+
+`marchyo notify` sends a notification over D-Bus. Its flags match
+`omarchy-notification-send`:
+
+```sh
+marchyo notify "Backup done" "Open the report" -g 󰆼 --exec xdg-open ~/report.html
+marchyo notify "Build failed" -u critical --action Retry just build --action Logs just logs
+```
+
+- `-g` sets the icon glyph, `-u low|normal|critical` the urgency, `-i` an icon
+  name, `-t` a timeout in milliseconds, `-r` an id to replace, `-p` prints the
+  new id, `--image` shows a local picture and `--transient` keeps the
+  notification out of history and out of the restore file.
+- The default application name is `marchyo-action`, which passes do-not-disturb.
+- `--exec <program> [args...]` runs a command when you click the toast. Up to
+  three `--action <label> <program> [words...]` add buttons; `--with <args...>`
+  appends the same arguments to every action.
+
+Commands run as argument lists, never through a shell, and only when the
+notification carries the session token that `marchyo notify` reads from
+`$XDG_RUNTIME_DIR/marchyo/notify-token` (mode 0600). A program that sets the
+hints by hand, or any other application, cannot make a toast run a command.
+Clicking a stored history row never runs a command: it opens the row's link or
+the sender's window.
+
+Notifications that were on screen when the shell restarted come back for about
+20 seconds (critical ones stay), do-not-disturb survives a restart, and a
+verification code is kept in history only as a placeholder.
+
+## What changed and first-login setup
+
+At the start of each graphical session `marchyo-session-notices` runs
+`marchyo whats-new --notify`. When the packaged `NEWS` changed since you last
+looked, it sends one notification whose button opens the **What's new** panel
+(`marchyo shell open whatsnew`) with the new entries and a short dix summary of
+the last switch. Closing the panel marks the entries as seen.
+
+On the first login `marchyo setup --welcome` sends one notification that opens
+the **Set up** panel (`marchyo shell open setup`): a checklist of git identity,
+SSH key, FIDO2 and fingerprint, language, keyboard, theme, agent login and
+dictation, each with a Fix button. `marchyo setup --done` ends the reminders.
 
 ## Per-sender rules
 

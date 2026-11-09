@@ -10,8 +10,7 @@ let
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
-  # The unified shell locks in-process (Phase 4); hyprlock stands down under
-  # the same mutual-exclusion cutover as waybar/mako/swayosd.
+  # The unified shell locks in-process (Phase 4), so hyprlock stands down.
   shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
   hasOsConfig = osConfig != { } && osConfig ? marchyo;
   cfg = if hasOsConfig then osConfig.marchyo.theme else null;

@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "Sínithe isteach i %1.",
+  "launch.notFoundInPath": "%1 gan fáil in PATH",
+  "utilities.reminder": "Meabhrúchán",
+  "utilities.battery": "Ceallra %1%",
+  "utilities.battery2": "Ceallra",
+  "utilities.transcode": "Traschódáil",
+  "utilities.share": "Roinn",
+  "toggles.enabled": "Cumasaithe",
+  "toggles.suspend": "Cuir ar fionraí"
+}

@@ -80,8 +80,7 @@ in
     };
   }
   # qmllint pulls in Quickshell's QML modules (Linux-only); gate it so the
-  # formatter output still evaluates on darwin, where the QML shell surfaces
-  # (Wayland layer-shell) never run anyway. Kept lazy in the let binding so
+  # formatter output still evaluates elsewhere. Kept lazy in the let binding so
   # pkgs.quickshell is never forced off Linux.
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     # Static QML check: fails on a non-existent-property assignment (the crash

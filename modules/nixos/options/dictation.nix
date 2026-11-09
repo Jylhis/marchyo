@@ -5,27 +5,47 @@ in
 {
   options.marchyo.dictation = {
     enable = lib.mkEnableOption ''
-      push-to-talk voice dictation (voxtype + Whisper) for the Wayland desktop.
-      Runs the voxtype daemon as a user service. By default recording is driven
-      by holding F9 (the daemon's evdev push-to-talk hotkey, see pushToTalk) and
-      can also be toggled with Super+Ctrl+X under Hyprland (see toggleKey);
-      transcribed text is typed at the cursor. Requires a microphone. The
-      push-to-talk hotkey adds dictation users to the `input` group so the daemon
-      can read /dev/input (see modules/nixos/dictation.nix). The first recording
-      downloads the Whisper model (~1.5 GB) unless preloadModel pulls it at
-      activation time'';
+      voice dictation for the Wayland desktop. The backend (see `backend`)
+      transcribes speech and types it at the cursor. Alt+Space toggles recording
+      under Hyprland (see toggleKey) and holding F9 is push-to-talk (see
+      pushToTalk). Requires a microphone'';
+
+    backend = mkOption {
+      type = types.enum [
+        "superwhisper"
+        "voxtype"
+        "hex"
+      ];
+      default = "superwhisper";
+      example = "voxtype";
+      description = ''
+        Dictation engine behind `marchyo dictation` and the Alt+Space and F9
+        binds.
+
+        - `superwhisper`: Superwhisper (unfree). Cloud processing is its default
+          mode. To transcribe locally run `superwhisper models select offline`
+          or `offline_lite` (the models download on first use). Requires
+          `nixpkgs.config.allowUnfree`; evaluation fails with a message
+          otherwise.
+        - `voxtype`: voxtype (Whisper, open source). The voxtype options below
+          apply only to this backend.
+        - `hex`: Hex (MIT, closed-source binary). Its speech model downloads once
+          at login.
+      '';
+    };
 
     pushToTalk = {
       enable = lib.mkEnableOption "the daemon's evdev push-to-talk hotkey" // {
         default = true;
         description = ''
-          Enable voxtype's built-in evdev hotkey (hold `pushToTalk.key` to record,
-          release to transcribe). This is the omarchy-style "hold F9 to dictate"
-          interaction. Enabling it adds dictation users to the `input` group so the
-          daemon can read /dev/input globally - a real privilege (any process the
-          user runs can then observe keystrokes). Set false to rely only on the
-          Hyprland `toggleKey` bind (`voxtype record toggle`), which needs no group
-          membership.
+          Hold `pushToTalk.key` to record, release to transcribe (the omarchy-style
+          "hold F9 to dictate"). With the voxtype backend this is the daemon's own
+          evdev hotkey: it adds dictation users to the `input` group so the daemon
+          can read /dev/input globally, a real privilege (any process the user
+          runs can then observe keystrokes). With the superwhisper and hex
+          backends it is a Hyprland bind pair (start on press, stop on release)
+          and needs no group membership. Set false to rely only on the
+          `toggleKey` bind.
         '';
       };
 
@@ -36,6 +56,8 @@ in
           evdev key name held to record when `pushToTalk.enable` is set. Must be a
           valid Linux evdev key (e.g. "F9", "SCROLLLOCK", "PAUSE", "RIGHTALT",
           "F13"-"F24"), or a numeric keycode with a source prefix (e.g. "WEV_234").
+          With the superwhisper and hex backends the name is bound in Hyprland as
+          written, so use a name Hyprland accepts (an F-key works in both).
         '';
       };
 
@@ -55,13 +77,12 @@ in
 
     toggleKey = mkOption {
       type = types.nullOr types.str;
-      default = "SUPER + CTRL + X";
+      default = "ALT + SPACE";
       example = "SUPER + H";
       description = ''
         Hyprland Lua bind spec ("MOD + MOD + key") wired to
-        `voxtype record toggle`, matching omarchy's Super+Ctrl+X toggle. Drives
-        the same daemon state as the push-to-talk hotkey. Set to null to bind no
-        compositor toggle.
+        `marchyo dictation toggle`, which drives whichever backend is selected.
+        Set to null to bind no compositor toggle.
       '';
     };
 
@@ -69,7 +90,7 @@ in
       type = types.str;
       default = "large-v3-turbo";
       description = ''
-        Whisper model voxtype loads for transcription. large-v3-turbo is
+        Whisper model voxtype loads (voxtype backend only) for transcription. large-v3-turbo is
         multilingual and fast; smaller models (e.g. base, small) trade accuracy
         for a smaller download and lower latency.
       '';
@@ -209,7 +230,8 @@ in
       default = true;
       description = ''
         Show a recording-state segment on the top bar, driven by
-        `voxtype status --follow`. Set false to keep dictation but drop the bar
+        the selected backend (voxtype's status stream, or `marchyo dictation
+        status`). Set false to keep dictation but drop the bar
         indicator.
       '';
     };
@@ -235,8 +257,9 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Bind Super+Shift+H under Hyprland to open a floating terminal streaming
-        `voxtype status --follow`, and register its window rule.
+        Voxtype backend only: bind Super+Shift+H under Hyprland to open a
+        floating terminal streaming `voxtype status --follow`, and register its
+        window rule.
       '';
     };
   };

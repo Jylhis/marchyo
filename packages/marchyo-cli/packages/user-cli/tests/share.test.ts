@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type Runtime } from "@marchyo/core";
 import { type Fetch, type Peer } from "@marchyo/core/localsend";
-import { type ShareDeps, runShare } from "../src/commands/utilities.ts";
+import { type ShareDeps, type TailscaleDeps, runShare } from "../src/commands/utilities.ts";
 
 // runShare with every network and desktop effect faked: nothing here opens a
 // socket, so the tests stay offline and never reach a real LocalSend device.
@@ -64,6 +64,25 @@ function receiver(status = 200): { fetch: Fetch; hosts: string[] } {
   return { fetch: f, hosts };
 }
 
+// A fake tailscale CLI: records argv, answers `file cp --targets` from `targets`.
+function fakeTailscale(
+  over: { available?: boolean; code?: number; stderr?: string; targets?: string[] } = {},
+): TailscaleDeps & { calls: string[][] } {
+  const calls: string[][] = [];
+  return {
+    calls,
+    available: () => over.available ?? false,
+    run: async (argv) => {
+      calls.push(argv);
+      if (argv.includes("--targets")) {
+        const out = (over.targets ?? []).map((n) => `100.64.0.1\t${n}\tidle`).join("\n");
+        return { code: 0, stdout: out, stderr: "" };
+      }
+      return { code: over.code ?? 0, stdout: "", stderr: over.stderr ?? "" };
+    },
+  };
+}
+
 function deps(
   over: Partial<ShareDeps> = {},
 ): ShareDeps & { notes: string[]; prompts: string[] } {
@@ -84,6 +103,7 @@ function deps(
       notes.push(body);
     },
     openLocalSend: () => true,
+    tailscale: fakeTailscale(),
     notes,
     prompts,
     ...over,
@@ -256,4 +276,81 @@ test("menu Clipboard sends the clipboard text as a message", async () => {
     expect.objectContaining({ fileType: "text/plain", preview: "hello there" }),
   ]);
   expect(d.notes).toEqual(["delivered to Phone"]);
+});
+
+test("--tailscale sends via tailscale file cp and skips LocalSend", async () => {
+  const ts = fakeTailscale({ available: true });
+  const d = deps({ tailscale: ts, discover: async () => [peer("Phone", "10.0.0.2")] });
+  const f = file();
+  const err = stderrOf();
+  const code = await runShare(RT, [f], { tailscale: "laptop.tail.ts.net" }, d);
+  err.restore();
+  expect(code).toBe(0);
+  expect(ts.calls).toEqual([
+    ["file", "cp", "--update-interval=0", "--", f, "laptop.tail.ts.net:"],
+  ]);
+  expect(d.notes).toEqual(["sent 1 file(s) to laptop over Taildrop"]);
+});
+
+test("--tailscale reports the tailscale error", async () => {
+  const ts = fakeTailscale({ available: true, code: 1, stderr: "no such peer" });
+  const d = deps({ tailscale: ts });
+  const err = stderrOf();
+  const code = await runShare(RT, [file()], { tailscale: "ghost" }, d);
+  err.restore();
+  expect(code).toBe(1);
+  expect(err.text()).toContain("no such peer");
+});
+
+test("--tailscale without tailscale on PATH fails", async () => {
+  const d = deps();
+  const err = stderrOf();
+  const code = await runShare(RT, [file()], { tailscale: "laptop" }, d);
+  err.restore();
+  expect(code).toBe(1);
+  expect(err.text()).toContain("tailscale not found");
+});
+
+test("--tailscale-receive runs tailscale file get into the directory", async () => {
+  const ts = fakeTailscale({ available: true });
+  const d = deps({ tailscale: ts });
+  const dir = mkdtempSync(join(tmpdir(), "marchyo-taildrop-"));
+  const err = stderrOf();
+  const code = await runShare(RT, [dir], { tailscaleReceive: true }, d);
+  err.restore();
+  expect(code).toBe(0);
+  expect(ts.calls).toEqual([["file", "get", "--conflict=rename", dir]]);
+});
+
+test("share menu offers Taildrop only when tailscale is available", async () => {
+  const seen: string[][] = [];
+  const mk = (available: boolean) =>
+    deps({
+      interactive: true,
+      tailscale: fakeTailscale({ available }),
+      choose: async (_h, options) => {
+        seen.push(options);
+        return null;
+      },
+    });
+  await runShare(RT, [], {}, mk(false));
+  await runShare(RT, [], {}, mk(true));
+  expect(seen[0]).not.toContain("Taildrop");
+  expect(seen[1]).toContain("Taildrop");
+});
+
+test("Taildrop menu path picks a peer from --targets and sends", async () => {
+  const ts = fakeTailscale({ available: true, targets: ["laptop", "phone"] });
+  const f = file();
+  const d = deps({
+    interactive: true,
+    tailscale: ts,
+    choose: async (h, options) => (h === "Share" ? "Taildrop" : (options[1] ?? null)),
+    pickPath: async () => f,
+  });
+  const err = stderrOf();
+  const code = await runShare(RT, [], {}, d);
+  err.restore();
+  expect(code).toBe(0);
+  expect(ts.calls.at(-1)).toEqual(["file", "cp", "--update-interval=0", "--", f, "phone:"]);
 });

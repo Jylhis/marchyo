@@ -13,14 +13,14 @@ Provider {
     providerId: "theme"
     prefix: Providers.prefixFor("theme")
     selectOnEmpty: true
-    emptyText: root.loading ? "loading themes" : "no themes"
+    emptyText: root.loading ? I18n.t("launcher.loadingThemes") : I18n.t("launcher.noThemes")
 
     property var themes: []
     property bool loading: false
 
     readonly property var rows: root.themes.map(t => ({
                 title: t.name,
-                subtitle: t.current ? t.variant + ", current" : t.variant,
+                subtitle: t.current ? I18n.t("launcher.themeCurrent", t.variant) : t.variant,
                 icon: "preferences-desktop-theme",
                 score: 0,
                 positions: [],

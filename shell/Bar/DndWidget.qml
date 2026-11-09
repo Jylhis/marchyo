@@ -2,17 +2,18 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Notification do-not-disturb indicator + unread badge. The shell owns
-// notifications in-process, so this binds straight to the shared
+// Notification bell: toggles do-not-disturb on click, shows the unread count,
+// and opens the history on right-click. Binds straight to the shared
 // NotificationState singleton: no external probe, subprocess, or poll timer.
-BarItem {
+BarIndicator {
     id: root
 
     interactive: true
     compact: true
+    indicatorActive: NotificationState.dnd || NotificationState.unreadCount > 0
     text: (NotificationState.dnd ? "󰂛" : "󰂚") + (NotificationState.unreadCount > 0 ? " " + NotificationState.unreadCount : "")
-    textColor: NotificationState.dnd ? Color.statusErr : (NotificationState.unreadCount > 0 ? Color.text : Color.textMuted)
-    tooltipText: (NotificationState.dnd ? "Do not disturb — left-click to show notifications" : "Notifications on — left-click to enable do-not-disturb") + "\nRight-click for history"
+    textColor: NotificationState.dnd ? Colors.statusErr : (NotificationState.unreadCount > 0 ? Colors.text : Colors.textMuted)
+    tooltipText: I18n.t(NotificationState.dnd ? "notifications.dndOn" : "notifications.dndOff") + "\n" + I18n.t("notifications.historyHint")
 
     onClicked: NotificationState.toggleDnd()
     onRightClicked: PanelManager.toggle("notifications", root)

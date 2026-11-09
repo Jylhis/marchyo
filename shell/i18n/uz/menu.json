@@ -1,0 +1,22 @@
+{
+  "menu.network": "Tarmoq",
+  "menu.speedTest": "Tezlik testi",
+  "menu.lock": "Qulflash",
+  "menu.suspend": "Kutish",
+  "menu.hibernate": "Uyqu",
+  "menu.reboot": "Qayta yuklash",
+  "menu.shutdown": "Oʻchirish",
+  "menu.style": "Uslub",
+  "menu.theme": "Mavzu",
+  "menu.background": "Fon",
+  "menu.font": "Shrift",
+  "menu.setup": "Sozlash",
+  "menu.audio": "Audio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Ishga tushirish",
+  "menu.appearance": "Koʻrinish",
+  "menu.system": "Tizim",
+  "menu.learn": "Oʻrganish",
+  "menu.screenshot": "Skrinshot",
+  "menu.share": "Ulashish"
+}

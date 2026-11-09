@@ -1,0 +1,11 @@
+{
+  "agent.signedInTo": "%1 ga kirildi.",
+  "launch.notFoundInPath": "%1 PATH da topilmadi",
+  "utilities.reminder": "Eslatma",
+  "utilities.battery": "Batareya %1%",
+  "utilities.battery2": "Batareya",
+  "utilities.transcode": "Qayta kodlash",
+  "utilities.share": "Ulashish",
+  "toggles.enabled": "Yoqildi",
+  "toggles.suspend": "Kutish"
+}

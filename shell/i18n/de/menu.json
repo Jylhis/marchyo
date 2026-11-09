@@ -1,0 +1,22 @@
+{
+  "menu.network": "Netzwerk",
+  "menu.speedTest": "Geschwindigkeitstest",
+  "menu.lock": "Sperren",
+  "menu.suspend": "Standby",
+  "menu.hibernate": "Ruhezustand",
+  "menu.reboot": "Neustart",
+  "menu.shutdown": "Ausschalten",
+  "menu.style": "Stil",
+  "menu.theme": "Design",
+  "menu.background": "Hintergrund",
+  "menu.font": "Schriftart",
+  "menu.setup": "Einrichtung",
+  "menu.audio": "Audio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Auslösen",
+  "menu.appearance": "Aussehen",
+  "menu.system": "System",
+  "menu.learn": "Lernen",
+  "menu.screenshot": "Screenshot",
+  "menu.share": "Teilen"
+}

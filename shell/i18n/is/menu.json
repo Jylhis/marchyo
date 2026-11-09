@@ -1,0 +1,22 @@
+{
+  "menu.network": "Net",
+  "menu.speedTest": "Hraðapróf",
+  "menu.lock": "Læsa",
+  "menu.suspend": "Svefn",
+  "menu.hibernate": "Dvala",
+  "menu.reboot": "Endurræsa",
+  "menu.shutdown": "Slökkva",
+  "menu.style": "Stíll",
+  "menu.theme": "Þema",
+  "menu.background": "Bakgrunnur",
+  "menu.font": "Leturgerð",
+  "menu.setup": "Uppsetning",
+  "menu.audio": "Hljóð",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Kveikja",
+  "menu.appearance": "Útlit",
+  "menu.system": "Kerfi",
+  "menu.learn": "Læra",
+  "menu.screenshot": "Skjámynd",
+  "menu.share": "Deila"
+}

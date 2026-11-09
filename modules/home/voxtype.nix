@@ -2,11 +2,11 @@
 # home-manager `services.voxtype` module: it writes ~/.config/voxtype/config.toml
 # and runs the `voxtype` user service. Recording is driven two ways (omarchy
 # parity): the daemon's evdev push-to-talk hotkey (hold F9 by default; see
-# marchyo.dictation.pushToTalk) and a Hyprland `voxtype record toggle` bind
-# (Super+Ctrl+X by default; see marchyo.dictation.toggleKey, wired in
-# modules/home/hyprland.nix). The evdev hotkey needs the user in the `input`
-# group, added by modules/nixos/dictation.nix. Gated on marchyo.dictation.enable;
-# Linux-only (Wayland dictation).
+# marchyo.dictation.pushToTalk) and the Alt+Space `marchyo dictation toggle`
+# bind (see marchyo.dictation.toggleKey, wired in modules/home/hyprland.nix).
+# The evdev hotkey needs the user in the `input` group, added by
+# modules/nixos/dictation.nix. Gated on marchyo.dictation.enable with
+# backend = "voxtype"; Linux-only (Wayland dictation).
 {
   lib,
   pkgs,
@@ -15,7 +15,10 @@
 }:
 let
   cfg = (osConfig.marchyo or { }).dictation or { };
-  enabled = pkgs.stdenv.hostPlatform.isLinux && (cfg.enable or false);
+  enabled =
+    pkgs.stdenv.hostPlatform.isLinux
+    && (cfg.enable or false)
+    && (cfg.backend or "superwhisper") == "voxtype";
 in
 {
   config = lib.mkIf enabled {

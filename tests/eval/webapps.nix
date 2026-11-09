@@ -131,4 +131,143 @@ in
       else
         throw "FAIL: custom webapps list did not replace the default entries"
     );
+
+  # Presets are off by default: no Microsoft 365 or Notion entries, no native
+  # Notion package.
+  eval-webapps-presets-off =
+    let
+      hm = (evalWith { }).config.home-manager.users.testuser;
+    in
+    pkgs.writeText "eval-webapps-presets-off" (
+      if
+        !((entries hm) ? "marchyo-webapp-outlook")
+        && !((entries hm) ? "marchyo-webapp-notion")
+        && !((entries hm) ? "marchyo-webapp-google-drive")
+        && !(lib.any (p: (p.pname or "") == "notion-app-enhanced") hm.home.packages)
+      then
+        "pass"
+      else
+        throw "FAIL: webapp presets are off by default but a preset entry or package is present"
+    );
+
+  # m365 adds six app-mode entries that carry no launch bind.
+  eval-webapps-presets-m365 =
+    let
+      hm = (evalWith { marchyo.webapps.presets.m365.enable = true; }).config.home-manager.users.testuser;
+      expected = {
+        marchyo-webapp-outlook = "https://outlook.office.com/mail/";
+        marchyo-webapp-word = "https://word.cloud.microsoft/";
+        marchyo-webapp-excel = "https://excel.cloud.microsoft/";
+        marchyo-webapp-powerpoint = "https://powerpoint.cloud.microsoft/";
+        marchyo-webapp-teams = "https://teams.cloud.microsoft/";
+        marchyo-webapp-onedrive = "https://www.office.com/launch/onedrive";
+      };
+      entryOk =
+        name: url: (entries hm) ? ${name} && lib.hasInfix "--app=${url}" (entries hm).${name}.exec;
+    in
+    pkgs.writeText "eval-webapps-presets-m365" (
+      if
+        lib.all (n: entryOk n expected.${n}) (builtins.attrNames expected)
+        && !(hasBindText hm "outlook.office.com")
+        && !(hasBindText hm "onedrive")
+      then
+        "pass"
+      else
+        throw "FAIL: m365 preset entries missing, mis-targeted, or carrying a launch bind"
+    );
+
+  # The selected web email client is registered without a preset.
+  eval-webapps-email-client =
+    let
+      hmOf = e: (evalWith { marchyo.defaults.email = e; }).config.home-manager.users.testuser;
+      outlook = hmOf "outlook";
+      aerc = hmOf "aerc";
+    in
+    pkgs.writeText "eval-webapps-email-client" (
+      if
+        (entries outlook) ? "marchyo-webapp-outlook"
+        && lib.hasInfix "--app=https://outlook.office.com/mail/" (entries outlook).marchyo-webapp-outlook.exec
+        && (entries (hmOf "gmail")) ? "marchyo-webapp-gmail"
+        && !((entries aerc) ? "marchyo-webapp-outlook")
+      then
+        "pass"
+      else
+        throw "FAIL: defaults.email did not register its web app (or aerc registered Outlook)"
+    );
+
+  # google adds thirteen app-mode entries that carry no launch bind.
+  eval-webapps-presets-google =
+    let
+      hm =
+        (evalWith { marchyo.webapps.presets.google.enable = true; }).config.home-manager.users.testuser;
+      expected = {
+        marchyo-webapp-gmail = "https://mail.google.com/";
+        marchyo-webapp-google-calendar = "https://calendar.google.com/";
+        marchyo-webapp-google-drive = "https://drive.google.com/";
+        marchyo-webapp-google-docs = "https://docs.google.com/document/";
+        marchyo-webapp-google-sheets = "https://docs.google.com/spreadsheets/";
+        marchyo-webapp-google-slides = "https://docs.google.com/presentation/";
+        marchyo-webapp-google-meet = "https://meet.google.com/";
+        marchyo-webapp-google-chat = "https://chat.google.com/";
+        marchyo-webapp-google-keep = "https://keep.google.com/";
+        marchyo-webapp-google-forms = "https://docs.google.com/forms/";
+        marchyo-webapp-google-sites = "https://sites.google.com/";
+        marchyo-webapp-google-contacts = "https://contacts.google.com/";
+        marchyo-webapp-google-tasks = "https://tasks.google.com/";
+      };
+      entryOk =
+        name: url: (entries hm) ? ${name} && lib.hasInfix "--app=${url}" (entries hm).${name}.exec;
+    in
+    pkgs.writeText "eval-webapps-presets-google" (
+      if
+        lib.all (n: entryOk n expected.${n}) (builtins.attrNames expected)
+        && !(hasBindText hm "drive.google.com")
+        && !(hasBindText hm "docs.google.com")
+      then
+        "pass"
+      else
+        throw "FAIL: google preset entries missing, mis-targeted, or carrying a launch bind"
+    );
+
+  # notion without unfree (the default) falls back to a web app and installs no
+  # package.
+  eval-webapps-presets-notion-webapp =
+    let
+      hm =
+        (evalWith {
+          marchyo.webapps.presets.notion.enable = true;
+          nixpkgs.config.allowUnfree = lib.mkForce false;
+        }).config.home-manager.users.testuser;
+      entry = (entries hm)."marchyo-webapp-notion" or null;
+    in
+    pkgs.writeText "eval-webapps-presets-notion-webapp" (
+      if
+        entry != null
+        && lib.hasInfix "--app=https://www.notion.so/" entry.exec
+        && !(lib.any (p: (p.pname or "") == "notion-app-enhanced") hm.home.packages)
+      then
+        "pass"
+      else
+        throw "FAIL: notion preset without unfree did not produce the Notion web app"
+    );
+
+  # With unfree allowed on x86_64-linux, notion installs the native app and no
+  # web app entry. Other platforms keep the web app.
+  eval-webapps-presets-notion-native =
+    let
+      hm =
+        (evalWith {
+          marchyo.webapps.presets.notion.enable = true;
+          nixpkgs.config.allowUnfree = true;
+        }).config.home-manager.users.testuser;
+      native = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+      hasNative = lib.any (p: (p.pname or "") == "notion-app-enhanced") hm.home.packages;
+      hasWebapp = (entries hm) ? "marchyo-webapp-notion";
+    in
+    pkgs.writeText "eval-webapps-presets-notion-native" (
+      if hasNative == native && hasWebapp == !native then
+        "pass"
+      else
+        throw "FAIL: notion preset with unfree picked the wrong branch for this platform"
+    );
 }

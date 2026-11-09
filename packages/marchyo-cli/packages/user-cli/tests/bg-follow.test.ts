@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import parity from "../../core/tests/fixtures/theme-parity.json";
 
 // `marchyo bg set` / `bg next` under marchyo.theme.followWallpaper, end to end
 // against a fake home: a manifest carrying the flag, a build-variant theme
@@ -43,35 +44,10 @@ const matugenJson = JSON.stringify({
     Object.entries(slots).map(([k, v]) => [k, { default: { color: v } }]),
   ),
 });
-// The token set the generated surfaces resolve (as in theme.test.ts).
+// The shared token set the generated surfaces resolve.
 const palette = {
-  tokens: {
-    bg: "#0c0f14",
-    text: "#d1d4dc",
-    accent: "#f5a351",
-    "accent-hover": "#ffb063",
-    "accent-subtle": "#281604",
-    "border-strong": "#3f4754",
-    border: "#242c37",
-    surface: "#1c1f24",
-    "status-err": "#ff8271",
-    "text-heading": "#e7ebf2",
-    "text-muted": "#878b91",
-    "syn-variable": "#00a3ee",
-  },
-  tokenSlots: {
-    bg: "base00",
-    text: "base05",
-    accent: "base09",
-    "accent-hover": "base09",
-    "accent-subtle": "base01",
-    "border-strong": "base04",
-    border: "base03",
-    surface: "base02",
-    "status-err": "base08",
-    "text-heading": "base06",
-    "text-muted": "base04",
-  },
+  tokens: parity.palette.tokens,
+  tokenSlots: parity.palette.tokenSlots,
 };
 
 type Fixture = {

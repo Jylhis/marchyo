@@ -7,14 +7,13 @@
 }:
 let
   inherit (lib) mkIf mkEnableOption;
-  hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
   cfg = config.marchyo.keybindingsHelp;
   desktopEnabled =
     pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
 
-  # Cheatsheet logic lives in the marchyo CLI (`marchyo keybindings`); reading
-  # binds at runtime keeps the sheet in sync with the actual running config,
-  # including downstream-added binds. fzf is the CLI's presentation dependency.
+  # The cheat sheet is `marchyo keybindings`: it lists marchyo/keybindings.json,
+  # which modules/home/keybinds.nix writes from the bind table, plus any
+  # described bind added downstream (from `hyprctl binds`). fzf presents it.
 in
 {
   options.marchyo.keybindingsHelp = {
@@ -25,11 +24,5 @@ in
 
   config = mkIf (desktopEnabled && cfg.enable) {
     home.packages = [ pkgs.fzf ];
-
-    # Reuse the existing floating-terminal class so the overlay picks up the
-    # centered floating-window rule from hyprland.nix without a new windowrule.
-    wayland.windowManager.hyprland.settings.bind = [
-      (hlua.bindd "SUPER + K" "Keybindings cheat sheet" (hlua.execInTerminal "marchyo keybindings"))
-    ];
   };
 }

@@ -32,8 +32,8 @@ let
   hasScript = hm: n: lib.any (lib.hasInfix n) (scriptNames hm);
 in
 {
-  # Menus default on with the desktop: the binds dispatch the marchyo CLI
-  # menus and the gum tool closure is installed (the marchyo-menu /
+  # Menus default on with the desktop: the binds open the shell's command
+  # menu (the gum TUI binds apply without the shell) and the gum tool closure is installed (the marchyo-menu /
   # marchyo-power-menu scripts were absorbed into the CLI).
   eval-menus-enabled =
     let
@@ -41,8 +41,8 @@ in
     in
     pkgs.writeText "eval-menus-enabled" (
       if
-        hasBind hm "SUPER + Escape" "-e marchyo menu power"
-        && hasBind hm "SUPER + ALT + Space" "-e marchyo menu"
+        hasBind hm "SUPER + Escape" "marchyo:menu.system"
+        && hasBind hm "SUPER + SPACE" "marchyo:menu"
         && hasScript hm "gum"
         && !(hasScript hm "marchyo-power-menu")
       then

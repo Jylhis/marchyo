@@ -37,13 +37,7 @@ let
           default = null;
           example = 501;
           description = ''
-            Numeric user id. On NixOS this sets `users.users.<name>.uid`.
-            On nix-darwin, providing the uid opts the user into
-            `users.knownUsers` so marchyo can manage the login shell (bash)
-            declaratively. It must match the account's existing uid (the first
-            macOS user is 501) — a mismatch aborts nix-darwin activation.
-            When unset, the login shell on macOS is left unmanaged; bash is
-            still registered in /etc/shells for a manual `chsh`.
+            Numeric user id. This sets `users.users.<name>.uid`.
           '';
         };
       };

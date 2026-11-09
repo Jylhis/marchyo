@@ -1,0 +1,22 @@
+{
+  "menu.network": "Jaringan",
+  "menu.speedTest": "Uji Kecepatan",
+  "menu.lock": "Kunci",
+  "menu.suspend": "Tangguhkan",
+  "menu.hibernate": "Hibernasi",
+  "menu.reboot": "Mulai Ulang",
+  "menu.shutdown": "Matikan",
+  "menu.style": "Gaya",
+  "menu.theme": "Tema",
+  "menu.background": "Latar Belakang",
+  "menu.font": "Font",
+  "menu.setup": "Pengaturan",
+  "menu.audio": "Audio",
+  "menu.bluetooth": "Bluetooth",
+  "menu.trigger": "Pemicu",
+  "menu.appearance": "Tampilan",
+  "menu.system": "Sistem",
+  "menu.learn": "Belajar",
+  "menu.screenshot": "Tangkapan Layar",
+  "menu.share": "Bagikan"
+}

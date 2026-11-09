@@ -25,6 +25,17 @@ in
         marchyo.theme.variant = "light";
       });
 
+  # The loader menu is hidden by default (timeout 0), and a host can raise it.
+  eval-plymouth-boot-menu-hidden = testNixOSCheck "plymouth-boot-menu-hidden" (
+    c: c.boot.loader.timeout == 0
+  ) (withTestUser { });
+
+  eval-plymouth-boot-timeout-override =
+    testNixOSCheck "plymouth-boot-timeout-override" (c: c.boot.loader.timeout == 3)
+      (withTestUser {
+        boot.loader.timeout = 3;
+      });
+
   # Everything plymouth.nix sets is mkDefault — a consumer can switch it off.
   eval-plymouth-opt-out =
     testNixOSCheck "plymouth-opt-out" (c: !c.boot.plymouth.enable)

@@ -12,11 +12,29 @@ let
   hasNvidia = builtins.elem "nvidia" cfg.vendors;
   isHybrid = cfg.prime.enable && (hasIntel || hasAmd) && hasNvidia;
   isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  isTuring = cfg.nvidia.generation == "turing-or-newer";
 
   # Backward compatibility: empty vendors on x86 defaults to Intel behavior.
   legacyIntel = cfg.vendors == [ ] && isX86;
 
   hasAnyGpu = hasIntel || hasAmd || hasNvidia || legacyIntel;
+
+  # On hybrid laptops in offload or reverse-sync mode the iGPU drives the
+  # panel, and forcing NVIDIA's VA-API/GLX/GBM drivers globally breaks
+  # Mesa clients such as Chromium (black video).
+  nvidiaDrivesDisplay =
+    hasNvidia && ((!hasIntel && !hasAmd) || (isHybrid && cfg.prime.mode == "sync"));
+  nvidiaVaapi = nvidiaDrivesDisplay && isTuring;
+  amdPrimary = hasAmd && !hasIntel && !nvidiaVaapi;
+
+  mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
+
+  nvidiaModules = [
+    "nvidia"
+    "nvidia_modeset"
+    "nvidia_uvm"
+    "nvidia_drm"
+  ];
 in
 {
   config = lib.mkMerge [
@@ -45,7 +63,7 @@ in
         intel-compute-runtime
       ];
 
-      environment.sessionVariables = {
+      environment.sessionVariables = lib.mkIf (!nvidiaVaapi) {
         LIBVA_DRIVER_NAME = lib.mkDefault "iHD";
       };
     })
@@ -54,9 +72,9 @@ in
       hardware.amdgpu = {
         initrd.enable = lib.mkDefault true;
         opencl.enable = lib.mkDefault true;
+        overdrive.enable = lib.mkDefault cfg.amd.overdrive.enable;
       };
 
-      # Only ROCm/OpenCL is needed here; Mesa handles VA-API/Vulkan natively.
       hardware.graphics.extraPackages = with pkgs; [
         rocmPackages.clr.icd
       ];
@@ -64,11 +82,36 @@ in
       environment.systemPackages = with pkgs; [
         rocmPackages.rocminfo
       ];
+    })
 
-      environment.sessionVariables = {
+    (lib.mkIf (hasAmd && cfg.amd.vaapi.enable) {
+      environment.systemPackages = [ pkgs.libva-utils ];
+
+      environment.sessionVariables = lib.mkIf amdPrimary {
         LIBVA_DRIVER_NAME = lib.mkDefault "radeonsi";
         VDPAU_DRIVER = lib.mkDefault "radeonsi";
       };
+    })
+
+    (lib.mkIf (hasAmd && cfg.amd.rocm.enable) {
+      hardware.amdgpu.opencl.enable = true;
+
+      environment.systemPackages = [ pkgs.rocmPackages.clr ];
+
+      systemd.tmpfiles.rules = [
+        "L+ /opt/rocm/hip - - - - ${pkgs.rocmPackages.clr}"
+      ];
+
+      environment.sessionVariables = lib.mkIf (cfg.amd.rocm.hsaOverrideGfxVersion != null) {
+        HSA_OVERRIDE_GFX_VERSION = cfg.amd.rocm.hsaOverrideGfxVersion;
+      };
+
+      users.users = lib.genAttrs mUsers (_name: {
+        extraGroups = [
+          "render"
+          "video"
+        ];
+      });
     })
 
     (lib.mkIf hasNvidia {
@@ -76,37 +119,33 @@ in
 
       hardware.nvidia = {
         modesetting.enable = true;
+        package = lib.mkDefault config.boot.kernelPackages.nvidiaPackages.${cfg.nvidia.package};
         open = lib.mkDefault cfg.nvidia.open;
         nvidiaSettings = lib.mkDefault true;
         powerManagement.enable = lib.mkDefault cfg.nvidia.powerManagement;
       };
 
+      hardware.nvidia-container-toolkit.enable = lib.mkDefault cfg.nvidia.containerToolkit.enable;
+
       hardware.graphics.extraPackages = with pkgs; [
         nvidia-vaapi-driver
       ];
 
-      environment.sessionVariables = {
-        __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
-        # Direct backend performs better for nvidia-vaapi-driver.
-        NVD_BACKEND = lib.mkDefault "direct";
-        # nvidia-drm GBM backend is needed for Wayland compositors.
-        GBM_BACKEND = lib.mkDefault "nvidia-drm";
-      };
+      environment.sessionVariables = lib.mkMerge [
+        {
+          NVD_BACKEND = lib.mkDefault (if isTuring then "direct" else "egl");
+        }
+        (lib.mkIf nvidiaDrivesDisplay {
+          __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
+          GBM_BACKEND = lib.mkDefault "nvidia-drm";
+        })
+        (lib.mkIf nvidiaVaapi {
+          LIBVA_DRIVER_NAME = lib.mkDefault "nvidia";
+        })
+      ];
 
       # Early kernel module loading prevents race conditions with display manager.
-      boot.initrd.kernelModules = [
-        "nvidia"
-        "nvidia_modeset"
-        "nvidia_uvm"
-        "nvidia_drm"
-      ];
-    })
-
-    # NVIDIA-only VA-API (when no Intel/AMD iGPU for decode)
-    (lib.mkIf (hasNvidia && !hasIntel && !hasAmd) {
-      environment.sessionVariables = {
-        LIBVA_DRIVER_NAME = lib.mkDefault "nvidia";
-      };
+      boot.initrd.kernelModules = nvidiaModules;
     })
 
     (lib.mkIf isHybrid {
@@ -143,6 +182,19 @@ in
       ];
     })
 
+    (lib.mkIf (isHybrid && cfg.prime.integratedOnlySpecialisation) {
+      specialisation.integrated-only.configuration = {
+        system.nixos.tags = [ "integrated-only" ];
+        marchyo.graphics = {
+          vendors = lib.mkForce (lib.remove "nvidia" cfg.vendors);
+          prime.enable = lib.mkForce false;
+          prime.integratedOnlySpecialisation = lib.mkForce false;
+          nvidia.containerToolkit.enable = lib.mkForce false;
+        };
+        boot.blacklistedKernelModules = nvidiaModules ++ [ "nouveau" ];
+      };
+    })
+
     {
       warnings = lib.optionals (legacyIntel && config.marchyo.desktop.enable) [
         "marchyo.graphics.vendors is empty on x86_64. This defaults to Intel behavior. Set vendors explicitly (e.g. [\"nvidia\"] or [\"amd\"])."
@@ -164,6 +216,22 @@ in
         {
           assertion = cfg.prime.enable && hasAmd && !hasIntel -> (cfg.prime.amdgpuBusId != "");
           message = "PRIME with AMD requires marchyo.graphics.prime.amdgpuBusId to be set";
+        }
+        {
+          assertion = cfg.prime.integratedOnlySpecialisation -> cfg.prime.enable;
+          message = "marchyo.graphics.prime.integratedOnlySpecialisation requires marchyo.graphics.prime.enable";
+        }
+        {
+          assertion = hasNvidia && cfg.nvidia.open -> isTuring;
+          message = ''marchyo.graphics.nvidia.open = true requires a Turing or newer GPU; set nvidia.open = false or nvidia.generation = "turing-or-newer"'';
+        }
+        {
+          assertion = cfg.nvidia.containerToolkit.enable -> hasNvidia;
+          message = ''marchyo.graphics.nvidia.containerToolkit.enable requires "nvidia" in marchyo.graphics.vendors'';
+        }
+        {
+          assertion = cfg.amd.rocm.enable -> hasAmd;
+          message = ''marchyo.graphics.amd.rocm.enable requires "amd" in marchyo.graphics.vendors'';
         }
       ];
     }

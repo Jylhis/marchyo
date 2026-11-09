@@ -6,27 +6,7 @@ default:
 check:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ "$(uname)" == "Darwin" ]]; then
-      # nix flake check deeply evaluates all nixosConfigurations, which
-      # requires Linux builders unavailable on macOS. Evaluate only the
-      # outputs that are buildable on the current platform.
-      echo "darwin: evaluating module exports..."
-      nix eval .#nixosModules  --apply builtins.attrNames > /dev/null
-      nix eval .#darwinModules --apply builtins.attrNames > /dev/null
-      nix eval .#homeManagerModules --apply builtins.attrNames > /dev/null
-      echo "darwin: evaluating darwin configurations..."
-      for cfg in $(nix eval .#darwinConfigurations --apply builtins.attrNames --json | nix run nixpkgs#jq -- -r '.[]'); do
-        # `--apply 'd: d.drvPath'`, not '(_: "ok")': the latter discards its
-        # argument, so the toplevel was never forced and a configuration whose
-        # packages fail to evaluate still passed this gate.
-        nix eval --raw ".#darwinConfigurations.$cfg.config.system.build.toplevel" --apply 'd: d.drvPath' > /dev/null
-        echo "  ok: darwinConfigurations.$cfg"
-      done
-      echo "darwin: checking formatter..."
-      nix build --dry-run .#formatter."$(nix eval --impure --raw --expr builtins.currentSystem)" 2>/dev/null
-    else
-      nix flake check --no-build
-    fi
+    nix flake check --no-build
     statix check .
     deadnix --fail --exclude .devenv result .
 
@@ -38,11 +18,7 @@ fmt:
 build-nixos config="x86_64":
     nix build .#nixosConfigurations.{{config}}.config.system.build.toplevel
 
-# Build Darwin configuration (config: aarch64, x86_64)
-build-darwin config="aarch64":
-    nix build .#darwinConfigurations.{{config}}.config.system.build.toplevel
-
-# Build Home Manager configuration (config: x86_64-linux, aarch64-linux, aarch64-darwin, x86_64-darwin)
+# Build Home Manager configuration (config: x86_64-linux, aarch64-linux)
 build-home config="x86_64-linux":
     nix build .#homeConfigurations.{{config}}.activationPackage
 

@@ -1,6 +1,9 @@
 import { test, expect, afterAll } from "bun:test";
 import { join } from "node:path";
-import { existsSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { diskSpeedtestArgv } from "../src/commands/menu.ts";
+import { checkPanelBinds } from "../src/commands/doctor.ts";
 
 // Clean up any state file the smoke tests below may have written.
 // Running as root (e.g. in a CI sandbox) writes go to /etc/marchyo;
@@ -35,6 +38,7 @@ async function run(
     env: {
       ...process.env,
       NO_COLOR: "1",
+      XDG_DATA_HOME: "/nonexistent/marchyo-cli-test-data",
       // Force the CLI's stdout to look like a non-TTY so animation/color stay off.
       ...env,
     },
@@ -50,6 +54,22 @@ test("--help exits 0 and shows Examples block", async () => {
   expect(r.code).toBe(0);
   expect(r.stdout).toContain("Examples:");
   expect(r.stdout).toContain("marchyo status");
+});
+
+test("monitor workspaces reset clears the workspace block cache", async () => {
+  const dir = `/tmp/marchyo-ws-reset-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const monitors = join(dir, "marchyo", "monitors");
+  Bun.spawnSync(["mkdir", "-p", monitors]);
+  writeFileSync(join(monitors, "workspaces"), "0\teDP-1\tBOE panel\n");
+  writeFileSync(join(monitors, "workspaces-merged"), "11\t1\tBOE panel\n");
+  const r = await run(["monitor", "workspaces", "reset"], {
+    XDG_STATE_HOME: dir,
+    HYPRLAND_INSTANCE_SIGNATURE: "",
+  });
+  expect(r.code).toBe(0);
+  expect(existsSync(join(monitors, "workspaces"))).toBe(false);
+  expect(existsSync(join(monitors, "workspaces-merged"))).toBe(false);
+  rmSync(dir, { recursive: true, force: true });
 });
 
 test("--version exits 0", async () => {
@@ -356,7 +376,7 @@ test("diff --dry-run prints a dix command or fails gracefully off-NixOS", async 
   const r = await run(["diff", "-n"]);
   if (r.code === 0) {
     // On a NixOS host: either a dix command or the single-generation notice.
-    expect(r.stdout + r.stderr).toMatch(/dix |nothing to diff/);
+    expect(r.stdout + r.stderr).toMatch(/dix diff |nothing to diff/);
   } else {
     // Sandbox without /nix: graceful error, no stack trace.
     expect(r.code).toBe(1);
@@ -438,7 +458,7 @@ test("runtime restore skips unknown override keys with a warning", async () => {
     }) + "\n",
   );
   const r = await run(["runtime", "restore"], env);
-  expect(r.code).toBe(0);
+  expect(r.code).toBe(1);
   expect(r.stderr).toContain("no handler registered");
   expect(r.stderr).toContain("restored 0/1");
 });
@@ -545,10 +565,28 @@ test("zoom with a bad direction exits 2", async () => {
   expect(r.stderr).toContain("invalid zoom direction");
 });
 
-test("menu with an unknown submenu exits 2", async () => {
-  const r = await run(["menu", "snacks"]);
+test("menu with an unknown route and no shell falls back to the main gum menu", async () => {
+  const r = await run(["menu", "snacks"], { PATH: "" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("gum");
+});
+
+test("menu select parses as a subcommand and rejects a bad width", async () => {
+  const r = await run(["menu", "select", "--width", "wide"], { PATH: "" });
   expect(r.code).toBe(2);
-  expect(r.stderr).toContain("unknown menu");
+  expect(r.stderr).toContain("--width");
+});
+
+test("menu input without the shell exits 2 and --tui does not hide a missing gum", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "menu-input-"));
+  try {
+    const plain = await run(["menu", "input"], { PATH: "", XDG_RUNTIME_DIR: dir });
+    expect(plain.code).toBe(2);
+    const tui = await run(["menu", "input", "--tui"], { PATH: "", XDG_RUNTIME_DIR: dir });
+    expect(tui.code).toBe(1);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("powerprofile set with a bad profile exits 2", async () => {
@@ -569,13 +607,17 @@ test("keybindings outside Hyprland fails cleanly", async () => {
   // Empty, not absent: hyprlandAvailable treats "" as no session, and an
   // inherited signature from the developer's own Hyprland would make this
   // succeed and assert nothing.
-  const r = await run(["keybindings"], { HYPRLAND_INSTANCE_SIGNATURE: "" });
+  // A generated sheet in the real config dir would also make it succeed.
+  const r = await run(["keybindings"], {
+    HYPRLAND_INSTANCE_SIGNATURE: "",
+    XDG_CONFIG_HOME: "/nonexistent",
+  });
   expect(r.code).toBe(1);
   expect(r.stderr.length).toBeGreaterThan(0);
 });
 
 test("info with an unknown topic exits 2", async () => {
-  const r = await run(["info", "weather"]);
+  const r = await run(["info", "nonexistent"]);
   expect(r.code).toBe(2);
   expect(r.stderr).toContain("unknown info");
 });
@@ -790,11 +832,9 @@ test("security enroll with an unknown method exits 2", async () => {
 });
 
 test("security enroll fido2 without pamu2fcfg names the option", async () => {
-  const r = await run(["security", "enroll", "fido2"]);
-  if (r.code !== 0) {
-    expect(r.code).toBe(1);
-    expect(r.stderr).toContain("marchyo.security.fido2.enable");
-  }
+  const r = await run(["security", "enroll", "fido2"], { PATH: "/nonexistent" });
+  expect(r.code).toBe(1);
+  expect(r.stderr).toContain("marchyo.security.fido2.enable");
 });
 
 test("--color=always with FORCE_COLOR override emits ANSI even when piped", async () => {
@@ -913,6 +953,7 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     ["shell", "bar", "off"],
     ["shell", "dismiss"],
     ["shell", "dismiss", "--all"],
+    ["shell", "notify-keys"],
     ["shell", "dnd"],
     ["shell", "dnd", "on"],
     ["shell", "lock"],
@@ -934,6 +975,7 @@ test("shell toggle/open/close/launcher map onto the IpcHandler functions", async
     "marchyo-shell ipc -n call -- shell setBar off",
     "marchyo-shell ipc -n call -- shell dismissLast",
     "marchyo-shell ipc -n call -- shell clearNotifications",
+    "marchyo-shell ipc -n call -- shell notifyKeyboard",
     "marchyo-shell ipc -n call -- shell toggleDnd",
     "marchyo-shell ipc -n call -- shell setDnd on",
     "marchyo-shell ipc -n call -- shell lock",
@@ -1182,6 +1224,22 @@ test("brightness still succeeds when the shell is not running", async () => {
   expect((await run(["brightness", "down"], { PATH: s.bin })).code).toBe(0);
 });
 
+test("brightness --keyboard rejects a bad action", async () => {
+  const r = await run(["brightness", "--keyboard", "sideways"], { PATH: "" });
+  expect(r.code).toBe(2);
+});
+
+test("keyboard backlight argv", async () => {
+  const m = await import("../src/commands/media.ts");
+  expect(m.pickKeyboardLed(["phy0-led", "tpacpi::kbd_backlight"])).toBe(
+    "tpacpi::kbd_backlight",
+  );
+  expect(m.pickKeyboardLed(["phy0-led"])).toBeNull();
+  expect(m.keyboardBrightnessArgv("d", "up", 0).slice(-1)[0]).toBe("10%+");
+  expect(m.keyboardBrightnessArgv("d", "toggle", 2).slice(-1)[0]).toBe("0");
+  expect(m.keyboardBrightnessArgv("d", "toggle", 0).slice(-1)[0]).toBe("100%");
+});
+
 test("brightness with a bad action exits 2", async () => {
   expect((await run(["brightness", "sideways"], { PATH: "" })).code).toBe(2);
 });
@@ -1250,4 +1308,20 @@ test("doctor text output labels each check PASS/FAIL/SKIP", async () => {
   expect(r.stdout).toMatch(/^PASS {2}shell ipc/m);
   expect(r.stdout).toMatch(/^SKIP {2}hyprland ipc/m);
   expect(r.stdout).toContain("1 check failed");
+});
+
+test("doctor panel bind check reads the cheat sheet", () => {
+  const sheet = [{ group: "Panels", combo: "Super+Ctrl+Alt+G", description: "Ui gallery (developer)" }];
+  expect(checkPanelBinds(false, sheet).status).toBe("skip");
+  expect(checkPanelBinds(true, null).status).toBe("skip");
+  expect(checkPanelBinds(true, sheet).status).toBe("pass");
+  expect(checkPanelBinds(true, []).status).toBe("warn");
+});
+
+test("disk speed test runs direct, incompressible fio jobs in the given directory", () => {
+  const argv = diskSpeedtestArgv("/tmp/x", "write");
+  expect(argv[0]).toBe("fio");
+  expect(argv).toContain("--directory=/tmp/x");
+  expect(argv).toContain("--rw=write");
+  expect(argv).toContain("--direct=1");
 });

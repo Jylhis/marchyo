@@ -1,6 +1,6 @@
 # marchyo.shell.settings schema: typed keys render to shell.json, unset typed
 # keys stay out of it, per-monitor overrides render under `monitors`, unknown
-# keys pass through, and the option tree still evaluates on darwin.
+# keys pass through.
 {
   helpers,
   lib,
@@ -10,7 +10,7 @@
   ...
 }:
 let
-  inherit (helpers) withTestUser testDarwinCheck withDarwinTestUser;
+  inherit (helpers) withTestUser;
 
   hmWith =
     extra:
@@ -43,6 +43,8 @@ in
           bar.layout.left = [ { id = "marchyo.clock"; } ];
           idle.lock = 600;
           caffeine.autoVideo = false;
+          clock.seconds = true;
+          battery.percentage = false;
         };
       });
     in
@@ -51,6 +53,8 @@ in
         bar.layout.left = [ { id = "marchyo.clock"; } ];
         idle.lock = 600;
         caffeine.autoVideo = false;
+        clock.seconds = true;
+        battery.percentage = false;
       }
     ) "typed shell settings did not render exactly to shell.json: ${builtins.toJSON json}";
 
@@ -132,6 +136,25 @@ in
       }
     ) "bar.style did not render to shell.json: ${builtins.toJSON json}";
 
+  # The centre group renders as three sections beside left and right.
+  eval-shell-settings-center-sections =
+    let
+      json = shellJsonOf (hmWith {
+        marchyo.shell.settings.bar.layout = {
+          centerBegin = [ { id = "marchyo.media"; } ];
+          center = [ { id = "marchyo.clock"; } ];
+          centerEnd = [ { id = "marchyo.dnd"; } ];
+        };
+      });
+    in
+    check "eval-shell-settings-center-sections" (
+      json.bar.layout == {
+        centerBegin = [ { id = "marchyo.media"; } ];
+        center = [ { id = "marchyo.clock"; } ];
+        centerEnd = [ { id = "marchyo.dnd"; } ];
+      }
+    ) "centerBegin/center/centerEnd did not render to shell.json: ${builtins.toJSON json}";
+
   # bar.style is a closed enum: an unknown look is rejected at eval.
   eval-shell-settings-bar-style-checked =
     let
@@ -167,33 +190,31 @@ in
       !bad.success
     ) "idle.lock accepted a string; the typed option is not enforced";
 
-  # The option declarations are shared with darwin: the typed tree, including
-  # per-monitor overrides, must evaluate there.
-  eval-shell-settings-darwin =
-    testDarwinCheck "shell-settings-darwin"
-      (
-        cfg:
-        let
-          s = cfg.marchyo.shell.settings;
-        in
-        s.idle.lock == 600
-        && s.bar.style == "segmented"
-        && s.monitors."DP-1".bar.style == null
-        &&
-          s.monitors."DP-1".bar.layout.right == [
-            {
-              id = "marchyo.clock";
-              settings = null;
-            }
-          ]
-        && s.custom == 1
-      )
-      (withDarwinTestUser {
-        marchyo.shell.settings = {
-          idle.lock = 600;
-          bar.style = "segmented";
-          monitors."DP-1".bar.layout.right = [ { id = "marchyo.clock"; } ];
-          custom = 1;
-        };
+  # marchyo.shell.diskWarnPercent reaches the shell as health.diskWarnPercent,
+  # merged with the user's settings, and stays out of shell.json at its default.
+  eval-shell-settings-disk-warn =
+    let
+      json = shellJsonOf (hmWith {
+        marchyo.shell.diskWarnPercent = 20;
+        marchyo.shell.settings.idle.lock = 600;
       });
+    in
+    check "eval-shell-settings-disk-warn" (
+      json == {
+        idle.lock = 600;
+        health.diskWarnPercent = 20;
+      }
+    ) "diskWarnPercent did not render as health.diskWarnPercent: ${builtins.toJSON json}";
+
+  eval-shell-settings-disk-warn-range =
+    let
+      bad = builtins.tryEval (
+        builtins.deepSeq (shellJsonOf (hmWith {
+          marchyo.shell.diskWarnPercent = 100;
+        })) true
+      );
+    in
+    check "eval-shell-settings-disk-warn-range" (
+      !bad.success
+    ) "diskWarnPercent accepted 100; the range is not enforced";
 }

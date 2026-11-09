@@ -4,10 +4,7 @@
 let
   inherit (helpers)
     testNixOSCheck
-    testDarwinCheck
-    testDarwinCheckFor
     withTestUser
-    withDarwinTestUser
     ;
 in
 {
@@ -57,12 +54,6 @@ in
     (hm.programs.bash.shellAliases.cp or "") == "cp --reflink=auto"
   ) (withTestUser { });
 
-  # The reflink alias is GNU-only, so it must NOT leak onto darwin, whose
-  # interactive shell resolves to BSD cp (no --reflink flag).
-  eval-shell-darwin-no-cp-reflink = testDarwinCheck "shell-darwin-no-cp-reflink" (
-    cfg: !(cfg.home-manager.users.testuser.programs.bash.shellAliases ? cp)
-  ) (withDarwinTestUser { });
-
   # marchyo.users.<name>.uid flows into users.users.<name>.uid on NixOS.
   eval-shell-user-uid =
     testNixOSCheck "shell-user-uid" (cfg: cfg.users.users.seconduser.uid == 1501)
@@ -73,47 +64,5 @@ in
           email = "second@example.com";
           uid = 1501;
         };
-      });
-
-  # Darwin: bash 5.x registered in /etc/shells and the curated HM subset wired
-  # for marchyo users (bash + aliases + starship + ghostty ssh features).
-  eval-shell-darwin-bash = testDarwinCheck "shell-darwin-bash" (
-    cfg:
-    let
-      hm = cfg.home-manager.users.testuser;
-    in
-    # environment.shells entries are rewritten to /run/current-system/sw paths,
-    # so match the shellPath suffix rather than the store-path name.
-    builtins.any (s: lib.hasSuffix "/bin/bash" (toString s)) cfg.environment.shells
-    && hm.programs.bash.enable
-    && (hm.programs.bash.shellAliases ? g)
-    && hm.programs.starship.enable
-    && lib.hasInfix "ssh-terminfo" (
-      lib.concatStringsSep "," (lib.toList hm.programs.ghostty.settings.shell-integration-features)
-    )
-  ) (withDarwinTestUser { });
-
-  # x86_64-darwin rides the stable trio (nixpkgs 26.05 + home-manager
-  # release-26.05 + nix-darwin 26.05); prove the curated HM subset in
-  # modules/darwin/home.nix also resolves against the stable Home Manager.
-  eval-shell-darwin-stable-hm = testDarwinCheckFor "x86_64-darwin" "shell-darwin-stable-hm" (
-    cfg:
-    let
-      hm = cfg.home-manager.users.testuser;
-    in
-    hm.programs.bash.enable && (hm.programs.bash.shellAliases ? g) && hm.programs.git.enable
-  ) (withDarwinTestUser { });
-
-  # Darwin: providing a uid opts the user into users.knownUsers and switches
-  # the login shell to bash declaratively.
-  eval-shell-darwin-known-user =
-    testDarwinCheck "shell-darwin-known-user"
-      (
-        cfg:
-        builtins.elem "testuser" cfg.users.knownUsers
-        && lib.hasInfix "bash-interactive" (toString cfg.users.users.testuser.shell)
-      )
-      (withDarwinTestUser {
-        marchyo.users.testuser.uid = 501;
       });
 }

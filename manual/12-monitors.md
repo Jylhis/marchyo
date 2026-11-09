@@ -100,12 +100,7 @@ turn the laptop's built-in panel off. Press it again to bring the panel back. Fr
 terminal it's `marchyo monitor laptop-toggle`. To keep the built-in panel off
 permanently, give it `enable = false` in `marchyo.monitors`.
 
-Closing the lid suspends the machine, the system's standard behavior. If you've
-turned on hibernation with `marchyo.power.hibernation.enable`, closing the lid uses
-suspend-then-hibernate instead: the machine suspends first so it wakes quickly, then
-hibernates after 45 minutes so a longer break draws no power. Set
-`marchyo.power.hibernation.suspendThenHibernate = false` to keep plain suspend on
-lid close.
+Closing the lid suspends the machine unless an external display is connected; then the laptop panel turns off and the session keeps running on the external display (`marchyo.power.lid`).
 
 ## Brightness
 
