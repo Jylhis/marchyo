@@ -1,274 +1,46 @@
-# Marchyo Developer Workstation Template
+# Marchyo workstation template
 
-This is a full-featured developer workstation configuration with desktop environment and comprehensive development tools.
+A desktop and development workstation built on Marchyo.
 
-## Quick Start
-
-
-1. **Initialize your configuration**:
-   ```bash
-   nix flake init -t github:Jylhis/marchyo#workstation
-   ```
-
-2. **Generate hardware configuration**:
-   ```bash
-   nixos-generate-config --show-hardware-config > hardware-configuration.nix
-   ```
-
-3. **Customize configuration.nix**:
-   - Change `networking.hostName` to your workstation name
-   - Update `marchyo.users.developer` with your details
-   - Set `marchyo.timezone` / `marchyo.defaultLocale` if the defaults (`Europe/Zurich`, `en_US.UTF-8`) don't fit
-   - Development tooling is a single switch — set `marchyo.development.enable = false` if you don't want it
-
-4. **Build and switch**:
-   ```bash
-   sudo nixos-rebuild switch --flake .#workstation
-   ```
-
-   Or try it in a VM first (see [Run VM](#run-vm) below).
-
-
-## Included Features
-
-### Desktop Environment
-- Hyprland (Wayland compositor)
-- Complete desktop environment with all Marchyo customizations
-- Ghostty terminal
-
-### Development Tools
-
-#### Editors
-- Emacs by default
-- Switch via `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
-
-#### Version Control
-- Git with Git LFS
-- GitHub CLI (gh)
-
-#### Containers
-- Rootless Podman with podman-tui (or Docker)
-- buildah, skopeo
-- Virtualization (QEMU/KVM via libvirtd)
-
-#### Build & Debug
-- gnumake, cmake, gcc, pkg-config
-- jq, yq, nmap, tcpdump
-
-### Terminal Enhancement
-- Starship prompt
-- Zoxide (smart cd)
-- fzf (fuzzy finder)
-- ripgrep (fast grep)
-- fd (fast find)
-
-## Customization
-
-### Programming Languages
-
-Add your preferred programming languages:
-
-```nix
-environment.systemPackages = with pkgs; [
-  # Python
-  python3
-  python3Packages.pip
-  python3Packages.virtualenv
-
-  # Node.js
-  nodejs
-  yarn
-
-  # Rust
-  rustc
-  cargo
-
-  # Go
-  go
-
-  # Java
-  jdk17
-];
-```
-
-### IDE Integration
-
-#### VS Code Extensions
-
-Use Home Manager for VS Code extensions:
-
-```nix
-programs.vscode = {
-  enable = true;
-  extensions = with pkgs.vscode-extensions; [
-    ms-python.python
-    ms-vscode.cpptools
-    rust-lang.rust-analyzer
-  ];
-};
-```
-
-### Database Tools
-
-Add database clients and servers:
-
-```nix
-services.postgresql = {
-  enable = true;
-  package = pkgs.postgresql_15;
-};
-
-environment.systemPackages = with pkgs; [
-  pgcli
-  mysql-client
-  redis
-  mongodb-compass
-];
-```
-
-### Container Alternatives
-
-`marchyo.development.enable` provisions a container backend for you. It defaults
-to rootless Podman; switch to the rootful Docker daemon with a single option:
-
-```nix
-# Default: rootless Podman (daemonless, docker-compatible CLI)
-marchyo.development.containers.backend = "podman";
-
-# Opt into the classic Docker daemon instead
-marchyo.development.containers.backend = "docker";
-```
-
-### Custom Development Shells
-
-Create project-specific shells with direnv:
-
-```nix
-programs.direnv = {
-  enable = true;
-  nix-direnv.enable = true;
-};
-```
-
-Then in your project directory, create a `.envrc`:
+## Install
 
 ```bash
-use flake
+nix flake init -t github:Jylhis/marchyo#workstation
+nixos-generate-config --show-hardware-config > hardware-configuration.nix
 ```
 
-## Workspace Organization
+Edit `configuration.nix`: the host name, `marchyo.users.developer` (rename it
+and `users.users.developer` to your user name), and `system.stateVersion` if
+you installed a different NixOS release. Then build and switch:
 
-### Multiple Monitors
-
-Hyprland configuration is in Marchyo modules. Override in your home configuration:
-
-```nix
-wayland.windowManager.hyprland.settings = {
-  monitor = [
-    "DP-1,1920x1080@60,0x0,1"
-    "HDMI-A-1,1920x1080@60,1920x0,1"
-  ];
-};
+```bash
+sudo nixos-rebuild switch --flake .#workstation
 ```
 
-### Productivity Apps
+To try it in a VM first:
 
-Add productivity applications:
-
-```nix
-environment.systemPackages = with pkgs; [
-  # Communication
-  slack
-  discord
-  zoom-us
-
-  # Browsers
-  firefox
-  chromium
-
-  # Note-taking
-  obsidian
-  joplin-desktop
-
-  # Office
-  libreoffice-fresh
-  thunderbird
-];
+```bash
+nixos-rebuild build-vm --flake .#workstation
+./result/bin/run-workstation-vm
 ```
 
-## Performance Tuning
+## What you get
 
-### SSD Optimization
+- `marchyo.desktop.enable`: Hyprland, the Marchyo shell, Ghostty, the Jylhis
+  theme, office and media apps.
+- `marchyo.development.enable`: Git with LFS, GitHub CLI, rootless Podman
+  (set `marchyo.development.containers.backend = "docker"` for Docker),
+  libvirt/QEMU, direnv with nix-direnv, and build tools.
 
-For systems with SSD:
+Pick editors with `marchyo.defaults.editor` and
+`marchyo.defaults.terminalEditor`, and describe displays with
+`marchyo.monitors`.
 
-```nix
-services.fstrim.enable = true;
-```
-
-### Gaming Performance
-
-If you also game on this workstation:
-
-```nix
-programs.gamemode.enable = true;
-hardware.graphics = {
-  enable = true;
-  enable32Bit = true;
-};
-```
-
-## Backup Strategy
-
-Set up automatic backups:
-
-```nix
-services.restic.backups.home = {
-  paths = [ "/home/developer" ];
-  repository = "s3:s3.amazonaws.com/my-backup-bucket";
-  passwordFile = "/etc/nixos/secrets/restic-password";
-  timerConfig = {
-    OnCalendar = "daily";
-  };
-};
-```
-
-## Updating
-
-Update your workstation:
+## Update
 
 ```bash
 nix flake update
 sudo nixos-rebuild switch --flake .#workstation
 ```
 
-## Troubleshooting
-
-### Docker Issues
-
-If Docker services fail to start:
-```bash
-sudo systemctl restart docker
-```
-
-### Display Issues
-
-Check Hyprland logs:
-```bash
-journalctl --user -u hyprland
-```
-
-### Performance Monitoring
-
-Monitor system resources:
-```bash
-btop  # Modern resource monitor
-htop  # Classic resource monitor
-```
-
-## Run VM
-
-```shell
-nixos-rebuild build-vm --flake .#workstation
-./result/bin/run-workstation-vm
-```
+The [Marchyo manual](https://marchyo.org/docs/) covers everything else.

@@ -10,9 +10,8 @@
   outputs =
     inputs@{ marchyo, ... }:
     {
-      # marchyo.lib.mkNixosSystem selects the correct nixpkgs (unstable),
-      # home-manager, overlay and marchyo modules automatically — you
-      # supply only your own config module.
+      # mkNixosSystem brings nixpkgs, Home Manager, the overlay and the
+      # marchyo modules; supply only your own modules.
       nixosConfigurations.workstation = marchyo.lib.mkNixosSystem {
         system = "x86_64-linux";
         modules = [ ./configuration.nix ];
