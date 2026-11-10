@@ -4,13 +4,22 @@
 
 ```bash
 # Justfile recipes (preferred workflow)
-just check               # Lint + eval checks (nix flake check --no-build, statix, deadnix)
+just check               # nix flake check --no-build, then statix and deadnix
 just check-full          # nix flake check, then build every heavy check
-just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
+just fmt                 # nix fmt: nixfmt, deadnix, statix, shellcheck, yamlfmt, typos, actionlint, qmlformat, qmllint
 just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
+just iso                 # Build an installer ISO (variant: minimal, graphical)
 just update              # nix flake update
 just run                 # Run default configuration VM (x86_64-linux only)
 just vm                  # Alias for just run
+just cli-test            # marchyo-cli: frozen Bun install, typecheck, unit tests
+just cli-repin           # Re-pin the marchyo-cli node_modules hash after bun.lock changes
+just site-dev            # Website dev server
+just site-build          # Website install, Astro check and build
+just sbom                # CycloneDX/SPDX SBOM of the reference system
+just vuln-scan           # Scan the reference closure for known CVEs (needs network)
+just security-vm         # Boot the reference system in a VM and run hardening scanners
+just security-scan       # sbom + vuln-scan + security-vm
 
 # Direct Nix commands
 nix flake check          # Validate configuration and run all tests
@@ -60,6 +69,6 @@ All changes must pass `just check` (or `nix flake check`).
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 
-`.github/workflows/site.yml` is a credential-free build gate for the Astro website (`site/`, landing page + Starlight docs): PRs and main pushes touching `site/**` run `bun run check` + `bun run build`. Deployment is handled outside GitHub Actions by the Cloudflare Workers Builds git integration (Worker `marchyo-site`, root directory `site`), which builds and deploys to https://marchyo.org on push to `main` — no repo secrets involved.
+`.github/workflows/site.yml` is a credential-free build gate for the Astro website (`site/`, landing page + Starlight docs): PRs and main pushes touching `site/**`, `manual/**` or the workflow file run `npm ci`, `npm run check` and `npm run build`. Deployment is handled outside GitHub Actions by the Cloudflare Workers Builds git integration (Worker `marchyo-site`, root directory `site`), which builds and deploys to https://marchyo.org on push to `main` — no repo secrets involved.
 
 Uses [Cachix](https://app.cachix.org) (`jylhis` cache) to speed up builds. Dependabot groups all `nix` and `github-actions` bumps into single weekly PRs.

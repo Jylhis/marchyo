@@ -66,14 +66,16 @@ contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.t
 
 | Group       | Commands |
 |-------------|----------|
-| System      | `status`, `rebuild`, `update`, `upgrade`, `rollback`, `gc`, `diff`, `debug` |
-| Theme       | `theme list\|get\|set <name>\|next`, `theme gaps\|bar-position\|bar-background\|icons`, `bg set\|list\|next` (`dark`/`light` alias the Jylhis pair; `--rebuild` is a deprecated alias for `--apply`) |
-| Toggle      | `toggle <name> [on\|off] [--status\|--apply\|--revert]` — gaps, transparency, reduce-motion (`--apply` persists), nightlight, waybar, touchpad, touchscreen, idle, screensaver, notifications, suspend, hybrid-gpu (`--apply`-only) |
+| System      | `status`, `rebuild`, `update`, `upgrade`, `rollback`, `gc`, `diff`, `debug`, `doctor`, `whats-new`, `setup`, `setup fix <id>` |
+| Theme       | `theme list\|get\|set <name>\|next`, `theme generate [image]`, `theme transparency\|corners [mode]`, `theme gaps\|bar-position\|bar-background\|icons`, `bg set\|list\|next` (`dark`/`light` alias the Jylhis pair; `--rebuild` is a deprecated alias for `--apply`) |
+| Toggle      | `toggle <name> [on\|off] [--status\|--apply\|--revert]` — gaps, transparency, animations, reduce-motion (`--apply` persists), fullscreen-desktop, nightlight, waybar (the top bar), touchpad, touchscreen, idle, screensaver, notifications, suspend, caffeine, hybrid-gpu (`--apply`-only) |
+| Shell       | `shell toggle\|open\|close <panel>`, `shell launcher\|gallery\|bar\|dnd\|overview\|lock\|reload`, `bar list\|put\|move\|remove\|set\|reset\|background\|position`, `volume`, `brightness`, `notify` |
 | Capture     | `capture screenshot [--target …] [--edit]`, `capture record [--audio …]`, `capture ocr`, `capture color` |
-| Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle\|clamshell on\|off` |
+| Menu/launch | `menu [route]`, `menu select`, `menu input`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `window pop\|close-all\|tiled-fullscreen` |
+| Monitor     | `monitor scale-cycle\|laptop-toggle\|clamshell on\|off`, `monitor save\|reset`, `monitor workspaces reset` |
 | Power       | `lock`, `logout`, `suspend`, `hibernate`, `reboot`, `shutdown`, `powerprofile get\|list\|set` |
-| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list [--kind]\|current\|set [--kind]` |
-| Declarative | `install\|remove <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
+| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list [--kind]\|current\|set [--kind]`, `dictation start\|stop\|toggle\|status`, `language [code\|list]`, `network portal` |
+| Declarative | `install\|remove <feature>`, `webapp add\|rm`, `plugin add\|list\|update\|remove\|validate`, `security enroll fido2\|fingerprint` |
 | Plumbing    | `runtime status\|restore`, `completion bash\|zsh\|fish\|man` |
 
 `marchyoctl` (dev shell only): `scaffold module <name>`, `options search <q>`.

@@ -26,15 +26,19 @@ in
 
 ### Home Manager modules accessing NixOS config
 
-Home Manager modules receive the NixOS config via `osConfig`:
+Home Manager modules receive the NixOS config via `osConfig` and read `osConfig.marchyo.*` directly, with no default and no `or` fallback: the declared NixOS option is the only default.
 
 ```nix
-{ config, lib, osConfig ? {}, ... }:
+{ lib, osConfig, ... }:
 let
-  cfg = osConfig.marchyo or {};
+  cfg = osConfig.marchyo.feature;
 in
-{ ... }
+{
+  config = lib.mkIf cfg.enable { ... };
+}
 ```
+
+Use `or` only for lookups that may genuinely miss (attrsOf entries, user-supplied attrsets).
 
 ### Feature flag cascading
 

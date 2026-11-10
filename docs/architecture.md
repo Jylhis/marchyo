@@ -36,14 +36,18 @@ Every input that takes a nixpkgs follows the root `nixpkgs`.
 flake.nix           # Flake entry point — imports outputs.nix, wraps per-system outputs
 flake.lock          # Single source of truth for all pinned inputs (nixpkgs, home-manager, etc.)
 outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
-overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, plymouth-marchyo-theme, plus the vendored design system in lib/design)
+overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, mkMarchyoShellPlugin, plymouth-marchyo-theme, jylhis-themes, plus the vendored design system in lib/design)
 treefmt.nix         # Formatter config for treefmt-nix
 shell.nix           # Development shell (nix develop / nix-shell)
-Justfile            # Task runner (check, fmt, build, update, verify)
+Justfile            # Task runner (check, check-full, fmt, build-nixos, iso, update, run/vm, cli-test, cli-repin, site-dev, site-build, sbom, vuln-scan, security-vm, security-scan)
 statix.toml         # Statix linter configuration
+CHANGELOG.md        # Release history
+NEWS                # User-visible changes by release, newest first
 docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)
 shell/              # Quickshell shell QML tree, the default desktop shell (bar, launcher, OSD, panels, notifications, lock; see shell/README.md)
+greeter/            # Quickshell greeter QML tree (login screen; see greeter/README.md)
+security/           # SBOM, CVE scan and VM hardening audit (sbom.nix, vuln-scan.nix, vm-test.nix; see security/README.md)
 modules/nixos/      # NixOS system-level modules (auto-discovered)
 modules/home/       # Home Manager user-level modules (auto-discovered)
 modules/generic/    # Shared helpers (palette, base16 slots, keyboard lib) imported by path
@@ -57,7 +61,7 @@ templates/workstation/  # Developer workstation template
 
 ## Flake Outputs
 
-- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Take `{ system, modules ? [], specialArgs ? {} }` and wire in marchyo's nixpkgs, home-manager, overlay and modules. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkPkgs`
+- `lib.mkNixosSystem` — **Batteries-included system builder** (recommended consumer entry point). Takes `{ system, modules ? [], specialArgs ? {}, overlays ? [], config ? {} }` and wires in marchyo's nixpkgs, home-manager, overlay and modules. `overlays` are the consumer's additions on top of marchyo's overlay; `config` is merged over `nixpkgs.config`, which the builder starts with `allowUnfree = true`. The reference `nixosConfigurations` are built through this same builder. Also exported: `lib.mkPkgs`, `lib.diskoLayout`, `lib.diskoLayouts`
 - `nixosModules.default` — Main NixOS module (includes Home Manager, overlay)
 - `nixosModules.home-manager` — Re-exported home-manager NixOS module
 - `nixosModules.disko` — Re-exported disko NixOS module; pair with `lib.diskoLayout "<layout>" { device = …; }` (layouts in `lib.diskoLayouts`)
@@ -72,7 +76,6 @@ templates/workstation/  # Developer workstation template
 - `checks.{system}.*` — Evaluation test suite
 - `formatter.{system}` — treefmt wrapper (same config as the dev shell)
 - `devShells.{system}.default` — the dev shell from `shell.nix`
-- `nixosModules` / `homeManagerModules` — per-platform module sets
 - `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
 
 Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchyo's nixpkgs — no separate nixpkgs input needed. For an overlay-applied package set use `marchyo.legacyPackages.<system>`.
@@ -82,7 +85,8 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchy
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.).
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages; the latter also carries `heavyChecks` and `testPredicates`).
-- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
+- `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.hostPlatform.isLinux`.
+- `lib/` — the other helpers are `keybinds.nix` (the Hyprland bind table), `hyprland-lua.nix`, `theme-generators.nix`, `theme-surfaces.nix`, `base16-tmtheme.nix`, `font-scale.nix`, `locale-language.nix`, `menu-entries.nix`, `webapp-browser.nix`, `webapp-presets.nix`, `xkb-compose.nix`, `console-table.nix`, `merge-unique.nix`, and `design/` (the vendored Jylhis design system).
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `linux` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.
 - `modules/nixos/options/` — `marchyo.*` option declarations, one file per namespace (feature-flags, users, localization, theme, keyboard, graphics, defaults, and many more). The directory's `default.nix` auto-imports every file, so adding a namespace is a one-file change.
