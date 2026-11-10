@@ -23,15 +23,12 @@ description: Common issues and questions for Marchyo systems
   automatically when `pushToTalk.enable` is on). See
   [Dictation](/docs/configuration/dictation/).
 - **A key does nothing / I don't know the shortcut.** The full shipped bind set
-  is on the [Keybindings](/docs/usage/hotkeys/) page; the source of truth is
-  spread across several `modules/home/` files — most binds live in
-  `hyprland.nix`, the rest in `screenshot.nix`, `omarchy-binds.nix`,
-  `menus.nix`, `utilities.nix`, `window-toggles.nix`,
-  `keybindings-cheatsheet.nix`, and `webapps.nix`.
-- **Display scaling / monitor layout is wrong.** Override
-  `wayland.windowManager.hyprland.settings.monitor` in your home config (the
-  [workstation template](/docs/guides/workstation-template/) shows the pattern); the
-  bundled `hyprmon` tool helps position monitors.
+  is on the [Keybindings](/docs/usage/hotkeys/) page, or press `Super + K` for
+  the searchable cheat sheet. The binds are defined in `lib/keybinds.nix` and
+  rendered by `modules/home/keybinds.nix`.
+- **Display scaling / monitor layout is wrong.** Describe
+  your outputs in `marchyo.monitors` (see [Monitors](/docs/configuration/monitors/)),
+  or adjust them live in the display panel (`Super + Ctrl + D`).
 - **Theme isn't applied.** Make sure `marchyo.theme.enable = true`. Marchyo
   themes several surfaces directly from the Jylhis design tokens; see
   [Theming](/docs/configuration/theming/).

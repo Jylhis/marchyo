@@ -36,7 +36,7 @@ marchyo.keyboard.layouts = [
 
 ## Deprecated: `marchyo.keyboard.variant`
 
-The top-level `variant` option is deprecated. Use the attribute set form in `layouts` instead.
+The top-level `variant` option still works for the first layout but warns. Use the attribute set form in `layouts` instead.
 
 ### Before
 
@@ -54,3 +54,47 @@ marchyo.keyboard.layouts = [
   { layout = "us"; variant = "intl"; }
 ];
 ```
+
+## Retired options
+
+Setting a retired option fails evaluation with a message that names its replacement. The full list is in `modules/nixos/options/removed.nix`.
+
+### Removed
+
+| Option | Replacement |
+|--------|-------------|
+| `marchyo.launcher.{keybinding,inputServer,telemetry,declutter,settings}` | None: the in-shell launcher of `marchyo.shell` replaces Vicinae |
+| `marchyo.osd.enable` | None: the shell draws the OSD |
+| `marchyo.gaming` | Enable `programs.steam` and friends on the host |
+| `marchyo.console.kmscon` | Configure `services.kmscon` on the host |
+| `marchyo.console.enable` | Use a terminal or a special workspace bind on the host |
+| `marchyo.snapshots` | Configure `services.snapper` on the host |
+| `marchyo.shell.devPlugins` | Declare plugins with `marchyo.shell.plugins` and rebuild |
+| `marchyo.shell.barPlugin` | The built-in bar is always used; add bar-widget plugins to `marchyo.shell.settings.bar.layout` |
+| `marchyo.ai.{agents,accounts,skills,crashCapture,herdr,amp}` | Install on the host; `marchyo.defaults.aiAgent` still installs one agent CLI |
+| `marchyo.ai.local` | Configure `services.ollama` on the host |
+| `marchyo.audio.tuner` | Tune PipeWire with `services.pipewire.extraConfig` |
+| `marchyo.hardware.camlink` | Configure `services.v4l2-relayd` on the host |
+| `marchyo.slack.themeInjection` | None: Slack keeps its own theme |
+| `marchyo.keyboard.legacyBinds` | None: there is one bind layout |
+| `marchyo.graphics.nvidia.package` | Set `hardware.nvidia.package`; Marchyo defaults it from `marchyo.graphics.nvidia.generation` |
+| `marchyo.performance.kernel` | Set `boot.kernelPackages` directly |
+| `marchyo.nix.caches` | Add to `nix.settings.substituters` and `nix.settings.trusted-public-keys` |
+| `marchyo.nix.router.extraUpstreams` | Add to `nix.settings.substituters` or `services.ncro.settings.upstreams` |
+| `marchyo.users.<name>.{uid,name}` | Set `users.users.<name>.uid`; `name` was never read |
+
+### Renamed
+
+A renamed option forwards its value to the upstream option and warns.
+
+| Option | Now |
+|--------|-----|
+| `marchyo.security.firewall.enable` | `networking.firewall.enable` |
+| `marchyo.power.hibernation.resumeDevice` | `boot.resumeDevice` |
+| `marchyo.hardware.logitech.enable` | `programs.solaar.enable` |
+| `marchyo.graphics.nvidia.open` | `hardware.nvidia.open` |
+| `marchyo.graphics.nvidia.powerManagement` | `hardware.nvidia.powerManagement.enable` |
+| `marchyo.graphics.nvidia.containerToolkit.enable` | `hardware.nvidia-container-toolkit.enable` |
+| `marchyo.graphics.amd.overdrive.enable` | `hardware.amdgpu.overdrive.enable` |
+| `marchyo.nix.router.{enable,port,netrcFile}` | `services.ncro.{enable,port,netrcFile}` |
+| `marchyo.services.localsend.{enable,openFirewall}` | `programs.localsend.{enable,openFirewall}` |

@@ -13,6 +13,18 @@ Feature flags are the primary way to configure Marchyo. Each flag enables a grou
 | `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
 | `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
 | `marchyo.office.enable` | `false` | Office applications (Papers document viewer, Obsidian, Xournal++) |
+| `marchyo.shell.enable` | `false` (`true` with desktop) | Quickshell desktop shell: bar, launcher, OSD, panels, notifications, lock ([details](/docs/configuration/shell/)) |
+| `marchyo.cli.enable` | `true` | Install the `marchyo` user CLI system-wide |
+| `marchyo.emacs.enable` | `false` | Emacs daemon with Hyprland integration ([details](/docs/configuration/emacs/)) |
+
+A second group of flags default to `true` and only take effect when `marchyo.desktop.enable` is set. Set one to `false` to opt out of that part of the desktop:
+
+| Option | Description |
+|--------|-------------|
+| `marchyo.menus.enable` | Power, session and central system menus |
+| `marchyo.utilities.enable` | Date/time and battery notifications, `marchyo transcode`, `marchyo share` |
+| `marchyo.reminders.enable` | `marchyo reminder` timers and their keybindings |
+| `marchyo.screensaver.enable` | Terminal screensaver on idle |
 
 ## Cascading defaults
 

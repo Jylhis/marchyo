@@ -1,8 +1,8 @@
 ---
 // Base shell for the standalone (non-docs) pages — landing.
-// Loads the vendored Jylhis design system (vendor/design, see `just ds-sync`) (tokens, self-hosted fonts, type,
-// motion, components) and applies the persisted paper/black mode before
-// first paint (no FOUC).
+// Loads the vendored Jylhis design system (vendor/design, a copy of lib/design
+// that is updated by hand): tokens, self-hosted fonts, type, motion and
+// components. Applies the persisted paper/amber mode before first paint (no FOUC).
 import '../../vendor/design/styles.css';
 import '../styles/site.css';
 

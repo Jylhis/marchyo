@@ -74,15 +74,15 @@ Add a test in `tests/eval/<feature>.nix` (auto-discovered). A test is a named pr
 
 ## Home Manager modules
 
-Home Manager modules that need NixOS config use `osConfig`:
+Home Manager modules that need NixOS config read it from `osConfig.marchyo.*` directly, without fallbacks:
 
 ```nix
-{ config, lib, osConfig ? {}, ... }:
+{ lib, osConfig, ... }:
 let
-  cfg = osConfig.marchyo or {};
+  cfg = osConfig.marchyo;
 in
 {
-  config = lib.mkIf (cfg ? myFeature && cfg.myFeature.enable) {
+  config = lib.mkIf cfg.myFeature.enable {
     # User-level configuration
   };
 }

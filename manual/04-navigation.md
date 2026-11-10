@@ -53,7 +53,8 @@ A workspace is a full screen of windows. You get several, and you switch between
 them instantly, which is the natural way to keep work separated — mail on one,
 code on another, chat on a third.
 
-- **Switch** to a workspace with `Super + 1` through `Super + 5`.
+- **Switch** to a workspace with `Super + 1` through `Super + 0` (workspaces 1 to 10;
+  each monitor has its own set, see [Monitors](./12-monitors.md)).
 - **Send** the active window to another workspace with `Super + Shift + <number>`.
 - **Flip** between the next and previous workspace with `Super + Tab` and
   `Super + Shift + Tab`, or scroll workspaces with `Super + scroll`.

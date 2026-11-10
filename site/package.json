@@ -10,6 +10,7 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.7",
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/starlight": "^0.42.10",
     "astro": "^7.4.8"

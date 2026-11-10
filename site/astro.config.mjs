@@ -2,9 +2,12 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
+import { satteri } from '@astrojs/markdown-satteri';
+import manualLinks from './src/plugins/manual-links.mjs';
 
 export default defineConfig({
   site: 'https://marchyo.org',
+  markdown: { processor: satteri({ mdastPlugins: [manualLinks] }) },
   integrations: [
     // Explicit sitemap ownership. Starlight bundles @astrojs/sitemap and only
     // injects its own when the integration is absent, so declaring it here
@@ -67,21 +70,30 @@ export default defineConfig({
             'docs/configuration/graphics',
             'docs/configuration/default-apps',
             'docs/configuration/webapps',
+            'docs/configuration/shell',
             'docs/configuration/launcher',
             'docs/configuration/menu',
             'docs/configuration/notifications',
             'docs/configuration/dictation',
             'docs/configuration/hardware',
+            'docs/configuration/monitors',
             'docs/configuration/power',
             'docs/configuration/performance',
             'docs/configuration/network',
             'docs/configuration/security',
+            'docs/configuration/nix-cache',
             'docs/configuration/bees',
+            'docs/configuration/emacs',
           ],
         },
         {
           label: 'Using Marchyo',
-          items: ['docs/usage/hotkeys', 'docs/usage/updating', 'docs/usage/troubleshooting'],
+          items: [
+            'docs/usage/cli',
+            'docs/usage/hotkeys',
+            'docs/usage/updating',
+            'docs/usage/troubleshooting',
+          ],
         },
         {
           label: 'Guides',

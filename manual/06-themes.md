@@ -18,8 +18,8 @@ in your configuration and rebuild:
 marchyo.theme.variant = "light";
 ```
 
-Both variants share the same palette family — a neutral grey ground with a
-single orange accent — so switching between them feels like the same desktop at a
+The two variants are Paper (ink on warm paper, light) and Amber (amber on terminal
+black, dark). They share one palette family, so switching between them feels like the same desktop at a
 different time of day, not a different desktop. Syntax highlighting in your editor
 and terminal uses the Modus color sets, so code reads the same everywhere.
 
@@ -63,9 +63,10 @@ It continues restoring independent overrides.
 
 ## Fonts
 
-Marchyo ships three typefaces that carry across the whole system: a slab serif for
-headings, a grotesque for body text, and a Nerd Font monospace for the terminal and
-all the desktop chrome (the icon glyphs in the bar and notifications need it). You
+Marchyo ships a set of typefaces that carry across the whole system: DejaVu Serif
+for serif text, Fira Sans for body and interface text, and IBM Plex Mono for
+monospace. The terminal and the desktop chrome (the icon glyphs in the bar and
+notifications need it) use BlexMono Nerd Font, IBM Plex Mono patched with icons. You
 don't have to touch any of this — it's chosen to look right together.
 
 If you want everything a little larger or smaller, there's one dial that moves every
@@ -95,5 +96,3 @@ You can also change the wallpaper at runtime with `marchyo bg set <path>` or cyc
 with `marchyo bg next`; like a runtime theme switch, it is replayed after a rebuild until
 you revert it. An inline theme can list further wallpapers of its own with
 `marchyo.theme.themes.[].wallpapers`.
-
-<!-- Assisted-by: Codex:gpt-6 -->
