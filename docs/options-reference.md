@@ -108,7 +108,8 @@ marchyo.keyboard = {
 
 ```nix
 marchyo.graphics = {
-  vendors = [ "intel" ]; # "intel", "amd", "nvidia"
+  vendors = [ "intel" "nvidia" ]; # "intel", "amd", "nvidia"
+  primary = "intel"; # required with several vendors (PRIME defaults it)
   prime = {
     enable = true;
     intelBusId = "PCI:0:2:0";

@@ -10,22 +10,72 @@ let
   hasIntel = builtins.elem "intel" cfg.vendors;
   hasAmd = builtins.elem "amd" cfg.vendors;
   hasNvidia = builtins.elem "nvidia" cfg.vendors;
+  hasAnyGpu = cfg.vendors != [ ];
+  multiGpu = builtins.length (lib.unique cfg.vendors) > 1;
   isHybrid = cfg.prime.enable && (hasIntel || hasAmd) && hasNvidia;
   isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
   isTuring = cfg.nvidia.generation == "turing-or-newer";
 
-  # Backward compatibility: empty vendors on x86 defaults to Intel behavior.
-  legacyIntel = cfg.vendors == [ ] && isX86;
+  # The global driver selection follows the primary GPU only: one value per
+  # variable, so a second GPU can never override (or conflict with) it.
+  intelPrimary = cfg.primary == "intel";
+  amdPrimary = cfg.primary == "amd";
+  nvidiaPrimary = cfg.primary == "nvidia";
+  # nvidia-vaapi-driver's direct backend needs a GSP (Turing or newer).
+  nvidiaVaapi = nvidiaPrimary && isTuring;
 
-  hasAnyGpu = hasIntel || hasAmd || hasNvidia || legacyIntel;
+  # The integrated GPU PRIME pairs with: the primary one, or (NVIDIA
+  # primary, sync mode) the only one, Intel when both are listed and its bus
+  # ID is set.
+  primeIgpu =
+    if cfg.primary == "intel" || cfg.primary == "amd" then
+      cfg.primary
+    else if hasIntel && (!hasAmd || cfg.prime.intelBusId != "") then
+      "intel"
+    else
+      "amd";
+  igpuBusId = if primeIgpu == "intel" then cfg.prime.intelBusId else cfg.prime.amdgpuBusId;
 
-  # On hybrid laptops in offload or reverse-sync mode the iGPU drives the
-  # panel, and forcing NVIDIA's VA-API/GLX/GBM drivers globally breaks
-  # Mesa clients such as Chromium (black video).
-  nvidiaDrivesDisplay =
-    hasNvidia && ((!hasIntel && !hasAmd) || (isHybrid && cfg.prime.mode == "sync"));
-  nvidiaVaapi = nvidiaDrivesDisplay && isTuring;
-  amdPrimary = hasAmd && !hasIntel && !nvidiaVaapi;
+  # Stable per-vendor DRM node for Hyprland (/dev/dri/card<N> numbering
+  # follows probe order). Matched by PCI address when the bus ID is set, else
+  # by kernel driver. Aquamarine splits AQ_DRM_DEVICES on ':', so the
+  # colon-laden /dev/dri/by-path names cannot be used directly.
+  busIds = {
+    intel = cfg.prime.intelBusId;
+    amd = cfg.prime.amdgpuBusId;
+    nvidia = cfg.prime.nvidiaBusId;
+  };
+  drivers = {
+    intel = "i915|xe";
+    amd = "amdgpu";
+    nvidia = "nvidia";
+  };
+  # "PCI:<bus>[@<domain>]:<device>:<function>" (decimal) -> sysfs "dddd:bb:dd.f".
+  pciAddress =
+    busId:
+    let
+      m = builtins.match "PCI:([0-9]+)(@([0-9]+))?:([0-9]+):([0-9]+)" busId;
+      hex = width: n: lib.toLower (lib.fixedWidthString width "0" (lib.toHexString (lib.toInt n)));
+      domain = builtins.elemAt m 2;
+    in
+    if m == null then
+      null
+    else
+      "${
+        hex 4 (if domain == null then "0" else domain)
+      }:${hex 2 (builtins.elemAt m 0)}:${hex 2 (builtins.elemAt m 3)}.${hex 1 (builtins.elemAt m 4)}";
+  drmNode = v: "/dev/dri/marchyo-${v}";
+  udevRule =
+    v:
+    let
+      address = pciAddress busIds.${v};
+      match = if address != null then ''KERNELS=="${address}"'' else ''DRIVERS=="${drivers.${v}}"'';
+    in
+    ''SUBSYSTEM=="drm", KERNEL=="card[0-9]*", ENV{DEVTYPE}=="drm_minor", ${match}, SYMLINK+="dri/marchyo-${v}"'';
+  # Primary first: aquamarine renders on the first device and still drives
+  # outputs wired to the others.
+  drmOrder =
+    lib.optional (cfg.primary != null) cfg.primary ++ lib.remove cfg.primary (lib.unique cfg.vendors);
 
   mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 
@@ -39,8 +89,9 @@ in
 {
   config = lib.mkMerge [
     {
+      # Headless hosts without a listed GPU skip the graphics stack.
       hardware.graphics = {
-        enable = lib.mkDefault true;
+        enable = lib.mkDefault (config.marchyo.desktop.enable || hasAnyGpu);
         enable32Bit = lib.mkDefault isX86;
       };
     }
@@ -56,14 +107,14 @@ in
       ];
     })
 
-    (lib.mkIf (hasIntel || legacyIntel) {
+    (lib.mkIf hasIntel {
       hardware.graphics.extraPackages = with pkgs; [
         intel-media-driver
         vpl-gpu-rt
         intel-compute-runtime
       ];
 
-      environment.sessionVariables = lib.mkIf (!nvidiaVaapi) {
+      environment.sessionVariables = lib.mkIf intelPrimary {
         LIBVA_DRIVER_NAME = lib.mkDefault "iHD";
       };
     })
@@ -134,9 +185,11 @@ in
 
       environment.sessionVariables = lib.mkMerge [
         {
+          # Read only by nvidia-vaapi-driver, so harmless when NVIDIA is not
+          # primary and right for apps run with nvidia-offload.
           NVD_BACKEND = lib.mkDefault (if isTuring then "direct" else "egl");
         }
-        (lib.mkIf nvidiaDrivesDisplay {
+        (lib.mkIf nvidiaPrimary {
           __GLX_VENDOR_LIBRARY_NAME = lib.mkDefault "nvidia";
           GBM_BACKEND = lib.mkDefault "nvidia-drm";
         })
@@ -151,12 +204,7 @@ in
 
     (lib.mkIf isHybrid {
       hardware.nvidia.prime = lib.mkMerge [
-        (lib.mkIf hasIntel {
-          inherit (cfg.prime) intelBusId;
-        })
-        (lib.mkIf (hasAmd && !hasIntel) {
-          inherit (cfg.prime) amdgpuBusId;
-        })
+        (if primeIgpu == "intel" then { intelBusId = igpuBusId; } else { amdgpuBusId = igpuBusId; })
         {
           inherit (cfg.prime) nvidiaBusId;
         }
@@ -188,6 +236,7 @@ in
         system.nixos.tags = [ "integrated-only" ];
         marchyo.graphics = {
           vendors = lib.mkForce (lib.remove "nvidia" cfg.vendors);
+          primary = lib.mkForce primeIgpu;
           prime.enable = lib.mkForce false;
           prime.integratedOnlySpecialisation = lib.mkForce false;
         };
@@ -196,12 +245,34 @@ in
       };
     })
 
-    {
-      warnings = lib.optionals (legacyIntel && config.marchyo.desktop.enable) [
-        "marchyo.graphics.vendors is empty on x86_64. This defaults to Intel behavior. Set vendors explicitly (e.g. [\"nvidia\"] or [\"amd\"])."
-      ];
+    # Several GPUs: give each a stable node and have Hyprland render on the
+    # primary one first.
+    (lib.mkIf (multiGpu && cfg.primary != null) {
+      services.udev.extraRules = lib.concatMapStringsSep "\n" udevRule drmOrder;
 
+      environment.sessionVariables = lib.mkIf config.marchyo.desktop.enable {
+        AQ_DRM_DEVICES = lib.mkDefault (lib.concatMapStringsSep ":" drmNode drmOrder);
+      };
+    })
+
+    {
       assertions = [
+        {
+          assertion = multiGpu -> cfg.primary != null;
+          message = "marchyo.graphics.vendors lists several GPUs (${lib.concatStringsSep ", " cfg.vendors}); set marchyo.graphics.primary to the one that drives the display";
+        }
+        {
+          assertion = cfg.primary != null -> builtins.elem cfg.primary cfg.vendors;
+          message = ''marchyo.graphics.primary = "${toString cfg.primary}" must be one of marchyo.graphics.vendors'';
+        }
+        {
+          assertion = isHybrid && cfg.prime.mode == "sync" -> nvidiaPrimary;
+          message = ''marchyo.graphics.prime.mode = "sync" renders everything on NVIDIA; set marchyo.graphics.primary = "nvidia"'';
+        }
+        {
+          assertion = isHybrid && cfg.prime.mode != "sync" -> !nvidiaPrimary;
+          message = ''marchyo.graphics.prime.mode = "${cfg.prime.mode}" drives the display from the integrated GPU; set marchyo.graphics.primary to "intel" or "amd"'';
+        }
         {
           assertion = cfg.prime.enable -> (hasNvidia && (hasIntel || hasAmd));
           message = "PRIME requires nvidia and either intel or amd in marchyo.graphics.vendors";
@@ -211,12 +282,16 @@ in
           message = "PRIME requires marchyo.graphics.prime.nvidiaBusId to be set";
         }
         {
-          assertion = cfg.prime.enable && hasIntel -> (cfg.prime.intelBusId != "");
+          assertion = isHybrid && primeIgpu == "intel" -> (cfg.prime.intelBusId != "");
           message = "PRIME with Intel requires marchyo.graphics.prime.intelBusId to be set";
         }
         {
-          assertion = cfg.prime.enable && hasAmd && !hasIntel -> (cfg.prime.amdgpuBusId != "");
+          assertion = isHybrid && primeIgpu == "amd" -> (cfg.prime.amdgpuBusId != "");
           message = "PRIME with AMD requires marchyo.graphics.prime.amdgpuBusId to be set";
+        }
+        {
+          assertion = lib.all (v: busIds.${v} == "" || pciAddress busIds.${v} != null) cfg.vendors;
+          message = ''marchyo.graphics.prime bus IDs must look like "PCI:<bus>:<device>:<function>" (decimal), optionally "PCI:<bus>@<domain>:<device>:<function>"'';
         }
         {
           assertion = cfg.prime.integratedOnlySpecialisation -> cfg.prime.enable;

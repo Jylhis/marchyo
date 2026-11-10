@@ -14,8 +14,6 @@ let
   # changes made without --apply); restore them at session start.
   cliEnabled = osConfig.marchyo.cli.enable;
   hasNvidia = builtins.elem "nvidia" osConfig.marchyo.graphics.vendors;
-  isPrimeOffload =
-    osConfig.marchyo.graphics.prime.enable && osConfig.marchyo.graphics.prime.mode == "offload";
 
   themeVariant = osConfig.marchyo.theme.variant;
   isDark = themeVariant == "dark";
@@ -777,17 +775,10 @@ in
 
           # Use XCompose file (absolute: no tilde expansion happens here either)
           (env "XCOMPOSEFILE" "${config.home.homeDirectory}/.XCompose")
-        ]
-        # NVIDIA GPU environment variables for Wayland
-        ++ lib.optionals hasNvidia [
-          (env "LIBVA_DRIVER_NAME" "nvidia")
-          (env "__GLX_VENDOR_LIBRARY_NAME" "nvidia")
-          (env "NVD_BACKEND" "direct")
-        ]
-        # NVIDIA PRIME offload mode
-        ++ lib.optionals isPrimeOffload [
-          (env "__NV_PRIME_RENDER_OFFLOAD" "1")
-          (env "__VK_LAYER_NV_optimus" "NVIDIA_only")
+
+          # GPU driver selection (LIBVA_DRIVER_NAME, NVIDIA GLX/GBM,
+          # AQ_DRM_DEVICES) is a NixOS session variable owned by
+          # modules/nixos/graphics.nix; it follows marchyo.graphics.primary.
         ];
 
         # Startup applications, wrapped in an `hl.on("hyprland.start", ...)`

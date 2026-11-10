@@ -120,5 +120,17 @@ Which GPU drivers your system uses is a separate setting,
 marchyo.graphics.vendors = [ "intel" ];
 ```
 
-NVIDIA drivers and hybrid laptops with two GPUs have more options. The Graphics
+With more than one GPU, also say which one drives the display:
+
+```nix
+marchyo.graphics = {
+  vendors = [ "intel" "amd" ];
+  primary = "amd";
+};
+```
+
+Run a single app on the other GPU with `DRI_PRIME=1 <app>`, or on an NVIDIA
+laptop in offload mode with `nvidia-offload <app>`.
+
+NVIDIA drivers and hybrid laptops have more options. The Graphics
 page in the configuration reference on the site covers them in full.

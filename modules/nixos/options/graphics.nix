@@ -1,17 +1,19 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
   inherit (lib) mkOption types;
+  cfg = config.marchyo.graphics;
+
+  vendor = types.enum [
+    "intel"
+    "amd"
+    "nvidia"
+  ];
+  integrated = lib.filter (v: v != "nvidia") cfg.vendors;
 in
 {
   options.marchyo.graphics = {
     vendors = mkOption {
-      type = types.listOf (
-        types.enum [
-          "intel"
-          "amd"
-          "nvidia"
-        ]
-      );
+      type = types.listOf vendor;
       default = [ ];
       example = [
         "intel"
@@ -23,10 +25,40 @@ in
         - "amd": AMD GPUs (integrated or discrete)
         - "nvidia": NVIDIA discrete GPUs
 
-        For hybrid graphics laptops, specify both vendors (e.g., ["intel" "nvidia"]).
-        When empty, Intel packages are applied on x86_64 for backward compatibility.
+        Every listed vendor's drivers, firmware and video-acceleration
+        packages are installed. With more than one vendor, set `primary`
+        to the GPU that drives the display. When empty, no vendor-specific
+        drivers are installed (Mesa's generic stack still runs).
 
-        Find your GPU with: lspci | grep -E 'VGA|3D'
+        Find your GPUs with: lspci | grep -E 'VGA|3D|Display'
+      '';
+    };
+
+    primary = mkOption {
+      type = types.nullOr vendor;
+      default =
+        if builtins.length cfg.vendors == 1 then
+          builtins.head cfg.vendors
+        else if cfg.prime.enable && builtins.length integrated == 1 then
+          if cfg.prime.mode == "sync" then "nvidia" else builtins.head integrated
+        else
+          null;
+      defaultText = lib.literalMD ''
+        the only entry of `vendors`; on a PRIME laptop with one integrated
+        GPU, `"nvidia"` in `sync` mode and the integrated GPU otherwise;
+        else `null`
+      '';
+      example = "amd";
+      description = ''
+        The GPU that drives the display, one of `vendors`. Required when
+        more than one vendor is listed.
+
+        Only the primary GPU gets the global driver selection
+        (`LIBVA_DRIVER_NAME`, `VDPAU_DRIVER`, and NVIDIA's GLX/GBM
+        variables), and with several GPUs Hyprland renders on it first
+        (`AQ_DRM_DEVICES`). Run a single app on another GPU with
+        `nvidia-offload <command>` (PRIME offload) or `DRI_PRIME=1 <command>`
+        (Mesa GPUs).
       '';
     };
 
@@ -81,7 +113,8 @@ in
         default = true;
         description = ''
           Use the Mesa radeonsi driver for VA-API and VDPAU video acceleration.
-          `LIBVA_DRIVER_NAME` is set to "radeonsi" only when AMD is the primary GPU.
+          `LIBVA_DRIVER_NAME` and `VDPAU_DRIVER` are set to "radeonsi" only when AMD
+          is `primary`.
         '';
       };
     };
@@ -103,7 +136,10 @@ in
         default = false;
         description = ''
           Enable NVIDIA PRIME for hybrid graphics laptops.
-          Requires both an integrated GPU (intel or amd) and nvidia in vendors.
+          Requires nvidia and an integrated GPU (intel or amd) in vendors.
+          The integrated GPU PRIME pairs with is `primary` (in `sync` mode,
+          where `primary` is nvidia, the only integrated GPU, or Intel when
+          both are listed and `intelBusId` is set).
         '';
       };
 
@@ -112,7 +148,8 @@ in
         default = "";
         example = "PCI:0:2:0";
         description = ''
-          PCI bus ID of the Intel integrated GPU.
+          PCI bus ID of the Intel GPU. Used by PRIME, and to pick the exact
+          device for Hyprland's GPU list when several GPUs are listed.
           Find with: lspci | grep -E 'VGA|3D' | grep Intel
           Format: PCI:bus:device:function (convert hex to decimal)
         '';
@@ -123,7 +160,8 @@ in
         default = "";
         example = "PCI:6:0:0";
         description = ''
-          PCI bus ID of the AMD integrated GPU.
+          PCI bus ID of the AMD GPU. Used by PRIME, and to pick the exact
+          device for Hyprland's GPU list when several GPUs are listed.
           Find with: lspci | grep -E 'VGA|3D' | grep AMD
           Format: PCI:bus:device:function (convert hex to decimal)
         '';
@@ -134,7 +172,8 @@ in
         default = "";
         example = "PCI:1:0:0";
         description = ''
-          PCI bus ID of the NVIDIA discrete GPU.
+          PCI bus ID of the NVIDIA GPU. Used by PRIME, and to pick the exact
+          device for Hyprland's GPU list when several GPUs are listed.
           Find with: lspci | grep -E 'VGA|3D' | grep NVIDIA
           Format: PCI:bus:device:function (convert hex to decimal)
         '';
@@ -152,6 +191,7 @@ in
           - "offload": On-demand rendering (default, power efficient).
             Use `nvidia-offload <command>` to run apps on dGPU.
           - "sync": Always use discrete GPU (best performance, more power).
+            `primary` must be "nvidia".
           - "reverse-sync": iGPU for display, dGPU for compute.
         '';
       };

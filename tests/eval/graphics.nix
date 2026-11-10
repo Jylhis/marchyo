@@ -20,6 +20,11 @@ let
     && !(env c ? GBM_BACKEND)
     && (env c).LIBVA_DRIVER_NAME or "" != "nvidia";
 
+  # The rendered Home Manager Hyprland env entries, as one string.
+  hyprEnv =
+    c:
+    helpers.hyprEntriesText c.home-manager.users.testuser.wayland.windowManager.hyprland.settings.env;
+
   hybrid = mode: {
     vendors = [
       "intel"
@@ -172,8 +177,53 @@ in
         }
       );
 
-  eval-graphics-intel-amd-vaapi =
-    testNixOSCheck "graphics-intel-amd-vaapi" (c: (env c).LIBVA_DRIVER_NAME == "iHD")
+  # Intel + AMD, AMD drives the display: both driver sets install, only the
+  # primary picks the VA-API/VDPAU driver, and Hyprland gets stable nodes with
+  # the primary first.
+  eval-graphics-intel-amd-primary-amd =
+    testNixOSCheck "graphics-intel-amd-primary-amd"
+      (
+        c:
+        (env c).LIBVA_DRIVER_NAME == "radeonsi"
+        && (env c).VDPAU_DRIVER == "radeonsi"
+        && lib.elem "intel-media-driver" (map lib.getName c.hardware.graphics.extraPackages)
+        && c.hardware.amdgpu.initrd.enable
+        && (env c).AQ_DRM_DEVICES == "/dev/dri/marchyo-amd:/dev/dri/marchyo-intel"
+        && lib.hasInfix ''DRIVERS=="amdgpu", SYMLINK+="dri/marchyo-amd"'' c.services.udev.extraRules
+        && lib.hasInfix ''DRIVERS=="i915|xe", SYMLINK+="dri/marchyo-intel"'' c.services.udev.extraRules
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics = {
+          vendors = [
+            "intel"
+            "amd"
+          ];
+          primary = "amd";
+        };
+      });
+
+  eval-graphics-intel-amd-primary-intel =
+    testNixOSCheck "graphics-intel-amd-primary-intel"
+      (
+        c:
+        (env c).LIBVA_DRIVER_NAME == "iHD"
+        && !(env c ? VDPAU_DRIVER)
+        && (env c).AQ_DRM_DEVICES == "/dev/dri/marchyo-intel:/dev/dri/marchyo-amd"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics = {
+          vendors = [
+            "intel"
+            "amd"
+          ];
+          primary = "intel";
+        };
+      });
+
+  eval-graphics-multi-vendor-needs-primary =
+    testNixOSFails "graphics-multi-vendor-needs-primary" "set marchyo.graphics.primary"
       (
         minimalConfig
         // {
@@ -183,6 +233,127 @@ in
           ];
         }
       );
+
+  eval-graphics-primary-not-listed =
+    testNixOSFails "graphics-primary-not-listed" "must be one of marchyo.graphics.vendors"
+      (
+        minimalConfig
+        // {
+          marchyo.graphics = {
+            vendors = [ "amd" ];
+            primary = "intel";
+          };
+        }
+      );
+
+  eval-graphics-prime-sync-needs-nvidia-primary =
+    testNixOSFails "graphics-prime-sync-needs-nvidia-primary"
+      "set marchyo.graphics.primary = \"nvidia\""
+      (
+        minimalConfig
+        // {
+          marchyo.graphics = (hybrid "sync") // {
+            primary = "intel";
+          };
+        }
+      );
+
+  # AMD + NVIDIA offload: AMD is primary by default, PRIME pairs with its bus
+  # ID, nothing NVIDIA-specific or offload-specific is exported globally, and
+  # the DRM nodes match the exact PCI devices.
+  eval-graphics-amd-nvidia-offload =
+    testNixOSCheck "graphics-amd-nvidia-offload"
+      (
+        c:
+        let
+          hmEnv = hyprEnv c;
+        in
+        c.marchyo.graphics.primary == "amd"
+        && c.hardware.nvidia.prime.offload.enable
+        && c.hardware.nvidia.prime.amdgpuBusId == "PCI:6:0:0"
+        && c.hardware.nvidia.prime.intelBusId == ""
+        && noNvidiaDisplayEnv c
+        && (env c).LIBVA_DRIVER_NAME == "radeonsi"
+        && !(env c ? __NV_PRIME_RENDER_OFFLOAD)
+        && (env c).AQ_DRM_DEVICES == "/dev/dri/marchyo-amd:/dev/dri/marchyo-nvidia"
+        && lib.hasInfix ''KERNELS=="0000:06:00.0", SYMLINK+="dri/marchyo-amd"'' c.services.udev.extraRules
+        && lib.hasInfix ''KERNELS=="0000:01:00.0", SYMLINK+="dri/marchyo-nvidia"'' c.services.udev.extraRules
+        && !(lib.hasInfix "LIBVA_DRIVER_NAME" hmEnv)
+        && !(lib.hasInfix "__NV_PRIME_RENDER_OFFLOAD" hmEnv)
+        && !(lib.hasInfix "__GLX_VENDOR_LIBRARY_NAME" hmEnv)
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics = {
+          vendors = [
+            "amd"
+            "nvidia"
+          ];
+          prime = {
+            enable = true;
+            amdgpuBusId = "PCI:6:0:0";
+            nvidiaBusId = "PCI:1:0:0";
+            mode = "offload";
+          };
+        };
+      });
+
+  # Intel + AMD + NVIDIA: the AMD iGPU drives the display, so PRIME pairs
+  # with AMD (not Intel) while every vendor's drivers still install.
+  eval-graphics-intel-amd-nvidia =
+    testNixOSCheck "graphics-intel-amd-nvidia"
+      (
+        c:
+        c.hardware.nvidia.prime.amdgpuBusId == "PCI:6:0:0"
+        && c.hardware.nvidia.prime.intelBusId == ""
+        && lib.elem "intel-media-driver" (map lib.getName c.hardware.graphics.extraPackages)
+        && lib.elem "nvidia" c.services.xserver.videoDrivers
+        && (env c).LIBVA_DRIVER_NAME == "radeonsi"
+        && noNvidiaDisplayEnv c
+        && (env c).AQ_DRM_DEVICES == "/dev/dri/marchyo-amd:/dev/dri/marchyo-intel:/dev/dri/marchyo-nvidia"
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics = {
+          vendors = [
+            "intel"
+            "amd"
+            "nvidia"
+          ];
+          primary = "amd";
+          prime = {
+            enable = true;
+            amdgpuBusId = "PCI:6:0:0";
+            nvidiaBusId = "PCI:1:0:0";
+          };
+        };
+      });
+
+  eval-graphics-pci-address =
+    testNixOSCheck "graphics-pci-address"
+      (
+        c: lib.hasInfix ''KERNELS=="0001:0a:1f.3", SYMLINK+="dri/marchyo-intel"'' c.services.udev.extraRules
+      )
+      (withTestUser {
+        marchyo.graphics = {
+          vendors = [
+            "intel"
+            "amd"
+          ];
+          primary = "intel";
+          prime.intelBusId = "PCI:10@1:31:3";
+        };
+      });
+
+  eval-graphics-bad-bus-id = testNixOSFails "graphics-bad-bus-id" "bus IDs must look like" (
+    minimalConfig
+    // {
+      marchyo.graphics = {
+        vendors = [ "intel" ];
+        prime.intelBusId = "0000:00:02.0";
+      };
+    }
+  );
 
   eval-graphics-amd-overdrive =
     testNixOSCheck "graphics-amd-overdrive"
@@ -211,19 +382,35 @@ in
         }
       );
 
-  eval-graphics-intel = testNixOS "graphics-intel" (
-    minimalConfig
-    // {
-      marchyo.graphics.vendors = [ "intel" ];
-    }
-  );
+  # A single GPU needs no primary, no DRM list and no udev nodes.
+  eval-graphics-intel =
+    testNixOSCheck "graphics-intel"
+      (
+        c:
+        c.marchyo.graphics.primary == "intel"
+        && (env c).LIBVA_DRIVER_NAME == "iHD"
+        && !(env c ? AQ_DRM_DEVICES)
+        && !(lib.hasInfix "marchyo-intel" c.services.udev.extraRules)
+        && lib.elem "intel-media-driver" (map lib.getName c.hardware.graphics.extraPackages)
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics.vendors = [ "intel" ];
+      });
 
-  eval-graphics-amd = testNixOS "graphics-amd" (
-    minimalConfig
-    // {
-      marchyo.graphics.vendors = [ "amd" ];
-    }
-  );
+  eval-graphics-amd =
+    testNixOSCheck "graphics-amd"
+      (
+        c:
+        c.marchyo.graphics.primary == "amd"
+        && (env c).LIBVA_DRIVER_NAME == "radeonsi"
+        && !(env c ? AQ_DRM_DEVICES)
+        && !(lib.elem "intel-media-driver" (map lib.getName c.hardware.graphics.extraPackages))
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+        marchyo.graphics.vendors = [ "amd" ];
+      });
 
   eval-graphics-nvidia = testNixOS "graphics-nvidia" (
     minimalConfig
@@ -268,13 +455,27 @@ in
     }
   );
 
-  # Empty vendors falls back to Intel on x86_64 for backward compatibility.
-  eval-graphics-legacy = testNixOS "graphics-legacy" (
-    minimalConfig
-    // {
-      marchyo.graphics.vendors = [ ];
-    }
-  );
+  # Empty vendors on a desktop: the generic graphics stack, no vendor drivers
+  # and no driver guess.
+  eval-graphics-no-vendors-desktop =
+    testNixOSCheck "graphics-no-vendors-desktop"
+      (
+        c:
+        c.hardware.graphics.enable
+        && c.marchyo.graphics.primary == null
+        && !(env c ? LIBVA_DRIVER_NAME)
+        && !(env c ? VDPAU_DRIVER)
+        && !(lib.elem "intel-media-driver" (map lib.getName c.hardware.graphics.extraPackages))
+        && !(lib.any (lib.hasInfix "marchyo.graphics.vendors") c.warnings)
+      )
+      (withTestUser {
+        marchyo.desktop.enable = true;
+      });
+
+  # Headless with no GPU listed: no graphics stack at all.
+  eval-graphics-headless = testNixOSCheck "graphics-headless" (
+    c: !c.hardware.graphics.enable && !(env c ? LIBVA_DRIVER_NAME)
+  ) (withTestUser { });
 }
 # Forcing package names touches ROCm attrs; keep this off the non-x86 CI legs.
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isx86_64 {

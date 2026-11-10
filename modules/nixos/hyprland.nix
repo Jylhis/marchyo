@@ -6,7 +6,6 @@
 }:
 let
   cfg = config.marchyo;
-  hasNvidia = builtins.elem "nvidia" (config.marchyo.graphics.vendors or [ ]);
 in
 {
   config = lib.mkIf cfg.desktop.enable {
@@ -40,9 +39,7 @@ in
       };
     };
 
-    environment.sessionVariables = lib.mkIf hasNvidia {
-      # Point Hyprland at the right GPU (dGPU is typically card1, iGPU card0).
-      WLR_DRM_DEVICES = lib.mkDefault "/dev/dri/card1:/dev/dri/card0";
-    };
+    # The compositor's GPU list (AQ_DRM_DEVICES) comes from
+    # modules/nixos/graphics.nix, keyed off marchyo.graphics.primary.
   };
 }
