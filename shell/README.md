@@ -878,7 +878,7 @@ Isolation:
   one paired device), power-profiles-daemon, logind (session `1`) and polkitd,
   and a private PipeWire with a null audio sink. The values (battery
   percentage, SSID, device names) are in `dev/fixtures/NAME/system-bus.env`.
-  `devenv.nix` provides the tools.
+  `shell.nix` provides the tools.
 - The unit runs in a cgroup named `session-1.scope` inside its own cgroup
   namespace, so libsystemd (and with it the shell's polkit agent) finds the
   mock logind session for the shell's pid.
@@ -889,7 +889,7 @@ Isolation:
   subscribed. `hyprctl` stays real and talks to the nested compositor.
 - The shell gets `MARCHYO_SHELL_DEV=1` and `MARCHYO_SHELL_OUTPUT=SHOT`.
 - Themed icons come from Adwaita (`MARCHYO_SANDBOX_ICONS`, set by
-  `devenv.nix`) through a generated `gtk-3.0/settings.ini`, not from the
+  `shell.nix`) through a generated `gtk-3.0/settings.ini`, not from the
   host profile.
 
 Commands:
@@ -935,7 +935,7 @@ Gotchas:
   `dev/system-bus` with the mock `AddMethod` or `AddProperty` calls.
 - Mock state is static: toggling Wi-Fi or connecting a device in the shell
   does not change the mocks.
-- Run the tools with `devenv shell` (it provides `bwrap`, `grim`, `jq`,
+- Run the tools from `nix develop` (it provides `bwrap`, `grim`, `jq`,
   `dbus-daemon`, `gdbus`, `pipewire`, `wireplumber` and python-dbusmock).
 
 Screenshots. `dev/shot SURFACE` starts the sandbox when it is down, closes
@@ -977,19 +977,18 @@ namespace. Quickshell 0.3.0's built-in tooling support mirrors the scanned
 files**, so qmlls can never resolve `qs.*` through it. (It's a runtime
 artifact: untracked, and recreated by any `quickshell -p shell` run.)
 
-Instead, the shared `languages.qml` devenv module (enabled in `devenv.nix`)
-builds a stable alias at `$DEVENV_STATE/qml/modules/qs -> shell/`
-(`enterShell`) and exports
+Instead, the dev shell (`shell.nix`, `shellHook`) builds a stable alias at
+`.dev/qml-modules/qs -> shell/` and exports
 
 ```
-QML_IMPORT_PATH = $DEVENV_STATE/qml/modules : quickshell/lib/qt-6/qml : qtdeclarative/lib/qt-6/qml
+QML_IMPORT_PATH = .dev/qml-modules : quickshell/lib/qt-6/qml : qtdeclarative/lib/qt-6/qml
 ```
 
 so the checked-in per-directory `qmldir`s (`module qs.Commons`, `qs.Bar`, …)
 resolve `qs.*` for qmlls/qmllint exactly the way the running shell resolves
 them, and `Quickshell.*` / `QtQuick*` resolve from the store paths. Any editor
-that launches qmlls with `-E` from the devenv shell (eglot, neovim-lsp, …)
-inherits this; inside the devenv shell you can check by hand:
+that launches qmlls with `-E` from the dev shell (eglot, neovim-lsp, …)
+inherits this; inside the dev shell you can check by hand:
 
 ```bash
 qmllint -E shell/shell.qml   # expect no "Failed to import" lines

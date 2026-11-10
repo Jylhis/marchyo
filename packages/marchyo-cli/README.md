@@ -3,7 +3,7 @@
 Two binaries built from one Bun + TypeScript + Ink monorepo:
 
 - **`marchyo`** — user CLI shipped to end users via the `modules/nixos/cli.nix` system module
-- **`marchyoctl`** — developer CLI shipped only inside the devenv shell (`devenv.nix`)
+- **`marchyoctl`** — developer CLI shipped only inside the dev shell (`shell.nix`)
 
 ## Layout
 
@@ -73,7 +73,6 @@ contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.t
 | Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle\|clamshell on\|off` |
 | Power       | `lock`, `logout`, `suspend`, `hibernate`, `reboot`, `shutdown`, `powerprofile get\|list\|set` |
 | Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list [--kind]\|current\|set [--kind]` |
-| Dev         | `dev init <lang> [--force]`, `dev db <engine>` (devenv templates and database services in the current directory) |
 | Declarative | `install\|remove <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
 | Plumbing    | `runtime status\|restore`, `completion bash\|zsh\|fish\|man` |
 
@@ -117,7 +116,7 @@ vendoring `node_modules` from `bun.lock` through a fixed-output derivation (the
 - installed by `modules/nixos/cli.nix` when `marchyo.cli.enable` (**default
   `true`**); options declared in `modules/nixos/options/cli.nix`; CLI-written
   state merged back via `modules/nixos/cli-state.nix`;
-- available to developers through the devenv shell (`devenv.nix`).
+- available to developers through the dev shell (`shell.nix`).
 
 After changing dependencies, re-pin the hash: `nix build
 .#legacyPackages.x86_64-linux.marchyo-cli`, then update `outputHash` in

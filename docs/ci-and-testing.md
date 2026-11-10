@@ -8,8 +8,7 @@ just check               # Lint + eval checks (nix flake check --no-build, stati
 just check-full          # nix flake check, then build every heavy check
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
 just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
-just update              # Update all inputs: flake.lock -> devenv.lock
-just verify              # Verify flake.lock and devenv.lock reference the same nixpkgs rev
+just update              # nix flake update
 just run                 # Run default configuration VM (x86_64-linux only)
 just vm                  # Alias for just run
 
@@ -21,7 +20,7 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available chec
 nix build .#checks.x86_64-linux.ref-desktop                # Run one reference system's tests
 
 # Development shell
-devenv shell             # Enter development shell (no experimental features needed)
+nix develop              # Enter the dev shell (shell.nix; `nix-shell` works too)
 ```
 
 `nix flake check` runs the default checks: evaluation tests, plus a few small builds (the shell JS/contract suites, the CLI theme-surface test, the xkbcli keymap check). The build-heavy checks are `legacyPackages.<system>.heavyChecks`, run by `just check-full` and the weekly CI job.
@@ -54,7 +53,7 @@ All changes must pass `just check` (or `nix flake check`).
 ## CI Pipeline
 
 `.github/workflows/validate.yml` runs on push to `main`, PRs, manual dispatch and a weekly schedule:
-1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
+1. **lint** — `nix fmt -- --ci` (formatting check) on a single `ubuntu-latest` runner (formatting is platform-independent).
 2. **check** — `nix flake check --accept-flake-config` on `x86_64-linux` (every run) and `aarch64-linux` (not on PRs).
 3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, not on PRs, after `lint` and `check` succeed).
 4. **heavy** — builds every `legacyPackages.x86_64-linux.heavyChecks` entry; weekly and on manual dispatch only.

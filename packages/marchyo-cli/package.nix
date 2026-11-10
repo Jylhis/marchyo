@@ -23,8 +23,7 @@ let
         "node_modules"
         ".direnv"
         ".env"
-      ])
-      && !lib.hasPrefix ".devenv" base;
+      ]);
   };
   # Bun's lockfile-driven offline install.
   # The hash needs to be regenerated whenever bun.lock changes:

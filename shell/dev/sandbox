@@ -110,7 +110,7 @@ cmd_up() {
   [[ -S $host_wl ]] || die "host wayland socket $host_wl missing: refusing to start Hyprland"
   [[ -d /run/user/$uid/hypr/${HYPRLAND_INSTANCE_SIGNATURE:-} ]] || die "HYPRLAND_INSTANCE_SIGNATURE is not a host instance (unset the sandbox env first)"
   if host systemctl --user is-active --quiet "$unit"; then die "already running (sandbox down first)"; fi
-  command -v bwrap >/dev/null || die "bwrap not on PATH (use devenv shell)"
+  command -v bwrap >/dev/null || die "bwrap not on PATH (use nix develop)"
   [[ -d $dev_dir/fixtures/$fixture ]] || die "no fixture $fixture in $dev_dir/fixtures"
 
   R=$(mktemp -d "/run/user/$uid/qsdev.XXXX")

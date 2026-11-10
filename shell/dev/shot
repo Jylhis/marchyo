@@ -114,7 +114,7 @@ while (($#)); do
   esac
   shift
 done
-((use_grab)) || command -v grim >/dev/null || die "grim not on PATH (use devenv shell)"
+((use_grab)) || command -v grim >/dev/null || die "grim not on PATH (use nix develop)"
 
 "$sandbox" status >/dev/null 2>&1 || "$sandbox" up --fixture "$fixture" >&2
 eval "$("$sandbox" env)"

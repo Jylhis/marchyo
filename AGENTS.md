@@ -4,7 +4,7 @@ Tool-agnostic guidance for AI agents working in this repository. This file is th
 
 ## What this repository is
 
-Marchyo is a modular NixOS configuration flake with Home Manager support. Consumers build systems with `marchyo.lib.mkNixosSystem`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; after a design change run `just ds-sync` (the `design-copies` check fails until you do).
+Marchyo is a modular NixOS configuration flake with Home Manager support. Consumers build systems with `marchyo.lib.mkNixosSystem`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; update that copy by hand after a design change.
 
 ## Declarative only — never suggest imperative changes
 
@@ -12,20 +12,19 @@ This is a declarative NixOS configuration. Never suggest imperative package inst
 
 ## Development and essential commands
 
-Enter `devenv shell`; it provides Nix tooling, `just`, `jq`, Bun, the CLI, and Qt QML tools, and configures `QML_IMPORT_PATH` for `qs.*` imports.
+Enter the dev shell with `nix develop` (or `nix-shell`; both read `shell.nix`, pinned by `flake.lock`). It provides Nix tooling, `just`, `jq`, Bun, Node.js, the CLI, and Qt QML tools, and configures `QML_IMPORT_PATH` for `qs.*` imports.
 
 ```bash
 just check               # Linux: nix flake check --no-build, then statix + deadnix
 just check-full          # nix flake check, then build every heavy check
 just fmt                 # nix fmt via treefmt
 just build-nixos         # reference NixOS config; optional config=x86_64|aarch64
-just verify              # check shared revisions in flake.lock and devenv.lock
 just cli-test            # frozen Bun install, typecheck, and unit tests
-just site-build          # frozen Bun install, Astro check, and build
+just site-build          # npm ci, Astro check, and build
 just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host only
 ```
 
-`just check` is the fast local gate and deliberately passes `--no-build`. Run plain `nix flake check` when the check derivations must be built, and `just check-full` after changes the heavy checks cover (Hyprland config rendering, theme assets, Plymouth, the shell wrapper, the ISOs). `just update` is the supported input-update path: it updates `flake.lock`, pins matching revisions into `devenv.yaml`, regenerates `devenv.lock`, and therefore must be followed by `just verify`.
+`just check` is the fast local gate and deliberately passes `--no-build`. Run plain `nix flake check` when the check derivations must be built, and `just check-full` after changes the heavy checks cover (Hyprland config rendering, theme assets, Plymouth, the shell wrapper, the ISOs). `just update` runs `nix flake update`.
 
 ## Adding or removing modules
 
@@ -53,8 +52,8 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 
 - `Bar/` widgets are instantiated per monitor: seat-global state, processes, and timers belong in singleton components under `Services/`; keep each directory's `qmldir` complete.
 - `Commons/Colors.qml`, `Style.qml`, and `Config.qml` are usable source defaults but the Nix package regenerates them with theme values and store paths; change the generators in `packages/marchyo-shell/package.nix` when changing baked output.
-- Run QML tools inside `devenv shell`; its `$DEVENV_STATE/qml/modules/qs` alias (`languages.qml`) is required because qmlls' Quickshell mirror lacks `qmldir` files.
-- To check a QML change on screen, run `shell/dev/shot SURFACE` from `devenv shell`. It runs the
+- Run QML tools inside the dev shell; its `.dev/qml-modules/qs` alias is required because qmlls' Quickshell mirror lacks `qmldir` files.
+- To check a QML change on screen, run `shell/dev/shot SURFACE` from the dev shell. It runs the
   tree's shell in an isolated nested Hyprland and never touches the live session or the
   `marchyo-shell` service.
 - `shell/dev/sandbox down` stops the sandbox and every process it started.
