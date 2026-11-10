@@ -2,30 +2,12 @@
 # `hl.dsp.global("marchyo:<name>")` for a name shell/shortcuts.json registers,
 # instead of spawning the CLI. Session-critical binds (lock, terminal) keep a
 # direct exec.
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+{ helpers, lib, ... }:
 let
-  inherit (helpers) withTestUser hyprHasBind hyprEntryText;
+  inherit (helpers) hyprHasBind hyprEntryText expect;
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
 
-  binds =
-    (lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser {
-          marchyo.desktop.enable = true;
-          marchyo.shell.enable = true;
-          home-manager.users.testuser.imports = [ homeManagerModules ];
-        })
-      ];
-    }).config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
+  binds = c: c.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind;
 
   global = name: ''hl.dsp.global("marchyo:${name}")'';
 
@@ -67,61 +49,50 @@ let
     "Num_Lock" = "lockKeys";
   };
 
-  missing = lib.filter (keys: !(hyprHasBind binds keys (global converted.${keys}))) (
-    lib.attrNames converted
-  );
-
-  lockKeyBind = lib.findFirst (
-    e: (e._args or [ ]) != [ ] && builtins.head e._args == "Caps_Lock"
-  ) null binds;
-
   rejected = builtins.tryEval (builtins.deepSeq (hlua.global "no.such.shortcut") true);
 in
 {
-  eval-shell-shortcuts-binds-dispatch-global =
-    pkgs.writeText "eval-shell-shortcuts-binds-dispatch-global"
-      (
-        if missing != [ ] then
-          throw "FAIL: these binds do not dispatch their marchyo global shortcut: ${lib.concatStringsSep ", " missing}"
-        else if
-          lib.any (e: lib.hasInfix "marchyo shell" (hyprEntryText e)) (
-            lib.filter (e: builtins.head (e._args or [ "" ]) != "SUPER + L") binds
-          )
-        then
-          throw "FAIL: a bind other than the lock still spawns `marchyo shell`"
-        else
-          "pass"
-      );
+  refs.desktop = {
+    eval-shell-shortcuts-binds-dispatch-global =
+      c:
+      let
+        missing = lib.filter (keys: !(hyprHasBind (binds c) keys (global converted.${keys}))) (
+          lib.attrNames converted
+        );
+      in
+      if missing != [ ] then
+        "these binds do not dispatch their marchyo global shortcut: ${lib.concatStringsSep ", " missing}"
+      else if
+        lib.any (e: lib.hasInfix "marchyo shell" (hyprEntryText e)) (
+          lib.filter (e: builtins.head (e._args or [ "" ]) != "SUPER + L") (binds c)
+        )
+      then
+        "a bind other than the lock still spawns `marchyo shell`"
+      else
+        true;
 
-  eval-shell-shortcuts-lock-keeps-exec = pkgs.writeText "eval-shell-shortcuts-lock-keeps-exec" (
-    if
-      hyprHasBind binds "SUPER + L" "exec_cmd" && hyprHasBind binds "SUPER + L" "marchyo shell lock"
-    then
-      "pass"
-    else
-      throw "FAIL: SUPER+L must keep a direct exec of `marchyo shell lock`"
-  );
+    eval-shell-shortcuts-lock-keeps-exec =
+      c:
+      expect (
+        hyprHasBind (binds c) "SUPER + L" "exec_cmd"
+        && hyprHasBind (binds c) "SUPER + L" "marchyo shell lock"
+      ) "SUPER+L must keep a direct exec of `marchyo shell lock`";
 
-  eval-shell-shortcuts-lock-keys-pass-through =
-    pkgs.writeText "eval-shell-shortcuts-lock-keys-pass-through"
-      (
-        let
-          opts = if lockKeyBind == null then { } else lib.elemAt lockKeyBind._args 2;
-        in
-        if (opts.non_consuming or false) && (opts.release or false) && (opts.ignore_mods or false) then
-          "pass"
-        else
-          throw "FAIL: the Caps_Lock bind must be a non-consuming release bind that ignores modifiers"
-      );
+    eval-shell-shortcuts-lock-keys-pass-through =
+      c:
+      let
+        lockKeyBind = lib.findFirst (
+          e: (e._args or [ ]) != [ ] && builtins.head e._args == "Caps_Lock"
+        ) null (binds c);
+        opts = if lockKeyBind == null then { } else lib.elemAt lockKeyBind._args 2;
+      in
+      expect (
+        (opts.non_consuming or false) && (opts.release or false) && (opts.ignore_mods or false)
+      ) "the Caps_Lock bind must be a non-consuming release bind that ignores modifiers";
+  };
 
-  eval-shell-shortcuts-unknown-name-rejected =
-    pkgs.writeText "eval-shell-shortcuts-unknown-name-rejected"
-      (
-        if rejected.success then
-          throw "FAIL: hlua.global accepted a name shell/shortcuts.json does not list"
-        else if !(lib.elem "panel.audio" hlua.shellShortcuts) then
-          throw "FAIL: hlua.shellShortcuts does not read shell/shortcuts.json"
-        else
-          "pass"
-      );
+  checks.eval-shell-shortcuts-unknown-name-rejected =
+    helpers.assertTest "shell-shortcuts-unknown-name-rejected"
+      (!rejected.success && lib.elem "panel.audio" hlua.shellShortcuts)
+      "hlua.global accepted a name shell/shortcuts.json does not list, or hlua.shellShortcuts does not read it";
 }

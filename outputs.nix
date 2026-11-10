@@ -236,21 +236,28 @@ in
   # two of them fails evaluation instead of one silently shadowing the other.
   mkChecks =
     { system }:
+    let
+      suite = import ./tests {
+        inherit system;
+        inherit (nixpkgs) lib;
+        inherit
+          nixpkgs
+          home-manager
+          ;
+        nixosModules = nixosModules.default;
+        homeManagerModules = homeManagerModules.default;
+        diskoModule = nixosModules.disko;
+        inherit diskoLayout diskoLayouts;
+      };
+    in
     mergeUnique "check" [
       {
         source = "tests/";
-        attrs = import ./tests {
-          inherit system;
-          inherit (nixpkgs) lib;
-          inherit
-            nixpkgs
-            home-manager
-            ;
-          nixosModules = nixosModules.default;
-          homeManagerModules = homeManagerModules.default;
-          diskoModule = nixosModules.disko;
-          inherit diskoLayout diskoLayouts;
-        };
+        attrs = suite.checks;
+      }
+      {
+        source = "tests/ (build checks)";
+        attrs = suite.heavyChecks;
       }
       {
         source = "outputs.nix (installer ISOs)";
@@ -277,7 +284,8 @@ in
         # package's installCheckPhase) is exercised; CI's toplevel build only bakes
         # the dark one. Plus marchyo-shell wrapper assertions and the two headless
         # shell suites (tests/shell/).
-        attrs = let
+        attrs =
+          let
             pkgs = mkPkgs system;
           in
           {

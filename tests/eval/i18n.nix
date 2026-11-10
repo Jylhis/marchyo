@@ -6,33 +6,13 @@
 # registry: lib/locale-language.nix is called with it directly, and a test
 # module widens the option's enum (enum declarations merge) with the synthetic
 # codes.
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+{ helpers, lib, ... }:
 let
-  inherit (helpers) withTestUser;
+  inherit (helpers) evalOptions;
 
-  evalWith =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  languageOf = extra: (evalWith extra).config.marchyo.language;
+  # marchyo.language from the option declarations alone: the default derives
+  # from marchyo.defaultLocale, so no system evaluation is needed.
+  languageOf = module: (evalOptions module).marchyo.language;
 
   # Synthetic registry entries in the locales.json shape.
   entry = locale: {
@@ -100,67 +80,71 @@ let
   ];
 
   shellPkgOf =
-    extra:
-    lib.findFirst (p: (p.pname or "") == "marchyo-shell") null
-      (evalWith extra).config.home-manager.users.testuser.home.packages;
+    c:
+    lib.findFirst (
+      p: (p.pname or "") == "marchyo-shell"
+    ) null c.home-manager.users.testuser.home.packages;
 in
 {
-  eval-i18n-language-default = pkgs.writeText "eval-i18n-language-default" (
-    if wrong != [ ] then
-      throw "FAIL: marchyo.language default is wrong for: ${
-        lib.concatMapStringsSep ", " (c: "${c.locale} (want ${c.want})") wrong
-      }"
-    else
-      "pass"
-  );
+  checks = {
+    eval-i18n-language-default =
+      helpers.assertTest "i18n-language-default" (wrong == [ ])
+        "marchyo.language default is wrong for: ${
+          lib.concatMapStringsSep ", " (c: "${c.locale} (want ${c.want})") wrong
+        }";
 
-  eval-i18n-language-default-shipped = pkgs.writeText "eval-i18n-language-default-shipped" (
-    if wrongShipped != [ ] then
-      throw "FAIL: marchyo.language should default to en with the shipped registry for: ${lib.concatStringsSep ", " wrongShipped}"
-    else
-      "pass"
-  );
+    eval-i18n-language-default-shipped =
+      helpers.assertTest "i18n-language-default-shipped" (wrongShipped == [ ])
+        "marchyo.language should default to en with the shipped registry for: ${lib.concatStringsSep ", " wrongShipped}";
 
-  eval-i18n-language-explicit-wins = pkgs.writeText "eval-i18n-language-explicit-wins" (
-    if
-      languageOf (
-        withCodes [ "de" ]
-        // {
-          marchyo.defaultLocale = "en_US.UTF-8";
-          marchyo.language = "de";
-        }
-      ) != "de"
-      || languageOf { marchyo.language = "en"; } != "en"
-    then
-      throw "FAIL: an explicit marchyo.language must win over the defaultLocale derivation (and en must be settable)"
-    else
-      "pass"
-  );
+    eval-i18n-language-explicit-wins =
+      helpers.assertTest "i18n-language-explicit-wins"
+        (
+          languageOf (
+            withCodes [ "de" ]
+            // {
+              marchyo.defaultLocale = "en_US.UTF-8";
+              marchyo.language = "de";
+            }
+          ) == "de"
+          && languageOf { marchyo.language = "en"; } == "en"
+        )
+        "an explicit marchyo.language must win over the defaultLocale derivation (and en must be settable)";
 
-  eval-i18n-language-rejects-unknown = pkgs.writeText "eval-i18n-language-rejects-unknown" (
-    if
-      (builtins.tryEval (languageOf {
-        marchyo.language = "zz";
-      })).success
-    then
-      throw "FAIL: marchyo.language accepted a code that is not in shell/i18n/locales.json"
-    else
-      "pass"
-  );
+    eval-i18n-language-rejects-unknown = helpers.assertTest "i18n-language-rejects-unknown" (
+      helpers.throws
+        (languageOf {
+          marchyo.language = "zz";
+        })
+    ) "marchyo.language accepted a code that is not in shell/i18n/locales.json";
+  };
 
-  eval-i18n-language-baked-into-shell =
+  # desktop-tweaks sets marchyo.language = "fi" (with the code widened in);
+  # the plain desktop keeps the default. Nothing builds that shell, so the
+  # missing fi catalog does not matter (and desktop-tweaks feeds no heavy check).
+  refs.desktop-tweaks.eval-i18n-language-baked-into-shell =
+    c:
     let
-      pkg = shellPkgOf (withCodes [ "fi" ] // { marchyo.language = "fi"; });
-      defaultPkg = shellPkgOf { };
+      pkg = shellPkgOf c;
     in
-    pkgs.writeText "eval-i18n-language-baked-into-shell" (
-      if pkg == null then
-        throw "FAIL: the marchyo-shell package is not in the Home Manager profile"
-      else if pkg.language != "fi" then
-        throw "FAIL: marchyo.language = fi did not reach the marchyo-shell package (got ${pkg.language})"
-      else if defaultPkg.language != "en" then
-        throw "FAIL: the default marchyo.language should bake en into the shell (got ${defaultPkg.language})"
-      else
-        "pass"
-    );
+    if pkg == null then
+      "the marchyo-shell package is not in the Home Manager profile"
+    else if pkg.language != "fi" then
+      "marchyo.language = fi did not reach the marchyo-shell package (got ${pkg.language})"
+    else
+      true;
+
+  # The default marchyo.language bakes en into the shell.
+  refs.desktop.eval-i18n-language-baked-into-shell-default =
+    c:
+    let
+      pkg = shellPkgOf c;
+    in
+    helpers.expect (
+      pkg != null && pkg.language == "en"
+    ) "the default marchyo.language should bake en into the shell (got ${pkg.language or "no shell"})";
+
+  refConfig.desktop-tweaks = withCodes [ "fi" ] // {
+    marchyo.language = "fi";
+  };
 }

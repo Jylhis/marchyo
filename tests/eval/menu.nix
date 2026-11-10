@@ -1,41 +1,13 @@
 # marchyo.menu.entries: the default tree, per-key merging of user entries, the
-# well-formedness assertions, and the rendered menu.json.
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+# well-formedness assertions, and the rendered menu.json. desktop-tweaks adds
+# the "capture.custom" entry and disables "system.reboot"; the malformed
+# entries go on the shared `misconfigured` system, each case matched by its
+# own entry id.
+{ helpers, lib, ... }:
 let
-  inherit (helpers) withTestUser;
-
-  evalWith =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  entries = extra: (evalWith extra).config.marchyo.menu.entries;
-  failed = extra: lib.filter (a: !a.assertion) (evalWith extra).config.assertions;
-  failsWith = extra: needle: lib.any (a: lib.hasInfix needle a.message) (failed extra);
-
-  check =
-    name: ok: detail:
-    pkgs.writeText "eval-menu-${name}" (if ok then "pass" else throw "FAIL: ${name}: ${detail}");
-
-  defaults = entries { };
-  ids = lib.attrNames defaults;
+  inherit (helpers) expect;
+  entries = c: c.marchyo.menu.entries;
+  ids = c: lib.attrNames (entries c);
   parentOf = id: lib.concatStringsSep "." (lib.init (lib.splitString "." id));
   topLevel = [
     "apps"
@@ -48,102 +20,112 @@ let
     "share"
   ];
 
-  custom = {
-    marchyo.menu.entries."capture.custom" = {
+in
+{
+  refs = {
+    desktop = {
+      eval-menu-default-top-level =
+        c: expect (lib.all (id: entries c ? ${id}) topLevel) "a top-level entry is missing";
+
+      eval-menu-default-parents =
+        c:
+        expect (lib.all (id: !(lib.hasInfix "." id) || entries c ? ${parentOf id}) (
+          ids c
+        )) "an entry has no parent";
+
+      eval-menu-default-providers =
+        c:
+        expect (lib.all (
+          id:
+          let
+            e = (entries c).${id};
+          in
+          (e.action == "provider") == (e.provider != null)
+        ) (ids c)) "provider and action disagree";
+
+      # The default tree passes its own assertions (the reference check fails
+      # on any failed assertion; this names the menu's part).
+      eval-menu-default-assertions =
+        c: lib.filter (a: !a.assertion && lib.hasPrefix "marchyo.menu" a.message) c.assertions == [ ];
+    };
+
+    desktop-tweaks = {
+      eval-menu-override-merges =
+        c:
+        let
+          e = entries c;
+        in
+        expect (
+          e ? "capture.custom" && e."capture.custom".label == "Custom" && e ? "capture.screenshot"
+        ) "the user entry did not merge with the defaults";
+
+      eval-menu-override-field =
+        c:
+        expect (
+          (entries c)."system.reboot".disabled && (entries c)."system.reboot".target == "marchyo reboot"
+        ) "a field override lost the default fields";
+
+      eval-menu-json-rendered =
+        c:
+        let
+          json = builtins.fromJSON c.home-manager.users.testuser.xdg.configFile."marchyo/menu.json".text;
+        in
+        expect (
+          json."capture.custom".target == "true"
+          && json."capture.screenshot".when == null
+          && json."appearance.theme".provider == "themes"
+          && json."system.hibernate".when == "test -e /etc/marchyo/hibernation"
+        ) "menu.json is missing or wrong";
+    };
+  };
+
+  refConfig.desktop-tweaks.marchyo.menu.entries = {
+    "capture.custom" = {
       label = "Custom";
       action = "exec";
       target = "true";
     };
+    "system.reboot".disabled = true;
   };
-  orphan = {
-    marchyo.menu.entries."nowhere.item" = {
+
+  failingConfig.misconfigured.marchyo.menu.entries = {
+    "nowhere.item" = {
       label = "Orphan";
       action = "exec";
       target = "true";
     };
-  };
-  providerless = {
-    marchyo.menu.entries."capture.broken" = {
+    "capture.broken" = {
       label = "Broken";
       action = "provider";
     };
-  };
-  targetless = {
-    marchyo.menu.entries."capture.empty" = {
+    "capture.empty" = {
       label = "Empty";
       action = "exec";
     };
-  };
-  strayProvider = {
-    marchyo.menu.entries."capture.stray" = {
+    "capture.stray" = {
       label = "Stray";
       action = "exec";
       target = "true";
       provider = "apps";
     };
   };
-in
-{
-  eval-menu-default-top-level = check "default-top-level" (lib.all (
-    id: defaults ? ${id}
-  ) topLevel) "a top-level entry is missing";
 
-  eval-menu-default-parents = check "default-parents" (lib.all (
-    id: !(lib.hasInfix "." id) || defaults ? ${parentOf id}
-  ) ids) "an entry has no parent";
-
-  eval-menu-default-providers = check "default-providers" (lib.all (
-    id:
-    let
-      e = defaults.${id};
-    in
-    (e.action == "provider") == (e.provider != null)
-  ) ids) "provider and action disagree";
-
-  eval-menu-default-assertions = check "default-assertions" (failed { } == [ ]) "default tree fails";
-
-  eval-menu-override-merges = check "override-merges" (
-    let
-      e = entries custom;
-    in
-    e ? "capture.custom"
-    && e."capture.custom".label == "Custom"
-    && e ? "capture.screenshot"
-    && failed custom == [ ]
-  ) "the user entry did not merge with the defaults";
-
-  eval-menu-override-field = check "override-field" (
-    (entries {
-      marchyo.menu.entries."system.reboot".disabled = true;
-    })."system.reboot".disabled
-    &&
-      (entries {
-        marchyo.menu.entries."system.reboot".disabled = true;
-      })."system.reboot".target == "marchyo reboot"
-  ) "a field override lost the default fields";
-
-  eval-menu-missing-parent = check "missing-parent" (failsWith orphan "is not an entry") "no failure";
-
-  eval-menu-provider-needs-provider =
-    check "provider-needs-provider" (failsWith providerless "provider must be set exactly")
-      "no failure";
-
-  eval-menu-provider-on-exec =
-    check "provider-on-exec" (failsWith strayProvider "provider must be set exactly")
-      "no failure";
-
-  eval-menu-exec-needs-target =
-    check "exec-needs-target" (failsWith targetless "non-empty target")
-      "no failure";
-
-  eval-menu-json-rendered = check "json-rendered" (
-    let
-      files = (evalWith custom).config.home-manager.users.testuser.xdg.configFile;
-      json = builtins.fromJSON files."marchyo/menu.json".text;
-    in
-    json."capture.custom".target == "true"
-    && json."capture.screenshot".when == null
-    && json."appearance.theme".provider == "themes"
-    && json."system.hibernate".when == "test -e /etc/marchyo/hibernation"
-  ) "menu.json is missing or wrong";
+  failing = {
+    eval-menu-missing-parent = {
+      on = "misconfigured";
+      expect = ''"nowhere.item": parent "nowhere" is not an entry'';
+    };
+    eval-menu-provider-needs-provider = {
+      on = "misconfigured";
+      expect = ''"capture.broken": provider must be set exactly'';
+    };
+    eval-menu-provider-on-exec = {
+      on = "misconfigured";
+      expect = ''"capture.stray": provider must be set exactly'';
+    };
+    eval-menu-exec-needs-target = {
+      on = "misconfigured";
+      expect = ''"capture.empty": action "exec" needs a non-empty target'';
+    };
+  };
 }

@@ -1,19 +1,15 @@
 # Evaluation tests for the bind table (lib/keybinds.nix) and its renderer
-# (modules/home/keybinds.nix).
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+# (modules/home/keybinds.nix), with every bind-contributing feature on: `full`
+# (desktop, development, media, office, emacs, dictation, web apps) and its
+# shell-off counterpart `shell-off-tweaks` (shell off, global workspaces,
+# voxtype; the rest in refConfig below).
+{ helpers, lib, ... }:
 let
   inherit (helpers)
-    withTestUser
     hyprHasBind
     hyprEntriesText
     duplicateChords
+    expect
     ;
 
   hasBindText = hm: s: lib.hasInfix s (hyprEntriesText (binds hm));
@@ -105,34 +101,7 @@ let
     (m "SUPER + K" "marchyo keybindings")
   ];
 
-  hmFor =
-    extra:
-    (lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    }).config.home-manager.users.testuser;
-
-  everything = {
-    marchyo = {
-      desktop.enable = true;
-      development.enable = true;
-      emacs.enable = true;
-      dictation.enable = true;
-      webapps.enable = true;
-    };
-  };
-  shellOff = lib.recursiveUpdate everything {
-    marchyo.shell.enable = false;
-    marchyo.workspaces.perMonitor = false;
-    marchyo.dictation.backend = "voxtype";
-  };
+  hmOf = c: c.home-manager.users.testuser;
 
   table = hm: hm.marchyo.keybinds.table;
   binds = hm: hm.wayland.windowManager.hyprland.settings.bind;
@@ -164,158 +133,184 @@ let
   tablePairs =
     hm: map (e: pair e.combo e.description) (lib.filter (e: !(e.hidden or false)) (table hm));
 
-  verdict =
-    name: ok: msg:
-    pkgs.writeText "eval-${name}" (if ok then "pass" else throw "FAIL: ${name}: ${msg}");
-in
-{
-  eval-keybinds-every-bind-described =
+  # Predicates run on both `full` and `shell-off-tweaks`.
+  everyBindDescribed =
+    c:
     let
-      a = hmFor everything;
-      b = hmFor shellOff;
-      missing = undescribed a ++ undescribed b ++ ungrouped a ++ ungrouped b;
+      hm = hmOf c;
+      missing = undescribed hm ++ ungrouped hm;
     in
-    verdict "keybinds-every-bind-described" (
-      missing == [ ] && builtins.length (table a) == builtins.length (binds a)
+    expect (
+      missing == [ ] && builtins.length (table hm) == builtins.length (binds hm)
     ) "table entries without a description or group: ${lib.concatStringsSep ", " missing}";
 
-  eval-keybinds-cheatsheet-matches-table =
+  cheatsheetMatchesTable =
+    c:
     let
-      check =
-        hm:
-        sheetPairs hm == tablePairs hm
-        && lib.sort lib.lessThan (sheetPairs hm) == lib.sort lib.lessThan (describedBindPairs hm);
-      a = hmFor everything;
-      b = hmFor shellOff;
+      hm = hmOf c;
     in
-    verdict "keybinds-cheatsheet-matches-table" (
-      check a && check b
+    expect (
+      sheetPairs hm == tablePairs hm
+      && lib.sort lib.lessThan (sheetPairs hm) == lib.sort lib.lessThan (describedBindPairs hm)
     ) "marchyo/keybindings.json differs from the bind table or the rendered binds";
 
-  # The launcher's keys mode runs a row with `hyprctl dispatch <dispatch>`, so
-  # only self-contained dispatcher expressions are exported.
-  eval-keybinds-cheatsheet-dispatch =
-    let
-      entries = sheet (hmFor everything);
-      byCombo = combo: lib.findFirst (e: e.combo == combo) null entries;
-    in
-    verdict "keybinds-cheatsheet-dispatch" (
-      (byCombo "SUPER + ALT + SPACE").dispatch == ''hl.dsp.global("marchyo:menu")''
-      && (byCombo "SUPER + C").dispatch == null
-      && lib.all (e: e.dispatch == null || !(lib.hasInfix "exec_cmd(terminal" e.dispatch)) entries
-    ) "the cheat sheet dispatch field is wrong";
-
-  # Per-monitor workspace binds use keycodes; the sheet shows digits.
-  eval-keybinds-cheatsheet-digit-labels =
-    let
-      combos = map (e: e.combo) (sheet (hmFor everything));
-    in
-    verdict "keybinds-cheatsheet-digit-labels" (
-      lib.elem "SUPER + 1" combos
-      && lib.elem "SUPER + SHIFT + ALT + 0" combos
-      && !(lib.any (lib.hasInfix "code:") combos)
-    ) "the cheat sheet shows keycodes instead of digits";
-
-  # Super+C/V: Ctrl+Shift+C/V for terminals, Ctrl/Shift+Insert for every
-  # other window (Emacs reads Ctrl+C and Ctrl+V as commands).
-  eval-keybinds-universal-clipboard =
-    let
-      bs = binds (hmFor everything);
-    in
-    verdict "keybinds-universal-clipboard" (
-      hyprHasBind bs "SUPER + C" ''"CTRL SHIFT", key = "C"''
-      && hyprHasBind bs "SUPER + C" ''send_shortcut({ mods = "CTRL", key = "Insert" })''
-      && hyprHasBind bs "SUPER + V" ''send_shortcut({ mods = "SHIFT", key = "Insert" })''
-      && hyprHasBind bs "SUPER + X" ''send_shortcut({ mods = "CTRL", key = "X" })''
-      && !(hyprHasBind bs "SUPER + C" ''mods = "CTRL", key = "C"'')
-    ) "Super+C/V/X do not send the terminal and Insert chords";
-
-  # The terminal tag follows the configured terminal (the `terminal` local).
-  eval-keybinds-terminal-tag =
-    let
-      hm = hmFor (
-        lib.recursiveUpdate everything {
-          home-manager.users.testuser.wayland.windowManager.hyprland.settings.terminal._var =
-            "/opt/bin/my-term --x";
-        }
-      );
-      regex = hm.marchyo.keybinds.terminalClassRegex;
-      rules = hm.wayland.windowManager.hyprland.settings.window_rule;
-      tagged = lib.any (r: (r.tag or null) == "+terminal" && (r.match.class or null) == regex) rules;
-    in
-    verdict "keybinds-terminal-tag" (
-      tagged
-      && builtins.match regex "my-term" != null
-      && builtins.match regex "com.mitchellh.ghostty" != null
-      && builtins.match regex "org.omarchy.btop" != null
-      && builtins.match regex "emacs" == null
-    ) "the terminal tag rule does not cover the configured terminal: ${regex}";
-
-  # A web app key on a marchyo chord (B, N, V are panels with the shell on)
-  # loses its bind with a warning instead of double-binding.
-  eval-keybinds-webapp-clash =
-    let
-      hm = hmFor (
-        lib.recursiveUpdate everything {
-          marchyo.webapps.extraApps =
-            map
-              (key: {
-                name = "Clash ${key}";
-                url = "https://example.com/${key}";
-                inherit key;
-              })
-              [
-                "B"
-                "N"
-                "V"
-              ];
-        }
-      );
-      dupes = normalizedDuplicates (binds hm);
-      warned = lib.filter (lib.hasInfix "Clash") hm.warnings;
-    in
-    verdict "keybinds-webapp-clash"
-      (dupes == [ ] && builtins.length warned == 3 && !(hasBindText hm "example.com"))
-      "clashing web app keys: duplicates ${lib.concatStringsSep ", " dupes}, ${toString (builtins.length warned)} warnings";
-
-  # The default web apps keep their keys: none clashes with a marchyo bind.
-  eval-keybinds-default-webapps-no-clash =
-    let
-      hm = hmFor everything;
-    in
-    verdict "keybinds-default-webapps-no-clash" (
-      !(lib.any (lib.hasInfix "marchyo.webapps: the key") hm.warnings)
-      && hyprHasBind (binds hm) "SUPER + SHIFT + G" "github.com"
-    ) "a default web app key clashes with a marchyo bind";
-
-  # Off the desktop there is no table, no binds and no cheat-sheet file.
-  eval-keybinds-desktop-off =
-    let
-      hm = hmFor { };
-    in
-    verdict "keybinds-desktop-off" (
-      table hm == [ ] && !(hm.xdg.configFile ? "marchyo/keybindings.json")
-    ) "desktop disabled but the bind table or the cheat-sheet file is present";
-
   # The layout: each chord reaches the named action.
-  eval-keybinds-layout =
+  layout =
+    chords: c:
     let
-      hm = hmFor everything;
-      off = hmFor shellOff;
-      missing =
-        lib.filter (c: !(hyprHasBind (binds hm) c.combo c.action)) chordMap
-        ++ lib.filter (c: !(hyprHasBind (binds off) c.combo c.action)) shellOffChordMap;
+      missing = lib.filter (m: !(hyprHasBind (binds (hmOf c)) m.combo m.action)) chords;
     in
-    verdict "keybinds-layout" (missing == [ ])
-      "chords off the layout: ${lib.concatMapStringsSep ", " (c: "${c.combo} -> ${c.action}") missing}";
+    expect (missing == [ ])
+      "chords off the layout: ${lib.concatMapStringsSep ", " (m: "${m.combo} -> ${m.action}") missing}";
 
-  # No chord is bound twice, with the shell on or off.
-  eval-keybinds-no-duplicate-chords =
+  noDuplicateChords =
+    c:
     let
-      dupes =
-        normalizedDuplicates (binds (hmFor everything)) ++ normalizedDuplicates (binds (hmFor shellOff));
+      dupes = normalizedDuplicates (binds (hmOf c));
     in
-    verdict "keybinds-no-duplicate-chords" (
-      dupes == [ ]
-    ) "these chords are bound more than once: ${lib.concatStringsSep ", " dupes}";
+    expect (dupes == [ ]) "these chords are bound more than once: ${lib.concatStringsSep ", " dupes}";
+
+in
+{
+  refs = {
+    full = {
+      eval-keybinds-every-bind-described = everyBindDescribed;
+      eval-keybinds-cheatsheet-matches-table = cheatsheetMatchesTable;
+
+      # The launcher's keys mode runs a row with `hyprctl dispatch <dispatch>`, so
+      # only self-contained dispatcher expressions are exported.
+      eval-keybinds-cheatsheet-dispatch =
+        c:
+        let
+          entries = sheet (hmOf c);
+          byCombo = combo: lib.findFirst (e: e.combo == combo) null entries;
+        in
+        expect (
+          (byCombo "SUPER + ALT + SPACE").dispatch == ''hl.dsp.global("marchyo:menu")''
+          && (byCombo "SUPER + C").dispatch == null
+          && lib.all (e: e.dispatch == null || !(lib.hasInfix "exec_cmd(terminal" e.dispatch)) entries
+        ) "the cheat sheet dispatch field is wrong";
+
+      # Per-monitor workspace binds use keycodes; the sheet shows digits.
+      eval-keybinds-cheatsheet-digit-labels =
+        c:
+        let
+          combos = map (e: e.combo) (sheet (hmOf c));
+        in
+        expect (
+          lib.elem "SUPER + 1" combos
+          && lib.elem "SUPER + SHIFT + ALT + 0" combos
+          && !(lib.any (lib.hasInfix "code:") combos)
+        ) "the cheat sheet shows keycodes instead of digits";
+
+      # Super+C/V: Ctrl+Shift+C/V for terminals, Ctrl/Shift+Insert for every
+      # other window (Emacs reads Ctrl+C and Ctrl+V as commands).
+      eval-keybinds-universal-clipboard =
+        c:
+        let
+          bs = binds (hmOf c);
+        in
+        expect (
+          hyprHasBind bs "SUPER + C" ''"CTRL SHIFT", key = "C"''
+          && hyprHasBind bs "SUPER + C" ''send_shortcut({ mods = "CTRL", key = "Insert" })''
+          && hyprHasBind bs "SUPER + V" ''send_shortcut({ mods = "SHIFT", key = "Insert" })''
+          && hyprHasBind bs "SUPER + X" ''send_shortcut({ mods = "CTRL", key = "X" })''
+          && !(hyprHasBind bs "SUPER + C" ''mods = "CTRL", key = "C"'')
+        ) "Super+C/V/X do not send the terminal and Insert chords";
+
+      # The default web apps keep their keys: none clashes with a marchyo bind.
+      eval-keybinds-default-webapps-no-clash =
+        c:
+        let
+          hm = hmOf c;
+        in
+        expect (
+          !(lib.any (lib.hasInfix "marchyo.webapps: the key") hm.warnings)
+          && hyprHasBind (binds hm) "SUPER + SHIFT + G" "github.com"
+        ) "a default web app key clashes with a marchyo bind";
+
+      # The layout: each chord reaches the named action.
+      eval-keybinds-layout = layout chordMap;
+
+      # No chord is bound twice, with the shell on or off.
+      eval-keybinds-no-duplicate-chords = noDuplicateChords;
+    };
+
+    # The same four with the shell off.
+    shell-off-tweaks = {
+      eval-keybinds-every-bind-described-shell-off = everyBindDescribed;
+      eval-keybinds-cheatsheet-matches-table-shell-off = cheatsheetMatchesTable;
+      eval-keybinds-layout-shell-off = layout shellOffChordMap;
+      eval-keybinds-no-duplicate-chords-shell-off = noDuplicateChords;
+
+      # The terminal tag follows the configured terminal (the `terminal` local).
+      eval-keybinds-terminal-tag =
+        c:
+        let
+          hm = hmOf c;
+          regex = hm.marchyo.keybinds.terminalClassRegex;
+          rules = hm.wayland.windowManager.hyprland.settings.window_rule;
+          tagged = lib.any (r: (r.tag or null) == "+terminal" && (r.match.class or null) == regex) rules;
+        in
+        expect (
+          tagged
+          && builtins.match regex "my-term" != null
+          && builtins.match regex "com.mitchellh.ghostty" != null
+          && builtins.match regex "org.omarchy.btop" != null
+          && builtins.match regex "emacs" == null
+        ) "the terminal tag rule does not cover the configured terminal: ${regex}";
+    };
+
+    desktop-tweaks-4 = {
+      # A web app key on a marchyo chord (B, N, V are panels with the shell on)
+      # loses its bind with a warning instead of double-binding.
+      eval-keybinds-webapp-clash =
+        c:
+        let
+          hm = hmOf c;
+          dupes = normalizedDuplicates (binds hm);
+          warned = lib.filter (lib.hasInfix "Clash") hm.warnings;
+        in
+        expect (dupes == [ ] && builtins.length warned == 3 && !(hasBindText hm "example.com"))
+          "clashing web app keys: duplicates ${lib.concatStringsSep ", " dupes}, ${toString (builtins.length warned)} warnings";
+    };
+
+    headless = {
+      # Off the desktop there is no table, no binds and no cheat-sheet file.
+      eval-keybinds-desktop-off =
+        c:
+        let
+          hm = hmOf c;
+        in
+        expect (
+          table hm == [ ] && !(hm.xdg.configFile ? "marchyo/keybindings.json")
+        ) "desktop disabled but the bind table or the cheat-sheet file is present";
+    };
+  };
+
+  refConfig = {
+    shell-off-tweaks = {
+      marchyo = {
+        development.enable = true;
+        emacs.enable = true;
+        dictation.enable = true;
+        dictation.backend = "voxtype";
+        workspaces.perMonitor = false;
+      };
+      home-manager.users.testuser.wayland.windowManager.hyprland.settings.terminal._var =
+        "/opt/bin/my-term --x";
+    };
+    desktop-tweaks-4.marchyo.webapps.extraApps =
+      map
+        (key: {
+          name = "Clash ${key}";
+          url = "https://example.com/${key}";
+          inherit key;
+        })
+        [
+          "B"
+          "N"
+          "V"
+        ];
+  };
 }

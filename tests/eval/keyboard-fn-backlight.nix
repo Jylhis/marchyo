@@ -3,124 +3,142 @@
   helpers,
   lib,
   pkgs,
-  nixosModules,
-  homeManagerModules,
   ...
 }:
 let
-  inherit (helpers) withTestUser hyprHasBind;
+  inherit (helpers) hyprHasBind;
 
-  evalWith =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  verdict =
-    name: ok: msg:
-    pkgs.writeText "eval-${name}" (if ok then "pass" else throw "FAIL: ${name}: ${msg}");
-
-  modprobe = e: e.config.boot.extraModprobeConfig;
-  hm = e: e.config.home-manager.users.testuser;
-  binds = e: (hm e).wayland.windowManager.hyprland.settings.bind or [ ];
-  kbOptions = e: (hm e).home.keyboard.options;
-  hyprEnv = e: (hm e).wayland.windowManager.hyprland.settings.env;
-  uwsmEnv = e: (hm e).xdg.configFile."uwsm/env-hyprland".text or "";
-
-  media = evalWith { marchyo.keyboard.fnMode = "media"; };
-  fn = evalWith { marchyo.keyboard.fnMode = "function"; };
-  shiftCaps = evalWith { marchyo.keyboard.composeKey = "shift-caps"; };
-  noBacklight = evalWith { marchyo.keyboard.backlight.enable = false; };
-  menu = evalWith { marchyo.keyboard.composeKey = "menu"; };
-  default = evalWith { };
-  swapCaps = evalWith { marchyo.keyboard.options = [ "ctrl:swapcaps" ]; };
-  swapCapsShift = evalWith {
-    marchyo.keyboard.options = [ "ctrl:swapcaps" ];
-    marchyo.keyboard.composeKey = "shift-caps";
-  };
+  modprobe = c: c.boot.extraModprobeConfig;
+  hm = c: c.home-manager.users.testuser;
+  binds = c: (hm c).wayland.windowManager.hyprland.settings.bind or [ ];
+  kbOptions = c: (hm c).home.keyboard.options;
+  hyprEnv = c: (hm c).wayland.windowManager.hyprland.settings.env;
+  uwsmEnv = c: (hm c).xdg.configFile."uwsm/env-hyprland".text or "";
 
   xkb = (import ../../lib/xkb-compose.nix).tree pkgs;
 in
 {
-  eval-keyboard-fnmode-default-untouched = verdict "keyboard-fnmode-default-untouched" (
-    !(lib.hasInfix "hid_apple" (modprobe default))
-  ) "fnMode = null must not write modprobe options";
+  refs = {
+    desktop = {
+      eval-keyboard-fnmode-default-untouched =
+        c:
+        helpers.expect (
+          !(lib.hasInfix "hid_apple" (modprobe c))
+        ) "fnMode = null must not write modprobe options";
 
-  eval-keyboard-fnmode-media = verdict "keyboard-fnmode-media" (
-    lib.hasInfix "options hid_apple fnmode=1" (modprobe media)
-    && lib.hasInfix "options hid_asus fnlock_default=0" (modprobe media)
-    && lib.hasInfix "options asus_wmi fnlock_default=0" (modprobe media)
-  ) "media mode should set fnmode=1 and fnlock_default=0";
+      eval-keyboard-backlight-binds =
+        c:
+        helpers.expect (
+          hyprHasBind (binds c) "XF86KbdBrightnessUp" "brightness --keyboard up"
+          && hyprHasBind (binds c) "XF86KbdBrightnessDown" "brightness --keyboard down"
+          && hyprHasBind (binds c) "XF86KbdLightOnOff" "brightness --keyboard toggle"
+          && hyprHasBind (binds c) "CTRL + XF86MonBrightnessUp" "brightness --keyboard up"
+          && hyprHasBind (binds c) "CTRL + XF86MonBrightnessDown" "brightness --keyboard down"
+        ) "keyboard backlight binds missing";
 
-  eval-keyboard-fnmode-function = verdict "keyboard-fnmode-function" (
-    lib.hasInfix "options hid_apple fnmode=2" (modprobe fn)
-    && lib.hasInfix "options hid_asus fnlock_default=1" (modprobe fn)
-    && lib.hasInfix "options asus_wmi fnlock_default=1" (modprobe fn)
-  ) "function mode should set fnmode=2 and fnlock_default=1";
+      # The default compose key is "menu", so the plain desktop doubles as the
+      # explicit composeKey = "menu" configuration.
+      eval-keyboard-menu-compose-unchanged =
+        c:
+        helpers.expect (
+          lib.elem "compose:menu" (kbOptions c) && !(c.environment.etc ? xkb)
+        ) "the menu compose key must stay on the stock option";
 
-  eval-keyboard-backlight-binds = verdict "keyboard-backlight-binds" (
-    hyprHasBind (binds default) "XF86KbdBrightnessUp" "brightness --keyboard up"
-    && hyprHasBind (binds default) "XF86KbdBrightnessDown" "brightness --keyboard down"
-    && hyprHasBind (binds default) "XF86KbdLightOnOff" "brightness --keyboard toggle"
-    && hyprHasBind (binds default) "CTRL + XF86MonBrightnessUp" "brightness --keyboard up"
-    && hyprHasBind (binds default) "CTRL + XF86MonBrightnessDown" "brightness --keyboard down"
-  ) "keyboard backlight binds missing";
+      # The menu compose key writes no uwsm session env.
+      eval-keyboard-shift-caps-session-env-menu =
+        c: helpers.expect (uwsmEnv c == "") "the menu compose key must leave the uwsm session env alone";
 
-  eval-keyboard-backlight-disabled = verdict "keyboard-backlight-disabled" (
-    !(hyprHasBind (binds noBacklight) "XF86KbdBrightnessUp" "brightness")
-  ) "backlight.enable = false must drop the binds";
+      eval-keyboard-compose-default-menu =
+        c:
+        helpers.expect (
+          c.marchyo.keyboard.composeKey == "menu"
+          && lib.elem "compose:menu" (kbOptions c)
+          && !(c.environment.etc ? xkb)
+        ) "the default compose key must be the Menu key";
+    };
 
-  eval-keyboard-shift-caps-options = verdict "keyboard-shift-caps-options" (
-    lib.elem "marchyo:shift_caps_compose" (kbOptions shiftCaps)
-    && !(lib.any (lib.hasPrefix "compose:") (kbOptions shiftCaps))
-    && shiftCaps.config.environment.sessionVariables.XKB_CONFIG_EXTRA_PATH == "/etc/xkb"
-    && shiftCaps.config.environment.etc ? xkb
-    && !(lib.hasInfix "shift_caps" shiftCaps.config.services.xserver.xkb.options)
-  ) "shift-caps should reach Hyprland only, with the extra path exported";
+    # desktop-tweaks: fnMode = "media".
+    desktop-tweaks.eval-keyboard-fnmode-media =
+      c:
+      helpers.expect (
+        lib.hasInfix "options hid_apple fnmode=1" (modprobe c)
+        && lib.hasInfix "options hid_asus fnlock_default=0" (modprobe c)
+        && lib.hasInfix "options asus_wmi fnlock_default=0" (modprobe c)
+      ) "media mode should set fnmode=1 and fnlock_default=0";
 
-  eval-keyboard-menu-compose-unchanged = verdict "keyboard-menu-compose-unchanged" (
-    lib.elem "compose:menu" (kbOptions menu) && !(menu.config.environment.etc ? xkb)
-  ) "the menu compose key must stay on the stock option";
+    # desktop-tweaks-2: fnMode = "function".
+    desktop-tweaks-2.eval-keyboard-fnmode-function =
+      c:
+      helpers.expect (
+        lib.hasInfix "options hid_apple fnmode=2" (modprobe c)
+        && lib.hasInfix "options hid_asus fnlock_default=1" (modprobe c)
+        && lib.hasInfix "options asus_wmi fnlock_default=1" (modprobe c)
+      ) "function mode should set fnmode=2 and fnlock_default=1";
 
-  # Hyprland only resolves the option with XKB_CONFIG_EXTRA_PATH set, so the
-  # Hyprland env and uwsm's session env carry it too.
-  eval-keyboard-shift-caps-session-env = verdict "keyboard-shift-caps-session-env" (
-    hyprHasBind (hyprEnv shiftCaps) "XKB_CONFIG_EXTRA_PATH" "/etc/xkb"
-    && lib.hasInfix "XKB_CONFIG_EXTRA_PATH=/etc/xkb" (uwsmEnv shiftCaps)
-    && uwsmEnv menu == ""
-  ) "XKB_CONFIG_EXTRA_PATH must reach the Hyprland and uwsm session env with shift-caps";
+    desktop-off.eval-keyboard-backlight-disabled =
+      c:
+      helpers.expect (
+        !(hyprHasBind (binds c) "XF86KbdBrightnessUp" "brightness")
+      ) "backlight.enable = false must drop the binds";
 
-  eval-keyboard-compose-default-menu = verdict "keyboard-compose-default-menu" (
-    default.config.marchyo.keyboard.composeKey == "menu"
-    && lib.elem "compose:menu" (kbOptions default)
-    && !(default.config.environment.etc ? xkb)
-  ) "the default compose key must be the Menu key";
+    # desktop-tweaks-3: composeKey = "shift-caps".
+    desktop-tweaks-3 = {
+      eval-keyboard-shift-caps-options =
+        c:
+        helpers.expect (
+          lib.elem "marchyo:shift_caps_compose" (kbOptions c)
+          && !(lib.any (lib.hasPrefix "compose:") (kbOptions c))
+          && c.environment.sessionVariables.XKB_CONFIG_EXTRA_PATH == "/etc/xkb"
+          && c.environment.etc ? xkb
+          && !(lib.hasInfix "shift_caps" c.services.xserver.xkb.options)
+        ) "shift-caps should reach Hyprland only, with the extra path exported";
 
-  # A Caps Lock remap keeps the Menu compose key.
-  eval-keyboard-caps-remap-keeps-menu-compose = verdict "keyboard-caps-remap-keeps-menu-compose" (
-    swapCaps.config.marchyo.keyboard.composeKey == "menu"
-    && lib.elem "compose:menu" (kbOptions swapCaps)
-    && !(lib.elem "marchyo:shift_caps_compose" (kbOptions swapCaps))
-  ) "a Caps Lock remap must keep the menu compose key";
+      # Hyprland only resolves the option with XKB_CONFIG_EXTRA_PATH set, so the
+      # Hyprland env and uwsm's session env carry it too.
+      eval-keyboard-shift-caps-session-env =
+        c:
+        helpers.expect (
+          hyprHasBind (hyprEnv c) "XKB_CONFIG_EXTRA_PATH" "/etc/xkb"
+          && lib.hasInfix "XKB_CONFIG_EXTRA_PATH=/etc/xkb" (uwsmEnv c)
+        ) "XKB_CONFIG_EXTRA_PATH must reach the Hyprland and uwsm session env with shift-caps";
+    };
 
-  eval-keyboard-caps-remap-shift-caps-rejected = verdict "keyboard-caps-remap-shift-caps-rejected" (
-    lib.any
-      (a: !a.assertion)
-      swapCapsShift.config.assertions
-  ) "shift-caps with ctrl:swapcaps must fail an assertion";
+    # A Caps Lock remap keeps the Menu compose key (desktop-tweaks:
+    # options = [ "ctrl:swapcaps" ]).
+    desktop-tweaks.eval-keyboard-caps-remap-keeps-menu-compose =
+      c:
+      helpers.expect (
+        c.marchyo.keyboard.composeKey == "menu"
+        && lib.elem "compose:menu" (kbOptions c)
+        && !(lib.elem "marchyo:shift_caps_compose" (kbOptions c))
+      ) "a Caps Lock remap must keep the menu compose key";
+  };
+
+  refConfig = {
+    desktop-tweaks.marchyo.keyboard = {
+      fnMode = "media";
+      options = [ "ctrl:swapcaps" ];
+    };
+    desktop-tweaks-2.marchyo.keyboard.fnMode = "function";
+    desktop-tweaks-3.marchyo.keyboard.composeKey = "shift-caps";
+    desktop-off.marchyo.keyboard.backlight.enable = false;
+  };
+
+  # misconfigured: shift-caps compose with a Caps Lock remap.
+  failing.eval-keyboard-caps-remap-shift-caps-rejected = {
+    on = "misconfigured";
+    expect = ''composeKey = "shift-caps" redefines Caps Lock'';
+  };
+
+  failingConfig.misconfigured.marchyo.keyboard = {
+    options = [ "ctrl:swapcaps" ];
+    composeKey = "shift-caps";
+  };
 
   # libxkbcommon resolves the custom option against the generated tree: Caps
-  # Lock keeps Caps_Lock on level 1 and Shift+Caps Lock yields Multi_key.
-  eval-keyboard-shift-caps-xkbcli =
+  # Lock keeps Caps_Lock on level 1 and Shift+Caps Lock yields Multi_key. A
+  # small build (no NixOS evaluation), kept in the default checks.
+  checks.eval-keyboard-shift-caps-xkbcli =
     pkgs.runCommand "eval-keyboard-shift-caps-xkbcli"
       {
         nativeBuildInputs = [ pkgs.libxkbcommon ];

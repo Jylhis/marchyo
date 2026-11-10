@@ -1,32 +1,20 @@
-{ helpers, ... }:
-let
-  inherit (helpers) testNixOS minimalConfig;
-in
-{
-  eval-slack = testNixOS "slack" (
-    minimalConfig
-    // {
-      programs.slack.enable = true;
-    }
-  );
+# Upstream-option ports evaluate on a minimal host: minimal-tweaks enables
+# programs.slack (with settings) and programs.solaar.
+_: {
+  refs.minimal-tweaks = {
+    eval-slack = cfg: cfg.programs.slack.enable;
+    eval-slack-settings = cfg: cfg.programs.slack.settings.DefaultSignInTeam == "example";
+    eval-logitech = cfg: cfg.programs.solaar.enable;
+  };
 
-  eval-slack-settings = testNixOS "slack-settings" (
-    minimalConfig
-    // {
-      programs.slack = {
-        enable = true;
-        settings = {
-          DefaultSignInTeam = "example";
-          HardwareAcceleration = false;
-        };
+  refConfig.minimal-tweaks.programs = {
+    slack = {
+      enable = true;
+      settings = {
+        DefaultSignInTeam = "example";
+        HardwareAcceleration = false;
       };
-    }
-  );
-
-  eval-logitech = testNixOS "logitech" (
-    minimalConfig
-    // {
-      programs.solaar.enable = true;
-    }
-  );
+    };
+    solaar.enable = true;
+  };
 }

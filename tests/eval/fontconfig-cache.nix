@@ -1,56 +1,36 @@
 # marchyo.fonts.cleanUserCache: the activation entry that rebuilds a stale
-# fontconfig user cache exists by default and disappears when disabled.
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+# fontconfig user cache exists by default and disappears when disabled
+# (desktop-off).
+{ lib, ... }:
 let
-  inherit (helpers) withTestUser;
-
-  evalWith =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  activationOf = extra: (evalWith extra).config.home-manager.users.testuser.home.activation;
+  activationOf = c: c.home-manager.users.testuser.home.activation;
 in
 {
-  eval-fontconfig-cache-default-rebuilds =
-    let
-      script = (activationOf { }).marchyoFontconfigCache.data or null;
-    in
-    pkgs.writeText "eval-fontconfig-cache-default-rebuilds" (
-      if script != null && lib.hasInfix "fc-cache" script then
-        "pass"
-      else
-        throw "FAIL: marchyo.fonts.cleanUserCache should install a fc-cache activation entry by default"
-    );
+  refs = {
+    desktop = {
+      eval-fontconfig-cache-default-rebuilds =
+        c:
+        let
+          script = (activationOf c).marchyoFontconfigCache.data or null;
+        in
+        if script != null && lib.hasInfix "fc-cache" script then
+          true
+        else
+          "marchyo.fonts.cleanUserCache should install a fc-cache activation entry by default";
+    };
 
-  eval-fontconfig-cache-disabled-omitted =
-    let
-      a =
-        (evalWith {
-          home-manager.users.testuser.marchyo.fonts.cleanUserCache = false;
-        }).config.home-manager.users.testuser.home.activation;
-    in
-    pkgs.writeText "eval-fontconfig-cache-disabled-omitted" (
-      if !a ? marchyoFontconfigCache then
-        "pass"
-      else
-        throw "FAIL: marchyo.fonts.cleanUserCache = false must omit the activation entry"
-    );
+    desktop-off = {
+      eval-fontconfig-cache-disabled-omitted =
+        c:
+        let
+          a = c.home-manager.users.testuser.home.activation;
+        in
+        if !a ? marchyoFontconfigCache then
+          true
+        else
+          "marchyo.fonts.cleanUserCache = false must omit the activation entry";
+    };
+  };
+
+  refConfig.desktop-off.home-manager.users.testuser.marchyo.fonts.cleanUserCache = false;
 }

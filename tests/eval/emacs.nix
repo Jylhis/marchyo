@@ -1,37 +1,20 @@
-{
-  helpers,
-  homeManagerModules,
-  ...
-}:
-let
-  inherit (helpers) testNixOS withTestUser;
+# The emacs module evaluates (assertions pass) off, on, and with every
+# sub-feature off (desktop-tweaks sets marchyo.emacs.enable with windmove,
+# eventListener, scratchpad, everywhere and orgProtocol all disabled).
+_: {
+  refs = {
+    desktop.eval-emacs-disabled = _: true;
+    full.eval-emacs-enabled = cfg: cfg.marchyo.emacs.enable;
+    desktop-tweaks.eval-emacs-minimal =
+      cfg: cfg.marchyo.emacs.enable && !cfg.marchyo.emacs.windmove.enable;
+  };
 
-  withHM =
-    extra:
-    withTestUser (
-      {
-        marchyo.desktop.enable = true;
-        home-manager.users.testuser = {
-          imports = [ homeManagerModules ];
-        };
-      }
-      // extra
-    );
-in
-{
-  eval-emacs-disabled = testNixOS "emacs-disabled" (withHM { });
-
-  eval-emacs-enabled = testNixOS "emacs-enabled" (withHM {
-    marchyo.emacs.enable = true;
-  });
-
-  # Every sub-feature off — module should still evaluate.
-  eval-emacs-minimal = testNixOS "emacs-minimal" (withHM {
-    marchyo.emacs.enable = true;
-    marchyo.emacs.windmove.enable = false;
-    marchyo.emacs.eventListener.enable = false;
-    marchyo.emacs.scratchpad.enable = false;
-    marchyo.emacs.everywhere.enable = false;
-    marchyo.emacs.orgProtocol.enable = false;
-  });
+  refConfig.desktop-tweaks.marchyo.emacs = {
+    enable = true;
+    windmove.enable = false;
+    eventListener.enable = false;
+    scratchpad.enable = false;
+    everywhere.enable = false;
+    orgProtocol.enable = false;
+  };
 }

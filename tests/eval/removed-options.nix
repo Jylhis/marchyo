@@ -1,197 +1,247 @@
 # Retired options (modules/nixos/options/removed.nix): a removed option fails
 # with the replacement hint instead of an unknown-option error; a renamed one
 # still lands on its upstream option.
-{ helpers, lib, ... }:
-let
-  inherit (helpers) testNixOSCheck testNixOSFails withTestUser;
-
-  renamedTo =
-    name: check: config:
-    testNixOSCheck "renamed-${name}" check (withTestUser config);
-in
+#
+# Every removed option is set at once on ONE configuration (misconfigured-3), and
+# each case requires a failed assertion that names its own option path and
+# carries its own hint, so the cases cannot satisfy each other. The renamed
+# options are set on the tweak reference systems (refConfig below).
+{ lib, ... }:
 {
-  eval-removed-launcher-vicinae-options =
-    testNixOSFails "removed-launcher-vicinae-options" "Vicinae"
-      (withTestUser {
-        marchyo.launcher.keybinding = "vim";
-      });
+  failing = {
+    eval-removed-launcher-vicinae-options = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.launcher.keybinding"
+        "Vicinae"
+      ];
+    };
 
-  eval-removed-osd = testNixOSFails "removed-osd" "SwayOSD" (withTestUser {
-    marchyo.osd.enable = false;
-  });
+    eval-removed-osd = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.osd"
+        "SwayOSD"
+      ];
+    };
 
-  eval-removed-gaming = testNixOSFails "removed-gaming" "gaming bundle" (withTestUser {
-    marchyo.gaming.enable = true;
-  });
+    eval-removed-gaming = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.gaming"
+        "gaming bundle"
+      ];
+    };
 
-  eval-removed-kmscon = testNixOSFails "removed-kmscon" "kmscon" (withTestUser {
-    marchyo.console.kmscon.enable = true;
-  });
+    eval-removed-kmscon = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.console.kmscon"
+        "kmscon"
+      ];
+    };
 
-  eval-removed-snapshots = testNixOSFails "removed-snapshots" "Snapper" (withTestUser {
-    marchyo.snapshots.enable = true;
-  });
+    eval-removed-snapshots = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.snapshots"
+        "Snapper"
+      ];
+    };
 
-  eval-removed-shell-dev-plugins =
-    testNixOSFails "removed-shell-dev-plugins" "plugin dev"
-      (withTestUser {
-        marchyo.shell.devPlugins.enable = true;
-      });
+    eval-removed-shell-dev-plugins = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.shell.devPlugins"
+        "plugin dev"
+      ];
+    };
 
-  eval-removed-shell-bar-plugin =
-    testNixOSFails "removed-shell-bar-plugin" "built-in bar"
-      (withTestUser {
-        marchyo.shell.barPlugin = "acme.bar";
-      });
+    eval-removed-shell-bar-plugin = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.shell.barPlugin"
+        "built-in bar"
+      ];
+    };
 
-  eval-removed-ai-agents = testNixOSFails "removed-ai-agents" "not carried" (withTestUser {
-    marchyo.ai.agents = [ "codex" ];
-  });
+    eval-removed-ai-agents = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.ai.agents"
+        "not carried"
+      ];
+    };
 
-  eval-removed-ai-local = testNixOSFails "removed-ai-local" "Ollama" (withTestUser {
-    marchyo.ai.local.enable = true;
-  });
+    eval-removed-ai-local = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.ai.local"
+        "Ollama"
+      ];
+    };
 
-  eval-removed-ai-crash-capture =
-    testNixOSFails "removed-ai-crash-capture" "Crash capture"
-      (withTestUser {
-        marchyo.ai.crashCapture.enable = false;
-      });
+    eval-removed-ai-crash-capture = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.ai.crashCapture"
+        "Crash capture"
+      ];
+    };
 
-  eval-removed-console = testNixOSFails "removed-console" "Quake-style" (withTestUser {
-    marchyo.console.enable = false;
-  });
+    eval-removed-console = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.console.enable"
+        "Quake-style"
+      ];
+    };
 
-  eval-removed-audio-tuner = testNixOSFails "removed-audio-tuner" "speaker tuner" (withTestUser {
-    marchyo.audio.tuner.enable = true;
-  });
+    eval-removed-audio-tuner = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.audio.tuner"
+        "speaker tuner"
+      ];
+    };
 
-  eval-removed-camlink = testNixOSFails "removed-camlink" "Cam Link" (withTestUser {
-    marchyo.hardware.camlink.enable = true;
-  });
+    eval-removed-camlink = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.hardware.camlink"
+        "Cam Link"
+      ];
+    };
 
-  eval-removed-slack-theme-injection =
-    testNixOSFails "removed-slack-theme-injection" "Slack theme"
-      (withTestUser {
-        marchyo.slack.themeInjection.enable = true;
-      });
+    eval-removed-slack-theme-injection = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.slack.themeInjection"
+        "Slack theme"
+      ];
+    };
 
-  eval-removed-keyboard-legacy-binds =
-    testNixOSFails "removed-keyboard-legacy-binds" "only Hyprland layout"
-      (withTestUser {
-        marchyo.keyboard.legacyBinds = true;
-      });
+    eval-removed-keyboard-legacy-binds = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.keyboard.legacyBinds"
+        "only Hyprland layout"
+      ];
+    };
 
-  eval-renamed-firewall = renamedTo "firewall" (c: !c.networking.firewall.enable) {
-    marchyo.security.firewall.enable = false;
-  };
+    eval-removed-nvidia-package = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.graphics.nvidia.package"
+        "hardware.nvidia.package"
+      ];
+    };
 
-  eval-renamed-resume-device = renamedTo "resume-device" (c: c.boot.resumeDevice == "/dev/sda2") {
-    marchyo.power.hibernation.resumeDevice = "/dev/sda2";
-  };
+    eval-removed-performance-kernel = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.performance.kernel"
+        "boot.kernelPackages"
+      ];
+    };
 
-  eval-renamed-logitech = renamedTo "logitech" (
-    c: c.programs.solaar.enable && c.hardware.logitech.wireless.enable
-  ) { marchyo.hardware.logitech.enable = true; };
+    eval-removed-nix-caches = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.nix.caches"
+        "nix.settings.substituters"
+      ];
+    };
 
-  eval-renamed-nvidia =
-    renamedTo "nvidia"
-      (
-        c:
-        !c.hardware.nvidia.open
-        && c.hardware.nvidia.powerManagement.enable
-        && !c.hardware.nvidia-container-toolkit.enable
-      )
-      {
-        marchyo.development.enable = true;
-        marchyo.graphics = {
-          vendors = [ "nvidia" ];
-          nvidia = {
-            open = false;
-            powerManagement = true;
-            containerToolkit.enable = false;
-          };
-        };
-      };
+    eval-removed-nix-router-extra-upstreams = {
+      on = "misconfigured-3";
+      expect = [
+        "`marchyo.nix.router.extraUpstreams"
+        "services.ncro.settings.upstreams"
+      ];
+    };
 
-  eval-renamed-amd-overdrive = renamedTo "amd-overdrive" (c: c.hardware.amdgpu.overdrive.enable) {
-    marchyo.graphics = {
-      vendors = [ "amd" ];
-      amd.overdrive.enable = true;
+    eval-removed-user-uid = {
+      on = "misconfigured-3";
+      expect = "set users.users.testuser.uid";
+    };
+
+    eval-removed-user-name = {
+      on = "misconfigured-3";
+      expect = "marchyo.users.testuser.name";
     };
   };
 
-  eval-renamed-nix-router =
-    renamedTo "nix-router"
-      (
-        c:
-        !c.services.ncro.enable
-        && c.services.ncro.port == 4300
-        && c.services.ncro.netrcFile == "/etc/nix/netrc"
-      )
-      {
-        marchyo.nix.router = {
-          enable = false;
-          port = 4300;
-          netrcFile = "/etc/nix/netrc";
-        };
-      };
+  refs = {
+    headless-tweaks-3.eval-renamed-firewall = c: !c.networking.firewall.enable;
+    headless-tweaks-4 = {
+      eval-renamed-resume-device = c: c.boot.resumeDevice == "/dev/sda2";
+      eval-renamed-logitech = c: c.programs.solaar.enable && c.hardware.logitech.wireless.enable;
+    };
+    nvidia-tweaks.eval-renamed-nvidia =
+      c:
+      !c.hardware.nvidia.open
+      && c.hardware.nvidia.powerManagement.enable
+      && !c.hardware.nvidia-container-toolkit.enable;
+    amd-tweaks.eval-renamed-amd-overdrive = c: c.hardware.amdgpu.overdrive.enable;
+    headless-tweaks.eval-renamed-nix-router =
+      c:
+      !c.services.ncro.enable
+      && c.services.ncro.port == 4300
+      && c.services.ncro.netrcFile == "/etc/nix/netrc";
+    headless-tweaks-3.eval-renamed-tailscale = c: !c.services.tailscale.enable;
+    desktop-off.eval-renamed-localsend =
+      c: !c.programs.localsend.enable && !c.programs.localsend.openFirewall;
 
-  eval-renamed-tailscale = renamedTo "tailscale" (c: !c.services.tailscale.enable) {
-    marchyo.services.tailscale.enable = false;
+    # The retired user fields stay out of the way when unset.
+    headless.eval-removed-user-fields-unset =
+      c: lib.all (u: u.uid == null && u.name == null) (lib.attrValues c.marchyo.users);
   };
 
-  eval-renamed-localsend =
-    renamedTo "localsend" (c: !c.programs.localsend.enable && !c.programs.localsend.openFirewall)
-      {
-        marchyo.desktop.enable = true;
-        marchyo.services.localsend = {
-          enable = false;
-          openFirewall = false;
-        };
-      };
+  refConfig = {
+    headless-tweaks-3.marchyo.security.firewall.enable = false;
+    headless-tweaks-3.marchyo.services.tailscale.enable = false;
+    headless-tweaks-4.marchyo.power.hibernation.resumeDevice = "/dev/sda2";
+    headless-tweaks-4.marchyo.hardware.logitech.enable = true;
+    nvidia-tweaks.marchyo.graphics.nvidia = {
+      open = false;
+      powerManagement = true;
+      containerToolkit.enable = false;
+    };
+    amd-tweaks.marchyo.graphics.amd.overdrive.enable = true;
+    headless-tweaks.marchyo.nix.router = {
+      enable = false;
+      port = 4300;
+      netrcFile = "/etc/nix/netrc";
+    };
+    desktop-off.marchyo.services.localsend = {
+      enable = false;
+      openFirewall = false;
+    };
+  };
 
-  eval-removed-nvidia-package =
-    testNixOSFails "removed-nvidia-package" "hardware.nvidia.package"
-      (withTestUser {
-        marchyo.graphics = {
-          vendors = [ "nvidia" ];
-          nvidia.package = "beta";
-        };
-      });
-
-  eval-removed-performance-kernel =
-    testNixOSFails "removed-performance-kernel" "boot.kernelPackages"
-      (withTestUser {
-        marchyo.performance.kernel = "zen";
-      });
-
-  eval-removed-nix-caches =
-    testNixOSFails "removed-nix-caches" "nix.settings.substituters"
-      (withTestUser {
-        marchyo.nix.caches = [ ];
-      });
-
-  eval-removed-nix-router-extra-upstreams =
-    testNixOSFails "removed-nix-router-extra-upstreams" "services.ncro.settings.upstreams"
-      (withTestUser {
-        marchyo.nix.router.extraUpstreams = [ ];
-      });
-
-  eval-removed-user-uid =
-    testNixOSFails "removed-user-uid" "set users.users.testuser.uid"
-      (withTestUser {
-        marchyo.users.testuser.uid = 1000;
-      });
-
-  eval-removed-user-name =
-    testNixOSFails "removed-user-name" "marchyo.users.testuser.name"
-      (withTestUser {
-        marchyo.users.testuser.name = "testuser";
-      });
-
-  # The retired user fields stay out of the way when unset.
-  eval-removed-user-fields-unset = testNixOSCheck "removed-user-fields-unset" (
-    c: lib.all (u: u.uid == null && u.name == null) (lib.attrValues c.marchyo.users)
-  ) (withTestUser { });
+  # Every retired option at once, on the shared misconfigured-3 system.
+  failingConfig.misconfigured-3 = {
+    marchyo.launcher.keybinding = "vim";
+    marchyo.osd.enable = false;
+    marchyo.gaming.enable = true;
+    marchyo.console.kmscon.enable = true;
+    marchyo.snapshots.enable = true;
+    marchyo.shell.devPlugins.enable = true;
+    marchyo.shell.barPlugin = "acme.bar";
+    marchyo.ai.agents = [ "codex" ];
+    marchyo.ai.local.enable = true;
+    marchyo.ai.crashCapture.enable = false;
+    marchyo.console.enable = false;
+    marchyo.audio.tuner.enable = true;
+    marchyo.hardware.camlink.enable = true;
+    marchyo.slack.themeInjection.enable = true;
+    marchyo.keyboard.legacyBinds = true;
+    marchyo.graphics.nvidia.package = "beta";
+    marchyo.performance.kernel = "zen";
+    marchyo.nix.caches = [ ];
+    marchyo.nix.router.extraUpstreams = [ ];
+    marchyo.users.testuser.uid = 1000;
+    marchyo.users.testuser.name = "testuser";
+  };
 }

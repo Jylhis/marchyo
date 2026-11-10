@@ -53,12 +53,17 @@ let
         throw "FAIL: disko-${name}: missing devices or mounts (disks: ${toString disks}; mounts: ${toString mounts})"
     );
 in
-lib.listToAttrs (map (name: lib.nameValuePair "eval-disko-${name}" (check name)) diskoLayouts)
-// {
-  eval-disko-unknown-layout = pkgs.writeText "eval-disko-unknown-layout" (
-    if (builtins.tryEval (diskoLayout "no-such-layout" { })).success then
-      throw "FAIL: diskoLayout accepted an unknown layout"
-    else
-      "pass"
-  );
+{
+  # Plain NixOS evaluations (no marchyo modules), one per layout: they share
+  # nothing with the reference systems, so they stay standalone checks.
+  checks =
+    lib.listToAttrs (map (name: lib.nameValuePair "eval-disko-${name}" (check name)) diskoLayouts)
+    // {
+      eval-disko-unknown-layout = pkgs.writeText "eval-disko-unknown-layout" (
+        if (builtins.tryEval (diskoLayout "no-such-layout" { })).success then
+          throw "FAIL: diskoLayout accepted an unknown layout"
+        else
+          "pass"
+      );
+    };
 }
