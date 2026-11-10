@@ -84,8 +84,8 @@ cli-repin:
 
 # Run the website dev server (landing + docs)
 site-dev:
-    cd site && bun install && bun run dev
+    cd site && npm install && npm run dev
 
 # Build the website (landing + docs)
 site-build:
-    cd site && bun install --frozen-lockfile && bun run check && bun run build
+    cd site && npm ci && npm run check && npm run build

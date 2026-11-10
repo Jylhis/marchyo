@@ -18,3 +18,12 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+  - package-ecosystem: "npm"
+    directory: "/site"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      site-npm:
+        patterns: ["*"]
