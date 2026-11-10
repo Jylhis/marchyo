@@ -4,7 +4,8 @@
 
 ```bash
 # Justfile recipes (preferred workflow)
-just check               # Lint + eval checks (nix flake check, statix, deadnix)
+just check               # Lint + eval checks (nix flake check --no-build, statix, deadnix)
+just check-full          # nix flake check, then build every heavy check
 just fmt                 # Format all Nix code (nixfmt, deadnix, statix, shellcheck, yamlfmt)
 just build-nixos         # Build reference NixOS configuration (config: x86_64, aarch64)
 just update              # Update all inputs: flake.lock -> devenv.lock
@@ -16,25 +17,25 @@ just vm                  # Alias for just run
 nix flake check          # Validate configuration and run all tests
 nix fmt                  # Format all Nix code via treefmt-nix
 nix flake show           # Display all flake outputs
-nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available tests
+nix eval .#checks.x86_64-linux --apply builtins.attrNames  # List available checks
+nix build .#checks.x86_64-linux.ref-desktop                # Run one reference system's tests
 
 # Development shell
 devenv shell             # Enter development shell (no experimental features needed)
 ```
 
-There is no way to run a single test in isolation; `nix flake check` runs them all: fast evaluation-only checks, plus a handful of small `runCommand` checks (the `build-plymouth-theme-{dark,light}` theme builds, the shell JS/contract suites).
+`nix flake check` runs the default checks: evaluation tests, plus a few small builds (the shell JS/contract suites, the CLI theme-surface test, the xkbcli keymap check). The build-heavy checks are `legacyPackages.<system>.heavyChecks`, run by `just check-full` and the weekly CI job.
 
 ## Testing
 
-Tests in `tests/` are fast evaluation-based checks (no builds required). Two categories:
-- **Module tests** (`tests/eval/*.nix`, auto-discovered): verify NixOS configs evaluate without errors for various feature combinations (minimal/feature-flags, themes, keyboard, graphics, defaults, hyprland config check).
-- **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
+`tests/` is organised around a few **reference systems** (`tests/lib.nix` `refBases`): NixOS configurations each evaluated once and shared by every test file. A test is a named predicate over one of them; each reference system is one check, `ref-<name>`, that runs all its predicates and names every failing one. The pinned systems (`minimal`, `headless`, `headless-dev`, `desktop`, `desktop-shell-off`, `desktop-dictation`, `full`, the graphics layouts) are the defaults for one kind of host; the tweak systems collect non-default settings from the test files (`refConfig`). Configurations no other test shares are `variant-<name>` checks, and every negative test (an assertion must fail) runs in the single `eval-assertions` check. Option-level tests use `helpers.evalOptions` and need no system. See `tests/README.md` for how to add a test.
 
-A few `outputs.nix` `mkChecks` entries are not eval-only. The `build-plymouth-theme-{dark,light}` checks (Linux only) build the tiny Plymouth theme package in both variants, running its asset pipeline and `installCheckPhase`.
+- **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
+- **Heavy checks** (`legacyPackages.<system>.heavyChecks`): `hyprland --verify-config` over rendered configs, theme asset dir builds, both Plymouth theme variants (the only place the light variant's asset pipeline and `installCheckPhase` run), the `marchyo-shell` wrapper, the installer ISO evaluations, and the LocalSend Nautilus script.
 
 ### Quickshell shell tests (`tests/shell/`, Linux only)
 
-The QML tree in `shell/` gets two headless suites, wired into `mkChecks` alongside the Plymouth ones. Neither needs Quickshell or a Qt platform plugin — that is the point, since `just -f shell/Justfile check` (which loads the tree for real) can only run on a machine that has both:
+The QML tree in `shell/` gets two headless suites, wired into `mkChecks`. Neither needs Quickshell or a Qt platform plugin — that is the point, since `just -f shell/Justfile check` (which loads the tree for real) can only run on a machine that has both:
 
 - **`shell-format-unit`** — runs the pure-JS suites over `shell/Commons/*.js`: `format-test.js`, `notify-test.js`, `launcher-test.js`, and `peripherals-test.js`. Each `Commons/*.js` is a plain module with a CommonJS guard so QML imports it unchanged while Node can load it.
 - **`shell-contracts`** — `bash tests/shell/contracts-test.sh`, static cross-file agreements that QML only resolves at runtime: qmldir completeness, `Bar/` widgets owning no `Process`/`Timer`/`Connections` (they are instantiated once per monitor), every `Services/` component being a singleton, every `Config.<tool>` being baked by `packages/marchyo-shell/package.nix`, and every shell IPC function name resolving to a function in `shell.qml`: each `shellIpc("<fn>")` call in the CLI sources (`modules/home/` reaches the shell only through `marchyo shell` verbs).
@@ -52,10 +53,11 @@ All changes must pass `just check` (or `nix flake check`).
 
 ## CI Pipeline
 
-`.github/workflows/validate.yml` runs three stages on push to `main` and PRs:
+`.github/workflows/validate.yml` runs on push to `main`, PRs, manual dispatch and a weekly schedule:
 1. **lint** — `nix fmt -- --ci` (formatting check) plus the `flake.lock` / `devenv.lock` rev-parity verification. Single `ubuntu-latest` runner (formatting and lockfile checks are platform-independent).
-2. **check** — `nix flake check --accept-flake-config` matrix across `x86_64-linux` and `aarch64-linux`.
-3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, runs after both `lint` and `check` succeed).
+2. **check** — `nix flake check --accept-flake-config` on `x86_64-linux` (every run) and `aarch64-linux` (not on PRs).
+3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, not on PRs, after `lint` and `check` succeed).
+4. **heavy** — builds every `legacyPackages.x86_64-linux.heavyChecks` entry; weekly and on manual dispatch only.
 
 Top-level `concurrency: ${{ github.workflow }}-${{ github.ref }}` cancels in-progress PR runs on new pushes (main runs are never canceled). Every job has a `timeout-minutes`.
 

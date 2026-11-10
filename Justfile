@@ -10,6 +10,16 @@ check:
     statix check .
     deadnix --fail --exclude .devenv result .
 
+# Run every check, building the heavy ones too (Hyprland --verify-config, theme assets, Plymouth, ISO evals)
+check-full:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    nix flake check
+    system=$(nix eval --raw --impure --expr builtins.currentSystem)
+    heavy=".#legacyPackages.$system.heavyChecks"
+    mapfile -t names < <(nix eval --raw "$heavy" --apply 'c: builtins.concatStringsSep "\n" (builtins.attrNames c)')
+    nix build --no-link -L "${names[@]/#/$heavy.}"
+
 # Format all nix files
 fmt:
     nix fmt

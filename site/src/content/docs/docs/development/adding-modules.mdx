@@ -56,18 +56,19 @@ Add any new options in a file under the `modules/nixos/options/` directory (one 
 
 ### 5. Add a test
 
-Add an evaluation test in `tests/eval/<feature>.nix` (auto-discovered) — each file is a function receiving the shared helpers and returning an attrset of named tests:
+Add a test in `tests/eval/<feature>.nix` (auto-discovered). A test is a named predicate over one of the shared reference systems (`desktop`, `headless`, `full`, …), which are each evaluated once; see [Testing](/docs/development/testing/):
 
 ```nix
 # tests/eval/my-feature.nix
-{ helpers, ... }:
-let
-  inherit (helpers) testNixOS withTestUser;
-in
+{ lib, ... }:
 {
-  eval-my-feature = testNixOS "my-feature" (withTestUser {
-    marchyo.myFeature.enable = true;
-  });
+  # A predicate on a shared reference system: the evaluated config -> true,
+  # false, a failure message or a list of failure messages.
+  refs.headless.eval-my-feature-off = cfg: !cfg.marchyo.myFeature.enable;
+
+  # A non-default setting goes on a tweak system, from the same file.
+  refs.headless-tweaks.eval-my-feature-on = cfg: cfg.services.my-feature.enable;
+  refConfig.headless-tweaks.marchyo.myFeature.enable = true;
 }
 ```
 

@@ -39,7 +39,7 @@ All must pass. CI enforces formatting with `nix fmt -- --ci`.
 
 1. Create the module file in the appropriate `modules/` subdirectory — `modules/nixos/` and `modules/home/` are auto-discovered, so no import edit is needed
 2. Define new options in a file under `modules/nixos/options/` (auto-discovered) under `marchyo.*`
-3. Add an evaluation test in `tests/eval/<feature>.nix`
+3. Add a test predicate in `tests/eval/<feature>.nix` (see [Testing](/docs/development/testing/))
 4. Run `nix fmt` and `nix flake check`
 
 See [Adding Modules](/docs/development/adding-modules/) for detailed instructions.

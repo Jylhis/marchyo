@@ -55,21 +55,23 @@ marchyo.media.enable = lib.mkDefault true;
 
 1. Create the file in `modules/nixos/` or `modules/home/` — auto-discovery picks it up on the next eval (no import edit needed). `modules/generic/` holds helpers imported by path, not modules.
 2. Define any new options in a file under `modules/nixos/options/` — auto-discovery picks them up. Use an existing namespace file or create a new one (`mychunk.nix`) declaring `options.marchyo.<namespace>`.
-3. Add an evaluation test in the appropriate `tests/eval/<feature>.nix`, or create a new file there:
+3. Add a test in the appropriate `tests/eval/<feature>.nix`, or create a new file there. A test is a named predicate over one of the shared reference systems in `tests/lib.nix` (each evaluated once); put it on the system that already has the configuration it needs, and put non-default settings on a tweak system with `refConfig`:
 
 ```nix
-{ helpers, ... }:
-let
-  inherit (helpers) testNixOS withTestUser;
-in
+# tests/eval/my-feature.nix
+{ lib, ... }:
 {
-  eval-my-feature = testNixOS "my-feature" (withTestUser {
-    marchyo.myFeature.enable = true;
-  });
+  # A predicate on a shared reference system: the evaluated config -> true,
+  # false, a failure message or a list of failure messages.
+  refs.headless.eval-my-feature-off = cfg: !cfg.marchyo.myFeature.enable;
+
+  # A non-default setting goes on a tweak system, from the same file.
+  refs.headless-tweaks.eval-my-feature-on = cfg: cfg.services.my-feature.enable;
+  refConfig.headless-tweaks.marchyo.myFeature.enable = true;
 }
 ```
 
-The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion). Tests are auto-discovered from `tests/eval/`.
+Each reference system is one check, `ref-<name>`, that runs all its predicates and names every one that fails. Negative tests, one-off configurations and build checks have their own sections (`failing`, `variants`, `heavy`); see `tests/README.md`. Tests are auto-discovered from `tests/eval/`.
 
 ## Cross-Module Data Flow
 

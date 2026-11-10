@@ -31,7 +31,7 @@ Rules for any new theme surface:
 - Stay IFD-free: pure string templating from `palette.hex` / base16 slots,
   never `readFile` of a built derivation such as `pkgs.jylhis-themes`
   (referencing it as a path is fine).
-- Add a `testNixOS` assertion in `tests/eval/themes.nix` and update
+- Add a test predicate in `tests/eval/themes.nix` and update
   `site/src/content/docs/docs/configuration/theming.mdx`.
 - If a surface needs a role with no palette token, report it as a
   `pkgs.jylhis-design-src` gap instead of inventing it locally.
@@ -100,7 +100,7 @@ the parity gaps first:
 
 - Verification stops at `nix build` / `nix flake check`; activating the running
   system is the user's action.
-- Every new module/option gets a `testNixOS` eval test; option declarations
+- Every new module/option gets a test predicate (tests/README.md); option declarations
   stay in `modules/nixos/options/`; keep
   `site/src/content/docs/docs/configuration/` in sync.
 - `just fmt` + `just check` before each commit; conventional commits.

@@ -81,14 +81,14 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchy
 
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
 - `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.). `devenv.lock` syncs to this via `just update`.
-- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages).
+- `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages; the latter also carries `heavyChecks` and `testPredicates`).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `linux` from here; adding/removing a system is a one-file change.
 - `lib/discover-modules.nix` — Auto-discovery helper. Returns every `.nix` file directly under a given directory (excluding `default.nix`) plus any subdirectory containing `default.nix`. Used by `modules/{nixos,home}/default.nix` and `modules/nixos/options/default.nix`.
 - `modules/nixos/options/` — `marchyo.*` option declarations, one file per namespace (feature-flags, users, localization, theme, keyboard, graphics, defaults, and many more). The directory's `default.nix` auto-imports every file, so adding a namespace is a one-file change.
 - `modules/nixos/default.nix` — Auto-discovers every NixOS module via `lib/discover-modules.nix`. Module merging is order-independent at the option/config layer; use `mkBefore`/`mkAfter`/priorities if a specific merge order matters.
 - `modules/home/default.nix` — Auto-discovers every Home Manager module via `lib/discover-modules.nix`.
-- `tests/default.nix` — Test suite entry point. Auto-discovers every file in `tests/eval/` and merges the attrsets they return; appends `lib-tests.nix`.
-- `tests/lib.nix` — Shared test helpers (`testNixOS`, `withTestUser`, `minimalConfig`).
-- `tests/eval/*.nix` — Per-feature evaluation tests. Each file receives helpers + `lib`/`pkgs`/`nixosModules`/`homeManagerModules` and returns an attrset of named tests.
+- `tests/default.nix` — Test suite entry point. Auto-discovers every file in `tests/eval/`, evaluates each shared reference system once (its base from `tests/lib.nix` plus the files' `refConfig` modules), and turns each system's predicates into one `ref-<name>` check; also the `variant-*` checks, `eval-assertions` and the heavy checks. Merges throw on duplicate names (`lib/merge-unique.nix`).
+- `tests/lib.nix` — The test harness (`mkSystem`, `evalOptions`, `predicateCheck`, `assertionCheck`), the reference and failing system bases, and helpers (`withTestUser`, `desktopWith`, `minimalConfig`, `expect`).
+- `tests/eval/*.nix` — Per-feature tests. Each file receives helpers + `lib`/`pkgs`/module sets and returns predicates on reference systems (`refs`), their settings (`refConfig`), `variants`, negative tests (`failing`), and standalone or heavy checks.
 - `tests/lib-tests.nix` — Unit tests for lib functions using `assertTest` helper.

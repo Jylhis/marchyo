@@ -16,6 +16,7 @@ Enter `devenv shell`; it provides Nix tooling, `just`, `jq`, Bun, the CLI, and Q
 
 ```bash
 just check               # Linux: nix flake check --no-build, then statix + deadnix
+just check-full          # nix flake check, then build every heavy check
 just fmt                 # nix fmt via treefmt
 just build-nixos         # reference NixOS config; optional config=x86_64|aarch64
 just verify              # check shared revisions in flake.lock and devenv.lock
@@ -24,7 +25,7 @@ just site-build          # frozen Bun install, Astro check, and build
 just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host only
 ```
 
-`just check` is the fast local gate and deliberately passes `--no-build`. Run plain `nix flake check` when the check derivations must be built. `just update` is the supported input-update path: it updates `flake.lock`, pins matching revisions into `devenv.yaml`, regenerates `devenv.lock`, and therefore must be followed by `just verify`.
+`just check` is the fast local gate and deliberately passes `--no-build`. Run plain `nix flake check` when the check derivations must be built, and `just check-full` after changes the heavy checks cover (Hyprland config rendering, theme assets, Plymouth, the shell wrapper, the ISOs). `just update` is the supported input-update path: it updates `flake.lock`, pins matching revisions into `devenv.yaml`, regenerates `devenv.lock`, and therefore must be followed by `just verify`.
 
 ## Adding or removing modules
 
@@ -44,9 +45,9 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 
 ## Testing
 
-- `tests/eval/*.nix` is auto-discovered. Each file receives helpers plus `lib`/`pkgs`/module sets and returns an attrset of named tests; every new module or option needs a `testNixOS` eval test, normally merged with `withTestUser`.
+- `tests/eval/*.nix` is auto-discovered. A test is a named predicate (`config -> true | false | message | [ messages ]`) over one of the shared reference systems in `tests/lib.nix` (`refBases`), each evaluated once and run as one check, `ref-<name>`, that names every failing predicate. Add `refs.<ref>.<test>` to the system that already has the configuration you need; non-default settings go on a tweak system through `refConfig.<ref>` from the same file. Negative tests go in `failing` (run together in `eval-assertions`), one-off configurations in `variants`, build checks in `heavy`. Every new module or option needs a predicate. See `tests/README.md`.
 - `tests/lib-tests.nix` contains unit tests for lib functions using `assertTest`.
-- Linux check derivations also build both Plymouth variants and the Marchyo shell wrapper, then run `tests/shell/format-test.js` and `tests/shell/contracts-test.sh`. HM modules read `osConfig.marchyo.*` directly (no `or` fallbacks) and are exercised only through NixOS configs; there is no standalone Home Manager output.
+- The default checks also run `tests/shell/*-test.js`, `tests/shell/contracts-test.sh` and `tests/cli/theme-surfaces-test.js`. The heavy checks (`legacyPackages.<system>.heavyChecks`, `just check-full`, weekly CI) build both Plymouth variants, the Marchyo shell wrapper, the theme asset dirs, the `hyprland --verify-config` runs and the ISO evaluations. HM modules read `osConfig.marchyo.*` directly (no `or` fallbacks) and are exercised only through NixOS configs; there is no standalone Home Manager output.
 
 ## QML shell pitfalls
 
@@ -76,7 +77,7 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
   `generateThemeChangeBase` (matugen); the relink/reload leg goes in `activateThemeDir`.
 - Stay IFD-free: pure string templating from `palette.hex` / base16 slots, never `readFile` of
   a built derivation such as `pkgs.jylhis-themes` (referencing it as a path is fine).
-- Add a `testNixOS` assertion in `tests/eval/themes.nix` and update
+- Add a predicate in `tests/eval/themes.nix` and update
   `site/src/content/docs/docs/configuration/theming.mdx`.
 - If a surface needs a role with no palette token, report it as a `pkgs.jylhis-design-src`
   gap instead of inventing it locally.
