@@ -1,9 +1,11 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Networking
 import qs.Commons
 import "../Commons/Format.js" as Format
+import "../Commons/Connectivity.js" as Connectivity
 
 // Shared network status for the bar widget, the network panel, the Control
 // Center, and the tooltips. The native Networking binding supplies the active
@@ -15,7 +17,10 @@ QtObject {
     id: root
 
     readonly property var activeDevice: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devs = Networking.devices ? Networking.devices.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < devs.length; i++)
             if (devs[i].connected)
                 return devs[i];
@@ -23,11 +28,25 @@ QtObject {
     }
     readonly property bool wifi: activeDevice && activeDevice.type !== DeviceType.Wired
 
+    // NetworkManager's connectivity verdict (Full, Portal, Limited, None, or
+    // Unknown), updated by its periodic check (marchyo.network.connectivityCheck).
+    // Portal and Limited mark a restricted network: the bar shows a warning
+    // glyph and the panel offers the captive-portal sign-in.
+    readonly property string connectivity: Connectivity.fromEnum(Networking.connectivity, NetworkConnectivity)
+    readonly property bool restricted: Connectivity.isRestricted(connectivity)
+
+    function openCaptivePortal(): void {
+        Quickshell.execDetached([Config.marchyo, "network", "portal"]);
+    }
+
     // Wi-Fi radio: whether this host has a Wi-Fi device at all, NetworkManager's
     // software radio switch (writable through setWifiEnabled), and the rfkill
     // hardware switch (read-only; while it is off the radio cannot be enabled).
     readonly property bool wifiAvailable: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const devs = Networking.devices ? Networking.devices.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < devs.length; i++)
             if (devs[i].type === DeviceType.Wifi)
                 return true;
@@ -69,23 +88,22 @@ QtObject {
             parts.push(root.ipAddress);
         if (root.ifName.length > 0)
             parts.push(root.ifName);
-        return parts.length > 0 ? parts.join("  ") : "offline";
+        return parts.length > 0 ? parts.join("  ") : I18n.t("network.offlineHint");
     }
 
-    onIfNameChanged: addrDebounce.restart()
-    onSsidChanged: addrDebounce.restart()
+    onIfNameChanged: root.addrDebounce.restart()
+    onSsidChanged: root.addrDebounce.restart()
 
     readonly property var deviceWatch: Connections {
         target: root.activeDevice
         ignoreUnknownSignals: true
         function onStateChanged() {
-            addrDebounce.restart();
+            root.addrDebounce.restart();
         }
     }
 
     // Coalesces the change burst of one (re)connect into a single probe.
     readonly property var addrDebounce: Timer {
-        id: addrDebounce
         interval: 500
         triggeredOnStart: false
         onTriggered: {
@@ -117,5 +135,5 @@ QtObject {
         }
     }
 
-    Component.onCompleted: addrDebounce.restart()
+    Component.onCompleted: root.addrDebounce.restart()
 }

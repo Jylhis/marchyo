@@ -7,11 +7,12 @@ import qs.Commons
 // Caps Lock / Num Lock state from the keyboard LED class devices
 // (/sys/class/leds/<input>::capslock|numlock/brightness, world-readable and
 // root-owned). Hyprland emits no IPC event on a lock-key toggle and sysfs LED
-// attributes raise no inotify event, so this is a short poll of a few sysfs
-// reads (no subprocess), run only while a LockKeysWidget exists: each widget
-// calls acquire() / release(). A lock counts as on when any keyboard's LED is
-// lit. The LED list is re-read on a slower cadence to pick up hotplugged
-// keyboards.
+// attributes raise no inotify event, so non-consuming Caps_Lock / Num_Lock
+// binds (modules/home/hyprland.nix) fire the `marchyo:lockKeys` global
+// shortcut, which calls refresh(). A 10s reconcile re-reads the LEDs and
+// re-lists them for hotplugged keyboards. All of it runs only while a
+// LockKeysWidget exists: each widget calls acquire() / release(). A lock
+// counts as on when any keyboard's LED is lit.
 QtObject {
     id: root
 
@@ -21,7 +22,6 @@ QtObject {
     property int _users: 0
     property var _capsPaths: []
     property var _numPaths: []
-    property int _ticks: 0
 
     function acquire(): void {
         root._users++;
@@ -70,41 +70,56 @@ QtObject {
     }
 
     readonly property var capsViews: Instantiator {
-        id: capsViews
         model: root._capsPaths
         delegate: FileView {
             required property string modelData
             path: modelData
             blockLoading: true
         }
+        onObjectAdded: root.refresh()
     }
 
     readonly property var numViews: Instantiator {
-        id: numViews
         model: root._numPaths
         delegate: FileView {
             required property string modelData
             path: modelData
             blockLoading: true
         }
+        onObjectAdded: root.refresh()
     }
 
-    readonly property var poll: Timer {
-        interval: 500
+    // The lock-key binds fire on key release, after the kernel has set the
+    // LED; the short delay covers a keyboard whose LED write lands late.
+    function refresh(): void {
+        if (root._users > 0)
+            root.settle.restart();
+    }
+
+    function read(): void {
+        root.capsLock = root.anyLit(root.capsViews);
+        root.numLock = root.anyLit(root.numViews);
+    }
+
+    readonly property var settle: Timer {
+        interval: 50
+        onTriggered: root.read()
+    }
+
+    // Slow reconcile: re-lists the LEDs (hotplugged keyboards) and catches a
+    // lock change no bind saw (a remapped key, another keyboard's modifiers).
+    readonly property var reconcile: Timer {
+        interval: 10000
         running: root._users > 0
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            // Re-list LEDs on the first tick and every 10 s after.
-            if (root._ticks % 20 === 0 && !list.running)
+            if (!list.running)
                 list.running = true;
-            root._ticks++;
-            root.capsLock = root.anyLit(capsViews);
-            root.numLock = root.anyLit(numViews);
+            root.read();
         }
         onRunningChanged: {
             if (!running) {
-                root._ticks = 0;
                 root.capsLock = false;
                 root.numLock = false;
             }

@@ -4,8 +4,40 @@ let
 in
 {
   options.marchyo.notifications = {
-    # Baked into the shell at build time; ignored when the shell is off (mako
-    # owns notifications then). Plain str/bool/int only, per the darwin eval gate.
+    stackBySender = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Group visible toasts into decks by sender (per site for browser
+        notifications). A deck expands on hover. Identical repeats collapse into
+        one toast with a count. Only used when `marchyo.shell.enable` is set.
+      '';
+    };
+
+    detectCodes = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Detect verification codes in notifications. A toast with a code gets a
+        Copy button, and the notification passes do-not-disturb.
+      '';
+    };
+
+    passApps = mkOption {
+      type = types.listOf types.str;
+      default = [ "marchyo" ];
+      example = [
+        "marchyo"
+        "Calendar"
+      ];
+      description = ''
+        Application names (exact, case-insensitive) whose notifications pass
+        do-not-disturb. Critical notifications always pass.
+      '';
+    };
+
+    # Baked into the shell at build time; ignored when the shell is off.
+    # Plain str/bool/int only.
     rules = mkOption {
       default = [ ];
       example = [

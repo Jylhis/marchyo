@@ -11,8 +11,17 @@ import "../Commons/LauncherProviders.js" as Providers
 QtObject {
     id: root
 
-    // "" = closed; otherwise "apps" | "emoji" | "clipboard".
+    // "" = closed; otherwise "apps" | "emoji" | "clipboard" | "theme" | "font"
+    // | "menu" | "keys" | "dmenu".
     property string mode: ""
+
+    // Command menu: the open menu id ("" = the root), changed by openMenu(),
+    // menuInto() and menuUp() (Launcher/MenuProvider reads it).
+    property string menuRoute: ""
+
+    // dmenu mode: the request file `marchyo menu select|input` wrote
+    // (Launcher/DmenuProvider answers it).
+    property string dmenuPath: ""
 
     readonly property bool open: mode !== ""
 
@@ -20,7 +29,7 @@ QtObject {
     property string query: ""
 
     // Prefix routing (Commons/LauncherProviders.js): in apps mode "=" routes to
-    // the calculator, ">theme" to themes, "#" to windows and "!" to power
+    // the calculator, ">theme" to themes, ">font" to fonts, "#" to windows and "!" to power
     // actions; emoji and clipboard search the whole text. A launcher plugin's
     // prefix (Commons/PluginIndex) routes to that plugin, whose provider id is
     // its plugin id. `provider` is the active provider's id ("" while closed),
@@ -29,15 +38,56 @@ QtObject {
     readonly property string provider: root.route.provider
     readonly property string providerQuery: root.route.query
 
-    onOpenChanged: if (!root.open)
-        root.query = ""
+    onOpenChanged: if (!root.open) {
+        root.query = "";
+        root.menuRoute = "";
+    }
+
+    function openMenu(route) {
+        root.menuRoute = route;
+        root.query = "";
+        root.mode = "menu";
+        return true;
+    }
+
+    // Closes the menu when it shows `route`, else opens it there.
+    function toggleMenu(route) {
+        if (root.mode === "menu" && root.menuRoute === route) {
+            root.close();
+            return false;
+        }
+        return root.openMenu(route);
+    }
+
+    function menuInto(id) {
+        root.query = "";
+        root.menuRoute = id;
+    }
+
+    // One level up; false at the root.
+    function menuUp() {
+        if (root.menuRoute === "")
+            return false;
+        const i = root.menuRoute.lastIndexOf(".");
+        root.query = "";
+        root.menuRoute = i < 0 ? "" : root.menuRoute.slice(0, i);
+        return true;
+    }
+
+    function openDmenu(path) {
+        root.dmenuPath = path;
+        root.query = "";
+        root.mode = "dmenu";
+    }
 
     function openAs(mode) {
         root.mode = mode;
     }
 
+    // Returns whether `mode` is open afterwards.
     function toggle(mode) {
         root.mode = root.mode === mode ? "" : mode;
+        return root.open;
     }
 
     function close() {

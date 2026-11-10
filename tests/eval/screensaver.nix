@@ -1,30 +1,9 @@
-{
-  helpers,
-  lib,
-  pkgs,
-  nixosModules,
-  homeManagerModules,
-  ...
-}:
+# The screensaver: default-on with the desktop, opt-out (desktop-off:
+# marchyo.screensaver.enable = false), and its lock guard with the shell on and off.
+{ helpers, lib, ... }:
 let
-  inherit (helpers) withTestUser hyprEntriesText;
-
-  evalWith =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  hmOf = eval: eval.config.home-manager.users.testuser;
+  inherit (helpers) hyprEntriesText;
+  hmOf = c: c.home-manager.users.testuser;
   hasPkg = hm: n: lib.any (p: (p.name or "") == n) hm.home.packages;
   listeners = hm: hm.services.hypridle.settings.listener or [ ];
   hasListener = hm: lib.any (l: (l.on-timeout or "") == "marchyo-screensaver-launch") (listeners hm);
@@ -35,74 +14,74 @@ let
     );
 in
 {
-  # Default-on with desktop: both scripts installed, the hypridle idle
-  # listener wired, and the fullscreen window rule contributed.
-  eval-screensaver-enabled =
-    let
-      hm = hmOf (evalWith { });
-    in
-    pkgs.writeText "eval-screensaver-enabled" (
-      if
-        hasPkg hm "marchyo-screensaver"
-        && hasPkg hm "marchyo-screensaver-launch"
-        && hasListener hm
-        && hasRule hm
-      then
-        "pass"
-      else
-        throw "FAIL: screensaver default-on with desktop but its scripts, hypridle listener, or window rule are missing"
-    );
+  refs = {
+    desktop = {
+      # Default-on with desktop: both scripts installed, the hypridle idle
+      # listener wired, and the fullscreen window rule contributed.
+      eval-screensaver-enabled =
+        c:
+        let
+          hm = hmOf c;
+        in
+        if
+          hasPkg hm "marchyo-screensaver"
+          && hasPkg hm "marchyo-screensaver-launch"
+          && hasListener hm
+          && hasRule hm
+        then
+          true
+        else
+          "screensaver default-on with desktop but its scripts, hypridle listener, or window rule are missing";
 
-  # Opt-out: no screensaver scripts and no idle listener, while the other
-  # hypridle listeners (dim/lock/dpms) stay in place.
-  eval-screensaver-disabled =
-    let
-      hm = hmOf (evalWith {
-        marchyo.screensaver.enable = false;
-      });
-    in
-    pkgs.writeText "eval-screensaver-disabled" (
-      if
-        !(hasPkg hm "marchyo-screensaver") && !(hasListener hm) && !(hasRule hm) && listeners hm != [ ]
-      then
-        "pass"
-      else
-        throw "FAIL: screensaver disabled but its script, window rule, or hypridle listener is still present"
-    );
+      # Phase 4: with the unified shell on, the launcher must guard against the
+      # in-shell lock the same way it guards against hyprlock — visible as the
+      # `marchyo shell lock-state` probe inside the launcher script (read from the derivation's
+      # eval-visible `text` attr; the flake disables import-from-derivation).
+      eval-screensaver-shell-lock-guard =
+        c:
+        let
+          hm = hmOf c;
+          launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
+          text = if launcher == null then "" else (launcher.text or "");
+        in
+        if launcher != null && lib.hasInfix "marchyo shell lock-state" text then
+          true
+        else
+          "marchyo.shell is on but the screensaver launcher does not probe the shell lock state";
+    };
 
-  # Phase 4: with the unified shell on, the launcher must guard against the
-  # in-shell lock the same way it guards against hyprlock — visible as the
-  # `marchyo shell lock-state` probe inside the launcher script (read from the derivation's
-  # eval-visible `text` attr; the flake disables import-from-derivation).
-  eval-screensaver-shell-lock-guard =
-    let
-      hm = hmOf (evalWith {
-        marchyo.shell.enable = true;
-      });
-      launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
-      text = if launcher == null then "" else (launcher.text or "");
-    in
-    pkgs.writeText "eval-screensaver-shell-lock-guard" (
-      if launcher != null && lib.hasInfix "marchyo shell lock-state" text then
-        "pass"
-      else
-        throw "FAIL: marchyo.shell is on but the screensaver launcher does not probe the shell lock state"
-    );
+    desktop-off = {
+      # Opt-out: no screensaver scripts and no idle listener, while the other
+      # hypridle listeners (dim/lock/dpms) stay in place.
+      eval-screensaver-disabled =
+        c:
+        let
+          hm = hmOf c;
+        in
+        if
+          !(hasPkg hm "marchyo-screensaver") && !(hasListener hm) && !(hasRule hm) && listeners hm != [ ]
+        then
+          true
+        else
+          "screensaver disabled but its script, window rule, or hypridle listener is still present";
+    };
 
-  # Shell off: the launcher keeps its plain hyprlock guard only (no CLI
-  # dependency, no shell lock-state probe).
-  eval-screensaver-shell-off-no-ipc-probe =
-    let
-      hm = hmOf (evalWith {
-        marchyo.shell.enable = false;
-      });
-      launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
-      text = if launcher == null then "" else (launcher.text or "");
-    in
-    pkgs.writeText "eval-screensaver-shell-off-no-ipc-probe" (
-      if launcher != null && !(lib.hasInfix "lock-state" text) then
-        "pass"
-      else
-        throw "FAIL: marchyo.shell is off but the screensaver launcher still probes (or misses) the shell lock state"
-    );
+    desktop-shell-off = {
+      # Shell off: the launcher keeps its plain hyprlock guard only (no CLI
+      # dependency, no shell lock-state probe).
+      eval-screensaver-shell-off-no-ipc-probe =
+        c:
+        let
+          hm = hmOf c;
+          launcher = lib.findFirst (p: (p.name or "") == "marchyo-screensaver-launch") null hm.home.packages;
+          text = if launcher == null then "" else (launcher.text or "");
+        in
+        if launcher != null && !(lib.hasInfix "lock-state" text) then
+          true
+        else
+          "marchyo.shell is off but the screensaver launcher still probes (or misses) the shell lock state";
+    };
+  };
+
+  refConfig.desktop-off.marchyo.screensaver.enable = false;
 }

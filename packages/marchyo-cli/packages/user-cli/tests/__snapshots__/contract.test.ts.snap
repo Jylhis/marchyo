@@ -52,12 +52,15 @@ Commands:
                                         notifications, lock)
   volume [options] <action>             Step or mute the default audio sink (or
                                         source with --mic)
-  brightness <action>                   Step the backlight brightness
+  brightness [options] <action>         Step the backlight brightness
   toggle [options] <name> [state]       Flip a desktop toggle live (gaps,
                                         nightlight, waybar, …)
   capture                               Screenshots, screen recording, OCR, and
                                         color picking
-  menu [submenu]                        Open the central system menu (gum TUI)
+  window <action>                       Window utilities: pop out, close all,
+                                        tiled fullscreen
+  menu [options] [route]                Open the command menu in the marchyo
+                                        shell (gum TUI fallback)
   keybindings                           Searchable Hyprland keybinding cheat
                                         sheet (fzf)
   launch <app> [args...]                Launch an app detached (file-manager
@@ -72,7 +75,7 @@ Commands:
                                         exit → loginctl)
   suspend                               Suspend the system
   hibernate                             Hibernate the system
-  reboot                                Reboot the system
+  reboot [options]                      Reboot the system
   shutdown                              Power the system off
   powerprofile <action> [profile]       Get, list, or set the power profile
   reminder                              Reminders via transient systemd user
@@ -83,12 +86,20 @@ Commands:
                                         (ffmpeg / tte / chafa)
   share [options] [paths...]            Send files, folders or clipboard text
                                         to a LocalSend device
-  font                                  Terminal font: list, current, or
-                                        runtime switch
+  font                                  Terminal and UI fonts: list, current,
+                                        or runtime switch
+  bar                                   Edit the shell bar live: widgets,
+                                        sections, position, background
+  dictation <action>                    Start, stop or toggle voice dictation
+                                        on the configured backend
+  language [options] [code]             Show or set marchyo's display language
+                                        (shell and CLI strings)
   install [options] <feature>           Enable a marchyo feature declaratively
                                         (state + rebuild)
   remove [options] <feature>            Disable a marchyo feature declaratively
                                         (state + rebuild)
+  network                               Network helpers (captive-portal
+                                        sign-in)
   webapp                                Manage CLI-added web apps (PWA windows)
   plugin                                Manage CLI-added shell plugins
                                         (build-time, baked on rebuild)
@@ -97,6 +108,13 @@ Commands:
                                         overrides
   completion <target>                   Emit shell completions or the man page
                                         (generated from the live command tree)
+  notify [args...]                      Send a desktop notification, optionally
+                                        with click actions
+  whats-new [options]                   Show what the Marchyo NEWS gained since
+                                        you last looked
+  setup [options]                       First-login checklist: git, SSH,
+                                        security keys, language, theme,
+                                        dictation
   help [command]                        display help for command
 
 Examples:
@@ -118,16 +136,118 @@ exports[`help contract: marchyo theme 1`] = `
 Inspect and switch Marchyo themes at runtime
 
 Options:
-  -h, --help                  display help for command
+  -h, --help                         display help for command
 
 Commands:
-  list                        List switchable themes (marchyo.theme.themes)
-  get                         Print the active theme
-  set [options] <name>        Switch the theme live (persist with --apply)
-  next [options]              Cycle to the next theme in the manifest
-  generate [options] [image]  Generate and apply a theme from a wallpaper image
-                              (matugen)
-  help [command]              display help for command
+  list                               List switchable themes
+                                     (marchyo.theme.themes)
+  get                                Print the active theme
+  set [options] <name>               Switch the theme live (persist with
+                                     --apply)
+  next [options]                     Cycle to the next theme in the manifest
+  transparency [options] [mode]      Show or set window transparency live
+                                     (opaque|transparent|glassy)
+  corners [options] [mode]           Show or set window corners live
+                                     (theme|sharp|rounded)
+  gaps [options] [state]             Show or set window gaps (on|off); persist
+                                     with --apply
+  bar-position [options] [position]  Show or set the shell bar position live
+                                     (top|bottom)
+  bar-background [options] [mode]    Show or set the shell bar background live
+                                     (opaque|glassy|clear)
+  icons [options] [name]             List installed icon themes or set the icon
+                                     theme live
+  generate [options] [image]         Generate and apply a theme from a
+                                     wallpaper image (matugen)
+  help [command]                     display help for command
+"
+`;
+
+exports[`help contract: marchyo theme gaps 1`] = `
+"Usage: marchyo theme gaps [options] [state]
+
+Show or set window gaps (on|off); persist with --apply
+
+Arguments:
+  state       on | off (omit to show the modes)
+
+Options:
+  --apply     Also persist marchyo.theme.appearance.gaps and rebuild
+  --revert    Undo: back to the declarative gaps
+  -h, --help  display help for command
+
+Live and ephemeral by default; marchyo.theme.appearance.gaps is the
+declarative default. "marchyo toggle gaps" flips the same setting live.
+
+Examples:
+  $ marchyo theme gaps on
+  $ marchyo theme gaps off --apply
+  $ marchyo theme gaps --revert
+
+"
+`;
+
+exports[`help contract: marchyo theme bar-position 1`] = `
+"Usage: marchyo theme bar-position [options] [position]
+
+Show or set the shell bar position live (top|bottom)
+
+Arguments:
+  position    top | bottom (omit to list)
+
+Options:
+  --revert    Undo: back to the declarative position
+  -h, --help  display help for command
+
+Live and ephemeral; written to the shell style file the shell watches.
+
+Examples:
+  $ marchyo theme bar-position bottom
+  $ marchyo theme bar-position --revert
+
+"
+`;
+
+exports[`help contract: marchyo theme bar-background 1`] = `
+"Usage: marchyo theme bar-background [options] [mode]
+
+Show or set the shell bar background live (opaque|glassy|clear)
+
+Arguments:
+  mode        opaque | glassy | clear (omit to list)
+
+Options:
+  --revert    Undo: back to the declarative background
+  -h, --help  display help for command
+
+Live and ephemeral; written to the shell style file the shell watches.
+
+Examples:
+  $ marchyo theme bar-background glassy
+  $ marchyo theme bar-background --revert
+
+"
+`;
+
+exports[`help contract: marchyo theme icons 1`] = `
+"Usage: marchyo theme icons [options] [name]
+
+List installed icon themes or set the icon theme live
+
+Arguments:
+  name        an icon theme directory name (omit to list)
+
+Options:
+  --revert    Undo: back to the declarative icon theme
+  -h, --help  display help for command
+
+Live and ephemeral (dconf); the declarative default is gtk.iconTheme.
+
+Examples:
+  $ marchyo theme icons
+  $ marchyo theme icons Papirus-Dark
+  $ marchyo theme icons --revert
+
 "
 `;
 
@@ -141,8 +261,27 @@ Options:
 
 Commands:
   set [options] [path]  Set the wallpaper to an image file
-  next                  Cycle through the wallpaper package's images
+  list                  List selectable wallpapers (theme, package and
+                        ~/Pictures/Wallpapers)
+  next                  Cycle through the selectable wallpapers (see bg list)
   help [command]        display help for command
+"
+`;
+
+exports[`help contract: marchyo bg list 1`] = `
+"Usage: marchyo bg list [options]
+
+List selectable wallpapers (theme, package and ~/Pictures/Wallpapers)
+
+Options:
+  -h, --help  display help for command
+
+--format json prints [{ path, name, source: theme|package|user, current }].
+
+Examples:
+  $ marchyo bg list
+  $ marchyo bg list --format json
+
 "
 `;
 
@@ -152,25 +291,49 @@ exports[`help contract: marchyo toggle 1`] = `
 Flip a desktop toggle live (gaps, nightlight, waybar, …)
 
 Arguments:
-  name        gaps | transparency | nightlight | waybar | touchpad |
-              touchscreen | idle | screensaver | notifications | suspend |
-              caffeine | hybrid-gpu
+  name        gaps | transparency | animations | reduce-motion |
+              fullscreen-desktop | nightlight | waybar | touchpad | touchscreen
+              | idle | screensaver | notifications | suspend | caffeine |
+              hybrid-gpu
   state       on | off (omit to flip)
 
 Options:
-  --apply     Also persist declaratively and rebuild (hybrid-gpu only)
+  --apply     Also persist declaratively and rebuild (hybrid-gpu,
+              reduce-motion)
   --revert    Undo: back to the declarative default
   --status    Print the current state instead of toggling
   -h, --help  display help for command
 
-Toggles are live and ephemeral (reset on activation); hybrid-gpu is
---apply-only. --status is scriptable (used by the waybar indicator).
+Toggles are live, and "marchyo runtime restore" replays them. hybrid-gpu
+is --apply-only; reduce-motion also takes --apply. --status is scriptable
+(used by the waybar indicator).
 
 Examples:
   $ marchyo toggle nightlight
   $ marchyo toggle notifications off
   $ marchyo toggle waybar --status
   $ marchyo toggle hybrid-gpu on --apply
+
+"
+`;
+
+exports[`help contract: marchyo window 1`] = `
+"Usage: marchyo window [options] <action>
+
+Window utilities: pop out, close all, tiled fullscreen
+
+Arguments:
+  action      pop | close-all | tiled-fullscreen
+
+Options:
+  -h, --help  display help for command
+
+pop floats, centres and pins the focused tile (and puts it back). Gaps
+and the fullscreen desktop are toggles: marchyo toggle gaps|fullscreen-desktop.
+
+Examples:
+  $ marchyo window pop
+  $ marchyo window close-all
 
 "
 `;
@@ -193,15 +356,82 @@ Commands:
 `;
 
 exports[`help contract: marchyo menu 1`] = `
-"Usage: marchyo menu [options] [submenu]
+"Usage: marchyo menu [options] [command] [route]
 
-Open the central system menu (gum TUI)
+Open the command menu in the marchyo shell (gum TUI fallback)
 
 Arguments:
-  submenu     power (the power/session menu)
+  route             dotted menu id: capture, appearance.theme, system, power
+                    (default: root)
 
 Options:
-  -h, --help  display help for command
+  --tui             use the gum terminal menu instead of the shell
+  -h, --help        display help for command
+
+Commands:
+  select [options]  dmenu-style picker: rows on stdin, the choice on stdout
+  input [options]   Prompt for a line of text in the shell and print it
+
+The shell opens the menu when it is running; an unknown route opens the root.
+Without the shell, or with --tui, power and system open the power menu,
+appearance the appearance menu, and anything else the main menu.
+
+Examples:
+  $ marchyo menu
+  $ marchyo menu capture
+  $ marchyo menu appearance.theme
+  $ marchyo menu power --tui
+
+"
+`;
+
+exports[`help contract: marchyo menu select 1`] = `
+"Usage: marchyo menu select [options]
+
+dmenu-style picker: rows on stdin, the choice on stdout
+
+Options:
+  --prompt <text>        prompt text
+  --multiple             allow several choices; prints a JSON array
+  --selected <value...>  values that start selected
+  --width <px>           menu width in pixels
+  --maxheight <px>       maximum list height in pixels
+  --on-change <json>     JSON argv array to run when the highlighted row
+                         changes
+  --change-key <key>     key that triggers --on-change
+  --tui                  fall back to gum when the shell is not reachable
+  -h, --help             display help for command
+
+Rows are TAB separated: label, glyph label, label subtext, or glyph label
+subtext. With two fields the first is a glyph when it has at most two
+characters. A chosen row prints its label, or label TAB subtext. Exit 1 on
+cancel, 2 when the shell is not reachable.
+
+
+Examples:
+  $ printf 'Lock\\nSuspend\\n' | marchyo menu select --prompt Power
+  $ printf 'Dark\\nLight\\n' | marchyo menu select --multiple --selected Dark
+
+"
+`;
+
+exports[`help contract: marchyo menu input 1`] = `
+"Usage: marchyo menu input [options]
+
+Prompt for a line of text in the shell and print it
+
+Options:
+  --prompt <text>  prompt text
+  --width <px>     menu width in pixels
+  --tui            fall back to gum when the shell is not reachable
+  -h, --help       display help for command
+
+Exit 1 on cancel, 2 when the shell is not reachable.
+
+
+Examples:
+  $ marchyo menu input --prompt Name
+
 "
 `;
 
@@ -211,11 +441,47 @@ exports[`help contract: marchyo monitor 1`] = `
 Monitor helpers (scale cycling, laptop panel)
 
 Options:
+  -h, --help         display help for command
+
+Commands:
+  scale-cycle        Cycle the focused monitor's scale (1 → 1.25 → … → 2 → 1)
+  laptop-toggle      Toggle the built-in laptop panel (eDP*) on/off
+  clamshell <state>  Lid switch handler: hide the laptop panel while an
+                     external display is on
+  reset              Forget the display panel's saved settings
+  save [options]     Print the current display layout
+  workspaces         Per-monitor workspace blocks
+                     (marchyo.workspaces.perMonitor)
+  help [command]     display help for command
+"
+`;
+
+exports[`help contract: marchyo monitor save 1`] = `
+"Usage: marchyo monitor save [options]
+
+Print the current display layout
+
+Options:
+  --nix       as a marchyo.monitors snippet
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo monitor save
+  $ marchyo monitor save --nix
+
+"
+`;
+
+exports[`help contract: marchyo monitor workspaces 1`] = `
+"Usage: marchyo monitor workspaces [options] [command]
+
+Per-monitor workspace blocks (marchyo.workspaces.perMonitor)
+
+Options:
   -h, --help      display help for command
 
 Commands:
-  scale-cycle     Cycle the focused monitor's scale (1 → 1.25 → … → 2 → 1)
-  laptop-toggle   Toggle the built-in laptop panel (eDP*) on/off
+  reset           Forget which workspace block each monitor owns
   help [command]  display help for command
 "
 `;
@@ -240,17 +506,275 @@ Commands:
 exports[`help contract: marchyo font 1`] = `
 "Usage: marchyo font [options] [command]
 
-Terminal font: list, current, or runtime switch
+Terminal and UI fonts: list, current, or runtime switch
 
 Options:
   -h, --help              display help for command
 
 Commands:
-  list                    List installed monospace font families
+  list [options]          List installed font families (monospace by default)
   current                 Show the active terminal font
-  set [options] [family]  Switch the terminal font live (ghostty override
-                          include)
+  set [options] [family]  Switch the terminal or UI font live
   help [command]          display help for command
+"
+`;
+
+exports[`help contract: marchyo font list 1`] = `
+"Usage: marchyo font list [options]
+
+List installed font families (monospace by default)
+
+Options:
+  --kind <kind>  mono | ui | all (default: "mono")
+  -h, --help     display help for command
+
+Examples:
+  $ marchyo font list
+  $ marchyo font list --kind ui --format json
+
+"
+`;
+
+exports[`help contract: marchyo font set 1`] = `
+"Usage: marchyo font set [options] [family]
+
+Switch the terminal or UI font live
+
+Arguments:
+  family         font family name (omit with --revert)
+
+Options:
+  --kind <kind>  mono (ghostty) | ui (GTK and shell) | all (default: "mono")
+  --revert       Back to the declarative font
+  -h, --help     display help for command
+
+Examples:
+  $ marchyo font set 'BlexMono Nerd Font'
+  $ marchyo font set Inter --kind ui
+  $ marchyo font set --kind all --revert
+
+"
+`;
+
+exports[`help contract: marchyo bar 1`] = `
+"Usage: marchyo bar [options] [command]
+
+Edit the shell bar live: widgets, sections, position, background
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  list                           Show the recorded bar layout edits
+  put [options] <id> <section>   Move or add a widget in a bar section
+  move <id> <direction> [count]  Shift a widget along its section
+  remove <id>                    Take a widget off the bar
+  set <section> [ids...]         Replace a bar section with the listed widgets
+  reset                          Drop every recorded bar layout edit
+  background [options] [mode]    Show or set the bar background
+                                 (opaque|glassy|clear)
+  position [options] [position]  Show or set the bar position (top|bottom)
+  help [command]                 display help for command
+
+Edits are recorded in $XDG_STATE_HOME/marchyo/shell/bar-layout.json and applied
+by the shell over the layout from marchyo.shell.settings; "marchyo bar reset"
+returns to that layout. Sections: left, centerBegin, center, centerEnd, right.
+Widget ids are listed in the shell configuration reference.
+
+"
+`;
+
+exports[`help contract: marchyo bar list 1`] = `
+"Usage: marchyo bar list [options]
+
+Show the recorded bar layout edits
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo bar list
+  $ marchyo bar list --format json
+
+"
+`;
+
+exports[`help contract: marchyo bar put 1`] = `
+"Usage: marchyo bar put [options] <id> <section>
+
+Move or add a widget in a bar section
+
+Arguments:
+  id            widget id, for example marchyo.cpu
+  section       left | centerBegin | center | centerEnd | right
+
+Options:
+  --at <index>  position in the section (default: the end)
+  -h, --help    display help for command
+
+A widget already on the bar moves and keeps its settings; a separator
+(marchyo.separator) is added instead of moved.
+
+Examples:
+  $ marchyo bar put marchyo.cpu left
+  $ marchyo bar put marchyo.dnd centerEnd --at 0
+
+"
+`;
+
+exports[`help contract: marchyo bar move 1`] = `
+"Usage: marchyo bar move [options] <id> <direction> [count]
+
+Shift a widget along its section
+
+Arguments:
+  id          widget id
+  direction   left (towards the start) | right
+  count       places to move (default 1)
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo bar move marchyo.cpu left
+  $ marchyo bar move marchyo.battery right 2
+
+"
+`;
+
+exports[`help contract: marchyo bar remove 1`] = `
+"Usage: marchyo bar remove [options] <id>
+
+Take a widget off the bar
+
+Arguments:
+  id          widget id
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo bar remove marchyo.media
+
+"
+`;
+
+exports[`help contract: marchyo bar set 1`] = `
+"Usage: marchyo bar set [options] <section> [ids...]
+
+Replace a bar section with the listed widgets
+
+Arguments:
+  section     left | centerBegin | center | centerEnd | right
+  ids         widget ids in order (none empties the section)
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo bar set center marchyo.clock
+  $ marchyo bar set centerEnd marchyo.dnd marchyo.caffeine
+  $ marchyo bar set centerBegin
+
+"
+`;
+
+exports[`help contract: marchyo bar reset 1`] = `
+"Usage: marchyo bar reset [options]
+
+Drop every recorded bar layout edit
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo bar reset
+
+"
+`;
+
+exports[`help contract: marchyo bar background 1`] = `
+"Usage: marchyo bar background [options] [mode]
+
+Show or set the bar background (opaque|glassy|clear)
+
+Arguments:
+  mode        opaque | glassy | clear (omit to list)
+
+Options:
+  --revert    Undo: back to the declarative background
+  -h, --help  display help for command
+
+Same as "marchyo theme bar-background". Double-clicking empty bar space
+steps through the modes.
+
+Examples:
+  $ marchyo bar background glassy
+  $ marchyo bar background --revert
+
+"
+`;
+
+exports[`help contract: marchyo bar position 1`] = `
+"Usage: marchyo bar position [options] [position]
+
+Show or set the bar position (top|bottom)
+
+Arguments:
+  position    top | bottom (omit to list)
+
+Options:
+  --revert    Undo: back to the declarative position
+  -h, --help  display help for command
+
+Same as "marchyo theme bar-position".
+
+Examples:
+  $ marchyo bar position bottom
+  $ marchyo bar position --revert
+
+"
+`;
+
+exports[`help contract: marchyo language 1`] = `
+"Usage: marchyo language [options] [code]
+
+Show or set marchyo's display language (shell and CLI strings)
+
+Arguments:
+  code        language code, or 'list' (omit to show the current one)
+
+Options:
+  --revert    Drop the runtime override, back to marchyo.language
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo language
+  $ marchyo language list
+  $ marchyo language de
+
+"
+`;
+
+exports[`help contract: marchyo dictation 1`] = `
+"Usage: marchyo dictation [options] <action>
+
+Start, stop or toggle voice dictation on the configured backend
+
+Arguments:
+  action      start | stop | toggle | status
+
+Options:
+  -h, --help  display help for command
+
+The backend (voxtype) comes from marchyo.dictation.backend.
+Concurrent calls are serialised; status prints idle, recording, transcribing or
+stopped (--json adds the backend name).
+
+Examples:
+  $ marchyo dictation toggle
+  $ marchyo dictation status --json
+
 "
 `;
 
@@ -266,6 +790,42 @@ Commands:
   add [options] <url>  Register a site as a standalone app window
   rm [options] <name>  Remove a CLI-added web app
   help [command]       display help for command
+"
+`;
+
+exports[`help contract: marchyo network 1`] = `
+"Usage: marchyo network [options] [command]
+
+Network helpers (captive-portal sign-in)
+
+Options:
+  -h, --help        display help for command
+
+Commands:
+  portal [options]  Open the captive-portal sign-in window and wait until
+                    online
+  help [command]    display help for command
+"
+`;
+
+exports[`help contract: marchyo network portal 1`] = `
+"Usage: marchyo network portal [options]
+
+Open the captive-portal sign-in window and wait until online
+
+Options:
+  --uri <url>      Page to open (default:
+                   marchyo.network.connectivityCheck.uri)
+  --browser <cmd>  Chromium-family browser (default: the webapps browser)
+  -h, --help       display help for command
+
+Pauses an active Tailscale exit node, opens the check URI in a browser app
+window, polls NetworkManager every 2s (every 15s after 5 minutes) until
+connectivity is full, then closes the window and restores the exit node.
+
+Examples:
+  $ marchyo network portal
+
 "
 `;
 
@@ -308,6 +868,11 @@ Arguments:
 
 Options:
   -h, --help  display help for command
+
+Examples:
+  $ marchyo completion bash
+  $ marchyo completion man
+
 "
 `;
 
@@ -324,6 +889,7 @@ Commands:
   toggle <panel>     Toggle a shell panel
   open <panel>       Open a shell panel
   close [panel]      Close the open shell panel, or only the named one
+  gallery [section]  Open the Ui gallery panel (dev), optionally at one section
   launcher <mode>    Toggle the launcher in a mode
   bar [state]        Toggle the top bar, or set it on/off
   overview [state]   Toggle the window overview, or open/close it
@@ -332,6 +898,7 @@ Commands:
   bar-state          Print the top bar state: on | off
   dnd-state          Print the do-not-disturb state: on | off
   dismiss [options]  Dismiss the newest notification toast
+  notify-keys        Control the notification toasts from the keyboard
   dnd [state]        Toggle do-not-disturb, or set it on/off
   reload             Reload the shell's QML in place
   help [command]     display help for command
@@ -342,6 +909,7 @@ Examples:
   $ marchyo shell toggle audio
   $ marchyo shell close notifications
   $ marchyo shell launcher emoji
+  $ marchyo shell gallery buttons
   $ marchyo shell dnd on
   $ marchyo shell bar off
   $ marchyo shell bar-state
@@ -361,6 +929,11 @@ Arguments:
 
 Options:
   -h, --help  display help for command
+
+Examples:
+  $ marchyo shell close
+  $ marchyo shell close audio
+
 "
 `;
 
@@ -372,6 +945,25 @@ Dismiss the newest notification toast
 Options:
   --all       Dismiss every notification toast
   -h, --help  display help for command
+
+Examples:
+  $ marchyo shell dismiss
+  $ marchyo shell dismiss --all
+
+"
+`;
+
+exports[`help contract: marchyo shell notify-keys 1`] = `
+"Usage: marchyo shell notify-keys [options]
+
+Control the notification toasts from the keyboard
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo shell notify-keys
+
 "
 `;
 
@@ -385,6 +977,29 @@ Arguments:
 
 Options:
   -h, --help  display help for command
+
+Examples:
+  $ marchyo shell dnd
+  $ marchyo shell dnd on
+
+"
+`;
+
+exports[`help contract: marchyo shell gallery 1`] = `
+"Usage: marchyo shell gallery [options] [section]
+
+Open the Ui gallery panel (dev), optionally at one section
+
+Arguments:
+  section     states | buttons | inputs | choices | panel | popups | dialogs
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo shell gallery
+  $ marchyo shell gallery buttons
+
 "
 `;
 
@@ -398,6 +1013,11 @@ Arguments:
 
 Options:
   -h, --help  display help for command
+
+Examples:
+  $ marchyo shell overview
+  $ marchyo shell overview on
+
 "
 `;
 
@@ -430,17 +1050,19 @@ exports[`help contract: marchyo brightness 1`] = `
 Step the backlight brightness
 
 Arguments:
-  action      up | down
+  action      up | down (toggle with --keyboard)
 
 Options:
+  --keyboard  Act on the keyboard backlight (up | down | toggle)
   -h, --help  display help for command
 
 With the marchyo shell installed: brightnessctl, then an OSD poke over
 shell IPC. Without it: swayosd-client when installed, else brightnessctl.
-brightnessctl steps 5%.
+brightnessctl steps 5%. --keyboard steps the *kbd_backlight* LED by 10%.
 
 Examples:
   $ marchyo brightness up
+  $ marchyo brightness --keyboard toggle
 
 "
 `;
@@ -460,6 +1082,112 @@ Exits 1 when any check fails; warnings do not change the exit code.
 Examples:
   $ marchyo doctor
   $ marchyo doctor --json | jq '.checks[] | select(.status == "fail")'
+
+"
+`;
+
+exports[`help contract: marchyo notify 1`] = `
+"Usage: marchyo notify [options] <headline> [description] [--exec <program> [args...] | --action <label> <program> [words...]... [--with <args...>]]
+
+Send a desktop notification, optionally with click actions
+
+Arguments:
+  args        headline, description and flags (read untouched, not by
+              commander)
+
+Options:
+  -h, --help  display help for command
+
+Flags (before the headline, or after the description):
+  --app-name <app>           sender name (default marchyo-action)
+  -g, --glyph <glyph>        icon glyph shown on the card
+  -u, --urgency <level>      low (default) | normal | critical
+  -i, --icon <icon>          icon name
+  -t, --expire-time <ms>     lifetime in milliseconds
+  -r, --replace-id <id>      replace an earlier notification
+  -p, --print-id             print the id of the new notification
+  --transient                keep the card out of history
+  --image <path-or-uri>      image shown on the card
+  --exec <program> [args...] run on click; takes the rest of the line
+  --action <label> <program> [words...]
+                             a button (up to 3); the first also runs on click
+  --with <args...>           arguments appended to every action
+
+Each flag also takes the --flag=value form. The click command needs
+$XDG_RUNTIME_DIR: the shell runs it only when the notification carries a
+one-time token the command wrote there. A glyph needs the token too.
+
+
+Examples:
+  $ marchyo notify 'Build done' '3 tests failed' -u critical
+  $ marchyo notify Reminder 'Stand up' --action 'Snooze' marchyo reminder set 'stand up' 10m
+  $ marchyo notify -p Audio 'Open the panel' --exec marchyo shell open audio
+
+"
+`;
+
+exports[`help contract: marchyo whats-new 1`] = `
+"Usage: marchyo whats-new [options]
+
+Show what the Marchyo NEWS gained since you last looked
+
+Options:
+  --notify     send one notification when NEWS changed (used by a user unit at
+               login)
+  --mark-seen  record the current NEWS as seen
+  -h, --help   display help for command
+
+--json prints { changed, hash, entries, summary }; summary is the dix
+comparison of the last two system generations (at most 40 lines).
+
+Examples:
+  $ marchyo whats-new
+  $ marchyo whats-new --json
+  $ marchyo whats-new --mark-seen
+
+"
+`;
+
+exports[`help contract: marchyo setup 1`] = `
+"Usage: marchyo setup [options] [command]
+
+First-login checklist: git, SSH, security keys, language, theme, dictation
+
+Options:
+  --done      mark the checklist finished (hides the welcome)
+  --welcome   send the one-time welcome notification (used by a user unit at
+              login)
+  -h, --help  display help for command
+
+Commands:
+  fix <id>    Run the interactive fix for one checklist item
+
+Each item is done, todo or skip (not applicable here). --json prints
+{ items: [{ id, title, status, detail, fix }], doneFlag }.
+
+Examples:
+  $ marchyo setup
+  $ marchyo setup --json
+  $ marchyo setup fix git
+
+"
+`;
+
+exports[`help contract: marchyo setup fix 1`] = `
+"Usage: marchyo setup fix [options] <id>
+
+Run the interactive fix for one checklist item
+
+Arguments:
+  id          git | ssh | fido2 | fingerprint | language | keyboard | theme |
+              dictation
+
+Options:
+  -h, --help  display help for command
+
+Examples:
+  $ marchyo setup fix git
+  $ marchyo setup fix ssh
 
 "
 `;

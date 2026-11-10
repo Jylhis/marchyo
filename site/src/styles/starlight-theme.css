@@ -1,79 +1,49 @@
 /*
- * starlight-theme.css — maps Starlight's design tokens onto the Jylhis
- * Design System v2, "The Survey" (Sheet/Field, single bronze accent, slab
- * display headings over a grotesque body) so the docs match the landing +
- * search pages. Self-hosted fonts are imported here so the docs pages carry
- * them too.
+ * starlight-theme.css — maps Starlight's --sl-* variables onto the
+ * vendored design tokens (colors_and_type.css loads first in customCss). The
+ * tokens switch on [data-mode="dark"]; astro.config's head script mirrors
+ * Starlight's [data-theme] onto [data-mode], so one mapping covers both modes.
  */
+:root,
+:root[data-theme='light'],
+:root[data-theme='dark'] {
+  --sl-font: var(--font-body);
+  --sl-font-mono: var(--font-mono);
 
-@import '@fontsource/zilla-slab/600.css';
-@import '@fontsource/zilla-slab/700.css';
-@import '@fontsource-variable/hanken-grotesk';
-@import '@fontsource-variable/hanken-grotesk/wght-italic.css';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/400-italic.css';
-@import '@fontsource/ibm-plex-mono/500.css';
+  --sl-color-accent-low: var(--color-selection-bg);
+  --sl-color-accent: var(--color-link);
+  --sl-color-accent-high: var(--color-text-heading);
 
-/* ── Dark theme (Jylhis Roast — the Field) — Starlight's default ─────── */
-:root {
-  --sl-font: 'Hanken Grotesk Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --sl-font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
-  --sl-font-display: 'Zilla Slab', 'Roboto Slab', Rockwell, Georgia, serif;
+  --sl-color-white: var(--color-text-heading);
+  --sl-color-gray-1: var(--color-text);
+  --sl-color-gray-2: var(--color-text-muted);
+  --sl-color-gray-3: var(--color-text-faint);
+  --sl-color-gray-4: var(--color-border-strong);
+  --sl-color-gray-5: var(--color-border);
+  --sl-color-gray-6: var(--color-bg-subtle);
+  --sl-color-gray-7: var(--color-surface);
+  --sl-color-black: var(--color-bg);
 
-  --sl-color-accent-low: #262119;
-  --sl-color-accent: #e0a33a;
-  --sl-color-accent-high: #f0b95c;
-
-  --sl-color-white: #f2f4f8;
-  --sl-color-gray-1: #d6dae2;
-  --sl-color-gray-2: #9aa0ab;
-  --sl-color-gray-3: #656b76;
-  --sl-color-gray-4: #3a4150;
-  --sl-color-gray-5: #2b303b;
-  --sl-color-gray-6: #14171e;
-  --sl-color-black: #0d0f14;
-
-  --sl-color-bg: #0d0f14;
-  --sl-color-bg-nav: #0d0f14;
-  --sl-color-bg-sidebar: #0a0c10;
-  --sl-color-bg-inline-code: #14171e;
-  --sl-color-hairline: #1b1f28;
-  --sl-color-hairline-light: #2b303b;
-  --sl-color-text-accent: #e0a33a;
+  --sl-color-bg: var(--color-bg);
+  --sl-color-bg-nav: var(--color-bg);
+  --sl-color-bg-sidebar: var(--color-bg-subtle);
+  --sl-color-bg-inline-code: var(--color-code-bg);
+  --sl-color-text: var(--color-text);
+  --sl-color-text-accent: var(--color-accent);
+  --sl-color-text-invert: var(--color-accent-foreground);
+  --sl-color-hairline-light: var(--color-border);
+  --sl-color-hairline: var(--color-border);
+  --sl-color-hairline-shade: var(--color-border-strong);
 }
 
-/* ── Light theme (Jylhis Paper — the Sheet) ──────────────────────────── */
-:root[data-theme='light'] {
-  --sl-color-accent-low: #e9e3dd;
-  --sl-color-accent: #8a4d00;
-  --sl-color-accent-high: #a75f0a;
-
-  --sl-color-white: #12141a;
-  --sl-color-gray-1: #23262e;
-  --sl-color-gray-2: #565a63;
-  --sl-color-gray-3: #878c95;
-  --sl-color-gray-4: #aab4c0;
-  --sl-color-gray-5: #cfd6de;
-  --sl-color-gray-6: #eef2f6;
-  --sl-color-gray-7: #f2f5f9;
-  --sl-color-black: #f6f8fb;
-
-  --sl-color-bg: #f6f8fb;
-  --sl-color-bg-nav: #f6f8fb;
-  --sl-color-bg-sidebar: #eef2f6;
-  --sl-color-bg-inline-code: #eef2f6;
-  --sl-color-hairline: #e0e6ed;
-  --sl-color-hairline-light: #cfd6de;
-  --sl-color-text-accent: #8a4d00;
-}
-
-/* ── Slab display headings — the v2 signature ────────────── */
+/* ── Serif display headings ───────────────────────────────── */
 .sl-markdown-content h1,
 h1.astro-hero-title,
 .content-panel h1,
 .site-title {
-  font-family: var(--sl-font-display);
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
 }
 
 /* Sub-headings stay in the grotesque body face, carried by weight. */
@@ -96,11 +66,11 @@ h1.astro-hero-title,
 
 /* Site title (wordmark) sits tight and heading-coloured */
 .site-title {
-  font-weight: 600;
+  font-weight: 400;
   color: var(--sl-color-white);
 }
 
-/* Sidebar + table-of-contents links: mono, muted, bronze on hover. */
+/* Sidebar + table-of-contents links: mono, muted, accent on hover. */
 .sidebar-content a,
 .right-sidebar a {
   font-size: 0.85rem;
@@ -112,13 +82,42 @@ h1.astro-hero-title,
   letter-spacing: 0.03em;
 }
 
-/* Links inside prose get the accessible bronze, matching the rest of the site. */
+/* Links inside prose get the accent, matching the rest of the site. */
 .sl-markdown-content a:not(:where(.not-content *)) {
   color: var(--sl-color-text-accent);
 }
 
-/* Frame the code block so it sits on the Sheet/Field surface. */
+/* Frame the code block so it sits on the paper/black surface. */
 .sl-markdown-content :not(pre) > code {
   border: 1px solid var(--sl-color-hairline-light);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* The design system's link colour outranks Starlight's :where() rule for
+   the current sidebar entry; restore the ink on the accent fill. */
+.sidebar-content a[aria-current="page"] {
+  color: var(--sl-color-text-invert);
+}
+
+/* Touch: Starlight's menu button, title, sidebar and on-this-page entries
+   and the edit link
+   reach the design system's --touch-min target on coarse pointers. */
+@media (pointer: coarse) {
+  starlight-menu-button button {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+  .site-title {
+    min-height: var(--touch-min);
+  }
+  .sidebar-content a,
+  mobile-starlight-toc a {
+    min-height: var(--touch-min);
+    display: flex;
+    align-items: center;
+  }
+  .meta a {
+    min-height: var(--touch-min);
+    align-items: center;
+  }
 }

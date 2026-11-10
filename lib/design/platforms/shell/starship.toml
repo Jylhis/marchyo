@@ -1,0 +1,58 @@
+# Jylhis starship prompt
+# ~/.config/starship.toml
+#
+# Palette names below are ANSI slots — they track whichever Jylhis theme
+# is loaded in the terminal. Don't hardcode hex; let the terminal resolve it.
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nix_shell\
+$cmd_duration
+$character"""
+add_newline = false
+
+[character]
+success_symbol = "[»](yellow)"
+error_symbol = "[»](red)"
+
+[cmd_duration]
+format = " [took $duration](8)" # bright-black / faint
+min_time = 2000
+
+[directory]
+style = "yellow"
+truncation_length = 3
+truncate_to_repo = true
+home_symbol = "~"
+
+[git_branch]
+format = " on [$branch]($style)"
+style = "green"
+symbol = ""
+
+[git_status]
+format = "[$all_status$ahead_behind]($style)"
+style = "yellow"
+conflicted = "="
+ahead = " ↑${count}"
+behind = " ↓${count}"
+diverged = " ↕${ahead_count}/${behind_count}"
+untracked = " ?"
+stashed = " *"
+modified = " ✗"
+staged = " ✚"
+renamed = " »"
+deleted = " ✖"
+
+[nix_shell]
+format = " [(nix)]($style)"
+style = "cyan"
+impure_msg = ""
+pure_msg = ""
+
+[time]
+disabled = false
+format = "[$time](8)"
+time_format = "%H:%M"

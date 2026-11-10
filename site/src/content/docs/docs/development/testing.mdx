@@ -3,67 +3,80 @@ title: Testing
 description: How to run and write tests for Marchyo
 ---
 
-Tests in Marchyo are fast evaluation-based checks that verify NixOS configurations evaluate without errors. They don't build any derivations, so they complete in under a minute.
+Marchyo's default checks are evaluation tests: they evaluate NixOS configurations and inspect the result without building any system. A handful of reference systems are each evaluated once, and every test is a named predicate over one of them, so `nix flake check` stays fast. Checks that build something run separately as heavy checks.
 
 ## Running tests
 
 ```bash
-# Run all tests
-nix flake check
+just check          # nix flake check --no-build, then statix + deadnix
+nix flake check     # also builds the cheap checks
+just check-full     # nix flake check, then builds every heavy check
 
-# List available tests
+# List the checks
 nix eval .#checks.x86_64-linux --apply builtins.attrNames
-```
 
-There is no way to run a single test in isolation — `nix flake check` runs them all.
+# Run one reference system's tests
+nix build .#checks.x86_64-linux.ref-desktop
+```
 
 ## Test structure
 
 ```
 tests/
-  default.nix        # Entry point — auto-discovers tests/eval/ and merges the results
-  lib.nix            # Shared helpers (assertTest, testNixOS, withTestUser, …)
+  default.nix        # Entry point: builds the reference systems, turns predicates into checks
+  lib.nix            # The harness, the reference system bases, shared helpers
   lib-tests.nix      # Library function unit tests
-  eval/              # Per-feature module tests, auto-discovered (one file per feature)
+  eval/              # One file per feature, auto-discovered
 ```
 
-### Module tests
+- **Reference systems** — `minimal`, `headless`, `headless-dev`, `desktop`, `desktop-shell-off`, `desktop-dictation`, `full` and the graphics layouts pin the defaults for one kind of host. The tweak systems (`desktop-tweaks`, `headless-tweaks-2`, `desktop-off`, …) collect non-default settings from many test files. Each becomes one check, `ref-<name>`, that runs all its predicates and lists every failing one by name.
+- **Variants** — `variant-<name>`, a configuration only one test needs.
+- **Negative tests** — `eval-assertions` checks that misconfigurations fail the assertion they should.
+- **Heavy checks** — `legacyPackages.<system>.heavyChecks`: Hyprland `--verify-config` runs, theme asset builds, the Plymouth theme, the shell wrapper and the installer ISO evaluations. Run with `just check-full`, and weekly in CI.
 
-Verify that NixOS configurations evaluate without errors for various feature combinations:
-
-| Test | Description |
-|------|-------------|
-| `eval-minimal` | Minimal NixOS modules import |
-| `eval-desktop` | Desktop feature flag |
-| `eval-development` | Development feature flag |
-| `eval-all-features` | All features enabled together |
-| `eval-themes` | Theme configurations |
-| `eval-keyboard` | Keyboard layouts and IME |
-| `eval-graphics-*` | GPU configurations (Intel, AMD, NVIDIA, PRIME) |
-
-### Library tests
-
-Unit tests for lib functions using the `assertTest` helper.
+See `tests/README.md` for the full layout.
 
 ## Writing tests
 
-### Module evaluation test
+### Module test
 
-Create (or extend) a file under `tests/eval/` — e.g. `tests/eval/my-feature.nix`. Each file is a function that receives the shared helpers and returns an attrset of named tests; it is auto-discovered, so no registration is needed:
+A test is a predicate from the evaluated NixOS `config` to `true`, `false`, a failure message, or a list of failure messages. Put it on the reference system that already has the configuration it needs:
 
 ```nix
-{ helpers, ... }:
-let
-  inherit (helpers) testNixOS withTestUser;
-in
+# tests/eval/my-feature.nix
+{ lib, ... }:
 {
-  eval-my-feature = testNixOS "my-feature" (withTestUser {
-    marchyo.myFeature.enable = true;
-  });
+  refs.desktop.eval-my-feature-default = cfg: cfg.services.my-feature.enable;
+  refs.headless.eval-my-feature-headless-off = cfg: !cfg.services.my-feature.enable;
 }
 ```
 
-The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config (grub disabled, root filesystem, stateVersion).
+A non-default setting goes on a tweak system, from the same file:
+
+```nix
+{ helpers, lib, ... }:
+{
+  refs.desktop-tweaks.eval-my-feature-port =
+    cfg:
+    helpers.expect (lib.elem 1234 cfg.networking.firewall.allowedTCPPorts) "port 1234 is not open";
+
+  refConfig.desktop-tweaks.marchyo.myFeature.port = 1234;
+}
+```
+
+A negative test names the assertion it expects:
+
+```nix
+{
+  failing.eval-my-feature-needs-port = {
+    on = "misconfigured";
+    expect = "marchyo.myFeature.port must be set";
+  };
+  failingConfig.misconfigured.marchyo.myFeature.enable = true;
+}
+```
+
+Files under `tests/eval/` are auto-discovered, so no registration is needed.
 
 ### Library test
 
@@ -79,12 +92,13 @@ test-my-function =
 
 ## CI pipeline
 
-The GitHub Actions workflow (`.github/workflows/validate.yml`) runs four jobs:
+The GitHub Actions workflow (`.github/workflows/validate.yml`) runs five jobs:
 
 1. **Lint** — `nix fmt -- --ci` plus a `flake.lock` / `devenv.lock` rev-parity check on a single Linux runner. Runs on every push and PR.
 2. **Check** — `nix flake check --accept-flake-config` on `x86_64-linux`. Runs on every push and PR.
-3. **Check (aarch64-linux)** — the same checks on an ARM runner. Runs only on pushes to `main` and manual dispatch.
-4. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel`. Runs only on pushes to `main` and manual dispatch, after lint and check succeed.
+3. **Check (aarch64-linux)** — the same checks on an ARM runner. Runs only on pushes to `main`, the weekly schedule and manual dispatch.
+4. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel`. Runs only on pushes to `main`, the weekly schedule and manual dispatch, after lint and check succeed.
+5. **Heavy checks** — builds every `legacyPackages.x86_64-linux.heavyChecks` entry. Runs weekly and on manual dispatch.
 
 Lint and check run in parallel. Concurrency groups cancel superseded PR runs automatically. Builds use [Cachix](https://app.cachix.org) (`jylhis` cache).
 

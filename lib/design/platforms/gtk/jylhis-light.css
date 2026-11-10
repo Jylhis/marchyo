@@ -1,0 +1,166 @@
+/* Jylhis GTK 3 / GTK 4 theme overrides — Jylhis
+ * GENERATED from tokens/<set>.tokens.json. Do not edit by hand.
+ * Install as ~/.config/gtk-3.0/gtk.css AND ~/.config/gtk-4.0/gtk.css
+ * for the polarity this file carries (GTK has no runtime variant switch
+ * for user CSS). Pair it with the matching gsettings color-scheme:
+ * prefer-light for jylhis-light.css, prefer-dark for jylhis-dark.css.
+ */
+
+@define-color accent_color          #1e4f8a;
+@define-color accent_bg_color       #1e4f8a;
+@define-color accent_fg_color       #f4efe4;
+@define-color accent_hover          #1a1814;
+
+@define-color destructive_color     #22201c;
+@define-color destructive_bg_color  #22201c;
+@define-color destructive_fg_color  #f4efe4;
+@define-color success_color         #2f6b2f;
+@define-color success_bg_color      #2f6b2f;
+@define-color success_fg_color      #f4efe4;
+@define-color warning_color         #7a5000;
+@define-color warning_bg_color      #7a5000;
+@define-color warning_fg_color      #f4efe4;
+@define-color error_color           #b80000;
+@define-color error_bg_color        #b80000;
+@define-color error_fg_color        #f4efe4;
+
+@define-color window_bg_color        #f4efe4;
+@define-color window_fg_color        #22201c;
+@define-color view_bg_color          #fffdf8;
+@define-color view_fg_color          #22201c;
+@define-color headerbar_bg_color     #f8f4ec;
+@define-color headerbar_fg_color     #1a1814;
+@define-color headerbar_border_color #847c6e;
+@define-color sidebar_bg_color       #ebe4d5;
+@define-color sidebar_fg_color       #22201c;
+@define-color card_bg_color          #fffdf8;
+@define-color popover_bg_color       #fffdf8;
+
+@define-color borders          #847c6e;
+@define-color shade_color      rgba(34, 32, 28, 0.08);
+
+/* ────────────────────────────────────
+   Typography
+   ──────────────────────────────────── */
+
+* {
+    -gtk-icon-style: regular;
+}
+
+/* ────────────────────────────────────
+   Focus — design(7) Keyboard
+   ──────────────────────────────────── */
+
+*:focus-visible,
+button:focus-visible,
+entry:focus-visible,
+textview text:focus-visible {
+    outline: 2px solid @accent_color;
+    outline-offset: 2px;
+    outline-style: solid;
+    box-shadow: none;
+}
+
+/* ────────────────────────────────────
+   Selected — the universal language
+   ──────────────────────────────────── */
+
+row:selected,
+treeview:selected,
+list > row:selected,
+.navigation-sidebar > row:selected {
+    background: alpha(@accent_color, 0.15);
+    color: @window_fg_color;
+    box-shadow: inset 3px 0 0 @accent_color;
+    border-radius: 0;
+}
+
+row:selected:focus {
+    outline: none;
+    box-shadow: inset 3px 0 0 @accent_color;
+}
+
+/* ────────────────────────────────────
+   Buttons — flatten, warm
+   ──────────────────────────────────── */
+
+button {
+    border-radius: 4px;
+    transition: background 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+button.suggested-action,
+button.default {
+    background: @accent_color;
+    color: @accent_fg_color;
+    border: 1px solid transparent;
+}
+
+button.suggested-action:hover {
+    background: shade(@accent_color, 0.92);
+}
+
+button.destructive-action {
+    background: @destructive_color;
+    color: @destructive_fg_color;
+}
+
+/* ────────────────────────────────────
+   Entry / input
+   ──────────────────────────────────── */
+
+entry {
+    border-radius: 4px;
+    border: 1px solid @borders;
+    background: @view_bg_color;
+}
+
+entry:focus-within {
+    border-color: @accent_color;
+    outline: 2px solid @accent_color;
+    outline-offset: -1px;
+}
+
+/* ────────────────────────────────────
+   Links — same as web
+   ──────────────────────────────────── */
+
+*:link,
+button.link {
+    color: @accent_color;
+    text-decoration-color: alpha(@accent_color, 0.4);
+}
+
+*:link:hover,
+button.link:hover {
+    color: shade(@accent_color, 0.85);
+}
+
+/* ────────────────────────────────────
+   Switches / checkbuttons
+   ──────────────────────────────────── */
+
+switch:checked {
+    background: @accent_color;
+}
+
+check:checked,
+radio:checked {
+    background: @accent_color;
+    color: @accent_fg_color;
+}
+
+/* ────────────────────────────────────
+   Scrollbar
+   ──────────────────────────────────── */
+
+scrollbar slider {
+    background: alpha(@window_fg_color, 0.25);
+    border-radius: 3px;
+    min-width: 8px;
+    min-height: 8px;
+}
+
+scrollbar slider:hover {
+    background: alpha(@window_fg_color, 0.45);
+}

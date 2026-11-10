@@ -3,3 +3,6 @@
 [default.extend-words]
 # "AGS" = Aylur's GTK Shell (named in the roadmap's source-repo list).
 AGS = "AGS"
+# HSA = Heterogeneous System Architecture (ROCm's HSA_OVERRIDE_GFX_VERSION,
+# the hsaOverrideGfxVersion option).
+hsa = "hsa"

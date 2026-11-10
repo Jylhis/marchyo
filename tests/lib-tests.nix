@@ -152,14 +152,12 @@ in
       result.variant == "nodeadkeys" && result.label == "Finnish" && result.ime == null
     ) "normalizeLayout overwrote a caller-supplied field";
 
-  # lib/camel-case.nix: kebab-case token names -> camelCase identifiers
-  # (QML property names / JSON keys). Same mapping package.nix used to bake
-  # Color.qml, now shared with modules/home/theme-runtime.nix's colors.json.
+  # lib.toCamelCase on kebab-case token names (QML property names, JSON keys):
+  # package.nix's Colors.qml, theme-runtime.nix's colors.json and the CLI's
+  # matugen.ts toCamel must agree.
   test-camel-case =
     let
-      toCamel = import ../lib/camel-case.nix {
-        inherit lib;
-      };
+      toCamel = lib.toCamelCase;
     in
     assertTest "camel-case" (
       toCamel "bg-subtle" == "bgSubtle"
@@ -167,17 +165,14 @@ in
       && toCamel "selection-bg" == "selectionBg"
       && toCamel "bg" == "bg"
       && toCamel "surface-raised" == "surfaceRaised"
-    ) "Expected kebab-case names to camelCase identically to package.nix's Color.qml generator";
+    ) "Expected kebab-case names to camelCase identically to package.nix's Colors.qml generator";
 
-  # lib/hex-byte.nix: two-digit hex -> int, shared by base16-scheme.nix's
-  # luminance polarity and theme-runtime.nix's rgba() literal translation.
-  # Case-insensitivity is contractual: base16 scheme files are lowercase but
-  # consumer-supplied token hexes are not normalized.
+  # lib.fromHexString on two-digit hex, as base16-scheme.nix's luminance
+  # polarity and theme-runtime.nix's rgba() literals use it. Case-insensitivity
+  # is contractual: consumer-supplied token hexes are not normalized.
   test-hex-byte =
     let
-      hexByte = import ../lib/hex-byte.nix {
-        inherit lib;
-      };
+      hexByte = lib.fromHexString;
     in
     assertTest "hex-byte" (
       hexByte "00" == 0 && hexByte "ff" == 255 && hexByte "FF" == 255 && hexByte "0a" == 10

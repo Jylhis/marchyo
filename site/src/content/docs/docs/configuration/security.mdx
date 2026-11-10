@@ -1,0 +1,58 @@
+---
+title: Security
+description: SSH server, sudo, firewall, fingerprint and FIDO2 options
+---
+
+## SSH server
+
+- `marchyo.security.ssh.enable` (`bool`, default `false`): OpenSSH server with key-only login and no root login.
+- `marchyo.security.ssh.users` (`list of str`, default `[ ]`): normal users outside `wheel` that also need an authorized key.
+- `marchyo.security.ssh.allowNoKeys` (`bool`, default `false`): skip the authorized-key check.
+
+`ssh.enable` turns on `services.openssh` with these settings:
+
+- `PasswordAuthentication = false`
+- `KbdInteractiveAuthentication = false`
+- `PermitRootLogin = "no"`
+
+Password login is off, so evaluation fails when a login user cannot get in.
+The check applies while sshd is enabled.
+It covers each normal user with a login shell that is in `wheel` or in `ssh.users`.
+Each of these users needs `openssh.authorizedKeys.keys` or `openssh.authorizedKeys.keyFiles`.
+The check only looks at the option values; it never reads key files.
+
+```nix
+marchyo.security.ssh.enable = true;
+users.users.alice.openssh.authorizedKeys.keys = [
+  "ssh-ed25519 AAAA... alice@laptop"
+];
+```
+
+The check is skipped when sshd gets keys from somewhere else:
+
+- `services.openssh.settings.TrustedUserCAKeys` is set (user certificates).
+- `services.openssh.authorizedKeysCommand` or `settings.AuthorizedKeysCommand` is set.
+- `marchyo.security.ssh.allowNoKeys = true`, for keys written at runtime.
+
+## sudo
+
+- `marchyo.security.sudo.timestampTimeout` (`int`, default `10`): minutes sudo remembers a password.
+
+The value is written to `security.sudo.extraConfig` as `Defaults timestamp_timeout=<n>`.
+`0` asks for the password every time; a negative value never expires.
+
+## Firewall, fingerprint and FIDO2
+
+- The firewall is the NixOS one (`networking.firewall.enable`, on by default); turn it off there.
+- `marchyo.security.fingerprint.enable` (`bool`, default `false`): fprintd with PAM integration.
+- `marchyo.security.fido2.enable` (`bool`, default `false`): FIDO2/U2F keys through pam_u2f.
+
+## Network defaults
+
+Every host gets these sysctls through `lib.mkDefault`, so a host can override each one:
+
+- `net.ipv4.conf.{all,default}.arp_ignore = 1` and `arp_announce = 2`: an interface answers ARP only for its own address. A dock's Ethernet and Wi-Fi on one network then keep their own routes.
+- `net.ipv4.tcp_mtu_probing = 1`: TCP finds a working packet size on links that drop ICMP.
+- `net.ipv4.tcp_congestion_control = "bbr"` with `net.core.default_qdisc = "fq"`. See [Performance](/docs/configuration/performance/).
+
+{/* Assisted-by: Claude Code:claude-opus-5-5 */}

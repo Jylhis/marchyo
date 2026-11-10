@@ -1,0 +1,747 @@
+/*
+ * platforms/shadcn/tokens.css — GENERATED from tokens/*.tokens.json. Do not edit by hand.
+ *
+ * The Jylhis theme on the shadcn/ui token names, as bare HSL triplets for
+ * Tailwind (hsl(var(--token) / <alpha-value>)). Self-contained: pair it with
+ * fonts.css + fonts/. Paper (light) is :root; Black (dark) is .dark and
+ * [data-mode="dark"]. With neither a mode class nor data-mode, the page
+ * follows the OS (prefers-color-scheme). Print is always light. See design(7).
+ */
+
+/* Paper (light) */
+:root {
+  color-scheme: light;
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 9.7% 12.2%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 9.7% 12.2%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 9.7% 12.2%;
+  --primary: 212.8 64.3% 32.9%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 13% 9%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 9.7% 12.2%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 36.7 10.6% 33.3%;
+  --accent: 41.8 65.1% 83.1%;
+  --accent-foreground: 40 13% 9%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 38.2 9.1% 47.5%;
+  --input: 36.7 10.6% 33.3%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 13% 9%;
+  --faint: 38.2 9.1% 47.5%;
+  --border-strong: 36.7 10.6% 33.3%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 46.1%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.8 64.3% 32.9%;
+  --decorator: 36.7 10.6% 33.3%;
+  --contour: 36.7 10.6% 33.3%;
+  /* status */
+  --status-err: 0 100% 36.1%;
+  --status-err-bg: 18.2 49.3% 86.9%;
+  --status-warn: 39.3 100% 23.9%;
+  --status-warn-bg: 40 37% 85.7%;
+  --status-ok: 120 39% 30.2%;
+  --status-ok-bg: 67.5 21.6% 85.5%;
+  --status-info: 173.7 100% 20.6%;
+  --status-info-bg: 92.7 15.9% 86.5%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+  /* radii: one corner */
+  --radius-none: 0px;
+  --radius: 2px;
+  /* Deprecated in 5.0: aliases of none and default; removed in 6.0 */
+  --radius-xs: var(--radius-none);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-pill: var(--radius);
+  /* font families */
+  --font-display: "Jost", Futura, "Century Gothic", sans-serif;
+  --font-body: "Fira Sans", "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-heading: var(--font-display);
+  /* type floors and the density box (tokens.css carries the same) */
+  --type-readable-min: 0.875rem;
+  --type-floor: 0.8125rem;
+  --control-h: 40px;
+  --touch-min: 40px;
+}
+
+/* Black (dark) */
+.dark,
+[data-mode="dark"] {
+  color-scheme: dark;
+  /* shadcn semantic */
+  --background: 0 0% 4.3%;
+  --foreground: 38.6 35% 92.2%;
+  --card: 36 17.2% 11.4%;
+  --card-foreground: 38.6 35% 92.2%;
+  --popover: 36 17.2% 11.4%;
+  --popover-foreground: 38.6 35% 92.2%;
+  --primary: 216.4 100% 77.1%;
+  --primary-foreground: 0 0% 4.3%;
+  --primary-hover: 38.2 40.7% 94.7%;
+  --secondary: 34.3 15.6% 8.8%;
+  --secondary-foreground: 38.6 35% 92.2%;
+  --muted: 30 11.1% 7.1%;
+  --muted-foreground: 36 9.2% 57.3%;
+  --accent: 36.9 28.9% 17.6%;
+  --accent-foreground: 38.2 40.7% 94.7%;
+  --destructive: 5.8 100% 67.6%;
+  --destructive-foreground: 0 0% 4.3%;
+  --border: 35 11.1% 42.4%;
+  --input: 36.9 10.4% 49%;
+  --ring: 35.9 100% 77.1%;
+  /* Jylhis extensions */
+  --heading: 38.2 40.7% 94.7%;
+  --faint: 35 11.5% 40.8%;
+  --border-strong: 36.9 10.4% 49%;
+  --scrim: 0 0% 2%;
+  --signal: 33.5 100% 57.8%;
+  --signal-foreground: 0 0% 4.3%;
+  --brand: 216.4 100% 77.1%;
+  --decorator: 36.9 10.4% 49%;
+  --contour: 36 9.2% 57.3%;
+  /* status */
+  --status-err: 5.8 100% 67.6%;
+  --status-err-bg: 6 33.3% 11.8%;
+  --status-warn: 35.9 100% 77.1%;
+  --status-warn-bg: 38.6 21.2% 12.9%;
+  --status-ok: 128 47.1% 65.9%;
+  --status-ok-bg: 126 16.7% 11.8%;
+  --status-info: 170.8 58.6% 56.5%;
+  --status-info-bg: 168.8 29.6% 10.6%;
+  /* charts */
+  --chart-1: 358.1 75.1% 59%;
+  --chart-2: 219.7 82.2% 64.7%;
+  --chart-3: 45.2 88.2% 56.9%;
+  --chart-4: 120 29.6% 51.6%;
+  --chart-5: 33 45.7% 61%;
+  --scrim-alpha: 0.6;
+}
+
+/* Paper (light), scoped: a light panel inside a dark page */
+.light,
+[data-mode="light"] {
+  color-scheme: light;
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 9.7% 12.2%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 9.7% 12.2%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 9.7% 12.2%;
+  --primary: 212.8 64.3% 32.9%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 13% 9%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 9.7% 12.2%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 36.7 10.6% 33.3%;
+  --accent: 41.8 65.1% 83.1%;
+  --accent-foreground: 40 13% 9%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 38.2 9.1% 47.5%;
+  --input: 36.7 10.6% 33.3%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 13% 9%;
+  --faint: 38.2 9.1% 47.5%;
+  --border-strong: 36.7 10.6% 33.3%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 46.1%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.8 64.3% 32.9%;
+  --decorator: 36.7 10.6% 33.3%;
+  --contour: 36.7 10.6% 33.3%;
+  /* status */
+  --status-err: 0 100% 36.1%;
+  --status-err-bg: 18.2 49.3% 86.9%;
+  --status-warn: 39.3 100% 23.9%;
+  --status-warn-bg: 40 37% 85.7%;
+  --status-ok: 120 39% 30.2%;
+  --status-ok-bg: 67.5 21.6% 85.5%;
+  --status-info: 173.7 100% 20.6%;
+  --status-info-bg: 92.7 15.9% 86.5%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+}
+
+/* Black (dark) when the page sets no mode and the OS prefers dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]):not(.light):not(.dark) {
+    color-scheme: dark;
+    /* shadcn semantic */
+    --background: 0 0% 4.3%;
+    --foreground: 38.6 35% 92.2%;
+    --card: 36 17.2% 11.4%;
+    --card-foreground: 38.6 35% 92.2%;
+    --popover: 36 17.2% 11.4%;
+    --popover-foreground: 38.6 35% 92.2%;
+    --primary: 216.4 100% 77.1%;
+    --primary-foreground: 0 0% 4.3%;
+    --primary-hover: 38.2 40.7% 94.7%;
+    --secondary: 34.3 15.6% 8.8%;
+    --secondary-foreground: 38.6 35% 92.2%;
+    --muted: 30 11.1% 7.1%;
+    --muted-foreground: 36 9.2% 57.3%;
+    --accent: 36.9 28.9% 17.6%;
+    --accent-foreground: 38.2 40.7% 94.7%;
+    --destructive: 5.8 100% 67.6%;
+    --destructive-foreground: 0 0% 4.3%;
+    --border: 35 11.1% 42.4%;
+    --input: 36.9 10.4% 49%;
+    --ring: 35.9 100% 77.1%;
+    /* Jylhis extensions */
+    --heading: 38.2 40.7% 94.7%;
+    --faint: 35 11.5% 40.8%;
+    --border-strong: 36.9 10.4% 49%;
+    --scrim: 0 0% 2%;
+    --signal: 33.5 100% 57.8%;
+    --signal-foreground: 0 0% 4.3%;
+    --brand: 216.4 100% 77.1%;
+    --decorator: 36.9 10.4% 49%;
+    --contour: 36 9.2% 57.3%;
+    /* status */
+    --status-err: 5.8 100% 67.6%;
+    --status-err-bg: 6 33.3% 11.8%;
+    --status-warn: 35.9 100% 77.1%;
+    --status-warn-bg: 38.6 21.2% 12.9%;
+    --status-ok: 128 47.1% 65.9%;
+    --status-ok-bg: 126 16.7% 11.8%;
+    --status-info: 170.8 58.6% 56.5%;
+    --status-info-bg: 168.8 29.6% 10.6%;
+    /* charts */
+    --chart-1: 358.1 75.1% 59%;
+    --chart-2: 219.7 82.2% 64.7%;
+    --chart-3: 45.2 88.2% 56.9%;
+    --chart-4: 120 29.6% 51.6%;
+    --chart-5: 33 45.7% 61%;
+    --scrim-alpha: 0.6;
+  }
+}
+
+/* Print — paper is always the light mode */
+@media print {
+  :root:not([data-mode]):not(.light):not(.dark),
+  .dark,
+  [data-mode="dark"] {
+    color-scheme: light;
+    /* shadcn semantic */
+    --background: 41.2 42.1% 92.5%;
+    --foreground: 40 9.7% 12.2%;
+    --card: 42.9 100% 98.6%;
+    --card-foreground: 40 9.7% 12.2%;
+    --popover: 42.9 100% 98.6%;
+    --popover-foreground: 40 9.7% 12.2%;
+    --primary: 212.8 64.3% 32.9%;
+    --primary-foreground: 41.2 42.1% 92.5%;
+    --primary-hover: 40 13% 9%;
+    --secondary: 40 46.2% 94.9%;
+    --secondary-foreground: 40 9.7% 12.2%;
+    --muted: 40.9 35.5% 87.8%;
+    --muted-foreground: 36.7 10.6% 33.3%;
+    --accent: 41.8 65.1% 83.1%;
+    --accent-foreground: 40 13% 9%;
+    --destructive: 40 9.7% 12.2%;
+    --destructive-foreground: 41.2 42.1% 92.5%;
+    --border: 38.2 9.1% 47.5%;
+    --input: 36.7 10.6% 33.3%;
+    --ring: 40 9.7% 12.2%;
+    /* Jylhis extensions */
+    --heading: 40 13% 9%;
+    --faint: 38.2 9.1% 47.5%;
+    --border-strong: 36.7 10.6% 33.3%;
+    --scrim: 0 0% 3.9%;
+    --signal: 0 100% 46.1%;
+    --signal-foreground: 0 0% 100%;
+    --brand: 212.8 64.3% 32.9%;
+    --decorator: 36.7 10.6% 33.3%;
+    --contour: 36.7 10.6% 33.3%;
+    /* status */
+    --status-err: 0 100% 36.1%;
+    --status-err-bg: 18.2 49.3% 86.9%;
+    --status-warn: 39.3 100% 23.9%;
+    --status-warn-bg: 40 37% 85.7%;
+    --status-ok: 120 39% 30.2%;
+    --status-ok-bg: 67.5 21.6% 85.5%;
+    --status-info: 173.7 100% 20.6%;
+    --status-info-bg: 92.7 15.9% 86.5%;
+    /* charts */
+    --chart-1: 350.2 85.2% 42.4%;
+    --chart-2: 212.3 68.4% 37.3%;
+    --chart-3: 46.8 100% 45.5%;
+    --chart-4: 116.3 35.6% 35.3%;
+    --chart-5: 31.6 38.1% 53.1%;
+    --scrim-alpha: 0.42;
+  }
+}
+:root[data-contrast="more"] {
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 11.1% 5.3%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 11.1% 5.3%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 11.1% 5.3%;
+  --primary: 212.9 65.6% 25.1%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 11.1% 5.3%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 11.1% 5.3%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 38.6 13% 21.2%;
+  --accent: 42.1 64.6% 74.5%;
+  --accent-foreground: 40 11.1% 5.3%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 36.7 10.6% 33.3%;
+  --input: 38.6 13% 21.2%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 11.1% 5.3%;
+  --faint: 36.7 10.6% 33.3%;
+  --border-strong: 38.6 13% 21.2%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 38.4%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.9 65.6% 25.1%;
+  --decorator: 38.6 13% 21.2%;
+  --contour: 38.6 13% 21.2%;
+  /* status */
+  --status-err: 0 100% 27.8%;
+  --status-err-bg: 20.7 40.8% 86.1%;
+  --status-warn: 38.7 100% 17.6%;
+  --status-warn-bg: 40 31.6% 85.1%;
+  --status-ok: 120 42.6% 21.2%;
+  --status-ok-bg: 60 19% 84.5%;
+  --status-info: 173.8 100% 15.1%;
+  --status-info-bg: 76.4 14.7% 85.3%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+:root[data-contrast="more"] :where(a) { text-decoration-thickness: 3px; }
+:root[data-contrast="more"] .ds-halftone { background-image: none; }
+@media screen {
+:root[data-contrast="more"][data-mode="dark"], :root[data-contrast="more"].dark {
+  /* shadcn semantic */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 34.3 14.3% 9.6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 34.3 14.3% 9.6%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 215.2 100% 82.9%;
+  --primary-foreground: 0 0% 0%;
+  --primary-hover: 0 0% 100%;
+  --secondary: 36 14.3% 6.9%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 40 13% 4.5%;
+  --muted-foreground: 37.9 18.8% 80.2%;
+  --accent: 36.9 28.9% 17.6%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 100% 74.5%;
+  --destructive-foreground: 0 0% 4.3%;
+  --border: 35.3 16.3% 59.2%;
+  --input: 37.9 18.8% 80.2%;
+  --ring: 35.9 100% 77.1%;
+  /* Jylhis extensions */
+  --heading: 0 0% 100%;
+  --faint: 35.3 16.3% 59.2%;
+  --border-strong: 37.9 18.8% 80.2%;
+  --scrim: 0 0% 2%;
+  --signal: 33.5 100% 57.8%;
+  --signal-foreground: 0 0% 4.3%;
+  --brand: 215.2 100% 82.9%;
+  --decorator: 37.9 18.8% 80.2%;
+  --contour: 37.9 18.8% 80.2%;
+  /* status */
+  --status-err: 6 100% 74.5%;
+  --status-err-bg: 7.5 34.8% 9%;
+  --status-warn: 35.9 100% 77.1%;
+  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-ok: 128.3 51.2% 75.1%;
+  --status-ok-bg: 127.5 17.4% 9%;
+  --status-info: 170.2 61.2% 68.6%;
+  --status-info-bg: 170 28.6% 8.2%;
+  /* charts */
+  --chart-1: 358.1 75.1% 59%;
+  --chart-2: 219.7 82.2% 64.7%;
+  --chart-3: 45.2 88.2% 56.9%;
+  --chart-4: 120 29.6% 51.6%;
+  --chart-5: 33 45.7% 61%;
+  --scrim-alpha: 0.6;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media screen and (prefers-color-scheme: dark) {
+:root[data-contrast="more"]:not([data-mode]):not(.light):not(.dark) {
+  /* shadcn semantic */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 34.3 14.3% 9.6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 34.3 14.3% 9.6%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 215.2 100% 82.9%;
+  --primary-foreground: 0 0% 0%;
+  --primary-hover: 0 0% 100%;
+  --secondary: 36 14.3% 6.9%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 40 13% 4.5%;
+  --muted-foreground: 37.9 18.8% 80.2%;
+  --accent: 36.9 28.9% 17.6%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 100% 74.5%;
+  --destructive-foreground: 0 0% 4.3%;
+  --border: 35.3 16.3% 59.2%;
+  --input: 37.9 18.8% 80.2%;
+  --ring: 35.9 100% 77.1%;
+  /* Jylhis extensions */
+  --heading: 0 0% 100%;
+  --faint: 35.3 16.3% 59.2%;
+  --border-strong: 37.9 18.8% 80.2%;
+  --scrim: 0 0% 2%;
+  --signal: 33.5 100% 57.8%;
+  --signal-foreground: 0 0% 4.3%;
+  --brand: 215.2 100% 82.9%;
+  --decorator: 37.9 18.8% 80.2%;
+  --contour: 37.9 18.8% 80.2%;
+  /* status */
+  --status-err: 6 100% 74.5%;
+  --status-err-bg: 7.5 34.8% 9%;
+  --status-warn: 35.9 100% 77.1%;
+  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-ok: 128.3 51.2% 75.1%;
+  --status-ok-bg: 127.5 17.4% 9%;
+  --status-info: 170.2 61.2% 68.6%;
+  --status-info-bg: 170 28.6% 8.2%;
+  /* charts */
+  --chart-1: 358.1 75.1% 59%;
+  --chart-2: 219.7 82.2% 64.7%;
+  --chart-3: 45.2 88.2% 56.9%;
+  --chart-4: 120 29.6% 51.6%;
+  --chart-5: 33 45.7% 61%;
+  --scrim-alpha: 0.6;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media print {
+:root[data-contrast="more"]:not([data-mode]):not(.light):not(.dark) {
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 11.1% 5.3%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 11.1% 5.3%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 11.1% 5.3%;
+  --primary: 212.9 65.6% 25.1%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 11.1% 5.3%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 11.1% 5.3%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 38.6 13% 21.2%;
+  --accent: 42.1 64.6% 74.5%;
+  --accent-foreground: 40 11.1% 5.3%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 36.7 10.6% 33.3%;
+  --input: 38.6 13% 21.2%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 11.1% 5.3%;
+  --faint: 36.7 10.6% 33.3%;
+  --border-strong: 38.6 13% 21.2%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 38.4%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.9 65.6% 25.1%;
+  --decorator: 38.6 13% 21.2%;
+  --contour: 38.6 13% 21.2%;
+  /* status */
+  --status-err: 0 100% 27.8%;
+  --status-err-bg: 20.7 40.8% 86.1%;
+  --status-warn: 38.7 100% 17.6%;
+  --status-warn-bg: 40 31.6% 85.1%;
+  --status-ok: 120 42.6% 21.2%;
+  --status-ok-bg: 60 19% 84.5%;
+  --status-info: 173.8 100% 15.1%;
+  --status-info-bg: 76.4 14.7% 85.3%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media (prefers-contrast: more) {
+:root:not([data-contrast]) {
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 11.1% 5.3%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 11.1% 5.3%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 11.1% 5.3%;
+  --primary: 212.9 65.6% 25.1%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 11.1% 5.3%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 11.1% 5.3%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 38.6 13% 21.2%;
+  --accent: 42.1 64.6% 74.5%;
+  --accent-foreground: 40 11.1% 5.3%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 36.7 10.6% 33.3%;
+  --input: 38.6 13% 21.2%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 11.1% 5.3%;
+  --faint: 36.7 10.6% 33.3%;
+  --border-strong: 38.6 13% 21.2%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 38.4%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.9 65.6% 25.1%;
+  --decorator: 38.6 13% 21.2%;
+  --contour: 38.6 13% 21.2%;
+  /* status */
+  --status-err: 0 100% 27.8%;
+  --status-err-bg: 20.7 40.8% 86.1%;
+  --status-warn: 38.7 100% 17.6%;
+  --status-warn-bg: 40 31.6% 85.1%;
+  --status-ok: 120 42.6% 21.2%;
+  --status-ok-bg: 60 19% 84.5%;
+  --status-info: 173.8 100% 15.1%;
+  --status-info-bg: 76.4 14.7% 85.3%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+:root:not([data-contrast]) :where(a) { text-decoration-thickness: 3px; }
+:root:not([data-contrast]) .ds-halftone { background-image: none; }
+@media screen {
+:root:not([data-contrast])[data-mode="dark"], :root:not([data-contrast]).dark {
+  /* shadcn semantic */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 34.3 14.3% 9.6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 34.3 14.3% 9.6%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 215.2 100% 82.9%;
+  --primary-foreground: 0 0% 0%;
+  --primary-hover: 0 0% 100%;
+  --secondary: 36 14.3% 6.9%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 40 13% 4.5%;
+  --muted-foreground: 37.9 18.8% 80.2%;
+  --accent: 36.9 28.9% 17.6%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 100% 74.5%;
+  --destructive-foreground: 0 0% 4.3%;
+  --border: 35.3 16.3% 59.2%;
+  --input: 37.9 18.8% 80.2%;
+  --ring: 35.9 100% 77.1%;
+  /* Jylhis extensions */
+  --heading: 0 0% 100%;
+  --faint: 35.3 16.3% 59.2%;
+  --border-strong: 37.9 18.8% 80.2%;
+  --scrim: 0 0% 2%;
+  --signal: 33.5 100% 57.8%;
+  --signal-foreground: 0 0% 4.3%;
+  --brand: 215.2 100% 82.9%;
+  --decorator: 37.9 18.8% 80.2%;
+  --contour: 37.9 18.8% 80.2%;
+  /* status */
+  --status-err: 6 100% 74.5%;
+  --status-err-bg: 7.5 34.8% 9%;
+  --status-warn: 35.9 100% 77.1%;
+  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-ok: 128.3 51.2% 75.1%;
+  --status-ok-bg: 127.5 17.4% 9%;
+  --status-info: 170.2 61.2% 68.6%;
+  --status-info-bg: 170 28.6% 8.2%;
+  /* charts */
+  --chart-1: 358.1 75.1% 59%;
+  --chart-2: 219.7 82.2% 64.7%;
+  --chart-3: 45.2 88.2% 56.9%;
+  --chart-4: 120 29.6% 51.6%;
+  --chart-5: 33 45.7% 61%;
+  --scrim-alpha: 0.6;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media screen and (prefers-color-scheme: dark) {
+:root:not([data-contrast]):not([data-mode]):not(.light):not(.dark) {
+  /* shadcn semantic */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 34.3 14.3% 9.6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 34.3 14.3% 9.6%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 215.2 100% 82.9%;
+  --primary-foreground: 0 0% 0%;
+  --primary-hover: 0 0% 100%;
+  --secondary: 36 14.3% 6.9%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 40 13% 4.5%;
+  --muted-foreground: 37.9 18.8% 80.2%;
+  --accent: 36.9 28.9% 17.6%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 100% 74.5%;
+  --destructive-foreground: 0 0% 4.3%;
+  --border: 35.3 16.3% 59.2%;
+  --input: 37.9 18.8% 80.2%;
+  --ring: 35.9 100% 77.1%;
+  /* Jylhis extensions */
+  --heading: 0 0% 100%;
+  --faint: 35.3 16.3% 59.2%;
+  --border-strong: 37.9 18.8% 80.2%;
+  --scrim: 0 0% 2%;
+  --signal: 33.5 100% 57.8%;
+  --signal-foreground: 0 0% 4.3%;
+  --brand: 215.2 100% 82.9%;
+  --decorator: 37.9 18.8% 80.2%;
+  --contour: 37.9 18.8% 80.2%;
+  /* status */
+  --status-err: 6 100% 74.5%;
+  --status-err-bg: 7.5 34.8% 9%;
+  --status-warn: 35.9 100% 77.1%;
+  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-ok: 128.3 51.2% 75.1%;
+  --status-ok-bg: 127.5 17.4% 9%;
+  --status-info: 170.2 61.2% 68.6%;
+  --status-info-bg: 170 28.6% 8.2%;
+  /* charts */
+  --chart-1: 358.1 75.1% 59%;
+  --chart-2: 219.7 82.2% 64.7%;
+  --chart-3: 45.2 88.2% 56.9%;
+  --chart-4: 120 29.6% 51.6%;
+  --chart-5: 33 45.7% 61%;
+  --scrim-alpha: 0.6;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media print {
+:root:not([data-contrast]):not([data-mode]):not(.light):not(.dark) {
+  /* shadcn semantic */
+  --background: 41.2 42.1% 92.5%;
+  --foreground: 40 11.1% 5.3%;
+  --card: 42.9 100% 98.6%;
+  --card-foreground: 40 11.1% 5.3%;
+  --popover: 42.9 100% 98.6%;
+  --popover-foreground: 40 11.1% 5.3%;
+  --primary: 212.9 65.6% 25.1%;
+  --primary-foreground: 41.2 42.1% 92.5%;
+  --primary-hover: 40 11.1% 5.3%;
+  --secondary: 40 46.2% 94.9%;
+  --secondary-foreground: 40 11.1% 5.3%;
+  --muted: 40.9 35.5% 87.8%;
+  --muted-foreground: 38.6 13% 21.2%;
+  --accent: 42.1 64.6% 74.5%;
+  --accent-foreground: 40 11.1% 5.3%;
+  --destructive: 40 9.7% 12.2%;
+  --destructive-foreground: 41.2 42.1% 92.5%;
+  --border: 36.7 10.6% 33.3%;
+  --input: 38.6 13% 21.2%;
+  --ring: 40 9.7% 12.2%;
+  /* Jylhis extensions */
+  --heading: 40 11.1% 5.3%;
+  --faint: 36.7 10.6% 33.3%;
+  --border-strong: 38.6 13% 21.2%;
+  --scrim: 0 0% 3.9%;
+  --signal: 0 100% 38.4%;
+  --signal-foreground: 0 0% 100%;
+  --brand: 212.9 65.6% 25.1%;
+  --decorator: 38.6 13% 21.2%;
+  --contour: 38.6 13% 21.2%;
+  /* status */
+  --status-err: 0 100% 27.8%;
+  --status-err-bg: 20.7 40.8% 86.1%;
+  --status-warn: 38.7 100% 17.6%;
+  --status-warn-bg: 40 31.6% 85.1%;
+  --status-ok: 120 42.6% 21.2%;
+  --status-ok-bg: 60 19% 84.5%;
+  --status-info: 173.8 100% 15.1%;
+  --status-info-bg: 76.4 14.7% 85.3%;
+  /* charts */
+  --chart-1: 350.2 85.2% 42.4%;
+  --chart-2: 212.3 68.4% 37.3%;
+  --chart-3: 46.8 100% 45.5%;
+  --chart-4: 116.3 35.6% 35.3%;
+  --chart-5: 31.6 38.1% 53.1%;
+  --scrim-alpha: 0.42;
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+}

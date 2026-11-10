@@ -23,7 +23,7 @@ Item {
     property bool popoutSwitchClosing: false
 
     readonly property bool opened: panelController.open
-    readonly property color barForeground: bar ? bar.barForeground : Color.foreground
+    readonly property color barForeground: bar ? bar.barForeground : CompatColor.foreground
 
     function open() {
         panelController.show();

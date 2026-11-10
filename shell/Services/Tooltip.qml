@@ -10,6 +10,21 @@ QtObject {
     id: root
 
     property string text: ""
+    property var owner: null
+    readonly property bool warm: root.active || cooldown.running
+    readonly property Timer cooldown: Timer {
+        interval: 400
+    }
+    readonly property Timer safety: Timer {
+        interval: 100
+        repeat: true
+        running: root.active
+        onTriggered: {
+            const item = root.owner;
+            if (!item || !item.visible || item.tooltipHovered === false)
+                root.hide();
+        }
+    }
     // Scene-x of the hovered item's center, screen-local for the top bar (its
     // layer surface spans the output from the top-left).
     property real anchorX: 0
@@ -24,6 +39,8 @@ QtObject {
     function show(text: string, item) {
         if (!item || text.length === 0)
             return;
+        cooldown.stop();
+        root.owner = item;
         root.text = text;
         try {
             const w = item.Window.window;
@@ -34,7 +51,12 @@ QtObject {
         root.anchorX = item.mapToItem(null, item.width / 2, 0).x;
     }
 
-    function hide() {
+    function hide(item) {
+        if (item && root.owner !== item)
+            return;
+        if (root.active)
+            cooldown.restart();
+        root.owner = null;
         root.text = "";
         root.anchorX = 0;
         root.screenName = "";

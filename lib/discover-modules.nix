@@ -6,9 +6,7 @@
 # Usage in modules/<target>/default.nix:
 #   { ... }:
 #   {
-#     imports =
-#       (import ../../lib/discover-modules.nix { inherit lib; }) ./.
-#       ++ [ ../generic/foo.nix ];
+#     imports = (import ../../lib/discover-modules.nix { inherit lib; }) ./.;
 #   }
 #
 # NixOS module merging is order-independent at the options/config layer,

@@ -1,6 +1,12 @@
 # LUKS encrypted BTRFS with subvolumes
 #
-# Usage:
+# From a host flake (see the Installation guide):
+#   imports = [
+#     marchyo.nixosModules.disko
+#     (marchyo.lib.diskoLayout "luks-btrfs" { device = "/dev/nvme0n1"; })
+#   ];
+#
+# Standalone (disko CLI on a single file):
 #   1. Set the disk device: export DISK=/dev/nvme0n1 (or /dev/sda, etc.)
 #   2. Partition: sudo nix run github:nix-community/disko -- --mode disko disko/luks-btrfs.nix --arg device '"'$DISK'"'
 #   3. During partitioning, you'll be prompted to set a LUKS passphrase
@@ -33,8 +39,7 @@
 # sizing below covers that once the encryption question is solved). To get
 # working hibernation, either put swap inside the encryption (LVM-on-LUKS or a
 # btrfs swapfile in the LUKS container) or accept plaintext swap by setting
-# randomEncryption = false — then point marchyo.power.hibernation.resumeDevice
-# at the swap device.
+# randomEncryption = false — then point boot.resumeDevice at the swap device.
 
 # No default: --mode disko repartitions and mkfs the target with no prompt,
 # so falling back to /dev/sda would silently wipe whatever disk happens to be

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import "../Commons/BarLayout.js" as BarLayout
+import "../Commons/IndicatorLayout.js" as IndicatorLayout
 
 // One anchored section of the bar (left / center / right): a row of widget
 // slots driven by the ShellConfig layout entries for `section`.
@@ -33,8 +34,8 @@ import "../Commons/BarLayout.js" as BarLayout
 //
 // The segmented bar style (ShellConfig.barStyleFor, "segmented") fills each
 // cluster, the run of visible widgets between two rendered separators, with a
-// Ui/BarSegment background. The tones alternate between Color.bgSubtle and
-// an accent-tinted Color.surface, and adjacent segments meet in a curved join centred on the
+// Ui/BarSegment background. The tones alternate between Colors.bgSubtle and
+// an accent-tinted Colors.surface, and adjacent segments meet in a curved join centred on the
 // separator, whose rule is then transparent. The segments are drawn from the
 // slots' own geometry by a zero-width layer behind them, so widths,
 // positions, and paddings are identical in both styles. The flat style (the
@@ -82,11 +83,22 @@ RowLayout {
     // the surface tinted with the accent, so the pair stays distinguishable
     // in both variants) and the hover highlight Ui/BarItem uses on this
     // section, a stronger accent tint distinct from both tones.
-    readonly property color segmentToneEven: Color.bgSubtle
-    readonly property color segmentToneOdd: Qt.tint(Color.surface, Qt.alpha(Color.accent, 0.18))
-    readonly property color segmentHover: Qt.tint(Color.surface, Qt.alpha(Color.accent, 0.36))
+    readonly property color segmentToneEven: Colors.bgSubtle
+    readonly property color segmentToneOdd: Qt.tint(Colors.surface, Qt.alpha(Colors.accent, 0.18))
+    readonly property color segmentHover: Qt.tint(Colors.surface, Qt.alpha(Colors.accent, 0.36))
 
-    readonly property var entries: root.entriesOverride || ShellConfig.barFor(root.screenName)[root.section] || []
+    readonly property var entries: {
+        const layout = ShellConfig.barFor(root.screenName);
+        return IndicatorLayout.groupEntries(root.entriesOverride || layout[root.section] || []);
+    }
+    function barRevealed(start): bool {
+        for (let p = start; p; p = p.parent) {
+            if (p.indicatorReveal !== undefined)
+                return p.indicatorReveal;
+        }
+        return false;
+    }
+    readonly property bool indicatorsRevealed: root.barRevealed(root.parent)
 
     // A loaded widget's `shown` flag, read through an untyped parameter for the
     // reason given in the file comment. A widget with no `shown` property (a
@@ -263,10 +275,24 @@ RowLayout {
                 // the separator rule; the slot keeps its width.
                 opacity: slot.isSeparator && root.segmented ? 0 : 1
                 // Never bind this Loader's `visible` (see the file comment).
-                sourceComponent: root.resolve ? root.resolve(slot.modelData.id) : null
+                sourceComponent: {
+                    if (slot.modelData.indicators)
+                        return indicatorGroup;
+                    return root.resolve ? root.resolve(slot.modelData.id) : null;
+                }
                 onLoaded: {
-                    if (!slot.isSeparator && root.configure)
+                    if (!slot.isSeparator && !slot.modelData.indicators && root.configure)
                         root.configure(item, slot.modelData);
+                }
+                Component {
+                    id: indicatorGroup
+                    IndicatorGroup {
+                        entries: slot.modelData.indicators
+                        resolve: root.resolve
+                        configure: root.configure
+                        indicatorsRevealed: root.indicatorsRevealed
+                        fixedRight: root.section === "right" || root.section === "centerBegin"
+                    }
                 }
             }
         }

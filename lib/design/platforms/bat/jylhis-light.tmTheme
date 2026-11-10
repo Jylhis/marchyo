@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Jylhis Light — GENERATED from tokens.json. Do not edit by hand.
+  Install for bat:  cp this ~/.config/bat/themes/ && bat cache --build
+  Install for delta: set syntax-theme in .gitconfig
+-->
+<plist version="1.0">
+<dict>
+  <key>name</key>
+  <string>Jylhis Light</string>
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <key>background</key>
+        <string>#f4efe4</string>
+        <key>foreground</key>
+        <string>#22201c</string>
+        <key>caret</key>
+        <string>#1a1814</string>
+        <key>selection</key>
+        <string>#f0dfb8</string>
+        <key>lineHighlight</key>
+        <string>#ebe4d5</string>
+        <key>gutterForeground</key>
+        <string>#847c6e</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Comment</string>
+      <key>scope</key><string>comment, punctuation.definition.comment</string>
+      <key>settings</key><dict>
+        <key>foreground</key><string>#5b5b5a</string>
+        <key>fontStyle</key><string>italic</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>String</string>
+      <key>scope</key><string>string, constant.other.symbol</string>
+      <key>settings</key><dict><key>foreground</key><string>#006500</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Number</string>
+      <key>scope</key><string>constant.numeric</string>
+      <key>settings</key><dict><key>foreground</key><string>#1e4f8a</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Keyword</string>
+      <key>scope</key><string>keyword, storage.type, storage.modifier</string>
+      <key>settings</key><dict>
+        <key>foreground</key><string>#5f00d6</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Function</string>
+      <key>scope</key><string>entity.name.function, support.function</string>
+      <key>settings</key><dict>
+        <key>foreground</key><string>#96005a</string>
+        <key>fontStyle</key><string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Type</string>
+      <key>scope</key><string>entity.name.type, entity.name.class, support.type, support.class</string>
+      <key>settings</key><dict><key>foreground</key><string>#00628a</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Variable</string>
+      <key>scope</key><string>variable, variable.other</string>
+      <key>settings</key><dict><key>foreground</key><string>#00628a</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Builtin</string>
+      <key>scope</key><string>support.constant, constant.language</string>
+      <key>settings</key><dict><key>foreground</key><string>#900076</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Tag</string>
+      <key>scope</key><string>entity.name.tag</string>
+      <key>settings</key><dict><key>foreground</key><string>#00628a</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Attribute</string>
+      <key>scope</key><string>entity.other.attribute-name</string>
+      <key>settings</key><dict><key>foreground</key><string>#00628a</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Doc comment</string>
+      <key>scope</key><string>comment.block.documentation</string>
+      <key>settings</key><dict>
+        <key>foreground</key><string>#545f40</string>
+        <key>fontStyle</key><string>italic</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Error</string>
+      <key>scope</key><string>invalid, invalid.illegal</string>
+      <key>settings</key><dict>
+        <key>foreground</key><string>#b80000</string>
+        <key>fontStyle</key><string>underline</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Diff added</string>
+      <key>scope</key><string>markup.inserted</string>
+      <key>settings</key><dict><key>foreground</key><string>#2f6b2f</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Diff deleted</string>
+      <key>scope</key><string>markup.deleted</string>
+      <key>settings</key><dict><key>foreground</key><string>#b80000</string></dict>
+    </dict>
+    <dict>
+      <key>name</key><string>Diff changed</string>
+      <key>scope</key><string>markup.changed</string>
+      <key>settings</key><dict><key>foreground</key><string>#7a5000</string></dict>
+    </dict>
+  </array>
+</dict>
+</plist>

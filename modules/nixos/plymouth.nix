@@ -17,23 +17,19 @@
         ];
         theme = lib.mkDefault "marchyo";
       };
-      # Run plymouth in initrd via systemd so the splash covers the entire
-      # boot up to greetd-start, leaving no unthemed TTY flash visible.
-      initrd = {
-        systemd.enable = lib.mkDefault true;
-        verbose = lib.mkDefault false;
-      };
-      loader.timeout = lib.mkDefault 5;
+      # nixpkgs' initrd is systemd-only now (scripted stage 1 is gone), so
+      # plymouth already runs in initrd and covers the boot up to greetd.
+      # 0 hides the systemd-boot menu; holding Space at power-on still opens it.
+      loader.timeout = lib.mkDefault 0;
       consoleLogLevel = lib.mkDefault 0;
       # NOTE: plain (priority-100) list, NOT mkDefault. kernelParams is a list
       # option, and a mkDefault list is dropped wholesale the moment any other
       # module defines kernelParams at normal priority (e.g. performance.nix's
       # `mitigations=off`, which is on by default). A plain list merges instead.
-      # Downstreams that need to drop these can still use mkForce.
+      # Downstreams that need to drop these can still use mkForce. `splash` and
+      # `loglevel=` come from boot.plymouth and consoleLogLevel.
       kernelParams = [
         "quiet"
-        "splash"
-        "loglevel=3"
         "rd.systemd.show_status=false"
         "rd.udev.log_level=3"
         "boot.shell_on_fail"

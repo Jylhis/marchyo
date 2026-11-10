@@ -1,8 +1,11 @@
 module qs.Commons
-singleton Color 1.0 Color.qml
+singleton Colors 1.0 Colors.qml
 singleton Style 1.0 Style.qml
 singleton Config 1.0 Config.qml
 singleton Theme 1.0 Theme.qml
 singleton ShellConfig 1.0 ShellConfig.qml
 singleton PluginIndex 1.0 PluginIndex.qml
 singleton Fuzzy 1.0 Fuzzy.qml
+singleton I18n 1.0 I18n.qml
+singleton Pointer 1.0 Pointer.qml
+GhostNotification 1.0 GhostNotification.qml

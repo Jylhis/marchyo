@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 import {
   type PluginKind,
   type PluginLock,
@@ -15,7 +16,9 @@ import {
   ok,
   readPluginLock,
   readState,
+  reservedIdNamespace,
   reservedPrefixClash,
+  tr,
 } from "@marchyo/core";
 import { type DeclarativeOpts, persistAndRebuild } from "./declarative.ts";
 
@@ -70,7 +73,7 @@ const defaultPrefetch: PluginPrefetch = async (url, rev) => {
   }
 };
 
-type Manifest = {
+export type Manifest = {
   id: string;
   kinds: PluginKind[];
   entryPoints: Record<string, string>;
@@ -81,6 +84,12 @@ type Manifest = {
 
 const KIND_LIST = Object.keys(PLUGIN_KINDS).join(", ");
 
+// Same shape packages/marchyo-shell/plugin.nix accepts: the id names a
+// directory under the shell's plugins/ tree.
+export function isValidPluginId(id: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(id) && !id.includes("..");
+}
+
 // Validate a parsed manifest.json. Returns the manifest, or a message naming
 // the first problem. The kind, entry point and prefix rules match
 // packages/marchyo-shell/plugin.nix, so a manifest accepted here builds.
@@ -89,6 +98,11 @@ export function validateManifest(raw: unknown): Manifest | string {
   const m = raw as Record<string, unknown>;
   if (m.schemaVersion !== 1) return "manifest schemaVersion must be 1";
   if (typeof m.id !== "string" || m.id === "") return "manifest id is missing";
+  if (!isValidPluginId(m.id))
+    return `plugin id '${m.id}' must match [A-Za-z0-9][A-Za-z0-9._-]* and not contain '..'`;
+  const ns = reservedIdNamespace(m.id);
+  if (ns !== null)
+    return `plugin id '${m.id}' uses the reserved ${ns}* namespace`;
   if (
     !Array.isArray(m.kinds) ||
     m.kinds.length === 0 ||
@@ -140,16 +154,75 @@ export function validateManifest(raw: unknown): Manifest | string {
   };
 }
 
-async function readManifest(treePath: string): Promise<Manifest | string> {
-  const file = Bun.file(join(treePath, "manifest.json"));
-  if (!(await file.exists())) return "manifest.json missing at the repo root";
+const SKIP_DIRS = new Set([".git", "node_modules", ".direnv"]);
+
+// Every file under `root` (relative paths), refusing symlinks. Returns the
+// paths and the symlinks found.
+function walk(root: string): { files: string[]; links: string[] } {
+  const files: string[] = [];
+  const links: string[] = [];
+  const visit = (dir: string): void => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const abs = join(dir, e.name);
+      if (e.isSymbolicLink()) links.push(relative(root, abs));
+      else if (e.isDirectory()) {
+        if (!SKIP_DIRS.has(e.name)) visit(abs);
+      } else files.push(relative(root, abs));
+    }
+  };
+  visit(root);
+  return { files, links };
+}
+
+function safeRel(p: string): boolean {
+  return p !== "" && !p.startsWith("/") && !p.includes("..") && !p.includes("\0");
+}
+
+export type PluginDirReport = {
+  manifest: Manifest | null;
+  problems: string[];
+};
+
+// The plugin.nix build checks, run on a checkout: manifest.json validates,
+// its entry points exist and no symlink is inside. Every problem is reported,
+// not just the first.
+export function validatePluginDir(dir: string): PluginDirReport {
+  const problems: string[] = [];
+  const report: PluginDirReport = { manifest: null, problems };
+  if (!existsSync(join(dir, "manifest.json"))) {
+    problems.push("manifest.json missing at the plugin root");
+    return report;
+  }
+  const { files, links } = walk(dir);
+  for (const l of links) problems.push(`symlink not allowed: ${l}`);
+
   let raw: unknown;
   try {
-    raw = JSON.parse(await file.text());
+    raw = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   } catch {
-    return "manifest.json is not valid JSON";
+    problems.push("manifest.json: not valid JSON");
+    return report;
   }
-  return validateManifest(raw);
+  const v = validateManifest(raw);
+  if (typeof v === "string") {
+    problems.push(`manifest.json: ${v}`);
+    return report;
+  }
+  report.manifest = v;
+  for (const ep of Object.values(v.entryPoints)) {
+    if (!safeRel(ep)) problems.push(`manifest.json: unsafe entry point path '${ep}'`);
+    else if (!files.includes(ep)) problems.push(`manifest.json: entry point '${ep}' does not exist`);
+  }
+  return report;
+}
+
+// Validate a fetched tree the way the build does (manifest.json, entry points,
+// symlinks); a message naming the first problem when it does not.
+function readManifest(treePath: string): Manifest | string {
+  const report = validatePluginDir(treePath);
+  if (report.problems.length > 0 || report.manifest === null)
+    return report.problems[0] ?? "manifest.json missing at the repo root";
+  return report.manifest;
 }
 
 // The state entry for a pinned source and its manifest.
@@ -172,7 +245,7 @@ function toEntry(url: string, pin: PluginPin, manifest: Manifest): ExtraPlugin {
 function prefetcher(rt: Runtime, injected: PluginPrefetch | undefined, verb: string): PluginPrefetch | null {
   if (injected !== undefined) return injected;
   if (!commandAvailable("nix-prefetch-git")) {
-    err(rt, "nix-prefetch-git not found");
+    err(rt, tr("plugin.nixPrefetchGitNotFound"));
     hint(rt, `Try: nix shell nixpkgs#nix-prefetch-git -c marchyo plugin ${verb} …`);
     return null;
   }
@@ -192,28 +265,24 @@ export async function runPluginAdd(
   const prefetch = prefetcher(rt, opts.prefetch, "add");
   if (prefetch === null) return 1;
 
-  info(rt, `fetching ${url} ...`);
+  info(rt, tr("plugin.fetching", url));
   const pin = await prefetch(url, opts.rev);
   if (pin === null) {
-    err(rt, `could not fetch ${url}`);
-    hint(rt, "check the URL and revision, and that the host is reachable");
+    err(rt, tr("plugin.couldNotFetch", url));
+    hint(rt, tr("plugin.checkTheUrlAndRevision"));
     return 1;
   }
 
-  const manifest = await readManifest(pin.path);
+  const manifest = readManifest(pin.path);
   if (typeof manifest === "string") {
-    err(rt, `invalid plugin: ${manifest}`);
-    return 1;
-  }
-  if (manifest.id.startsWith("marchyo.")) {
-    err(rt, `plugin id '${manifest.id}' uses the reserved marchyo.* namespace`);
+    err(rt, tr("plugin.invalidPlugin", manifest));
     return 1;
   }
 
   const prev = await readState().catch(() => ({}) as State);
   const existing = prev.shell?.extraPlugins ?? [];
   if (existing.some((p) => p.id === manifest.id)) {
-    err(rt, `plugin '${manifest.id}' is already added`);
+    err(rt, tr("plugin.pluginIsAlreadyAdded", manifest.id));
     hint(rt, `Try: marchyo plugin remove ${manifest.id} first`);
     return 1;
   }
@@ -235,10 +304,10 @@ export async function runPluginRemove(
   const prev = await readState().catch(() => ({}) as State);
   const existing = prev.shell?.extraPlugins ?? [];
   if (!existing.some((p) => p.id === id)) {
-    err(rt, `plugin '${id}' is not CLI-managed`);
+    err(rt, tr("plugin.pluginIsNotCliManaged", id));
     hint(
       rt,
-      "flake-declared plugins live in marchyo.shell.plugins; edit that list instead",
+      tr("plugin.flakeDeclaredPluginsLiveIn"),
     );
     return 1;
   }
@@ -265,23 +334,23 @@ export async function runPluginUpdate(
   opts: PluginUpdateOpts,
 ): Promise<number> {
   if (opts.rev !== undefined && id === undefined) {
-    err(rt, "--rev needs a plugin id");
+    err(rt, tr("plugin.revNeedsPluginId"));
     hint(rt, "Try: marchyo plugin update <id> --rev <rev>");
     return 2;
   }
   const prev = await readState().catch(() => ({}) as State);
   const existing = prev.shell?.extraPlugins ?? [];
   if (id !== undefined && !existing.some((p) => p.id === id)) {
-    err(rt, `plugin '${id}' is not CLI-managed`);
+    err(rt, tr("plugin.pluginIsNotCliManaged", id));
     hint(
       rt,
-      "see `marchyo plugin list`; flake-declared plugins update with the flake inputs",
+      tr("plugin.seeMarchyoPluginListFlake"),
     );
     return 1;
   }
   const targets = existing.filter((p) => id === undefined || p.id === id);
   if (targets.length === 0) {
-    ok(rt, "no CLI-added plugins to update");
+    ok(rt, tr("plugin.noCliAddedPluginsTo"));
     return 0;
   }
   const prefetch = prefetcher(rt, opts.prefetch, "update");
@@ -290,20 +359,20 @@ export async function runPluginUpdate(
   const updated = new Map<string, ExtraPlugin>();
   const changes: string[] = [];
   for (const p of targets) {
-    info(rt, `fetching ${p.url} ...`);
+    info(rt, tr("plugin.fetching", p.url));
     const pin = await prefetch(p.url, opts.rev);
     if (pin === null) {
-      err(rt, `could not fetch ${p.url}`);
-      hint(rt, "check the URL and revision, and that the host is reachable");
+      err(rt, tr("plugin.couldNotFetch", p.url));
+      hint(rt, tr("plugin.checkTheUrlAndRevision"));
       return 1;
     }
-    const manifest = await readManifest(pin.path);
+    const manifest = readManifest(pin.path);
     if (typeof manifest === "string") {
-      err(rt, `invalid plugin '${p.id}' at ${pin.rev.slice(0, 12)}: ${manifest}`);
+      err(rt, tr("plugin.invalidPluginAt", p.id, pin.rev.slice(0, 12), manifest));
       return 1;
     }
     if (manifest.id !== p.id) {
-      err(rt, `plugin '${p.id}' now declares id '${manifest.id}'`);
+      err(rt, tr("plugin.pluginNowDeclaresId", p.id, manifest.id));
       hint(rt, `Try: marchyo plugin remove ${p.id}, then marchyo plugin add ${p.url}`);
       return 1;
     }
@@ -366,7 +435,7 @@ export async function runPluginList(
     });
     hint(
       rt,
-      "no plugins.lock.json in the installed shell; showing CLI-added plugins only",
+      tr("plugin.noPluginsLockJsonIn"),
     );
     return 0;
   }
@@ -385,4 +454,19 @@ export async function runPluginList(
     return rows.length === 0 ? "no shell plugins" : rows.join("\n");
   });
   return 0;
+}
+
+// `marchyo plugin validate <dir>`: the plugin.nix build checks on a checkout.
+export async function runPluginValidate(rt: Runtime, dir: string): Promise<number> {
+  if (!existsSync(dir)) {
+    err(rt, tr("plugin.noSuchDirectory", dir));
+    return 1;
+  }
+  const report = validatePluginDir(dir);
+  data(rt, report, () =>
+    report.problems.length === 0
+      ? `ok: ${report.manifest?.id}`
+      : report.problems.map((p) => `invalid: ${p}`).join("\n"),
+  );
+  return report.problems.length === 0 ? 0 : 1;
 }

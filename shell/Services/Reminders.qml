@@ -1,7 +1,9 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.Commons
+import "../Commons/ReminderFlow.js" as Flow
 
 // Shared reminder state: ONE seat-wide poll of the pending `marchyo reminder`
 // timers. The CLI schedules them as transient systemd user timers named
@@ -11,6 +13,26 @@ QtObject {
     id: root
 
     property int count: 0
+
+    function invalidMinutes(): void {
+        const title = I18n.t("reminders.title");
+        const message = I18n.t("reminders.invalidMinutes");
+        Quickshell.execDetached([Config.marchyo, "notify", title, message]);
+    }
+
+    function schedule(minutes: real, message: string): bool {
+        if (scheduleProc.running || Flow.minutes(String(minutes)) === 0)
+            return false;
+        const fallback = I18n.t("reminders.title");
+        scheduleProc.command = Flow.scheduleArgs(Config.marchyo, minutes, message, fallback);
+        scheduleProc.running = true;
+        return true;
+    }
+
+    readonly property var scheduleProcess: Process {
+        id: scheduleProc
+        onExited: probe.running = true
+    }
 
     // `systemctl --user list-timers --no-legend <glob>` prints one line per
     // matching timer (and nothing when none match), so the non-empty line count

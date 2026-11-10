@@ -5,27 +5,30 @@ in
 {
   options.marchyo.dictation = {
     enable = lib.mkEnableOption ''
-      push-to-talk voice dictation (voxtype + Whisper) for the Wayland desktop.
-      Runs the voxtype daemon as a user service. By default recording is driven
-      by holding F9 (the daemon's evdev push-to-talk hotkey, see pushToTalk) and
-      can also be toggled with Super+Ctrl+X under Hyprland (see toggleKey);
-      transcribed text is typed at the cursor. Requires a microphone. The
-      push-to-talk hotkey adds dictation users to the `input` group so the daemon
-      can read /dev/input (see modules/nixos/dictation.nix). The first recording
-      downloads the Whisper model (~1.5 GB) unless preloadModel pulls it at
-      activation time'';
+      voice dictation for the Wayland desktop. The backend (see `backend`)
+      transcribes speech and types it at the cursor. Super+Ctrl+X toggles recording
+      under Hyprland (see toggleKey) and holding F9 is push-to-talk (see
+      pushToTalk). Requires a microphone'';
+
+    backend = mkOption {
+      type = types.enum [ "voxtype" ];
+      default = "voxtype";
+      description = ''
+        Dictation engine behind `marchyo dictation`, the Super+Ctrl+X bind and
+        the F9 hotkey: voxtype (Whisper, open source).
+      '';
+    };
 
     pushToTalk = {
       enable = lib.mkEnableOption "the daemon's evdev push-to-talk hotkey" // {
         default = true;
         description = ''
-          Enable voxtype's built-in evdev hotkey (hold `pushToTalk.key` to record,
-          release to transcribe). This is the omarchy-style "hold F9 to dictate"
-          interaction. Enabling it adds dictation users to the `input` group so the
-          daemon can read /dev/input globally - a real privilege (any process the
-          user runs can then observe keystrokes). Set false to rely only on the
-          Hyprland `toggleKey` bind (`voxtype record toggle`), which needs no group
-          membership.
+          Hold `pushToTalk.key` to record, release to transcribe (the omarchy-style
+          "hold F9 to dictate"). With the voxtype backend this is the daemon's own
+          evdev hotkey: it adds dictation users to the `input` group so the daemon
+          can read /dev/input globally, a real privilege (any process the user
+          runs can then observe keystrokes). Set false to rely only on the
+          `toggleKey` bind.
         '';
       };
 
@@ -59,9 +62,8 @@ in
       example = "SUPER + H";
       description = ''
         Hyprland Lua bind spec ("MOD + MOD + key") wired to
-        `voxtype record toggle`, matching omarchy's Super+Ctrl+X toggle. Drives
-        the same daemon state as the push-to-talk hotkey. Set to null to bind no
-        compositor toggle.
+        `marchyo dictation toggle`, which drives whichever backend is selected.
+        Set to null to bind no compositor toggle.
       '';
     };
 
@@ -69,7 +71,7 @@ in
       type = types.str;
       default = "large-v3-turbo";
       description = ''
-        Whisper model voxtype loads for transcription. large-v3-turbo is
+        Whisper model voxtype loads (voxtype backend only) for transcription. large-v3-turbo is
         multilingual and fast; smaller models (e.g. base, small) trade accuracy
         for a smaller download and lower latency.
       '';
@@ -209,7 +211,8 @@ in
       default = true;
       description = ''
         Show a recording-state segment on the top bar, driven by
-        `voxtype status --follow`. Set false to keep dictation but drop the bar
+        the selected backend (voxtype's status stream, or `marchyo dictation
+        status`). Set false to keep dictation but drop the bar
         indicator.
       '';
     };
@@ -235,8 +238,9 @@ in
       type = types.bool;
       default = true;
       description = ''
-        Bind Super+Shift+H under Hyprland to open a floating terminal streaming
-        `voxtype status --follow`, and register its window rule.
+        Voxtype backend only: bind Super+Shift+H under Hyprland to open a
+        floating terminal streaming `voxtype status --follow`, and register its
+        window rule.
       '';
     };
   };

@@ -17,6 +17,8 @@ QtObject {
     readonly property string pgrep: "pgrep"
     readonly property string ls: "ls"
     readonly property string df: "df"
+    readonly property string date: "date"
+    readonly property string bash: "bash"
     readonly property string wtype: "wtype"
     readonly property string cliphist: "cliphist"
     readonly property string wlCopy: "wl-copy"
@@ -29,4 +31,15 @@ QtObject {
     readonly property string qalc: "qalc"
     readonly property string find: "find"
     readonly property string ps: "ps"
+    readonly property string chmod: "chmod"
+    readonly property string mkdir: "mkdir"
+    readonly property string rm: "rm"
+    readonly property string inotifywait: "inotifywait"
+    readonly property string udevadm: "udevadm"
+    readonly property string brightnessctl: "brightnessctl"
+    readonly property string ddcutil: "ddcutil"
+    readonly property string thumbs: "marchyo-thumbs"
+    readonly property string language: "en"
+    readonly property bool perMonitorWorkspaces: true
+    readonly property bool monitorPersist: true
 }

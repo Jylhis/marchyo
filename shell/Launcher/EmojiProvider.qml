@@ -14,7 +14,7 @@ Provider {
     layout: "grid"
     columns: 8
     showIcons: false
-    emptyText: "no emoji"
+    emptyText: I18n.t("launcher.noEmoji")
 
     // One row per catalog entry, built once: the title is the emoji itself,
     // the subtitle its name (the searched field, prepared once for Fuzzy).

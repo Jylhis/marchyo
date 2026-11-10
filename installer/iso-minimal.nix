@@ -5,13 +5,10 @@
 # supports both local and remote installations via SSH, and provides helpful
 # guidance for users during the installation process.
 #
-# NOT a flake output: nothing in flake.nix / outputs.nix / the Justfile / CI
-# references this file, so `nix flake check` never evaluates it and it rots
-# silently across nixpkgs bumps (it was carrying two removed package aliases).
-# Evaluate it by hand after updating flake.lock:
+# Flake output packages.x86_64-linux.iso-minimal; `nix flake check` evaluates
+# its drvPath (checks.x86_64-linux.eval-iso-minimal) without building it. Build:
 #
-#   nix-build '<nixpkgs/nixos>' -I nixos-config=installer/iso-minimal.nix \
-#     -A config.system.build.isoImage
+#   just iso minimal   # or: nix build .#iso-minimal
 
 {
   config,
@@ -38,17 +35,17 @@
   # ISO metadata
   image.fileName = lib.mkForce "marchyo-installer-minimal-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
 
-  # Enable SSH for remote installation
+  # Key-only SSH for remote installation: a password-reachable root on a
+  # live image is a remote-root hole. Add your own key to reach the image.
   services.openssh = {
     enable = true;
     settings = {
-      PermitRootLogin = "yes";
-      PasswordAuthentication = true;
+      PermitRootLogin = "prohibit-password";
+      PasswordAuthentication = false;
     };
   };
 
-  # Set a known root password for SSH access (change after first login!)
-  # users.users.root.initialPassword = "marchyo";
+  # users.users.root.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAA... you@host" ];
 
   # Essential installation tools
   environment.systemPackages = with pkgs; [

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# `voxtype status --follow`: report idle once, then stay subscribed.
+printf '{"text":"","class":"idle","alt":"idle","tooltip":"idle"}\n'
+[[ " $* " == *" --follow "* ]] && exec sleep infinity
+exit 0

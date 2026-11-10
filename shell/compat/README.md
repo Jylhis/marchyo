@@ -15,8 +15,11 @@ so imported omarchy bar widgets run near-unmodified: only their
   BarIconButton, OpticalGlyph, PluginBarApi, KeyboardPanel, BorderSurface) plus
   a minimal `BorderOverlay` stub.
 - `Commons/` — `ShellIpc` / `IpcRegistry` vendored verbatim; `Style`,
-  `Color`, `Border`, `Util` **reimplemented** to expose omarchy's API backed
-  by marchyo's own `qs.Commons` `Style`/`Color`/`Theme` tokens.
+  `CompatColor`, `Border`, `Util` **reimplemented** to expose omarchy's API
+  backed by marchyo's own `qs.Commons` `Style`/`Colors`/`Theme` tokens.
+  omarchy's `Color` is named `CompatColor` here because Qt 6.12's QtQuick
+  `Color` singleton shadows that name; the bake-time rewrite turns a plugin's
+  `Color.` reads into `CompatColor.`.
 
 ## Provenance
 

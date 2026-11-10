@@ -8,6 +8,11 @@ import QtQuick
 QtObject {
     id: root
 
+    readonly property var reminderPanel: Loader {
+        active: root.openId === "reminders"
+        source: "../Panels/ReminderFlow.qml"
+    }
+
     // Empty string = nothing open; otherwise the panelId of the open panel.
     property string openId: ""
 
@@ -22,6 +27,17 @@ QtObject {
     // close. Ui/Panel shows a back button while it is set.
     property string returnId: ""
 
+    // True when the panel was summoned by a key or IPC (no bar item clicked):
+    // Ui/Panel then takes on-demand keyboard focus.
+    property bool keyboard: false
+
+    // The output of the clicked bar item, or the focused output when an IPC
+    // summon passes no item. MARCHYO_SHELL_OUTPUT overrides both.
+    function _outputOf(item): string {
+        const name = Screens.pin(Screens.nameOf(item));
+        return name.length > 0 ? name : Screens.focusedName;
+    }
+
     function toggle(id, item) {
         if (root.openId === id) {
             root.close();
@@ -31,10 +47,9 @@ QtObject {
     }
 
     function open(id, item) {
-        // An IPC summon passes no item, so fall back to the focused output.
-        const name = Screens.nameOf(item);
-        root.screenName = name.length > 0 ? name : Screens.focusedName;
+        root.screenName = root._outputOf(item);
         root.returnId = "";
+        root.keyboard = item ? (root.openId !== "" && root.keyboard) : true;
         root.openId = id;
     }
 

@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import qs.Commons
 
 // Seat-global clock: one SystemClock and one format toggle for the whole seat.
 // A singleton so toggling the format on one monitor's bar updates every output
@@ -8,8 +9,17 @@ import Quickshell
 QtObject {
     id: root
 
+    // Live seconds in the compact format. Starts from
+    // marchyo.shell.settings.clock.seconds; right-click flips it for the session.
+    property bool showSeconds: {
+        const c = ShellConfig.config && ShellConfig.config.clock;
+        return !!(c && c.seconds === true);
+    }
+
+    // The tick drops to every second only while seconds are on screen, so the
+    // default bar repaints once a minute.
     readonly property var clock: SystemClock {
-        precision: SystemClock.Minutes
+        precision: root.showSeconds && !root.showAlt ? SystemClock.Seconds : SystemClock.Minutes
     }
 
     readonly property date date: root.clock.date
@@ -17,6 +27,10 @@ QtObject {
     // false = compact ("Sat 22 Aug · 14:30"), true = long form with ISO week
     // ("22 August W34 2025").
     property bool showAlt: false
+
+    function toggleSeconds() {
+        root.showSeconds = !root.showSeconds;
+    }
 
     function toggleFormat() {
         root.showAlt = !root.showAlt;
@@ -36,6 +50,6 @@ QtObject {
 
     // Qt.formatDateTime is a valid QML global; qmllint's Qt type model omits it.
     // qmllint disable missing-property
-    readonly property string barText: root.showAlt ? (Qt.formatDateTime(root.date, "d MMMM") + " W" + root.isoWeek(root.date) + " " + Qt.formatDateTime(root.date, "yyyy")) : Qt.formatDateTime(root.date, "ddd d MMM · HH:mm")
+    readonly property string barText: root.showAlt ? (Qt.formatDateTime(root.date, "d MMMM") + " W" + root.isoWeek(root.date) + " " + Qt.formatDateTime(root.date, "yyyy")) : Qt.formatDateTime(root.date, root.showSeconds ? "ddd d MMM · HH:mm:ss" : "ddd d MMM · HH:mm")
     // qmllint enable missing-property
 }

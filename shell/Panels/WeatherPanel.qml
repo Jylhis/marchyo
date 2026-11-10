@@ -9,13 +9,13 @@ import qs.Services
 Panel {
     id: root
     panelId: "weather"
-    title: "Weather"
+    title: I18n.t("weather.title")
 
     body: [
         Text {
             Layout.fillWidth: true
-            text: Weather.available ? Weather.icon + "  " + Weather.tempC + "°C" : "Unavailable"
-            color: Color.textHeading
+            text: Weather.available ? Weather.icon + "  " + Weather.tempC + "°C" : I18n.t("weather.unavailable")
+            color: Colors.textHeading
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSize
         },
@@ -23,10 +23,14 @@ Panel {
             Layout.fillWidth: true
             visible: Weather.description !== ""
             text: Weather.description
-            color: Color.textMuted
+            color: Colors.textMuted
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
             elide: Text.ElideRight
+        },
+        PanelSectionHeader {
+            visible: Weather.forecast.length > 0
+            text: I18n.t("weather.forecast")
         },
         Repeater {
             model: Weather.forecast
@@ -39,13 +43,13 @@ Panel {
                 Text {
                     Layout.preferredWidth: Style.panelWidth * 0.25
                     text: modelData.day
-                    color: Color.text
+                    color: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }
                 Text {
                     text: modelData.icon
-                    color: Color.text
+                    color: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }
@@ -54,7 +58,7 @@ Panel {
                 }
                 Text {
                     text: modelData.hi + "° / " + modelData.lo + "°"
-                    color: Color.textMuted
+                    color: Colors.textMuted
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSizeSmall
                 }

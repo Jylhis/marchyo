@@ -11,8 +11,7 @@ machines, and sending a file across the room.
 
 ## Wi-Fi
 
-Press `Super + Ctrl + W` to open the Wi-Fi manager, nmtui, in a floating terminal.
-Pick **Activate a connection**, choose your network, and enter the password. You can
+Press `Super + Ctrl + W` to open nmtui in a floating terminal. In nmtui, pick **Activate a connection**, choose your network, and enter the password. You can
 also get there from the system menu (`Super + Alt + Space`, then **Setup**, then
 **Wifi**), or by clicking the network indicator in the top bar.
 
@@ -22,6 +21,12 @@ configuration and doesn't change when you rebuild.
 
 If you run the Marchyo shell, `Super + Shift + N` opens a Network panel with your
 current connection, signal, and address, and a shortcut into nmtui.
+
+Behind a hotel or airport Wi-Fi, the bar icon turns into a warning glyph and the
+Network panel shows **Open captive portal**. It runs `marchyo network portal`, which
+opens the sign-in page, pauses a Tailscale exit node until you are online, and closes
+the window afterwards. NetworkManager asks nmcheck.gnome.org every five minutes to
+detect this; set `marchyo.network.connectivityCheck.enable = false` to stop the probes.
 
 ## Bluetooth
 
@@ -63,7 +68,7 @@ with other people, use Tailscale's own access controls to limit who can reach wh
 If you don't use Tailscale, turn it off:
 
 ```nix
-marchyo.services.tailscale.enable = false;
+services.tailscale.enable = false;
 ```
 
 ## LocalSend
@@ -94,13 +99,13 @@ LocalSend comes with the desktop. For other devices to find yours, it opens port
 53317 (TCP and UDP) on your network. To keep the port closed and only send, use:
 
 ```nix
-marchyo.services.localsend.openFirewall = false;
+programs.localsend.openFirewall = false;
 ```
 
 If you'd rather not have LocalSend at all, switch it off and the port closes with it:
 
 ```nix
-marchyo.services.localsend.enable = false;
+programs.localsend.enable = false;
 ```
 
 ## The firewall
@@ -117,5 +122,5 @@ networking.firewall.allowedTCPPorts = [ 8080 ];
 ```
 
 To turn the firewall off entirely, for example on a machine that sits behind another
-firewall, set `marchyo.security.firewall.enable = false`. Features that open ports
+firewall, set `networking.firewall.enable = false`. Features that open ports
 keep declaring them, but nothing is blocked while the firewall is off.

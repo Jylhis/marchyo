@@ -13,6 +13,7 @@ This skill covers development workflows for the Marchyo NixOS configuration flak
 
 ```bash
 nix flake check     # Validate and run all tests (REQUIRED before committing)
+just check-full     # Also build the heavy checks (Hyprland config, theme assets, Plymouth)
 nix fmt             # Format all Nix code (REQUIRED before committing)
 nix develop         # Enter development shell with all tools
 nix flake show      # Inspect all flake outputs
@@ -54,12 +55,6 @@ in
 }
 ```
 
-## Adding a New nix-darwin Module
-
-`modules/darwin/` is a curated subset, **not** auto-discovered:
-1. Create `modules/darwin/<name>.nix`
-2. Add an import line to `modules/darwin/default.nix` manually
-
 ## Defining New Options
 
 Options live under `modules/nixos/options/` — pick the matching namespace file or create a new one. Each file declares `options.marchyo.<namespace>` and is auto-imported by `modules/nixos/options/default.nix`.
@@ -84,22 +79,21 @@ in
 
 ## Writing Tests
 
-Drop tests into the matching `tests/eval/<feature>.nix` (or create a new file there). Each file is a function returning an attrset of named tests:
+A test is a named predicate over one of the shared reference systems in `tests/lib.nix` (`refBases`): a function from the evaluated NixOS `config` to `true`, `false`, a failure message or a list of failure messages. Each reference system is evaluated once and is one check, `ref-<name>`, that lists every failing predicate by name. Add the predicate to the system that already has the configuration you need (`desktop`, `headless`, `full`, …); a non-default setting goes on a tweak system (`desktop-tweaks`, `headless-tweaks-2`, `desktop-off`, …) through `refConfig`, in the same file:
 
 ```nix
 # tests/eval/my-feature.nix
-{ helpers, ... }:
-let
-  inherit (helpers) testNixOS withTestUser;
-in
+{ helpers, lib, ... }:
 {
-  eval-my-feature = testNixOS "my-feature" (withTestUser {
-    marchyo.myFeature.enable = true;
-  });
+  refs.desktop.eval-my-feature-default = cfg: cfg.services.my-feature.enable;
+
+  refs.desktop-tweaks.eval-my-feature-port =
+    cfg: helpers.expect (lib.elem 1234 cfg.networking.firewall.allowedTCPPorts) "port 1234 is not open";
+  refConfig.desktop-tweaks.marchyo.myFeature.port = 1234;
 }
 ```
 
-The `testNixOS` helper evaluates the NixOS config without building derivations. The `withTestUser` helper merges your config with a minimal bootable config. Files in `tests/eval/` are auto-discovered.
+Negative tests go in `failing` (`{ on = "misconfigured"; expect = "assertion text"; }` plus `failingConfig.misconfigured`), one-off configurations in `variants`, build checks in `heavy` (built by `just check-full`, not `nix flake check`). Files in `tests/eval/` are auto-discovered; `tests/README.md` has the details. Avoid calling `helpers.mkSystem` per test: every call is a full evaluation.
 
 ## Key Patterns
 
@@ -114,4 +108,4 @@ The `testNixOS` helper evaluates the NixOS config without building derivations. 
 - Always run `nix fmt` before committing — CI will fail without it
 - Never define options outside `modules/nixos/options/`
 - Auto-discovery imports every `.nix` file under `modules/{nixos,home}/` — leftover scratch files become dead modules
-- Tests are evaluation-only (no builds) — use the `testNixOS` and `withTestUser` helpers from `tests/lib.nix`
+- Default checks are evaluation-only: add predicates to the shared reference systems in `tests/lib.nix` rather than evaluating a new system per test; anything that builds goes in `heavy`

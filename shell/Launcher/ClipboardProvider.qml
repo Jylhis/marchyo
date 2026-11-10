@@ -26,7 +26,7 @@ Provider {
     highlight: false
     selectOnEmpty: true
     previews: true
-    emptyText: "clipboard history is empty"
+    emptyText: I18n.t("launcher.clipboardEmpty")
 
     readonly property int maxHistory: 500
     readonly property string cacheDir: Quickshell.cacheDir + "/cliphist"
@@ -110,13 +110,13 @@ Provider {
     }
 
     function pump() {
-        if (decodeProc.running || root.decodingKey !== "" || root.queue.length === 0 || !root.active)
+        if (root.decodeProc.running || root.decodingKey !== "" || root.queue.length === 0 || !root.active)
             return;
         const next = root.queue[0];
         root.queue = root.queue.slice(1);
         root.decodingKey = next.key;
-        decodeProc.command = ["sh", "-c", root.decodeScript, Config.cliphist, root.cacheDir, next.id, next.key, String(root.maxPreviewBytes), String(root.maxCached)];
-        decodeProc.running = true;
+        root.decodeProc.command = ["sh", "-c", root.decodeScript, Config.cliphist, root.cacheDir, next.id, next.key, String(root.maxPreviewBytes), String(root.maxCached)];
+        root.decodeProc.running = true;
     }
 
     // argv: $0 cliphist, $1 cache dir, $2 entry id, $3 file name, $4 byte
@@ -127,7 +127,6 @@ Provider {
     readonly property string decodeScript: ["c=$0 id=$2 f=$3 max=$4 keep=$5", "mkdir -p -- \"$1\" && cd -- \"$1\" || exit 1", "if [ ! -s \"./$f\" ]; then", "  \"$c\" decode \"$id\" | head -c \"$max\" > \"./$f.part\" && [ -s \"./$f.part\" ] && mv -f -- \"./$f.part\" \"./$f\" || { rm -f -- \"./$f.part\"; exit 1; }", "fi", "touch -- \"./$f\"", "ls -t | tail -n +\"$((keep + 1))\" | while IFS= read -r old; do rm -f -- \"./$old\"; done"].join("\n")
 
     readonly property var decodeProc: Process {
-        id: decodeProc
         onExited: (exitCode, exitStatus) => {
             const key = root.decodingKey;
             root.decodingKey = "";
@@ -138,7 +137,6 @@ Provider {
     }
 
     readonly property var listProc: Process {
-        id: listProc
         command: [Config.cliphist, "list"]
         stdout: SplitParser {
             onRead: line => {
@@ -157,8 +155,8 @@ Provider {
             // cheap hit in decodeScript).
             root.previewSources = ({});
             root.items = [];
-            listProc.running = false;
-            listProc.running = true;
+            root.listProc.running = false;
+            root.listProc.running = true;
         }
     }
 }

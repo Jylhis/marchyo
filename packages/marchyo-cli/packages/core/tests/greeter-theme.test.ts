@@ -14,8 +14,14 @@ import { join } from "node:path";
 import {
   GREETER_THEME_DIR,
   greeterThemeDir,
-  writeGreeterTheme,
+  greeterThemeFile,
+  writeGreeterTheme as writeAs,
+
 } from "../src/greeter-theme.ts";
+
+// Every test writes as the same user; one name keeps the paths readable.
+const writeGreeterTheme = (themeDir: string, markerDir: string) =>
+  writeAs(themeDir, markerDir, "alice");
 
 const roots: string[] = [];
 
@@ -52,7 +58,44 @@ describe("greeterThemeDir", () => {
   });
 });
 
+describe("greeterThemeFile", () => {
+  test("names one marker per login name", () => {
+    expect(greeterThemeFile("alice")).toBe("theme-alice.json");
+    expect(greeterThemeFile("_svc-1")).toBe("theme-_svc-1.json");
+  });
+
+  test("rejects names that are not plain login names", () => {
+    for (const bad of ["", "../x", "a/b", "Alice", "a.b", "x".repeat(33)]) {
+      expect(greeterThemeFile(bad)).toBeNull();
+    }
+  });
+});
+
 describe("writeGreeterTheme", () => {
+  test("keeps each user's marker separate", async () => {
+    const { themeDir, markerDir } = fixture({
+      name: "nord",
+      variant: "light",
+      colors: { bg: "#ECEFF4" },
+    });
+    expect(await writeAs(themeDir, markerDir, "alice")).toBe(true);
+    expect(await writeAs(themeDir, markerDir, "bob")).toBe(true);
+    expect(readdirSync(markerDir).sort()).toEqual([
+      "theme-alice.json",
+      "theme-bob.json",
+    ]);
+  });
+
+  test("skips an unusable user name", async () => {
+    const { themeDir, markerDir } = fixture({
+      name: "nord",
+      variant: "light",
+      colors: {},
+    });
+    expect(await writeAs(themeDir, markerDir, "../evil")).toBe(false);
+    expect(readdirSync(markerDir)).toEqual([]);
+  });
+
   test("writes name, variant and #rrggbb colours, world-readable", async () => {
     const { themeDir, markerDir } = fixture({
       name: "nord",
@@ -60,7 +103,7 @@ describe("writeGreeterTheme", () => {
       colors: { bg: "#ECEFF4", accent: "#5e81ac", bogus: "rgb(1,2,3)" },
     });
     expect(await writeGreeterTheme(themeDir, markerDir)).toBe(true);
-    const marker = join(markerDir, "theme.json");
+    const marker = join(markerDir, "theme-alice.json");
     expect(JSON.parse(readFileSync(marker, "utf8"))).toEqual({
       name: "nord",
       variant: "light",
@@ -68,7 +111,7 @@ describe("writeGreeterTheme", () => {
     });
     expect(statSync(marker).mode & 0o777).toBe(0o644);
     // Atomic replace: no temp file left behind.
-    expect(readdirSync(markerDir)).toEqual(["theme.json"]);
+    expect(readdirSync(markerDir)).toEqual(["theme-alice.json"]);
   });
 
   test("replaces an existing marker", async () => {
@@ -77,10 +120,10 @@ describe("writeGreeterTheme", () => {
       variant: "dark",
       colors: { bg: "#0c0f14" },
     });
-    writeFileSync(join(markerDir, "theme.json"), "stale");
+    writeFileSync(join(markerDir, "theme-alice.json"), "stale");
     expect(await writeGreeterTheme(themeDir, markerDir)).toBe(true);
     expect(
-      JSON.parse(readFileSync(join(markerDir, "theme.json"), "utf8")).name,
+      JSON.parse(readFileSync(join(markerDir, "theme-alice.json"), "utf8")).name,
     ).toBe("jylhis-dark");
   });
 

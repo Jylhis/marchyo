@@ -59,7 +59,7 @@ in
       wireplumber.enable = lib.mkDefault true;
     };
 
-    # defaultFonts are set in modules/generic/fontconfig.nix.
+    # defaultFonts are set in modules/nixos/fonts.nix.
     fonts = {
       enableDefaultPackages = lib.mkDefault true;
       fontconfig.enable = lib.mkDefault true;
@@ -69,7 +69,11 @@ in
     environment.sessionVariables.NAUTILUS_4_EXTENSION_DIR = "${config.system.path}/lib/nautilus/extensions-4";
 
     # xdg-user-dirs-gtk generates GTK bookmarks for sidebar folders (Documents, Downloads, etc.)
-    environment.systemPackages = [ pkgs.xdg-user-dirs-gtk ];
+    # wsdd lets gvfs discover Windows network shares (gvfs logs a missing wsdd otherwise)
+    environment.systemPackages = [
+      pkgs.xdg-user-dirs-gtk
+      pkgs.wsdd
+    ];
 
     xdg.portal = {
       enable = lib.mkDefault true;

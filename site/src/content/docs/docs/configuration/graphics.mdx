@@ -1,9 +1,9 @@
 ---
 title: Graphics (GPU)
-description: Configure GPU vendors, NVIDIA drivers, and hybrid graphics
+description: Configure GPU vendors, the primary GPU, NVIDIA drivers, and hybrid graphics
 ---
 
-Marchyo supports Intel, AMD, and NVIDIA GPUs, including hybrid graphics configurations with NVIDIA PRIME.
+Marchyo supports Intel, AMD, and NVIDIA GPUs, including machines with several GPUs and hybrid graphics with NVIDIA PRIME.
 
 ## GPU vendors
 
@@ -13,14 +13,18 @@ Specify which GPU vendors are present in your system:
 marchyo.graphics.vendors = [ "intel" ];
 ```
 
-For hybrid graphics laptops with two GPUs:
+A machine with several GPUs lists them all and names the one that drives the
+display:
 
 ```nix
-marchyo.graphics.vendors = [ "intel" "nvidia" ];
+marchyo.graphics = {
+  vendors = [ "intel" "amd" ];
+  primary = "amd";
+};
 ```
 
 :::note
-Find your GPU with: `lspci | grep -E 'VGA|3D'`
+Find your GPUs with: `lspci | grep -E 'VGA|3D|Display'`
 :::
 
 | Vendor | Description |
@@ -29,29 +33,82 @@ Find your GPU with: `lspci | grep -E 'VGA|3D'`
 | `"amd"` | AMD GPUs (integrated or discrete) |
 | `"nvidia"` | NVIDIA discrete GPUs |
 
-When `vendors` is empty (default), Intel packages are applied on x86_64 for backward compatibility. If `vendors` is left empty while `marchyo.desktop.enable = true`, evaluation emits a warning telling you to set `vendors` explicitly (e.g. `["nvidia"]` or `["amd"]`).
+When `vendors` is empty (the default), no vendor-specific drivers are installed
+and no driver is forced; Mesa's generic stack still runs.
+`hardware.graphics.enable` follows `marchyo.desktop.enable` (or any listed
+vendor), so a headless host without a listed GPU skips the graphics stack.
+
+## Several GPUs
+
+Every listed vendor's drivers, firmware and video-acceleration packages are
+installed. `marchyo.graphics.primary` picks the GPU that drives the display:
+
+- It defaults to the only entry of `vendors`. On a PRIME laptop with one
+  integrated GPU it defaults to `"nvidia"` in `sync` mode and to the
+  integrated GPU otherwise. Any other combination of several vendors must set
+  it; evaluation fails without it, or when it is not in `vendors`.
+- Only the primary GPU sets the global driver selection: `LIBVA_DRIVER_NAME`
+  (`iHD`, `radeonsi`, or `nvidia` on Turing or newer), `VDPAU_DRIVER`
+  (`radeonsi`), and NVIDIA's `__GLX_VENDOR_LIBRARY_NAME` / `GBM_BACKEND`.
+- Per-app offload variables are not set globally. Run one app on another GPU
+  with `nvidia-offload <command>` (PRIME offload mode) or `DRI_PRIME=1
+  <command>` (Mesa GPUs).
+- Hyprland renders on the primary GPU first. Each listed GPU gets a stable
+  node, `/dev/dri/marchyo-<vendor>` (a udev rule matching the PCI address
+  from `prime.<vendor>BusId` when set, else the kernel driver), and
+  `AQ_DRM_DEVICES` lists them with the primary first, because
+  `/dev/dri/card<N>` numbering changes between boots.
 
 ## NVIDIA options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.graphics.nvidia.open` | `bool` | `true` | Use open-source kernel modules (recommended for RTX 20xx+, required for RTX 50xx) |
-| `marchyo.graphics.nvidia.powerManagement` | `bool` | `false` | Experimental power management (may improve laptop battery life) |
+- `marchyo.graphics.nvidia.generation` (`"turing-or-newer"` or `"pre-turing"`, default `"turing-or-newer"`): the GPU generation. Turing is RTX 20xx and GTX 16xx. Pre-Turing is Maxwell, Pascal and Volta.
+
+marchyo sets these NVIDIA options with `lib.mkDefault`; set them directly to override:
+
+- `hardware.nvidia.package`: `boot.kernelPackages.nvidiaPackages.stable`, or `legacy_580` for pre-Turing GPUs.
+- `hardware.nvidia.open`: `true` for Turing or newer, `false` for pre-Turing. RTX 50xx requires the open modules.
+- `hardware.nvidia-container-toolkit.enable`: `true` with `marchyo.development.enable`, so containers get the GPU through CDI (`podman run --device nvidia.com/gpu=all ...`).
+
+Experimental power management is `hardware.nvidia.powerManagement.enable` (off).
 
 ```nix
-marchyo.graphics.nvidia = {
-  open = true;
-  powerManagement = false;
-};
+marchyo.graphics.nvidia.generation = "turing-or-newer";
+hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
 ```
 
 :::caution
-Set `nvidia.open = false` for older GPUs (Maxwell, Pascal, Volta). The open-source modules only support Turing (RTX 20xx) and newer.
+`hardware.nvidia.open = true` with `generation = "pre-turing"` fails evaluation. The open modules support only Turing and newer.
 :::
+
+### NVIDIA environment variables
+
+- `NVD_BACKEND` is `direct` on Turing or newer and `egl` on pre-Turing.
+- `__GLX_VENDOR_LIBRARY_NAME=nvidia` and `GBM_BACKEND=nvidia-drm` are set only when NVIDIA is `primary`: NVIDIA is the only GPU, or PRIME runs in `sync` mode.
+- `LIBVA_DRIVER_NAME=nvidia` is set under the same condition, and only on Turing or newer.
+
+In PRIME `offload` and `reverse-sync` modes the integrated GPU is primary, so these variables stay unset. Forcing them there breaks video in Chromium-based browsers.
+
+## AMD options
+
+- `marchyo.graphics.amd.vaapi.enable` (bool, default `true`): Mesa radeonsi VA-API and VDPAU, plus `vainfo`. `LIBVA_DRIVER_NAME=radeonsi` and `VDPAU_DRIVER=radeonsi` are set only when AMD is `primary`.
+- Overclocking and undervolting (LACT, CoreCtrl) need `hardware.amdgpu.overdrive.enable = true;`.
+- `marchyo.graphics.amd.rocm.enable` (bool, default `false`): the ROCm compute stack. It installs the HIP runtime (`rocmPackages.clr`), links it to `/opt/rocm/hip`, and adds Marchyo users to the `render` and `video` groups. It requires `"amd"` in `vendors`.
+- `marchyo.graphics.amd.rocm.hsaOverrideGfxVersion` (string or null, default `null`): the value of `HSA_OVERRIDE_GFX_VERSION`, for GPUs that ROCm does not officially support (for example `"10.3.0"` for RDNA2 or `"11.0.0"` for RDNA3).
+
+```nix
+marchyo.graphics = {
+  vendors = [ "amd" ];
+  amd.rocm = {
+    enable = true;
+    hsaOverrideGfxVersion = "11.0.0";
+  };
+};
+```
 
 ## NVIDIA PRIME (hybrid graphics)
 
-For laptops with both an integrated GPU and a discrete NVIDIA GPU:
+For laptops with both an integrated GPU and a discrete NVIDIA GPU. With one
+integrated GPU, `primary` follows the mode:
 
 ```nix
 marchyo.graphics = {
@@ -75,9 +132,9 @@ Run `lspci | grep -E 'VGA|3D'` and convert hex bus IDs to the `PCI:bus:device:fu
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.graphics.prime.enable` | `bool` | `false` | Enable NVIDIA PRIME |
-| `marchyo.graphics.prime.intelBusId` | `string` | `""` | PCI bus ID of Intel iGPU |
-| `marchyo.graphics.prime.amdgpuBusId` | `string` | `""` | PCI bus ID of AMD iGPU |
-| `marchyo.graphics.prime.nvidiaBusId` | `string` | `""` | PCI bus ID of NVIDIA dGPU |
+| `marchyo.graphics.prime.intelBusId` | `string` | `""` | PCI bus ID of the Intel GPU |
+| `marchyo.graphics.prime.amdgpuBusId` | `string` | `""` | PCI bus ID of the AMD GPU |
+| `marchyo.graphics.prime.nvidiaBusId` | `string` | `""` | PCI bus ID of the NVIDIA GPU |
 | `marchyo.graphics.prime.mode` | `string` | `"offload"` | PRIME render mode |
 
 ### PRIME modes
@@ -85,7 +142,7 @@ Run `lspci | grep -E 'VGA|3D'` and convert hex bus IDs to the `PCI:bus:device:fu
 | Mode | Description |
 |------|-------------|
 | `"offload"` | On-demand rendering (default). Power efficient — use `nvidia-offload <command>` to run apps on the discrete GPU. |
-| `"sync"` | Always use discrete GPU. Best performance but more power consumption. |
+| `"sync"` | Always use discrete GPU. Best performance but more power consumption. `primary` is `"nvidia"`. |
 | `"reverse-sync"` | iGPU for display, dGPU for compute. |
 
 ### PRIME requirements
@@ -94,9 +151,26 @@ Enabling PRIME is validated with assertions — the build fails with a clear
 message if any of these are not met:
 
 - `vendors` must contain `"nvidia"` **and** an iGPU vendor (`"intel"` or `"amd"`)
+- `primary` must be `"nvidia"` in `sync` mode, and the integrated GPU otherwise
 - `prime.nvidiaBusId` must be set
-- `prime.intelBusId` must be set when `"intel"` is in `vendors`
-- `prime.amdgpuBusId` must be set when `"amd"` is the iGPU (i.e. `"amd"` in `vendors` without `"intel"`)
+- the bus ID of the integrated GPU PRIME pairs with must be set: `primary`,
+  or in `sync` mode the only integrated GPU (Intel when both are listed and
+  `intelBusId` is set)
+
+With Intel, AMD and NVIDIA all listed, PRIME pairs with the integrated GPU
+named by `primary`.
+
+### Integrated-only boot entry
+
+On a hybrid laptop, set `prime.integratedOnlySpecialisation = true` to add an `integrated-only` boot specialisation:
+
+```nix
+marchyo.graphics.prime.integratedOnlySpecialisation = true;
+```
+
+The specialisation turns off PRIME, blacklists the `nvidia`, `nvidia_modeset`, `nvidia_uvm`, `nvidia_drm` and `nouveau` kernel modules, and removes the NVIDIA environment variables and the container toolkit. Use it to save battery when you do not need the discrete GPU.
+
+Select the `integrated-only` entry in the systemd-boot menu. When the menu is hidden (`boot.loader.timeout = 0`), hold Space while the machine boots to show it. The option requires `prime.enable`.
 
 ## Examples
 
@@ -117,7 +191,6 @@ marchyo.graphics.vendors = [ "amd" ];
 ```nix
 marchyo.graphics = {
   vendors = [ "nvidia" ];
-  nvidia.open = true;
 };
 ```
 
@@ -126,7 +199,6 @@ marchyo.graphics = {
 ```nix
 marchyo.graphics = {
   vendors = [ "intel" "nvidia" ];
-  nvidia.open = true;
   prime = {
     enable = true;
     intelBusId = "PCI:0:2:0";
@@ -136,12 +208,34 @@ marchyo.graphics = {
 };
 ```
 
+### Intel + AMD desktop (AMD drives the display)
+
+```nix
+marchyo.graphics = {
+  vendors = [ "intel" "amd" ];
+  primary = "amd";
+};
+```
+
+### Intel + AMD + NVIDIA laptop (AMD iGPU, offload)
+
+```nix
+marchyo.graphics = {
+  vendors = [ "intel" "amd" "nvidia" ];
+  primary = "amd";
+  prime = {
+    enable = true;
+    amdgpuBusId = "PCI:6:0:0";
+    nvidiaBusId = "PCI:1:0:0";
+  };
+};
+```
+
 ### AMD + NVIDIA laptop (sync)
 
 ```nix
 marchyo.graphics = {
   vendors = [ "amd" "nvidia" ];
-  nvidia.open = true;
   prime = {
     enable = true;
     amdgpuBusId = "PCI:6:0:0";

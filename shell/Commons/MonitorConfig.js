@@ -17,7 +17,7 @@
 // Top-level keys a per-monitor override cannot change.
 var ALWAYS_GLOBAL = ["idle", "caffeine", "monitors"];
 
-var SECTIONS = ["left", "center", "right"];
+var SECTIONS = ["left", "centerBegin", "center", "centerEnd", "right"];
 
 function isPlainObject(v) {
     return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -66,7 +66,8 @@ function resolve(config, output) {
     return deepMerge(base, overrideFor(config, output));
 }
 
-// Effective bar layout for `output`: { left, center, right }. Each section
+// Effective bar layout for `output`: { left, centerBegin, center, centerEnd,
+// right }. Each section
 // falls back independently to `defaults` when the resolved layout leaves it
 // unset (or sets it to a non-array), so a partial override stays valid.
 function barLayout(config, output, defaults) {

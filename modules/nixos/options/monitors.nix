@@ -29,9 +29,9 @@ in
       historical behaviour — so hosts that do not care about monitor layout
       need not set anything.
 
-      This drives Hyprland only. Interactive, one-off tweaks are still possible
-      with `hyprmon` (the monitor menu); those live-changes do not persist
-      across a rebuild, whereas entries here do.
+      This drives Hyprland only. Changes made in the shell's display panel
+      are kept in `$XDG_STATE_HOME/marchyo/monitors/settings` and applied on
+      top of these entries (see `marchyo.monitorPanel.persist`).
     '';
     type = types.listOf (
       types.submodule {
@@ -135,5 +135,18 @@ in
         };
       }
     );
+  };
+
+  options.marchyo.monitorPanel.persist = mkOption {
+    type = types.bool;
+    default = true;
+    description = ''
+      Whether Hyprland loads the display panel's saved settings
+      (`$XDG_STATE_HOME/marchyo/monitors/settings`) after `marchyo.monitors`.
+      The file is runtime state and survives rebuilds, by design; delete it
+      with `marchyo monitor reset`, or print it as `marchyo.monitors` entries
+      with `marchyo monitor save --nix`. When false, Hyprland ignores the file
+      and the panel changes the displays for the session only.
+    '';
   };
 }

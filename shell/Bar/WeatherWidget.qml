@@ -13,8 +13,8 @@ BarItem {
     interactive: true
     shown: Weather.available
     text: Weather.icon + "  " + Weather.tempC + "°C"
-    textColor: Color.text
-    tooltipText: Weather.description !== "" ? Weather.description + ", " + Weather.tempC + "°C" : "Weather"
+    textColor: Colors.text
+    tooltipText: Weather.description !== "" ? Weather.description + ", " + Weather.tempC + "°C" : I18n.t("weather.title")
 
     onClicked: PanelManager.toggle("weather", root)
 }

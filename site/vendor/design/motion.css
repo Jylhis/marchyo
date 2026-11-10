@@ -1,0 +1,125 @@
+/*
+ * motion.css — drawn and typed entrances.
+ *
+ * Nothing fades, floats or bounces. A rule extends, a readout types on, a
+ * caret blinks: the interface draws itself the way a terminal reports. Each
+ * idiom maps to an existing motion token.
+ *
+ *   line-extend — a hairline rule extends from its start  (slow, 300ms)
+ *   readout     — a mono value types on with steps()      (long, 480ms, stepped)
+ *   caret       — a block caret blinks                     (1.1s, loop)
+ *
+ * Colour and translate only: buttons sink in 80ms, colours ease in 150ms, and
+ * under reduced motion every control lands in its final state at once.
+ *
+ * Guardrails (design(7)):
+ *   · the caret never appears twice on one surface
+ *   · caret is for prompts and loading states only
+ *   · nothing bounces — every continuous easing is ease-out
+ *
+ * The universal prefers-reduced-motion guard in colors_and_type.css covers
+ * every animation below: durations collapse to 0.001ms and loops run once, so
+ * extended and typed elements land in their final visible state and the
+ * caret rests solid.
+ */
+
+@keyframes ds-line-in {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes ds-readout-in {
+  to {
+    width: var(--ds-readout-ch, 10ch);
+  }
+}
+@keyframes ds-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Press and colour: pressables sink 80ms (transform) and change colour in
+   150ms. Nothing fades or scales. Components set these durations through
+   --transition-press and --transition-fast; the rule below makes the sink
+   instant under reduced motion, since the guard in colors_and_type.css only
+   shortens durations. */
+.ds-press {
+  transition:
+    transform var(--transition-press),
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.ds-press:active:enabled {
+  transform: translateY(1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-press,
+  .ds-btn,
+  .ds-segmented__option,
+  .ds-pager a,
+  .ds-switch__track,
+  .ds-switch__track::before,
+  a,
+  button {
+    transition: none;
+  }
+}
+
+/* Links ease their underline colour in 150ms (red on hover is decoration);
+   nothing else on a link moves. */
+@media (prefers-reduced-motion: no-preference) {
+  a {
+    transition: text-decoration-color var(--transition-fast);
+  }
+}
+
+/* A hairline rule that extends from its start. Add .is-drawn to run. */
+.ds-line-extend {
+  height: 1px;
+  background: var(--color-border);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.ds-line-extend.is-drawn {
+  animation: ds-line-in var(--transition-slow) forwards;
+}
+
+/* A mono readout that types on, terminal-style. Set --ds-readout-ch to the
+   value's rendered width — any CSS length, not only ch (e.g.
+   style="--ds-readout-ch: 10ch" for 10 plain mono characters). Counting
+   characters only holds at default tracking: add letter-spacing and the text
+   is wider than its ch count, so the tail clips. Where the readout carries
+   tracking or a non-mono face, measure the element instead. Add .is-read to
+   run. */
+.ds-readout {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  vertical-align: bottom;
+}
+.ds-readout.is-read {
+  /* motion.long — steps(12) replaces the ease, so the duration is the
+     literal token value (var(--transition-long) bundles its bezier). */
+  animation: ds-readout-in 480ms steps(12) forwards;
+}
+
+/* The block caret — prompts and loading states. Always aria-hidden="true";
+   pair it with visible text (e.g. "fetching") so meaning never rides on
+   the animation alone. */
+.ds-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.1em;
+  background: var(--color-cursor);
+  vertical-align: text-bottom;
+  margin-left: 0.15em;
+  animation: ds-caret-blink 1.1s steps(1) infinite;
+}

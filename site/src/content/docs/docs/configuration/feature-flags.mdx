@@ -13,7 +13,6 @@ Feature flags are the primary way to configure Marchyo. Each flag enables a grou
 | `marchyo.development.enable` | `false` | Development tools (git, Docker, buildah, gh, virtualization) |
 | `marchyo.media.enable` | `false` | Media applications (Spotify, MPV, etc.) |
 | `marchyo.office.enable` | `false` | Office applications (Papers document viewer, Obsidian, Xournal++) |
-| `marchyo.gaming.enable` | `false` | Gaming bundle (Steam, GameMode, Gamescope, MangoHUD, Lutris, Heroic) — desktop-only, opt-in |
 
 ## Cascading defaults
 
@@ -39,6 +38,18 @@ Since these use `lib.mkDefault`, you can override them:
 }
 ```
 
+## Boot menu
+
+Marchyo sets `boot.loader.timeout` to `0`, so systemd-boot skips the menu and boots the default entry. Hold <kbd>Space</kbd> at power-on to open the menu.
+
+A timeout stored in an EFI variable overrides `boot.loader.timeout`. A host that set one from the menu keeps the menu visible for that many seconds.
+
+This is a default, so a host can choose its own value:
+
+```nix
+boot.loader.timeout = 3;
+```
+
 ## Desktop environment
 
 When `marchyo.desktop.enable = true`, Marchyo configures:
@@ -48,7 +59,7 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Bluetooth** — Enabled and configured
 - **Fonts** — Curated set of fonts including Nerd Fonts
 - **Theming** — Jylhis design-system theming across GTK, Qt, terminals, TUIs, and Emacs, with runtime theme switching
-- **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps the discrete stack: waybar, Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent
+- **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps only hyprlock and hyprpolkitagent, with no bar, OSD or notification daemon
 - **Terminal emulator** — Ghostty
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/docs/configuration/default-apps/)
 
@@ -61,6 +72,12 @@ When `marchyo.development.enable = true`, Marchyo configures:
 - **Virtualization** via QEMU/KVM (libvirtd), with virt-manager and virt-viewer
 - **Build tools** — GNU Make, CMake, GCC, pkg-config
 - **Utilities** — direnv (with nix-direnv), jq, yq, network debugging tools (nmap, tcpdump, netcat)
+
+Marchyo does not install OBS Studio, Kdenlive or lazydocker. To add one, list it in `environment.systemPackages`:
+
+```nix
+environment.systemPackages = with pkgs; [ obs-studio lazydocker ];
+```
 
 :::note
 Shell enhancements are not gated on `development.enable`: fzf, ripgrep, fd, and
@@ -116,24 +133,3 @@ marchyo.development.enable = true;
 marchyo.defaults.aiAgent = "claude-code";  # installs the CLI, $AI_AGENT = "claude"
 ```
 
-## Gaming
-
-When `marchyo.gaming.enable = true` **and** the desktop is enabled, Marchyo
-configures:
-
-- **Steam** with Remote Play firewall ports, the Steam hardware udev rules, and
-  the Xbox controller driver (`xpadneo`)
-- **GameMode** and **Gamescope** for performance and upscaling
-- **MangoHUD** performance overlay
-- **Lutris** and **Heroic** launchers plus **ProtonUp-Qt**
-
-Gaming is not auto-enabled by the desktop, so a plain desktop stays lean. Steam
-pulls in 32-bit graphics and is x86_64-only, so on other architectures the flag
-has no effect.
-
-```nix
-{
-  marchyo.desktop.enable = true;
-  marchyo.gaming.enable = true;
-}
-```

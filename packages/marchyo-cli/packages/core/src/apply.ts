@@ -156,8 +156,8 @@ export async function applyChange(
   }
 
   // mode === "revert"
-  const hadOverride = await clearOverride(spec.key, runtimePath);
   await spec.runtimeRevert(ctx);
+  const hadOverride = await clearOverride(spec.key, runtimePath);
   if (hadOverride) ok(rt, `${spec.key} runtime override dropped`);
 
   if (spec.stateDelete) {

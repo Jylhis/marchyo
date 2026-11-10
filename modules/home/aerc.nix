@@ -5,16 +5,16 @@
 # variant). The "marchyo" styleset built from Jylhis semantic tokens contrasts
 # against its surface in both variants.
 {
-  osConfig ? { },
+  osConfig,
   pkgs,
   lib,
   ...
 }:
 let
-  defaults = (osConfig.marchyo or { }).defaults or { };
-  enabled = (osConfig.marchyo.desktop.enable or false) && (defaults.email or null) == "aerc";
+  defaults = osConfig.marchyo.defaults;
+  enabled = osConfig.marchyo.desktop.enable && defaults.email == "aerc";
 
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeVariant = osConfig.marchyo.theme.variant;
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;
     variant = themeVariant;

@@ -10,6 +10,7 @@ import {
   data,
   usageError,
   type Runtime,
+  tr,
 } from "@marchyo/core";
 
 export type GcOpts = { olderThan: string; dryRun: boolean };
@@ -19,7 +20,7 @@ export async function runGc(rt: Runtime, opts: GcOpts): Promise<number> {
   if (period === null) {
     return usageError(
       rt,
-      `invalid period: "${opts.olderThan}" (expected <days>d, e.g. 14d)`,
+      tr("gc.invalidPeriodExpectedDays", opts.olderThan),
       "marchyo gc --delete-older-than 30d",
     );
   }
@@ -35,17 +36,17 @@ export async function runGc(rt: Runtime, opts: GcOpts): Promise<number> {
   if (needsSudo && !commandAvailable("sudo")) {
     err(
       rt,
-      "collecting system generations requires root; install sudo or re-run as root (e.g. `sudo marchyo gc`)",
+      tr("gc.collectingSystemGenerationsRequiresRoot"),
     );
     return 1;
   }
   if (!needsSudo && !commandAvailable("nix-collect-garbage")) {
-    err(rt, "nix-collect-garbage not found in PATH");
+    err(rt, tr("gc.nixCollectGarbageNotFound"));
     return 1;
   }
 
-  info(rt, `collecting garbage older than ${period} ...`);
+  info(rt, tr("gc.collectingGarbageOlderThan", period));
   const code = await runArgv(argv, { noInput: rt.noInput });
-  if (code === 0) ok(rt, "garbage collection finished");
+  if (code === 0) ok(rt, tr("gc.garbageCollectionFinished"));
   return code;
 }

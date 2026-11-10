@@ -51,6 +51,11 @@ let
     && builtins.match ".*[[:space:]].*" prefix == null
     && !(lib.any (s: lib.hasPrefix s prefix) reservedPrefixStarts);
 in
+# The id names a directory under share/marchyo/shell/plugins/ and an IPC
+# target, so it must be a plain path component.
+assert lib.assertMsg (
+  builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*" id != null && !(lib.hasInfix ".." id)
+) "marchyo shell plugin id '${id}': ids must match [A-Za-z0-9][A-Za-z0-9._-]* and not contain '..'";
 assert lib.assertMsg (
   !lib.hasPrefix "marchyo." id
 ) "marchyo shell plugin id '${id}': the marchyo.* namespace is reserved for first-party surfaces";

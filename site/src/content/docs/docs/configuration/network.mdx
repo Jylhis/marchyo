@@ -1,0 +1,38 @@
+---
+title: Network
+description: Connectivity check and captive-portal sign-in
+---
+
+## Connectivity check
+
+NetworkManager polls a check URL and reports `full`, `portal`, `limited` or `none`. The shell reads that state: the bar network icon turns into a warning glyph on `portal` and `limited`, and the Network panel offers **Open captive portal**.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.network.connectivityCheck.enable` | `bool` | `marchyo.desktop.enable` | Poll the check URL |
+| `marchyo.network.connectivityCheck.uri` | `str` | `http://nmcheck.gnome.org/check_network_status.txt` | URL to request; keep it plain HTTP so a portal can intercept it |
+| `marchyo.network.connectivityCheck.response` | `str` | `NetworkManager is online` | Expected body; empty accepts the `X-NetworkManager-Status: online` header |
+| `marchyo.network.connectivityCheck.interval` | `int` | `300` | Seconds between checks |
+
+```nix
+marchyo.network.connectivityCheck.uri = "http://ping.example.org/nm-check.txt";
+```
+
+:::note[Privacy]
+Every `interval` seconds NetworkManager sends a plain HTTP request to the configured `uri`, so that host sees your public IP address. To send no probes, set `marchyo.network.connectivityCheck.enable = false`. Captive portals are then not detected.
+:::
+
+## Signing in to a captive portal
+
+```sh
+marchyo network portal
+```
+
+The command:
+
+1. pauses an active Tailscale exit node (`tailscale set --exit-node=`), because the tunnel is blocked until you sign in;
+2. opens the check URL in a floating 900x760 web-app window of your webapps browser (`marchyo.webapps.browser`, else the default browser when chromium-based, else chromium);
+3. runs `nmcli networking connectivity check` every 2 seconds for 5 minutes, then every 15 seconds, until the result is `full`;
+4. closes the window and restores the exit node.
+
+A second run while one is active only reopens the window. `--uri` and `--browser` override the configured values.

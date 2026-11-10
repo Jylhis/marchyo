@@ -13,6 +13,26 @@ import { type State } from "../src/state.ts";
 
 const rt = buildRuntime({ quiet: true }, {}, false);
 
+test("failed revert preserves the saved override", async () => {
+  const { dir, runtimePath } = tempPaths();
+  try {
+    await setOverride("toggle.test", true, runtimePath);
+    const { spec } = makeSpec({
+      runtimeRevert: async () => {
+        throw new Error("failed");
+      },
+    });
+    await expect(
+      applyChange(rt, spec, { mode: "revert", runtimePath }),
+    ).rejects.toThrow("failed");
+    expect((await loadRuntimeState(runtimePath)).overrides["toggle.test"]).toBe(
+      true,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 type Recorded = { runtimeApplies: number; runtimeReverts: number };
 
 function makeSpec(

@@ -96,20 +96,16 @@ in
       type = types.nullOr (
         types.enum [
           "mpv"
-          "cmus"
           "vlc"
           "amberol"
         ]
       );
       default = "mpv";
-      example = "cmus";
+      example = "amberol";
       description = ''
         Default audio player for local files. "mpv" (the default) opens audio
         files headlessly and is registered as the system default for audio
-        MIME types. "cmus" is a TUI library player with no single-file MIME
-        handler: selecting it installs cmus via its Home-Manager module but
-        leaves audio files without a registered opener (launch it manually).
-        Set to null to skip audio player management.
+        MIME types. Set to null to skip audio player management.
       '';
     };
 
@@ -117,20 +113,18 @@ in
       type = types.nullOr (
         types.enum [
           "spotify-player"
-          "ncspot"
           "spotify"
         ]
       );
       default = "spotify-player";
-      example = "ncspot";
+      example = "spotify";
       description = ''
         Default music client bound to the Hyprland Super+M keybind. Defaults
         to "spotify-player", a TUI Spotify client launched in a floating
-        terminal; "ncspot" is an alternative TUI client. Both install via
-        their Home-Manager modules when selected. "spotify" is the GUI app,
-        always installed on x86_64 (see modules/nixos/media.nix); selecting it
-        here only binds Super+M to it. Set to null to skip music player
-        management.
+        terminal and installed via its Home-Manager module. "spotify" is the
+        GUI app, always installed on x86_64 (see modules/nixos/media.nix);
+        selecting it here only binds Super+M to it. Set to null to skip music
+        player management.
       '';
     };
 
@@ -205,20 +199,18 @@ in
       type = types.nullOr (
         types.enum [
           "aerc"
-          "neomutt"
           "gmail"
           "outlook"
         ]
       );
       default = "aerc";
-      example = "neomutt";
+      example = "gmail";
       description = ''
         Default email client. Defaults to "aerc", a TUI mail client (mailto
-        links open it in a terminal); "neomutt" is an alternative TUI client.
-        Both install via their Home-Manager modules and require account
-        configuration before use. "gmail" and "outlook" are web apps opened
-        in the browser (no package installed). Set to null to skip email
-        management.
+        links open it in a terminal), installed via its Home-Manager module
+        and requiring account configuration before use. "gmail" and
+        "outlook" are web apps opened in the browser (no package installed).
+        Set to null to skip email management.
       '';
     };
   };

@@ -1,0 +1,21 @@
+{
+  "_comment": "Binary caches marchyo adds to nix.settings.substituters and trusted-public-keys (modules/nixos/nix-settings.nix).",
+  "caches": [
+    {
+      "url": "https://jylhis.cachix.org",
+      "publicKey": "jylhis.cachix.org-1:SIAw5iWjXRhLAmejqPy0PGuqH6bjCHIFVF9CiHmHRpE="
+    },
+    {
+      "url": "https://jylhis-extra.cachix.org",
+      "publicKey": "jylhis-extra.cachix.org-1:fG6wVx1e7AaS7vodJoR+0Lk2nhISY3NzGDMAZ2veXKk="
+    },
+    {
+      "url": "https://nix-community.cachix.org",
+      "publicKey": "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    },
+    {
+      "url": "https://devenv.cachix.org",
+      "publicKey": "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+    }
+  ]
+}

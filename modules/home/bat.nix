@@ -1,12 +1,12 @@
 {
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeVariant = osConfig.marchyo.theme.variant;
   isDark = themeVariant == "dark";
-  # tmThemes come only from the built jylhis-themes package (design system 3.0.0).
+  # tmThemes come only from the built jylhis-themes package (vendored design system).
   designThemes = "${pkgs.jylhis-themes}/share/jylhis/bat";
 in
 {

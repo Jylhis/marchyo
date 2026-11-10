@@ -1,0 +1,1310 @@
+/*
+ * tokens.css — GENERATED from tokens/*.tokens.json. Do not edit by hand.
+ * Modes: data-mode="light|dark" on <html> picks one; with no data-mode the
+ * page follows the OS (prefers-color-scheme). Print is always light.
+ */
+
+@layer ds.base;
+
+/* Jylhis — Paper — ink on warm paper (default) */
+:root {
+  color-scheme: light;
+  /* Background */
+  --color-bg: #f4efe4;
+  --color-bg-subtle: #ebe4d5;
+  /* Surface */
+  --color-surface: #f8f4ec;
+  --color-surface-raised: #fffdf8;
+  /* Text */
+  --color-text: #22201c;
+  --color-text-muted: #5e574c;
+  --color-text-heading: #1a1814;
+  --color-text-faint: #847c6e;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #8a5300;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #eb0000;
+  --color-primary-hi: #ff6b5e;
+  --color-primary-lo: #8e0000;
+  --color-primary-edge: #5a0000;
+  /* Links and focus */
+  --color-link: #1e4f8a;
+  --color-link-underline-hover: #eb0000;
+  --color-focus-ring: #22201c;
+  --color-selection-bg: #f0dfb8;
+  --color-cursor: #eb0000;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #1e4f8a;
+  --color-accent-hover: #1a1814;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #22201c;
+  /* Borders */
+  --color-border: #847c6e;
+  --color-border-strong: #5e574c;
+  --color-rule: #22201c;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #e9e2d3;
+  --color-bevel-hi: #fffdf8;
+  --color-bevel-lo: #8a847a;
+  --color-bevel-edge: #22201c;
+  /* Code */
+  --color-code-bg: #ebe4d5;
+  --color-code-text: #22201c;
+  --color-code-border: #847c6e;
+  /* Syntax */
+  --color-syntax-keyword: #5f00d6;
+  --color-syntax-string: #006500;
+  --color-syntax-number: #063dea;
+  --color-syntax-function: #96005a;
+  --color-syntax-builtin: #900076;
+  --color-syntax-type: #00675f;
+  --color-syntax-variable: #00628a;
+  --color-syntax-comment: #5b5b5a;
+  --color-syntax-docstring: #545f40;
+  --color-syntax-tag: #00675f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #b80000;
+  --color-status-warn: #7a5000;
+  --color-status-ok: #2f6b2f;
+  --color-status-info: #00695e;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #c8102e;
+  --color-chart-2: #1e5aa0;
+  --color-chart-3: #e8b500;
+  --color-chart-4: #3e7a3a;
+  --color-chart-5: #b58a5a;
+  --color-chart-ink: #22201c;
+  --color-accent-subtle: #f0dfb8;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
+  --color-accent-foreground: #f4efe4;
+  --color-accent-hover-foreground: #f4efe4;
+  --color-destructive-foreground: #f4efe4;
+  --color-bg-subtle-foreground: #22201c;
+  --color-surface-foreground: #22201c;
+  --color-surface-raised-foreground: #22201c;
+  --color-selection-bg-foreground: #22201c;
+  --color-primary-foreground: #ffffff;
+  --color-scrim: rgba(10, 10, 10, 0.42);
+  --color-halftone-dot: rgba(34, 32, 28, 0.32);
+  /* Spacing */
+  --space-2xs: 0.125rem;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  /* Layout */
+  --layout-max: 1120px;
+  --layout-measure: 65ch;
+  --layout-rail: 16rem;
+  --layout-content-max: 72ch;
+  --layout-margin-width: 16rem;
+  --layout-gap: 2.5rem;
+  --layout-padding-mobile: 1.25rem;
+  /* Radii: one corner */
+  --radius-none: 0px;
+  --radius: 2px;
+  /* Deprecated in 5.0: aliases of none and default; removed in 6.0 */
+  --radius-xs: var(--radius-none);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-pill: var(--radius);
+  /* Border widths */
+  --border-hairline: 1px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-bevel-edge: 3px;
+  --border-focus: 2px;
+  --border-marker: 3px;
+  /* Z-index layers */
+  --z-base: 0; /* @kind other */
+  --z-sticky: 10; /* @kind other */
+  --z-scrim: 40; /* @kind other */
+  --z-modal: 50; /* @kind other */
+  --z-toast: 60; /* @kind other */
+  --z-skip: 100; /* @kind other */
+  /* Breakpoints — reference only; @media rules repeat these literally: sm 40em · md 53.75em */
+  --breakpoint-sm: 40em;
+  --breakpoint-md: 53.75em;
+  /* Font families */
+  --font-display: "Jost", Futura, "Century Gothic", sans-serif;
+  --font-body: "Fira Sans", "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-numeric: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-heading: var(--font-display);
+  /* Type styles */
+  --type-display-size: 3.625rem;
+  --type-display-line-height: 1.05; /* @kind other */
+  --type-display-weight: 500; /* @kind other */
+  --type-display-letter-spacing: 0px;
+  --type-display: 500 3.625rem/1.05 var(--font-display); /* @kind other */
+  --type-h1-size: 2.125rem;
+  --type-h1-line-height: 1.15; /* @kind other */
+  --type-h1-weight: 500; /* @kind other */
+  --type-h1: 500 2.125rem/1.15 var(--font-display); /* @kind other */
+  --type-h2-size: 1.5rem;
+  --type-h2-line-height: 1.25; /* @kind other */
+  --type-h2-weight: 500; /* @kind other */
+  --type-h2: 500 1.5rem/1.25 var(--font-display); /* @kind other */
+  --type-h3-size: 1.1875rem;
+  --type-h3-line-height: 1.3; /* @kind other */
+  --type-h3-weight: 500; /* @kind other */
+  --type-h3: 500 1.1875rem/1.3 var(--font-display); /* @kind other */
+  --type-lead-size: 1.25rem;
+  --type-lead-line-height: 1.6; /* @kind other */
+  --type-lead-weight: 400; /* @kind other */
+  --type-lead: 400 1.25rem/1.6 var(--font-body); /* @kind other */
+  --type-body-size: 1.125rem;
+  --type-body-line-height: 1.6; /* @kind other */
+  --type-body-weight: 400; /* @kind other */
+  --type-body: 400 1.125rem/1.6 var(--font-body); /* @kind other */
+  --type-ui-size: 1rem;
+  --type-ui-line-height: 1.4; /* @kind other */
+  --type-ui-weight: 400; /* @kind other */
+  --type-ui: 400 1rem/1.4 var(--font-body); /* @kind other */
+  --type-ui-strong-size: 1rem;
+  --type-ui-strong-line-height: 1.4; /* @kind other */
+  --type-ui-strong-weight: 600; /* @kind other */
+  --type-ui-strong: 600 1rem/1.4 var(--font-body); /* @kind other */
+  --type-small-size: 0.875rem;
+  --type-small-line-height: 1.45; /* @kind other */
+  --type-small-weight: 400; /* @kind other */
+  --type-small: 400 0.875rem/1.45 var(--font-body); /* @kind other */
+  --type-data-size: 0.875rem;
+  --type-data-line-height: 1.3; /* @kind other */
+  --type-data-weight: 400; /* @kind other */
+  --type-data: 400 0.875rem/1.3 var(--font-mono); /* @kind other */
+  --type-label-size: 0.8125rem;
+  --type-label-line-height: 1.3; /* @kind other */
+  --type-label-weight: 500; /* @kind other */
+  --type-label: 500 0.8125rem/1.3 var(--font-mono); /* @kind other */
+  --type-code-size: 0.875rem;
+  --type-code-line-height: 1.55; /* @kind other */
+  --type-code-weight: 400; /* @kind other */
+  --type-code: 400 0.875rem/1.55 var(--font-mono); /* @kind other */
+  /* Type scale: deprecated in 5.0, aliases of the styles; removed in 6.0 */
+  --type-scale-0: var(--type-display-size);
+  --type-scale-1: var(--type-h1-size);
+  --type-scale-2: var(--type-h2-size);
+  --type-scale-3: var(--type-lead-size);
+  --type-scale-4: var(--type-h3-size);
+  --type-scale-5: var(--type-body-size);
+  --type-scale-6: var(--type-ui-size);
+  --type-scale-7: var(--type-small-size);
+  --type-scale-8: var(--type-data-size);
+  --type-scale-9: var(--type-label-size);
+  /* Type scaling floors */
+  --type-readable-min: 0.875rem;
+  --type-floor: 0.8125rem;
+  /* Texture: the halftone field */
+  --halftone-pitch: 6px;
+  --halftone-dot-radius: 1.1px;
+  /* Density — the default box; density.css owns the full axis */
+  --cell-h: 40px;
+  --control-h: 40px;
+  --touch-min: 40px;
+  /* Focus ring */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.25, 0.1, 0.25, 1); /* @kind other */
+  --transition-base: 250ms cubic-bezier(0.2, 0.6, 0.2, 1); /* @kind other */
+  --transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --transition-long: 480ms cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */
+  --transition-press: 80ms cubic-bezier(0, 0, 0.58, 1); /* @kind other */
+}
+
+/* Jylhis — Amber — amber on terminal black */
+[data-mode="dark"] {
+  color-scheme: dark;
+  /* Background */
+  --color-bg: #0b0b0b;
+  --color-bg-subtle: #141210;
+  /* Surface */
+  --color-surface: #1a1713;
+  --color-surface-raised: #221e18;
+  /* Text */
+  --color-text: #f2ede4;
+  --color-text-muted: #9c9488;
+  --color-text-heading: #f7f3ec;
+  --color-text-faint: #746a5c;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #ffa028;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #ffa028;
+  --color-primary-hi: #ffd08a;
+  --color-primary-lo: #8a5410;
+  --color-primary-edge: #5a3608;
+  /* Links and focus */
+  --color-link: #8ab8ff;
+  --color-link-underline-hover: #ffd08a;
+  --color-focus-ring: #ffd08a;
+  --color-selection-bg: #3a3020;
+  --color-cursor: #ffa028;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #8ab8ff;
+  --color-accent-hover: #f7f3ec;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #ff6a5a;
+  /* Borders */
+  --color-border: #786e60;
+  --color-border-strong: #8a8070;
+  --color-rule: #ffa028;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #1a1713;
+  --color-bevel-hi: #5a5040;
+  --color-bevel-lo: #000000;
+  --color-bevel-edge: #ffa028;
+  /* Code */
+  --color-code-bg: #141210;
+  --color-code-text: #f2ede4;
+  --color-code-border: #786e60;
+  /* Syntax */
+  --color-syntax-keyword: #ab8fff;
+  --color-syntax-string: #00bb18;
+  --color-syntax-number: #749fff;
+  --color-syntax-function: #ff6db6;
+  --color-syntax-builtin: #ff5fec;
+  --color-syntax-type: #00b78f;
+  --color-syntax-variable: #00b8c6;
+  --color-syntax-comment: #979796;
+  --color-syntax-docstring: #92a07e;
+  --color-syntax-tag: #00b78f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #ff6a5a;
+  --color-status-warn: #ffd08a;
+  --color-status-ok: #7fd18a;
+  --color-status-info: #4fd1bd;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #e5484d;
+  --color-chart-2: #5b8def;
+  --color-chart-3: #f2c230;
+  --color-chart-4: #5fa85f;
+  --color-chart-5: #c9a06e;
+  --color-chart-ink: #f2ede4;
+  --color-accent-subtle: #3a3020;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+  --color-accent-foreground: #0b0b0b;
+  --color-accent-hover-foreground: #0b0b0b;
+  --color-destructive-foreground: #0b0b0b;
+  --color-bg-subtle-foreground: #f2ede4;
+  --color-surface-foreground: #f2ede4;
+  --color-surface-raised-foreground: #f2ede4;
+  --color-selection-bg-foreground: #f2ede4;
+  --color-primary-foreground: #0b0b0b;
+  --color-scrim: rgba(5, 5, 5, 0.6);
+  --color-halftone-dot: rgba(255, 160, 40, 0.28);
+}
+
+/* Jylhis — Paper — ink on warm paper, scoped */
+[data-mode="light"] {
+  color-scheme: light;
+  /* Background */
+  --color-bg: #f4efe4;
+  --color-bg-subtle: #ebe4d5;
+  /* Surface */
+  --color-surface: #f8f4ec;
+  --color-surface-raised: #fffdf8;
+  /* Text */
+  --color-text: #22201c;
+  --color-text-muted: #5e574c;
+  --color-text-heading: #1a1814;
+  --color-text-faint: #847c6e;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #8a5300;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #eb0000;
+  --color-primary-hi: #ff6b5e;
+  --color-primary-lo: #8e0000;
+  --color-primary-edge: #5a0000;
+  /* Links and focus */
+  --color-link: #1e4f8a;
+  --color-link-underline-hover: #eb0000;
+  --color-focus-ring: #22201c;
+  --color-selection-bg: #f0dfb8;
+  --color-cursor: #eb0000;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #1e4f8a;
+  --color-accent-hover: #1a1814;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #22201c;
+  /* Borders */
+  --color-border: #847c6e;
+  --color-border-strong: #5e574c;
+  --color-rule: #22201c;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #e9e2d3;
+  --color-bevel-hi: #fffdf8;
+  --color-bevel-lo: #8a847a;
+  --color-bevel-edge: #22201c;
+  /* Code */
+  --color-code-bg: #ebe4d5;
+  --color-code-text: #22201c;
+  --color-code-border: #847c6e;
+  /* Syntax */
+  --color-syntax-keyword: #5f00d6;
+  --color-syntax-string: #006500;
+  --color-syntax-number: #063dea;
+  --color-syntax-function: #96005a;
+  --color-syntax-builtin: #900076;
+  --color-syntax-type: #00675f;
+  --color-syntax-variable: #00628a;
+  --color-syntax-comment: #5b5b5a;
+  --color-syntax-docstring: #545f40;
+  --color-syntax-tag: #00675f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #b80000;
+  --color-status-warn: #7a5000;
+  --color-status-ok: #2f6b2f;
+  --color-status-info: #00695e;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #c8102e;
+  --color-chart-2: #1e5aa0;
+  --color-chart-3: #e8b500;
+  --color-chart-4: #3e7a3a;
+  --color-chart-5: #b58a5a;
+  --color-chart-ink: #22201c;
+  --color-accent-subtle: #f0dfb8;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
+  --color-accent-foreground: #f4efe4;
+  --color-accent-hover-foreground: #f4efe4;
+  --color-destructive-foreground: #f4efe4;
+  --color-bg-subtle-foreground: #22201c;
+  --color-surface-foreground: #22201c;
+  --color-surface-raised-foreground: #22201c;
+  --color-selection-bg-foreground: #22201c;
+  --color-primary-foreground: #ffffff;
+  --color-scrim: rgba(10, 10, 10, 0.42);
+  --color-halftone-dot: rgba(34, 32, 28, 0.32);
+}
+
+/* A mode scope paints its own ink and ground; any rule overrides it */
+@layer ds.base {
+  :where([data-mode]) {
+    color: var(--color-text);
+    background-color: var(--color-bg);
+  }
+}
+
+/* Amber — amber on terminal black when the page sets no mode and the OS prefers dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]) {
+    color-scheme: dark;
+    /* Background */
+    --color-bg: #0b0b0b;
+    --color-bg-subtle: #141210;
+    /* Surface */
+    --color-surface: #1a1713;
+    --color-surface-raised: #221e18;
+    /* Text */
+    --color-text: #f2ede4;
+    --color-text-muted: #9c9488;
+    --color-text-heading: #f7f3ec;
+    --color-text-faint: #746a5c;
+    /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+    --color-label: #ffa028;
+    /* Primary: the one signal per page (SBB red by day, amber by night) */
+    --color-primary: #ffa028;
+    --color-primary-hi: #ffd08a;
+    --color-primary-lo: #8a5410;
+    --color-primary-edge: #5a3608;
+    /* Links and focus */
+    --color-link: #8ab8ff;
+    --color-link-underline-hover: #ffd08a;
+    --color-focus-ring: #ffd08a;
+    --color-selection-bg: #3a3020;
+    --color-cursor: #ffa028;
+    /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+    --color-accent: #8ab8ff;
+    --color-accent-hover: #f7f3ec;
+    --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+    --color-destructive: #ff6a5a;
+    /* Borders */
+    --color-border: #786e60;
+    --color-border-strong: #8a8070;
+    --color-rule: #ffa028;
+    /* Bevel: pressable controls only */
+    --color-bevel-face: #1a1713;
+    --color-bevel-hi: #5a5040;
+    --color-bevel-lo: #000000;
+    --color-bevel-edge: #ffa028;
+    /* Code */
+    --color-code-bg: #141210;
+    --color-code-text: #f2ede4;
+    --color-code-border: #786e60;
+    /* Syntax */
+    --color-syntax-keyword: #ab8fff;
+    --color-syntax-string: #00bb18;
+    --color-syntax-number: #749fff;
+    --color-syntax-function: #ff6db6;
+    --color-syntax-builtin: #ff5fec;
+    --color-syntax-type: #00b78f;
+    --color-syntax-variable: #00b8c6;
+    --color-syntax-comment: #979796;
+    --color-syntax-docstring: #92a07e;
+    --color-syntax-tag: #00b78f;
+    /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+    --syntax-keyword-weight: 600; /* @kind other */
+    --syntax-keyword-style: normal; /* @kind other */
+    --syntax-string-weight: 400; /* @kind other */
+    --syntax-string-style: normal; /* @kind other */
+    --syntax-number-weight: 400; /* @kind other */
+    --syntax-number-style: normal; /* @kind other */
+    --syntax-function-weight: 600; /* @kind other */
+    --syntax-function-style: normal; /* @kind other */
+    --syntax-builtin-weight: 400; /* @kind other */
+    --syntax-builtin-style: normal; /* @kind other */
+    --syntax-type-weight: 400; /* @kind other */
+    --syntax-type-style: normal; /* @kind other */
+    --syntax-variable-weight: 400; /* @kind other */
+    --syntax-variable-style: normal; /* @kind other */
+    --syntax-comment-weight: 400; /* @kind other */
+    --syntax-comment-style: italic; /* @kind other */
+    --syntax-docstring-weight: 400; /* @kind other */
+    --syntax-docstring-style: italic; /* @kind other */
+    /* Status */
+    --color-status-err: #ff6a5a;
+    --color-status-warn: #ffd08a;
+    --color-status-ok: #7fd18a;
+    --color-status-info: #4fd1bd;
+    /* Chart: the Du Bois palette, inside charts only */
+    --color-chart-1: #e5484d;
+    --color-chart-2: #5b8def;
+    --color-chart-3: #f2c230;
+    --color-chart-4: #5fa85f;
+    --color-chart-5: #c9a06e;
+    --color-chart-ink: #f2ede4;
+    --color-accent-subtle: #3a3020;
+    --shadow-raised: none; /* @kind shadow */
+    --shadow-keycap: none; /* @kind shadow */
+    --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+    --color-accent-foreground: #0b0b0b;
+    --color-accent-hover-foreground: #0b0b0b;
+    --color-destructive-foreground: #0b0b0b;
+    --color-bg-subtle-foreground: #f2ede4;
+    --color-surface-foreground: #f2ede4;
+    --color-surface-raised-foreground: #f2ede4;
+    --color-selection-bg-foreground: #f2ede4;
+    --color-primary-foreground: #0b0b0b;
+    --color-scrim: rgba(5, 5, 5, 0.6);
+    --color-halftone-dot: rgba(255, 160, 40, 0.28);
+  }
+}
+
+/* Print — paper is always the light mode */
+@media print {
+  :root:not([data-mode]),
+  [data-mode="dark"] {
+    color-scheme: light;
+    /* Background */
+    --color-bg: #f4efe4;
+    --color-bg-subtle: #ebe4d5;
+    /* Surface */
+    --color-surface: #f8f4ec;
+    --color-surface-raised: #fffdf8;
+    /* Text */
+    --color-text: #22201c;
+    --color-text-muted: #5e574c;
+    --color-text-heading: #1a1814;
+    --color-text-faint: #847c6e;
+    /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+    --color-label: #8a5300;
+    /* Primary: the one signal per page (SBB red by day, amber by night) */
+    --color-primary: #eb0000;
+    --color-primary-hi: #ff6b5e;
+    --color-primary-lo: #8e0000;
+    --color-primary-edge: #5a0000;
+    /* Links and focus */
+    --color-link: #1e4f8a;
+    --color-link-underline-hover: #eb0000;
+    --color-focus-ring: #22201c;
+    --color-selection-bg: #f0dfb8;
+    --color-cursor: #eb0000;
+    /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+    --color-accent: #1e4f8a;
+    --color-accent-hover: #1a1814;
+    --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+    --color-destructive: #22201c;
+    /* Borders */
+    --color-border: #847c6e;
+    --color-border-strong: #5e574c;
+    --color-rule: #22201c;
+    /* Bevel: pressable controls only */
+    --color-bevel-face: #e9e2d3;
+    --color-bevel-hi: #fffdf8;
+    --color-bevel-lo: #8a847a;
+    --color-bevel-edge: #22201c;
+    /* Code */
+    --color-code-bg: #ebe4d5;
+    --color-code-text: #22201c;
+    --color-code-border: #847c6e;
+    /* Syntax */
+    --color-syntax-keyword: #5f00d6;
+    --color-syntax-string: #006500;
+    --color-syntax-number: #063dea;
+    --color-syntax-function: #96005a;
+    --color-syntax-builtin: #900076;
+    --color-syntax-type: #00675f;
+    --color-syntax-variable: #00628a;
+    --color-syntax-comment: #5b5b5a;
+    --color-syntax-docstring: #545f40;
+    --color-syntax-tag: #00675f;
+    /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+    --syntax-keyword-weight: 600; /* @kind other */
+    --syntax-keyword-style: normal; /* @kind other */
+    --syntax-string-weight: 400; /* @kind other */
+    --syntax-string-style: normal; /* @kind other */
+    --syntax-number-weight: 400; /* @kind other */
+    --syntax-number-style: normal; /* @kind other */
+    --syntax-function-weight: 600; /* @kind other */
+    --syntax-function-style: normal; /* @kind other */
+    --syntax-builtin-weight: 400; /* @kind other */
+    --syntax-builtin-style: normal; /* @kind other */
+    --syntax-type-weight: 400; /* @kind other */
+    --syntax-type-style: normal; /* @kind other */
+    --syntax-variable-weight: 400; /* @kind other */
+    --syntax-variable-style: normal; /* @kind other */
+    --syntax-comment-weight: 400; /* @kind other */
+    --syntax-comment-style: italic; /* @kind other */
+    --syntax-docstring-weight: 400; /* @kind other */
+    --syntax-docstring-style: italic; /* @kind other */
+    /* Status */
+    --color-status-err: #b80000;
+    --color-status-warn: #7a5000;
+    --color-status-ok: #2f6b2f;
+    --color-status-info: #00695e;
+    /* Chart: the Du Bois palette, inside charts only */
+    --color-chart-1: #c8102e;
+    --color-chart-2: #1e5aa0;
+    --color-chart-3: #e8b500;
+    --color-chart-4: #3e7a3a;
+    --color-chart-5: #b58a5a;
+    --color-chart-ink: #22201c;
+    --color-accent-subtle: #f0dfb8;
+    --shadow-raised: none; /* @kind shadow */
+    --shadow-keycap: none; /* @kind shadow */
+    --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
+    --color-accent-foreground: #f4efe4;
+    --color-accent-hover-foreground: #f4efe4;
+    --color-destructive-foreground: #f4efe4;
+    --color-bg-subtle-foreground: #22201c;
+    --color-surface-foreground: #22201c;
+    --color-surface-raised-foreground: #22201c;
+    --color-selection-bg-foreground: #22201c;
+    --color-primary-foreground: #ffffff;
+    --color-scrim: rgba(10, 10, 10, 0.42);
+    --color-halftone-dot: rgba(34, 32, 28, 0.32);
+  }
+}
+
+:root[data-contrast="more"] {
+  /* Background */
+  --color-bg: #f4efe4;
+  --color-bg-subtle: #ebe4d5;
+  /* Surface */
+  --color-surface: #f8f4ec;
+  --color-surface-raised: #fffdf8;
+  /* Text */
+  --color-text: #0f0e0c;
+  --color-text-muted: #3d382f;
+  --color-text-heading: #0f0e0c;
+  --color-text-faint: #5e574c;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #5a3600;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #c40000;
+  --color-primary-hi: #ff5a4a;
+  --color-primary-lo: #7a0000;
+  --color-primary-edge: #4a0000;
+  /* Links and focus */
+  --color-link: #163c6a;
+  --color-link-underline-hover: #c40000;
+  --color-focus-ring: #22201c;
+  --color-selection-bg: #e8cf94;
+  --color-cursor: #c40000;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #163c6a;
+  --color-accent-hover: #0f0e0c;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #22201c;
+  /* Borders */
+  --color-border: #5e574c;
+  --color-border-strong: #3d382f;
+  --color-rule: #22201c;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #e9e2d3;
+  --color-bevel-hi: #fffdf8;
+  --color-bevel-lo: #8a847a;
+  --color-bevel-edge: #22201c;
+  /* Code */
+  --color-code-bg: #ebe4d5;
+  --color-code-text: #0f0e0c;
+  --color-code-border: #5e574c;
+  /* Syntax */
+  --color-syntax-keyword: #5f00d6;
+  --color-syntax-string: #006500;
+  --color-syntax-number: #063dea;
+  --color-syntax-function: #96005a;
+  --color-syntax-builtin: #900076;
+  --color-syntax-type: #00675f;
+  --color-syntax-variable: #00628a;
+  --color-syntax-comment: #5b5b5a;
+  --color-syntax-docstring: #545f40;
+  --color-syntax-tag: #00675f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #8e0000;
+  --color-status-warn: #5a3a00;
+  --color-status-ok: #1f4d1f;
+  --color-status-info: #004d45;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #c8102e;
+  --color-chart-2: #1e5aa0;
+  --color-chart-3: #e8b500;
+  --color-chart-4: #3e7a3a;
+  --color-chart-5: #b58a5a;
+  --color-chart-ink: #22201c;
+  --color-accent-subtle: #e8cf94;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
+  --color-accent-foreground: #f4efe4;
+  --color-accent-hover-foreground: #f4efe4;
+  --color-destructive-foreground: #f4efe4;
+  --color-bg-subtle-foreground: #0f0e0c;
+  --color-surface-foreground: #0f0e0c;
+  --color-surface-raised-foreground: #0f0e0c;
+  --color-selection-bg-foreground: #0f0e0c;
+  --color-primary-foreground: #ffffff;
+  --color-scrim: rgba(10, 10, 10, 0.42);
+  --color-halftone-dot: rgba(34, 32, 28, 0.32);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+:root[data-contrast="more"] :where(a) { text-decoration-thickness: 3px; }
+:root[data-contrast="more"] .ds-halftone { background-image: none; }
+@media screen {
+:root[data-contrast="more"][data-mode="dark"] {
+  /* Background */
+  --color-bg: #000000;
+  --color-bg-subtle: #0d0c0a;
+  /* Surface */
+  --color-surface: #14120f;
+  --color-surface-raised: #1c1915;
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-muted: #d6cfc3;
+  --color-text-heading: #ffffff;
+  --color-text-faint: #a89a86;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #ffb54f;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #ffa028;
+  --color-primary-hi: #ffd08a;
+  --color-primary-lo: #8a5410;
+  --color-primary-edge: #5a3608;
+  /* Links and focus */
+  --color-link: #a8ccff;
+  --color-link-underline-hover: #ffd08a;
+  --color-focus-ring: #ffd08a;
+  --color-selection-bg: #3a3020;
+  --color-cursor: #ffa028;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #a8ccff;
+  --color-accent-hover: #ffffff;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #ff8a7d;
+  /* Borders */
+  --color-border: #a89a86;
+  --color-border-strong: #d6cfc3;
+  --color-rule: #ffb54f;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #14120f;
+  --color-bevel-hi: #5a5040;
+  --color-bevel-lo: #000000;
+  --color-bevel-edge: #ffb54f;
+  /* Code */
+  --color-code-bg: #0d0c0a;
+  --color-code-text: #ffffff;
+  --color-code-border: #a89a86;
+  /* Syntax */
+  --color-syntax-keyword: #ab8fff;
+  --color-syntax-string: #00bb18;
+  --color-syntax-number: #749fff;
+  --color-syntax-function: #ff6db6;
+  --color-syntax-builtin: #ff5fec;
+  --color-syntax-type: #00b78f;
+  --color-syntax-variable: #00b8c6;
+  --color-syntax-comment: #979796;
+  --color-syntax-docstring: #92a07e;
+  --color-syntax-tag: #00b78f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #ff8a7d;
+  --color-status-warn: #ffd08a;
+  --color-status-ok: #9fe0a8;
+  --color-status-info: #7ee0d0;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #e5484d;
+  --color-chart-2: #5b8def;
+  --color-chart-3: #f2c230;
+  --color-chart-4: #5fa85f;
+  --color-chart-5: #c9a06e;
+  --color-chart-ink: #ffffff;
+  --color-accent-subtle: #3a3020;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+  --color-accent-foreground: #000000;
+  --color-accent-hover-foreground: #000000;
+  --color-destructive-foreground: #0b0b0b;
+  --color-bg-subtle-foreground: #ffffff;
+  --color-surface-foreground: #ffffff;
+  --color-surface-raised-foreground: #ffffff;
+  --color-selection-bg-foreground: #ffffff;
+  --color-primary-foreground: #0b0b0b;
+  --color-scrim: rgba(5, 5, 5, 0.6);
+  --color-halftone-dot: rgba(255, 160, 40, 0.28);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media screen and (prefers-color-scheme: dark) {
+:root[data-contrast="more"]:not([data-mode]) {
+  /* Background */
+  --color-bg: #000000;
+  --color-bg-subtle: #0d0c0a;
+  /* Surface */
+  --color-surface: #14120f;
+  --color-surface-raised: #1c1915;
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-muted: #d6cfc3;
+  --color-text-heading: #ffffff;
+  --color-text-faint: #a89a86;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #ffb54f;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #ffa028;
+  --color-primary-hi: #ffd08a;
+  --color-primary-lo: #8a5410;
+  --color-primary-edge: #5a3608;
+  /* Links and focus */
+  --color-link: #a8ccff;
+  --color-link-underline-hover: #ffd08a;
+  --color-focus-ring: #ffd08a;
+  --color-selection-bg: #3a3020;
+  --color-cursor: #ffa028;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #a8ccff;
+  --color-accent-hover: #ffffff;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #ff8a7d;
+  /* Borders */
+  --color-border: #a89a86;
+  --color-border-strong: #d6cfc3;
+  --color-rule: #ffb54f;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #14120f;
+  --color-bevel-hi: #5a5040;
+  --color-bevel-lo: #000000;
+  --color-bevel-edge: #ffb54f;
+  /* Code */
+  --color-code-bg: #0d0c0a;
+  --color-code-text: #ffffff;
+  --color-code-border: #a89a86;
+  /* Syntax */
+  --color-syntax-keyword: #ab8fff;
+  --color-syntax-string: #00bb18;
+  --color-syntax-number: #749fff;
+  --color-syntax-function: #ff6db6;
+  --color-syntax-builtin: #ff5fec;
+  --color-syntax-type: #00b78f;
+  --color-syntax-variable: #00b8c6;
+  --color-syntax-comment: #979796;
+  --color-syntax-docstring: #92a07e;
+  --color-syntax-tag: #00b78f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #ff8a7d;
+  --color-status-warn: #ffd08a;
+  --color-status-ok: #9fe0a8;
+  --color-status-info: #7ee0d0;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #e5484d;
+  --color-chart-2: #5b8def;
+  --color-chart-3: #f2c230;
+  --color-chart-4: #5fa85f;
+  --color-chart-5: #c9a06e;
+  --color-chart-ink: #ffffff;
+  --color-accent-subtle: #3a3020;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+  --color-accent-foreground: #000000;
+  --color-accent-hover-foreground: #000000;
+  --color-destructive-foreground: #0b0b0b;
+  --color-bg-subtle-foreground: #ffffff;
+  --color-surface-foreground: #ffffff;
+  --color-surface-raised-foreground: #ffffff;
+  --color-selection-bg-foreground: #ffffff;
+  --color-primary-foreground: #0b0b0b;
+  --color-scrim: rgba(5, 5, 5, 0.6);
+  --color-halftone-dot: rgba(255, 160, 40, 0.28);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media (prefers-contrast: more) {
+:root:not([data-contrast]) {
+  /* Background */
+  --color-bg: #f4efe4;
+  --color-bg-subtle: #ebe4d5;
+  /* Surface */
+  --color-surface: #f8f4ec;
+  --color-surface-raised: #fffdf8;
+  /* Text */
+  --color-text: #0f0e0c;
+  --color-text-muted: #3d382f;
+  --color-text-heading: #0f0e0c;
+  --color-text-faint: #5e574c;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #5a3600;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #c40000;
+  --color-primary-hi: #ff5a4a;
+  --color-primary-lo: #7a0000;
+  --color-primary-edge: #4a0000;
+  /* Links and focus */
+  --color-link: #163c6a;
+  --color-link-underline-hover: #c40000;
+  --color-focus-ring: #22201c;
+  --color-selection-bg: #e8cf94;
+  --color-cursor: #c40000;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #163c6a;
+  --color-accent-hover: #0f0e0c;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #22201c;
+  /* Borders */
+  --color-border: #5e574c;
+  --color-border-strong: #3d382f;
+  --color-rule: #22201c;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #e9e2d3;
+  --color-bevel-hi: #fffdf8;
+  --color-bevel-lo: #8a847a;
+  --color-bevel-edge: #22201c;
+  /* Code */
+  --color-code-bg: #ebe4d5;
+  --color-code-text: #0f0e0c;
+  --color-code-border: #5e574c;
+  /* Syntax */
+  --color-syntax-keyword: #5f00d6;
+  --color-syntax-string: #006500;
+  --color-syntax-number: #063dea;
+  --color-syntax-function: #96005a;
+  --color-syntax-builtin: #900076;
+  --color-syntax-type: #00675f;
+  --color-syntax-variable: #00628a;
+  --color-syntax-comment: #5b5b5a;
+  --color-syntax-docstring: #545f40;
+  --color-syntax-tag: #00675f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #8e0000;
+  --color-status-warn: #5a3a00;
+  --color-status-ok: #1f4d1f;
+  --color-status-info: #004d45;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #c8102e;
+  --color-chart-2: #1e5aa0;
+  --color-chart-3: #e8b500;
+  --color-chart-4: #3e7a3a;
+  --color-chart-5: #b58a5a;
+  --color-chart-ink: #22201c;
+  --color-accent-subtle: #e8cf94;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
+  --color-accent-foreground: #f4efe4;
+  --color-accent-hover-foreground: #f4efe4;
+  --color-destructive-foreground: #f4efe4;
+  --color-bg-subtle-foreground: #0f0e0c;
+  --color-surface-foreground: #0f0e0c;
+  --color-surface-raised-foreground: #0f0e0c;
+  --color-selection-bg-foreground: #0f0e0c;
+  --color-primary-foreground: #ffffff;
+  --color-scrim: rgba(10, 10, 10, 0.42);
+  --color-halftone-dot: rgba(34, 32, 28, 0.32);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+:root:not([data-contrast]) :where(a) { text-decoration-thickness: 3px; }
+:root:not([data-contrast]) .ds-halftone { background-image: none; }
+@media screen {
+:root:not([data-contrast])[data-mode="dark"] {
+  /* Background */
+  --color-bg: #000000;
+  --color-bg-subtle: #0d0c0a;
+  /* Surface */
+  --color-surface: #14120f;
+  --color-surface-raised: #1c1915;
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-muted: #d6cfc3;
+  --color-text-heading: #ffffff;
+  --color-text-faint: #a89a86;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #ffb54f;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #ffa028;
+  --color-primary-hi: #ffd08a;
+  --color-primary-lo: #8a5410;
+  --color-primary-edge: #5a3608;
+  /* Links and focus */
+  --color-link: #a8ccff;
+  --color-link-underline-hover: #ffd08a;
+  --color-focus-ring: #ffd08a;
+  --color-selection-bg: #3a3020;
+  --color-cursor: #ffa028;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #a8ccff;
+  --color-accent-hover: #ffffff;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #ff8a7d;
+  /* Borders */
+  --color-border: #a89a86;
+  --color-border-strong: #d6cfc3;
+  --color-rule: #ffb54f;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #14120f;
+  --color-bevel-hi: #5a5040;
+  --color-bevel-lo: #000000;
+  --color-bevel-edge: #ffb54f;
+  /* Code */
+  --color-code-bg: #0d0c0a;
+  --color-code-text: #ffffff;
+  --color-code-border: #a89a86;
+  /* Syntax */
+  --color-syntax-keyword: #ab8fff;
+  --color-syntax-string: #00bb18;
+  --color-syntax-number: #749fff;
+  --color-syntax-function: #ff6db6;
+  --color-syntax-builtin: #ff5fec;
+  --color-syntax-type: #00b78f;
+  --color-syntax-variable: #00b8c6;
+  --color-syntax-comment: #979796;
+  --color-syntax-docstring: #92a07e;
+  --color-syntax-tag: #00b78f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #ff8a7d;
+  --color-status-warn: #ffd08a;
+  --color-status-ok: #9fe0a8;
+  --color-status-info: #7ee0d0;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #e5484d;
+  --color-chart-2: #5b8def;
+  --color-chart-3: #f2c230;
+  --color-chart-4: #5fa85f;
+  --color-chart-5: #c9a06e;
+  --color-chart-ink: #ffffff;
+  --color-accent-subtle: #3a3020;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+  --color-accent-foreground: #000000;
+  --color-accent-hover-foreground: #000000;
+  --color-destructive-foreground: #0b0b0b;
+  --color-bg-subtle-foreground: #ffffff;
+  --color-surface-foreground: #ffffff;
+  --color-surface-raised-foreground: #ffffff;
+  --color-selection-bg-foreground: #ffffff;
+  --color-primary-foreground: #0b0b0b;
+  --color-scrim: rgba(5, 5, 5, 0.6);
+  --color-halftone-dot: rgba(255, 160, 40, 0.28);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+@media screen and (prefers-color-scheme: dark) {
+:root:not([data-contrast]):not([data-mode]) {
+  /* Background */
+  --color-bg: #000000;
+  --color-bg-subtle: #0d0c0a;
+  /* Surface */
+  --color-surface: #14120f;
+  --color-surface-raised: #1c1915;
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-muted: #d6cfc3;
+  --color-text-heading: #ffffff;
+  --color-text-faint: #a89a86;
+  /* Frame: field names, table heads, keys (ochre by day, amber by night) */
+  --color-label: #ffb54f;
+  /* Primary: the one signal per page (SBB red by day, amber by night) */
+  --color-primary: #ffa028;
+  --color-primary-hi: #ffd08a;
+  --color-primary-lo: #8a5410;
+  --color-primary-edge: #5a3608;
+  /* Links and focus */
+  --color-link: #a8ccff;
+  --color-link-underline-hover: #ffd08a;
+  --color-focus-ring: #ffd08a;
+  --color-selection-bg: #3a3020;
+  --color-cursor: #ffa028;
+  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
+  --color-accent: #a8ccff;
+  --color-accent-hover: #ffffff;
+  --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
+  --color-destructive: #ff8a7d;
+  /* Borders */
+  --color-border: #a89a86;
+  --color-border-strong: #d6cfc3;
+  --color-rule: #ffb54f;
+  /* Bevel: pressable controls only */
+  --color-bevel-face: #14120f;
+  --color-bevel-hi: #5a5040;
+  --color-bevel-lo: #000000;
+  --color-bevel-edge: #ffb54f;
+  /* Code */
+  --color-code-bg: #0d0c0a;
+  --color-code-text: #ffffff;
+  --color-code-border: #a89a86;
+  /* Syntax */
+  --color-syntax-keyword: #ab8fff;
+  --color-syntax-string: #00bb18;
+  --color-syntax-number: #749fff;
+  --color-syntax-function: #ff6db6;
+  --color-syntax-builtin: #ff5fec;
+  --color-syntax-type: #00b78f;
+  --color-syntax-variable: #00b8c6;
+  --color-syntax-comment: #979796;
+  --color-syntax-docstring: #92a07e;
+  --color-syntax-tag: #00b78f;
+  /* Syntax emphasis — themes may carry meaning in weight/style instead of hue */
+  --syntax-keyword-weight: 600; /* @kind other */
+  --syntax-keyword-style: normal; /* @kind other */
+  --syntax-string-weight: 400; /* @kind other */
+  --syntax-string-style: normal; /* @kind other */
+  --syntax-number-weight: 400; /* @kind other */
+  --syntax-number-style: normal; /* @kind other */
+  --syntax-function-weight: 600; /* @kind other */
+  --syntax-function-style: normal; /* @kind other */
+  --syntax-builtin-weight: 400; /* @kind other */
+  --syntax-builtin-style: normal; /* @kind other */
+  --syntax-type-weight: 400; /* @kind other */
+  --syntax-type-style: normal; /* @kind other */
+  --syntax-variable-weight: 400; /* @kind other */
+  --syntax-variable-style: normal; /* @kind other */
+  --syntax-comment-weight: 400; /* @kind other */
+  --syntax-comment-style: italic; /* @kind other */
+  --syntax-docstring-weight: 400; /* @kind other */
+  --syntax-docstring-style: italic; /* @kind other */
+  /* Status */
+  --color-status-err: #ff8a7d;
+  --color-status-warn: #ffd08a;
+  --color-status-ok: #9fe0a8;
+  --color-status-info: #7ee0d0;
+  /* Chart: the Du Bois palette, inside charts only */
+  --color-chart-1: #e5484d;
+  --color-chart-2: #5b8def;
+  --color-chart-3: #f2c230;
+  --color-chart-4: #5fa85f;
+  --color-chart-5: #c9a06e;
+  --color-chart-ink: #ffffff;
+  --color-accent-subtle: #3a3020;
+  --shadow-raised: none; /* @kind shadow */
+  --shadow-keycap: none; /* @kind shadow */
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
+  --color-accent-foreground: #000000;
+  --color-accent-hover-foreground: #000000;
+  --color-destructive-foreground: #0b0b0b;
+  --color-bg-subtle-foreground: #ffffff;
+  --color-surface-foreground: #ffffff;
+  --color-surface-raised-foreground: #ffffff;
+  --color-selection-bg-foreground: #ffffff;
+  --color-primary-foreground: #0b0b0b;
+  --color-scrim: rgba(5, 5, 5, 0.6);
+  --color-halftone-dot: rgba(255, 160, 40, 0.28);
+  --border-hairline: 2px;
+  --border-rule: 2px;
+  --border-bevel: 2px;
+  --border-focus: 3px;
+  --focus-ring-width: 3px;
+}
+}
+}

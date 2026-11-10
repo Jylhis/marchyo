@@ -54,7 +54,7 @@ sudo nixos-rebuild switch --flake .#workstation
   `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and
   `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
 - **Version control** — Git with Git LFS, GitHub CLI
-- **Containers** — Docker with docker-compose, buildah, skopeo, lazydocker
+- **Containers** — Docker with docker-compose, buildah, skopeo
 - **Virtualization** — QEMU/KVM via libvirtd
 - **Build & debug** — gnumake, cmake, gcc, jq/yq, nmap, tcpdump
 
@@ -138,7 +138,7 @@ Hyprland's config load, so Marchyo rejects it at eval time:
 
 ```nix
 wayland.windowManager.hyprland.settings.env = [
-  { _args = [ "AQ_DRM_DEVICES" "/dev/dri/by-path/pci-0000:03:00.0-card" ]; }
+  { _args = [ "HYPRCURSOR_THEME" "Bibata-Modern-Classic" ]; }
 ];
 ```
 

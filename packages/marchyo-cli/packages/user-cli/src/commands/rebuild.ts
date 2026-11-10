@@ -1,4 +1,4 @@
-import { nixosRebuild, err, info, type Runtime } from "@marchyo/core";
+import { nixosRebuild, err, info, type Runtime, tr } from "@marchyo/core";
 import { requireFlake } from "./require-flake.ts";
 
 export type RebuildOpts = { dryRun: boolean };
@@ -12,9 +12,7 @@ export async function runRebuild(
 
   info(
     rt,
-    `rebuilding from ${flake.path} (${flake.source}, ${
-      opts.dryRun ? "dry-activate" : "switch"
-    }) ...`,
+    tr("rebuild.rebuildingFrom", flake.path, flake.source, opts.dryRun ? "dry-activate" : "switch"),
   );
   const result = await nixosRebuild({
     flakePath: flake.path,

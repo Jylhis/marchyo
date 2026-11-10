@@ -9,18 +9,16 @@ description: How Marchyo is organized and how modules interact
 modules/
   nixos/          # NixOS system-level modules (auto-discovered)
   home/           # Home Manager user-level modules (auto-discovered)
-  darwin/         # nix-darwin modules (hand-curated import list)
-  nix-on-droid/   # nix-on-droid (Android terminal) modules
-  generic/        # Shared modules imported by nixos, home, and darwin
+  generic/        # Shared helpers and modules
 lib/              # Flake helpers (system list, module auto-discovery)
-packages/         # Custom Nix packages (hyprmon, marchyo-cli, marchyo-wallpapers,
+packages/         # Custom Nix packages (marchyo-cli, marchyo-wallpapers,
                   # plymouth-marchyo-theme, wallpapper)
 overlay.nix       # Nixpkgs overlay (single file at the repo root)
 tests/            # Evaluation-based test suite
 templates/        # Flake templates (workstation)
 site/             # Astro + Starlight website (marchyo.org)
-disko/            # Disk layout snippets (not wired into flake outputs)
-installer/        # ISO build snippets (not wired into flake outputs)
+disko/            # Disk layouts (lib.diskoLayout + nixosModules.disko)
+installer/        # Installer ISOs (packages.x86_64-linux.iso-*)
 ```
 
 ## Module organization
@@ -51,7 +49,7 @@ in
 
 ### Generic modules (`modules/generic/`)
 
-Shared modules imported by the NixOS, Home Manager, and nix-darwin `default.nix` files. These contain configuration that applies at multiple levels (e.g., fontconfig, git).
+Helpers shared by NixOS and Home Manager modules (the design palette, base16 slots, the keyboard library). They are imported by path where needed, not auto-imported.
 
 ## Module patterns
 
@@ -103,18 +101,10 @@ The keyboard/IME system is the most complex cross-module pattern:
 | Input | Purpose |
 |-------|---------|
 | `nixpkgs` | Primary package set — NixOS unstable channel |
-| `nixpkgs-stable` | nixos-26.05, used only by `darwinConfigurations.x86_64` |
 | `home-manager` | User environment management (master, pairs with unstable) |
-| `home-manager-stable` | release-26.05 Home Manager for the stable darwin config |
-| `home-manager-droid` | Pinned Home Manager revision (HM 24.05) for nix-on-droid |
-| `nix-darwin` | macOS system configuration (master, pairs with unstable) |
-| `nix-darwin-stable` | nix-darwin-26.05 for the stable darwin config |
-| `nix-on-droid` | Android terminal environment (own pinned nixpkgs) |
-| `nixos-hardware` | Hardware-specific modules, re-exported as `nixosModules.hardware.*` |
 | `treefmt-nix` | Multi-tool code formatter |
-| `vicinae` | Application launcher on the `marchyo.shell.enable = false` fallback (the shell has its own) |
-| `noctalia` | noctalia-shell, a Wayland desktop shell |
-| `sops-nix` | Secrets management |
-| `jylhis-design` | Jylhis design system — theme tokens and assets |
-| `flake-compat` | Shim exposing flake outputs to non-flake consumers (non-flake input) |
-| `wallpapper-src` | Source for the wallpapper macOS dynamic-wallpaper tool (non-flake input) |
+| `ncro` | Nix Cache Route Optimizer (`services.ncro.enable`, on by default) |
+| `tinted-schemes` | Base16 scheme catalog, read at eval time (non-flake input) |
+| `disko` | Declarative partitioning for the `disko/` layouts |
+
+Every input that takes a nixpkgs follows the root `nixpkgs`.

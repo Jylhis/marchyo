@@ -8,7 +8,7 @@ Documentation is organized into three trees (mirroring the omarchy model):
 
 - **`docs/`** (this tree) — contributor/system-architecture reference.
 - **[`manual/`](../manual/)** — published end-user documentation (how to *use* marchyo).
-- **[`TODO.md`](../TODO.md)** — the single list of open work.
+- **[`TODO.md`](../TODO.md)** — open work.
 
 ## Contents
 
@@ -21,8 +21,8 @@ Documentation is organized into three trees (mirroring the omarchy model):
   graphics, performance, desktop extras, dictation, launcher, web apps) and
   breaking changes.
 - [gotchas.md](gotchas.md) — the accumulated sharp edges (theme source of truth,
-  design-system v3, font stack, the stylix retirement, the Vicinae gotchas, Plymouth
-  generation, nix-on-droid, ghostty ssh, hyprlock fingerprint, …).
+  design-system v3, font stack, the stylix retirement, the in-shell launcher, Plymouth
+  generation, ghostty ssh, hyprlock fingerprint, …).
 - [ci-and-testing.md](ci-and-testing.md) — commands, the test suite, CI pipeline,
   session-completion checklist.
 

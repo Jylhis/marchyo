@@ -4,6 +4,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Weekly run of everything, including the heavy build checks.
+  schedule:
+    - cron: '37 3 * * 1'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -25,7 +28,11 @@ jobs:
           INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
           fail=0
           for name in $INPUTS; do
-            FLAKE_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' flake.lock) \
+            # The root input may live under a suffixed node (nixpkgs_2) when
+            # another input also has a nixpkgs: resolve the root's alias.
+            NODE=$(jq -er --arg n "$name" '.nodes.root.inputs[$n] // $n' flake.lock) \
+              || { echo "::error::$name missing from flake.lock"; fail=1; continue; }
+            FLAKE_REV=$(jq -er --arg node "$NODE" '.nodes[$node].locked.rev' flake.lock) \
               || { echo "::error::$name missing from flake.lock"; fail=1; continue; }
             DEVENV_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' devenv.lock) \
               || { echo "::error::$name missing from devenv.lock"; fail=1; continue; }
@@ -81,3 +88,26 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build toplevel
         run: nix build --accept-flake-config .#nixosConfigurations.x86_64.config.system.build.toplevel
+  # The heavy checks (legacyPackages.<system>.heavyChecks): Hyprland
+  # --verify-config runs, theme asset builds, the Plymouth theme and shell
+  # wrapper builds, the installer ISO evaluations. Too slow for the PR gate;
+  # weekly and on manual dispatch (`just check-full` locally).
+  heavy:
+    name: Heavy checks (x86_64-linux)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v17
+        with:
+          name: jylhis
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Build heavy checks
+        run: |
+          set -euo pipefail
+          heavy=".#legacyPackages.x86_64-linux.heavyChecks"
+          mapfile -t names < <(nix eval --accept-flake-config --raw "$heavy" \
+            --apply 'c: builtins.concatStringsSep "\n" (builtins.attrNames c)')
+          nix build --accept-flake-config --no-link -L "${names[@]/#/$heavy.}"

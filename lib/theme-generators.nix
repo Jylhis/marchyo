@@ -9,7 +9,7 @@
 # semantic token name to "#rrggbb".
 { lib }:
 let
-  hexByte = import ./hex-byte.nix { inherit lib; };
+  hexByte = lib.fromHexString;
   consoleTable = import ./console-table.nix { inherit lib; };
   tmTheme = import ./base16-tmtheme.nix { inherit lib; };
 
@@ -25,49 +25,61 @@ let
       4
     ];
 
-  # Token -> base16 slot. The 16 exported pairs mirror jylhis-palette.nix's
-  # base16 attrset; the extras get the closest slot by role, which for a tinted
-  # scheme is lossy (border/syn-comment collapse onto text-faint's base03,
-  # accent-hover onto accent's base09, accent-subtle onto bg-subtle's base01).
-  # selection-bg, destructive and the syn-* extras take the slot the base16
-  # styling guidelines name for their role: base02 "Selection Background",
-  # base08 "Variables" and "Diff Deleted" (the red slot), base09 "Integers",
-  # base0C "Support" (built-ins), base0D "Functions". `cursor` shares
-  # accent's slot because it is the same hex as accent; two tokens with one
-  # build hex but different slots make a surface hex swap ambiguous. A token
-  # absent from this table (contour, decorator, scrim, syn-docstring: no
-  # base16 role) keeps its build-variant hex. Shipped to the CLI as
-  # `tokenSlots` in every theme dir's palette.json.
+  # Token -> base16 slot, by role as in jylhis-palette.nix's base16 attrset
+  # (mirrors BASE16 in lib/design/scripts/lib/terminal.mjs, design-desktop(7)):
+  # base00 bg, base01 bg-subtle, base02 selection-bg, base03 text-faint, base04
+  # text-muted, base05 text, base06 text-heading, base07 text-heading again,
+  # base08 status-err, base09 syn-number, base0A status-warn, base0B
+  # syn-string, base0C syn-type, base0D syn-function, base0E syn-keyword, base0F
+  # syn-docstring. base07 is "The Lightest Foreground" (ANSI 15, bright white),
+  # so no ground takes it and text-heading keeps base06.
+  # Extras take the slot of the role they share a hex with: since design 5.0
+  # accent, link, rule and focus-ring (light) are the ink, so they take base05
+  # (text); accent-hover is text-heading (base06), accent-subtle is selection-bg
+  # (base02). Two tokens with one build hex but different slots would make a
+  # surface hex swap ambiguous, so the aliases follow their target. Lossy
+  # leftovers: surface and surface-raised fall to base01 (nearest ground),
+  # border to base03 and border-strong to base04, destructive to base08 (the
+  # red slot). Tokens with no base16 role are left out and keep their
+  # build-variant hex: primary and its on-/hi/lo/edge shades, cursor (an alias
+  # of primary), the bevels, the chart colours, scrim, status-info,
+  # link-underline-hover. That is the least surprising choice: the signal is
+  # the design's own and a tinted scheme has no counterpart for it. Shipped to
+  # the CLI as `tokenSlots` in every theme dir's palette.json.
   tokenSlots = {
     bg = "base00";
     "bg-subtle" = "base01";
-    surface = "base02";
-    "surface-raised" = "base07";
+    surface = "base01";
+    "surface-raised" = "base01";
     "text-faint" = "base03";
     "text-muted" = "base04";
     text = "base05";
     "text-heading" = "base06";
     "status-err" = "base08";
-    accent = "base09";
-    cursor = "base09";
+    "syn-number" = "base09";
     "status-warn" = "base0A";
     "syn-string" = "base0B";
     "syn-type" = "base0C";
-    "status-info" = "base0D";
+    "syn-function" = "base0D";
     "syn-keyword" = "base0E";
-    brand = "base0F";
+    "syn-docstring" = "base0F";
+    accent = "base05";
+    link = "base05";
+    rule = "base05";
+    "chart-ink" = "base05";
+    brand = "base05";
+    contour = "base04";
+    decorator = "base04";
     border = "base03";
     "border-strong" = "base04";
-    "accent-hover" = "base09";
-    "accent-subtle" = "base01";
+    "accent-hover" = "base06";
+    "accent-subtle" = "base02";
     "status-ok" = "base0B";
     "syn-comment" = "base03";
     "selection-bg" = "base02";
     destructive = "base08";
     "syn-variable" = "base08";
-    "syn-number" = "base09";
     "syn-builtin" = "base0C";
-    "syn-function" = "base0D";
   };
 
   # Token resolver for a base16 scheme: the slot when tokenSlots maps the
@@ -86,7 +98,9 @@ let
     general:col.inactive_border ${rgba (resolve "border-strong") "ff"}
   '';
 
-  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix.
+  # fzf `--color` string, mirroring the role->token map in modules/home/fzf.nix
+  # and emitFzf in lib/design/scripts/lib/terminal.mjs. Links are ink, so a
+  # match is marked by weight and underline, not hue.
   # `green` is the ANSI green the `marker` role uses.
   fzfOptsText =
     resolve: green:
@@ -94,15 +108,15 @@ let
     + lib.concatStringsSep "," [
       "fg:${resolve "text"}"
       "bg:${resolve "bg"}"
-      "hl:${resolve "accent"}"
+      "hl:${resolve "text"}:underline:bold"
       "fg+:${resolve "text-heading"}"
-      "bg+:${resolve "accent-subtle"}"
-      "hl+:${resolve "accent-hover"}"
+      "bg+:${resolve "selection-bg"}"
+      "hl+:${resolve "text-heading"}:underline:bold"
       "info:${resolve "text-muted"}"
       "marker:${green}"
-      "prompt:${resolve "accent"}"
-      "spinner:${resolve "accent"}"
-      "pointer:${resolve "accent"}"
+      "prompt:${resolve "text"}"
+      "spinner:${resolve "text-muted"}"
+      "pointer:${resolve "rule"}"
       "header:${resolve "text-muted"}"
       "border:${resolve "border"}"
       "separator:${resolve "border"}"
@@ -398,6 +412,147 @@ let
         background-color: "${s.base00}"
   '';
 
+  # Application theme surfaces (tmux, fcitx5), from base16 slots;
+  # core/src/theme-surfaces.ts ports each one byte for byte.
+
+  # tmux status line, messages, pane borders and pane background. Sourced from the
+  # tmux config (build-time copy first, current-theme copy after it).
+  tmuxConfText = s: ''
+    set -g status-style "fg=${s.base05},bg=${s.base01}"
+    set -g message-style "fg=${s.base05},bg=${s.base02}"
+    set -g message-command-style "fg=${s.base05},bg=${s.base02}"
+    set -g mode-style "fg=${s.base05},bg=${s.base02}"
+    set -g pane-border-style "fg=${s.base03}"
+    set -g pane-active-border-style "fg=${s.base0D}"
+    set -g window-style "fg=${s.base05},bg=${s.base00}"
+    set -g window-active-style "fg=${s.base05},bg=${s.base00}"
+    set -g window-status-style "fg=${s.base04},bg=${s.base01}"
+    set -g window-status-current-style "fg=${s.base00},bg=${s.base0D},bold"
+    set -g window-status-activity-style "fg=${s.base0A},bg=${s.base01}"
+    set -g window-status-bell-style "fg=${s.base08},bg=${s.base01}"
+    set -g clock-mode-colour "${s.base0D}"
+    set -g display-panes-colour "${s.base04}"
+    set -g display-panes-active-colour "${s.base0D}"
+  '';
+
+  # fcitx5 classicui theme; the svg glyphs are linked in beside it.
+  fcitx5ThemeText = s: ''
+    [Metadata]
+    Name=Marchyo
+    Version=1
+    Author=Marchyo
+    Description=Generated from the current Marchyo theme
+    ScaleWithDPI=True
+
+    [InputPanel]
+    NormalColor=${s.base05}
+    HighlightCandidateColor=${s.base00}
+    HighlightColor=${s.base00}
+    HighlightBackgroundColor=${s.base0D}
+    PageButtonAlignment=Last Candidate
+
+    [InputPanel/TextMargin]
+    Left=12
+    Right=12
+    Top=8
+    Bottom=8
+
+    [InputPanel/ContentMargin]
+    Left=6
+    Right=6
+    Top=6
+    Bottom=6
+
+    [InputPanel/Background]
+    Color=${s.base00}
+    BorderColor=${s.base02}
+    BorderWidth=2
+
+    [InputPanel/Background/Margin]
+    Left=2
+    Right=2
+    Top=2
+    Bottom=2
+
+    [InputPanel/Highlight]
+    Color=${s.base0D}
+
+    [InputPanel/Highlight/Margin]
+    Left=8
+    Right=8
+    Top=5
+    Bottom=5
+
+    [InputPanel/PrevPage]
+    Image=prev.svg
+
+    [InputPanel/PrevPage/ClickMargin]
+    Left=6
+    Right=6
+    Top=5
+    Bottom=5
+
+    [InputPanel/NextPage]
+    Image=next.svg
+
+    [InputPanel/NextPage/ClickMargin]
+    Left=6
+    Right=6
+    Top=5
+    Bottom=5
+
+    [Menu]
+    NormalColor=${s.base05}
+    HighlightCandidateColor=${s.base00}
+
+    [Menu/Background]
+    Color=${s.base00}
+    BorderColor=${s.base02}
+    BorderWidth=2
+
+    [Menu/Background/Margin]
+    Left=2
+    Right=2
+    Top=2
+    Bottom=2
+
+    [Menu/ContentMargin]
+    Left=6
+    Right=6
+    Top=6
+    Bottom=6
+
+    [Menu/CheckBox]
+    Image=radio.svg
+
+    [Menu/SubMenu]
+    Image=arrow.svg
+
+    [Menu/Highlight]
+    Color=${s.base0D}
+
+    [Menu/Highlight/Margin]
+    Left=8
+    Right=8
+    Top=5
+    Bottom=5
+
+    [Menu/Separator]
+    Color=${s.base03}
+
+    [Menu/TextMargin]
+    Left=12
+    Right=12
+    Top=8
+    Bottom=8
+  '';
+
+  # File name -> text for every application surface of one theme.
+  appSurfaceTexts = s: {
+    "tmux.conf" = tmuxConfText s;
+    "fcitx5-theme.conf" = fcitx5ThemeText s;
+  };
+
   # Expected output for the CLI parity fixture: every generator `marchyo theme
   # generate` ports, applied to a base16 palette and the build-variant token
   # hexes the CLI reads from palette.json.
@@ -424,6 +579,7 @@ let
       "lazygit.yml" = lazygitText base16;
       "spotify-player-theme.toml" = spotifyPlayerThemeText base16;
       "gdu.yaml" = gduText base16;
+      surfaces = appSurfaceTexts base16;
       shade = shadeRgba (resolve "text");
       tokens = lib.genAttrs (lib.attrNames tokens) resolve;
     };
@@ -448,6 +604,9 @@ in
     lazygitText
     spotifyPlayerThemeText
     gduText
+    tmuxConfText
+    fcitx5ThemeText
+    appSurfaceTexts
     parityExpected
     ;
 }

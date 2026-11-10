@@ -1,0 +1,11 @@
+"use strict";
+const assert = require("node:assert/strict");
+const B = require("../../shell/Commons/Battery.js");
+assert.equal(B.glyph(0, false, false), B.glyph(-5, false, false));
+assert.equal(B.glyph(100, false, false), B.glyph(150, false, false));
+assert.notEqual(B.glyph(30, true, false), B.glyph(30, false, false));
+assert.equal(B.holding(true, true, 2, 2, 3, 80), true);
+assert.equal(B.holding(true, true, 3, 2, 3, 80), true);
+assert.equal(B.holding(true, true, 3, 2, 3, 100), false);
+assert.equal(B.holding(true, false, 2, 2, 3, 80), false);
+console.log("battery: passed");

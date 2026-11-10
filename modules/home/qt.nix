@@ -12,12 +12,11 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 in
 {
   config = lib.mkIf desktopEnabled {

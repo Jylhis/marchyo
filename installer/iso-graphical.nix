@@ -4,13 +4,10 @@
 # It provides a full desktop environment with Calamares installer and helpful
 # tools for both GUI and CLI-based installation workflows.
 #
-# NOT a flake output: nothing in flake.nix / outputs.nix / the Justfile / CI
-# references this file, so `nix flake check` never evaluates it and it rots
-# silently across nixpkgs bumps (it was carrying two removed package aliases).
-# Evaluate it by hand after updating flake.lock:
+# Flake output packages.x86_64-linux.iso-graphical; `nix flake check` evaluates
+# its drvPath (checks.x86_64-linux.eval-iso-graphical) without building it. Build:
 #
-#   nix-build '<nixpkgs/nixos>' -I nixos-config=installer/iso-graphical.nix \
-#     -A config.system.build.isoImage
+#   just iso graphical   # or: nix build .#iso-graphical
 
 {
   config,

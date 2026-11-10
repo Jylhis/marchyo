@@ -4,10 +4,10 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Services
 
-// The one tooltip surface: a click-through overlay layer just below the top bar,
-// centered under the hovered bar item (clamped to the screen). Driven by the
-// shared Services/Tooltip singleton; every BarItem and tray icon writes there,
-// and this window is instantiated once from shell.qml.
+// The one tooltip surface: a click-through overlay layer just below the top bar
+// (above a bottom bar), centered on the hovered bar item (clamped to the
+// screen). Driven by the shared Services/Tooltip singleton; every BarItem and
+// tray icon writes there, and this window is instantiated once from shell.qml.
 PanelWindow {
     id: root
 
@@ -30,10 +30,15 @@ PanelWindow {
     }
     screen: targetScreen
 
-    anchors.top: true
+    anchors.top: !Style.barBottom
+    anchors.bottom: Style.barBottom
     anchors.left: true
     // barMarginV is 0 in strip mode, so this reproduces the strip look.
+    // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+    // qmllint disable missing-property
     margins.top: Style.barHeight + Style.barMarginV + 8
+    margins.bottom: Style.barHeight + Style.barMarginV + 8
+    // qmllint enable missing-property
 
     readonly property int tipX: {
         const sw = root.targetScreen ? root.targetScreen.width : 0;
@@ -42,7 +47,10 @@ PanelWindow {
             x = Math.max(0, Math.min(x, sw - implicitWidth));
         return Math.round(x);
     }
+    // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+    // qmllint disable missing-property
     margins.left: tipX
+    // qmllint enable missing-property
 
     implicitWidth: card.implicitWidth
     implicitHeight: card.implicitHeight
@@ -58,12 +66,12 @@ PanelWindow {
         opacity: root.visible ? 1.0 : 0.0
         Behavior on opacity {
             NumberAnimation {
-                duration: 100
+                duration: Style.duration(100)
             }
         }
         radius: Style.osdRadius
-        color: Qt.alpha(Color.surface, Style.surfaceAlpha)
-        border.color: Color.border
+        color: Qt.alpha(Colors.surface, Style.surfaceAlpha)
+        border.color: Colors.border
         border.width: 1
         implicitWidth: label.implicitWidth + Style.paddingH
         implicitHeight: label.implicitHeight + Math.round(Style.spacing / 2)
@@ -72,7 +80,7 @@ PanelWindow {
             id: label
             anchors.centerIn: parent
             text: Tooltip.text
-            color: Color.text
+            color: Colors.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
         }

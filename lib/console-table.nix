@@ -4,7 +4,7 @@
 # emit a per-theme `console.txt`. Pure string/number work, IFD-free.
 { lib }:
 let
-  hexByte = import ./hex-byte.nix { inherit lib; };
+  hexByte = lib.fromHexString;
 in
 hexes:
 let

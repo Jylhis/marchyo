@@ -2,21 +2,16 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   inherit (lib) mkIf;
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 
-  # The unified shell locks in-process (Phase 4); hyprlock stands down under
-  # the same mutual-exclusion cutover as waybar/mako/swayosd.
-  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
-  hasOsConfig = osConfig != { } && osConfig ? marchyo;
-  cfg = if hasOsConfig then osConfig.marchyo.theme else null;
-
-  fontScale = if cfg != null then cfg.fontScale else 1.0;
+  # The unified shell locks in-process (Phase 4), so hyprlock stands down.
+  shellEnabled = osConfig.marchyo.shell.enable;
+  inherit (osConfig.marchyo.theme) fontScale;
   fs = import ../../lib/font-scale.nix {
     inherit lib;
     scale = fontScale;
@@ -33,7 +28,7 @@ in
     programs.hyprlock = {
       enable = true;
       sourceFirst = true;
-      settings = mkIf (cfg != null && cfg.enable) {
+      settings = mkIf osConfig.marchyo.theme.enable {
         source = colorsInclude;
 
         general = {
@@ -52,7 +47,7 @@ in
         # Gate on the host running fprintd: hyprlock's fprintd backend aborts when
         # the service is missing, breaking the lock screen on readerless desktops.
         auth = {
-          "fingerprint:enabled" = osConfig.services.fprintd.enable or false;
+          "fingerprint:enabled" = osConfig.services.fprintd.enable;
         };
 
         background = [

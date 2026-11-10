@@ -1,0 +1,990 @@
+{
+  "$description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode — paper and black, one international-orange accent.",
+  "$extensions": {
+    "com.jylhis": {
+      "meta": {
+        "name": "Jylhis Design System",
+        "description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode — paper and black, one international-orange accent."
+      },
+      "theme": {
+        "name": "Jylhis",
+        "slug": "jylhis",
+        "blurb": "one theme, two modes: warm paper with one SBB red signal by day, amber on black by night; ink links, hairline panels, bevelled controls",
+        "modes": {
+          "light": "Paper — ink on warm paper",
+          "dark": "Amber — amber on terminal black"
+        }
+      },
+      "groups": {
+        "grounds": {
+          "label": "Grounds",
+          "blurb": "page backgrounds and card surfaces, four tonal steps",
+          "members": [
+            "bg",
+            "bg-subtle",
+            "surface",
+            "surface-raised",
+            "scrim"
+          ]
+        },
+        "ink": {
+          "label": "Ink",
+          "blurb": "what is drawn on the sheet: text in every weight, and label, the frame hue for field names, table heads and keys",
+          "members": [
+            "text-heading",
+            "text",
+            "text-muted",
+            "text-faint",
+            "label"
+          ]
+        },
+        "primary": {
+          "label": "Primary",
+          "blurb": "the one signal colour (SBB red by day, amber by night) and its bevel edges; one primary per page and the mark chevron, nothing else",
+          "members": [
+            "primary",
+            "on-primary",
+            "primary-hi",
+            "primary-lo",
+            "primary-edge"
+          ]
+        },
+        "accent": {
+          "label": "Links and focus",
+          "blurb": "ink links, the focus ring, selection and the cursor; accent, accent-hover and accent-subtle are deprecated aliases kept for 4.x readers",
+          "members": [
+            "link",
+            "link-underline-hover",
+            "focus-ring",
+            "accent",
+            "accent-hover",
+            "accent-subtle",
+            "selection-bg",
+            "cursor"
+          ]
+        },
+        "consequence": {
+          "label": "Consequence",
+          "blurb": "the irreversible-action role: ink by day so it never reads as the primary, red by night",
+          "members": [
+            "destructive"
+          ]
+        },
+        "line": {
+          "label": "Line",
+          "blurb": "the hairline, the strong border for field edges and table heads, and the 2px ink rule",
+          "members": [
+            "border",
+            "border-strong",
+            "rule"
+          ]
+        },
+        "bevel": {
+          "label": "Bevel",
+          "blurb": "the two-tone bevel and ink bottom line of pressable controls, and only of those",
+          "members": [
+            "bevel-face",
+            "bevel-hi",
+            "bevel-lo",
+            "bevel-edge"
+          ]
+        },
+        "modus": {
+          "label": "Modus",
+          "blurb": "syntax role taxonomy — keyword, string, type, comment; a theme maps these to its own syntax voice, never repurposed for UI",
+          "members": [
+            "syn-keyword",
+            "syn-string",
+            "syn-number",
+            "syn-function",
+            "syn-builtin",
+            "syn-type",
+            "syn-variable",
+            "syn-comment",
+            "syn-docstring"
+          ]
+        },
+        "signal": {
+          "label": "Signal",
+          "blurb": "status colors — error, warning, ok, info; always paired with a glyph + word (themes may not drop them to grayscale)",
+          "members": [
+            "status-err",
+            "status-warn",
+            "status-ok",
+            "status-info"
+          ]
+        },
+        "chart": {
+          "label": "Chart",
+          "blurb": "the W.E.B. Du Bois palette, inside charts only; every bar is labelled directly",
+          "members": [
+            "chart-1",
+            "chart-2",
+            "chart-3",
+            "chart-4",
+            "chart-5",
+            "chart-ink"
+          ]
+        },
+        "spectrum": {
+          "label": "Spectrum",
+          "blurb": "the 16-slot ANSI terminal palette; slot 11 is the accent in Amber only, a true dark yellow in Paper",
+          "members": [
+            "black",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "white",
+            "bright-black",
+            "bright-red",
+            "bright-green",
+            "bright-yellow",
+            "bright-blue",
+            "bright-magenta",
+            "bright-cyan",
+            "bright-white"
+          ]
+        }
+      },
+      "typography": {
+        "roles": {
+          "display": {
+            "weight": 500,
+            "lineHeight": 1.05,
+            "letterSpacing": "0"
+          },
+          "body": {
+            "sizeBase": "1.125rem",
+            "lineHeight": 1.6
+          },
+          "mono": {},
+          "numeric": {
+            "notes": "figures, amounts and readouts — IBM Plex Mono with tabular-nums; declared as --font-numeric"
+          },
+          "heading": {
+            "inherits": "display",
+            "lineHeight": 1.15,
+            "letterSpacing": "0"
+          },
+          "label": {
+            "inherits": "mono",
+            "weight": 500,
+            "letterSpacing": "0",
+            "transform": "none"
+          }
+        },
+        "tuiFallback": "\"IBM Plex Mono\", \"JetBrains Mono\", Iosevka, \"Fira Mono\", \"DejaVu Sans Mono\", monospace",
+        "scaling": {
+          "rootFontSize": "user-agent",
+          "minRelativeEm": 0.85,
+          "fluid": "clamp(<rem-min>, <rem-base> + <vw>, <rem-max>)",
+          "targets": {
+            "resizeText": "200%",
+            "reflowWidth": "320px",
+            "reflowZoom": "400%"
+          },
+          "textSpacing": {
+            "lineHeight": 1.5,
+            "letterSpacing": "0.12em",
+            "wordSpacing": "0.16em",
+            "paragraphSpacing": "2em"
+          },
+          "notes": "Every step is a rem multiple of the user agent's root font size — the system never sets `html { font-size }`. readableFloor is the smallest step for text a user must read; absoluteFloor is the hard floor for glanceable chrome. Specified in design(7)."
+        },
+        "notes": "Three families: Jost for display (never bolder than 500), Fira Sans for text, IBM Plex Mono for labels, data, code and figures. Labels are lowercase in content, never upper-cased by CSS.",
+        "scaleAliases": [
+          "display",
+          "h1",
+          "h2",
+          "lead",
+          "h3",
+          "body",
+          "ui",
+          "small",
+          "data",
+          "label"
+        ]
+      },
+      "sound": {
+        "tap": {
+          "theme": "bell",
+          "meaning": "generic acknowledgement"
+        },
+        "error": {
+          "theme": "dialog-error",
+          "meaning": "something went wrong"
+        },
+        "complete": {
+          "theme": "complete",
+          "meaning": "long task finished"
+        }
+      }
+    }
+  },
+  "font": {
+    "$type": "fontFamily",
+    "display": {
+      "$value": [
+        "Jost",
+        "Futura",
+        "Century Gothic",
+        "sans-serif"
+      ]
+    },
+    "body": {
+      "$value": [
+        "Fira Sans",
+        "Source Sans 3",
+        "system-ui",
+        "sans-serif"
+      ]
+    },
+    "mono": {
+      "$value": [
+        "IBM Plex Mono",
+        "ui-monospace",
+        "Menlo",
+        "monospace"
+      ]
+    },
+    "numeric": {
+      "$value": "{font.mono}"
+    }
+  },
+  "type": {
+    "$description": "Named typography styles. Jost for display (weight 500), Fira Sans for text, IBM Plex Mono for data, labels and code. The --type-scale-N variables are deprecated aliases (0 display, 1 h1, 2 h2, 3 lead, 4 h3, 5 body, 6 ui, 7 small, 8 data, 9 label).",
+    "style": {
+      "$type": "typography",
+      "display": {
+        "$value": {
+          "fontFamily": "{font.display}",
+          "fontSize": {
+            "value": 3.625,
+            "unit": "rem"
+          },
+          "fontWeight": 500,
+          "lineHeight": 1.05,
+          "letterSpacing": {
+            "value": 0,
+            "unit": "px"
+          }
+        }
+      },
+      "h1": {
+        "$value": {
+          "fontFamily": "{font.display}",
+          "fontSize": {
+            "value": 2.125,
+            "unit": "rem"
+          },
+          "fontWeight": 500,
+          "lineHeight": 1.15
+        }
+      },
+      "h2": {
+        "$value": {
+          "fontFamily": "{font.display}",
+          "fontSize": {
+            "value": 1.5,
+            "unit": "rem"
+          },
+          "fontWeight": 500,
+          "lineHeight": 1.25
+        }
+      },
+      "h3": {
+        "$value": {
+          "fontFamily": "{font.display}",
+          "fontSize": {
+            "value": 1.1875,
+            "unit": "rem"
+          },
+          "fontWeight": 500,
+          "lineHeight": 1.3
+        }
+      },
+      "lead": {
+        "$value": {
+          "fontFamily": "{font.body}",
+          "fontSize": {
+            "value": 1.25,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.6
+        }
+      },
+      "body": {
+        "$value": {
+          "fontFamily": "{font.body}",
+          "fontSize": {
+            "value": 1.125,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.6
+        }
+      },
+      "ui": {
+        "$value": {
+          "fontFamily": "{font.body}",
+          "fontSize": {
+            "value": 1,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      },
+      "ui-strong": {
+        "$value": {
+          "fontFamily": "{font.body}",
+          "fontSize": {
+            "value": 1,
+            "unit": "rem"
+          },
+          "fontWeight": 600,
+          "lineHeight": 1.4
+        }
+      },
+      "small": {
+        "$value": {
+          "fontFamily": "{font.body}",
+          "fontSize": {
+            "value": 0.875,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.45
+        }
+      },
+      "data": {
+        "$value": {
+          "fontFamily": "{font.mono}",
+          "fontSize": {
+            "value": 0.875,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.3
+        }
+      },
+      "label": {
+        "$value": {
+          "fontFamily": "{font.mono}",
+          "fontSize": {
+            "value": 0.8125,
+            "unit": "rem"
+          },
+          "fontWeight": 500,
+          "lineHeight": 1.3
+        }
+      },
+      "code": {
+        "$value": {
+          "fontFamily": "{font.mono}",
+          "fontSize": {
+            "value": 0.875,
+            "unit": "rem"
+          },
+          "fontWeight": 400,
+          "lineHeight": 1.55
+        }
+      }
+    },
+    "readable-min": {
+      "$type": "dimension",
+      "$value": {
+        "value": 0.875,
+        "unit": "rem"
+      }
+    },
+    "floor": {
+      "$type": "dimension",
+      "$value": {
+        "value": 0.8125,
+        "unit": "rem"
+      }
+    }
+  },
+  "space": {
+    "$type": "dimension",
+    "2xs": {
+      "$value": {
+        "value": 0.125,
+        "unit": "rem"
+      }
+    },
+    "xs": {
+      "$value": {
+        "value": 0.25,
+        "unit": "rem"
+      }
+    },
+    "sm": {
+      "$value": {
+        "value": 0.5,
+        "unit": "rem"
+      }
+    },
+    "md": {
+      "$value": {
+        "value": 1,
+        "unit": "rem"
+      }
+    },
+    "lg": {
+      "$value": {
+        "value": 1.5,
+        "unit": "rem"
+      }
+    },
+    "xl": {
+      "$value": {
+        "value": 2,
+        "unit": "rem"
+      }
+    },
+    "2xl": {
+      "$value": {
+        "value": 3,
+        "unit": "rem"
+      }
+    },
+    "3xl": {
+      "$value": {
+        "value": 4,
+        "unit": "rem"
+      }
+    }
+  },
+  "layout": {
+    "$type": "dimension",
+    "max": {
+      "$value": {
+        "value": 1120,
+        "unit": "px"
+      }
+    },
+    "measure": {
+      "$value": {
+        "value": 65,
+        "unit": "ch"
+      }
+    },
+    "rail": {
+      "$value": {
+        "value": 16,
+        "unit": "rem"
+      }
+    },
+    "content-max": {
+      "$value": {
+        "value": 72,
+        "unit": "ch"
+      }
+    },
+    "margin-width": {
+      "$value": {
+        "value": 16,
+        "unit": "rem"
+      }
+    },
+    "gap": {
+      "$value": {
+        "value": 2.5,
+        "unit": "rem"
+      }
+    },
+    "padding-mobile": {
+      "$value": {
+        "value": 1.25,
+        "unit": "rem"
+      }
+    }
+  },
+  "radius": {
+    "$type": "dimension",
+    "$description": "One corner: none (0) for rules, cells and the halftone field, default (2px) for everything else. xs to pill are deprecated aliases of those two, kept until 6.0.",
+    "none": {
+      "$value": {
+        "value": 0,
+        "unit": "px"
+      }
+    },
+    "default": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    },
+    "xs": {
+      "$value": "{radius.none}"
+    },
+    "sm": {
+      "$value": "{radius.default}"
+    },
+    "md": {
+      "$value": "{radius.default}"
+    },
+    "lg": {
+      "$value": "{radius.default}"
+    },
+    "xl": {
+      "$value": "{radius.default}"
+    },
+    "pill": {
+      "$value": "{radius.default}"
+    }
+  },
+  "breakpoint": {
+    "$type": "dimension",
+    "$description": "em units, resolved against the browser's default font size (never a page `html { font-size }`). 40em/53.75em are 640px/860px at the 16px default. Hand-authored @media rules repeat these values literally with a `/* breakpoints.<name> */` comment.",
+    "sm": {
+      "$value": {
+        "value": 40,
+        "unit": "em"
+      }
+    },
+    "md": {
+      "$value": {
+        "value": 53.75,
+        "unit": "em"
+      }
+    }
+  },
+  "z": {
+    "$type": "number",
+    "$description": "Semantic layering scale. `skip` sits above everything; scrim/modal/toast are the overlay slots.",
+    "base": {
+      "$value": 0
+    },
+    "sticky": {
+      "$value": 10
+    },
+    "scrim": {
+      "$value": 40
+    },
+    "modal": {
+      "$value": 50
+    },
+    "toast": {
+      "$value": 60
+    },
+    "skip": {
+      "$value": 100
+    }
+  },
+  "border": {
+    "$type": "dimension",
+    "$description": "hairline = default component border; rule = ink rule; bevel and bevel-edge = raised controls; focus mirrors focus.width (validated); marker = selected-item stripe per design(7) Keyboard.",
+    "hairline": {
+      "$value": {
+        "value": 1,
+        "unit": "px"
+      }
+    },
+    "rule": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    },
+    "bevel": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    },
+    "bevel-edge": {
+      "$value": {
+        "value": 3,
+        "unit": "px"
+      }
+    },
+    "focus": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    },
+    "marker": {
+      "$value": {
+        "value": 3,
+        "unit": "px"
+      }
+    }
+  },
+  "focus": {
+    "$type": "dimension",
+    "$description": "ring stroke + offset; colour is always `accent`. See design(7) Keyboard.",
+    "width": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    },
+    "offset": {
+      "$value": {
+        "value": 2,
+        "unit": "px"
+      }
+    }
+  },
+  "density": {
+    "$description": "Three scopes on <html> via data-density. Only the box changes; type size does not. 40px is the default floor and 32px the absolute (fine-pointer) one; coarse pointers get 44px whatever the attribute says. The spacing steps below lg remap with the tier because a tighter row with the same gutters just looks cramped.",
+    "$extensions": {
+      "com.jylhis": {
+        "tui": {
+          "lineHeight": 1.3,
+          "rowPadY": "2px",
+          "gapInline": "1ch",
+          "gapBlock": "1 line"
+        }
+      }
+    },
+    "default": {
+      "cell-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 40,
+          "unit": "px"
+        }
+      },
+      "control-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 40,
+          "unit": "px"
+        }
+      },
+      "touch-min": {
+        "$type": "dimension",
+        "$value": {
+          "value": 40,
+          "unit": "px"
+        }
+      },
+      "gutter": {
+        "$type": "dimension",
+        "$value": "{space.md}"
+      },
+      "row-gap": {
+        "$type": "dimension",
+        "$value": "{space.sm}"
+      }
+    },
+    "comfortable": {
+      "cell-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 48,
+          "unit": "px"
+        }
+      },
+      "control-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 48,
+          "unit": "px"
+        }
+      },
+      "touch-min": {
+        "$type": "dimension",
+        "$value": {
+          "value": 48,
+          "unit": "px"
+        }
+      },
+      "gutter": {
+        "$type": "dimension",
+        "$value": "{space.lg}"
+      },
+      "row-gap": {
+        "$type": "dimension",
+        "$value": "{space.md}"
+      },
+      "space": {
+        "$type": "dimension",
+        "2xs": {
+          "$value": {
+            "value": 0.1875,
+            "unit": "rem"
+          }
+        },
+        "xs": {
+          "$value": {
+            "value": 0.375,
+            "unit": "rem"
+          }
+        },
+        "sm": {
+          "$value": {
+            "value": 0.625,
+            "unit": "rem"
+          }
+        },
+        "md": {
+          "$value": {
+            "value": 1.25,
+            "unit": "rem"
+          }
+        }
+      }
+    },
+    "compact": {
+      "cell-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 32,
+          "unit": "px"
+        }
+      },
+      "control-h": {
+        "$type": "dimension",
+        "$value": {
+          "value": 32,
+          "unit": "px"
+        }
+      },
+      "touch-min": {
+        "$type": "dimension",
+        "$value": {
+          "value": 32,
+          "unit": "px"
+        }
+      },
+      "gutter": {
+        "$type": "dimension",
+        "$value": "{space.sm}"
+      },
+      "row-gap": {
+        "$type": "dimension",
+        "$value": "{space.xs}"
+      },
+      "space": {
+        "$type": "dimension",
+        "2xs": {
+          "$value": {
+            "value": 0.125,
+            "unit": "rem"
+          }
+        },
+        "xs": {
+          "$value": {
+            "value": 0.1875,
+            "unit": "rem"
+          }
+        },
+        "sm": {
+          "$value": {
+            "value": 0.375,
+            "unit": "rem"
+          }
+        },
+        "md": {
+          "$value": {
+            "value": 0.75,
+            "unit": "rem"
+          }
+        }
+      }
+    },
+    "coarse-pointer-floor": {
+      "$type": "dimension",
+      "$value": {
+        "value": 44,
+        "unit": "px"
+      }
+    }
+  },
+  "motion": {
+    "$type": "transition",
+    "fast": {
+      "$value": {
+        "duration": {
+          "value": 150,
+          "unit": "ms"
+        },
+        "delay": {
+          "value": 0,
+          "unit": "ms"
+        },
+        "timingFunction": [
+          0.25,
+          0.1,
+          0.25,
+          1
+        ]
+      }
+    },
+    "base": {
+      "$value": {
+        "duration": {
+          "value": 250,
+          "unit": "ms"
+        },
+        "delay": {
+          "value": 0,
+          "unit": "ms"
+        },
+        "timingFunction": [
+          0.2,
+          0.6,
+          0.2,
+          1
+        ]
+      }
+    },
+    "slow": {
+      "$value": {
+        "duration": {
+          "value": 300,
+          "unit": "ms"
+        },
+        "delay": {
+          "value": 0,
+          "unit": "ms"
+        },
+        "timingFunction": [
+          0.16,
+          1,
+          0.3,
+          1
+        ]
+      }
+    },
+    "long": {
+      "$value": {
+        "duration": {
+          "value": 480,
+          "unit": "ms"
+        },
+        "delay": {
+          "value": 0,
+          "unit": "ms"
+        },
+        "timingFunction": [
+          0.2,
+          0.8,
+          0.2,
+          1
+        ]
+      },
+      "$description": "the long ease-out for drawn and typed entrances (line-extend, readout); no overshoot, the system bans bounce"
+    },
+    "press": {
+      "$value": {
+        "duration": {
+          "value": 80,
+          "unit": "ms"
+        },
+        "delay": {
+          "value": 0,
+          "unit": "ms"
+        },
+        "timingFunction": [
+          0,
+          0,
+          0.58,
+          1
+        ]
+      },
+      "$description": "pressing a bevelled control: the shortest ease-out, nothing after it"
+    }
+  },
+  "foreground": {
+    "$type": "color",
+    "accent": {
+      "$value": "{color.bg}",
+      "$description": "label on the accent fill — primary button",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 4.5
+        }
+      }
+    },
+    "accent-hover": {
+      "$value": "{color.bg}",
+      "$description": "label on the accent :hover/:active fill",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 4.5
+        }
+      }
+    },
+    "destructive": {
+      "$value": "{color.bg}",
+      "$description": "label on the destructive fill — irreversible button",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 4.5
+        }
+      }
+    },
+    "bg-subtle": {
+      "$value": "{color.text}",
+      "$description": "body on the subtle fill — code, zebra",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 7
+        }
+      }
+    },
+    "surface": {
+      "$value": "{color.text}",
+      "$description": "body on a card surface",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 7
+        }
+      }
+    },
+    "surface-raised": {
+      "$value": "{color.text}",
+      "$description": "body on a raised plate / modal",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 7
+        }
+      }
+    },
+    "selection-bg": {
+      "$value": "{color.text}",
+      "$description": "selected text on the selection highlight",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 7
+        }
+      }
+    },
+    "primary": {
+      "$value": "{color.on-primary}",
+      "$description": "text on primary",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 4.5
+        }
+      }
+    }
+  },
+  "texture": {
+    "$type": "dimension",
+    "$description": "The halftone field: one per page. Dot colour is the overlay.halftone-dot colour.",
+    "halftone-pitch": {
+      "$value": {
+        "value": 6,
+        "unit": "px"
+      }
+    },
+    "halftone-dot-radius": {
+      "$value": {
+        "value": 1.1,
+        "unit": "px"
+      }
+    }
+  }
+}

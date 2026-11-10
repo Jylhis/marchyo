@@ -1,6 +1,5 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -16,6 +15,10 @@
     };
 
     nh.enable = true;
+    zoxide = {
+      enable = true;
+      options = [ "--cmd cd" ];
+    };
     ripgrep = {
       enable = true;
       arguments = [ "--smart-case" ];
@@ -32,6 +35,6 @@
   };
 
   # FreeDesktop trash CLI. Intentionally does NOT alias `rm`: changing rm
-  # semantics in a shared flake surprises consumers. Linux-only (not macOS Trash).
-  home.packages = lib.optionals (!pkgs.stdenv.hostPlatform.isDarwin) [ pkgs.trash-cli ];
+  # semantics in a shared flake surprises consumers.
+  home.packages = [ pkgs.trash-cli ];
 }

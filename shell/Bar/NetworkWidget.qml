@@ -17,12 +17,14 @@ BarItem {
     text: {
         if (!activeDevice)
             return "󰤭";
+        if (NetworkStatus.restricted)
+            return "󰤫";
         if (activeDevice.type === DeviceType.Wired)
             return "󰈀";
         return ssid.length > 0 ? "󰤨 " + NetworkStatus.signalStrength : "󰤨";
     }
-    textColor: activeDevice ? Color.text : Color.textFaint
-    tooltipText: NetworkStatus.tooltipText
+    textColor: !activeDevice ? Colors.textFaint : (NetworkStatus.restricted ? Colors.statusWarn : Colors.text)
+    tooltipText: NetworkStatus.restricted ? NetworkStatus.tooltipText + "  (" + NetworkStatus.connectivity.toLowerCase() + ")" : NetworkStatus.tooltipText
 
     onClicked: PanelManager.toggle("network", root)
 }

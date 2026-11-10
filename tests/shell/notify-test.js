@@ -207,12 +207,129 @@ test("matchRule returns the first matching rule", () => {
   assert.equal(Notify.matchRule(rs, "discord", "").overrideDuration, 1000);
 });
 
+test("detectCodes finds codes next to a keyword", () => {
+  const cases = [
+    ["Your verification code is 482913", "482913"],
+    ["482 913 is your Google verification code", "482913"],
+    ["G-482913 is your Google verification code", "482913"],
+    ["Use code A9F3K2 to sign in", "A9F3K2"],
+    ["Your OTP: 8472", "8472"],
+    ["Tu c\u00f3digo de verificaci\u00f3n es 123456", "123456"],
+    ["Ihr Sicherheitscode lautet 904512", "904512"],
+    ["\u9a8c\u8bc1\u7801\uff1a665544\uff0c5\u5206\u949f\u5185\u6709\u6548", "665544"],
+    ["\u0412\u0430\u0448 \u043a\u043e\u0434 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0438\u044f: 778899", "778899"],
+    ["Koodisi on 31415926", "31415926"],
+  ];
+  for (const [text, want] of cases)
+    assert.equal(Notify.detectCodes(text)[0], want, text);
+});
+
+test("detectCodes ignores dates, prices, years and product names", () => {
+  const cases = [
+    "Meeting code review on 2024-11-05",
+    "Your code is due 05.11.2026",
+    "Verification fee is $4829 today",
+    "Verification fee 4829 EUR",
+    "Code coverage is now 97.5%",
+    "Claude Code finished build 482913",
+    "Order 482913 shipped",
+    "Your code expires in 10 minutes",
+    "Verify your email by 2026",
+    "Code 12.50 discount",
+    "",
+  ];
+  for (const text of cases)
+    assert.deepEqual(Notify.detectCodes(text), [], text);
+});
+
+test("detectCodes requires the code near the keyword", () => {
+  const far = "Your code" + " blah".repeat(30) + " 482913";
+  assert.deepEqual(Notify.detectCodes(far), []);
+});
+
+test("detectLinks keeps http(s) only and trims punctuation", () => {
+  assert.deepEqual(Notify.detectLinks("see https://example.com/a?b=1. and javascript:alert(1)"), [
+    "https://example.com/a?b=1",
+  ]);
+});
+
+test("deckKey groups browser notifications per site, others per app", () => {
+  const a = { appName: "Google Chrome", desktopEntry: "google-chrome", body: "hi\nhttps://mail.example.com/x" };
+  const b = { appName: "Google Chrome", desktopEntry: "google-chrome", body: "yo", hints: { "x-kde-origin-name": "https://chat.example.org" } };
+  const c = { appName: "Chromium", body: "ping\nwww.news.example.net" };
+  const d = { appName: "Slack", desktopEntry: "slack.desktop", body: "https://mail.example.com" };
+  assert.equal(Notify.deckKey(a), "site:mail.example.com");
+  assert.equal(Notify.deckKey(b), "site:chat.example.org");
+  assert.equal(Notify.deckKey(c), "site:news.example.net");
+  assert.equal(Notify.deckKey(d), "app:slack");
+  assert.equal(Notify.deckKey({ appName: "Firefox", body: "plain" }), "app:firefox");
+});
+
+test("buildDecks groups by key in newest-first order, or one per row", () => {
+  const rows = [
+    { id: 1, appName: "Slack" },
+    { id: 2, appName: "Mail" },
+    { id: 3, appName: "Slack" },
+  ];
+  const decks = Notify.buildDecks(rows, true);
+  assert.deepEqual(decks.map((d) => d.rows.map((r) => r.id)), [[1, 3], [2]]);
+  assert.equal(Notify.buildDecks(rows, false).length, 3);
+});
+
+test("findRepeat matches identical app, summary and body only", () => {
+  const rows = [
+    { appName: "A", summary: "s", body: "b" },
+    { appName: "A", summary: "s", body: "other" },
+  ];
+  assert.equal(Notify.findRepeat(rows, { appName: "A", summary: "s", body: "b" }), 0);
+  assert.equal(Notify.findRepeat(rows, { appName: "A", summary: "s", body: "other" }), 1);
+  assert.equal(Notify.findRepeat(rows, { appName: "B", summary: "s", body: "b" }), -1);
+});
+
+test("dndPass matrix", () => {
+  const opts = { passApps: ["marchyo"], detectCodes: true };
+  const rec = (o) => Object.assign({ appName: "Slack", summary: "hi", body: "", critical: false }, o);
+  assert.equal(Notify.dndPass(rec({}), opts), "");
+  assert.equal(Notify.dndPass(rec({ critical: true }), opts), "critical");
+  assert.equal(Notify.dndPass(rec({ appName: "Marchyo" }), opts), "app");
+  assert.equal(Notify.dndPass(rec({ appName: "marchyo-action" }), { passApps: [] }), "app");
+  assert.equal(Notify.dndPass(rec({}), { passApps: [], bypassRule: true }), "rule");
+  assert.equal(Notify.dndPass(rec({ body: "Your code is 482913" }), opts), "code");
+  assert.equal(Notify.dndPass(rec({ body: "Your code is 482913" }), { passApps: [], detectCodes: false }), "");
+});
+
+test("focusTarget prefers pid, then class", () => {
+  const clients = [
+    { pid: 10, class: "slack", address: "0xa" },
+    { pid: 20, class: "org.telegram.desktop", address: "0xb" },
+  ];
+  assert.equal(Notify.focusTarget(clients, { pid: 20, appName: "x" }), "0xb");
+  assert.equal(Notify.focusTarget(clients, { desktopEntry: "org.telegram.desktop.desktop" }), "0xb");
+  assert.equal(Notify.focusTarget(clients, { appName: "Slack" }), "0xa");
+  assert.equal(Notify.focusTarget(clients, { appName: "nope" }), "");
+});
+
+test("routeClick walks default, focus, link, dismiss", () => {
+  assert.equal(Notify.routeClick({ hasDefault: true, focusAddress: "0x1", link: "u" }).step, "default");
+  assert.deepEqual(Notify.routeClick({ focusAddress: "0x1", link: "u" }), { step: "focus", arg: "0x1" });
+  assert.deepEqual(Notify.routeClick({ link: "https://e.com/x" }), { step: "link", arg: "https://e.com/x" });
+  assert.equal(Notify.routeClick({}).step, "dismiss");
+});
+
 test("the module exports its whole public surface to Node", () => {
   assert.deepEqual(Object.keys(Notify).sort(), [
     "addHistory",
+    "buildDecks",
+    "deckKey",
+    "detectCodes",
+    "detectLinks",
+    "dndPass",
     "evictionIndex",
+    "findRepeat",
+    "focusTarget",
     "matchRule",
     "partitionExpired",
+    "routeClick",
     "unreadCount",
   ]);
 });

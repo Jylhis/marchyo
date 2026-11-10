@@ -13,12 +13,12 @@ When `marchyo.desktop.enable = true`, the `marchyo.defaults.*` options control w
 | `marchyo.defaults.editor` | `"emacs"` | `"emacs"`, `"vscode"`, `"vscodium"`, `"zed"` |
 | `marchyo.defaults.terminalEditor` | `"emacs"` | `"emacs"`, `"neovim"`, `"helix"`, `"nano"` |
 | `marchyo.defaults.videoPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"celluloid"` |
-| `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"cmus"`, `"vlc"`, `"amberol"` |
-| `marchyo.defaults.musicPlayer` | `"spotify-player"` | `"spotify-player"`, `"ncspot"`, `"spotify"` |
+| `marchyo.defaults.audioPlayer` | `"mpv"` | `"mpv"`, `"vlc"`, `"amberol"` |
+| `marchyo.defaults.musicPlayer` | `"spotify-player"` | `"spotify-player"`, `"spotify"` |
 | `marchyo.defaults.fileManager` | `"nautilus"` | `"nautilus"`, `"thunar"` |
 | `marchyo.defaults.terminalFileManager` | `"yazi"` | `"yazi"`, `"ranger"`, `"lf"` |
 | `marchyo.defaults.imageEditor` | `"pinta"` | `"pinta"`, `"gimp"`, `"krita"` |
-| `marchyo.defaults.email` | `"aerc"` | `"aerc"`, `"neomutt"`, `"gmail"`, `"outlook"` |
+| `marchyo.defaults.email` | `"aerc"` | `"aerc"`, `"gmail"`, `"outlook"` |
 | `marchyo.defaults.aiAgent` | `null` | `"claude-code"`, `"codex"`, `"opencode"` (installed only with `development.enable`) |
 
 :::note
@@ -33,7 +33,7 @@ marchyo.defaults = {
   editor = "vscode";
   terminalEditor = "neovim";
   videoPlayer = "mpv";
-  audioPlayer = "mpv";        # or "cmus" for a TUI library player
+  audioPlayer = "mpv";
   musicPlayer = "spotify-player";  # TUI Spotify client (floating terminal)
   fileManager = "nautilus";
   terminalFileManager = "yazi";
@@ -77,7 +77,7 @@ Some choices are "externally managed" — Marchyo does not install a package for
 `"emacs"` is the default `editor` and `terminalEditor`. When selected, Marchyo installs `pkgs.emacs` and sets `$VISUAL` to `emacsclient -c -a emacs` (graphical frame) and `$EDITOR` to `emacsclient -t -a 'emacs -nw'` (terminal), each with a plain-Emacs fallback when no daemon is running. Switch `editor` to `"vscode"`/… or `terminalEditor` to `"neovim"`/… to use another editor. The two selectors resolve independently, so you can mix (e.g. `editor = "emacs"` with `terminalEditor = "neovim"`).
 
 :::note
-  The TUI music (`spotify-player`, `ncspot`) and mail (`aerc`, `neomutt`) clients are installed but require account configuration before use. The music clients launch in a floating terminal under Hyprland (Super+M).
+  The TUI music (`spotify-player`) and mail (`aerc`) clients are installed but require account configuration before use. The music client launches in a floating terminal under Hyprland (Super+M).
 :::
 
 ## How defaults work
@@ -86,4 +86,4 @@ When a default is set, Marchyo:
 
 1. **Installs the package** (unless externally managed)
 2. **Registers MIME type associations** — for `browser`, `editor`, `videoPlayer`, `audioPlayer`, `fileManager`, and `email`. E.g., setting `browser = "firefox"` registers Firefox as the handler for `text/html`, `x-scheme-handler/http`, etc. The other categories are install-only: `imageEditor` is never registered as a MIME handler (Loupe stays the default image viewer), and `terminalEditor`, `terminalFileManager`, and `musicPlayer` register no associations either.
-3. **Sets environment variables** — `browser` sets `$BROWSER`, `editor` sets `$VISUAL`, `terminalEditor` sets `$EDITOR`
+3. **Sets environment variables** — `editor` sets `$VISUAL`, `terminalEditor` sets `$EDITOR`. `browser` sets no `$BROWSER`: xdg-utils would resolve it to the first desktop file that runs the browser binary, often a web app, so the browser reports it is not the default

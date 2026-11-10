@@ -2,20 +2,20 @@
 # home-manager `services.voxtype` module: it writes ~/.config/voxtype/config.toml
 # and runs the `voxtype` user service. Recording is driven two ways (omarchy
 # parity): the daemon's evdev push-to-talk hotkey (hold F9 by default; see
-# marchyo.dictation.pushToTalk) and a Hyprland `voxtype record toggle` bind
-# (Super+Ctrl+X by default; see marchyo.dictation.toggleKey, wired in
-# modules/home/hyprland.nix). The evdev hotkey needs the user in the `input`
-# group, added by modules/nixos/dictation.nix. Gated on marchyo.dictation.enable;
-# Linux-only (Wayland dictation).
+# marchyo.dictation.pushToTalk) and the Alt+Space `marchyo dictation toggle`
+# bind (see marchyo.dictation.toggleKey, wired in modules/home/hyprland.nix).
+# The evdev hotkey needs the user in the `input` group, added by
+# modules/nixos/dictation.nix. Gated on marchyo.dictation.enable with
+# backend = "voxtype"; Linux-only (Wayland dictation).
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  cfg = (osConfig.marchyo or { }).dictation or { };
-  enabled = pkgs.stdenv.hostPlatform.isLinux && (cfg.enable or false);
+  cfg = osConfig.marchyo.dictation;
+  enabled = pkgs.stdenv.hostPlatform.isLinux && cfg.enable && cfg.backend == "voxtype";
 in
 {
   config = lib.mkIf enabled {
@@ -27,7 +27,7 @@ in
       # runs large-v3-turbo on CPU (slow). pkgs.voxtype-vulkan enables the
       # gpu-vulkan Cargo feature; Vulkan covers NVIDIA/AMD/Intel and falls back
       # to CPU when no device is present. Escape hatch: marchyo.dictation.gpu.
-      package = if (cfg.gpu or true) then pkgs.voxtype-vulkan else pkgs.voxtype;
+      package = if cfg.gpu then pkgs.voxtype-vulkan else pkgs.voxtype;
 
       # Give the daemon unit WAYLAND_DISPLAY plus wtype/wl-clipboard on PATH so
       # output.mode = "type" can type into Wayland windows (the module gates both
@@ -36,7 +36,7 @@ in
 
       # Pre-fetch the model at activation only when asked; otherwise voxtype
       # downloads it on first recording.
-      loadModels = lib.optional (cfg.preloadModel or false) cfg.model;
+      loadModels = lib.optional cfg.preloadModel cfg.model;
 
       settings = {
         # Required for `record toggle` / `status` to share daemon state.
@@ -51,7 +51,7 @@ in
         # marchyo.dictation.pushToTalk.enable = false leaves only the Hyprland
         # toggle bind (`voxtype record toggle`), which needs no /dev/input access.
         hotkey =
-          if (cfg.pushToTalk.enable or true) then
+          if cfg.pushToTalk.enable then
             {
               enabled = true;
               inherit (cfg.pushToTalk) key mode;
@@ -66,7 +66,7 @@ in
           max_duration_secs = 60;
           # Sound cues on record start/stop (built-in), gated on the UI toggle.
           feedback = {
-            enabled = cfg.audioFeedback or true;
+            enabled = cfg.audioFeedback;
             theme = "subtle";
           };
         };
@@ -76,8 +76,8 @@ in
           # Free VRAM/host memory between dictations rather than pinning the
           # model resident (marchyo.dictation.onDemandModel); gpu_isolation lets
           # a discrete GPU sleep between recordings (marchyo.dictation.gpuIsolation).
-          on_demand_loading = cfg.onDemandModel or false;
-          gpu_isolation = cfg.gpuIsolation or false;
+          on_demand_loading = cfg.onDemandModel;
+          gpu_isolation = cfg.gpuIsolation;
         };
         # Silence gate (marchyo.dictation.silenceGate): voice activity detection
         # drops recordings with no speech before Whisper sees them, so silence
@@ -93,19 +93,19 @@ in
           # Desktop notifications on start/stop/transcription, gated on
           # the UI toggle.
           notification = {
-            on_recording_start = cfg.notify or true;
-            on_recording_stop = cfg.notify or true;
-            on_transcription = cfg.notify or true;
+            on_recording_start = cfg.notify;
+            on_recording_stop = cfg.notify;
+            on_transcription = cfg.notify;
           };
         };
       }
-      // lib.optionalAttrs (cfg.spokenPunctuation or false || (cfg.replacements or { }) != { }) {
+      // lib.optionalAttrs (cfg.spokenPunctuation || cfg.replacements != { }) {
         # Deterministic transcript post-processing (marchyo.dictation.replacements
         # / spokenPunctuation). Only emitted when configured, so the default
         # config stays untouched.
         text = {
-          spoken_punctuation = cfg.spokenPunctuation or false;
-          replacements = cfg.replacements or { };
+          spoken_punctuation = cfg.spokenPunctuation;
+          inherit (cfg) replacements;
         };
       };
     };

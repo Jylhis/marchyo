@@ -2,4 +2,5 @@ module qs.Notifications
 NotificationDaemon 1.0 NotificationDaemon.qml
 NotificationList 1.0 NotificationList.qml
 NotificationPopup 1.0 NotificationPopup.qml
+NotificationDeck 1.0 NotificationDeck.qml
 NotificationCenter 1.0 NotificationCenter.qml

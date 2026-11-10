@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Services.UPower
+import qs.Commons
 
 // Shared power-profile state over power-profiles-daemon (UPower's
 // PowerProfiles). Read by the bar's PowerProfileWidget, the power panel and
@@ -19,6 +20,17 @@ QtObject {
             return "performance";
         default:
             return "balanced";
+        }
+    }
+
+    readonly property string label: {
+        switch (root.profile) {
+        case PowerProfile.PowerSaver:
+            return I18n.t("power.nameSaver");
+        case PowerProfile.Performance:
+            return I18n.t("power.namePerformance");
+        default:
+            return I18n.t("power.nameBalanced");
         }
     }
 
