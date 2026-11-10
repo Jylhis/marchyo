@@ -13,6 +13,6 @@ result
 # Quickshell QML tooling: runtime-generated symlink into /run/user (vfs)
 shell/.qmlls.ini
 
-# bun / TypeScript build artifacts
+# bun / npm / TypeScript build artifacts
 node_modules/
 dist/

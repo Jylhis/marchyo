@@ -71,7 +71,7 @@ in
     typos.excludes = [
       "**/*.png"
       "flake.lock"
-      "site/bun.lock"
+      "site/package-lock.json"
     ];
     # qmlformat (from Qt's qtdeclarative), edits in place (-i). Absolute command
     # path so it needs no PATH entry in the dev shell or CI.
