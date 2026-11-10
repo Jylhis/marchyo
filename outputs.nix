@@ -110,6 +110,8 @@ let
     _1password = ./modules/home/_1password.nix;
   };
 
+  mergeUnique = import ./lib/merge-unique.nix { inherit (nixpkgs) lib; };
+
   # Batteries-included system builder: a consumer that adds only `marchyo` as
   # an input gets marchyo's nixpkgs, home-manager, overlay and modules.
 
@@ -230,144 +232,155 @@ in
       )
     );
 
+  # Each check set is merged with mergeUnique, not `//`, so a name defined in
+  # two of them fails evaluation instead of one silently shadowing the other.
   mkChecks =
     { system }:
-    import ./tests {
-      inherit system;
-      inherit (nixpkgs) lib;
-      inherit
-        nixpkgs
-        home-manager
-        ;
-      nixosModules = nixosModules.default;
-      homeManagerModules = homeManagerModules.default;
-      diskoModule = nixosModules.disko;
-      inherit diskoLayout diskoLayouts;
-    }
-    # Evaluate each ISO's drvPath without building it: the string context is
-    # dropped, so the check does not depend on the image.
-    // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
-      builtins.listToAttrs (
-        map (
-          variant:
-          nixpkgs.lib.nameValuePair "eval-iso-${variant}" (
-            (mkPkgs system).writeText "eval-iso-${variant}" (
-              builtins.unsafeDiscardStringContext
-                (mkIso { inherit system variant; }).config.system.build.isoImage.drvPath
-            )
-          )
-        ) isoVariants
-      )
-    )
-    # The one non-eval check: build the Plymouth theme in both variants. The
-    # only place the light variant's asset pipeline (resvg/imagemagick + the
-    # package's installCheckPhase) is exercised; CI's toplevel build only bakes
-    # the dark one. Plus marchyo-shell wrapper assertions and the two headless
-    # shell suites (tests/shell/).
-    // (
-      let
-        pkgs = mkPkgs system;
-      in
+    mergeUnique "check" [
       {
-        build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
-        build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
-        build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
-          wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
-          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$wrapper" \
-            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
-          grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
-            || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
-          greeter="${pkgs.marchyo-shell}/bin/marchyo-greeter"
-          grep -q "share/marchyo/greeter" "$greeter" \
-            || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
-          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
-            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
-          greeterConfig="${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml"
-          grep -q "nix/store" "$greeterConfig" \
-            || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
-          # The generator hand-writes the sessionCommand array; without commas
-          # between elements it is a QML parse error, the greeter fails to load,
-          # and greetd crash-loops with no login window. Assert it is
-          # comma-separated.
-          grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
-            || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
-          touch "$out"
-        '';
-
-        # Headless suites for the Quickshell tree. Both stage only the trees
-        # they read, rather than ${./.}: the whole repo as a build input would
-        # rebuild them on every site/ or docs/ edit. Each suite derives its root
-        # from its own location, so the staged layout mirrors the repo's.
-        shell-format-unit =
-          pkgs.runCommand "check-shell-js-unit"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              mkdir -p src/tests
-              cp -r ${./shell} src/shell
-              cp -r ${./tests/shell} src/tests/shell
-              cd src
-              # Globbed, not listed: a new *-test.js must not be able to sit in
-              # the tree unrun. The count assertion keeps a rename from turning
-              # the glob into a vacuous pass.
-              count=0
-              for t in tests/shell/*-test.js; do
-                node "$t"
-                count=$((count + 1))
-              done
-              [ "$count" -gt 0 ] || { echo "FAIL: no tests/shell/*-test.js found"; exit 1; }
-              touch "$out"
-            '';
-
-        # theme-runtime.nix's activation reset and the CLI's relink targets are
-        # hand-maintained on opposite sides of a language boundary; a CLI target
-        # missing from the Nix list breaks the next activation.
-        cli-theme-surfaces =
-          pkgs.runCommand "check-cli-theme-surfaces"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              # Only the parents: `cp -r dir target` nests when target exists.
-              mkdir -p src/tests src/modules src/lib \
-                src/packages/marchyo-cli/packages/user-cli/src \
-                src/packages/marchyo-cli/packages/core
-              cp -r ${./tests/cli} src/tests/cli
-              cp -r ${./modules/home} src/modules/home
-              cp ${./lib/theme-generators.nix} src/lib/theme-generators.nix
-              cp -r ${./packages/marchyo-cli/packages/core/src} \
-                src/packages/marchyo-cli/packages/core/src
-              cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
-                src/packages/marchyo-cli/packages/user-cli/src/commands
-              cd src
-              node tests/cli/theme-surfaces-test.js
-              touch "$out"
-            '';
-
-        shell-contracts =
-          pkgs.runCommand "check-shell-contracts"
-            {
-              nativeBuildInputs = [
-                pkgs.gnugrep
-                pkgs.gawk
-              ];
-            }
-            ''
-              mkdir -p src/tests src/packages
-              cp -r ${./shell} src/shell
-              cp -r ${./greeter} src/greeter
-              cp -r ${./modules} src/modules
-              cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
-              mkdir -p src/packages/marchyo-cli
-              cp -r ${./packages/marchyo-cli/packages} src/packages/marchyo-cli/packages
-              cp -r ${./tests/shell} src/tests/shell
-              cd src
-              bash tests/shell/contracts-test.sh
-              touch "$out"
-            '';
+        source = "tests/";
+        attrs = import ./tests {
+          inherit system;
+          inherit (nixpkgs) lib;
+          inherit
+            nixpkgs
+            home-manager
+            ;
+          nixosModules = nixosModules.default;
+          homeManagerModules = homeManagerModules.default;
+          diskoModule = nixosModules.disko;
+          inherit diskoLayout diskoLayouts;
+        };
       }
-    );
+      {
+        source = "outputs.nix (installer ISOs)";
+        # Evaluate each ISO's drvPath without building it: the string context is
+        # dropped, so the check does not depend on the image.
+        attrs = nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+          builtins.listToAttrs (
+            map (
+              variant:
+              nixpkgs.lib.nameValuePair "eval-iso-${variant}" (
+                (mkPkgs system).writeText "eval-iso-${variant}" (
+                  builtins.unsafeDiscardStringContext
+                    (mkIso { inherit system variant; }).config.system.build.isoImage.drvPath
+                )
+              )
+            ) isoVariants
+          )
+        );
+      }
+      {
+        source = "outputs.nix (builds and shell suites)";
+        # The one non-eval check: build the Plymouth theme in both variants. The
+        # only place the light variant's asset pipeline (resvg/imagemagick + the
+        # package's installCheckPhase) is exercised; CI's toplevel build only bakes
+        # the dark one. Plus marchyo-shell wrapper assertions and the two headless
+        # shell suites (tests/shell/).
+        attrs = let
+            pkgs = mkPkgs system;
+          in
+          {
+            build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
+            build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
+            build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
+              wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
+              grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$wrapper" \
+                || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
+              grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
+                || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
+              greeter="${pkgs.marchyo-shell}/bin/marchyo-greeter"
+              grep -q "share/marchyo/greeter" "$greeter" \
+                || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
+              grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
+                || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
+              greeterConfig="${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml"
+              grep -q "nix/store" "$greeterConfig" \
+                || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
+              # The generator hand-writes the sessionCommand array; without commas
+              # between elements it is a QML parse error, the greeter fails to load,
+              # and greetd crash-loops with no login window. Assert it is
+              # comma-separated.
+              grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
+                || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
+              touch "$out"
+            '';
+
+            # Headless suites for the Quickshell tree. Both stage only the trees
+            # they read, rather than ${./.}: the whole repo as a build input would
+            # rebuild them on every site/ or docs/ edit. Each suite derives its root
+            # from its own location, so the staged layout mirrors the repo's.
+            shell-format-unit =
+              pkgs.runCommand "check-shell-js-unit"
+                {
+                  nativeBuildInputs = [ pkgs.nodejs ];
+                }
+                ''
+                  mkdir -p src/tests
+                  cp -r ${./shell} src/shell
+                  cp -r ${./tests/shell} src/tests/shell
+                  cd src
+                  # Globbed, not listed: a new *-test.js must not be able to sit in
+                  # the tree unrun. The count assertion keeps a rename from turning
+                  # the glob into a vacuous pass.
+                  count=0
+                  for t in tests/shell/*-test.js; do
+                    node "$t"
+                    count=$((count + 1))
+                  done
+                  [ "$count" -gt 0 ] || { echo "FAIL: no tests/shell/*-test.js found"; exit 1; }
+                  touch "$out"
+                '';
+
+            # theme-runtime.nix's activation reset and the CLI's relink targets are
+            # hand-maintained on opposite sides of a language boundary; a CLI target
+            # missing from the Nix list breaks the next activation.
+            cli-theme-surfaces =
+              pkgs.runCommand "check-cli-theme-surfaces"
+                {
+                  nativeBuildInputs = [ pkgs.nodejs ];
+                }
+                ''
+                  # Only the parents: `cp -r dir target` nests when target exists.
+                  mkdir -p src/tests src/modules src/lib \
+                    src/packages/marchyo-cli/packages/user-cli/src \
+                    src/packages/marchyo-cli/packages/core
+                  cp -r ${./tests/cli} src/tests/cli
+                  cp -r ${./modules/home} src/modules/home
+                  cp ${./lib/theme-generators.nix} src/lib/theme-generators.nix
+                  cp -r ${./packages/marchyo-cli/packages/core/src} \
+                    src/packages/marchyo-cli/packages/core/src
+                  cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
+                    src/packages/marchyo-cli/packages/user-cli/src/commands
+                  cd src
+                  node tests/cli/theme-surfaces-test.js
+                  touch "$out"
+                '';
+
+            shell-contracts =
+              pkgs.runCommand "check-shell-contracts"
+                {
+                  nativeBuildInputs = [
+                    pkgs.gnugrep
+                    pkgs.gawk
+                  ];
+                }
+                ''
+                  mkdir -p src/tests src/packages
+                  cp -r ${./shell} src/shell
+                  cp -r ${./greeter} src/greeter
+                  cp -r ${./modules} src/modules
+                  cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
+                  mkdir -p src/packages/marchyo-cli
+                  cp -r ${./packages/marchyo-cli/packages} src/packages/marchyo-cli/packages
+                  cp -r ${./tests/shell} src/tests/shell
+                  cd src
+                  bash tests/shell/contracts-test.sh
+                  touch "$out"
+                '';
+          };
+      }
+    ];
 
   mkFormatter =
     { system }:

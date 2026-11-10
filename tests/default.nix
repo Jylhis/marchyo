@@ -30,26 +30,40 @@ let
 
   evalFiles = (import ../lib/discover-modules.nix { inherit lib; }) ./eval;
 
-  evalTests = lib.foldl' (
-    acc: f:
-    acc
-    // (import f {
-      inherit
-        helpers
-        lib
-        home-manager
-        nixosModules
-        homeManagerModules
-        diskoModule
-        diskoLayout
-        diskoLayouts
-        ;
-      pkgs = testPkgs;
-    })
-  ) { } evalFiles;
+  mergeUnique = import ../lib/merge-unique.nix { inherit lib; };
+
+  # Merged with mergeUnique, not `//`: two files defining the same test name
+  # fail evaluation instead of one silently shadowing the other.
+  evalTests = mergeUnique "test" (
+    map (f: {
+      source = toString f;
+      attrs = import f {
+        inherit
+          helpers
+          lib
+          home-manager
+          nixosModules
+          homeManagerModules
+          diskoModule
+          diskoLayout
+          diskoLayouts
+          ;
+        pkgs = testPkgs;
+      };
+    }) evalFiles
+  );
 
   libTests = import ./lib-tests.nix {
     inherit lib helpers;
   };
 in
-evalTests // libTests
+mergeUnique "test" [
+  {
+    source = "tests/eval/";
+    attrs = evalTests;
+  }
+  {
+    source = "tests/lib-tests.nix";
+    attrs = libTests;
+  }
+]
