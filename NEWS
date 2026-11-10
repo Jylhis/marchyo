@@ -1,10 +1,11 @@
 marchyo NEWS                                             -*- outline -*-
 
 User-visible changes worth mentioning, newest first, after the GNU
-Coding Standards (NEWS File). marchyo has no releases, so changes are
-grouped by year; CHANGELOG.md lists them in detail with commit links.
+Coding Standards (NEWS File).  marchyo has no versioned releases: each
+release is named after its year and month (YYYY-MM), and changes are
+grouped by that release.  CHANGELOG.md lists them in detail.
 
-* Noteworthy changes in 2026
+* Noteworthy changes in 2026-11
 
   Hotkeys (breaking): the pre-4.5 marchyo layout is the only layout
   again, and marchyo.keyboard.legacyBinds is gone.  Super+L locks, apps
@@ -22,19 +23,51 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
     Act on newest notification Super+Ctrl+Alt+comma
 
   Dictation toggles on Super+Ctrl+X and the compose key is the Menu key
-  again (marchyo.keyboard.composeKey = "shift-caps" keeps Shift+Caps
-  Lock).  The default web apps keep their Super+Shift keys, GitHub on
-  Super+Shift+G included.
+  again (marchyo.keyboard.composeKey = "shift-caps" selects
+  Shift+Caps Lock).  The default web apps keep their Super+Shift keys,
+  GitHub on Super+Shift+G included.
 
-  More of omarchy's first-party shell plugins are packaged: workspaces,
-  active window, tray, media, polkit, network, weather, tailscale,
-  elsewhen and dropbox. A plugin can now replace a native panel or the
-  polkit agent with `replaces`; native components stay the default.
+  Options (breaking): options that only passed a value on to an
+  upstream NixOS option are retired.  Renamed ones keep working with a
+  warning (the marchyo. prefix is left out on the left):
 
-  Theme switching keeps btop and the desktop light/dark preference on
-  the same saved selection after a rebuild. A failed preference update
-  reports an error and preserves the previous selection. Chrome,
-  Chromium and Brave now follow the light/dark switch too.
+    security.firewall.enable       -> networking.firewall.enable
+    power.hibernation.resumeDevice -> boot.resumeDevice
+    hardware.logitech.enable       -> programs.solaar.enable
+    graphics.nvidia.open           -> hardware.nvidia.open
+    graphics.nvidia.powerManagement
+                         -> hardware.nvidia.powerManagement.enable
+    graphics.nvidia.containerToolkit.enable
+                         -> hardware.nvidia-container-toolkit.enable
+    graphics.amd.overdrive.enable  -> hardware.amdgpu.overdrive.enable
+    nix.router.{enable,port,netrcFile}
+                         -> services.ncro.{enable,port,netrcFile}
+    services.tailscale.enable      -> services.tailscale.enable
+    services.localsend.{enable,openFirewall}
+                         -> programs.localsend.{enable,openFirewall}
+
+  Removed ones fail evaluation with a hint:
+  marchyo.graphics.nvidia.package (set hardware.nvidia.package),
+  marchyo.performance.kernel (boot.kernelPackages), marchyo.nix.caches
+  (nix.settings.substituters), marchyo.nix.router.extraUpstreams and
+  marchyo.users.<name>.uid and .name.
+
+  Several GPUs (breaking for multi-GPU hosts): marchyo.graphics.primary
+  names the GPU that drives the display.  Every listed vendor's drivers
+  are installed, but only the primary sets the driver variables, and
+  Hyprland renders on it first.  A host that lists more than one vendor
+  must set it, unless it is a PRIME laptop with one integrated GPU,
+  where it follows the PRIME mode.  An empty marchyo.graphics.vendors no
+  longer assumes Intel.
+
+  Home Manager (breaking): marchyo's Home Manager modules run only
+  under the marchyo NixOS module, which sets them up for every
+  marchyo.users entry.  There is no standalone Home Manager output any
+  more (homeConfigurations, lib.mkHomeConfiguration).
+
+  Installation: the flake exports the disko layouts
+  (lib.diskoLayout, with nixosModules.disko) and the installer ISOs
+  (packages.x86_64-linux.iso-minimal and iso-graphical, "just iso").
 
 ** New features
 
@@ -45,23 +78,16 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   New panels: Bluetooth (Super+Ctrl+B), a speed test for network and
   disk (Super+Ctrl+Alt+P) and Dropbox (Super+Ctrl+Alt+D).  Breaking:
   Super+Ctrl+B used to start the bluetui manager; that is now
-  Super+Ctrl+Shift+B while the shell is on.  The agents panel marks old
-  limits as stale and tells you when an agent needs a sign-in, and
-  display tiles in the Display panel work from the keyboard.
+  Super+Ctrl+Shift+B while the shell is on.  Display tiles in the
+  Display panel work from the keyboard.
 
   Bar: the middle of the bar has three sections, so widgets can sit
   beside the clock without moving it.  The recording, reminder,
-  remote session, dictation, stay-awake and do-not-disturb indicators
-  form one group, and tray icons can be pinned so the rest fold behind
-  the "·" button.  "marchyo bar put", "move", "remove" and "set" rearrange
-  the bar without a rebuild, and "marchyo bar reset" undoes it.
-  Double-click empty bar space to change the bar background.
-
-  omarchy's menu, emoji picker and clipboard manager can replace the
-  launcher: add omarchy-menu, omarchy-emojis and omarchy-clipboard to
-  marchyo.shell.plugins.  Super+Space, Super+R, Super+K, Super+Ctrl+E
-  and Super+Ctrl+V then open them, the menu shows marchyo.menu.entries,
-  and "marchyo menu select" and "input" answer through omarchy's menu.
+  dictation, stay-awake and do-not-disturb indicators form one group,
+  and tray icons can be pinned so the rest fold behind the "·" button.
+  "marchyo bar put", "move", "remove" and "set" rearrange the bar
+  without a rebuild, and "marchyo bar reset" undoes it.  Double-click
+  empty bar space to change the bar background.
 
   Theme and wallpaper pickers: Super+Ctrl+T now opens a grid of theme
   previews instead of the launcher's theme mode, and Super+Ctrl+Shift+W
@@ -70,33 +96,25 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   contour) per light and dark theme; "marchyo bg list" lists what you
   can choose, and a theme can list its own wallpapers.
 
-  Fonts and appearance: "marchyo font set <family> --kind ui" changes the
-  interface font of GTK and the shell as well as the terminal font.
-  "marchyo theme gaps", "bar-position", "bar-background" and "icons" change
-  window gaps, the bar placement, its background and the icon theme
-  without a rebuild; the Control Center has an Appearance section for
-  them.  Runtime theme, wallpaper, font and appearance changes now
+  Fonts and appearance: "marchyo font set <family> --kind ui" changes
+  the interface font of GTK and the shell as well as the terminal font.
+  "marchyo theme gaps", "bar-position", "bar-background" and "icons"
+  change window gaps, the bar placement, its background and the icon
+  theme without a rebuild; the Control Center has an Appearance section
+  for them.  Runtime theme, wallpaper, font and appearance changes now
   survive a rebuild until you revert them.
 
-  More themed apps: btop, kitty, foot, alacritty, Helix, Neovim, Emacs
-  and Chromium-based browsers follow the theme.  Browsers keep the
-  colour of the theme built into the system.
+  More themed apps: btop, kitty, foot, alacritty, Helix, Neovim, Emacs,
+  tmux and fcitx5 follow the theme.  marchyo.tmux.enable (on with
+  marchyo.development.enable) gives a themed tmux.
 
-  Command menu: Super+Space opens a searchable menu of everything
+  Command menu: Super+Alt+Space opens a searchable menu of everything
   marchyo can do (apps, capture, toggles, appearance, hardware, system,
-  setup, share); Escape goes up a level.  Super+Alt+Space opens the
-  apps, Super+K the keybinding cheat sheet.  Add or hide entries with
-  marchyo.menu.entries or ~/.config/marchyo/menu.local.json.  Breaking
-  binds: the browser, file manager and messenger moved to Super+Shift+B,
-  Super+Shift+F and Super+Shift+G (marchyo.keyboard.legacyBinds keeps
-  the old chords), and Super+Alt+Space no longer opens the gum menu.
+  setup, share); Escape goes up a level.  Super+R opens the apps,
+  Super+K the keybinding cheat sheet.  Add or hide entries with
+  marchyo.menu.entries or ~/.config/marchyo/menu.local.json.
 
-  Shell plugins: panel, menu, overlay, service and bar plugins from
-  omarchy now run on the shell, with the omarchy-* helper commands they
-  call.  "marchyo plugin validate" checks a plugin checkout.  On a
-  development host, marchyo.shell.devPlugins.enable and "marchyo plugin
-  dev" load a checkout without a rebuild; dev plugins are unreviewed
-  code, so leave the option off elsewhere.
+  Shell plugins: "marchyo plugin validate" checks a plugin checkout.
 
   Shell panels: panels opened with a key or "marchyo shell open" take
   keyboard focus.  Escape closes, Up, Down and Tab move between
@@ -106,17 +124,6 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   Reduce motion at run time: "marchyo toggle reduce-motion on" makes
   every shell transition instant, and the shell follows Hyprland's
   animations setting.
-
-  Crash diagnosis: when one of your programs dumps core, a notification
-  offers to start your AI agent on the crash, with a skill that covers
-  coredumpctl, NixOS debuginfo and reporting.  "marchyo toggle
-  crash-capture off" silences it.  The marchyo, marchyo-plugin and
-  diagnose-crash skills are installed for Claude Code, Codex and opencode.
-
-  Dev environments: "marchyo dev init <lang>" writes a devenv.nix,
-  devenv.yaml and .envrc for the language into the current directory,
-  and "marchyo dev db <engine>" adds a database service (postgres,
-  mysql, mariadb, redis or mongodb) to an existing devenv.nix.
 
   Notifications from scripts: "marchyo notify" takes the flags of
   omarchy-notification-send and can attach a click command and up to three
@@ -131,18 +138,18 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   notification opens a panel with the new entries and a summary of the
   last switch.  On the first login a welcome notification opens a setup
   checklist ("marchyo setup") for git, SSH, FIDO2, fingerprint, language,
-  keyboard, theme, agent login and dictation.  Super+Ctrl+U and
-  Super+Ctrl+H open the two panels.
+  keyboard, theme and dictation.  Super+Ctrl+U and Super+Ctrl+H open the
+  two panels.
 
   Notifications: toasts stack by sender into decks that expand on
   hover, show verification codes with a Copy button, and route clicks
   to the sender's window or link.  Do-not-disturb still lets through
   critical notifications, Marchyo's own and those carrying a code.
 
-  Display panel: a shell panel (global shortcut panel.display) for
-  each display's brightness, scale, resolution, refresh rate and
-  rotation, with a layout map to drag displays around and Extend or
-  Mirror for the laptop panel.  Choices are kept per monitor in
+  Display panel: a shell panel (Super+Ctrl+D) for each display's
+  brightness, scale, resolution, refresh rate and rotation, with a
+  layout map to drag displays around and Extend or Mirror for the
+  laptop panel.  Choices are kept per monitor in
   $XDG_STATE_HOME/marchyo/monitors/settings and survive rebuilds.
   "marchyo monitor reset" clears them, "marchyo monitor save --nix"
   prints the layout as marchyo.monitors, and
@@ -154,28 +161,11 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   workspaces from 1.  Set marchyo.workspaces.perMonitor = false for
   one global set; "marchyo monitor workspaces reset" starts over.
 
-  Agent accounts: "marchyo agent account add claude Work" signs in a
-  second Claude Code, Codex or Grok account.  History, settings and
-  sessions stay shared, so "claude --continue" works after a switch.
-  "marchyo agent account use" picks the account for new sessions; at a
-  usage threshold marchyo offers a switch, or switches by itself in
-  auto mode.  "marchyo agent account copy <host>" moves the sign-ins
-  to another machine over ssh.
-
-  AI agent usage: marchyo.ai.agents installs agent CLIs, and the
-  agents panel and the marchyo.agents bar widget show the Claude Code,
-  Codex and GitHub Copilot usage limits with their reset times.
-  "marchyo agent usage" prints the same data with token totals.
-
-  Agent console: marchyo.console adds a Quake-style terminal on
-  Super+Ctrl+grave that starts the default AI agent.  marchyo.ai.herdr
-  and marchyo.ai.amp install herdr and the Amp apps.
-
   World clock and status indicators: the Elsewhen panel (Super+Ctrl+Alt+E)
   shows the time in your cities on a map.  Optional bar indicators show a
-  connected gliff remote session, a pending update, a nearly full Nix
-  store disk (marchyo.shell.diskWarnPercent) and failing "marchyo doctor"
-  checks.  The Power panel can roll back to the previous generation.
+  pending update, a nearly full Nix store disk
+  (marchyo.shell.diskWarnPercent) and failing "marchyo doctor" checks.
+  The Power panel can roll back to the previous generation.
 
   Window appearance: marchyo.theme.appearance.transparency (opaque,
   transparent, glassy), corners (theme, sharp, rounded) and animations
@@ -185,142 +175,49 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   font.  "marchyo window pop" (Super+Alt+O) pops a tile out as a
   floating pinned window.
 
-  Peripherals: marchyo.audio.tuner applies a laptop speaker tuning,
-  marchyo.hardware.camlink relays an Elgato Cam Link 4K as a virtual
-  camera, and WirePlumber now waits at login for camera access.
-  "marchyo share --tailscale <peer>" sends files over Taildrop.
+  Camera: WirePlumber now waits at login for camera access.
 
-  Theme surfaces: "marchyo theme" now also themes VS Code (and
-  Insiders, VSCodium, Cursor), Obsidian, tmux, fcitx5 and herdr.
-  marchyo.tmux.enable (on with marchyo.development.enable) gives a
-  themed tmux, and marchyo.slack.themeInjection.enable themes Slack
-  through an opt-in launcher.
-  Display language: marchyo.language (derived from
-  marchyo.defaultLocale) sets the language of the shell and CLI
-  strings, and "marchyo language <code>" switches it live.  Missing
-  translations fall back to English.
   Captive portals: NetworkManager now checks connectivity against
-  nmcheck.gnome.org by default on desktops (marchyo.network.connectivityCheck;
-  set enable = false to send no probes).  The shell marks restricted
-  networks, and "marchyo network portal" or the Network panel opens the
-  sign-in page.
+  nmcheck.gnome.org by default on desktops
+  (marchyo.network.connectivityCheck; set enable = false to send no
+  probes).  The shell marks restricted networks, and "marchyo network
+  portal" or the Network panel opens the sign-in page.
+
   Power: marchyo.power.hibernation turns hibernation back on, with
   suspend-then-hibernate and a resume-device assertion.  marchyo.power.lid
   sets the lid-close action on battery, on AC and when docked.  Closing
   the lid with an external display connected turns the laptop panel off.
+
   Input methods: marchyo.keyboard.layouts accepts the ime values
   chewing (Zhuyin) and cangjie (Cangjie 5).  Input starts in Latin; a
   lone Shift toggles the engine and Super+I cycles layouts, then
   engines.  Noto CJK fonts follow the configured language.
+
   Keyboard: marchyo.keyboard.fnMode picks whether the top row sends
   media keys or F1-F12 by default, the keyboard backlight keys work
   through "marchyo brightness --keyboard", and composeKey can be
   "shift-caps" (Shift+Caps Lock composes, Caps Lock stays Caps Lock).
 
-  GPU options: marchyo.graphics.nvidia selects the driver branch and
-  GPU generation and enables the NVIDIA Container Toolkit with
-  development containers.  marchyo.graphics.amd adds ROCm, VA-API and
-  overdrive.  Hybrid laptops can add an "integrated-only" boot entry
-  that turns the NVIDIA GPU off.
-
-  Local models: marchyo.ai.local runs Ollama with the build that
-  matches the GPU and registers it as an opencode provider.
-
-  The fleet and options UI is available at marchyo.org/os. It stores
-  configuration in the browser and exports Nix configuration.
+  GPU options: marchyo.graphics.nvidia.generation picks the default
+  driver branch and open modules, and the NVIDIA Container Toolkit is
+  on with development containers.  marchyo.graphics.amd adds ROCm and
+  VA-API.  Hybrid laptops can add an "integrated-only" boot entry that
+  turns the NVIDIA GPU off.
 
   Web app presets: marchyo.webapps.presets.m365 adds Outlook, Word,
   Excel, PowerPoint, Teams and OneDrive, and presets.notion adds Notion.
 
-  Quickshell desktop shell: marchyo.shell provides a bar, launcher
-  command palette, notification centre, Control Center, workspace
-  overview, session lock and greeter in one themed shell.  It is
-  enabled by default with marchyo.desktop.enable and replaces waybar,
-  mako, SwayOSD and Vicinae.
-
-  marchyo CLI: a 1.0 command line with a frozen command surface for
-  theme, toggle, capture, update, rollback, gc, diff, doctor, share,
-  plugin and more, with shell completions and a man page.  Changes
-  apply to the running desktop and are restored at startup.
-
-  Runtime theming: themes switch live without a rebuild across the
-  shell, Ghostty, Hyprland, GTK, Qt, bat, fzf, hyprlock and the console,
-  and "marchyo theme generate" derives a palette from a wallpaper.
-
-  Omarchy-style desktop: central and power menus, dictation with
-  Whisper, web apps with launch keys, screensaver, do-not-disturb,
-  caffeine, fingerprint and FIDO2 login, and shell plugins that run
-  upstream omarchy Quickshell plugins.
-
-  Typed options: marchyo.monitors, marchyo.defaults, marchyo.identity,
-  marchyo.nix.caches and marchyo.theme.fontScale and appearance, plus
-  GPU vendor and NVIDIA PRIME settings, system builders for NixOS
-  and nix-on-droid.
-
-  Documentation: a Starlight site with an end-user manual and
-  searchable option and package reference.
-
 ** Changes in behavior
 
-  Compose key: marchyo.keyboard.composeKey defaults to "shift-caps",
-  so Shift+Caps Lock is Compose in Hyprland and Caps Lock stays Caps
-  Lock.  The console and X get no compose key; set "menu" to keep the
-  Menu key.
+  Defaults: the bar is a full-width strip
+  (marchyo.theme.appearance.floatingBar = false), and input starts in
+  Latin (marchyo.keyboard.autoActivateIME = false).
 
-  Hotkeys (breaking): the Hyprland binds follow the Omarchy 4.5
-  planes.  Super is the system, Super+Shift apps, Super+Ctrl panels
-  and menus, Super+Ctrl+Alt quick actions.  Set
-  marchyo.keyboard.legacyBinds = true to keep the old layout for one
-  release.  Moved binds, old -> new:
-
-    Lock                       Super+L -> Super+Ctrl+L
-    Music player               Super+M -> Super+Shift+M
-    Audio panel                Super+Shift+V -> Super+Ctrl+A
-    Network panel              Super+Shift+N -> Super+Ctrl+N
-    Power panel                Super+Shift+B -> Super+Ctrl+P
-    System monitor panel       Super+Shift+M -> Super+Ctrl+M
-    Control Center             Super+Shift+Q -> Super+Ctrl+O
-    Window overview            Super+grave -> Super+Ctrl+grave
-    Quake console              Super+Ctrl+grave -> Super+grave
-    Window to Quake console    Super+Ctrl+Shift+grave -> Super+Shift+grave
-    Emoji picker               Super+period -> Super+Ctrl+E
-    Dismiss all notifications  Super+Ctrl+Shift+comma -> Super+Shift+comma
-    Notification history       Super+N -> Super+Shift+Alt+comma
-    Notification keyboard      Super+Alt+comma -> Super+Ctrl+comma
-    Do-not-disturb             Super+Ctrl+comma -> Super+Ctrl+Alt+comma
-    Emacs everywhere           Super+Ctrl+E -> Super+Shift+Alt+E
-    Org capture                Super+Shift+T -> Super+Ctrl+Alt+O
-    Emacs-aware focus/swap     Super+Alt(+Shift)+H/J/K/L
-                               -> Super+Ctrl+Alt(+Shift)+H/J/K/L
-    Window to monitor          Super+Shift+comma/period
-                               -> Super+Shift+Ctrl+arrows
-
-  New binds: Super+L / Super+Alt+L cycle the workspace layout
-  (dwindle, scrolling, master), Super+M minimizes to the drawer,
-  Super+A selects all, Super+comma acts on the newest notification
-  and Super+Alt+comma dismisses it, Super+Shift+Q calculator (qalc),
-  Super+Shift+T activity (btop), Super+Ctrl+D display panel,
-  Super+Shift+Ctrl+A agents panel, Super+Ctrl+W next background,
-  Super+Ctrl+Alt+C screenshot and Super+Ctrl+Alt+F full screen
-  desktop.  Super+C and Super+V send Ctrl+Shift+C/V in terminals and
-  keep Ctrl+Insert/Shift+Insert elsewhere.  Removed: the night light bind (Super+Ctrl+N)
-  and the nmtui bind on Super+Ctrl+W; without the shell,
-  Super+Ctrl+A and Super+Ctrl+N open wiremix and nmtui.  Super+K
-  lists the binds from the same table.
-
-  Translations: the whole shell and the runtime messages and menus of
-  the marchyo command follow marchyo.language.  Strings without a
-  translation in your language show in English.
-
-  Dictation backend: marchyo.dictation.backend now defaults to
-  superwhisper, a proprietary (unfree) program that needs
-  nixpkgs.config.allowUnfree.  Set it to "voxtype" to keep the old
-  open-source engine, or "hex".  Alt+Space toggles recording
-  (previously Super+Ctrl+X); F9 stays push-to-talk.
+  The systemd-boot menu is hidden by default.  Hold Space at power-on to
+  open it, or set boot.loader.timeout to show it.
 
   Faster menus and panels: the shell's keybinds reach it through
-  Hyprland global shortcuts, and marchyo CLI calls through a private
-  unix socket, so no process starts per keypress.
+  Hyprland global shortcuts, so no process starts per keypress.
 
   Faster logout, reboot and shutdown: marchyo closes every window and
   waits at most two seconds for the apps before it ends the session.
@@ -331,58 +228,191 @@ grouped by year; CHANGELOG.md lists them in detail with commit links.
   mq-deadline.  marchyo.security.ssh adds a key-only SSH server that
   refuses to evaluate while a login user has no authorized key.
 
-  Ghostty is the default terminal, bash the only login shell, and the
-  design system moved to a Jost, Fira Sans and IBM Plex Mono look.
-  Development tools default to rootless Podman, and the default
-  keyboard layout is us(altgr-intl) with Compose on the Menu key.
+  The flake now has six inputs (nixpkgs, home-manager, treefmt-nix,
+  ncro, tinted-schemes and disko), and the design system is part of
+  marchyo instead of a separate input.
 
-  Security defaults tightened: CPU mitigations stay on unless
-  marchyo.performance.disableMitigations is set, accept-flake-config is
-  no longer enabled, users no longer join the docker group by default,
-  and the cache proxy listens on localhost only.
-
-  The systemd-boot menu is hidden by default. Hold Space at power-on to
-  open it, or set boot.loader.timeout to show it.
-
-  OBS Studio and lazydocker are no longer installed. The SUPER + ALT + D
-  lazydocker bind is removed too. Add the packages through
+  OBS Studio and lazydocker are no longer installed.  The SUPER + ALT + D
+  lazydocker bind is removed too.  Add the packages through
   environment.systemPackages if you want them.
 
 ** Removed features
 
+  Breaking: this release removes the omarchy plugin layer (omarchy's
+  first-party plugins, plugins that replace native panels, "marchyo
+  plugin dev"), the AI tooling (marchyo.ai.*, "marchyo agent", the
+  agents panel, the Quake console, "marchyo dev", local Ollama;
+  marchyo.defaults.aiAgent still installs one agent CLI), unfree and
+  unverified packages (Superwhisper, Hex, Amp, gliff and others), the
+  speaker tuner, the Cam Link relay, Taildrop in "marchyo share", Slack
+  theme injection, the VS Code, Obsidian, Slack and herdr theme
+  surfaces, every shell and CLI language except English, nix-on-droid,
+  the last nix-darwin pieces, sops-nix and the nixos-hardware re-export.
+  Options that were removed fail evaluation with a pointer to what
+  replaces them.  Dictation uses Voxtype only.
+
+  The search demo page at marchyo.org/search was removed.
+
+** Bug fixes
+
+  Theme switching keeps btop and the desktop light/dark preference on
+  the same saved selection after a rebuild.  A failed preference update
+  reports an error and preserves the previous selection.  Chrome,
+  Chromium and Brave now follow the light/dark switch too.
+
+  The greeter follows every user's theme, not only the first one's,
+  and "marchyo network portal" no longer closes unrelated windows
+  when a portal redirects to a host name with pattern syntax in it.
+
+* Noteworthy changes in 2026-10
+
+** New features
+
+  Quickshell desktop shell: marchyo.shell provides a bar, launcher
+  command palette, notification centre, Control Center, workspace
+  overview, session lock and greeter in one themed shell.  It is
+  enabled by default with marchyo.desktop.enable and replaces the
+  separate bar, notification daemon, on-screen display and launcher.
+
+  Runtime theming: themes switch live without a rebuild across the
+  shell, Ghostty, Hyprland, GTK, Qt, bat, fzf, hyprlock and the console,
+  and "marchyo theme generate" derives a palette from a wallpaper.
+
+** Changes in behavior
+
+  The design system moved to a Jost, Fira Sans and IBM Plex Mono look.
+
+  The cache proxy listens on localhost only.
+
+** Removed features
+
   Stylix, nix-darwin support, the Vicinae, noctalia, waybar, mako and
-  SwayOSD modules, the self-tracking telemetry stack and the marchyo.ai
-  BYOK tooling were removed.  The gaming, kmscon, snapper and
+  SwayOSD modules were removed.  The gaming, kmscon, snapper and
   hibernation modules gave way to upstream NixOS options.
 
-  The search demo page at marchyo.org/search was removed.  The fleet app at marchyo.org/os
-  no longer has packages and options pages.
+** Bug fixes
+
+  Fixed Qt 6.12 turning shell colours black.
+
+* Noteworthy changes in 2026-09
+
+** New features
+
+  Typed options: marchyo.monitors declares the monitor layout, and
+  marchyo.theme.appearance scales the shell's corners, animation speed
+  and borders.
+
+  Shell plugins: upstream omarchy Quickshell bar widgets run on the
+  shell through a compatibility layer, managed with "marchyo plugin
+  add", "list" and "remove".
+
+** Changes in behavior
+
+  Development tools default to rootless Podman.
+
+** Removed features
+
+  The marchyo.ai BYOK tooling was removed.
 
 ** Bug fixes
 
   Fixed Hyprland Lua-config breakage, shell and greeter crash loops,
-  the black login screen, dconf conflicts on light-theme rebuilds and
-  Qt 6.12 turning shell colours black.
+  the black login screen and dconf conflicts on light-theme rebuilds.
 
-* Noteworthy changes in 2025
+* Noteworthy changes in 2026-08
+
+** New features
+
+  Documentation: an end-user manual on the documentation site.
+
+** Changes in behavior
+
+  bash is the only login shell.
+
+  Users no longer join the docker group by default.
+
+** Removed features
+
+  The self-tracking telemetry stack was removed.
+
+* Noteworthy changes in 2026-07
+
+** New features
+
+  marchyo CLI: a 1.0 command line with a frozen command surface for
+  theme, toggle, capture, update, rollback, gc, diff, doctor, share,
+  plugin and more, with shell completions and a man page.  Changes
+  apply to the running desktop and are restored at startup.
+
+  Omarchy-style desktop: central and power menus, dictation with
+  Whisper, web apps with launch keys, screensaver, do-not-disturb,
+  caffeine, and fingerprint and FIDO2 login.
+
+  Documentation: a Starlight site with option and package reference.
+
+  marchyo.theme.fontScale scales every text surface.
+
+* Noteworthy changes in 2026-05
+
+** Changes in behavior
+
+  The default keyboard layout is us(altgr-intl) with Compose on the
+  Menu key.
+
+* Noteworthy changes in 2026-04
+
+** Changes in behavior
+
+  Ghostty is the default terminal.
+
+* Noteworthy changes in 2026-03
+
+** New features
+
+  marchyo.defaults picks the browser, editors, players, file manager
+  and email client.
+
+** Changes in behavior
+
+  Security defaults tightened: CPU mitigations stay on unless
+  marchyo.performance.disableMitigations is set, and
+  accept-flake-config is no longer enabled.
+
+* Noteworthy changes in 2026-01
+
+** New features
+
+  GPU vendor options for Intel, AMD and NVIDIA, with NVIDIA PRIME
+  offload, sync and reverse-sync modes.
+
+* Noteworthy changes in 2025-11
+
+** New features
+
+  fcitx5 input methods with Chinese, Japanese and Korean support under
+  marchyo.keyboard.layouts.
+
+* Noteworthy changes in 2025-10
+
+** New features
+
+  Installation tooling: installer ISOs, disko layouts, workstation and
+  minimal flake templates, and marchyo.lib.mkNixosSystem.
+
+  Theming through nix-colors Base16 schemes with the Modus schemes.
+
+  Optional Prometheus and Grafana monitoring, system hardening and
+  BTRFS root rollback.
+
+** Changes in behavior
+
+  The legacy base, desktop and developer profiles were removed;
+  desktop and development settings now follow their enable options.
+
+* Noteworthy changes in 2025-09
 
 ** New features
 
   First version of the NixOS and Home Manager module set for a
   Hyprland desktop, with marchyo.* options for users and desktop,
   development, media and office feature flags.
-
-  Installation tooling: installer ISOs, disko layouts, workstation and
-  minimal flake templates, and marchyo.lib.mkNixosSystem.
-
-  Theming through nix-colors Base16 schemes with the Modus schemes, and
-  fcitx5 input methods with Chinese, Japanese and Korean support under
-  marchyo.keyboard.layouts.
-
-  Optional sops-nix secrets, Prometheus and Grafana monitoring, system
-  hardening and BTRFS root rollback.
-
-** Changes in behavior
-
-  The legacy base, desktop and developer profiles were removed;
-  desktop and development settings now follow their enable options.

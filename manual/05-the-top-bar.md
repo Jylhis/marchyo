@@ -111,8 +111,6 @@ Several segments open a panel under the bar. Only one panel is open at a time, a
 clicking anywhere outside it closes it. Each panel also has a button to the full
 tool when you need more.
 
-The AI agents panel marks limits that are more than an hour old as stale, and an agent whose
-check failed because you are signed out shows a sign-in message instead of an error.
 In the Display panel, Tab reaches a layout tile and selects its display, **Shift** with
 the arrow keys moves the tile one step, and **R** rotates it.
 
@@ -197,9 +195,8 @@ marchyo.shell.settings.bar.layout.right = [
 Rebuild, and the bar picks up the new layout without restarting. A few more
 segments are available but not shown by default: `marchyo.nightLight` (click to turn
 night light on or off), `marchyo.tailscale` (your Tailscale connection, click for
-details), `marchyo.weather` (current conditions, click for a forecast panel),
-`marchyo.agents` (the AI agent usage limit closest to its end, click for every
-limit and its reset time), and `marchyo.lockKeys` (shows CAPS / NUM while Caps
+details), `marchyo.weather` (current conditions, click for a forecast panel)
+and `marchyo.lockKeys` (shows CAPS / NUM while Caps
 Lock or Num Lock is on).
 Three indicators stay hidden until needed: `marchyo.update` (the flake pins a newer nixpkgs than the
 running system), `marchyo.disk` (the Nix store filesystem is nearly full) and
