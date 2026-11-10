@@ -1,21 +1,20 @@
 # Marchyo
 
-A modular NixOS configuration flake providing a curated set of system and home-manager configurations with sensible defaults.
+Marchyo is a declarative NixOS desktop: Hyprland, a Quickshell shell, a
+matched theme and a curated set of apps, configured through `marchyo.*`
+options in a single flake.
 
-## Features
+Read more at [marchyo.org](https://marchyo.org/).
 
-- **Modular Architecture**: Organized modules for desktop, development, media, and office environments.
-- **Feature Flags**: Simple enable flags that configure entire stacks (desktop, development, etc.).
-- **Home Manager Integration**: Seamless user environment management.
-- **Hardware Support**: Graphics vendor options (incl. NVIDIA PRIME); pairs with `nixos-hardware` profiles from your own flake.
-- **Extensive Configuration**: A rich set of custom options for fine-grained control.
+## Quick start
 
-## Quick Start
+Start from the template:
 
-Marchyo is batteries-included: add it as your **only** input and let
-`marchyo.lib.mkNixosSystem` selects the correct nixpkgs,
-home-manager, overlay and marchyo modules for your system. No separate
-`nixpkgs` input is needed.
+```bash
+nix flake init -t github:Jylhis/marchyo#workstation
+```
+
+or add Marchyo as your only input:
 
 ```nix
 {
@@ -28,11 +27,7 @@ home-manager, overlay and marchyo modules for your system. No separate
         ./hardware-configuration.nix
         {
           marchyo.desktop.enable = true;
-          marchyo.development.enable = true;
-          marchyo.users.myuser = {
-            fullname = "Your Name";
-            email = "your.email@example.com";
-          };
+          marchyo.users.me = { fullname = "Your Name"; email = "you@example.com"; };
         }
       ];
     };
@@ -40,78 +35,37 @@ home-manager, overlay and marchyo modules for your system. No separate
 }
 ```
 
-You can still wire the modules manually (`marchyo.nixosModules.default` with
-your own `nixpkgs.lib.nixosSystem`) if you prefer — but then you are responsible
-for picking the right nixpkgs per system. The raw passthrough
-`marchyo.inputs.nixpkgs` is always **unstable**; for a system-correct,
-overlay-applied package set use `marchyo.legacyPackages.<system>`.
+## The Marchyo Manual
 
-Alternatively, use the provided template to bootstrap a new configuration:
-```bash
-nix flake init -t github:Jylhis/marchyo#workstation
-```
+The manual lives in [`manual/`](manual/), which is its authoritative source.
 
-## Configuration
+- [Welcome to Marchyo](manual/01-welcome-to-marchyo.md)
 
-Marchyo is configured through a set of options under the `marchyo.*` namespace.
+**The Basics**
 
-### Feature Flags
+- [Getting Started](manual/02-getting-started.md)
+- [Coming from Other Distros](manual/03-coming-from-other-distros.md)
+- [Navigation](manual/04-navigation.md)
+- [The Top Bar](manual/05-the-top-bar.md)
+- [Themes](manual/06-themes.md)
+- [Hotkeys](manual/07-hotkeys.md)
+- [The Marchyo CLI](manual/08-the-marchyo-cli.md)
+- [Default Apps](manual/09-default-apps.md)
 
-Enable groups of related functionality with feature flags:
+**Configuration**
 
-- `marchyo.desktop.enable`: Desktop environment (Hyprland, fonts, audio, bluetooth).
-- `marchyo.development.enable`: Development tools (git, docker, virtualization).
-- `marchyo.media.enable`: Media applications (auto-enabled with desktop).
-- `marchyo.office.enable`: Office applications (auto-enabled with desktop).
+- [Updating](manual/10-updating.md)
+- [Monitors](manual/12-monitors.md)
+- [Networking](manual/13-networking.md)
+- [Hardware Authentication](manual/14-hardware-authentication.md)
 
-### User Configuration
+**The Rest**
 
-Configure users with metadata for git and applications:
+- [Troubleshooting](manual/11-troubleshooting.md)
 
-```nix
-marchyo.users.myuser = {
-  fullname = "Your Name";
-  email = "your.email@example.com";
-};
-```
-
-### Theming
-
-Customize the theme variant:
-
-```nix
-marchyo.theme = {
-  enable = true;
-  variant = "dark";  # or "light"
-};
-```
-
-The dark variant uses the Jylhis Dark palette; the light variant uses Jylhis Light (both modes of the single theme in [Jylhis Design System](https://github.com/jylhis/design) `tokens/`). Set `marchyo.theme.scheme = "<name>"` to use a `base16-schemes` scheme instead.
-
-**For complete documentation of all available options, see the [Marchyo documentation](https://marchyo.org/docs).**
-
-## Development
-
-Essential commands for development and testing:
-
-```bash
-nix flake check  # Validate configuration and run all tests
-nix fmt          # Format all Nix code in the repository
-nix develop      # Enter a development shell with necessary tools
-```
-
-## Contributing
-
-Contributions are highly welcome! To ensure a smooth process, please make sure that:
-- All Nix files are formatted with `nix fmt` before committing.
-- All tests pass by running `nix flake check`.
-- Your commit messages follow the [conventional commit format](https://www.conventionalcommits.org/en/v1.0.0/).
+The full option reference is at [marchyo.org/docs](https://marchyo.org/docs).
+Contributors start at [`docs/`](docs/) and [`AGENTS.md`](AGENTS.md).
 
 ## License
 
-Released under the [MIT License](LICENSE).
-
-## Acknowledgments
-
-- [nixos-hardware](https://github.com/NixOS/nixos-hardware) for hardware configurations.
-- [home-manager](https://github.com/nix-community/home-manager) for user environment management.
+Marchyo is released under the [MIT License](LICENSE).
