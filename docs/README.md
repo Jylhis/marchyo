@@ -28,3 +28,9 @@ Documentation is organized into two trees (mirroring the omarchy model):
 The published user-facing docs live in [`site/`](../site/) (Astro + Starlight,
 https://marchyo.org). Keep `site/src/content/docs/docs/configuration/` in sync
 with the option declarations under `modules/nixos/options/`.
+
+## Contributing
+
+- Run `just fmt` before committing (CI enforces `nix fmt -- --ci`) and `just check` before finishing; `nix flake check` also builds the cheap checks. `nix flake show` lists the flake outputs.
+- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`.
+- A new feature is a module under `modules/nixos/` or `modules/home/` (auto-discovered), its options under `modules/nixos/options/`, and a test predicate in `tests/eval/<feature>.nix`. See [adding-modules.md](adding-modules.md).

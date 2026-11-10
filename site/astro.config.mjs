@@ -76,7 +76,6 @@ export default defineConfig({
             'docs/configuration/notifications',
             'docs/configuration/dictation',
             'docs/configuration/hardware',
-            'docs/configuration/monitors',
             'docs/configuration/power',
             'docs/configuration/performance',
             'docs/configuration/network',
@@ -84,14 +83,6 @@ export default defineConfig({
             'docs/configuration/nix-cache',
             'docs/configuration/bees',
             'docs/configuration/emacs',
-          ],
-        },
-        {
-          label: 'Using Marchyo',
-          items: [
-            'docs/usage/cli',
-            'docs/usage/updating',
-            'docs/usage/troubleshooting',
           ],
         },
         {
@@ -104,12 +95,7 @@ export default defineConfig({
         },
         {
           label: 'Development',
-          items: [
-            'docs/development/architecture',
-            'docs/development/adding-modules',
-            'docs/development/testing',
-            'docs/development/contributing',
-          ],
+          items: ['docs/development'],
         },
       ],
     }),

@@ -9,8 +9,9 @@ answer. Here are the ones people hit first.
 ## A rebuild fails
 
 - **Something about an unknown option.** If a rebuild complains that a `marchyo.*`
-  option doesn't exist, it usually means the option was renamed or removed. Check the
-  migration guide on the site for the current name. Because the system is declarative,
+  option doesn't exist, it usually means the option was renamed or removed (for
+  example `marchyo.inputMethod.*`, now `marchyo.keyboard.layouts`). Check the
+  [migration guide](/docs/guides/migration/) for the current name. Because the system is declarative,
   a stale option name fails the build outright rather than silently doing nothing —
   which is the point: you find out immediately.
 - **You want to check before committing to a full build.** A quick evaluation catches
@@ -30,8 +31,9 @@ answer. Here are the ones people hit first.
   rebuild, that's expected — runtime switches are temporary. See
   [Themes](./06-themes.md).
 - **Dictation isn't typing.** Confirm `marchyo.dictation.enable` is on and that the
-  dictation service is running. The push-to-talk key also needs your user to be in the
-  `input` group, which Marchyo adds for you when push-to-talk is enabled.
+  dictation service is running (`systemctl --user status voxtype`). The push-to-talk key also needs your user to be in the
+  `input` group, which Marchyo adds for you when push-to-talk is enabled. See
+  [Dictation](/docs/configuration/dictation/).
 
 ## Questions people ask
 

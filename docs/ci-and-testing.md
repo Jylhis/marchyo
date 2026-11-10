@@ -41,6 +41,43 @@ nix develop              # Enter the dev shell (shell.nix; `nix-shell` works too
 - **Lib tests** (`tests/lib-tests.nix`): unit tests for lib functions using `assertTest` helper.
 - **Heavy checks** (`legacyPackages.<system>.heavyChecks`): `hyprland --verify-config` over rendered configs, theme asset dir builds, both Plymouth theme variants (the only place the light variant's asset pipeline and `installCheckPhase` run), the `marchyo-shell` wrapper, the installer ISO evaluations, and the LocalSend Nautilus script.
 
+### Writing tests
+
+A predicate takes the evaluated NixOS `config` and returns `true`, `false`, a failure message or a list of messages. Non-default settings go on a tweak system from the same file; `helpers.expect` turns a condition and a message into a result:
+
+```nix
+{ helpers, lib, ... }:
+{
+  refs.desktop-tweaks.eval-my-feature-port =
+    cfg:
+    helpers.expect (lib.elem 1234 cfg.networking.firewall.allowedTCPPorts) "port 1234 is not open";
+
+  refConfig.desktop-tweaks.marchyo.myFeature.port = 1234;
+}
+```
+
+A negative test names the assertion it expects:
+
+```nix
+{
+  failing.eval-my-feature-needs-port = {
+    on = "misconfigured";
+    expect = "marchyo.myFeature.port must be set";
+  };
+  failingConfig.misconfigured.marchyo.myFeature.enable = true;
+}
+```
+
+A lib test goes in `tests/lib-tests.nix` (`assertTest name assertion message` fails at evaluation time when the assertion is false):
+
+```nix
+test-my-function =
+  let
+    result = lib.myFunction "input";
+  in
+  assertTest "my-function" (result == "expected") "Expected myFunction to transform input";
+```
+
 ### Quickshell shell tests (`tests/shell/`, Linux only)
 
 The QML tree in `shell/` gets two headless suites, wired into `mkChecks`. Neither needs Quickshell or a Qt platform plugin — that is the point, since `just -f shell/Justfile check` (which loads the tree for real) can only run on a machine that has both:

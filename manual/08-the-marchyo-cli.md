@@ -19,10 +19,14 @@ So every command that *changes* something offers three modes:
 
 - **By default, it changes things live.** The effect is instant — no rebuild — and
   it's remembered across compositor restarts. This is the mode you'll use constantly:
-  fast, reversible, low-stakes. A live change resets on the next full rebuild.
-- **`--apply` makes it stick.** Add this flag and the change is also written down and
-  rebuilt into your system, so it survives reboots. Your hand-written configuration
-  still wins if it disagrees — `--apply` sets a default, not an override.
+  fast, reversible, low-stakes. Live changes are kept in
+  `~/.local/state/marchyo/runtime.json` and replayed after every login and
+  home-manager activation (theme first, then wallpaper, fonts, appearance and
+  toggles), so a rebuild does not drop them.
+- **`--apply` makes it stick.** Add this flag and the change is also written to
+  `/etc/marchyo/cli-state.json` and rebuilt into your system, so it survives reboots.
+  Your hand-written configuration still wins if it disagrees — `--apply` sets a
+  default, not an override.
 - **`--revert` undoes it.** Drops the live change, puts the declared value back, and
   cleans up anything `--apply` persisted.
 
@@ -31,6 +35,20 @@ So the rhythm is: try it live, and if you love it, run the same command with
 because there's no meaningful "live" version of installing software.
 `security enroll` only registers your fingerprint or key; turn the feature on
 in your config first.
+
+### Wiring `--apply` into your flake
+
+Flake evaluation is pure, so Marchyo cannot read `/etc/marchyo/cli-state.json` itself.
+To let `--apply` settings reach your system, read the file in your own flake:
+
+```nix
+{
+  marchyoCliState =
+    builtins.fromJSON (builtins.readFile /etc/marchyo/cli-state.json);
+}
+```
+
+and rebuild with `--impure` (`marchyo rebuild` passes it for you).
 
 ## What you can do
 
@@ -53,6 +71,13 @@ marchyo bar put marchyo.cpu centerBegin   # edit the bar layout live (marchyo ba
 marchyo theme icons          # installed icon themes; give a name to set one
 ```
 
+`bar list` shows the recorded layout edits and `bar reset` drops them; `bar position`
+and `bar background` are the same as the `theme bar-*` commands. `bg list --format json`
+reports `[{path, name, source, current}]`, and `theme list --format json` adds each
+theme's `preview` and `wallpaper` paths when it ships them. Bar position, bar
+background, reduce motion and the UI font live in
+`$XDG_STATE_HOME/marchyo/shell/style.json`, which the shell watches.
+
 Runtime changes survive a home-manager activation: `marchyo runtime restore` replays them.
 
 ### Toggles
@@ -61,7 +86,8 @@ Runtime changes survive a home-manager activation: `marchyo runtime restore` rep
 `gaps`, `transparency`, `animations`, `reduce-motion` (make shell transitions instant; takes `--apply`),
 `fullscreen-desktop` (hide the bar and drop gaps, borders and rounding), `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
 `screensaver`, `notifications`, `suspend` and `caffeine` (keep the machine awake).
-`waybar` shows or hides the shell top bar.
+`waybar` shows or hides the shell top bar. With the shell running, `--status` for
+`waybar` and `notifications` reads the live bar and do-not-disturb state.
 Add `--status` to check one, or `--apply` to make it permanent:
 
 ```bash
@@ -70,7 +96,9 @@ marchyo toggle gaps off --apply      # and keep it that way
 ```
 
 One more switch, `hybrid-gpu`, changes hardware configuration and has no live mode, so
-it only works with `--apply` (for example `marchyo toggle hybrid-gpu on --apply`).
+it only works with `--apply` (for example `marchyo toggle hybrid-gpu on --apply`);
+it persists `marchyo.graphics.prime.enable`. `reduce-motion --apply` persists
+`marchyo.theme.appearance.reduceMotion`.
 
 ### Notifications, what changed, first-login setup
 
@@ -101,6 +129,36 @@ marchyo plugin validate ~/src/my-plugin
 
 `validate` runs the build's manifest checks on a checkout.
 
+### Shell panels and bar
+
+`marchyo shell` drives the running shell (`marchyo.shell.enable`). Hypridle, the
+screensaver, the lock bind and your scripts use it; each call exits 1 with a hint when
+the shell is not running, and prints the shell's reply (`--json`:
+`{"function", "reply"}`).
+
+```bash
+marchyo shell toggle|open <panel>   # controlcenter, audio, network, power, monitor, notifications, ...
+marchyo shell close [<panel>]       # the named panel, or whichever is open
+marchyo shell launcher <mode>       # apps | emoji | clipboard
+marchyo shell bar [on|off]          # the top bar
+marchyo shell overview [on|off]     # the window overview
+marchyo shell lock                  # also: lock-state, bar-state, dnd-state (print the state)
+marchyo shell dnd [on|off]          # do not disturb
+marchyo shell dismiss [--all]       # newest notification toast, or every toast
+marchyo shell notify-keys           # control the toasts from the keyboard
+marchyo shell gallery [section]     # every shell control in every state (for development)
+marchyo shell reload                # reload the shell's QML in place
+```
+
+### Volume and brightness
+
+```bash
+marchyo volume up|down|mute [--mic]   # 5% steps, capped at 100%; --mic is the default source
+marchyo brightness up|down            # 5% steps
+```
+
+With the shell running, the on-screen display shows the level.
+
 ### Capture
 
 ```bash
@@ -115,6 +173,11 @@ marchyo capture color      # color picker, hex to clipboard
 ```bash
 marchyo window pop                 # float, centre and pin the focused tile (again to undo)
 marchyo window close-all           # close every window
+marchyo window tiled-fullscreen    # tiled fullscreen
+marchyo zoom in|out|reset          # cursor zoom
+marchyo monitor scale-cycle        # step the focused monitor's scale
+marchyo monitor laptop-toggle      # laptop panel on/off
+marchyo monitor clamshell on|off   # the lid handler
 marchyo monitor save --nix         # print the current layout as a marchyo.monitors snippet
 marchyo monitor reset              # forget the display panel's saved settings
 marchyo monitor workspaces reset   # forget which workspace block each monitor owns
@@ -129,13 +192,20 @@ marchyo menu [route]         # the command menu, e.g. capture or appearance.them
 marchyo menu --tui           # the gum menu, for when the shell is down
 marchyo keybindings          # searchable cheat sheet (also Super + K in the shell)
 marchyo launch <app>         # launch an app detached from the terminal
+marchyo focus-or-launch <class> [cmd...]   # focus a window of that class, or launch it
 marchyo lock                 # also: logout, suspend, hibernate, reboot, shutdown
 marchyo powerprofile set <p> # power-saver / balanced / performance
 ```
 
+In a Hyprland session, `logout`, `reboot` and `shutdown` run in a short-lived user
+unit (30 seconds at most) that closes every window, waits up to 2 seconds for the apps
+to exit, then ends the session or reboots or powers off. `shutdown` holds a sleep,
+idle and lid-switch inhibitor meanwhile.
+
 `marchyo menu select` and `marchyo menu input` are a dmenu mode for scripts: the rows
 come on stdin, the choice goes to stdout, and a cancel exits 1 (2 when the shell is
-not reachable). The menu entries come from `marchyo.menu.entries`; add your own in
+not reachable). **Trigger**, **Speed test** measures network (`speedtest-go`) or disk
+(`fio`) speed. The menu entries come from `marchyo.menu.entries`; add your own in
 `~/.config/marchyo/menu.local.json`.
 
 ### Utilities
@@ -147,7 +217,36 @@ marchyo transcode [file] [--to mp4|webm|gif]
 marchyo font list --kind ui         # families to pick from (mono | ui | all)
 marchyo font set <family>           # switch the terminal font live
 marchyo font set <family> --kind ui # switch the UI font (GTK and shell)
+marchyo font current                # the active terminal font
+marchyo dictation start|stop|toggle|status   # drive the configured dictation backend
+marchyo share [paths...] [--to <alias|ip>] [--pin <pin>] [--clipboard]
 ```
+
+`transcode` also takes `--ascii`, and `font list --format json` adds each family's
+`kind` and the current fonts.
+
+### Sharing with LocalSend
+
+`marchyo share` speaks the [LocalSend](https://localsend.org) v2 protocol itself, so it
+sends to phones and computers running LocalSend without opening the app:
+
+- `marchyo share photo.jpg notes/` looks for LocalSend devices on the local network for
+  about 2 seconds. With one device it sends straight away; with several it opens a
+  picker (under `--no-input` it lists them and asks for `--to`). Folders are sent
+  recursively and arrive with their structure.
+- `--to <alias|ip>` picks the receiver by its LocalSend name or by IPv4 address
+  (optionally `ip:port`), which skips discovery. Use it in scripts.
+- `--pin <pin>` answers a receiver that asks for a PIN.
+- `--clipboard` copies a file's contents (or a folder's path) to the clipboard with
+  `wl-copy` instead of sending.
+- With no paths, a menu picks a file, a folder, or the current clipboard text (sent as
+  a LocalSend message).
+- `--json` prints `{"share": {"peer": ..., "status": "sent", "sent": n, "skipped": n}}`.
+
+The receiver has to accept the transfer; notifications report accepted, declined and
+finished. Discovery uses UDP multicast on port 53317 and falls back to scanning the
+local /24 subnet, so sending also works with `programs.localsend.openFirewall = false`.
+`Share` is also listed under **Trigger** in `marchyo menu`.
 
 ### Managing the system
 
@@ -155,22 +254,38 @@ marchyo font set <family> --kind ui # switch the UI font (GTK and shell)
 marchyo status               # current config + system info
 marchyo rebuild              # rebuild against your flake
 marchyo update               # update your flake inputs
+marchyo update --check       # only report whether the lock pins a newer nixpkgs
 marchyo upgrade              # update, then rebuild
 marchyo rollback             # switch to the previous generation
-marchyo gc                   # collect old generations
+marchyo gc                   # collect old generations (--delete-older-than 14d)
 marchyo diff                 # what changed between generations
+marchyo debug                # diagnostics bundle: versions, generation, journal errors
+marchyo doctor               # session health checks
 ```
+
+`rebuild`, `update`, `upgrade`, `rollback` and `diff` take `-n` for a dry run.
+`doctor` prints PASS, FAIL or SKIP per check (the shell's baked tool paths exist,
+Hyprland and shell IPC answer, the Marchyo user services are active) and exits 1 on
+any FAIL.
 
 The update and rollback commands are covered in more depth in
 [Updating](./10-updating.md). You can also flip whole feature groups on and off —
 `marchyo install development`, `marchyo remove media` — and add web-app windows with
-`marchyo webapp add <url>`; those always rebuild.
+`marchyo webapp add <url> [--name --key]` (`webapp rm <name>` removes one); those always
+rebuild. `marchyo security enroll fido2|fingerprint` needs the matching
+`marchyo.security.*` flag.
+
+`marchyo plugin update` and `plugin remove <name>` complete the plugin commands above.
+`marchyo runtime status` lists the active live overrides, and
+`marchyo completion bash|zsh|fish|man` prints shell completions and the man page
+(both are installed with the package).
 
 ## Text or JSON, quiet or loud
 
 Most commands take `--format text|json` (or `--json`) if you want to script against
-them, plus `--plain`, `--no-color`, `-q` for quiet and `-v` for verbose. Data goes to
-standard output and diagnostics to standard error, so piping works cleanly.
+them, plus `--color`, `--no-color`, `--plain`, `--no-animation`, `--no-input`, `-q` for
+quiet and `-v` for verbose. Data goes to standard output and diagnostics to standard
+error, so piping works cleanly. Exit codes: 0 success, 1 runtime failure, 2 usage error.
 
 ## A stable contract
 
