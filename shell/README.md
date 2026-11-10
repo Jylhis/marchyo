@@ -685,7 +685,7 @@ grid, where Left/Right move by one), Enter activates.
 | emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
 | clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js`; image entries get a thumbnail row (see below) | text: copy + type; image: `wl-copy` + Ctrl+V |
 
-| menu | `SUPER+ALT+Space` | `Commons/MenuModel.js` over `~/.config/marchyo/menu.json` (from `marchyo.menu.entries`) merged per key with `menu.local.json`; providers list themes, fonts, languages, power profiles, wallpapers and agent accounts with one `marchyo` command each, apps from `DesktopEntries` | submenu: `Services/Launcher.menuInto()`; exec and terminal run detached after the launcher closes; launcher opens another mode |
+| menu | `SUPER+ALT+Space` | `Commons/MenuModel.js` over `~/.config/marchyo/menu.json` (from `marchyo.menu.entries`) merged per key with `menu.local.json`; providers list themes, fonts, languages, power profiles and wallpapers with one `marchyo` command each, apps from `DesktopEntries` | submenu: `Services/Launcher.menuInto()`; exec and terminal run detached after the launcher closes; launcher opens another mode |
 | keys | `SUPER+K` | `~/.config/marchyo/keybindings.json`, rows grouped by modifier plane | `hyprctl dispatch <dispatch>` when the bind has one |
 | dmenu | none (`marchyo menu select|input`) | the request file `$XDG_RUNTIME_DIR/marchyo/menu/<id>.json`, answered in `<id>.out` then `<id>.done` | the chosen value; closing answers with an empty file (a cancel) |
 
