@@ -80,7 +80,7 @@ contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.t
 
 `marchyoctl` (dev shell only): `scaffold module <name>`, `options search <q>`.
 
-Full reference with examples: https://marchyo.org/docs/usage/cli/
+Full reference with examples: https://marchyo.org/manual/08-the-marchyo-cli/
 
 ## Standard flags (both binaries)
 

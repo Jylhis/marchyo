@@ -155,7 +155,7 @@ ${sections}
 .SH GLOBAL FLAGS
 ${GLOBAL_FLAGS.map((f) => `.TP\n.B ${esc(f)}`).join("\n")}
 .SH SEE ALSO
-Full documentation: https://marchyo.org/docs/usage/cli/
+Full documentation: https://marchyo.org/manual/08-the-marchyo-cli/
 `;
 }
 
