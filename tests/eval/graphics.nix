@@ -171,8 +171,9 @@ in
       marchyo.graphics = {
         vendors = [ "amd" ];
         amd.vaapi.enable = false;
+        # ROCm exists only on x86_64; elsewhere the module asserts against it.
         amd.rocm = {
-          enable = true;
+          enable = x86;
           hsaOverrideGfxVersion = "10.3.0";
         };
       };
