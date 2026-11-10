@@ -4,8 +4,7 @@ A custom [Quickshell](https://quickshell.org) desktop shell and the default
 Marchyo desktop shell: a single long-running QML process for the bar, panels,
 OSD, notifications, launcher, lock, and polkit agent. The discrete
 hyprlock + hyprpolkitagent pair stays as the `marchyo.shell.enable = false`
-fallback. Open work:
-**[TODO.md](../TODO.md)**.
+fallback.
 
 ## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 5 (launcher) done
 
