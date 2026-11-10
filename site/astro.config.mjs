@@ -90,7 +90,6 @@ export default defineConfig({
           label: 'Using Marchyo',
           items: [
             'docs/usage/cli',
-            'docs/usage/hotkeys',
             'docs/usage/updating',
             'docs/usage/troubleshooting',
           ],

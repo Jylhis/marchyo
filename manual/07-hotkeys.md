@@ -255,3 +255,14 @@ With `marchyo.emacs.enable`:
 
 The top bar isn't only for reading — most segments respond to clicks and scrolls.
 Those are covered in [The Top Bar](./05-the-top-bar.md).
+
+## Changing a bind
+
+Every bind comes from one table, `lib/keybinds.nix`, which
+`modules/home/keybinds.nix` renders into Hyprland binds and into
+`~/.config/marchyo/keybindings.json` for the `Super + K` cheat sheet. To change
+a bind, override `wayland.windowManager.hyprland.settings` in your Home Manager
+configuration; edits to the generated files are lost on the next rebuild.
+
+With `marchyo.shell.enable = false`, hyprlock locks the screen and the
+shell-only binds (launcher, panels, notifications) are absent.
