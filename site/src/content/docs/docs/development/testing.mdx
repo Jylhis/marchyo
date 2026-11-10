@@ -102,4 +102,4 @@ The GitHub Actions workflow (`.github/workflows/validate.yml`) runs five jobs:
 
 Lint and check run in parallel. Concurrency groups cancel superseded PR runs automatically. Builds use [Cachix](https://app.cachix.org) (`jylhis` cache).
 
-A separate `.github/workflows/site.yml` workflow is a build-only gate for the website: changes touching `site/**` run `bun run check` and `bun run build`. Deployment happens outside GitHub Actions — Cloudflare Workers Builds deploys the site to [marchyo.org](https://marchyo.org) on push to `main`.
+A separate `.github/workflows/site.yml` workflow is a build-only gate for the website: changes touching `site/**` or `manual/**` run `npm ci`, `npm run check` and `npm run build`. Deployment happens outside GitHub Actions — Cloudflare Workers Builds deploys the site to [marchyo.org](https://marchyo.org) on push to `main`.

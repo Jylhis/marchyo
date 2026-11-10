@@ -66,7 +66,6 @@ import Base from '../layouts/Base.astro';
           <ul class="callout-list">
             <li>tracking nixpkgs unstable</li>
             <li>daily-driven on real hardware</li>
-            <li>omarchy parity: tracked in <a href="https://github.com/Jylhis/marchyo/blob/main/OMARCHY_PARITY.md">OMARCHY_PARITY.md</a></li>
           </ul>
         </div>
       </div>
@@ -123,7 +122,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
 
     <section class="man__section">
       <h2 class="man__h">THEMING</h2>
-      <p class="man__lead">Paper and Black, straight from the <a href="https://github.com/jylhis/design">Jylhis design tokens</a>. The ☾ in the header flips this page the same way <code>marchyo.theme.variant</code> flips your desktop.</p>
+      <p class="man__lead">Paper and Amber, straight from the <a href="https://github.com/jylhis/design">Jylhis design tokens</a>. The ☾ in the header flips this page the same way <code>marchyo.theme.variant</code> flips your desktop.</p>
       <div class="swatches">
         <div class="swatch" data-mode="light">
           <div class="swatch__name">☀ paper</div>
@@ -136,7 +135,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
           </div>
         </div>
         <div class="swatch" data-mode="dark">
-          <div class="swatch__name">☾ black</div>
+          <div class="swatch__name">☾ amber</div>
           <div class="swatch__code">variant = <span class="swatch__str">"dark"</span>;</div>
           <div class="swatch__chips">
             <span class="chip chip--bg"></span>
@@ -153,7 +152,7 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
       <div class="faq">
         <details>
           <summary><span class="faq__chev">›</span> Why not just use Omarchy?</summary>
-          <p>Omarchy is Arch. I wanted the same opinionated desktop with NixOS guarantees — rollbacks, one config for every machine, and no drift. Parity status is tracked in <a href="https://github.com/Jylhis/marchyo/blob/main/OMARCHY_PARITY.md">OMARCHY_PARITY.md</a>.</p>
+          <p>Omarchy is Arch. I wanted the same opinionated desktop with NixOS guarantees — rollbacks, one config for every machine, and no drift.</p>
         </details>
         <details>
           <summary><span class="faq__chev">›</span> Do I need my own nixpkgs input?</summary>

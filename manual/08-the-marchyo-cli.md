@@ -44,6 +44,9 @@ marchyo bg set <path>        # set the wallpaper
 marchyo bg list              # selectable wallpapers (theme, package, ~/Pictures/Wallpapers)
 marchyo bg next              # cycle that list
 marchyo theme gaps on        # window gaps (--apply keeps it)
+marchyo theme transparency glassy   # opaque | transparent | glassy
+marchyo theme corners rounded       # theme | sharp | rounded
+marchyo theme generate <image>      # build a theme from a wallpaper (matugen)
 marchyo theme bar-position bottom
 marchyo theme bar-background glassy
 marchyo bar put marchyo.cpu centerBegin   # edit the bar layout live (marchyo bar --help)
@@ -56,7 +59,7 @@ Runtime changes survive a home-manager activation: `marchyo runtime restore` rep
 
 `marchyo toggle <name>` flips a desktop feature on or off, live. The switches include
 `gaps`, `transparency`, `animations`, `reduce-motion` (make shell transitions instant; takes `--apply`),
-`nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
+`fullscreen-desktop` (hide the bar and drop gaps, borders and rounding), `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`,
 `screensaver`, `notifications`, `suspend` and `caffeine` (keep the machine awake).
 `waybar` shows or hides the shell top bar.
 Add `--status` to check one, or `--apply` to make it permanent:
@@ -105,6 +108,18 @@ marchyo capture screenshot [--target area|active|output|screen] [--edit]
 marchyo capture record [--audio none|desktop|mic]   # run again to stop
 marchyo capture ocr        # select a region, copy the recognized text
 marchyo capture color      # color picker, hex to clipboard
+```
+
+### Windows, monitors, language and network
+
+```bash
+marchyo window pop                 # float, centre and pin the focused tile (again to undo)
+marchyo window close-all           # close every window
+marchyo monitor save --nix         # print the current layout as a marchyo.monitors snippet
+marchyo monitor reset              # forget the display panel's saved settings
+marchyo monitor workspaces reset   # forget which workspace block each monitor owns
+marchyo language [code|list]       # show or set the display language (--revert to undo)
+marchyo network portal             # sign in to a captive portal and wait until online
 ```
 
 ### Menus, launching, and session

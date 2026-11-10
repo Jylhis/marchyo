@@ -55,6 +55,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 | `marchyo theme next` | Cycle the manifest |
 | `marchyo theme gaps [on\|off] [--apply\|--revert]` | Window gaps; `--apply` persists `marchyo.theme.appearance.gaps` |
 | `marchyo theme transparency\|corners [mode] [--revert]` | Window transparency and corners (runtime-only) |
+| `marchyo theme generate [image] [--light\|--dark] [--revert]` | Build a theme from a wallpaper with matugen and apply it live |
 | `marchyo theme bar-position [top\|bottom]` / `theme bar-background [opaque\|glassy\|clear]` | Shell bar placement and background (runtime-only, written to the shell style file) |
 | `marchyo bar put <id> <section> [--at N]` / `move <id> left\|right [n]` / `remove <id>` / `set <section> [ids...]` | Edit the shell bar layout live (sections: `left`, `centerBegin`, `center`, `centerEnd`, `right`); recorded in `bar-layout.json` and replayed by `runtime restore` |
 | `marchyo bar list` / `bar reset` | Show the recorded edits / drop them |
@@ -67,7 +68,7 @@ and rebuild with `--impure` (the CLI's own `rebuild` passes it automatically).
 
 ### Toggles
 
-`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `animations`, `reduce-motion`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu`. `hybrid-gpu` is `--apply`-only: it changes hardware configuration, persisting `marchyo.graphics.prime.enable`. `reduce-motion` also takes `--apply` and persists `marchyo.theme.appearance.reduceMotion`. With the shell enabled, `waybar` and `notifications` `--status` read the live bar/DND state over shell IPC (falling back to the recorded runtime override when the shell is not running).
+`marchyo toggle <name> [on|off] [--status|--apply|--revert]` for: `gaps`, `transparency`, `animations`, `reduce-motion`, `fullscreen-desktop`, `nightlight`, `waybar`, `touchpad`, `touchscreen`, `idle`, `screensaver`, `notifications`, `suspend`, and `hybrid-gpu`. `hybrid-gpu` is `--apply`-only: it changes hardware configuration, persisting `marchyo.graphics.prime.enable`. `reduce-motion` also takes `--apply` and persists `marchyo.theme.appearance.reduceMotion`. With the shell enabled, `waybar` and `notifications` `--status` read the live bar/DND state over shell IPC (falling back to the recorded runtime override when the shell is not running).
 
 ### Shell
 
@@ -112,12 +113,16 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 
 | Command | Purpose |
 |---------|---------|
-| `marchyo menu [power]` | Central system menu / power menu (gum TUIs); **Trigger > Speed test** measures network (`speedtest-go`) or disk (`fio`) speed |
+| `marchyo menu [route]` / `menu select` / `menu input` | Central system menu in the shell (`--tui` for the gum fallback), plus dmenu-style `select` and `input` for scripts; **Trigger > Speed test** measures network (`speedtest-go`) or disk (`fio`) speed |
 | `marchyo keybindings` | Searchable live keybinding cheatsheet |
 | `marchyo launch <app>` | Detached launch (`file-manager` opens at the focused terminal's cwd) |
 | `marchyo focus-or-launch <class> [cmd…]` | Focus an existing window or launch |
 | `marchyo zoom in\|out\|reset` | Cursor zoom |
 | `marchyo monitor scale-cycle\|laptop-toggle\|clamshell on\|off` | Monitor scale / laptop panel / lid handler |
+| `marchyo monitor save [--nix]` / `monitor reset` / `monitor workspaces reset` | Print the current layout (as a `marchyo.monitors` snippet with `--nix`) / forget the display panel's saved settings / forget the per-monitor workspace blocks |
+| `marchyo window pop\|close-all\|tiled-fullscreen` | Float, centre and pin the focused tile / close every window / tiled fullscreen |
+| `marchyo language [code\|list] [--revert]` | Show or set the display language of the shell and CLI |
+| `marchyo network portal [--uri <url>] [--browser <cmd>]` | Sign in to a captive portal in an app window and wait until online |
 | `marchyo lock` / `logout` / `suspend` / `hibernate` / `reboot` / `shutdown` | Session & power. In a Hyprland session, `logout`, `reboot` and `shutdown` run in a transient `systemd-run --user` unit (at most 30 s) that closes every window, waits up to 2 s for the apps to exit, then ends the session (`uwsm stop`) or runs `systemctl reboot\|poweroff --no-wall`; `shutdown` holds a sleep, idle and lid-switch inhibitor meanwhile |
 | `marchyo powerprofile get\|list\|set <p>` | Power profiles |
 
@@ -145,6 +150,21 @@ With the shell installed these run silent `wpctl` / `brightnessctl` and the shel
 - `--json` prints the result (`{"share": {"peer": …, "status": "sent", "sent": n, "skipped": n}}`).
 
 The receiver has to accept the transfer; desktop notifications report when it is accepted, declined, and finished. Discovery uses UDP multicast on port 53317 and falls back to scanning the local /24 subnet, so sending also works with `programs.localsend.openFirewall = false`. `Share` is also listed under **Trigger** in `marchyo menu`.
+
+### Notifications, news and first-login setup
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo notify <summary> [body]` | Send a notification, with optional `--exec` and `--action` click commands |
+| `marchyo whats-new` | NEWS entries since you last looked |
+| `marchyo setup` / `setup fix <item>` | First-login checklist (git, SSH, security keys, language, theme, dictation) |
+
+### Shell plugins
+
+| Command | Purpose |
+|---------|---------|
+| `marchyo plugin add <git-url>` / `list` / `update` / `remove` | Manage CLI-added shell plugins, baked in on rebuild |
+| `marchyo plugin validate <dir>` | Check a plugin checkout against the manifest rules the build enforces |
 
 ### Dictation
 

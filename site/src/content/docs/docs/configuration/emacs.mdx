@@ -1,0 +1,33 @@
+---
+title: Emacs
+description: Emacs daemon with Hyprland integration
+---
+
+`marchyo.emacs` runs an Emacs user daemon and connects it to Hyprland. It is off by default. Emacs takes its colours from the active Marchyo theme (see [Theming](/docs/configuration/theming/)).
+
+```nix
+marchyo.emacs.enable = true;
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.emacs.enable` | `bool` | `false` | Emacs daemon and Hyprland integration |
+| `marchyo.emacs.package` | `package` | `pkgs.emacs-pgtk` | Emacs build for the daemon (the Wayland-native pgtk build) |
+| `marchyo.emacs.windmove.enable` | `bool` | `true` | `Super + Alt + H/J/K/L` moves focus inside Emacs first and falls through to Hyprland at the frame edge; `Super + Alt + Shift + H/J/K/L` does the same for window swap |
+| `marchyo.emacs.eventListener.enable` | `bool` | `true` | Subscribe to the Hyprland event stream from Emacs and run hooks on workspace and window changes |
+| `marchyo.emacs.scratchpad.enable` | `bool` | `true` | `Super + Z` toggles an `emacsclient` frame on the `magic` special workspace |
+| `marchyo.emacs.everywhere.enable` | `bool` | `true` | `Super + Ctrl + E` captures the focused text field into a temporary Emacs frame (emacs-everywhere) |
+| `marchyo.emacs.orgProtocol.enable` | `bool` | `true` | Register the `org-protocol` URL handler and bind `Super + Shift + T` to `org-capture` |
+
+`Super + Shift + E` opens a new Emacs frame whenever the daemon is enabled.
+
+## Example
+
+```nix
+marchyo.emacs = {
+  enable = true;
+  everywhere.enable = false;  # no emacs-everywhere binding
+};
+```

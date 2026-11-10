@@ -54,7 +54,7 @@ sudo nixos-rebuild switch --flake .#workstation
   `marchyo.defaults.editor` (emacs, vscode, vscodium, zed) and
   `marchyo.defaults.terminalEditor` (emacs, neovim, helix, nano)
 - **Version control** — Git with Git LFS, GitHub CLI
-- **Containers** — Docker with docker-compose, buildah, skopeo
+- **Containers** — rootless Podman with a `docker` compatibility shim, buildah, skopeo
 - **Virtualization** — QEMU/KVM via libvirtd
 - **Build & debug** — gnumake, cmake, gcc, jq/yq, nmap, tcpdump
 
@@ -91,26 +91,17 @@ programs.vscode = {
 };
 ```
 
-### Using Podman instead of Docker
+### Using Docker instead of Podman
 
 ```nix
-virtualisation.podman = {
-  enable = true;
-  dockerCompat = true;
-  defaultNetwork.settings.dns_enabled = true;
-};
+marchyo.development.containers.backend = "docker";
 ```
+
+See [Feature Flags](/docs/configuration/feature-flags/#container-backend-and-the-docker-group) for the `docker` group trade-off.
 
 ### Project-specific dev shells with direnv
 
-```nix
-programs.direnv = {
-  enable = true;
-  nix-direnv.enable = true;
-};
-```
-
-Then in your project directory, create a `.envrc`:
+`marchyo.development.enable` already installs direnv with nix-direnv. In your project directory, create a `.envrc`:
 
 ```bash
 use flake
@@ -118,16 +109,13 @@ use flake
 
 ### Multi-monitor setup
 
-Override Hyprland monitor configuration in your home config. Entries are
-tables for the Lua config renderer (the default since Hyprland 0.55):
+Describe your outputs in `marchyo.monitors` (see [Monitors](/docs/configuration/monitors/)):
 
 ```nix
-wayland.windowManager.hyprland.settings = {
-  monitor = [
-    { output = "DP-1"; mode = "1920x1080@60"; position = "0x0"; scale = 1; }
-    { output = "HDMI-A-1"; mode = "1920x1080@60"; position = "1920x0"; scale = 1; }
-  ];
-};
+marchyo.monitors = [
+  { output = "DP-1"; mode = "1920x1080@60"; position = "0x0"; }
+  { output = "HDMI-A-1"; mode = "1920x1080@60"; position = "1920x0"; }
+];
 ```
 
 ### Extra environment variables

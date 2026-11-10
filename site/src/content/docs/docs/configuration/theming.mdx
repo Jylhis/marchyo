@@ -3,9 +3,9 @@ title: Theming
 description: Customize system appearance with the Jylhis design system and base16 color schemes
 ---
 
-Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Ghostty, fzf, bat, hyprlock, starship, the console, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild. There is no Stylix: marchyo retired it once every surface it covered had a marchyo-owned path.
+Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Ghostty, fzf, bat, hyprlock, starship, the console, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild.
 
-The in-shell launcher themes itself from the design tokens at runtime (the shell's `Color` singleton), so it needs no theme registration. See [Launcher](/docs/configuration/launcher/).
+The in-shell launcher themes itself from the design tokens at runtime (the shell's `Colors` singleton), so it needs no theme registration. See [Launcher](/docs/configuration/launcher/).
 
 ## Options
 
@@ -17,7 +17,17 @@ The in-shell launcher themes itself from the design tokens at runtime (the shell
 | `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
 | `marchyo.theme.themes` | `list of string or inline base16 theme` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
 | `marchyo.theme.themes.[].wallpapers` | `list of path` | `[]` | Further wallpapers of an inline theme, listed in the theme dir's `wallpapers/` ([details](#wallpaper)) |
+| `marchyo.theme.appearance.transparency` | `"opaque"`, `"transparent"` or `"glassy"` | `"opaque"` | How see-through windows are ([details](#window-appearance)) |
+| `marchyo.theme.appearance.corners` | `"theme"`, `"sharp"` or `"rounded"` | `"theme"` | Window corners ([details](#window-appearance)) |
+| `marchyo.theme.appearance.animations` | `"auto"`, `"on"` or `"off"` | `"auto"` | Hyprland animations ([details](#window-appearance)) |
 | `marchyo.theme.appearance.gaps` | `bool` | `false` | Gaps between tiled windows and the screen edge ([details](#window-appearance)) |
+| `marchyo.theme.appearance.floatingBar` | `bool` | `false` | Floating pill bar ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.surfaceAlpha` | `float` (0.3–1.0) | `0.85` | Shell surface opacity ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.cornerRadiusScale` | `float` (0.0–4.0) | `1.0` | Shell corner-radius multiplier ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.uiScale` | `float` (0.5–4.0) | `1.0` | Shell geometry multiplier ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.animationSpeed` | `float` (0.1–10.0) | `1.0` | Shell animation speed ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.reduceMotion` | `bool` | `true` in a VM guest | No animations, blur or shadows ([details](#shell-appearance-scale)) |
+| `marchyo.theme.appearance.highContrast` | `bool` | `false` | Thicker shell separators ([details](#shell-appearance-scale)) |
 | `marchyo.theme.followWallpaper` | `bool` | `false` | `marchyo bg set` / `bg next` also generate a matugen theme from the new wallpaper ([details](#follow-the-wallpaper)) |
 | `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo wallpapers where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
@@ -37,11 +47,10 @@ By default the theme is the [Jylhis Design System](https://github.com/jylhis/des
 
 | Variant | Palette |
 |---------|---------|
-| `"dark"` | Jylhis Dark (the "Black" mode) |
-| `"light"` | Jylhis Light (the "Paper" mode) |
+| `"dark"` | Jylhis Amber (amber on terminal black) |
+| `"light"` | Jylhis Paper (ink on warm paper) |
 
-Both variants sit on a neutral grey ground (off-white paper or near-black)
-with a single international-orange accent for interaction and the mark. Code colors are Emacs Modus Operandi (light) /
+Paper sits on warm off-white with ink text and a red signal colour. Amber sits on near-black with an amber signal colour. Code colors are Emacs Modus Operandi (light) /
 Vivendi (dark), so syntax reads identically in every editor and terminal.
 
 To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file in the [tinted-theming/schemes](https://github.com/tinted-theming/schemes) catalog (the `base16/` directory):
@@ -58,22 +67,22 @@ A base16 theme in [runtime switching](#runtime-theme-switching) (a catalog or in
 | Slot | Tokens |
 |------|--------|
 | `base00` | `bg` |
-| `base01` | `bg-subtle`, `accent-subtle` |
-| `base02` | `surface`, `selection-bg` |
+| `base01` | `bg-subtle`, `surface`, `surface-raised` |
+| `base02` | `accent-subtle`, `selection-bg` |
 | `base03` | `text-faint`, `border`, `syn-comment` |
-| `base04` | `text-muted`, `border-strong`, `contour`, `decorator` |
-| `base05` | `text` |
-| `base06` | `text-heading` |
-| `base07` | `surface-raised` |
+| `base04` | `text-muted`, `contour`, `decorator`, `border-strong` |
+| `base05` | `text`, `accent`, `link`, `rule`, `chart-ink`, `brand` |
+| `base06` | `text-heading`, `accent-hover` |
 | `base08` | `status-err`, `destructive`, `syn-variable` |
-| `base09` | `accent`, `accent-hover`, `cursor`, `brand`, `syn-number` |
+| `base09` | `syn-number` |
 | `base0A` | `status-warn` |
 | `base0B` | `syn-string`, `status-ok` |
 | `base0C` | `syn-type`, `syn-builtin` |
-| `base0D` | `status-info`, `syn-function` |
+| `base0D` | `syn-function` |
 | `base0E` | `syn-keyword` |
+| `base0F` | `syn-docstring` |
 
-`selection-bg`, `destructive` and the extra `syn-*` tokens follow the slot the [base16 styling guidelines](https://github.com/tinted-theming/home/blob/main/styling.md) name for that role (Selection Background, Diff Deleted, Variables, Integers, Support, Functions). The legacy aliases `brand`, `contour` and `decorator` share the slot of the role they alias. `scrim` and `syn-docstring` have no base16 role and keep the Jylhis hex. No token reads `base0F`. A matugen theme additionally takes `border`, `border-strong` and `accent-subtle` from Material's `outline_variant`, `outline` and `primary_container` when matugen emits them.
+Tokens with no base16 role keep the build variant's hex: `primary` and its shades, `cursor`, the bevels, the chart colours, `scrim`, `status-info` and `link-underline-hover`. No token reads `base07`. A matugen theme additionally takes `border`, `border-strong` and `accent-subtle` from Material's `outline_variant`, `outline` and `primary_container` when matugen emits them.
 
 ## Fonts
 
@@ -110,7 +119,7 @@ after a restart.
 surface at once — the interface fonts (GTK, Qt, Electron), the terminal, the
 bar, notifications, the lock screen, the launcher, the TUI apps, and the TTY
 console. It defaults to `1.25` (noticeably larger than upstream defaults).
-Set it to `1.0` to restore the historical sizes, or higher for
+Set it to `1.0` for the upstream sizes, or higher for
 HiDPI-at-distance or accessibility:
 
 ```nix
@@ -283,12 +292,12 @@ marchyo.theme = {
 With the Quickshell shell (`marchyo.shell.enable = true`), a set of
 palette-independent axes adjust the shell's geometry, corners, animation
 speed, contrast, and overall shape without touching the colour palette.
-The scale axes default neutral; the style axes (`floatingBar`,
-`surfaceAlpha`) are Caelestia-inspired and default on.
+The scale axes default neutral; `surfaceAlpha` is Caelestia-inspired and
+defaults to a glass `0.85`, and `floatingBar` is off by default.
 
 ```nix
 marchyo.theme.appearance = {
-  # floatingBar = false;     # full-width strip bar instead of the floating pill
+  # floatingBar = true;      # detached floating pill instead of the full-width strip
   # surfaceAlpha = 1.0;      # opaque surfaces, no blur (default 0.85 glass)
   # cornerRadiusScale = 0.0; # square every corner (default 1.0)
   # uiScale = 1.2;           # larger chrome without changing font size
@@ -300,7 +309,7 @@ marchyo.theme.appearance = {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `floatingBar` | `bool` | `true` | Detached rounded pill bar with gaps to the screen edges; `false` restores the full-width strip |
+| `floatingBar` | `bool` | `false` | `true` floats the bar as a detached rounded pill with gaps to the screen edges, instead of the full-width strip |
 | `surfaceAlpha` | `float` | `0.85` | Surface opacity; below `1` enables the Hyprland blur effect for the shell's layer surfaces (glass look) |
 | `cornerRadiusScale` | `float` | `1.0` | Multiplier on corner radii (`0.0` squares corners) |
 | `uiScale` | `float` | `1.0` | Geometry multiplier on top of `fontScale`, fonts unchanged |

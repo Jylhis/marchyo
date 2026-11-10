@@ -39,7 +39,7 @@ marchyo.defaults = {
 A couple of notes on the choices. `gmail` and `outlook` for email aren't installed
 apps — they just open the web version in your browser. And `spotify-player` and the
 TUI mail clients are installed but need you to sign in before they do anything; the
-music client opens in a floating terminal on `Super + Shift + M`.
+music client opens in a floating terminal on `Super + M`.
 
 ## The terminal is always Ghostty
 

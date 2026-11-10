@@ -10,13 +10,21 @@ modules/
   nixos/          # NixOS system-level modules (auto-discovered)
   home/           # Home Manager user-level modules (auto-discovered)
   generic/        # Shared helpers and modules
-lib/              # Flake helpers (system list, module auto-discovery)
-packages/         # Custom Nix packages (marchyo-cli, marchyo-wallpapers,
-                  # plymouth-marchyo-theme, wallpapper)
+lib/              # Flake helpers (system list, module auto-discovery,
+                  # keybinds, theme generators, the vendored design system)
+packages/         # Custom Nix packages (marchyo-cli, marchyo-shell,
+                  # marchyo-wallpapers, plymouth-marchyo-theme)
+shell/            # Quickshell desktop shell (QML), packaged as marchyo-shell
+greeter/          # greetd login greeter (QML)
+security/         # SBOM, vulnerability scan and VM test
 overlay.nix       # Nixpkgs overlay (single file at the repo root)
 tests/            # Evaluation-based test suite
 templates/        # Flake templates (workstation)
+manual/           # End-user manual, also rendered on the site
 site/             # Astro + Starlight website (marchyo.org)
+docs/             # Contributor documentation
+CHANGELOG.md      # Release history
+NEWS              # Entries shown by `marchyo whats-new`
 disko/            # Disk layouts (lib.diskoLayout + nixosModules.disko)
 installer/        # Installer ISOs (packages.x86_64-linux.iso-*)
 ```
@@ -37,12 +45,12 @@ Key files:
 
 ### Home Manager modules (`modules/home/`)
 
-User-level modules that configure dotfiles, user applications, and Hyprland settings. These modules access NixOS config via `osConfig`:
+User-level modules that configure dotfiles, user applications, and Hyprland settings. They read the NixOS config directly from `osConfig.marchyo.*` and are evaluated only through NixOS configurations:
 
 ```nix
-{ config, lib, osConfig ? {}, ... }:
+{ lib, osConfig, ... }:
 let
-  cfg = osConfig.marchyo or {};
+  cfg = osConfig.marchyo;
 in
 { ... }
 ```

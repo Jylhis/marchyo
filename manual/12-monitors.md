@@ -72,15 +72,28 @@ marchyo.monitors = [
 ];
 ```
 
-## Live changes with hyprmon
+## Live changes with the display panel
 
 For a one-off, such as a borrowed screen at a meeting, you don't need to edit your
-configuration. Open the system menu with `Super + Alt + Space`, choose **Setup**,
-then **Monitors**. That opens hyprmon, a terminal tool for arranging, resizing, and
-enabling outputs on the fly.
+configuration. Press `Super + Ctrl + D` to open the display panel. It shows one
+display at a time and sets on/off, brightness, scale, resolution, refresh rate,
+rotation (right-click a display in the layout map), and Extend or Mirror. With more
+than one display, drag a display in the layout map to place it beside another.
 
-Changes made in hyprmon apply right away but don't survive a rebuild. When you've
-found an arrangement you like, copy it into `marchyo.monitors` so it sticks.
+The panel applies a change right away and saves it, keyed by make, model and
+serial, so a dock that renames its ports keeps each monitor's settings. Saved
+settings survive rebuilds and win over `marchyo.monitors`. Two commands manage them:
+
+- `marchyo monitor save --nix` prints the current layout as a `marchyo.monitors`
+  snippet, so you can make it permanent.
+- `marchyo monitor reset` forgets the saved settings, so `marchyo.monitors` decides
+  again.
+
+If you want the panel to change only the current session, set
+`marchyo.monitorPanel.persist = false`.
+
+The system menu (`Super + Alt + Space`, **Setup**, **Monitors**) opens hyprmon, a
+terminal tool for arranging outputs on the fly. Its changes don't survive a rebuild.
 
 ## Scaling on the fly
 

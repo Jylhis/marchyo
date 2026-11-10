@@ -41,7 +41,7 @@ What's new is honest too: you don't `apt install` or drag files into `~/.config`
 anymore. Those dotfiles are *generated* from your configuration, so editing them by
 hand gets overwritten on the next rebuild. The rebuild loop replaces the tinkering
 loop. It takes a little getting used to, and then it's hard to go back — see
-[Getting Started](02-getting-started) for the loop itself and
+[Getting Started](./02-getting-started.md) for the loop itself and
 [Updating](./10-updating.md) for how change and rollback work.
 
 ## What's in the box
