@@ -14,6 +14,8 @@ let
   multiGpu = builtins.length (lib.unique cfg.vendors) > 1;
   isHybrid = cfg.prime.enable && (hasIntel || hasAmd) && hasNvidia;
   isX86 = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+  # nixpkgs builds ROCm for x86_64 only (clang-rocm refuses other platforms).
+  hasRocm = isX86;
   isTuring = cfg.nvidia.generation == "turing-or-newer";
 
   # The global driver selection follows the primary GPU only: one value per
@@ -122,16 +124,12 @@ in
     (lib.mkIf hasAmd {
       hardware.amdgpu = {
         initrd.enable = lib.mkDefault true;
-        opencl.enable = lib.mkDefault true;
+        opencl.enable = lib.mkDefault hasRocm;
       };
 
-      hardware.graphics.extraPackages = with pkgs; [
-        rocmPackages.clr.icd
-      ];
-
-      environment.systemPackages = with pkgs; [
-        rocmPackages.rocminfo
-      ];
+      # Without ROCm (non-x86_64), AMD gets Mesa alone.
+      hardware.graphics.extraPackages = lib.optional hasRocm pkgs.rocmPackages.clr.icd;
+      environment.systemPackages = lib.optional hasRocm pkgs.rocmPackages.rocminfo;
     })
 
     (lib.mkIf (hasAmd && cfg.amd.vaapi.enable) {
@@ -304,6 +302,10 @@ in
         {
           assertion = cfg.amd.rocm.enable -> hasAmd;
           message = ''marchyo.graphics.amd.rocm.enable requires "amd" in marchyo.graphics.vendors'';
+        }
+        {
+          assertion = cfg.amd.rocm.enable -> hasRocm;
+          message = "marchyo.graphics.amd.rocm.enable: ROCm is not available on ${pkgs.stdenv.hostPlatform.system}";
         }
       ];
     }
