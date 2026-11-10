@@ -4,11 +4,10 @@ Detailed system-architecture reference for people (and agents) working *on*
 marchyo. This is the deep companion to the distilled [`AGENTS.md`](../AGENTS.md)
 at the repo root — start there for the essentials, come here for the full detail.
 
-Documentation is organized into three trees (mirroring the omarchy model):
+Documentation is organized into two trees (mirroring the omarchy model):
 
 - **`docs/`** (this tree) — contributor/system-architecture reference.
 - **[`manual/`](../manual/)** — published end-user documentation (how to *use* marchyo).
-- **[`TODO.md`](../TODO.md)** — open work.
 
 ## Contents
 
