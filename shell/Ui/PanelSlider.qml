@@ -14,6 +14,10 @@ Item {
     property real step: 0.05
     signal moved(real value)
 
+    activeFocusOnTab: true
+    Keys.onLeftPressed: e => root.moved(root.clamp(root.value - root.step))
+    Keys.onRightPressed: e => root.moved(root.clamp(root.value + root.step))
+
     readonly property real shown: Math.max(0, Math.min(1, root.value))
 
     implicitWidth: Style.panelWidth
@@ -30,15 +34,15 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         height: Style.sliderTrackHeight
         radius: height / 2
-        color: Color.bgSubtle
-        border.color: Color.border
+        color: Colors.bgSubtle
+        border.color: Colors.border
         border.width: 1
 
         Rectangle {
             width: track.width * root.shown
             height: track.height
             radius: track.radius
-            color: root.dimmed ? Color.textFaint : Color.accent
+            color: root.dimmed ? Colors.textFaint : Colors.accent
         }
     }
 
@@ -48,9 +52,9 @@ Item {
         radius: width / 2
         x: (root.width - width) * root.shown
         anchors.verticalCenter: parent.verticalCenter
-        color: root.dimmed ? Color.textFaint : Color.accent
-        border.color: Color.surface
-        border.width: Style.borderWidth
+        color: root.dimmed ? Colors.textFaint : Colors.accent
+        border.color: root.activeFocus ? Colors.focusRing : Colors.surface
+        border.width: root.activeFocus ? Style.borderFocus : Style.borderWidth
     }
 
     MouseArea {

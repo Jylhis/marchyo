@@ -9,7 +9,7 @@
   jylhis-design-src,
   # External tools the interactive widgets shell out to. Baked into a generated
   # Commons/Config.qml as absolute /nix/store paths so the store shell never
-  # relies on the session PATH. Same packages/commands waybar.nix wires.
+  # relies on the session PATH.
   ghostty,
   hyprland,
   voxtype,
@@ -19,6 +19,7 @@
   bluetui,
   procps,
   coreutils,
+  bash,
   wtype,
   cliphist,
   wl-clipboard,
@@ -29,53 +30,66 @@
   curl,
   qrencode,
   libqalculate,
+  imagemagick,
   findutils,
+  inotify-tools,
+  brightnessctl,
+  ddcutil,
   uwsm,
   systemd,
-  # Runtime tools the omarchy plugin compat shim puts on the shell's PATH, but
-  # only when plugins are declared (see the wrapper below). omarchy plugins call
-  # these by bare name: python3 (agent-activity's odv.py collector), notify-send
-  # (SBB delay alerts), jq (omarchy-bar's settings encode). curl / hyprland /
-  # coreutils are already inputs.
-  python3,
-  libnotify,
-  jq,
   # "dark" = Jylhis Dark, "light" = Jylhis Light — matches marchyo.theme.variant.
   variant ? "dark",
   # marchyo.theme.fontScale — every bar dimension derives from it via
   # lib/font-scale.nix, so the shell scales with the rest of the desktop.
   fontScale ? 1.0,
   # marchyo.dictation.{enable,indicator} — bakes the dictation bar widget in/out
-  # (the shell reads no runtime config yet; parity with waybar's voxtypeIndicator).
+  # (the shell reads no runtime config yet).
   dictationIndicator ? false,
+  # marchyo.dictation.backend — picks how the indicator learns the state
+  # (voxtype's status stream, or `marchyo dictation status` polling).
+  dictationBackend ? "voxtype",
   # marchyo.menus.enable — drives the power panel's menu button (marchyo menu
-  # power vs the in-shell app launcher), matching waybar's menusEnabled gate.
+  # power vs the in-shell app launcher).
   menusEnabled ? true,
-  # marchyo.hardware.logitech.enable — arms the solaar HID++ fallback in the
+  # programs.solaar.enable — arms the solaar HID++ fallback in the
   # peripherals-battery service (only useful with a Logi receiver the kernel
   # will not bind); off by default so no solaar poll runs.
   peripheralsFallback ? false,
-  # marchyo.services.tailscale.enable — conditionally bakes the tailscale CLI
+  # services.tailscale.enable — conditionally bakes the tailscale CLI
   # path into Config so the store shell can drive the Tailscale status widget.
   # When off, the bare name is baked (never forced into the closure) and the
   # widget self-hides because the command is absent. Keeps tailscale out of the
   # shell closure on hosts that do not use it.
   tailscaleEnabled ? false,
+  # marchyo.language: default display language of the shell strings
+  # (Commons/I18n.qml); `marchyo language <code>` overrides it at runtime.
+  language ? "en",
+  # marchyo.workspaces.perMonitor: the bar labels each monitor's block of ten
+  # workspaces 1-10 (Bar/WorkspacesWidget.qml).
+  perMonitorWorkspaces ? true,
+  # marchyo.monitorPanel.persist: the display panel saves its changes to
+  # $XDG_STATE_HOME/marchyo/monitors/settings.
+  monitorPersist ? true,
   # marchyo.notifications.rules — per-sender notification rules, baked as a QML
   # array literal (JSON is valid JS). Empty by default. See Services/Notification
   # State.qml for the match/apply logic.
   notifRules ? [ ],
+  # marchyo.notifications.stackBySender / detectCodes / passApps.
+  notifStackBySender ? true,
+  notifDetectCodes ? true,
+  notifPassApps ? [ "marchyo" ],
   # marchyo.theme.appearance.* — palette-independent scale axes (Caelestia's
   # split). Neutral defaults reproduce the current look.
   cornerRadiusScale ? 1.0,
   uiScale ? 1.0,
   animationSpeed ? 1.0,
+  reduceMotion ? false,
   highContrast ? false,
   # marchyo.theme.appearance.floatingBar / surfaceAlpha — the Caelestia-inspired
   # style axes: a detached rounded pill bar instead of the full-width strip, and
   # translucent glass surfaces (alpha < 1 pairs with the Hyprland blur layer
   # rules modules/home/hyprland.nix registers for the shell's namespaces).
-  floatingBar ? true,
+  floatingBar ? false,
   surfaceAlpha ? 0.85,
   # Shell plugins (build-time Option A). A list of pkgs.mkMarchyoShellPlugin
   # derivations; each carries passthru.marchyoPlugin = { id; kinds; entryPoints;
@@ -90,7 +104,7 @@ let
   # Reuse the design-system palette helper (single source of truth for token ->
   # hex resolution and the palette/status/syntax merge) rather than re-reading
   # theme file here. It only touches pkgs.jylhis-design-src, so a one-attr stub
-  # is enough in this callPackage context. Same idiom as modules/home/vicinae.nix.
+  # is enough in this callPackage context.
   palette = import ../../modules/generic/jylhis-palette.nix {
     pkgs = { inherit jylhis-design-src; };
     inherit lib variant;
@@ -108,45 +122,78 @@ let
   # Corner radii additionally scale by cornerRadiusScale (0 = square corners).
   radiusPx = base: builtins.floor (base * fontScale * uiScale * cornerRadiusScale + 0.5);
   # Base animation duration (ms) divided by the speed multiplier.
-  animMs = base: builtins.floor (base / animationSpeed + 0.5);
+  animMs = base: if reduceMotion then 0 else builtins.floor (base / animationSpeed + 0.5);
 
-  # Commons/Theme.qml dev default embeds the dark (Jylhis Dark) fallback palette.
-  # For a light-variant host, translate those literals to the host variant
-  # with the same semantic-token hex swap modules/home/theme-runtime.nix uses
-  # (accent == cursor agree in both variants, so the mapping is well-defined;
-  # the file's only hexes are the fallback literals). This keeps a
-  # theme-disabled light host from flashing/showing dark bar colors.
-  darkPalette = import ../../modules/generic/jylhis-palette.nix {
-    pkgs = { inherit jylhis-design-src; };
-    inherit lib;
-    variant = "dark";
-  };
-  tokenNameList = lib.attrNames darkPalette.hex;
-  # The dev-default Theme.qml (whose only hexes are the Jylhis Dark fallback
-  # literals) hex-swapped to the host variant — the same semantic-token swap
-  # modules/home/theme-runtime.nix uses. Parameterized by source tree: the
-  # shell's Theme.qml and the greeter's static Theme.qml both carry the same
-  # literals, so both get the same treatment.
+  # Jylhis dimension and motion tokens (tokens/base.tokens.json) that the
+  # palette reader does not expose: the focus ring and marker widths, and the
+  # motion durations in ms.
+  baseTokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/tokens/base.tokens.json");
+  borderPx = name: baseTokens.border.${name}."$value".value;
+  motionMs = name: baseTokens.motion.${name}."$value".duration.value;
+  spaceSteps = [
+    "2xs"
+    "xs"
+    "sm"
+    "md"
+    "lg"
+    "xl"
+    "2xl"
+    "3xl"
+  ];
+  # `space` tokens are rem (16 px); the UI scale applies on top.
+  spacePx = name: ui.round (baseTokens.space.${name}."$value".value * 16);
+
+  # Commons/Theme.qml and the greeter's Theme.qml carry a dev-default palette
+  # as `<camelName>: "#rrggbb"` lines. Fill each line from the host variant's
+  # palette by its property name, never by matching the old hex: a hex swap
+  # cannot tell apart tokens that share a value in one variant (design 5.0 ink
+  # is text, rule and link by day), and it silently skips stale literals.
+  # A name with no palette token keeps its literal.
+  hexByCamel = lib.mapAttrs' (n: v: lib.nameValuePair (toCamel n) v) palette.hex;
+  fillThemeLine =
+    line:
+    let
+      m = builtins.match "([[:space:]]*)([A-Za-z0-9]+): \"#[0-9a-fA-F]{6}\"(,?)" line;
+      name = builtins.elemAt m 1;
+    in
+    if m == null || !(hexByCamel ? ${name}) then
+      line
+    else
+      "${builtins.head m}${name}: \"${hexByCamel.${name}}\"${builtins.elemAt m 2}";
+  # The generated Colors.qml binds Theme.palette.<camel> for every token in
+  # `hex`, so the fallback must define every one of them; the dev fallback
+  # lists only the tokens the dev tree uses. Every missing token is added
+  # right after the fallback palette's opening line (shell:
+  # `property var palette: ({`, greeter: `readonly property var baked: ({`);
+  # the assert keeps a reworded opener from making the injection a no-op.
+  paletteOpen = "[[:space:]]*(readonly )?property var (palette|baked): \\(\\{";
   themeQmlFor =
     devThemePath:
-    writeText "Theme.qml" (
-      let
-        devTheme = builtins.readFile devThemePath;
-      in
-      if variant == "dark" then
-        devTheme
-      else
-        builtins.replaceStrings (map (n: darkPalette.hex.${n}) tokenNameList) (map (
-          n: palette.hex.${n}
-        ) tokenNameList) devTheme
-    );
+    let
+      lines = lib.splitString "\n" (builtins.readFile devThemePath);
+      present = lib.filter (n: n != null) (
+        map (
+          line:
+          let
+            m = builtins.match "[[:space:]]*([A-Za-z0-9]+): \"#[0-9a-fA-F]{6}\",?" line;
+          in
+          if m == null then null else builtins.head m
+        ) lines
+      );
+      missing = lib.filter (n: !(lib.elem n present)) (map toCamel (lib.attrNames hex));
+      missingLines = map (n: "            ${n}: \"${hexByCamel.${n}}\",") missing;
+      inject = line: [ line ] ++ lib.optionals (builtins.match paletteOpen line != null) missingLines;
+    in
+    assert lib.assertMsg (lib.any (l: builtins.match paletteOpen l != null) lines)
+      "marchyo-shell: no fallback palette opener (`property var palette|baked: ({`) in ${toString devThemePath}";
+    writeText "Theme.qml" (lib.concatStringsSep "\n" (lib.concatMap inject (map fillThemeLine lines)));
   themeQml = themeQmlFor ../../shell/Commons/Theme.qml;
   greeterThemeQml = themeQmlFor ../../greeter/Commons/Theme.qml;
 
   # Bar colors: every palette + status token, minus syntax-highlighting tokens
   # (syn-*) which no UI surface uses.
   hex = lib.filterAttrs (n: _: !lib.hasPrefix "syn-" n) palette.hex;
-  toCamel = import ../../lib/camel-case.nix { inherit lib; };
+  toCamel = lib.toCamelCase;
   colorLines = lib.concatStringsSep "\n" (
     lib.mapAttrsToList (
       name: _: "readonly property color ${toCamel name}: Theme.palette.${toCamel name}"
@@ -157,7 +204,7 @@ let
   # carries the same delegation): every token binds Theme.palette.<camel> so
   # the whole bar live-recolors on `marchyo theme set`. Theme.qml below bakes
   # the host-variant fallback palette; this file is variant-independent.
-  colorQml = builtins.toFile "Color.qml" ''
+  colorQml = builtins.toFile "Colors.qml" ''
     pragma Singleton
     import QtQuick
 
@@ -176,91 +223,199 @@ let
   # marchyo.theme.fontScale, plus the baked-in feature flags the shell reads (no
   # runtime shell.json yet).
   styleQml = builtins.toFile "Style.qml" ''
-    pragma Singleton
-    import QtQuick
+        pragma Singleton
+        import QtQuick
 
-    // Generated from lib/font-scale.nix (scale ${toString fontScale}).
-    QtObject {
-      readonly property int barHeight: ${toString (ui.round 28)}
-      readonly property int fontSize: ${toString (fs.round 14)}
-      readonly property int fontSizeSmall: ${toString (fs.round 12)}
-      readonly property int spacing: ${toString (ui.round 4)}
-      readonly property int paddingH: ${toString (ui.round 6)}
-      readonly property int barItemPad: ${toString (ui.round 4)}
-      readonly property string fontFamily: "BlexMono Nerd Font"
+        // Generated from lib/font-scale.nix (scale ${toString fontScale}).
+        QtObject {
+          readonly property int barHeight: ${toString (ui.round 28)}
+          readonly property int fontSize: ${toString (fs.round 14)}
+          readonly property int fontSizeSmall: ${toString (fs.round 12)}
+          readonly property int spacing: ${toString (ui.round 4)}
+          readonly property int paddingH: ${toString (ui.round 6)}
 
-      // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
-      // screen edges and the bar's corner radius. All bake to 0 in strip mode
-      // (floatingBar false), where the bar spans edge to edge as before.
-      readonly property bool barFloating: ${lib.boolToString floatingBar}
-      readonly property int barMarginH: ${toString (if floatingBar then ui.round 6 else 0)}
-      readonly property int barMarginV: ${toString (if floatingBar then ui.round 6 else 0)}
-      readonly property int barRadius: ${toString (if floatingBar then radiusPx 12 else 0)}
+          // Jylhis spacing scale in px (tokens/base.tokens.json `space`), scaled
+          // with the UI.
+          readonly property var spaceScale: ({
+    ${lib.concatMapStringsSep ",\n" (n: "        \"${n}\": ${toString (spacePx n)}") spaceSteps}
+          })
 
-      // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
-      // to every shell card; 1.0 restores the opaque flat look (and the home
-      // Hyprland config keeps blur off).
-      readonly property real surfaceAlpha: ${toString surfaceAlpha}
+          // One step of the spacing scale; an unknown step reads as "sm".
+          function space(step: string): int {
+            const px = spaceScale[step];
+            return px === undefined ? spaceScale.sm : px;
+          }
 
-      // On-screen-display geometry (volume/brightness overlay).
-      readonly property int osdPad: ${toString (ui.round 14)}
-      readonly property int osdRadius: ${toString (radiusPx 8)}
-      readonly property int osdMargin: ${toString (ui.round 80)}
-      readonly property int osdBarWidth: ${toString (ui.round 140)}
-      readonly property int osdBarHeight: ${toString (ui.round 6)}
+          readonly property int barItemPad: space("xs")
+          readonly property string baseFontFamily: "BlexMono Nerd Font"
+          // Shell font: the runtime UI font (Services/RuntimeStyle, `marchyo font set
+          // --kind ui`) over the baked family.
+          property string uiFont: ""
+          readonly property string fontFamily: uiFont !== "" ? uiFont : baseFontFamily
 
-      // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
-      readonly property int panelWidth: ${toString (ui.round 260)}
-      readonly property int panelPad: ${toString (ui.round 14)}
-      readonly property int panelGap: ${toString (ui.round 6)}
-      readonly property int panelRadius: ${toString (radiusPx 8)}
-      readonly property int panelRowHeight: ${toString (ui.round 30)}
+          // Floating pill bar (marchyo.theme.appearance.floatingBar): gap from the
+          // screen edges and the bar's corner radius. All bake to 0 in strip mode
+          // (floatingBar false), where the bar spans edge to edge as before.
+          readonly property bool barFloating: ${lib.boolToString floatingBar}
+          readonly property int barMarginH: ${toString (if floatingBar then ui.round 6 else 0)}
+          readonly property int barMarginV: ${toString (if floatingBar then ui.round 6 else 0)}
+          readonly property int barRadius: ${toString (if floatingBar then radiusPx 12 else 0)}
 
-      // Control Center geometry (wider card, quick-toggle tiles, slider track).
-      readonly property int controlCenterWidth: ${toString (ui.round 340)}
-      readonly property int tileHeight: ${toString (ui.round 52)}
-      readonly property int sliderTrackHeight: ${toString (ui.round 6)}
+          // Glass surfaces (marchyo.theme.appearance.surfaceAlpha): opacity applied
+          // to every shell card; 1.0 restores the opaque flat look (and the home
+          // Hyprland config keeps blur off).
+          readonly property real surfaceAlpha: ${toString surfaceAlpha}
 
-      // Launcher geometry (apps/emoji/clipboard card).
-      readonly property int launcherWidth: ${toString (ui.round 640)}
+          // Runtime bar switches, written by Services/RuntimeStyle from
+          // `marchyo theme bar-position` and `marchyo theme bar-background`. An empty
+          // barBackground keeps the surfaceAlpha look above.
+          property string barPosition: "top"
+          property string barBackground: ""
+          readonly property bool barBottom: barPosition === "bottom"
+          readonly property real barAlpha: barBackground === "opaque" ? 1.0 : barBackground === "clear" ? 0.0 : barBackground === "glassy" ? Math.min(surfaceAlpha, 0.6) : surfaceAlpha
 
-      // Media (MPRIS) widget: max characters of the track title shown in the bar.
-      readonly property int mediaMaxChars: 40
+          // On-screen-display geometry (volume/brightness overlay).
+          readonly property int osdPad: ${toString (ui.round 14)}
+          readonly property int osdRadius: ${toString (radiusPx 8)}
+          readonly property int osdMargin: ${toString (ui.round 80)}
+          readonly property int osdBarWidth: ${toString (ui.round 140)}
+          readonly property int osdBarHeight: ${toString (ui.round 6)}
 
-      // Notification-toast geometry (replaces mako; mako uses width 380, pad 8,
-      // radius 0 sharp corners, border 2, margin 10). Pixel sizes scale with the
-      // font; the timeouts are milliseconds and stay unscaled.
-      readonly property int notifWidth: ${toString (ui.round 380)}
-      readonly property int notifPad: ${toString (ui.round 12)}
-      readonly property int notifRadius: ${toString (radiusPx 0)}
-      readonly property int notifBorder: ${toString (if highContrast then 3 else 2)}
-      readonly property int notifGap: ${toString (ui.round 8)}
-      readonly property int notifMargin: ${toString (ui.round 10)}
-      readonly property int notifIconSize: ${toString (ui.round 40)}
-      readonly property int notifMaxVisible: 5
-      readonly property int notifTimeoutLow: 5000
-      readonly property int notifTimeoutNormal: 5000
-      readonly property int notifTimeoutCritical: 0
-      readonly property int notifCenterMaxHeight: ${toString (ui.round 420)}
-      readonly property var notifRules: ${builtins.toJSON notifRules}
+          // Summonable-panel geometry (audio/network/power/monitor cards under the bar).
+          readonly property int panelWidth: ${toString (ui.round 260)}
+          readonly property int panelPad: ${toString (ui.round 14)}
+          readonly property int panelGap: ${toString (ui.round 6)}
+          readonly property int panelRadius: ${toString (radiusPx 8)}
+          readonly property int panelRowHeight: ${toString (ui.round 30)}
 
-      // Appearance scale axes (marchyo.theme.appearance).
-      readonly property int animationDuration: ${toString (animMs 150)}
-      readonly property bool highContrast: ${lib.boolToString highContrast}
-      readonly property int borderWidth: ${toString (if highContrast then 2 else 1)}
+          // Control Center geometry (wider card, quick-toggle tiles, slider track).
+          readonly property int controlCenterWidth: ${toString (ui.round 340)}
+          readonly property int tileHeight: ${toString (ui.round 52)}
+          readonly property int sliderTrackHeight: ${toString (ui.round 6)}
 
-      // Whether to run the solaar HID++ fallback for peripherals battery.
-      readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
+          // Launcher geometry (apps/emoji/clipboard card).
+          readonly property int launcherWidth: ${toString (ui.round 640)}
 
-      // Baked feature flags (parity with waybar's conditional widgets).
-      readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
-      readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
-    }
+          // Media (MPRIS) widget: max characters of the track title shown in the bar.
+          readonly property int mediaMaxChars: 40
+
+          // Notification-toast geometry. Pixel sizes scale with the font; the
+          // timeouts are milliseconds and stay unscaled.
+          readonly property int notifWidth: ${toString (ui.round 380)}
+          readonly property int notifPad: ${toString (ui.round 12)}
+          readonly property int notifRadius: ${toString (radiusPx 0)}
+          readonly property int notifBorder: ${toString (if highContrast then 3 else 2)}
+          readonly property int notifGap: ${toString (ui.round 8)}
+          readonly property int notifMargin: ${toString (ui.round 10)}
+          readonly property int notifIconSize: ${toString (ui.round 40)}
+          readonly property int notifMaxVisible: 5
+          readonly property int notifTimeoutLow: 5000
+          readonly property int notifTimeoutNormal: 5000
+          readonly property int notifTimeoutCritical: 0
+          readonly property int notifCenterMaxHeight: ${toString (ui.round 420)}
+          readonly property var notifRules: ${builtins.toJSON notifRules}
+          readonly property bool notifStackBySender: ${lib.boolToString notifStackBySender}
+          readonly property bool notifDetectCodes: ${lib.boolToString notifDetectCodes}
+          readonly property var notifPassApps: ${builtins.toJSON notifPassApps}
+
+          // Appearance scale axes (marchyo.theme.appearance).
+          readonly property int animationDuration: ${toString (animMs 150)}
+          readonly property bool highContrast: ${lib.boolToString highContrast}
+          readonly property int borderWidth: ${toString (if highContrast then 2 else 1)}
+          readonly property real animationSpeed: ${toString animationSpeed}
+          readonly property bool reduceMotion: ${lib.boolToString reduceMotion}
+
+          // Jylhis motion tokens (ms): press sink, colour ease, base, slow, long.
+          // motionLong is the budget no transition may exceed (tests/shell/motion-budget-test.js).
+          readonly property int motionPress: ${toString (motionMs "press")}
+          readonly property int motionFast: ${toString (motionMs "fast")}
+          readonly property int motionBase: ${toString (motionMs "base")}
+          readonly property int motionSlow: ${toString (motionMs "slow")}
+          readonly property int motionLong: ${toString (motionMs "long")}
+
+          // Runtime switches: the reduce-motion override (Services/RuntimeStyle) and
+          // Hyprland's animations:enabled probe (Services/Motion).
+          property bool motionRuntimeOff: false
+          property bool compositorAnimationsOff: false
+
+          // Every transition length goes through here: 0 when motion is reduced at
+          // build time, by the runtime toggle, or by the compositor.
+          function duration(ms: int): int {
+            if (reduceMotion || motionRuntimeOff || compositorAnimationsOff)
+              return 0;
+            return Math.max(0, Math.round(ms / animationSpeed));
+          }
+
+          // Jylhis border tokens: hairline is borderWidth (wider under high
+          // contrast), the focus ring and the selected-item marker are wider still.
+          readonly property int borderFocus: ${
+            toString (borderPx "focus" + (if highContrast then 1 else 0))
+          }
+          readonly property int borderMarker: ${toString (borderPx "marker")}
+
+          // Control states (normal, hover, focus, selected, pressed): fill colour,
+          // fill alpha and border. Colours follow the live theme through Colors.
+          readonly property var controls: ({
+              normal: {
+                fill: Colors.bgSubtle,
+                fillAlpha: 1.0,
+                border: Colors.border,
+                borderWidth: borderWidth
+              },
+              hover: {
+                fill: Colors.surfaceRaised,
+                fillAlpha: 1.0,
+                border: Colors.borderStrong,
+                borderWidth: borderWidth
+              },
+              focus: {
+                fill: Colors.bgSubtle,
+                fillAlpha: 1.0,
+                border: Colors.focusRing,
+                borderWidth: borderFocus
+              },
+              selected: {
+                fill: Colors.accentSubtle,
+                fillAlpha: 1.0,
+                border: Colors.accent,
+                borderWidth: borderWidth
+              },
+              pressed: {
+                fill: Colors.selectionBg,
+                fillAlpha: 1.0,
+                border: Colors.borderStrong,
+                borderWidth: borderWidth
+              }
+            })
+
+          function control(state: string): var {
+            return controls[state] || controls.normal;
+          }
+
+          // Whether to run the solaar HID++ fallback for peripherals battery.
+          readonly property bool peripheralsFallback: ${lib.boolToString peripheralsFallback}
+
+          // Baked feature flags.
+          readonly property bool dictationIndicator: ${lib.boolToString dictationIndicator}
+          readonly property string dictationBackend: "${dictationBackend}"
+          readonly property bool menusEnabled: ${lib.boolToString menusEnabled}
+        }
   '';
+
+  # Thumbnail generator for the theme and wallpaper pickers (Services/Thumbnails).
+  marchyoThumbs = writeShellApplication {
+    name = "marchyo-thumbs";
+    runtimeInputs = [
+      coreutils
+      findutils
+      imagemagick
+    ];
+    text = builtins.readFile ./thumbs.sh;
+  };
 
   # Generated tool-path singleton: absolute /nix/store paths for the binaries the
   # interactive widgets launch or probe, overwriting the checked-in dev default so
-  # the store shell never depends on the session PATH. Same commands as waybar.nix.
+  # the store shell never depends on the session PATH.
   # writeText (not builtins.toFile) because the content references store paths.
   configQml = writeText "Config.qml" ''
     pragma Singleton
@@ -279,6 +434,8 @@ let
       readonly property string pgrep: "${lib.getExe' procps "pgrep"}"
       readonly property string ls: "${lib.getExe' coreutils "ls"}"
       readonly property string df: "${lib.getExe' coreutils "df"}"
+      readonly property string date: "${lib.getExe' coreutils "date"}"
+      readonly property string bash: "${lib.getExe bash}"
       readonly property string wtype: "${lib.getExe wtype}"
       readonly property string cliphist: "${lib.getExe cliphist}"
       readonly property string wlCopy: "${lib.getExe' wl-clipboard "wl-copy"}"
@@ -293,6 +450,17 @@ let
       readonly property string qalc: "${lib.getExe libqalculate}"
       readonly property string find: "${lib.getExe' findutils "find"}"
       readonly property string ps: "${lib.getExe' procps "ps"}"
+      readonly property string chmod: "${lib.getExe' coreutils "chmod"}"
+      readonly property string mkdir: "${lib.getExe' coreutils "mkdir"}"
+      readonly property string rm: "${lib.getExe' coreutils "rm"}"
+      readonly property string inotifywait: "${lib.getExe' inotify-tools "inotifywait"}"
+      readonly property string udevadm: "${lib.getExe' systemd "udevadm"}"
+      readonly property string brightnessctl: "${lib.getExe brightnessctl}"
+      readonly property string ddcutil: "${lib.getExe ddcutil}"
+      readonly property string thumbs: "${lib.getExe marchyoThumbs}"
+      readonly property string language: "${language}"
+      readonly property bool perMonitorWorkspaces: ${lib.boolToString perMonitorWorkspaces}
+      readonly property bool monitorPersist: ${lib.boolToString monitorPersist}
     }
   '';
 
@@ -352,78 +520,6 @@ let
   pluginsLockJson = writeText "plugins.lock.json" (
     builtins.toJSON (import ./plugin-lock.nix { inherit lib; } plugins)
   );
-
-  # omarchy CLI shims the imported plugins call by bare name (added to the shell
-  # wrapper PATH only when plugins are declared). omarchy-shell forwards an IPC
-  # call to the running shell via `quickshell -p $MARCHYO_SHELL_ROOT ipc` (that
-  # env var is set by the wrapper); for `shell toggle|summon|hide <id>` it
-  # redirects to that plugin's own IPC target, since marchyo plugins own their
-  # target (=id). omarchy-bar persists a plugin's inline setting into marchyo's
-  # runtime overlay, which Commons/ShellConfig reads as pluginSettings and
-  # shell.qml's applyWidget merges into the widget at load.
-  omarchyShell = writeShellApplication {
-    name = "omarchy-shell";
-    runtimeInputs = [ quickshell ];
-    text = ''
-      # shellcheck disable=SC2154  # MARCHYO_SHELL_ROOT is set by the shell wrapper
-      quiet=0
-      if [ "''${1:-}" = "-q" ]; then
-        quiet=1
-        shift
-      fi
-      target="''${1:-}"
-      method="''${2:-}"
-      if [ "$#" -ge 2 ]; then shift 2; else shift "$#"; fi
-      if [ "$target" = "shell" ]; then
-        case "$method" in
-          toggle | summon | hide)
-            newtarget="''${1:-}"
-            if [ "$method" = "summon" ]; then method="show"; fi
-            target="$newtarget"
-            set --
-            ;;
-        esac
-      fi
-      if [ "$quiet" = 1 ]; then
-        quickshell -p "$MARCHYO_SHELL_ROOT" ipc -n call -- "$target" "$method" "$@" >/dev/null 2>&1 || exit 0
-      else
-        exec quickshell -p "$MARCHYO_SHELL_ROOT" ipc -n call -- "$target" "$method" "$@"
-      fi
-    '';
-  };
-
-  omarchyBar = writeShellApplication {
-    name = "omarchy-bar";
-    runtimeInputs = [
-      jq
-      coreutils
-    ];
-    text = ''
-      if [ "''${1:-}" != "set" ]; then
-        echo "omarchy-bar: only 'set' is supported" >&2
-        exit 2
-      fi
-      shift
-      id="''${1:?id}"
-      key="''${2:?key}"
-      value="''${3:?value}"
-      json=0
-      if [ "''${4:-}" = "--json" ]; then json=1; fi
-      state="''${XDG_STATE_HOME:-$HOME/.local/state}/marchyo/shell"
-      file="$state/plugin-settings.json"
-      mkdir -p "$state"
-      [ -f "$file" ] || echo '{}' > "$file"
-      tmp="$(mktemp "$state/.plugin-settings.XXXXXX")"
-      if [ "$json" = 1 ]; then
-        jq --arg id "$id" --arg key "$key" --argjson val "$value" \
-          '.[$id] = ((.[$id] // {}) + {($key): $val})' "$file" > "$tmp"
-      else
-        jq --arg id "$id" --arg key "$key" --arg val "$value" \
-          '.[$id] = ((.[$id] // {}) + {($key): $val})' "$file" > "$tmp"
-      fi
-      mv -f "$tmp" "$file"
-    '';
-  };
 in
 stdenvNoCC.mkDerivation {
   pname = "marchyo-shell";
@@ -441,7 +537,7 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p "$out/share/marchyo/shell"
     cp -r . "$out/share/marchyo/shell/"
-    install -Dm0644 ${colorQml} "$out/share/marchyo/shell/Commons/Color.qml"
+    install -Dm0644 ${colorQml} "$out/share/marchyo/shell/Commons/Colors.qml"
     install -Dm0644 ${styleQml} "$out/share/marchyo/shell/Commons/Style.qml"
     install -Dm0644 ${themeQml} "$out/share/marchyo/shell/Commons/Theme.qml"
     install -Dm0644 ${configQml} "$out/share/marchyo/shell/Commons/Config.qml"
@@ -456,12 +552,18 @@ stdenvNoCC.mkDerivation {
       ${lib.concatMapStringsSep "\n" (p: ''
         cp -r ${p} "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
         chmod -R u+w "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}"
-        # Rewrite omarchy plugin imports onto the compat host namespace
-        # (shell/compat) so vendored omarchy QML resolves marchyo's shim
-        # instead of marchyo's own qs.Ui / qs.Commons (different API). Scoped to
-        # the two omarchy module names; the plugin's source stays unmodified.
+        # Rewrite plugin imports onto the compat host namespace
+        # (shell/compat) so plugin QML written against that host API resolves
+        # the shim instead of marchyo's own qs.Ui / qs.Commons (different API),
+        # and a bare `Color.` read onto `CompatColor.` because Qt 6.12's
+        # QtQuick `Color` singleton shadows the shim's under that name. The
+        # plugin's source stays otherwise unmodified.
         find "$out/share/marchyo/shell/plugins/${p.marchyoPlugin.id}" -type f \( -name '*.qml' -o -name '*.js' \) -print0 \
-          | xargs -0 -r sed -i -e 's/\bimport qs\.Ui\b/import qs.compat.Ui/g' -e 's/\bimport qs\.Commons\b/import qs.compat.Commons/g'
+          | xargs -0 -r sed -i -E \
+            -e 's/(^|[^.A-Za-z0-9_])import qs\.Ui\b/\1import qs.compat.Ui/g' \
+            -e 's/(^|[^.A-Za-z0-9_])import qs\.Commons\b/\1import qs.compat.Commons/g' \
+            -e 's/(^|[^.A-Za-z0-9_])Color\.([A-Za-z])/\1CompatColor.\2/g' \
+            -e 's/\bCommons\.Color\.([A-Za-z])/Commons.CompatColor.\1/g'
       '') plugins}
     ''}
 
@@ -501,7 +603,7 @@ stdenvNoCC.mkDerivation {
     # the config root — a nested dir would not see qs.Commons.
     mkdir -p "$out/share/marchyo/greeter/Commons"
     cp -r ${../../greeter}/. "$out/share/marchyo/greeter/"
-    install -Dm0644 ${colorQml} "$out/share/marchyo/greeter/Commons/Color.qml"
+    install -Dm0644 ${colorQml} "$out/share/marchyo/greeter/Commons/Colors.qml"
     install -Dm0644 ${styleQml} "$out/share/marchyo/greeter/Commons/Style.qml"
     install -Dm0644 ${greeterThemeQml} "$out/share/marchyo/greeter/Commons/Theme.qml"
     install -Dm0644 ${greeterConfigQml} "$out/share/marchyo/greeter/Commons/Config.qml"
@@ -524,29 +626,10 @@ stdenvNoCC.mkDerivation {
     #     plugin; tray/notification themed icons would then resolve against
     #     hicolor and fail to load). The gtk3 platform theme reads marchyo's
     #     own GTK settings (modules/home/gtk.nix: icon theme "Adwaita").
-    # When plugins are declared, expose the omarchy CLI shims and the runtime
-    # tools imported omarchy plugins call by bare name (python3, notify-send,
-    # curl, coreutils, hyprctl), and point omarchy-shell at this store shell via
-    # MARCHYO_SHELL_ROOT. Gated so plugin-less hosts keep a lean closure/PATH.
     makeWrapper ${lib.getExe quickshell} "$out/bin/marchyo-shell" \
       --add-flags "-p $out/share/marchyo/shell" \
       --set-default TZDIR /etc/zoneinfo \
-      --set QT_QPA_PLATFORMTHEME gtk3${
-        lib.optionalString (plugins != [ ]) ''
-          \
-               --set MARCHYO_SHELL_ROOT "$out/share/marchyo/shell" \
-               --prefix PATH : "${
-                 lib.makeBinPath [
-                   omarchyShell
-                   omarchyBar
-                   python3
-                   libnotify
-                   curl
-                   coreutils
-                   hyprland
-                 ]
-               }"''
-      }
+      --set QT_QPA_PLATFORMTHEME gtk3
 
     # Greeter wrapper. TZDIR for the clock, like the shell; no
     # QT_QPA_PLATFORMTHEME — the greeter user has no GTK settings and no
@@ -557,6 +640,8 @@ stdenvNoCC.mkDerivation {
 
     runHook postInstall
   '';
+
+  passthru = { inherit language; };
 
   meta = {
     description = "Marchyo Quickshell desktop shell and greetd greeter";

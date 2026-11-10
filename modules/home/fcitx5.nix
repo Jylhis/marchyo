@@ -1,13 +1,12 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  kbdCfg = (osConfig.marchyo or { }).keyboard or { layouts = [ ]; };
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  kbdCfg = osConfig.marchyo.keyboard;
 in
 {
   config = lib.mkIf (desktopEnabled && kbdCfg.layouts != [ ]) {

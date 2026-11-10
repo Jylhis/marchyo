@@ -14,12 +14,12 @@ BarItem {
     interactive: true
     text: audio ? (audio.muted ? "󰝟" : "󰕾 " + Math.round(audio.volume * 100)) : "󰕾"
     reserveText: audio && !audio.muted ? "󰕾 100" : ""
-    textColor: (audio && audio.muted) ? Color.textFaint : Color.text
+    textColor: (audio && audio.muted) ? Colors.textFaint : Colors.text
     tooltipText: {
         if (!sink)
             return "";
         const name = sink.description || sink.nickname || sink.name || "";
-        const level = audio && !audio.muted ? Math.round(audio.volume * 100) + "%" : "muted";
+        const level = audio && !audio.muted ? Math.round(audio.volume * 100) + "%" : I18n.t("audio.muted");
         return name.length > 0 ? (name + "  " + level) : level;
     }
 

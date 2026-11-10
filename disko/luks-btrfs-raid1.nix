@@ -1,6 +1,15 @@
 # Two-disk BTRFS RAID1 with per-device LUKS2 encryption.
 #
-# Usage:
+# From a host flake (see the Installation guide):
+#   imports = [
+#     marchyo.nixosModules.disko
+#     (marchyo.lib.diskoLayout "luks-btrfs-raid1" {
+#       deviceA = "/dev/disk/by-id/...";
+#       deviceB = "/dev/disk/by-id/...";
+#     })
+#   ];
+#
+# Standalone (disko CLI on a single file):
 #   1. Set both disks:
 #        export DISK_A=/dev/disk/by-id/nvme-...   # alphabetically first
 #        export DISK_B=/dev/disk/by-id/nvme-...

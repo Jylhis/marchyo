@@ -1,13 +1,19 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
   inherit (lib) mkOption types;
 in
 {
   options.marchyo.hardware = {
-    logitech.enable = mkOption {
+    camera.waitForAccess = mkOption {
       type = types.bool;
-      default = false;
-      description = "Enable Logitech wireless device support (Solaar GUI + udev rules).";
+      default = config.marchyo.desktop.enable;
+      defaultText = lib.literalExpression "config.marchyo.desktop.enable";
+      description = ''
+        Delay WirePlumber's start at login (at most five seconds) until the
+        session can open the seat's camera media devices. libcamera opens each
+        media device once, when WirePlumber starts, and a camera whose access
+        arrives later stays missing until WirePlumber restarts.
+      '';
     };
 
     ddc.enable = mkOption {

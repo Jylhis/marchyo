@@ -150,7 +150,7 @@ export function resolvedPalette(
   return { tokens, tokenSlots: palette.tokenSlots };
 }
 
-// kebab-case -> camelCase, matching lib/camel-case.nix (colors.json keys).
+// kebab-case -> camelCase, matching nixpkgs lib.toCamelCase (colors.json keys).
 export function toCamel(name: string): string {
   return name
     .split("-")
@@ -252,15 +252,15 @@ export function fzfOptsFor(resolve: TokenResolver, green: string): string {
     [
       `fg:${resolve("text")}`,
       `bg:${resolve("bg")}`,
-      `hl:${resolve("accent")}`,
+      `hl:${resolve("text")}:underline:bold`,
       `fg+:${resolve("text-heading")}`,
-      `bg+:${resolve("accent-subtle")}`,
-      `hl+:${resolve("accent-hover")}`,
+      `bg+:${resolve("selection-bg")}`,
+      `hl+:${resolve("text-heading")}:underline:bold`,
       `info:${resolve("text-muted")}`,
       `marker:${green}`,
-      `prompt:${resolve("accent")}`,
-      `spinner:${resolve("accent")}`,
-      `pointer:${resolve("accent")}`,
+      `prompt:${resolve("text")}`,
+      `spinner:${resolve("text-muted")}`,
+      `pointer:${resolve("rule")}`,
       `header:${resolve("text-muted")}`,
       `border:${resolve("border")}`,
       `separator:${resolve("border")}`,
@@ -576,12 +576,14 @@ export function gduText(b: Base16): string {
 }
 
 // Fill a build-variant surface template (theme dir `templates/`): each
-// `{{token:<name>}}` becomes the resolved hex and `{{shade}}` the GTK shade of
-// the resolved text colour. An unknown token name throws rather than shipping
+// `{{token:<name>}}` becomes the resolved hex, `{{bare:<name>}}` the same hex
+// without its `#` (foot), and `{{shade}}` the GTK shade of the resolved text
+// colour. An unknown token name throws rather than shipping
 // a placeholder.
 export function fillTemplate(text: string, resolve: TokenResolver): string {
   return text
     .replace(/\{\{token:([a-z0-9-]+)\}\}/g, (_, name: string) => resolve(name))
+    .replace(/\{\{bare:([a-z0-9-]+)\}\}/g, (_, name: string) => resolve(name).replace(/^#/, ""))
     .replace(/\{\{shade\}\}/g, () => shadeRgba(resolve("text")));
 }
 

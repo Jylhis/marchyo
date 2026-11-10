@@ -1,0 +1,40 @@
+---
+title: Web Apps
+description: Run websites as standalone desktop windows, and enable Microsoft 365, Google Workspace and Notion presets
+---
+
+When `marchyo.desktop.enable = true`, `marchyo.webapps` registers each web app as a `.desktop` entry. The entry opens the site in the chromium-family browser's app mode (`--app=<url>`), so it runs in its own window without tabs. Apps with a `key` also get a Hyprland launch bind, with the default chord `SUPER + SHIFT`.
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `marchyo.webapps.enable` | follows `marchyo.desktop.enable` | Register the web app entries and binds |
+| `marchyo.webapps.browser` | `null` | Browser for app mode. `null` follows `marchyo.defaults.browser` when it is chromium-based, otherwise chromium |
+| `marchyo.webapps.apps` | a default set (ChatGPT, GitHub, YouTube, and others) | Web apps to register. Overriding this replaces the default set |
+| `marchyo.webapps.extraApps` | `[ ]` | Web apps appended to `apps` |
+| `marchyo.webapps.presets.m365.enable` | `false` | Add the Microsoft 365 web apps |
+| `marchyo.webapps.presets.google.enable` | `false` | Add the Google Workspace web apps |
+| `marchyo.webapps.presets.notion.enable` | `false` | Add Notion |
+
+Each app takes `name`, `url`, and optional `icon` and `key` values.
+
+## Presets
+
+Presets merge into the effective app list after `apps` and `extraApps`. They do not change the default set. Preset entries have no launch key, so they start from the app launcher.
+
+- `presets.m365` adds Outlook, Word, Excel, PowerPoint, Teams, and OneDrive.
+- `presets.google` adds Gmail, Calendar, Drive, Docs, Sheets, Slides, Meet, Chat, Keep, Forms, Sites, Contacts, and Tasks. An app with the same name in `apps` or `extraApps` keeps its own entry, so the default Gmail and Google Calendar are not duplicated.
+- `presets.notion` installs `notion-app-enhanced` when `nixpkgs.config.allowUnfree` is set on x86_64-linux. Otherwise it adds a Notion web app for `https://www.notion.so/`.
+
+The Notion desktop build in nixpkgs wraps Notion with the Notion Enhancer and has an unfree license. Leave `presets.notion` off to use only the web app.
+
+```nix
+{
+  marchyo.webapps.presets = {
+    m365.enable = true;
+    google.enable = true;
+    notion.enable = true;
+  };
+}
+```

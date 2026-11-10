@@ -18,7 +18,7 @@ BarItem {
     shown: Mpris.active
     interactive: true
     text: (Mpris.isPlaying ? "󰎇 " : "󰏤 ") + shortTitle
-    textColor: Mpris.isPlaying ? Color.text : Color.textMuted
+    textColor: Mpris.isPlaying ? Colors.text : Colors.textMuted
     tooltipText: {
         if (!Mpris.active)
             return "";

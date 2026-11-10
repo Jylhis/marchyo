@@ -2,26 +2,25 @@
 #
 # The upstream Jylhis HM fzf target stays disabled in modules/home/jylhis-theme.nix:
 # it mkForce-overwrites FZF_DEFAULT_OPTS (dropping the layout options below), ships
-# fewer color keys, and is Linux-gated, whereas this works on darwin too.
+# fewer color keys, and is Linux-gated.
 {
   lib,
   pkgs,
   options,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  themeEnabled = (osConfig.marchyo or { }).theme.enable or true;
-  themeVariant = (osConfig.marchyo or { }).theme.variant or "dark";
+  themeEnabled = osConfig.marchyo.theme.enable;
+  themeVariant = osConfig.marchyo.theme.variant;
 
   # On a Linux desktop the runtime theme layer (modules/home/theme-runtime.nix)
   # owns fzf colours: it sets FZF_DEFAULT_OPTS_FILE to the current-theme's
   # fzf.opts, which fzf reads before FZF_DEFAULT_OPTS. Baking `--color` here too
   # would win over that file (OPTS overrides the file) and defeat the live
-  # swap, so drop the build-time colours there and keep them for darwin and
-  # non-desktop Linux, where there is no runtime layer. Layout options stay.
-  runtimeThemed =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  # swap, so drop the build-time colours there and keep them for non-desktop
+  # Linux, where there is no runtime layer. Layout options stay.
+  runtimeThemed = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 
   palette = import ../generic/jylhis-palette.nix {
     inherit pkgs lib;
@@ -30,7 +29,7 @@ let
 
   # HM master nests the widget options under programs.fzf.{fileWidget,...},
   # deprecating the flat *WidgetCommand/*WidgetOptions form that release-26.05 HM
-  # (darwinConfigurations.x86_64 / stable-darwin checks) still declares. Pick the
+  # still declares. Pick the
   # shape the active HM declares so this stays warning-free on master and valid on stable.
   hasNestedWidgets = options.programs.fzf ? changeDirWidget;
 
@@ -80,15 +79,15 @@ in
           lib.mapAttrs (_: lib.mkDefault) {
             fg = palette.hex.text;
             bg = palette.hex.bg;
-            hl = palette.hex.accent;
+            hl = "${palette.hex.text}:underline:bold";
             "fg+" = palette.hex."text-heading";
-            "bg+" = palette.hex."accent-subtle";
-            "hl+" = palette.hex."accent-hover";
+            "bg+" = palette.hex."selection-bg";
+            "hl+" = "${palette.hex."text-heading"}:underline:bold";
             info = palette.hex."text-muted";
             marker = palette.ansi.green;
-            prompt = palette.hex.accent;
-            spinner = palette.hex.accent;
-            pointer = palette.hex.accent;
+            prompt = palette.hex.text;
+            spinner = palette.hex."text-muted";
+            pointer = palette.hex.rule;
             header = palette.hex."text-muted";
             border = palette.hex.border;
             separator = palette.hex.border;

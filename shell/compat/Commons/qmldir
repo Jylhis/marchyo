@@ -1,6 +1,6 @@
 module qs.compat.Commons
 singleton Style 1.0 Style.qml
-singleton Color 1.0 Color.qml
+singleton CompatColor 1.0 CompatColor.qml
 singleton Border 1.0 Border.qml
 singleton Util 1.0 Util.qml
 singleton IpcRegistry 1.0 IpcRegistry.qml

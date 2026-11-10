@@ -14,7 +14,7 @@ PanelWindow {
 
     visible: Polkit.active
     screen: Screens.byName(Screens.focusedName)
-    color: Qt.alpha(Color.scrim, 0.4)
+    color: Qt.alpha(Colors.scrim, 0.4)
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
     // Hyprland layer rules (blur, animation) match the "marchyo:" prefix.
@@ -28,8 +28,10 @@ PanelWindow {
         bottom: true
     }
 
+    Component.onCompleted: Dev.register("polkit", root, card)
+
     readonly property int shakeDistance: Style.fontSize
-    readonly property int shakeStep: Math.max(1, Math.round(Style.animationDuration / 3))
+    readonly property int shakeStep: Math.max(1, Math.round(Style.duration(Style.motionFast) / 3))
 
     onVisibleChanged: if (visible) {
         input.text = "";
@@ -48,8 +50,8 @@ PanelWindow {
         width: Math.min(Style.launcherWidth, parent.width - 2 * Style.panelGap)
         implicitHeight: column.implicitHeight + 2 * Style.panelPad
         radius: Style.panelRadius
-        color: Qt.alpha(Color.bg, Style.surfaceAlpha)
-        border.color: Polkit.failed ? Color.statusErr : Color.border
+        color: Qt.alpha(Colors.bg, Style.surfaceAlpha)
+        border.color: Polkit.failed ? Colors.statusErr : Colors.border
         border.width: 1
 
         transform: Translate {
@@ -91,8 +93,8 @@ PanelWindow {
 
             Text {
                 width: parent.width
-                text: "Authentication required"
-                color: Color.textHeading
+                text: I18n.t("polkit.title")
+                color: Colors.textHeading
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSize
                 font.bold: true
@@ -101,7 +103,7 @@ PanelWindow {
             Text {
                 width: parent.width
                 text: Polkit.message
-                color: Color.text
+                color: Colors.text
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSizeSmall
                 wrapMode: Text.Wrap
@@ -110,8 +112,8 @@ PanelWindow {
             Text {
                 width: parent.width
                 visible: Polkit.identityName.length > 0
-                text: "Authenticating as " + Polkit.identityName
-                color: Color.textMuted
+                text: I18n.t("polkit.authenticatingAs", Polkit.identityName)
+                color: Colors.textMuted
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSizeSmall
                 elide: Text.ElideRight
@@ -121,7 +123,7 @@ PanelWindow {
                 width: parent.width
                 visible: Polkit.actionId.length > 0
                 text: Polkit.actionId
-                color: Color.textFaint
+                color: Colors.textFaint
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSizeSmall
                 elide: Text.ElideMiddle
@@ -132,8 +134,8 @@ PanelWindow {
             Text {
                 width: parent.width
                 visible: text.length > 0
-                text: Polkit.supplementary.length > 0 ? Polkit.supplementary : (Polkit.failed ? "Authentication failed, try again" : "")
-                color: Polkit.supplementaryIsError || Polkit.failed ? Color.statusErr : Color.textMuted
+                text: Polkit.supplementary.length > 0 ? Polkit.supplementary : (Polkit.failed ? I18n.t("polkit.failed") : "")
+                color: Polkit.supplementaryIsError || Polkit.failed ? Colors.statusErr : Colors.textMuted
                 font.family: Style.fontFamily
                 font.pixelSize: Style.fontSizeSmall
                 wrapMode: Text.Wrap
@@ -142,9 +144,9 @@ PanelWindow {
             Rectangle {
                 width: parent.width
                 height: Style.fontSize * 2.5
-                color: Color.surface
+                color: Colors.surface
                 border.width: 1
-                border.color: Polkit.failed ? Color.statusErr : (input.activeFocus ? Color.accent : Color.border)
+                border.color: Polkit.failed ? Colors.statusErr : (input.activeFocus ? Colors.accent : Colors.border)
 
                 TextInput {
                     id: input
@@ -152,9 +154,9 @@ PanelWindow {
                     anchors.margins: Style.paddingH * 2
                     verticalAlignment: TextInput.AlignVCenter
                     clip: true
-                    color: Color.text
-                    selectionColor: Color.selectionBg
-                    selectedTextColor: Color.text
+                    color: Colors.text
+                    selectionColor: Colors.selectionBg
+                    selectedTextColor: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                     echoMode: Polkit.maskInput ? TextInput.Password : TextInput.Normal
@@ -174,8 +176,8 @@ PanelWindow {
                     anchors.leftMargin: Style.paddingH * 2
                     anchors.verticalCenter: parent.verticalCenter
                     visible: input.text.length === 0
-                    text: Polkit.busy ? "Checking…" : (Polkit.prompt.length > 0 ? Polkit.prompt : "Password")
-                    color: Color.textFaint
+                    text: Polkit.busy ? I18n.t("polkit.checking") : (Polkit.prompt.length > 0 ? Polkit.prompt : I18n.t("polkit.password"))
+                    color: Colors.textFaint
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                 }
@@ -188,11 +190,11 @@ PanelWindow {
                 Repeater {
                     model: [
                         {
-                            label: "Cancel",
+                            label: I18n.t("polkit.cancel"),
                             primary: false
                         },
                         {
-                            label: "Authenticate",
+                            label: I18n.t("polkit.authenticate"),
                             primary: true
                         }
                     ]
@@ -204,16 +206,16 @@ PanelWindow {
                         width: label.implicitWidth + 2 * Style.panelPad
                         height: Style.panelRowHeight
                         radius: Style.panelRadius
-                        color: button.modelData.primary ? (mouse.containsMouse && button.enabledAction ? Color.accentHover : Color.accent) : (mouse.containsMouse ? Color.surfaceRaised : Color.bgSubtle)
+                        color: button.modelData.primary ? (mouse.containsMouse && button.enabledAction ? Colors.accentHover : Colors.accent) : (mouse.containsMouse ? Colors.surfaceRaised : Colors.bgSubtle)
                         opacity: button.enabledAction ? 1 : 0.6
-                        border.color: Color.border
+                        border.color: Colors.border
                         border.width: button.modelData.primary ? 0 : 1
 
                         Text {
                             id: label
                             anchors.centerIn: parent
                             text: button.modelData.label
-                            color: button.modelData.primary ? Color.bg : Color.text
+                            color: button.modelData.primary ? Colors.bg : Colors.text
                             font.family: Style.fontFamily
                             font.pixelSize: Style.fontSizeSmall
                         }

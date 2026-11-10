@@ -21,4 +21,5 @@ BarItem {
     tooltipText: Power.tooltipText
 
     onClicked: PanelManager.toggle("power", root)
+    onRightClicked: Power.togglePercent()
 }

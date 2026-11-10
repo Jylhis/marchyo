@@ -44,8 +44,8 @@ current `theme set --rebuild`):
 
 - **default = runtime** — apply live (`hyprctl`, `systemctl --user`,
   `hyprsunset`, `makoctl`, symlink swap) and persist an ephemeral override under
-  `~/.local/state/marchyo/runtime.json` so it survives `hyprctl reload`. Instant,
-  no rebuild.
+  `~/.local/state/marchyo/runtime.json` so `marchyo runtime restore` can replay it
+  after `hyprctl reload` and after a home-manager activation. Instant, no rebuild.
 - **`--apply`** — additionally write the key into `/etc/marchyo/cli-state.json`
   (the `marchyoCliState` → `marchyo.*` path, merged at `mkDefault`) and run
   `nixos-rebuild`. Survives reboot; hand-written flake config still wins.
@@ -67,12 +67,13 @@ contract is enforced by snapshot tests (`packages/user-cli/tests/contract.test.t
 | Group       | Commands |
 |-------------|----------|
 | System      | `status`, `rebuild`, `update`, `upgrade`, `rollback`, `gc`, `diff`, `debug` |
-| Theme       | `theme list\|get\|set <name>\|next`, `bg set\|next` (`dark`/`light` alias the Jylhis pair; `--rebuild` is a deprecated alias for `--apply`) |
-| Toggle      | `toggle <name> [on\|off] [--status\|--apply\|--revert]` — gaps, transparency, nightlight, waybar, touchpad, touchscreen, idle, screensaver, notifications, suspend, hybrid-gpu (`--apply`-only) |
+| Theme       | `theme list\|get\|set <name>\|next`, `theme gaps\|bar-position\|bar-background\|icons`, `bg set\|list\|next` (`dark`/`light` alias the Jylhis pair; `--rebuild` is a deprecated alias for `--apply`) |
+| Toggle      | `toggle <name> [on\|off] [--status\|--apply\|--revert]` — gaps, transparency, reduce-motion (`--apply` persists), nightlight, waybar, touchpad, touchscreen, idle, screensaver, notifications, suspend, hybrid-gpu (`--apply`-only) |
 | Capture     | `capture screenshot [--target …] [--edit]`, `capture record [--audio …]`, `capture ocr`, `capture color` |
-| Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle` |
+| Menu/launch | `menu [power]`, `keybindings`, `launch <app>`, `focus-or-launch <class>`, `zoom in\|out\|reset`, `monitor scale-cycle\|laptop-toggle\|clamshell on\|off` |
 | Power       | `lock`, `logout`, `suspend`, `hibernate`, `reboot`, `shutdown`, `powerprofile get\|list\|set` |
-| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list\|current\|set` |
+| Utilities   | `reminder set\|show\|clear`, `info datetime\|battery`, `transcode [--to …\|--ascii]`, `share [paths…] [--to …\|--clipboard]`, `font list [--kind]\|current\|set [--kind]` |
+| Dev         | `dev init <lang> [--force]`, `dev db <engine>` (devenv templates and database services in the current directory) |
 | Declarative | `install\|remove <feature>`, `webapp add\|rm`, `security enroll fido2\|fingerprint` |
 | Plumbing    | `runtime status\|restore`, `completion bash\|zsh\|fish\|man` |
 

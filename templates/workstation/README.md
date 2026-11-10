@@ -47,7 +47,7 @@ This is a full-featured developer workstation configuration with desktop environ
 - GitHub CLI (gh)
 
 #### Containers
-- Rootless Podman with podman-tui (or Docker with lazydocker, opt-in)
+- Rootless Podman with podman-tui (or Docker)
 - buildah, skopeo
 - Virtualization (QEMU/KVM via libvirtd)
 

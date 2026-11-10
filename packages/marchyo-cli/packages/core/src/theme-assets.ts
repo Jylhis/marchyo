@@ -20,6 +20,7 @@ export type ThemeManifestEntry = z.infer<typeof ThemeManifestEntry>;
 // at its default.
 const ManifestObject = z.object({
   themes: z.array(ThemeManifestEntry),
+  defaultTheme: ThemeManifestEntry.optional(),
   followWallpaper: z.boolean().default(false),
 });
 export type ThemeManifestFile = z.infer<typeof ManifestObject>;

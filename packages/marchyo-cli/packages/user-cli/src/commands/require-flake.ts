@@ -3,6 +3,7 @@ import {
   usageError,
   type FlakeLocation,
   type Runtime,
+  tr,
 } from "@marchyo/core";
 
 // Detect the flake or emit the canonical usage error (shared by rebuild,
@@ -15,7 +16,7 @@ export async function requireFlake(
   if (!flake) {
     usageError(
       rt,
-      "could not detect flake",
+      tr("require-flake.couldNotDetectFlake"),
       "place a flake at /etc/nixos/flake.nix or run from a flake directory",
     );
     return null;

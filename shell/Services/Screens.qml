@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Window
 import Quickshell
 import Quickshell.Hyprland
+import "../Commons/DevTools.js" as Tools
 
 // Screen lookup for the seat-global windows (panels, OSD, toast stack). Those
 // surfaces are instantiated once, outside shell.qml's per-screen Variants loop,
@@ -38,12 +39,34 @@ QtObject {
         }
     }
 
+    readonly property var names: Quickshell.screens.map(s => s.name)
+
+    // `name`, unless MARCHYO_SHELL_OUTPUT names an existing output (the dev
+    // sandbox pins every summoned surface to one output).
+    function pin(name: string): string {
+        return Tools.pickOutput(Dev.outputOverride, root.names, name);
+    }
+
     // Where a surface belongs when nothing summoned it from a particular bar
     // (a notification, an OSD, an IPC-triggered panel): the output with input
     // focus.
     readonly property string focusedName: {
         const mon = Hyprland.focusedMonitor;
-        return mon ? mon.name : "";
+        return root.pin(mon ? mon.name : "");
     }
     readonly property var focused: root.byName(root.focusedName)
+
+    // Screens backed by a real output. With no monitor connected, Qt shows a
+    // nameless zero-size placeholder and Hyprland a FALLBACK output; neither
+    // can carry a lock surface.
+    readonly property int realCount: {
+        const screens = Quickshell.screens;
+        let n = 0;
+        for (let i = 0; i < screens.length; i++) {
+            const s = screens[i];
+            if (s && s.name && s.name !== "FALLBACK" && s.width > 0 && s.height > 0)
+                n++;
+        }
+        return n;
+    }
 }

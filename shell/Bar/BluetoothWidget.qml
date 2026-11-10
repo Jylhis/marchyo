@@ -15,13 +15,13 @@ BarItem {
     interactive: true
     compact: true
     text: !adapter || !adapter.enabled ? "󰂲" : (connected.length > 0 ? "󰂯 " + connected.length : "󰂯")
-    textColor: (adapter && adapter.enabled) ? Color.text : Color.textFaint
+    textColor: (adapter && adapter.enabled) ? Colors.text : Colors.textFaint
     tooltipText: {
         if (!adapter || !adapter.enabled)
-            return "Bluetooth off";
+            return I18n.t("bluetooth.off");
         if (connected.length === 0)
-            return "No devices connected";
-        return "Devices connected: " + connected.length + "\n" + connected.join("\n");
+            return I18n.t("bluetooth.noDevices");
+        return I18n.t("bluetooth.connected", connected.length) + "\n" + connected.join("\n");
     }
 
     onClicked: Quickshell.execDetached([Config.terminal, "--class=org.omarchy.bluetui", "-e", Config.bluetui])

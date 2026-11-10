@@ -3,11 +3,12 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { mkdir, rename } from "node:fs/promises";
 
-// Ephemeral runtime overrides (the change model's "default = runtime"
-// leg). Overrides survive `hyprctl reload` via `marchyo runtime restore`
-// but deliberately NOT nixos-rebuild activation: activation rewrites the
-// Home-Manager-managed surfaces (the theme-runtime contract), after which
-// the declarative value is live again and stale overrides are meaningless.
+// Runtime overrides (the change model's "default = runtime" leg). The file
+// outlives a session and a home-manager activation: activation rewrites the
+// Home-Manager-managed surfaces (the theme-runtime contract), then
+// `marchyo runtime restore` replays every override on top. A successful
+// `--apply` rebuild or a `--revert` drops the override, because the
+// declarative value then matches or is wanted again.
 // The file is INTERNAL (schema-versioned, may change between minors).
 export const RUNTIME_SCHEMA_VERSION = 1;
 

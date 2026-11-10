@@ -1,73 +1,22 @@
-{ helpers, lib, ... }:
-let
-  inherit (helpers) testNixOSCheck withTestUser minimalConfig;
-in
-{
-  # avahi / firewall / zram are on by default (mkDefault) on any host.
-  eval-omarchy-service-defaults = testNixOSCheck "omarchy-service-defaults" (
-    cfg:
-    cfg.services.avahi.enable
-    && cfg.services.avahi.nssmdns4
-    && cfg.networking.firewall.enable
-    && cfg.zramSwap.enable
-    && cfg.zramSwap.algorithm == "zstd"
-  ) minimalConfig;
+_: {
+  refs = {
+    # avahi / firewall / zram are on by default (mkDefault) on any host.
+    minimal.eval-omarchy-service-defaults =
+      cfg:
+      cfg.services.avahi.enable
+      && cfg.services.avahi.nssmdns4
+      && cfg.networking.firewall.enable
+      && cfg.zramSwap.enable
+      && cfg.zramSwap.algorithm == "zstd";
 
-  # LocalSend's port opens on the desktop (via modules/nixos/localsend.nix;
-  # the sub-toggle is exercised in tests/eval/localsend.nix).
-  eval-omarchy-firewall-desktop =
-    testNixOSCheck "omarchy-firewall-desktop"
-      (cfg: builtins.elem 53317 cfg.networking.firewall.allowedTCPPorts)
-      (withTestUser {
-        marchyo.desktop.enable = true;
-      });
+    # LocalSend's port opens on the desktop (via modules/nixos/localsend.nix;
+    # the sub-toggle is exercised in tests/eval/localsend.nix).
+    desktop.eval-omarchy-firewall-desktop =
+      cfg: builtins.elem 53317 cfg.networking.firewall.allowedTCPPorts;
 
-  # snapshots on a btrfs host: snapper is configured for the root subvolume.
-  eval-omarchy-snapshots-btrfs =
-    testNixOSCheck "omarchy-snapshots-btrfs"
-      (cfg: (cfg.services.snapper.configs.root.SUBVOLUME or null) == "/")
-      (withTestUser {
-        marchyo.snapshots.enable = true;
-      });
+    # autoTimezone opt-in turns on the geoclue-based daemon.
+    headless-tweaks.eval-omarchy-autotimezone = cfg: cfg.services.automatic-timezoned.enable;
+  };
 
-  # Setting one retention horizon must leave the others at their defaults.
-  # With the old `attrsOf int` option an attrset definition replaced the whole
-  # default, so DAILY/WEEKLY/MONTHLY/YEARLY collapsed to "0" while
-  # TIMELINE_CLEANUP stayed true — snapper then deleted those snapshots.
-  eval-omarchy-snapshots-partial-limits =
-    testNixOSCheck "omarchy-snapshots-partial-limits"
-      (
-        cfg:
-        let
-          root = cfg.services.snapper.configs.root;
-        in
-        root.TIMELINE_LIMIT_HOURLY == "24" && root.TIMELINE_LIMIT_DAILY == "7"
-      )
-      (withTestUser {
-        marchyo.snapshots = {
-          enable = true;
-          timelineLimits.hourly = 24;
-        };
-      });
-
-  # snapshots on a non-btrfs host: no snapper config, warning emitted.
-  eval-omarchy-snapshots-nonbtrfs =
-    testNixOSCheck "omarchy-snapshots-nonbtrfs"
-      (
-        cfg:
-        (cfg.services.snapper.configs or { }) == { } && lib.any (w: lib.hasInfix "btrfs" w) cfg.warnings
-      )
-      (withTestUser {
-        marchyo.snapshots = {
-          enable = true;
-          btrfs = false;
-        };
-      });
-
-  # autoTimezone opt-in turns on the geoclue-based daemon.
-  eval-omarchy-autotimezone =
-    testNixOSCheck "omarchy-autotimezone" (cfg: cfg.services.automatic-timezoned.enable)
-      (withTestUser {
-        marchyo.autoTimezone.enable = true;
-      });
+  refConfig.headless-tweaks.marchyo.autoTimezone.enable = true;
 }

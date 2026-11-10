@@ -15,13 +15,6 @@ let
     inherit (pkgs) chromium;
   };
 
-  browserCommands = {
-    brave = "brave";
-    google-chrome = "google-chrome";
-    firefox = "firefox";
-    chromium = "chromium";
-  };
-
   editorPackages = {
     inherit (pkgs) emacs;
     inherit (pkgs) vscode;
@@ -62,9 +55,9 @@ let
     inherit (pkgs) amberol;
   };
 
-  # musicPlayer install paths live outside this map: the TUI clients
-  # (spotify-player, ncspot) install via their Home-Manager modules
-  # (modules/home/{spotify-player,ncspot}.nix), and the Spotify GUI installs
+  # musicPlayer install paths live outside this map: the TUI client
+  # spotify-player installs via its Home-Manager module
+  # (modules/home/spotify-player.nix), and the Spotify GUI installs
   # unconditionally via modules/nixos/media.nix (x86_64-only).
 
   fileManagerPackages = {
@@ -84,11 +77,9 @@ let
     inherit (pkgs) krita;
   };
 
-  # email install paths live outside this map: aerc/neomutt install via their
-  # Home-Manager modules (modules/home/{aerc,neomutt}.nix); gmail/outlook are
-  # web apps opened in the browser (no package).
-  # gmail → https://mail.google.com (TODO: register as PWA)
-  # outlook → https://outlook.com (TODO: register as PWA)
+  # email install paths live outside this map: aerc installs via its
+  # Home-Manager module (modules/home/aerc.nix); gmail/outlook are
+  # web apps registered by modules/home/webapps.nix (no package).
 
   defaultPackages =
     lib.optional (d.browser != null) browserPackages.${d.browser}
@@ -120,8 +111,7 @@ in
         environment.systemPackages = defaultPackages;
 
         environment.sessionVariables =
-          lib.optionalAttrs (d.browser != null) { BROWSER = browserCommands.${d.browser}; }
-          // lib.optionalAttrs (d.editor != null && builtins.hasAttr d.editor editorVisualCommands) {
+          lib.optionalAttrs (d.editor != null && builtins.hasAttr d.editor editorVisualCommands) {
             VISUAL = editorVisualCommands.${d.editor};
           }
           //

@@ -2,91 +2,182 @@ pragma Singleton
 import QtQuick
 import Quickshell.Io
 import qs.Commons
+import "../Commons/WifiQr.js" as Qr
 
-// On-demand Wi-Fi QR for the current network. generate() runs a short chain:
-// find the active SSID, read its PSK (nmcli -s, authorized for the session by
-// NetworkManager's default polkit), then render a QR as a UTF8 half-block text
-// grid with qrencode (no temp files, no image plumbing). Falls back to an
-// open-network QR when the PSK is unavailable.
-//
-// Not a seat-global status like the other singletons; it holds the last
-// generated QR for the panel to bind to, and only runs when the panel asks.
 QtObject {
     id: root
 
     property string ssid: ""
-    property string qrText: ""
+    property string password: ""
+    property bool secured: false
+    property bool loading: false
     property string error: ""
+    property var matrix: ({
+            size: 0,
+            cells: []
+        })
+    property int generation: 0
+    property bool pending: false
+    property string uuid: ""
+    property string detailsText: ""
+    property string qrOutput: ""
 
-    property string _psk: ""
-
-    // WIFI: URI escaping: backslash-escape \ ; , : and " (MECARD grammar).
-    function esc(s): string {
-        return String(s || "").replace(/([\\;,:"])/g, "\\$1");
+    function cancel(): void {
+        generation++;
+        pending = false;
+        active.running = false;
+        details.running = false;
+        render.running = false;
+        ssid = "";
+        password = "";
+        uuid = "";
+        detailsText = "";
+        qrOutput = "";
+        secured = false;
+        matrix = {
+            size: 0,
+            cells: []
+        };
+        error = "";
+        loading = false;
     }
 
     function generate(): void {
-        root.qrText = "";
-        root.error = "";
-        root.ssid = "";
-        root._psk = "";
-        ssidProc.running = true;
+        cancel();
+        loading = true;
+        pending = true;
+        startPending.restart();
     }
 
-    function buildAndRender(): void {
-        if (root.ssid === "") {
-            root.error = "No active Wi-Fi network";
+    function start(process): void {
+        process.token = generation;
+        process.busy = true;
+        process.running = true;
+    }
+
+    function stopped(process): void {
+        if (process.running || !process.busy || Number(process.processId) > 0)
             return;
-        }
-        const body = root._psk !== "" ? ("WIFI:T:WPA;S:" + root.esc(root.ssid) + ";P:" + root.esc(root._psk) + ";;") : ("WIFI:T:nopass;S:" + root.esc(root.ssid) + ";;");
-        qrProc.command = [Config.qrencode, "-t", "UTF8", "-o", "-", body];
-        qrProc.running = true;
+        process.busy = false;
+        if (process.token === generation)
+            fail("wifiqr.failed");
+        startPending.restart();
     }
 
-    // 1) Active SSID from `nmcli -t -f active,ssid dev wifi` (line "yes:<ssid>").
-    readonly property var ssidProc: Process {
-        id: ssidProc
-        command: [Config.nmcli, "-t", "-f", "active,ssid", "dev", "wifi"]
+    function fail(key: string): void {
+        loading = false;
+        password = "";
+        matrix = {
+            size: 0,
+            cells: []
+        };
+        error = I18n.t(key);
+    }
+
+    property Timer startPending: Timer {
+        interval: 0
+        onTriggered: {
+            if (!root.pending || active.busy || details.busy || render.busy)
+                return;
+            root.pending = false;
+            root.start(active);
+        }
+    }
+
+    property Process active: Process {
+        onRunningChanged: {
+            if (!running)
+                Qt.callLater(root.stopped, active);
+        }
+        property int token: -1
+        property bool busy: false
+        command: [Config.nmcli, "-t", "-f", "UUID,TYPE", "connection", "show", "--active"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const lines = String(text).split("\n");
-                for (var i = 0; i < lines.length; i++) {
-                    if (lines[i].indexOf("yes:") === 0) {
-                        root.ssid = lines[i].slice(4);
-                        break;
-                    }
-                }
+                if (active.token !== root.generation)
+                    return;
+                const line = text.split("\n").find(l => /:(802-11-wireless|wifi)$/.test(l));
+                root.uuid = line ? line.split(":")[0] : "";
             }
-        }
-        onExited: {
-            if (root.ssid === "") {
-                root.error = "No active Wi-Fi network";
-                return;
-            }
-            pskProc.command = [Config.nmcli, "-s", "-g", "802-11-wireless-security.psk", "connection", "show", root.ssid];
-            pskProc.running = true;
-        }
-    }
-
-    // 2) PSK for that connection (may be empty: open network, or not authorized).
-    readonly property var pskProc: Process {
-        id: pskProc
-        command: []
-        stdout: StdioCollector {
-            onStreamFinished: root._psk = String(text).trim()
-        }
-        onExited: root.buildAndRender()
-    }
-
-    readonly property var qrProc: Process {
-        id: qrProc
-        command: []
-        stdout: StdioCollector {
-            onStreamFinished: root.qrText = String(text)
         }
         onExited: code => {
-            if (code !== 0)
-                root.error = "Could not render QR";
+            busy = false;
+            startPending.restart();
+            if (token !== root.generation)
+                return;
+            if (code !== 0 || !root.uuid) {
+                root.fail(code !== 0 ? "wifiqr.failed" : "wifiqr.noNetwork");
+                return;
+            }
+            root.start(details);
+        }
+    }
+
+    property Process details: Process {
+        onRunningChanged: {
+            if (!running)
+                Qt.callLater(root.stopped, details);
+        }
+        property int token: -1
+        property bool busy: false
+        command: [Config.nmcli, "--escape", "no", "-s", "-g", "802-11-wireless.ssid,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk", "connection", "show", "uuid", root.uuid]
+        stdout: SplitParser {
+            onRead: line => {
+                if (details.token === root.generation)
+                    root.detailsText += line + "\n";
+            }
+        }
+        onExited: code => {
+            busy = false;
+            startPending.restart();
+            if (token !== root.generation)
+                return;
+            const fields = root.detailsText.replace(/\r/g, "").split("\n");
+            root.ssid = fields[0] || "";
+            const security = fields[1] === "--" ? "" : fields[1] || "";
+            const secret = fields[2] === "--" ? "" : fields[2] || "";
+            root.detailsText = "";
+            if (code !== 0 || !Qr.payload(root.ssid, security, secret)) {
+                root.fail("wifiqr.failed");
+                return;
+            }
+            root.secured = security !== "";
+            root.password = secret;
+            render.stdinEnabled = true;
+            root.start(render);
+        }
+    }
+
+    property Process render: Process {
+        onRunningChanged: {
+            if (!running)
+                Qt.callLater(root.stopped, render);
+        }
+        property int token: -1
+        property bool busy: false
+        command: [Config.qrencode, "-t", "ASCII", "-m", "4", "-o", "-"]
+        onStarted: {
+            if (token !== root.generation)
+                return;
+            write(Qr.payload(root.ssid, root.secured ? "wpa-psk" : "", root.password));
+            stdinEnabled = false;
+        }
+        stdout: SplitParser {
+            onRead: line => {
+                if (render.token === root.generation)
+                    root.qrOutput += line + "\n";
+            }
+        }
+        onExited: code => {
+            busy = false;
+            startPending.restart();
+            if (token !== root.generation)
+                return;
+            root.matrix = Qr.parseAscii(root.qrOutput);
+            root.qrOutput = "";
+            root.loading = false;
+            if (code !== 0 || root.matrix.size === 0)
+                root.fail("wifiqr.failed");
         }
     }
 }

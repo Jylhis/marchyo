@@ -6,17 +6,16 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  screensaverEnabled = (osConfig.marchyo or { }).screensaver.enable or true;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  screensaverEnabled = osConfig.marchyo.screensaver.enable;
 
   # With the unified shell on, its in-shell lock replaces hyprlock, so the
   # "never draw over the lock screen" guard must ask the shell.
-  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
+  shellEnabled = osConfig.marchyo.shell.enable;
 
   marchyo-screensaver = pkgs.writeShellApplication {
     name = "marchyo-screensaver";

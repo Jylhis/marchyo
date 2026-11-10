@@ -4,7 +4,7 @@ import Quickshell.Io
 import qs.Commons
 
 // Shared Tailscale state: ONE seat-wide `tailscale status --json` poll. The CLI
-// is only baked into Config when marchyo.services.tailscale.enable is set; on
+// is only baked into Config when services.tailscale.enable is set; on
 // other hosts the bare name is baked, the probe fails, and `installed` stays
 // false so the widget self-hides. A singleton; this state is seat-global.
 QtObject {
@@ -20,7 +20,7 @@ QtObject {
     property var peers: []
 
     // Up/down is offered only when the CLI is baked as a store path
-    // (marchyo.services.tailscale.enable) and the status probe succeeds. The
+    // (services.tailscale.enable) and the status probe succeeds. The
     // daemon accepts it only from root or the tailnet operator, which NixOS
     // sets via marchyo.services.tailscale.operator (the primary marchyo user
     // when the shell is on); any refusal lands in lastError.
@@ -32,7 +32,7 @@ QtObject {
         if (root.lastExit === 0)
             return "";
         const line = root.actionStderr.split("\n").map(l => l.trim()).filter(l => l.length > 0)[0];
-        return line || ("tailscale exited " + root.lastExit);
+        return line || I18n.t("tailscale.exited", root.lastExit);
     }
     // Full refusal text for the detail panel (includes the CLI's operator hint).
     readonly property string lastErrorDetail: root.lastExit === 0 ? "" : (root.actionStderr.trim() || root.lastError)
@@ -45,12 +45,11 @@ QtObject {
         root.actionStderr = "";
         // --timeout bounds `up` on a logged-out node, which would otherwise wait
         // for an interactive login indefinitely.
-        action.command = on ? [Config.tailscale, "up", "--timeout=20s"] : [Config.tailscale, "down"];
-        action.running = true;
+        root.action.command = on ? [Config.tailscale, "up", "--timeout=20s"] : [Config.tailscale, "down"];
+        root.action.running = true;
     }
 
     readonly property var action: Process {
-        id: action
         stderr: StdioCollector {
             readonly property int maxChars: 4096
             onStreamFinished: root.actionStderr = text.length <= maxChars ? text : text.slice(0, maxChars)
@@ -65,7 +64,7 @@ QtObject {
     function first100(ips): string {
         if (!ips)
             return "";
-        for (var i = 0; i < ips.length; i++) {
+        for (let i = 0; i < ips.length; i++) {
             const ip = String(ips[i] || "");
             if (ip.indexOf("100.") === 0)
                 return ip;
@@ -91,7 +90,7 @@ QtObject {
         let en = "";
         const rawPeers = data.Peer || {};
         const list = [];
-        for (var id in rawPeers) {
+        for (let id in rawPeers) {
             const p = rawPeers[id] || {};
             const pdns = String(p.DNSName || "");
             const nm = (p.HostName && String(p.HostName)) || (pdns.charAt(pdns.length - 1) === "." ? pdns.slice(0, -1) : pdns);

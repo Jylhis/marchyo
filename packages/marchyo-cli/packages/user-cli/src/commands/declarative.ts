@@ -16,6 +16,7 @@ import {
   readState,
   writeState,
   usageError,
+  tr,
 } from "@marchyo/core";
 
 // Declarative-only commands (no runtime leg): edit cli-state.json, then
@@ -35,7 +36,7 @@ type Feature = (typeof FEATURES)[number];
 // SUPER+SHIFT letters already claimed by marchyo binds and the default
 // webapp set (see modules/nixos/options/webapps.nix).
 const TAKEN_SUPER_SHIFT_KEYS = new Set(
-  "A C D E G H I O P S W X Y Z".split(" "),
+  "A B C D E G H I L M N O P Q S T V W X Y Z".split(" "),
 );
 
 export type DeclarativeOpts = { dryRun?: boolean };
@@ -49,7 +50,7 @@ export async function persistAndRebuild(
   const prev = await readState().catch(() => ({}) as State);
   const next = mergeState(prev, patch);
   if (opts.dryRun) {
-    ok(rt, `${describe} (dry run: state not written, no rebuild)`);
+    ok(rt, tr("declarative.dryRunStateNotWritten", describe));
     process.stdout.write(JSON.stringify(patch) + "\n");
     return 0;
   }
@@ -58,7 +59,7 @@ export async function persistAndRebuild(
     ({ path } = await writeState(next));
   } catch (e) {
     if (e instanceof Error && e.message.includes("EACCES")) {
-      err(rt, "cannot write state file (permission denied)");
+      err(rt, tr("declarative.cannotWriteStateFilePermission"));
       hint(rt, "Try: sudo marchyo …");
       return 1;
     }
@@ -67,15 +68,15 @@ export async function persistAndRebuild(
   ok(rt, `${describe} → ${path}`);
   info(
     rt,
-    "requires the marchyoCliState wiring in your flake (see the marchyo-cli README)",
+    tr("declarative.requiresTheMarchyoclistateWiringIn"),
   );
   const flake = await detectFlake();
   if (!flake) {
-    err(rt, "no flake found (looked in cached state, /etc/nixos, cwd)");
+    err(rt, tr("declarative.noFlakeFoundLookedIn"));
     hint(rt, "Try: run from your flake directory, then `marchyo rebuild`");
     return 1;
   }
-  info(rt, `rebuilding from ${flake.path} ...`);
+  info(rt, tr("declarative.rebuildingFrom", flake.path));
   const result = await nixosRebuild({
     flakePath: flake.path,
     noInput: rt.noInput,
@@ -91,7 +92,7 @@ function featureOrError(rt: Runtime, raw: string): Feature | null {
   if ((FEATURES as readonly string[]).includes(raw)) return raw as Feature;
   usageError(
     rt,
-    `unknown feature: "${raw}"`,
+    tr("declarative.unknownFeature", raw),
     `marchyo install <${FEATURES.join("|")}>`,
   );
   return null;
@@ -144,7 +145,7 @@ export async function runWebappAdd(
   } catch {
     return usageError(
       rt,
-      `invalid URL: "${url}"`,
+      tr("declarative.invalidUrl", url),
       "marchyo webapp add https://example.com --name Example",
     );
   }
@@ -159,7 +160,7 @@ export async function runWebappAdd(
     if (modifiers === "SUPER SHIFT" && TAKEN_SUPER_SHIFT_KEYS.has(key)) {
       return usageError(
         rt,
-        `SUPER+SHIFT+${key} is already taken by marchyo binds or the default webapps`,
+        tr("declarative.superShiftIsAlreadyTaken", key),
         "pick a free key, or pass --modifiers 'SUPER SHIFT ALT'",
       );
     }
@@ -168,7 +169,7 @@ export async function runWebappAdd(
   const prev = await readState().catch(() => ({}) as State);
   const existing = prev.webapps?.extraApps ?? [];
   if (existing.some((a) => a.name === name)) {
-    err(rt, `webapp '${name}' already exists`);
+    err(rt, tr("declarative.webappAlreadyExists", name));
     hint(rt, "Try: marchyo webapp rm first, or pass a different --name");
     return 1;
   }
@@ -194,10 +195,10 @@ export async function runWebappRm(
   const prev = await readState().catch(() => ({}) as State);
   const existing = prev.webapps?.extraApps ?? [];
   if (!existing.some((a) => a.name === name)) {
-    err(rt, `webapp '${name}' is not CLI-managed`);
+    err(rt, tr("declarative.webappIsNotCliManaged", name));
     hint(
       rt,
-      "built-in defaults live in marchyo.webapps.apps — override that list in your flake",
+      tr("declarative.builtInDefaultsLiveIn"),
     );
     return 1;
   }
@@ -218,8 +219,8 @@ export async function runSecurityEnroll(
   switch (method) {
     case "fingerprint": {
       if (!commandAvailable("fprintd-enroll")) {
-        err(rt, "fprintd-enroll not found");
-        hint(rt, "enable marchyo.security.fingerprint.enable and rebuild first");
+        err(rt, tr("declarative.fprintdEnrollNotFound"));
+        hint(rt, tr("declarative.enableMarchyoSecurityFingerprintEnable"));
         return 1;
       }
       const proc = Bun.spawn(["fprintd-enroll"], {
@@ -231,27 +232,27 @@ export async function runSecurityEnroll(
     }
     case "fido2": {
       if (!commandAvailable("pamu2fcfg")) {
-        err(rt, "pamu2fcfg not found");
-        hint(rt, "enable marchyo.security.fido2.enable and rebuild first");
+        err(rt, tr("declarative.pamuFcfgNotFound"));
+        hint(rt, tr("declarative.enableMarchyoSecurityFidoEnable"));
         return 1;
       }
-      info(rt, "touch your security key when it blinks ...");
+      info(rt, tr("declarative.touchYourSecurityKeyWhen"));
       const r = await captureArgv(["pamu2fcfg"]);
       if (r.code !== 0 || r.stdout.trim() === "") {
-        err(rt, "pamu2fcfg failed (no key present, or touch timed out)");
+        err(rt, tr("declarative.pamuFcfgFailedNoKey"));
         return 1;
       }
       const dir = join(homedir(), ".config", "Yubico");
       await mkdir(dir, { recursive: true });
       const keysFile = join(dir, "u2f_keys");
       await appendFile(keysFile, r.stdout.trim() + "\n");
-      ok(rt, `credential appended to ${keysFile}`);
+      ok(rt, tr("declarative.credentialAppendedTo", keysFile));
       return 0;
     }
     default:
       return usageError(
         rt,
-        `unknown method: "${method}"`,
+        tr("declarative.unknownMethod", method),
         "marchyo security enroll <fido2|fingerprint>",
       );
   }

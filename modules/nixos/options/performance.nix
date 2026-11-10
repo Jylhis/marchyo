@@ -33,32 +33,14 @@ in
       '';
     };
 
-    kernel = mkOption {
-      type = types.enum [
-        "default"
-        "latest"
-        "zen"
-        "xanmod"
-        "lts"
-      ];
-      default = "default";
-      example = "zen";
+    kyber.enable = mkOption {
+      type = types.bool;
+      default = true;
       description = ''
-        Kernel variant to boot.
-
-        - `"default"` — leave `boot.kernelPackages` unmanaged (the nixpkgs
-          default kernel, or whatever the host sets).
-        - `"latest"` — newest mainline kernel (`linuxPackages_latest`); best
-          hardware support, shortest support window.
-        - `"zen"` — ZEN kernel (`linuxPackages_zen`); tuned for desktop
-          interactivity and low latency.
-        - `"xanmod"` — XanMod kernel (`linuxPackages_xanmod_latest`); mainline
-          with performance-oriented patches (gaming/workstation).
-        - `"lts"` — long-term-support kernel (`linuxPackages`); most
-          conservative choice for servers and stable hosts.
-
-        The mapping is applied with `lib.mkDefault`, so a host can still set
-        `boot.kernelPackages` directly to override it.
+        Use the kyber I/O scheduler on whole non-rotational disks (NVMe, SATA,
+        MMC, virtio), except zoned disks. Kyber holds a read latency target,
+        so interactive reads stay fast while large writes fill the disk queue.
+        With `tuning.nvme.enable`, NVMe disks keep mq-deadline instead.
       '';
     };
 
@@ -71,20 +53,22 @@ in
           workloads.
 
           Turning this on enables the broadly-safe sub-toggles (network, nvme,
-          memory) by default. The aggressive toggles (hugePages, compute) stay
+          memory, hugePages) by default. The aggressive compute toggle stays
           off and must be opted into explicitly.
         '';
       };
 
       network.enable = followsMaster ''
-        Network stack tuning: BBR congestion control (loads the tcp_bbr module),
-        TCP Fast Open, MTU probing, larger socket buffers and backlogs.
+        Network stack tuning: TCP Fast Open, window scaling, larger socket
+        buffers and backlogs. BBR, fq and MTU probing are on without it.
         Broadly safe and beneficial. Defaults to the value of tuning.enable.
       '';
 
       nvme.enable = followsMaster ''
-        NVMe SSD I/O tuning via udev rules: no-op scheduler, larger read-ahead
-        and max request size. Safe for NVMe SSDs. Defaults to tuning.enable.
+        NVMe SSD I/O tuning via udev rules: mq-deadline scheduler (in place of
+        kyber, because idle-class I/O only yields under an ioprio-aware
+        scheduler), larger read-ahead and max request size. Safe for NVMe
+        SSDs. Defaults to tuning.enable.
       '';
 
       memory = {
@@ -114,15 +98,11 @@ in
         };
       };
 
-      hugePages.enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Enable 2 MiB transparent huge pages always (transparent_hugepage=always,
-          hugepagesz=2M). Improves TLB performance for large allocations but can
-          hurt latency-sensitive and interactive desktop workloads. Off by default.
-        '';
-      };
+      hugePages.enable = followsMaster ''
+        Transparent huge pages on request (transparent_hugepage=madvise): only
+        allocations that madvise(MADV_HUGEPAGE) get 2 MiB pages, so RSS does not
+        bloat as with `always`. Defaults to tuning.enable.
+      '';
 
       compute.enable = mkOption {
         type = types.bool;

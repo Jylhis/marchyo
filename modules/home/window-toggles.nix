@@ -1,25 +1,14 @@
-# Notification/DND and screen-recording toggle binds (wired in
-# modules/home/hyprland.nix) plus the recorder/notify tools the marchyo CLI
-# drives. omarchy's `omarchy-*` scripts do not exist here, so marchyo routes
-# these through the CLI (`marchyo toggle …` / `marchyo capture record`).
+# The recorder/notify tools the marchyo CLI drives for the capture and window
+# binds in lib/keybinds.nix, and the pop-out re-centring hook.
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  # When the unified shell owns notifications, DND is in-shell state and mako is
-  # gone, so these binds reach the shell through `marchyo shell` instead of
-  # `marchyo toggle`/makoctl.
-  shellEnabled = ((osConfig.marchyo or { }).shell or { }).enable or false;
-  # The store path when the CLI is not installed system-wide, so the shell binds
-  # never depend on marchyo.cli.enable.
-  cliEnabled = (osConfig.marchyo or { }).cli.enable or false;
-  marchyoCli = if cliEnabled then "marchyo" else lib.getExe pkgs.marchyo-cli;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
 in
 {
   config = lib.mkIf desktopEnabled {
@@ -31,25 +20,32 @@ in
       pkgs.procps
     ];
 
-    wayland.windowManager.hyprland.settings.bind =
-      if shellEnabled then
-        [
-          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (hlua.exec "${marchyoCli} shell dnd"))
-          (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
-            hlua.exec "${marchyoCli} shell dismiss --all"
-          ))
-          (hlua.bindd "SUPER + N" "Notification centre (history)" (
-            hlua.exec "${marchyoCli} shell toggle notifications"
-          ))
-        ]
-      else
-        [
-          (hlua.bindd "SUPER + CTRL + comma" "Toggle do-not-disturb" (
-            hlua.exec "marchyo toggle notifications"
-          ))
-          (hlua.bindd "SUPER + CTRL + SHIFT + comma" "Dismiss all notifications" (
-            hlua.exec "makoctl dismiss --all"
-          ))
+    # Window utilities (`marchyo window pop|close-all|tiled-fullscreen`, `marchyo toggle
+    # gaps|fullscreen-desktop`). The Appearance menu lists them all.
+    wayland.windowManager.hyprland.settings.on = [
+      # A floating window moved to another monitor keeps its offset, so a popped-out
+      # window is centred again once it lands. The dispatcher move fires before the
+      # window changes monitor, so the centring waits one loop.
+      {
+        _args = [
+          "window.move_to_workspace"
+          (hlua.mkLuaInline ''
+            function(window, workspace)
+              if not (window and workspace and window.monitor and workspace.monitor) then return end
+              if window.monitor.id == workspace.monitor.id then return end
+              local popped = false
+              for _, tag in ipairs(window.tags or {}) do
+                if tag == "pop" then popped = true end
+              end
+              if not popped then return end
+              local target = "address:" .. window.address
+              hl.timer(function()
+                hl.dispatch(hl.dsp.window.center({ window = target }))
+              end, { timeout = 1, type = "oneshot" })
+            end'')
         ];
+      }
+    ];
+
   };
 }

@@ -27,7 +27,7 @@ Item {
     // refresh would land on a single screen and leave the others stale.
     function broadcast(method) {
         var items = bar && typeof bar.moduleWidgets === "function" ? bar.moduleWidgets(moduleName) : [root];
-        for (var i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             if (items[i] && typeof items[i][method] === "function")
                 items[i][method]();
         }

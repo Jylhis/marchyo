@@ -1,0 +1,111 @@
+{
+  "bar": {
+    "layout": {
+      "center": [
+        {
+          "id": "omarchy.clock"
+        }
+      ],
+      "left": [
+        {
+          "id": "marchyo.session"
+        },
+        {
+          "id": "omarchy.workspaces"
+        },
+        {
+          "id": "omarchy.active-window"
+        }
+      ],
+      "right": [
+        {
+          "id": "omarchy.tray"
+        },
+        {
+          "id": "omarchy.media"
+        },
+        {
+          "id": "marchyo.separator"
+        },
+        {
+          "id": "marchyo.screenRecording"
+        },
+        {
+          "id": "marchyo.reminders"
+        },
+        {
+          "id": "marchyo.remoteSession"
+        },
+        {
+          "id": "marchyo.dictation"
+        },
+        {
+          "id": "marchyo.caffeine"
+        },
+        {
+          "id": "marchyo.dnd"
+        },
+        {
+          "id": "marchyo.separator"
+        },
+        {
+          "id": "omarchy.weather"
+        },
+        {
+          "id": "omarchy.elsewhen"
+        },
+        {
+          "id": "omarchy.dropbox"
+        },
+        {
+          "id": "omarchy.tailscale"
+        },
+        {
+          "id": "marchyo.separator"
+        },
+        {
+          "id": "marchyo.theme"
+        },
+        {
+          "id": "marchyo.keyboardLayout"
+        },
+        {
+          "id": "marchyo.bluetooth"
+        },
+        {
+          "id": "omarchy.network"
+        },
+        {
+          "id": "marchyo.camera"
+        },
+        {
+          "id": "marchyo.mic"
+        },
+        {
+          "id": "marchyo.audio"
+        },
+        {
+          "id": "marchyo.separator"
+        },
+        {
+          "id": "marchyo.cpu"
+        },
+        {
+          "id": "marchyo.powerProfile"
+        },
+        {
+          "id": "marchyo.peripherals"
+        },
+        {
+          "id": "marchyo.battery"
+        },
+        {
+          "id": "marchyo.separator"
+        },
+        {
+          "id": "marchyo.controlCenter"
+        }
+      ]
+    }
+  }
+}

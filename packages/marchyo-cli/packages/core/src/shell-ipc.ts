@@ -3,12 +3,13 @@ import { dirname, join } from "node:path";
 import { commandAvailable } from "./flake.ts";
 import { captureArgv } from "./system.ts";
 
-// The one bridge from the CLI into the running marchyo shell: the stock
-// `IpcHandler { target: "shell" }` in shell/shell.qml, reached through the
-// `marchyo-shell` wrapper (it bakes its own `-p <store-path>`, so the call
-// self-targets the running instance). Every call site passes the function
-// name as a string literal: tests/shell/contracts-test.sh greps
-// `shellIpc("<fn>"` across the CLI sources and fails when shell.qml lacks it.
+// The one bridge from the CLI into the running marchyo shell's function table
+// (`actions` in shell/shell.qml): the `IpcHandler { target: "shell" }`,
+// reached through the `marchyo-shell` wrapper (it bakes its own
+// `-p <store-path>`, so the call self-targets the running instance).
+// Every call site passes the function name as a string literal:
+// tests/shell/contracts-test.sh greps `shellIpc("<fn>"` across the CLI sources
+// and fails when shell.qml lacks it.
 
 export const SHELL_BIN = "marchyo-shell";
 export const SHELL_IPC_TARGET = "shell";
@@ -74,10 +75,8 @@ export async function shellIpcWith(
   return parseShellIpcResult(fn, await exec(shellIpcArgv(fn, ...args)));
 }
 
-export function shellIpc(fn: string, ...args: string[]): Promise<string> {
-  if (!commandAvailable(SHELL_BIN)) {
-    return Promise.reject(notInstalled());
-  }
+export async function shellIpc(fn: string, ...args: string[]): Promise<string> {
+  if (!commandAvailable(SHELL_BIN)) throw notInstalled();
   return shellIpcWith(captureArgv, fn, ...args);
 }
 

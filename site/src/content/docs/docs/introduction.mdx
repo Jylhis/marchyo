@@ -10,7 +10,7 @@ Marchyo is a modular NixOS configuration flake providing a curated set of system
 - **Modular architecture** — Configurations broken into small, manageable modules for desktop, development, media, and office environments.
 - **Feature flags** — Enable entire stacks with a single boolean (`marchyo.desktop.enable = true`).
 - **Home Manager integration** — Seamless user environment management for dotfiles and user-level applications.
-- **Hardware support** — Integration with `nixos-hardware` for common devices, including NVIDIA PRIME hybrid graphics.
+- **Hardware support** — Graphics vendor options including NVIDIA PRIME hybrid graphics; pairs with [nixos-hardware](https://github.com/NixOS/nixos-hardware) profiles imported from your own flake.
 - **Extensive options** — Fine-grained control through the `marchyo.*` option namespace.
 
 ## How it works
@@ -30,22 +30,22 @@ Marchyo is distributed as a batteries-included Nix flake. Add it as your only in
 }
 ```
 
-The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). On x86_64-darwin, `marchyo.lib.mkDarwinSystem` transparently pins the stable nixos-26.05 package set (the last release supporting Intel macOS); every other system rides unstable. If you only need Home Manager, use `homeManagerModules.default`.
+The builder bakes in `nixosModules.default` (NixOS system modules + Home Manager integration). Every system rides nixpkgs unstable. The Home Manager modules read the NixOS options, so there is no Home Manager-only setup.
 
 :::note
-The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` (x86_64-darwin → stable 26.05, others → unstable) or the `marchyo.lib.*` builders.
+The raw `marchyo.inputs.nixpkgs` passthrough is always **unstable**. For a system-correct, overlay-applied package set, use `marchyo.legacyPackages.<system>` or the `marchyo.lib.*` builders.
 :::
 
 ## Flake outputs
 
 | Output | Description |
 |--------|-------------|
-| `lib.mkNixosSystem` / `lib.mkDarwinSystem` | System-aware builders (recommended entry point) |
-| `lib.mkNixOnDroidConfiguration` | nix-on-droid (Android terminal) builder, aarch64; reuses the HM-agnostic generic modules (HM 24.05) |
+| `lib.mkNixosSystem` | System builder (recommended entry point) |
 | `nixosModules.default` | Main NixOS module (includes Home Manager) |
-| `nixosModules.hardware.<profile>` | [nixos-hardware](https://github.com/NixOS/nixos-hardware) per-machine profiles, re-exported (e.g. `lenovo-thinkpad-x1-9th-gen`, `framework-13-7040-amd`, `common-pc-ssd`) |
-| `homeManagerModules.default` | Home Manager module only |
-| `legacyPackages.{system}` | System-aware nixpkgs + overlay (x86_64-darwin → stable 26.05) |
+| `homeManagerModules.default` | The Home Manager modules (imported for every `marchyo.users` entry; need the NixOS module) |
+| `nixosModules.disko` + `lib.diskoLayout` | Declarative disk layouts from `disko/` (see [Installation](/docs/guides/installation/)) |
+| `packages.x86_64-linux.iso-{minimal,graphical}` | Installer ISOs |
+| `legacyPackages.{system}` | nixpkgs + marchyo overlay |
 | `overlays.default` | Nixpkgs overlay |
 | `templates.workstation` | Starter workstation template |
 | `apps.{system}.default` | QEMU VM runner (x86_64-linux) |

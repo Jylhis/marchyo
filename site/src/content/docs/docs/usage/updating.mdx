@@ -33,8 +33,6 @@ nix flake update marchyo
 sudo nixos-rebuild switch --flake .#yourhost
 ```
 
-On macOS use `darwin-rebuild switch --flake .#yourhost` instead.
-
 :::note
 `nix flake update` rewrites `flake.lock`. Commit the updated lock file so the
 change is reproducible and reviewable — the lock is the single source of truth
@@ -43,12 +41,8 @@ for what your system is built from.
 
 ## What "update" actually moves
 
-Marchyo's builders pick the package set for you, so an update tracks different
-channels depending on the system (see the [Introduction](/docs/introduction/)):
-
-- **Linux and `aarch64-darwin`** ride **nixpkgs unstable**.
-- **`x86_64-darwin`** is pinned to **stable nixos-26.05** (the last release
-  supporting Intel macOS).
+Marchyo's builders pick the package set for you: every system rides **nixpkgs
+unstable** (see the [Introduction](/docs/introduction/)).
 
 You do not add a separate `nixpkgs` input — updating the `marchyo` input is what
 advances your packages.

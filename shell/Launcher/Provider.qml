@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Commons
 import qs.Services
 
 // The launcher provider interface. A provider turns its `query` into
@@ -38,7 +39,7 @@ QtObject {
     property bool highlight: true // StyledText title with match highlighting
     // Preselect the first row with an empty query (otherwise only once typed).
     property bool selectOnEmpty: false
-    property string emptyText: "no matches"
+    property string emptyText: I18n.t("launcher.noMatches")
 
     // Thumbnails (list only). With `previews`, a row carrying a `preview`
     // key is drawn taller with an image: ResultsView calls requestPreview(row)

@@ -25,49 +25,54 @@ marchyo.performance.disableMitigations = false;
 
 ## Kernel selection
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `marchyo.performance.kernel` | `enum` | `"default"` | Kernel variant: `default` (nixpkgs LTS default), `latest`, `zen`, `xanmod`, `lts` |
+marchyo leaves the kernel to NixOS. Pick another one with `boot.kernelPackages`:
 
 ```nix
-marchyo.performance.kernel = "zen";
+boot.kernelPackages = pkgs.linuxPackages_zen; # or linuxPackages_latest, linuxPackages_xanmod_latest
 ```
 
-Set via `lib.mkDefault`, so hosts can still override `boot.kernelPackages`
-directly. `"default"` leaves the option unmanaged.
+## Network and disk defaults
+
+These are on for every host, without `tuning.enable`:
+
+- BBR congestion control with the fq qdisc (`tcp_bbr` is loaded), and TCP MTU probing. Each sysctl is set with `lib.mkDefault`.
+- The kyber I/O scheduler on whole non-rotational disks (`nvme*`, `sd*`, `mmcblk*`, `vd*`). Partitions, loop, zram, dm and zoned disks are not matched. Kyber holds a read latency target, so interactive reads stay fast while a large build or copy fills the disk queue.
+
+- `marchyo.performance.kyber.enable` (`bool`, default `true`): add the kyber udev rule.
+
+With `tuning.nvme.enable`, NVMe disks get mq-deadline instead of kyber, and kyber keeps the other disks.
+mq-deadline is ioprio-aware, so idle-class nix builds and bees yield disk I/O to interactive work.
 
 ## Kernel & I/O tuning
 
 Opt-in kernel/sysctl/IO tuning for throughput-oriented workloads. Disabled by
 default. Enabling `marchyo.performance.tuning.enable` turns on the broadly-safe
-sub-toggles (`network`, `nvme`, `memory`); the aggressive toggles (`hugePages`,
-`compute`) stay off and must be opted into explicitly.
+sub-toggles (`network`, `nvme`, `memory`, `hugePages`); the aggressive `compute`
+toggle stays off and must be opted into explicitly.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.performance.tuning.enable` | `bool` | `false` | Master switch; enables the safe sub-toggles below |
-| `marchyo.performance.tuning.network.enable` | `bool` | follows `enable` | BBR congestion control, TCP Fast Open, MTU probing, larger socket buffers |
-| `marchyo.performance.tuning.nvme.enable` | `bool` | follows `enable` | NVMe udev tuning: no-op scheduler, larger read-ahead and max request size |
+| `marchyo.performance.tuning.network.enable` | `bool` | follows `enable` | TCP Fast Open, window scaling, larger socket buffers and backlogs |
+| `marchyo.performance.tuning.nvme.enable` | `bool` | follows `enable` | NVMe udev tuning: mq-deadline scheduler, larger read-ahead and max request size |
 | `marchyo.performance.tuning.memory.enable` | `bool` | follows `enable` | Lower swappiness, keep FS metadata cached, byte-based dirty-page thresholds |
 | `marchyo.performance.tuning.memory.dirtyBytes` | `positive int` | `268435456` | `vm.dirty_bytes` (256 MiB) — synchronous writeback threshold |
 | `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `positive int` | `67108864` | `vm.dirty_background_bytes` (64 MiB) — background writeback threshold |
-| `marchyo.performance.tuning.hugePages.enable` | `bool` | `false` | 2 MiB transparent huge pages always |
+| `marchyo.performance.tuning.hugePages.enable` | `bool` | follows `enable` | Transparent huge pages on request (`transparent_hugepage=madvise`) |
 | `marchyo.performance.tuning.compute.enable` | `bool` | `false` | Relaxed PAM limits (memlock/rtprio/nofile/nproc) for trusted compute hosts |
 
 ```nix
-# Safe defaults (network + nvme + memory):
+# Safe defaults (network + nvme + memory + hugePages):
 marchyo.performance.tuning.enable = true;
 
-# Compute/CUDA workstation — opt into the aggressive toggles too:
+# Compute/CUDA workstation: opt into the aggressive toggle too:
 marchyo.performance.tuning = {
   enable = true;
-  hugePages.enable = true;
   compute.enable = true;
 };
 ```
 
 :::caution
-`hugePages` can hurt latency-sensitive and interactive desktop workloads.
 `compute` relaxes resource limits system-wide (unlimited `memlock`, real-time
 priority for all users) — only enable it on trusted single-user machines where
 you control every process.

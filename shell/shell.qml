@@ -1,5 +1,11 @@
+// Quickshell.Hyprland's GlobalShortcut (used below) derives from PostReloadHook,
+// which that module's qmltypes leaves to Quickshell core, so qmllint cannot
+// resolve the type and reports "PostReloadHook was not found" at a line that
+// does not track this file. Hence a file-wide disable rather than a region.
+// qmllint disable import
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 
@@ -17,6 +23,8 @@ import qs.Services
 // omarchy plugin compat host API (shell/compat). Namespaced so its BarWidget /
 // Panel / Style / Color do not collide with marchyo's own qs.Ui / qs.Commons.
 import qs.compat.Ui as Plugin
+import "Commons/Actions.js" as Actions
+import "Commons/Appearance.js" as Appearance
 
 // A Jylhis-themed top bar plus the shell surfaces (OSD, panels, lock,
 // notifications, launcher), composed from qs.Bar widgets backed by qs.Ui
@@ -25,8 +33,9 @@ import qs.compat.Ui as Plugin
 // the default reproduces the historical static order). Widget ids resolve to
 // first-party Components in `barComponents` below, or to plugin bar-widgets via
 // Commons/PluginIndex — the build-time Option A plugin model (Nix-declared,
-// store-baked; no runtime discovery). A single stock IpcHandler drives runtime
-// actions; there is no custom bus. See shell/README.md.
+// store-baked; no runtime discovery). Runtime actions live in one function
+// table (`actions` below), reached through the IpcHandler and the Hyprland
+// global shortcuts. See shell/README.md.
 ShellRoot {
     id: shell
 
@@ -48,6 +57,9 @@ ShellRoot {
             "marchyo.reminders": cReminders,
             "marchyo.tailscale": cTailscale,
             "marchyo.weather": cWeather,
+            "marchyo.update": cUpdate,
+            "marchyo.disk": cDisk,
+            "marchyo.health": cHealth,
             "marchyo.tray": cTray,
             "marchyo.media": cMedia,
             "marchyo.dictation": cDictation,
@@ -107,6 +119,18 @@ ShellRoot {
     Component {
         id: cWeather
         WeatherWidget {}
+    }
+    Component {
+        id: cUpdate
+        UpdateWidget {}
+    }
+    Component {
+        id: cDisk
+        DiskWidget {}
+    }
+    Component {
+        id: cHealth
+        HealthWidget {}
     }
     Component {
         id: cTray
@@ -189,12 +213,12 @@ ShellRoot {
     Component {
         id: cPluginBar
         Plugin.PluginBarApi {
-            foreground: Color.text
-            barForeground: Color.text
-            background: Color.background
-            urgent: Color.statusErr
+            foreground: Colors.text
+            barForeground: Colors.text
+            background: Colors.background
+            urgent: Colors.statusErr
             fontFamily: Style.fontFamily
-            position: "top"
+            position: Style.barPosition
             vertical: false
             barSize: Style.barHeight
             transparent: false
@@ -269,9 +293,23 @@ ShellRoot {
     NetworkPanel {}
     PowerPanel {}
     MonitorPanel {}
+    DisplayPanel {}
     WeatherPanel {}
+    ElsewhenPanel {}
     TailscalePanel {}
     WifiQrPanel {}
+    BluetoothPanel {}
+    SpeedtestPanel {}
+    DropboxPanel {}
+    GalleryPanel {}
+    WhatsNewPanel {}
+    SetupPanel {}
+    ImagePicker {
+        kind: "themes"
+    }
+    ImagePicker {
+        kind: "backgrounds"
+    }
     NotificationCenter {}
     // Quick settings over the Services/QuickToggles model; opens the panels
     // above as detail pages.
@@ -286,6 +324,9 @@ ShellRoot {
     // singleton. A plugin that fails to load is logged and skipped.
     property var pluginDaemons: []
     Component.onCompleted: {
+        RuntimeStyle.start();
+        Motion.start();
+        Dev.start();
         const out = [];
         const entries = PluginIndex.daemonComponents();
         for (let i = 0; i < entries.length; i++) {
@@ -321,136 +362,315 @@ ShellRoot {
     // below the bar on the hovered item's screen (Services/Tooltip holds the state).
     TooltipWindow {}
 
-    // Keybind bridge: Hyprland binds reach the already-running shell through
-    // `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper bakes its own
-    // -p, so it self-targets the running instance). A single stock IpcHandler, no
-    // custom bus, no plugin registry. Panel summons mirror the
-    // in-process bar-widget clicks; the OSD poke is a fallback for the brightness
-    // case the native watcher can't cover on some hosts.
+    // The one function table behind every runtime action. The IpcHandler and
+    // the Hyprland global shortcuts below both dispatch here. Arguments arrive
+    // as strings, and a function's arity is its argument count (Actions.call
+    // rejects a mismatch). Panel summons mirror the
+    // in-process bar-widget clicks; the OSD poke is a fallback for the
+    // brightness case the native watcher cannot cover on some hosts.
+    readonly property var actions: ({
+            togglePanel: id => {
+                PanelManager.toggle(id);
+                return "ok";
+            },
+            openPanel: id => {
+                PanelManager.open(id);
+                return "ok";
+            },
+            closePanel: id => {
+                if (PanelManager.openId === id)
+                    PanelManager.close();
+                return "ok";
+            },
+            closePanels: () => {
+                PanelManager.close();
+                return "ok";
+            },
+            openGallery: section => {
+                Gallery.section = section;
+                PanelManager.open("gallery");
+                return "ok";
+            },
+            toggleDnd: () => {
+                NotificationState.toggleDnd();
+                return NotificationState.dnd ? "on" : "off";
+            },
+            setDnd: on => {
+                NotificationState.setDnd(shell.truthy(on));
+                return NotificationState.dnd ? "on" : "off";
+            },
+            dndState: () => NotificationState.dnd ? "on" : "off",
+            clearNotifications: () => {
+                NotificationState.clearAll();
+                return "ok";
+            },
+            dismissLast: () => {
+                NotificationState.dismissLast();
+                return "ok";
+            },
+            actNewest: () => NotificationState.actNewest(),
+            dismissOne: () => NotificationState.dismissOne(),
+            silence: () => {
+                NotificationState.toggleDnd();
+                return NotificationState.dnd ? "on" : "off";
+            },
+            notifyKeyboard: () => {
+                NotificationState.startKeyboard();
+                return NotificationState.kbActive ? "on" : "off";
+            },
+            toggleNotifications: () => {
+                PanelManager.toggle("notifications");
+                return "ok";
+            },
+            clearHistory: () => {
+                NotificationState.clearHistory();
+                return "ok";
+            },
+            toggleBar: () => {
+                shell.barVisible = !shell.barVisible;
+                return shell.barVisible ? "on" : "off";
+            },
+            setBar: on => {
+                shell.barVisible = shell.truthy(on);
+                return shell.barVisible ? "on" : "off";
+            },
+            barState: () => shell.barVisible ? "on" : "off",
+            osdShow: (label, percent, hasBar) => {
+                osd.show(label, parseInt(percent) || 0, hasBar !== "false");
+                return "ok";
+            },
+            lock: () => {
+                Lock.lock();
+                return "locked";
+            },
+            lockState: () => Lock.locked ? "locked" : "unlocked",
+            toggleLauncher: mode => Launcher.toggle(mode) ? "on" : "off",
+            openLauncher: mode => {
+                Launcher.openAs(mode);
+                return "on";
+            },
+            openMenu: route => {
+                Launcher.openMenu(route);
+                return "on";
+            },
+            toggleMenu: route => Launcher.toggleMenu(route) ? "on" : "off",
+            menuRequest: path => {
+                Launcher.openDmenu(path);
+                return "on";
+            },
+            closeLauncher: () => {
+                Launcher.close();
+                return "ok";
+            },
+            toggleOverview: () => {
+                Overview.toggle();
+                return Overview.open ? "on" : "off";
+            },
+            openOverview: () => {
+                Overview.openOverview();
+                return "on";
+            },
+            closeOverview: () => {
+                Overview.close();
+                return "off";
+            },
+            refreshLockKeys: () => {
+                LockKeys.refresh();
+                return "ok";
+            },
+            caffeineChanged: on => {
+                Caffeine.setManual(shell.truthy(on));
+                return Caffeine.manual ? "on" : "off";
+            },
+            nightlightChanged: on => {
+                Nightlight.setEnabled(shell.truthy(on));
+                return Nightlight.enabled ? "on" : "off";
+            },
+            ping: () => "ok",
+            // Deferred so the reply reaches the caller before the engine reloads.
+            reload: () => {
+                Qt.callLater(() => Quickshell.reload(false));
+                return "ok";
+            }
+        })
+
+    function truthy(on: string): bool {
+        return on === "true" || on === "on" || on === "1";
+    }
+
+    // `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper bakes its
+    // own -p, so it self-targets the running instance). Each function forwards
+    // to the table above; tests/shell/contracts-test.sh keeps the two lists equal.
     IpcHandler {
         target: "shell"
 
         function togglePanel(id: string): string {
-            PanelManager.toggle(id);
-            return "ok";
+            return shell.actions.togglePanel(id);
         }
 
         function openPanel(id: string): string {
-            PanelManager.open(id);
-            return "ok";
+            return shell.actions.openPanel(id);
         }
 
         function closePanel(id: string): string {
-            if (PanelManager.openId === id)
-                PanelManager.close();
-            return "ok";
+            return shell.actions.closePanel(id);
         }
 
         function closePanels(): string {
-            PanelManager.close();
-            return "ok";
+            return shell.actions.closePanels();
+        }
+
+        function openGallery(section: string): string {
+            return shell.actions.openGallery(section);
         }
 
         function toggleDnd(): string {
-            NotificationState.toggleDnd();
-            return NotificationState.dnd ? "on" : "off";
+            return shell.actions.toggleDnd();
         }
 
         function setDnd(on: string): string {
-            NotificationState.setDnd(on === "true" || on === "on" || on === "1");
-            return NotificationState.dnd ? "on" : "off";
+            return shell.actions.setDnd(on);
         }
 
         function dndState(): string {
-            return NotificationState.dnd ? "on" : "off";
+            return shell.actions.dndState();
         }
 
         function clearNotifications(): string {
-            NotificationState.clearAll();
-            return "ok";
+            return shell.actions.clearNotifications();
         }
 
         function dismissLast(): string {
-            NotificationState.dismissLast();
-            return "ok";
+            return shell.actions.dismissLast();
+        }
+
+        function actNewest(): string {
+            return shell.actions.actNewest();
+        }
+
+        function dismissOne(): string {
+            return shell.actions.dismissOne();
+        }
+
+        function silence(): string {
+            return shell.actions.silence();
+        }
+
+        function notifyKeyboard(): string {
+            return shell.actions.notifyKeyboard();
         }
 
         function toggleNotifications(): string {
-            PanelManager.toggle("notifications");
-            return "ok";
+            return shell.actions.toggleNotifications();
         }
 
         function clearHistory(): string {
-            NotificationState.clearHistory();
-            return "ok";
+            return shell.actions.clearHistory();
         }
 
         function toggleBar(): string {
-            shell.barVisible = !shell.barVisible;
-            return shell.barVisible ? "on" : "off";
+            return shell.actions.toggleBar();
         }
 
         function setBar(on: string): string {
-            shell.barVisible = on === "true" || on === "on" || on === "1";
-            return shell.barVisible ? "on" : "off";
+            return shell.actions.setBar(on);
         }
 
         function barState(): string {
-            return shell.barVisible ? "on" : "off";
+            return shell.actions.barState();
         }
 
         function osdShow(label: string, percent: string, hasBar: string): string {
-            osd.show(label, parseInt(percent) || 0, hasBar !== "false");
-            return "ok";
+            return shell.actions.osdShow(label, percent, hasBar);
         }
 
         function lock(): string {
-            Lock.lock();
-            return "locked";
+            return shell.actions.lock();
         }
 
         function lockState(): string {
-            return Lock.locked ? "locked" : "unlocked";
+            return shell.actions.lockState();
         }
 
         function toggleLauncher(mode: string): string {
-            Launcher.toggle(mode);
-            return Launcher.open ? "on" : "off";
+            return shell.actions.toggleLauncher(mode);
         }
 
         function openLauncher(mode: string): string {
-            Launcher.openAs(mode);
-            return "on";
+            return shell.actions.openLauncher(mode);
+        }
+
+        function openMenu(route: string): string {
+            return shell.actions.openMenu(route);
+        }
+
+        function toggleMenu(route: string): string {
+            return shell.actions.toggleMenu(route);
+        }
+
+        function menuRequest(path: string): string {
+            return shell.actions.menuRequest(path);
         }
 
         function closeLauncher(): string {
-            Launcher.close();
-            return "ok";
+            return shell.actions.closeLauncher();
         }
 
         function toggleOverview(): string {
-            Overview.toggle();
-            return Overview.open ? "on" : "off";
+            return shell.actions.toggleOverview();
         }
 
         function openOverview(): string {
-            Overview.openOverview();
-            return "on";
+            return shell.actions.openOverview();
         }
 
         function closeOverview(): string {
-            Overview.close();
-            return "off";
+            return shell.actions.closeOverview();
+        }
+
+        function refreshLockKeys(): string {
+            return shell.actions.refreshLockKeys();
+        }
+
+        function caffeineChanged(on: string): string {
+            return shell.actions.caffeineChanged(on);
+        }
+
+        function nightlightChanged(on: string): string {
+            return shell.actions.nightlightChanged(on);
         }
 
         function ping(): string {
-            return "ok";
+            return shell.actions.ping();
         }
 
-        // Deferred so the reply reaches the caller before the engine reloads.
         function reload(): string {
-            Qt.callLater(() => Quickshell.reload(false));
-            return "ok";
+            return shell.actions.reload();
+        }
+    }
+
+    // Hyprland global shortcuts `marchyo:<name>`, one per shell/shortcuts.json
+    // entry (lib/hyprland-lua.nix's `global` reads the same file), so a bind
+    // reaches the shell without spawning a process.
+    FileView {
+        id: shortcutsFile
+        path: Quickshell.shellDir + "/shortcuts.json"
+        blockLoading: true
+    }
+
+    // Variants hands its delegate modelData; with GlobalShortcut unresolved (see the
+    // top of the file) qmllint cannot tell it is the delegate.
+    // qmllint disable required
+    Variants {
+        model: Actions.parseShortcuts(shortcutsFile.text())
+
+        GlobalShortcut {
+            required property var modelData
+            // qmllint enable required
+            appid: "marchyo"
+            name: modelData.name
+            description: modelData.description
+            onPressed: Actions.call(shell.actions, modelData.call, modelData.args)
         }
     }
 
@@ -470,7 +690,8 @@ ShellRoot {
             WlrLayershell.namespace: "marchyo:bar"
 
             anchors {
-                top: true
+                top: !Style.barBottom
+                bottom: Style.barBottom
                 left: true
                 right: true
             }
@@ -478,15 +699,20 @@ ShellRoot {
                 // Floating pill: inset from the screen edges. The generator
                 // bakes 0 in strip mode (barFloating false), so the strip keeps
                 // the full-width edge-to-edge look.
-                top: Style.barMarginV
+                // Quickshell's _Window qmltypes declares Margins as an opaque stub, so qmllint cannot see its top/bottom/left/right.
+                // qmllint disable missing-property
+                top: Style.barBottom ? 0 : Style.barMarginV
+                bottom: Style.barBottom ? Style.barMarginV : 0
                 left: Style.barMarginH
                 right: Style.barMarginH
+                // qmllint enable missing-property
             }
-            // Floating pill reserves its own footprint (top inset + height +
-            // a matching gap below) so windows tile beneath it instead of
-            // being overlapped; the strip keeps Quickshell's default zone
-            // (height + margins).
-            exclusiveZone: Style.barFloating ? Style.barMarginV * 2 + Style.barHeight : -1
+            // Always explicit: assigning exclusiveZone switches exclusionMode to
+            // Normal, where -1 reserves nothing and windows tile under the bar.
+            // The compositor adds the top margin itself, so the pill gets a gap
+            // below matching its top inset; the strip (margin 0) reserves
+            // exactly its height.
+            exclusiveZone: Style.barHeight + Style.barMarginV
             implicitHeight: Style.barHeight
             color: "transparent"
 
@@ -496,16 +722,44 @@ ShellRoot {
                 id: barBody
                 anchors.fill: parent
                 radius: Style.barRadius
-                color: Qt.alpha(Color.background, Style.surfaceAlpha)
+                color: Qt.alpha(Colors.background, Style.barAlpha)
             }
 
-            // Three anchored sections driven by ShellConfig.barFor() for this
-            // output: left and right groups, plus a centered group (the clock
-            // by default). Ui/BarSection owns the per-entry Loaders, slot
-            // collapse (a hidden widget leaves no gap), and cluster-aware
-            // separators.
+            // Double-clicking empty bar space steps the bar background
+            // (opaque, glassy, clear). Widgets and sections sit above this
+            // area, so only the gaps between them reach it.
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.LeftButton
+                onDoubleClicked: Quickshell.execDetached([Config.marchyo, "theme", "bar-background", Appearance.nextBarBackground(Style.barBackground)])
+            }
+
+            // Five sections driven by ShellConfig.barFor() for this output:
+            // left and right groups, and a centre group split around its
+            // anchor. `center` (the clock by default) stays at the exact
+            // middle; centerBegin grows leftwards from it and centerEnd
+            // rightwards, so a widget that appears or resizes never moves the
+            // anchor. Ui/BarSection owns the per-entry Loaders, slot collapse
+            // (a hidden widget leaves no gap), and cluster-aware separators.
             Item {
                 anchors.fill: parent
+                property bool indicatorReveal: false
+
+                HoverHandler {
+                    onHoveredChanged: {
+                        if (hovered) {
+                            indicatorHide.stop();
+                            parent.indicatorReveal = true;
+                        } else {
+                            indicatorHide.restart();
+                        }
+                    }
+                }
+                Timer {
+                    id: indicatorHide
+                    interval: 120
+                    onTriggered: parent.indicatorReveal = false
+                }
 
                 BarSection {
                     anchors.left: parent.left
@@ -520,8 +774,27 @@ ShellRoot {
                 }
 
                 BarSection {
+                    id: centerSection
                     anchors.centerIn: parent
                     section: "center"
+                    screenName: barWin.screenName
+                    resolve: shell.componentFor
+                    configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
+                }
+
+                BarSection {
+                    anchors.right: centerSection.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    section: "centerBegin"
+                    screenName: barWin.screenName
+                    resolve: shell.componentFor
+                    configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)
+                }
+
+                BarSection {
+                    anchors.left: centerSection.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    section: "centerEnd"
                     screenName: barWin.screenName
                     resolve: shell.componentFor
                     configure: (item, entry) => shell.applyWidget(item, entry, barWin.screenName)

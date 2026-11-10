@@ -19,7 +19,7 @@ BarItem {
             return "󰾅";
         }
     }
-    textColor: Throttle.throttled ? Color.statusWarn : Color.text
-    tooltipText: ["Power profile: " + PowerProfileState.name].concat(Throttle.warnings).join("\n")
+    textColor: Throttle.throttled ? Colors.statusWarn : Colors.text
+    tooltipText: [I18n.t("power.profileTooltip", PowerProfileState.label)].concat(Throttle.warnings).join("\n")
     onClicked: PowerProfileState.cycle()
 }

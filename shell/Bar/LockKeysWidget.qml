@@ -18,8 +18,8 @@ BarItem {
 
     shown: locks.length > 0
     text: locks.join(" ")
-    textColor: Color.statusWarn
-    tooltipText: locks.map(k => k === "CAPS" ? "Caps Lock on" : "Num Lock on").join("\n")
+    textColor: Colors.statusWarn
+    tooltipText: locks.map(k => I18n.t(k === "CAPS" ? "lockkeys.caps" : "lockkeys.num")).join("\n")
 
     Component.onCompleted: LockKeys.acquire()
     Component.onDestruction: LockKeys.release()

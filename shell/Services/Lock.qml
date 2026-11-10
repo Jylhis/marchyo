@@ -1,6 +1,10 @@
 pragma Singleton
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pam
+import qs.Commons
+import "../Commons/SessionLock.js" as SessionLock
 
 // Seat-global lock state + PAM auth machine for the lock surface (rendered by
 // Lock/LockScreen.qml; driven over IPC from shell.qml).
@@ -13,8 +17,96 @@ import Quickshell.Services.Pam
 QtObject {
     id: root
 
-    // Drives WlSessionLock.locked in LockScreen.
+    // Drives WlSessionLock.locked in LockScreen (gated by screensReady there).
     property bool locked: false
+
+    // True once at least one real output has been stable for screenSettleMs.
+    // LockScreen requests the compositor lock only then: a WlSessionLock that
+    // locks while outputs are being replaced asks for a lock surface on an
+    // output Hyprland has already torn down, a fatal protocol error.
+    readonly property int screenSettleMs: 300
+    property bool screensReady: false
+
+    readonly property var screenSettle: Timer {
+
+        interval: root.screenSettleMs
+        onTriggered: root.screensReady = Screens.realCount > 0
+    }
+
+    function handleScreensChanged() {
+        root.screensReady = false;
+        root.screenSettle.restart();
+        // A monitor still coming up has no workspace and cannot answer yet.
+        root.strandedRetry.rearm();
+        root.checkStranded();
+    }
+
+    readonly property var screenWatch: Connections {
+        target: Quickshell
+
+        function onScreensChanged() {
+            root.handleScreensChanged();
+        }
+    }
+
+    // Stranded-lock recovery. ext-session-lock outlives its client: if the
+    // shell exits while locked, Hyprland keeps the session locked, and a new
+    // shell starts with locked = false. Read the compositor's state and take
+    // the lock back (misc.allow_session_lock_restore permits it). marchyo-shell
+    // is the only locker when the shell is enabled, so a held lock is its own.
+    property bool strandedResolved: false
+
+    function checkStranded() {
+        if (root.strandedResolved || root.strandedProbe.running)
+            return;
+        if (root.locked) {
+            root.strandedResolved = true;
+            return;
+        }
+        root.strandedProbe.running = true;
+    }
+
+    readonly property var strandedProbe: Process {
+
+        command: [Config.hyprctl, "-j", "monitors"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const state = SessionLock.lockState(text);
+                if (state === "unknown")
+                    return; // strandedRetry asks again
+                root.strandedResolved = true;
+                if (state === "locked" && !root.locked) {
+                    console.warn("Lock: compositor holds an orphaned session lock; recovering");
+                    root.lock();
+                }
+            }
+        }
+    }
+
+    // Covers the compositor settling after a restart; screen changes re-arm it.
+    readonly property var strandedRetry: Timer {
+
+        readonly property int budget: 20
+        property int remaining: budget
+
+        function rearm() {
+            if (!root.strandedResolved)
+                remaining = budget;
+        }
+
+        interval: 500
+        repeat: true
+        running: !root.strandedResolved && remaining > 0
+        onTriggered: {
+            remaining -= 1;
+            root.checkStranded();
+        }
+    }
+
+    Component.onCompleted: {
+        root.screenSettle.start();
+        root.checkStranded();
+    }
 
     // Screen name whose password field takes keyboard focus once the lock is
     // secure (set by LockScreen from Screens.focusedName on secureChanged).
@@ -41,7 +133,7 @@ QtObject {
     property int failureCount: 0
 
     function clearFailure() {
-        failureTimer.stop();
+        root.failureTimer.stop();
         root.failed = false;
         root.failureText = "";
     }
@@ -50,11 +142,10 @@ QtObject {
         root.failureText = text;
         root.failed = true;
         root.failureCount += 1;
-        failureTimer.restart();
+        root.failureTimer.restart();
     }
 
     readonly property var failureTimer: Timer {
-        id: failureTimer
 
         interval: root.failureResetMs
         onTriggered: {
@@ -76,8 +167,8 @@ QtObject {
     // LockScreen calls this once every screen is covered (WlSessionLock.secure),
     // the gate before the PAM conversation starts and the field is focused.
     function onSecure() {
-        if (!pam.active)
-            pam.start();
+        if (!root.pam.active)
+            root.pam.start();
     }
 
     // The field's Enter handler. Empty input is ignored (hyprlock's
@@ -86,18 +177,17 @@ QtObject {
     function submit(text) {
         if (root.busy || text.length === 0)
             return;
-        if (!pam.active) {
-            pam.start();
+        if (!root.pam.active) {
+            root.pam.start();
             return;
         }
-        if (!pam.responseRequired)
+        if (!root.pam.responseRequired)
             return;
         root.busy = true;
-        pam.respond(text);
+        root.pam.respond(text);
     }
 
     readonly property var pam: PamContext {
-        id: pam
 
         // The stock NixOS login stack (Quickshell's default); pam_unix and an
         // optional fprintd factor both flow through the message protocol.
@@ -105,10 +195,10 @@ QtObject {
 
         onPamMessage: {
             // pamMessage carries no parameters; read the just-updated state.
-            root.message = pam.message;
-            root.messageIsError = pam.messageIsError;
-            if (pam.responseRequired)
-                root.maskInput = !pam.responseVisible;
+            root.message = root.pam.message;
+            root.messageIsError = root.pam.messageIsError;
+            if (root.pam.responseRequired)
+                root.maskInput = !root.pam.responseVisible;
         }
 
         onCompleted: result => {
@@ -123,7 +213,7 @@ QtObject {
                 root.message = "Authentication failed";
                 root.messageIsError = true;
                 root.registerFailure(root.message);
-                pam.start(); // fresh conversation for the retry
+                root.pam.start(); // fresh conversation for the retry
             } else if (result === PamResult.MaxTries) {
                 root.message = "Too many attempts — wait, then press Enter";
                 root.messageIsError = true;

@@ -16,15 +16,15 @@ Marchyo shortcut starts with it. If you remember only one thing, remember that
 ## Launching things
 
 To open an app, hold `Super` and press a letter. `Super + Return` gives you a
-terminal, `Super + B` a browser, `Super + F` a file manager, `Super + E` your
-editor. Don't remember the letter? `Super + R` opens the launcher — start typing a
-name and press Enter.
+terminal, `Super + B` a browser, `Super + F` a file manager,
+`Super + E` your editor. Don't remember the chord? `Super + Alt + Space` opens the
+command menu and `Super + R` the app launcher — start typing a name and press Enter.
 
 :::note
 If you're coming from omarchy, note the difference: Marchyo launches apps with
-`Super + <letter>`, where omarchy uses `Super + Shift + <letter>`. The `Super +
-Shift` chords here open **web apps** instead — `Super + Shift + G` for GitHub,
-`Super + Shift + Y` for YouTube, and so on.
+`Super + <letter>`, where omarchy uses `Super + Shift + <letter>`. The
+`Super + Shift` chords open the shell panels and **web apps**
+(`Super + Shift + G` for GitHub, `Super + Shift + Y` for YouTube, and so on).
 :::
 
 ## Tiling: windows arrange themselves
@@ -67,7 +67,7 @@ notes window, or anything you want one keystroke away but not underfoot.
 
 Plug in a second display and Marchyo treats each screen as its own set of
 workspaces. Move focus between monitors with `Ctrl + Alt + Tab`, and push the
-active window to the next screen with `Super + Shift + ,` and `Super + Shift + .`.
+active window to the screen in a direction with `Super + Shift + Ctrl + ←/→/↑/↓`.
 Setting up the physical arrangement of your monitors is covered under
 [Monitors](./12-monitors.md).
 

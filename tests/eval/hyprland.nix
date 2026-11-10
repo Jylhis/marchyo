@@ -2,38 +2,19 @@
   helpers,
   lib,
   pkgs,
-  nixosModules,
-  homeManagerModules,
   ...
 }:
 let
   inherit (helpers)
-    withTestUser
-    testNixOSFails
     hyprHasBind
     hyprEntriesText
+    expect
     ;
+  inherit (helpers) ref;
 
-  evalDesktop =
-    extra:
-    lib.nixosSystem {
-      inherit (pkgs.stdenv.hostPlatform) system;
-      modules = [
-        nixosModules
-        (withTestUser (
-          lib.recursiveUpdate {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser.imports = [ homeManagerModules ];
-          } extra
-        ))
-      ];
-    };
-
-  # Build the Hyprland config and run hyprland --verify-config against it.
   mkVerifyConfig =
-    name: extra:
+    name: eval:
     let
-      eval = evalDesktop extra;
       hyprlandConfig = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.lua".source;
       hyprland = eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.package;
     in
@@ -75,326 +56,244 @@ let
         touch $out
       '';
 
-  shellHyprSettings =
-    shellOn:
-    (evalDesktop { marchyo.shell.enable = shellOn; })
-    .config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+  settingsOf = c: c.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+  hmOf = c: c.home-manager.users.testuser;
 in
 {
-  # The marchyo.shell.enable = false fallback config.
-  check-home-hyprland-config = mkVerifyConfig "check-hyprland-config" {
-    marchyo.shell.enable = false;
+  # Hyprland config verification (heavy: builds the config and runs Hyprland).
+  heavy = {
+    # The marchyo.shell.enable = false fallback config.
+    check-home-hyprland-config = mkVerifyConfig "check-hyprland-config" (ref "desktop-shell-off");
+
+    # Global workspace numbering (marchyo.workspaces.perMonitor = false, set on
+    # desktop-tweaks-3): the per-monitor Lua module is not loaded and the
+    # workspace rule returns.
+    check-home-hyprland-config-global-workspaces = mkVerifyConfig "check-hyprland-config-global-ws" (
+      ref "desktop-tweaks-3"
+    );
+
+    # Same verification with the shell on (the desktop default), which adds the
+    # curve, animation leaves and per-namespace layer rules.
+    check-home-hyprland-config-shell = mkVerifyConfig "check-hyprland-config-shell" (ref "desktop");
+
+    # Appearance options (glassy windows, rounded corners, forced animations
+    # plus the pop-out window hook, all set on desktop-tweaks-2) render a config
+    # Hyprland accepts.
+    check-home-hyprland-config-appearance = mkVerifyConfig "check-hyprland-config-appearance" (
+      ref "desktop-tweaks-2"
+    );
   };
 
-  # Same verification with the shell on (the desktop default), which adds the
-  # curve, animation leaves and per-namespace layer rules.
-  check-home-hyprland-config-shell = mkVerifyConfig "check-hyprland-config-shell" {
-    marchyo.shell.enable = true;
-  };
-
-  # Shell on: animations run on the popin bezier and the shell namespaces get
-  # their per-surface layer rules.
-  eval-hyprland-shell-effects =
-    let
-      settings = shellHyprSettings true;
-      layerRules = hyprEntriesText (settings.layer_rule or [ ]);
-      curves = hyprEntriesText (settings.curve or [ ]);
-      animations = settings.animation or [ ];
-      leaf = name: lib.findFirst (a: (a.leaf or "") == name) { } animations;
-      expectedRules = [
-        "marchyo:(panel|launcher|osd)"
-        "popin 90%"
-        "marchyo:bar"
-        "marchyo:(notifs|tooltip)"
-        "no_anim=true"
-        "selection|hyprpicker"
-      ];
-      missingRules = lib.filter (n: !lib.hasInfix n layerRules) expectedRules;
-    in
-    pkgs.writeText "eval-hyprland-shell-effects" (
-      if !(settings.config.animations.enabled or false) then
-        throw "FAIL: shell on should enable Hyprland animations"
-      else if !lib.hasInfix "popin" curves then
-        throw "FAIL: shell on should define the popin bezier curve"
-      else if (leaf "windows").bezier or "" != "popin" || (leaf "layers").bezier or "" != "popin" then
-        throw "FAIL: windows/layers animations should use the popin bezier"
-      else if (leaf "workspaces").enabled or true then
-        throw "FAIL: workspace animations should stay disabled"
-      else if missingRules != [ ] then
-        throw "FAIL: missing shell layer rules: ${toString missingRules}"
-      else
-        "pass"
-    );
-
-  # Shell off: the fallback stack keeps animations off and gets no curve,
-  # animation leaves or shell layer rules.
-  eval-hyprland-shell-effects-off =
-    let
-      settings = shellHyprSettings false;
-      layerRules = hyprEntriesText (settings.layer_rule or [ ]);
-    in
-    pkgs.writeText "eval-hyprland-shell-effects-off" (
-      if settings.config.animations.enabled or true then
-        throw "FAIL: shell off should keep Hyprland animations disabled"
-      else if (settings.curve or [ ]) != [ ] || (settings.animation or [ ]) != [ ] then
-        throw "FAIL: shell off should register no curve or animation leaves"
-      else if lib.hasInfix "marchyo:" layerRules || lib.hasInfix "no_anim" layerRules then
-        throw "FAIL: shell off should register no shell layer rules"
-      else
-        "pass"
-    );
-
-  eval-hyprland-keybindings-cheatsheet =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-            };
-          })
-        ];
-      };
-      hm = eval.config.home-manager.users.testuser;
-      hasBind = lib.hasInfix "marchyo keybindings" (
-        hyprEntriesText hm.wayland.windowManager.hyprland.settings.bind
-      );
-      hasPkg = lib.any (p: lib.hasInfix "fzf" (p.name or "")) hm.home.packages;
-    in
-    pkgs.writeText "eval-hyprland-keybindings-cheatsheet" (
-      if hasBind && hasPkg then
-        "pass"
-      else
-        throw "FAIL: keybindings cheat sheet bind or package missing when desktop enabled"
-    );
-
-  eval-hyprland-keybindings-cheatsheet-disabled =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-              marchyo.keybindingsHelp.enable = false;
-            };
-          })
-        ];
-      };
-      hasBind = lib.hasInfix "marchyo keybindings" (
-        hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.bind
-      );
-    in
-    pkgs.writeText "eval-hyprland-keybindings-cheatsheet-disabled" (
-      if hasBind then throw "FAIL: keybindings cheat sheet bind present when disabled" else "pass"
-    );
-
-  # The omarchy-style window-management + toggle binds land on desktop and are
-  # backed by the window-toggles.nix wrappers.
-  eval-hyprland-window-management-binds =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-            };
-          })
-        ];
-      };
-      hm = eval.config.home-manager.users.testuser;
-      bind = hm.wayland.windowManager.hyprland.settings.bind;
-      bindText = hyprEntriesText bind;
-      hasBindText = needle: lib.hasInfix needle bindText;
-      hasPkg = name: lib.any (p: lib.hasInfix name (p.name or "")) hm.home.packages;
-
-      # New window-management dispatchers are present, in their Lua spellings.
-      newBinds = [
-        "hl.dsp.group.toggle()"
-        "into_group"
-        "follow = false"
-        "hl.dsp.workspace.move("
-        "hl.dsp.window.resize({ x = -100"
-        "marchyo zoom in"
-        "marchyo toggle nightlight"
-        "marchyo toggle idle"
-        "marchyo toggle caffeine"
-        "marchyo capture record"
-        "marchyo theme next"
-      ];
-      missingBinds = lib.filter (n: !hasBindText n) newBinds;
-
-      # All former wrapper scripts are absorbed into the marchyo CLI; the
-      # recorder tool closure remains.
-      wrappers = [
-        "gpu-screen-recorder"
-      ];
-      missingPkgs = lib.filter (n: !hasPkg n) wrappers;
-
-      # Monitor focus relocated: no SUPER+comma/period focusmonitor bind remains,
-      # the CTRL+ALT+Tab focus bind exists, and comma/period drive emoji/notifications.
-      focusmonitorMoved = !(hyprHasBind bind "SUPER + comma" "hl.dsp.focus({ monitor");
-      hasCtrlAltMonitor = hyprHasBind bind "CTRL + ALT + TAB" ''hl.dsp.focus({ monitor = "+1" })'';
-      hasEmoji = hasBindText "Emoji picker";
-    in
-    pkgs.writeText "eval-hyprland-window-management-binds" (
-      if missingBinds != [ ] then
-        throw "FAIL: missing window-management binds: ${toString missingBinds}"
-      else if missingPkgs != [ ] then
-        throw "FAIL: missing toggle wrapper packages: ${toString missingPkgs}"
-      else if !focusmonitorMoved then
-        throw "FAIL: SUPER+comma focusmonitor bind should have been relocated"
-      else if !hasCtrlAltMonitor then
-        throw "FAIL: CTRL+ALT+Tab monitor-focus bind missing"
-      else if !hasEmoji then
-        throw "FAIL: emoji picker bind missing"
-      else
-        "pass"
-    );
-
-  # The Super+E editor bind resolves through the `editor` Lua local, which is
-  # derived from marchyo.defaults.editor (emacs -> emacsclient by default,
-  # and e.g. vscode -> code when reselected).
-  eval-hyprland-editor-bind =
-    let
-      mkEval =
-        extra:
-        lib.nixosSystem {
-          inherit (pkgs.stdenv.hostPlatform) system;
-          modules = [
-            nixosModules
-            (withTestUser (
-              lib.recursiveUpdate {
-                marchyo.desktop.enable = true;
-                home-manager.users.testuser = {
-                  imports = [ homeManagerModules ];
-                };
-              } extra
-            ))
+  refs = {
+    desktop = {
+      # Shell on: animations run on the popin bezier and the shell namespaces get
+      # their per-surface layer rules.
+      eval-hyprland-shell-effects =
+        c:
+        let
+          settings = settingsOf c;
+          layerRules = hyprEntriesText (settings.layer_rule or [ ]);
+          curves = hyprEntriesText (settings.curve or [ ]);
+          animations = settings.animation or [ ];
+          leaf = name: lib.findFirst (a: (a.leaf or "") == name) { } animations;
+          expectedRules = [
+            "marchyo:(panel|launcher|osd)"
+            "popin 90%"
+            "marchyo:bar"
+            "marchyo:(notifs|tooltip)"
+            "no_anim=true"
+            "selection|hyprpicker"
           ];
-        };
-      settingsOf = eval: eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
+          missingRules = lib.filter (n: !lib.hasInfix n layerRules) expectedRules;
+        in
+        if !(settings.config.animations.enabled or false) then
+          "shell on should enable Hyprland animations"
+        else if !lib.hasInfix "popin" curves then
+          "shell on should define the popin bezier curve"
+        else if (leaf "windows").bezier or "" != "popin" || (leaf "layers").bezier or "" != "popin" then
+          "windows/layers animations should use the popin bezier"
+        else if (leaf "workspaces").enabled or true then
+          "workspace animations should stay disabled"
+        else if missingRules != [ ] then
+          "missing shell layer rules: ${toString missingRules}"
+        else
+          true;
 
-      defaultSettings = settingsOf (mkEval { });
-      vscodeSettings = settingsOf (mkEval {
-        marchyo.defaults.editor = "vscode";
-      });
+      eval-hyprland-keybindings-cheatsheet =
+        c:
+        let
+          hm = hmOf c;
+          hasBind = lib.hasInfix "marchyo:launcher.keys" (
+            hyprEntriesText hm.wayland.windowManager.hyprland.settings.bind
+          );
+          hasPkg = lib.any (p: lib.hasInfix "fzf" (p.name or "")) hm.home.packages;
+        in
+        expect (hasBind && hasPkg) "keybindings cheat sheet bind or package missing when desktop enabled";
 
-      hasEditorBind = hyprHasBind defaultSettings.bind "SUPER + E" "hl.dsp.exec_cmd(editor)";
-      defaultEditorVar = defaultSettings.editor._var;
-      vscodeEditorVar = vscodeSettings.editor._var;
-    in
-    pkgs.writeText "eval-hyprland-editor-bind" (
-      if !hasEditorBind then
-        throw "FAIL: Super+E bind should exec the editor local"
-      else if defaultEditorVar != "emacsclient -c -a emacs" then
-        throw "FAIL: default editor local should be emacsclient -c -a emacs, got ${toString defaultEditorVar}"
-      else if vscodeEditorVar != "code" then
-        throw "FAIL: editor local for vscode should be code, got ${toString vscodeEditorVar}"
+      # The omarchy-style window-management + toggle binds land on desktop and are
+      # backed by the window-toggles.nix wrappers.
+      eval-hyprland-window-management-binds =
+        c:
+        let
+          hm = hmOf c;
+          bind = hm.wayland.windowManager.hyprland.settings.bind;
+          bindText = hyprEntriesText bind;
+          hasBindText = needle: lib.hasInfix needle bindText;
+          hasPkg = name: lib.any (p: lib.hasInfix name (p.name or "")) hm.home.packages;
+
+          # New window-management dispatchers are present, in their Lua spellings.
+          newBinds = [
+            "hl.dsp.group.toggle()"
+            "into_group"
+            # Per-monitor workspaces (the default): silent move and workspace move.
+            "move_window(1, false)"
+            "move_to_monitor("
+            "hl.dsp.window.resize({ x = -100"
+            "marchyo zoom in"
+            "marchyo toggle idle"
+            "marchyo toggle caffeine"
+            "marchyo capture record"
+            "marchyo theme next"
+          ];
+          missingBinds = lib.filter (n: !hasBindText n) newBinds;
+
+          # All former wrapper scripts are absorbed into the marchyo CLI; the
+          # recorder tool closure remains.
+          wrappers = [
+            "gpu-screen-recorder"
+          ];
+          missingPkgs = lib.filter (n: !hasPkg n) wrappers;
+
+          # Monitor focus relocated: no SUPER+comma/period focusmonitor bind remains,
+          # the CTRL+ALT+Tab focus bind exists, and comma drives notifications.
+          focusmonitorMoved = !(hyprHasBind bind "SUPER + comma" "hl.dsp.focus({ monitor");
+          hasCtrlAltMonitor = hyprHasBind bind "CTRL + ALT + TAB" ''hl.dsp.focus({ monitor = "+1" })'';
+          hasEmoji = hasBindText "Emoji picker";
+        in
+        if missingBinds != [ ] then
+          "missing window-management binds: ${toString missingBinds}"
+        else if missingPkgs != [ ] then
+          "missing toggle wrapper packages: ${toString missingPkgs}"
+        else if !focusmonitorMoved then
+          "SUPER+comma focusmonitor bind should have been relocated"
+        else if !hasCtrlAltMonitor then
+          "CTRL+ALT+Tab monitor-focus bind missing"
+        else if !hasEmoji then
+          "emoji picker bind missing"
+        else
+          true;
+
+      # The Super+E editor bind resolves through the `editor` Lua local, which is
+      # derived from marchyo.defaults.editor (emacs -> emacsclient by default,
+      # and vscode -> code when reselected, as desktop-tweaks-3 does).
+      eval-hyprland-editor-bind =
+        c:
+        let
+          defaultSettings = settingsOf c;
+          hasEditorBind = hyprHasBind defaultSettings.bind "SUPER + E" "hl.dsp.exec_cmd(editor)";
+          defaultEditorVar = defaultSettings.editor._var;
+        in
+        if !hasEditorBind then
+          "Super+E bind should exec the editor local"
+        else if defaultEditorVar != "emacsclient -c -a emacs" then
+          "default editor local should be emacsclient -c -a emacs, got ${toString defaultEditorVar}"
+        else
+          true;
+
+      eval-hyprland-wallpaper-enabled =
+        c:
+        expect (lib.hasInfix "awww-daemon --format xrgb" (hyprEntriesText (settingsOf c).on)) "Hyprland wallpaper startup did not include awww-daemon";
+    };
+
+    # Shell off: the fallback stack keeps animations off and gets no curve,
+    # animation leaves or shell layer rules.
+    desktop-shell-off.eval-hyprland-shell-effects-off =
+      c:
+      let
+        settings = settingsOf c;
+        layerRules = hyprEntriesText (settings.layer_rule or [ ]);
+      in
+      if settings.config.animations.enabled or true then
+        "shell off should keep Hyprland animations disabled"
+      else if (settings.curve or [ ]) != [ ] || (settings.animation or [ ]) != [ ] then
+        "shell off should register no curve or animation leaves"
+      else if lib.hasInfix "marchyo:" layerRules || lib.hasInfix "no_anim" layerRules then
+        "shell off should register no shell layer rules"
       else
-        "pass"
-    );
+        true;
 
-  eval-hyprland-wallpaper-enabled =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
-            marchyo.desktop.enable = true;
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-            };
-          })
-        ];
-      };
-      startup = hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on;
-      hasAwww = lib.hasInfix "awww-daemon --format xrgb" startup;
-    in
-    pkgs.writeText "eval-hyprland-wallpaper-enabled" (
-      if hasAwww then "pass" else throw "FAIL: Hyprland wallpaper startup did not include awww-daemon"
-    );
+    desktop-off = {
+      # home-manager.users.testuser.marchyo.keybindingsHelp.enable = false.
+      eval-hyprland-keybindings-cheatsheet-disabled =
+        c:
+        expect (
+          !(lib.hasInfix "marchyo:launcher.keys" (hyprEntriesText (settingsOf c).bind))
+        ) "keybindings cheat sheet bind present when disabled";
 
-  eval-hyprland-wallpaper-disabled =
-    let
-      eval = lib.nixosSystem {
-        inherit (pkgs.stdenv.hostPlatform) system;
-        modules = [
-          nixosModules
-          (withTestUser {
-            marchyo = {
-              desktop.enable = true;
-              theme.wallpaper.enable = false;
-            };
-            home-manager.users.testuser = {
-              imports = [ homeManagerModules ];
-            };
-          })
-        ];
-      };
-      startup = hyprEntriesText eval.config.home-manager.users.testuser.wayland.windowManager.hyprland.settings.on;
-      hasAwww = lib.hasInfix "awww-daemon" startup;
-    in
-    pkgs.writeText "eval-hyprland-wallpaper-disabled" (
-      if hasAwww then throw "FAIL: Hyprland wallpaper included awww-daemon when disabled" else "pass"
-    );
+      # marchyo.theme.wallpaper.enable = false.
+      eval-hyprland-wallpaper-disabled =
+        c:
+        expect (
+          !(lib.hasInfix "awww-daemon" (hyprEntriesText (settingsOf c).on))
+        ) "Hyprland wallpaper included awww-daemon when disabled";
+    };
 
-  # settings.env entries must render as two-argument hl.env(name, value) calls:
-  # a single-table hl.env({...}) call aborts Hyprland's Lua chunk on load and
-  # silently drops every setting after it (monitors, window rules, autostarts).
-  # A consumer entry in the `_args` shape must render correctly next to the
-  # module defaults, and no env call anywhere in the file may take a table.
-  eval-hyprland-env-two-arg-calls =
-    let
-      eval = evalDesktop {
-        home-manager.users.testuser.wayland.windowManager.hyprland.settings.env = [
-          {
-            _args = [
-              "MARCHYO_TEST_ENV"
-              "eval-test"
-            ];
-          }
-        ];
-      };
-      lua = eval.config.home-manager.users.testuser.xdg.configFile."hypr/hyprland.lua".text;
-      hasTwoArgCall = lib.hasInfix ''hl.env("MARCHYO_TEST_ENV", "eval-test")'' lua;
-      hasTableCall = lib.hasInfix "hl.env({" lua;
-    in
-    pkgs.writeText "eval-hyprland-env-two-arg-calls" (
-      if !hasTwoArgCall then
-        throw "FAIL: consumer env entry did not render as hl.env(\"MARCHYO_TEST_ENV\", \"eval-test\")"
-      else if hasTableCall then
-        throw "FAIL: rendered Hyprland config contains a single-table hl.env({...}) call"
+    # settings.env entries must render as two-argument hl.env(name, value) calls:
+    # a single-table hl.env({...}) call aborts Hyprland's Lua chunk on load and
+    # silently drops every setting after it (monitors, window rules, autostarts).
+    # A consumer entry in the `_args` shape (desktop-tweaks) must render
+    # correctly next to the module defaults, and no env call anywhere in the
+    # file may take a table.
+    desktop-tweaks.eval-hyprland-env-two-arg-calls =
+      c:
+      let
+        lua = (hmOf c).xdg.configFile."hypr/hyprland.lua".text;
+      in
+      if !lib.hasInfix ''hl.env("MARCHYO_TEST_ENV", "eval-test")'' lua then
+        "consumer env entry did not render as hl.env(\"MARCHYO_TEST_ENV\", \"eval-test\")"
+      else if lib.hasInfix "hl.env({" lua then
+        "rendered Hyprland config contains a single-table hl.env({...}) call"
       else
-        "pass"
-    );
+        true;
+
+    # ... and vscode -> code (desktop-tweaks-3: editor = "vscode").
+    desktop-tweaks-3.eval-hyprland-editor-bind-vscode =
+      c:
+      let
+        var = (settingsOf c).editor._var;
+      in
+      expect (var == "code") "editor local for vscode should be code, got ${toString var}";
+  };
+
+  refConfig = {
+    desktop-off = {
+      home-manager.users.testuser.marchyo.keybindingsHelp.enable = false;
+      marchyo.theme.wallpaper.enable = false;
+    };
+    desktop-tweaks.home-manager.users.testuser.wayland.windowManager.hyprland.settings.env = [
+      {
+        _args = [
+          "MARCHYO_TEST_ENV"
+          "eval-test"
+        ];
+      }
+    ];
+  };
 
   # The legacy hyprlang `{ n, v }` env shape is rejected at eval time by the
   # assertion in modules/home/hyprland.nix instead of aborting the Lua chunk
   # at runtime. Home Manager propagates the user assertion to the system
   # level, so this is the failure a consumer sees from nixos-rebuild.
-  eval-hyprland-env-legacy-shape-rejected =
-    testNixOSFails "hyprland-env-legacy-shape-rejected"
-      "settings.env entries must be two-argument calls"
-      (withTestUser {
-        marchyo.desktop.enable = true;
-        home-manager.users.testuser = {
-          imports = [ homeManagerModules ];
-          wayland.windowManager.hyprland.settings.env = [
-            {
-              n = "AQ_DRM_DEVICES";
-              v = "/dev/dri/by-path/pci-0000:03:00.0-card";
-            }
-          ];
-        };
-      });
+  failing.eval-hyprland-env-legacy-shape-rejected = {
+    on = "misconfigured";
+    expect = "settings.env entries must be two-argument calls";
+  };
+
+  failingConfig.misconfigured.home-manager.users.testuser.wayland.windowManager.hyprland.settings.env =
+    [
+      {
+        n = "AQ_DRM_DEVICES";
+        v = "/dev/dri/by-path/pci-0000:03:00.0-card";
+      }
+    ];
 }

@@ -1,5 +1,5 @@
-# Stands down when the unified Quickshell shell owns the lock (Phase 4), the
-# same mutual-exclusion cutover as waybar/mako/swayosd on the Home-Manager side.
+# Stands down when the unified Quickshell shell owns the lock (Phase 4),
+# matching the Home-Manager hyprlock module.
 { config, lib, ... }:
 let
   cfg = config.marchyo;

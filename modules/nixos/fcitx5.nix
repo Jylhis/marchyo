@@ -6,6 +6,8 @@
 }:
 let
   kbdCfg = config.marchyo.keyboard;
+  # The generated theme exists where the runtime theme layer does.
+  fcitxTheme = if config.marchyo.theme.enable then "marchyo" else "default";
   keyboardLib = import ../generic/keyboard-lib.nix;
   normalizedLayouts = map keyboardLib.normalizeLayout kbdCfg.layouts;
 
@@ -21,6 +23,10 @@ let
           [ pkgs.fcitx5-mozc ]
         else if l.ime == "hangul" then
           [ pkgs.fcitx5-hangul ]
+        else if l.ime == "chewing" then
+          [ pkgs.fcitx5-chewing ]
+        else if l.ime == "cangjie" then
+          [ pkgs.fcitx5-table-extra ]
         else
           [ ]
       ) normalizedLayouts
@@ -34,29 +40,48 @@ let
     fcitx5-table-other
   ];
 
-  generateIMName =
-    layout:
-    if layout.ime != null then
-      layout.ime # "pinyin", "mozc", "hangul", "unicode"
-    else
-      "keyboard-${layout.layout}${lib.optionalString (layout.variant != "") "-${layout.variant}"}";
+  # Korean keyboards use kr104, which has the Hangul and Hanja keys.
+  effectiveVariant =
+    l: if l.ime == "hangul" && l.layout == "kr" && l.variant == "" then "kr104" else l.variant;
 
-  generateFcitxLayout =
-    layout: if layout.variant != "" then "${layout.layout}(${layout.variant})" else layout.layout;
+  fcitxLayout =
+    l:
+    let
+      variant = effectiveVariant l;
+    in
+    if variant != "" then "${l.layout}(${variant})" else l.layout;
+
+  keyboardEntries = lib.unique (
+    map (l: {
+      name = "keyboard-${l.layout}${
+        lib.optionalString (effectiveVariant l != "") "-${effectiveVariant l}"
+      }";
+      layout = fcitxLayout l;
+    }) normalizedLayouts
+  );
+
+  # Engines follow the keyboard layouts so the trigger keys cycle layouts first.
+  imEntries = lib.unique (
+    map (l: {
+      name = l.ime;
+      layout = if l.ime == "hangul" && l.layout == "kr" then fcitxLayout l else "";
+    }) (lib.filter (l: l.ime != null) normalizedLayouts)
+  );
+
+  profileEntries = keyboardEntries ++ imEntries;
 
   inputMethodItems = lib.listToAttrs (
     lib.imap0 (
-      i: layout:
+      i: entry:
       lib.nameValuePair "Groups/0/Items/${toString i}" {
-        "Name" = generateIMName layout;
-        # Empty layout for IME (fcitx5 handles it), otherwise use keyboard layout
-        "Layout" = if layout.ime != null then "" else generateFcitxLayout layout;
+        "Name" = entry.name;
+        "Layout" = entry.layout;
       }
-    ) normalizedLayouts
+    ) profileEntries
   );
 in
 {
-  config = lib.mkIf (kbdCfg.layouts != [ ]) {
+  config = lib.mkIf (config.marchyo.desktop.enable && kbdCfg.layouts != [ ]) {
     i18n.inputMethod = {
       enable = lib.mkDefault true;
       type = "fcitx5";
@@ -70,7 +95,7 @@ in
               "Name" = "Default";
               # Empty default layout: fcitx5 manages all layouts.
               "Default Layout" = "";
-              "DefaultIM" = generateIMName (lib.head normalizedLayouts);
+              "DefaultIM" = (lib.head profileEntries).name;
             };
 
             "GroupOrder" = {
@@ -82,15 +107,22 @@ in
           globalOptions = {
             "Hotkey" = {
               "EnumerateWithTriggerKeys" = true;
-              "AltTriggerKeys" = lib.concatStringsSep ";" kbdCfg.imeTriggerKey;
               "EnumerateSkipFirst" = false;
               "ModifierOnlyKeyTimeout" = 250;
             };
 
-            # Primary trigger keys for switching between all inputs (layouts + IME).
-            "Hotkey/TriggerKeys" = lib.listToAttrs [
-              (lib.nameValuePair "0" "Super+Space")
-            ];
+            # Cycle through the group: keyboard layouts first, then engines.
+            "Hotkey/TriggerKeys" = lib.listToAttrs (
+              lib.imap0 (i: key: lib.nameValuePair (toString i) key) (
+                lib.unique ([ "Super+Space" ] ++ kbdCfg.imeTriggerKey)
+              )
+            );
+
+            # A lone Shift toggles between the current engine and Latin.
+            "Hotkey/AltTriggerKeys" = {
+              "0" = "Shift_L";
+              "1" = "Shift_R";
+            };
 
             "Hotkey/PrevPage" = lib.listToAttrs [
               (lib.nameValuePair "0" (lib.mkDefault "Up"))
@@ -154,7 +186,8 @@ in
                 "PreferTextIcon" = false;
                 "ShowLayoutNameInIcon" = true;
                 "UseInputMethodLanguageToDisplayText" = true;
-                "Theme" = "default";
+                "Theme" = fcitxTheme;
+                "DarkTheme" = fcitxTheme;
                 "ForceWaylandDPI" = 0;
               };
             };

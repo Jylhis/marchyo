@@ -11,13 +11,24 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["bun"],
-    "lib": ["ESNext"],
+    "types": [
+      "bun"
+    ],
+    "lib": [
+      "ESNext"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@marchyo/core": ["packages/core/src/index.ts"],
-      "@marchyo/core/*": ["packages/core/src/*"]
+      "@marchyo/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@marchyo/core/*": [
+        "packages/core/src/*"
+      ]
     }
   },
-  "include": ["packages/*/src/**/*", "packages/*/tests/**/*"]
+  "include": [
+    "packages/*/src/**/*",
+    "packages/*/tests/**/*"
+  ]
 }

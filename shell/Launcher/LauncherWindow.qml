@@ -22,8 +22,12 @@ PanelWindow {
         "clipboard": clipboardProvider,
         "calc": calcProvider,
         "theme": themeProvider,
+        "font": fontProvider,
         "windows": windowsProvider,
-        "power": powerProvider
+        "power": powerProvider,
+        "menu": menuProvider,
+        "keys": keysProvider,
+        "dmenu": dmenuProvider
     })
     readonly property var active: root.providers[Launcher.provider] || appsProvider
 
@@ -32,8 +36,46 @@ PanelWindow {
     readonly property var clipboardProvider: ClipboardProvider {}
     readonly property var calcProvider: CalcProvider {}
     readonly property var themeProvider: ThemeProvider {}
+    readonly property var fontProvider: FontProvider {}
     readonly property var windowsProvider: WindowsProvider {}
     readonly property var powerProvider: PowerProvider {}
+    readonly property var menuProvider: MenuProvider {}
+    readonly property var keysProvider: KeysProvider {}
+    readonly property var dmenuProvider: DmenuProvider {}
+
+    // The line above the query field in the menu, keys and dmenu modes: the
+    // menu path, the sheet title or the dmenu prompt.
+    readonly property string header: {
+        if (Launcher.mode === "menu")
+            return root.menuProvider.breadcrumbText !== "" ? I18n.t("launcher.menuRoot") + " \u203a " + root.menuProvider.breadcrumbText : I18n.t("launcher.menuRoot");
+        if (Launcher.mode === "keys")
+            return I18n.t("launcher.keysTitle");
+        if (Launcher.mode === "dmenu")
+            return root.dmenuProvider.promptText;
+        return "";
+    }
+
+    // Dev IPC hooks (Services/Dev).
+    function setQuery(text) {
+        query.text = text;
+    }
+
+    function select(index) {
+        return results.select(index);
+    }
+
+    // Escape in the menu clears the query, then goes up a level, then closes.
+    function dismiss() {
+        if (Launcher.mode === "menu") {
+            if (query.text !== "") {
+                query.text = "";
+                return;
+            }
+            if (Launcher.menuUp())
+                return;
+        }
+        Launcher.close();
+    }
 
     // Launcher plugins (Commons/PluginIndex): each component's root is a
     // Provider. Its providerId and prefix come from the manifest, so routing
@@ -41,6 +83,8 @@ PanelWindow {
     // logged and skipped.
     property var pluginProviders: ({})
     Component.onCompleted: {
+        Dev.launcher = root;
+        Dev.register("launcher", root, card);
         const out = {};
         const entries = PluginIndex.launcherComponents();
         for (let i = 0; i < entries.length; i++) {
@@ -104,8 +148,8 @@ PanelWindow {
         width: Math.min(Style.launcherWidth, parent.width - 2 * Style.panelGap)
         implicitHeight: Math.min(column.implicitHeight, parent.height - 2 * Style.panelGap)
         radius: 0
-        color: Qt.alpha(Color.bg, Style.surfaceAlpha)
-        border.color: Color.border
+        color: Qt.alpha(Colors.bg, Style.surfaceAlpha)
+        border.color: Colors.border
         border.width: 1
 
         // Swallow clicks inside the card so they don't reach the dismiss
@@ -120,27 +164,39 @@ PanelWindow {
             anchors.right: parent.right
             spacing: Style.spacing
 
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: Style.panelPad
+                visible: root.header !== ""
+                text: root.header
+                color: Colors.textMuted
+                font.family: Style.fontFamily
+                font.pixelSize: Style.fontSizeSmall
+                elide: Text.ElideRight
+            }
+
             // The one query field, shared by every mode.
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.margins: Style.panelPad
                 implicitHeight: query.implicitHeight + Style.panelPad
-                color: Color.bgSubtle
+                color: Colors.bgSubtle
                 border.width: 1
-                border.color: query.activeFocus ? Color.accent : Color.border
+                border.color: query.activeFocus ? Colors.accent : Colors.border
 
                 TextInput {
                     id: query
                     anchors.fill: parent
                     anchors.margins: Style.panelPad / 2
-                    color: Color.text
-                    selectionColor: Color.selectionBg
-                    selectedTextColor: Color.text
+                    color: Colors.text
+                    selectionColor: Colors.selectionBg
+                    selectedTextColor: Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: Style.fontSize
                     clip: true
-                    Keys.onEscapePressed: Launcher.close()
+                    Keys.onEscapePressed: root.dismiss()
 
                     // Inline autocomplete: remaining letters of the active
                     // provider's suggestion, dimmed after the cursor. Only a
@@ -163,7 +219,7 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         text: query.ghost
                         visible: text.length > 0
-                        color: Color.textMuted
+                        color: Colors.textMuted
                         font: query.font
                     }
 
@@ -172,7 +228,10 @@ PanelWindow {
                     // by one on Left/Right.
                     Keys.onPressed: event => {
                         const grid = root.active.layout === "grid";
-                        if (event.key === Qt.Key_Down) {
+                        if (event.key === Qt.Key_Backspace && query.text === "" && Launcher.mode === "menu") {
+                            Launcher.menuUp();
+                            event.accepted = true;
+                        } else if (event.key === Qt.Key_Down) {
                             results.move(grid ? 3 : 1);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Up) {
@@ -205,6 +264,14 @@ PanelWindow {
                 anchors.right: parent.right
                 provider: root.active
             }
+        }
+    }
+
+    // Changing menu level starts with an empty field.
+    Connections {
+        target: Launcher
+        function onMenuRouteChanged() {
+            query.text = "";
         }
     }
 

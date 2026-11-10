@@ -23,7 +23,7 @@ in
         description = ''
           Cross-WM directional focus: SUPER+ALT+H/J/K/L tries
           `windmove-*` inside Emacs first and falls through to
-          `hyprctl dispatch movefocus` when at the frame edge.
+          `hl.dsp.focus` (via `hyprctl dispatch`) when at the frame edge.
           SUPER+ALT+SHIFT+H/J/K/L does the same for window swap.
         '';
       };
@@ -68,7 +68,7 @@ in
         default = true;
         description = ''
           Register `x-scheme-handler/org-protocol` and bind
-          SUPER+SHIFT+C to `(org-capture)`.
+          SUPER+SHIFT+T to `(org-capture)`.
         '';
       };
     };

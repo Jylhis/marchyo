@@ -1,0 +1,3249 @@
+/*
+ * components/components.css — hand-authored styles for the React components
+ * library. Class-per-component; tokens only, no raw hex. Hover/focus states
+ * live here so the JSX stays declarative. colors_and_type.css owns the universal
+ * reduced-motion guard, the :focus-visible ring and the prose-link baseline — this
+ * file never restates them.
+ */
+
+/* ── 5.0 bevel ──────────────────────────────────────────── */
+/* Border-colour shorthands (top right bottom left) for the pressable bevel.
+   Raised is lit top-left, shaded right, with the bevel-edge line under it
+   (3px on a Button, see --border-bevel-edge); pressed inverts. Only
+   pressables use them; a field is the inverse (--ds-bevel-pressed). */
+:root,
+[data-mode] {
+  --ds-bevel-raised: var(--color-bevel-hi) var(--color-bevel-lo) var(--color-bevel-edge)
+    var(--color-bevel-hi);
+  --ds-bevel-pressed: var(--color-bevel-lo) var(--color-bevel-hi) var(--color-bevel-hi)
+    var(--color-bevel-lo);
+  --ds-bevel-primary: var(--color-primary-hi) var(--color-primary-lo) var(--color-primary-edge)
+    var(--color-primary-hi);
+  --ds-bevel-primary-pressed: var(--color-primary-lo) var(--color-primary-hi)
+    var(--color-primary-hi) var(--color-primary-lo);
+}
+
+/* ── Button ─────────────────────────────────────────────── */
+.ds-btn {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  font-weight: 400;
+  line-height: 1.4;
+  min-height: var(--control-h);
+  padding: 0 var(--space-md);
+  box-sizing: border-box;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+.ds-btn:disabled {
+  color: var(--color-text-faint);
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+/* Loading — set aria-busy on the button; a trailing mono ellipsis does the work, no spinner */
+.ds-btn[aria-busy="true"] {
+  cursor: progress;
+}
+.ds-btn[aria-busy="true"]::after {
+  content: " …";
+}
+.ds-btn--primary {
+  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border-color: var(--ds-bevel-primary);
+}
+.ds-btn--ghost,
+.ds-btn--default,
+.ds-btn--secondary {
+  background: var(--color-bevel-face);
+  color: var(--color-text);
+  border-color: var(--ds-bevel-raised);
+}
+.ds-btn--danger,
+.ds-btn--destructive {
+  background: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+  border-color: var(--color-bevel-lo);
+}
+.ds-btn--link {
+  background: none;
+  border: none;
+  min-height: 0;
+  padding: 0;
+  color: var(--color-link);
+  text-decoration: underline 2px;
+  text-underline-offset: 3px;
+  font-size: var(--type-ui-size);
+}
+.ds-btn--link:hover,
+.ds-btn--link:active {
+  text-decoration-color: var(--color-link-underline-hover);
+}
+.ds-btn--search {
+  background: var(--color-bevel-face);
+  border-color: var(--ds-bevel-raised);
+  color: var(--color-text-muted);
+  font-size: var(--type-ui-size);
+  display: inline-flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+/* The pressables share one bevel: a 2px two-tone border lit on top and left,
+   shaded on the right, with a 3px ink (bevel-edge) line under it. Pressing
+   inverts the light, drops the bottom line to 2px and sinks the control 1px;
+   disabled controls go flat. */
+.ds-btn--primary,
+.ds-btn--ghost,
+.ds-btn--default,
+.ds-btn--secondary,
+.ds-btn--danger,
+.ds-btn--destructive,
+.ds-btn--search,
+.ds-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  border-style: solid;
+  border-width: var(--border-bevel);
+  border-bottom-width: var(--border-bevel-edge);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-press);
+}
+.ds-btn--primary:active:enabled,
+.ds-btn--ghost:active:enabled,
+.ds-btn--default:active:enabled,
+.ds-btn--secondary:active:enabled,
+.ds-btn--danger:active:enabled,
+.ds-btn--destructive:active:enabled,
+.ds-btn--search:active:enabled,
+.ds-btn--icon:active:enabled,
+.ds-btn[aria-pressed="true"]:enabled {
+  border-bottom-width: var(--border-bevel);
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+.ds-btn--primary:active:enabled {
+  border-color: var(--ds-bevel-primary-pressed);
+}
+.ds-btn--primary:disabled,
+.ds-btn--ghost:disabled,
+.ds-btn--default:disabled,
+.ds-btn--secondary:disabled,
+.ds-btn--danger:disabled,
+.ds-btn--destructive:disabled,
+.ds-btn--search:disabled,
+.ds-btn--icon:disabled {
+  border-width: var(--border-hairline);
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-faint);
+}
+/* Icon button: a square key for one glyph or Icon. Give it an aria-label. */
+.ds-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--control-h);
+  block-size: var(--control-h);
+  padding: 0;
+  background: var(--color-bevel-face);
+  color: var(--color-text);
+  border-color: var(--ds-bevel-raised);
+  font-family: var(--font-body);
+  font-size: var(--type-lead-size);
+  line-height: 1;
+}
+.ds-btn--search > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.ds-btn .ds-icon {
+  inline-size: 1.125em;
+  block-size: 1.125em;
+}
+
+/* ── Icon ───────────────────────────────────────────────── */
+/* Stroked icons draw in the text colour; buttons size them through .ds-btn .ds-icon. */
+.ds-icon {
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  flex: none;
+  vertical-align: -0.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+/* ── Kbd ────────────────────────────────────────────────── */
+.ds-kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  box-sizing: border-box;
+  text-align: center;
+  font: 500 var(--type-label-size) / 1.6 var(--font-mono);
+  padding: 0 0.375rem;
+  border: var(--border-hairline) solid;
+  border-color: var(--ds-bevel-raised);
+  border-bottom-width: 2px; /* key-cap depth, not a focus width */
+  border-radius: var(--radius);
+  background: var(--color-bevel-face);
+  color: var(--color-text);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.ds-kbd--accent {
+  color: var(--color-text-heading);
+  border-color: var(--color-border-strong);
+}
+.ds-kbd-chord {
+  display: inline-flex;
+  gap: 0.25em;
+  align-items: baseline;
+}
+
+/* ── Tag ────────────────────────────────────────────────── */
+.ds-tag {
+  display: inline-flex;
+  align-items: center;
+  font: 500 var(--type-label-size) / 1.5 var(--font-mono);
+  padding: 1px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+  color: var(--color-text);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+a.ds-tag {
+  text-decoration: none;
+  cursor: pointer;
+}
+a.ds-tag:hover {
+  color: var(--color-link);
+  border-color: var(--color-border-strong);
+}
+a.ds-tag:active {
+  color: var(--color-link);
+  border-color: var(--color-border-strong);
+}
+
+/* Tag layout — wrapping row of chips */
+.ds-tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* ── Mark — personal brand mark: jy ❯ ───────────────────── */
+/* Plex Mono lacks the chevron glyph, so the chevron is the chevron-right icon.
+   Once per surface; the clamp keeps it at or below 56px. */
+.ds-mark {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: min(1em, 56px);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-text-heading);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.ds-mark__chevron {
+  color: var(--color-primary);
+  margin-inline-start: 0.2em;
+  inline-size: 1em;
+  block-size: 1em;
+  vertical-align: baseline;
+}
+
+/* ── StatusBadge ────────────────────────────────────────── */
+/* A status word in mono with a small icon, in a hairline chip on the surface
+   ground. The status colour sits on the text and the icon only; the chip
+   stays neutral, so the word plus the icon carry the meaning, never colour. */
+.ds-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  font: 500 var(--type-label-size) / 1 var(--font-mono);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+.ds-status .ds-icon {
+  inline-size: 1em;
+  block-size: 1em;
+  vertical-align: 0;
+}
+.ds-status--active {
+  color: var(--color-status-ok);
+}
+.ds-status--archived {
+  color: var(--color-text-muted);
+}
+.ds-status--experimental {
+  color: var(--color-status-warn);
+}
+.ds-status--contributed {
+  color: var(--color-status-info);
+}
+
+/* ── Alert ──────────────────────────────────────────────── */
+/* The panel stays surface + hairline, never a coloured slab. The icon and the
+   lowercase mono status word in __head take the status colour; the fact is
+   plain text. */
+.ds-alert {
+  border: var(--border-hairline) solid var(--color-border);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  line-height: 1.45;
+}
+.ds-alert__head {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+.ds-alert__glyph {
+  display: inline-flex;
+}
+.ds-alert__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+.ds-alert__dismiss {
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  line-height: 1;
+  background: none;
+  border: 0;
+  padding: var(--space-2xs) var(--space-xs);
+  margin: calc(var(--space-2xs) * -1) calc(var(--space-xs) * -1) 0 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.ds-alert__dismiss:hover {
+  color: var(--color-link);
+}
+.ds-alert__dismiss:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-alert__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+}
+.ds-alert p {
+  margin: 0;
+  color: var(--color-text);
+}
+.ds-alert--info .ds-alert__head {
+  color: var(--color-status-info);
+}
+.ds-alert--ok .ds-alert__head {
+  color: var(--color-status-ok);
+}
+.ds-alert--warn .ds-alert__head {
+  color: var(--color-status-warn);
+}
+.ds-alert--err .ds-alert__head {
+  color: var(--color-status-err);
+}
+
+/* ── Callout ────────────────────────────────────────────── */
+/* A flat bg-subtle panel with a 2px ink rule on top; the mono label names it. */
+.ds-callout {
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+  border-block-start: var(--border-rule) solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
+  font-family: var(--font-body);
+}
+.ds-callout__label {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  color: var(--color-label);
+  margin: 0 0 var(--space-sm);
+  font-weight: 400;
+}
+.ds-callout ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ds-callout li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.5em;
+  font-size: var(--type-body-size);
+}
+.ds-callout li::before {
+  content: "›";
+  position: absolute;
+  left: 0;
+  color: var(--color-label);
+  font-family: var(--font-mono);
+}
+/* Inline prose links inside components (.ds-callout a, .ds-log__what a) inherit
+   the underlined accent baseline from the global link rule in colors_and_type.css
+   — the accent alone is not a cue in grayscale themes, where accent and body ink
+   are near-identical lightness. Positional chrome (.ds-tag,
+   .ds-breadcrumb, .ds-pager, nav) opts out with text-decoration:none. */
+
+/* ── Terminal ───────────────────────────────────────────── */
+/* Terminal session frame on the page ground. Same hairline/radius language as
+   ds-codeblock. The prompt is plain text; only the chevron takes the rule
+   colour, never the primary red. Output colouring is the consumer's job, via
+   syntax and status tokens. */
+.ds-term {
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+.ds-term__title {
+  font-size: var(--type-label-size);
+  color: var(--color-label);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+.ds-term__body {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--type-ui-size);
+  line-height: 1.6;
+}
+.ds-term__entry + .ds-term__entry {
+  margin-top: var(--space-xs);
+}
+.ds-term__line {
+  display: flex;
+  align-items: baseline;
+  white-space: pre-wrap;
+  /* The frame clips; a long flake ref or URL breaks instead of vanishing. */
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.ds-term__cwd {
+  color: var(--color-label);
+}
+.ds-term__chev {
+  color: var(--color-rule);
+  font-weight: 700;
+}
+.ds-term__cmd {
+  color: var(--color-text);
+  font-weight: 500;
+}
+/* Output status marks. The glyph carries a weight step so it separates from the
+   surrounding output ink by more than hue — status-ok in light mode is a dark
+   green that sits close to body ink at normal weight. */
+.ds-term__ok,
+.ds-term__err,
+.ds-term__warn {
+  font-weight: 700;
+}
+.ds-term__ok {
+  color: var(--color-status-ok);
+}
+.ds-term__err {
+  color: var(--color-status-err);
+}
+.ds-term__warn {
+  color: var(--color-status-warn);
+}
+/* A <pre>: drop the code-block frame elements.css gives a bare one. */
+.ds-term__out {
+  overflow-wrap: anywhere;
+  margin: var(--space-2xs) 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  font: inherit;
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+}
+
+/* ── ProjectCard ────────────────────────────────────────── */
+.ds-card {
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+}
+/* Two classes keep it above the base rule wherever a sheet puts it. */
+.ds-card.ds-card--subtle {
+  background: var(--color-bg-subtle);
+  border-color: var(--color-border-strong);
+}
+.ds-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+.ds-card__title {
+  font-family: var(--font-mono);
+  font-size: var(--type-body-size);
+  font-weight: 500;
+  color: var(--color-text-heading);
+  margin: 0 0 var(--space-xs);
+}
+.ds-card__title a {
+  color: inherit;
+  text-decoration: none;
+}
+.ds-card__title a:hover,
+.ds-card__title a:active {
+  text-decoration: underline 2px;
+  text-decoration-color: var(--color-link-underline-hover);
+  text-underline-offset: 3px;
+}
+.ds-card__desc {
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-sm);
+  line-height: 1.45;
+}
+.ds-card__tags {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* ── Field ──────────────────────────────────────────────── */
+.ds-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font: 400 var(--type-ui-size) / 1.4 var(--font-body);
+}
+.ds-field__label {
+  font-size: var(--type-ui-size);
+  color: var(--color-text);
+}
+/* The explain line reserves its height at rest so validation never jumps the
+   layout. It renders even when empty, carrying a non-breaking space. */
+.ds-field__help {
+  font-size: var(--type-small-size);
+  color: var(--color-text-muted);
+  min-height: 1.4em;
+  line-height: 1.4;
+}
+.ds-field__help--error {
+  color: var(--color-status-err);
+}
+.ds-field__input {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  line-height: 1.4;
+  color: var(--color-text);
+  /* Recessed: the inverse bevel on the raised surface. */
+  background: var(--color-surface-raised);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  min-height: var(--control-h);
+  padding: 0 var(--space-sm);
+  width: 100%;
+  box-sizing: border-box;
+  transition: background-color var(--transition-fast);
+}
+textarea.ds-field__input {
+  min-height: 6rem;
+  padding: var(--space-sm);
+  line-height: 1.5;
+  resize: vertical;
+}
+.ds-field__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+.ds-field__input:focus {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.ds-field__input:disabled {
+  color: var(--color-text-faint);
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+  cursor: not-allowed;
+}
+.ds-field__input[aria-invalid="true"] {
+  border-color: var(--color-status-err);
+}
+
+/* ── CodeBlock ──────────────────────────────────────────── */
+.ds-codeblock {
+  font-family: var(--font-mono);
+}
+.ds-codeblock__filename {
+  font-size: var(--type-label-size);
+  color: var(--color-label);
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-code-border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 0.4rem 1rem;
+  display: inline-block;
+  margin-bottom: -1px;
+}
+.ds-codeblock pre {
+  background: var(--color-code-bg);
+  border: var(--border-hairline) solid var(--color-code-border);
+  border-radius: 0 var(--radius) var(--radius) var(--radius);
+  padding: var(--space-md);
+  margin: 0;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--type-code-size);
+  color: var(--color-code-text);
+}
+.ds-codeblock--plain pre {
+  border-radius: var(--radius);
+}
+/* Token spans for highlighted code: one class per syntax role, colour plus
+   the role's weight and style tokens. Keywords and functions carry 600,
+   comments italic. Never the primary colour (design(7) Type). */
+.ds-tok-keyword { color: var(--color-syntax-keyword); font-weight: var(--syntax-keyword-weight); font-style: var(--syntax-keyword-style); }
+.ds-tok-string { color: var(--color-syntax-string); font-weight: var(--syntax-string-weight); font-style: var(--syntax-string-style); }
+.ds-tok-number { color: var(--color-syntax-number); font-weight: var(--syntax-number-weight); font-style: var(--syntax-number-style); }
+.ds-tok-function { color: var(--color-syntax-function); font-weight: var(--syntax-function-weight); font-style: var(--syntax-function-style); }
+.ds-tok-builtin { color: var(--color-syntax-builtin); font-weight: var(--syntax-builtin-weight); font-style: var(--syntax-builtin-style); }
+.ds-tok-type { color: var(--color-syntax-type); font-weight: var(--syntax-type-weight); font-style: var(--syntax-type-style); }
+.ds-tok-variable { color: var(--color-syntax-variable); font-weight: var(--syntax-variable-weight); font-style: var(--syntax-variable-style); }
+.ds-tok-comment { color: var(--color-syntax-comment); font-weight: var(--syntax-comment-weight); font-style: var(--syntax-comment-style); }
+.ds-tok-docstring { color: var(--color-syntax-docstring); font-weight: var(--syntax-docstring-weight); font-style: var(--syntax-docstring-style); }
+.ds-tok-tag { color: var(--color-syntax-tag); }
+
+/* Syntax token classes. Each pairs the colour with its emphasis tokens, so a
+   grayscale theme carries the distinction in weight and italic when it has no
+   hue to spare. Always use these rather than setting a colour
+   and a weight by hand. */
+.ds-syn-keyword {
+  color: var(--color-syntax-keyword);
+  font-weight: var(--syntax-keyword-weight);
+  font-style: var(--syntax-keyword-style);
+}
+.ds-syn-string {
+  color: var(--color-syntax-string);
+  font-weight: var(--syntax-string-weight);
+  font-style: var(--syntax-string-style);
+}
+.ds-syn-number {
+  color: var(--color-syntax-number);
+  font-weight: var(--syntax-number-weight);
+  font-style: var(--syntax-number-style);
+}
+.ds-syn-function {
+  color: var(--color-syntax-function);
+  font-weight: var(--syntax-function-weight);
+  font-style: var(--syntax-function-style);
+}
+.ds-syn-builtin {
+  color: var(--color-syntax-builtin);
+  font-weight: var(--syntax-builtin-weight);
+  font-style: var(--syntax-builtin-style);
+}
+.ds-syn-type {
+  color: var(--color-syntax-type);
+  font-weight: var(--syntax-type-weight);
+  font-style: var(--syntax-type-style);
+}
+.ds-syn-variable {
+  color: var(--color-syntax-variable);
+  font-weight: var(--syntax-variable-weight);
+  font-style: var(--syntax-variable-style);
+}
+.ds-syn-comment {
+  color: var(--color-syntax-comment);
+  font-weight: var(--syntax-comment-weight);
+  font-style: var(--syntax-comment-style);
+}
+.ds-syn-docstring {
+  color: var(--color-syntax-docstring);
+  font-weight: var(--syntax-docstring-weight);
+  font-style: var(--syntax-docstring-style);
+}
+.ds-syn-tag {
+  color: var(--color-syntax-tag);
+  font-weight: var(--syntax-type-weight);
+  font-style: var(--syntax-type-style);
+}
+
+/* ── CvEntry (one role on a CV) ─────────────────────────── */
+.ds-cv {
+  color: var(--color-text);
+}
+.ds-cv + .ds-cv {
+  margin-top: var(--space-lg);
+}
+.ds-cv__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.ds-cv__role {
+  font-family: var(--font-display);
+  font-size: var(--type-h3-size);
+  font-weight: 500;
+  color: var(--color-text-heading);
+  line-height: 1.4;
+  margin: 0;
+}
+.ds-cv__when {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ds-cv__duration::before {
+  content: "(";
+}
+.ds-cv__duration::after {
+  content: ")";
+}
+.ds-cv__duration {
+  color: var(--color-text-muted);
+}
+.ds-cv__meta {
+  font-family: var(--font-mono);
+  font-size: var(--type-ui-size);
+  margin: var(--space-2xs) 0 0;
+}
+.ds-cv__company {
+  color: var(--color-text-heading);
+}
+a.ds-cv__company {
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.2em;
+}
+.ds-cv__location {
+  color: var(--color-text-muted);
+}
+.ds-cv__sep {
+  color: var(--color-text-faint);
+  user-select: none;
+}
+.ds-cv__desc {
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  line-height: 1.6;
+  color: var(--color-text);
+  margin: var(--space-sm) 0 0;
+  max-width: 72ch;
+}
+.ds-cv__highlights {
+  list-style: none;
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  max-width: 72ch;
+}
+.ds-cv__hl {
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  line-height: 1.6;
+  color: var(--color-text);
+  padding-left: 1.35rem;
+  text-indent: -1.35rem;
+}
+.ds-cv__hl::before {
+  content: "·";
+  display: inline-block;
+  width: 1.35rem;
+  text-indent: 0;
+  color: var(--color-label);
+  font-family: var(--font-mono);
+}
+
+/* ── SkillMatrix (CV skills block) ──────────────────────── */
+.ds-skills {
+  font-family: var(--font-mono);
+  font-size: var(--type-ui-size);
+  margin: 0;
+  color: var(--color-text);
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) 1fr;
+}
+.ds-skills__row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  gap: 0 var(--space-md);
+  align-items: baseline;
+  padding: var(--space-2xs) 0;
+}
+.ds-skills__row + .ds-skills__row {
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+.ds-skills__key {
+  color: var(--color-label);
+  font-weight: 500;
+}
+.ds-skills__values {
+  margin: 0;
+  color: var(--color-text);
+}
+.ds-skills__sep {
+  color: var(--color-text-faint);
+  user-select: none;
+}
+.ds-skills--syntax .ds-skills__key {
+  color: var(--color-syntax-keyword);
+  font-style: var(--syntax-keyword-style);
+}
+.ds-skills--syntax .ds-skills__value {
+  color: var(--color-syntax-string);
+  font-weight: var(--syntax-string-weight);
+  font-style: var(--syntax-string-style);
+}
+
+/* ── Changelog (commit-log history) ─────────────────────── */
+.ds-log {
+  font-family: var(--font-body);
+  font-size: var(--type-h3-size);
+  color: var(--color-text);
+}
+.ds-log__entry {
+  display: grid;
+  grid-template-columns: 11ch 2ch 1fr;
+  gap: 0 var(--space-sm);
+}
+.ds-log__date {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--color-label);
+  padding-top: 0.28em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ds-log__gutter {
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+  text-align: center;
+  position: relative;
+  user-select: none;
+}
+/* The node is a drawn square in the rule colour, not a glyph: Unicode
+   marks are for terminal output only (design: Iconography). Leave the
+   element empty. */
+.ds-log__node {
+  display: block;
+  inline-size: 0.4em;
+  block-size: 0.4em;
+  margin: 0.6em auto 0;
+  background: var(--color-rule);
+}
+.ds-log__gutter::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 1.5em;
+  bottom: -0.4em;
+  width: 1px;
+  background: var(--color-border);
+}
+.ds-log__entry:last-child .ds-log__gutter::after {
+  display: none;
+}
+.ds-log__body {
+  padding-bottom: 1.1em;
+}
+.ds-log__what {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+.ds-log__ref {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+@media (max-width: 40em) {
+  /* breakpoints.sm */
+  .ds-log__entry {
+    grid-template-columns: 2ch 1fr;
+  }
+  .ds-log__date {
+    display: none;
+  }
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────── */
+.ds-breadcrumb {
+  font-family: var(--font-body);
+  font-size: var(--type-small-size);
+  line-height: 1.4;
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+}
+.ds-breadcrumb a {
+  color: var(--color-link);
+  text-decoration: underline 1px;
+  text-underline-offset: 3px;
+}
+.ds-breadcrumb a:hover,
+.ds-breadcrumb a:active {
+  text-decoration-color: var(--color-link-underline-hover);
+}
+.ds-breadcrumb__sep {
+  display: inline-flex;
+  color: var(--color-text-faint);
+  user-select: none;
+}
+.ds-breadcrumb__current {
+  color: var(--color-text);
+}
+
+/* ── Responsive · touch · print (system-wide) ─────────────────
+   Feature queries own input method and print; breakpoints elsewhere
+   repeat literal token values (breakpoints.sm 640 / md 860). Touch
+   floor = --touch-min (density axis; 40px default, coarse pointers
+   never below it). Imported via styles.css, so every consumer (site,
+   web prototype, specimen) inherits this without repeating it. */
+
+/* Coarse pointer (touch / stylus): primitives clear the --touch-min floor. */
+@media (pointer: coarse) {
+  .ds-btn,
+  .ds-field__input {
+    min-height: var(--touch-min);
+  }
+  /* Below 16px, iOS Safari zooms the page on focus; elements.css does the same. */
+  .ds-field__input {
+    font-size: max(1rem, var(--type-ui-size));
+  }
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Text-sized controls keep their line in the layout but take the full
+     touch box: the negative block margin gives back what the height adds. */
+  .ds-btn--link,
+  .ds-breadcrumb a,
+  .ds-toast__dismiss,
+  .ds-alert__dismiss {
+    min-height: var(--touch-min);
+    margin-block: calc((var(--touch-min) - 1lh) / -2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ds-breadcrumb a {
+    min-width: 3ch;
+  }
+  /* Inline links that wrap: vertical padding on an inline box grows the tap
+     area without moving a line. The box is the font's content area (about
+     1.2em), so subtracting 1em always clears the floor. */
+  .ds-log__what a {
+    padding-block: calc((var(--touch-min) - 1em) / 2);
+  }
+  .ds-toast__dismiss,
+  .ds-alert__dismiss {
+    min-width: var(--touch-min);
+    margin-inline-end: calc(var(--space-sm) * -1);
+  }
+  a.ds-tag,
+  .ds-tabs__tab,
+  .ds-pager a {
+    min-height: var(--touch-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ds-pager a {
+    min-width: var(--touch-min);
+  }
+}
+
+/* ── Table ──────────────────────────────────────────────── */
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--type-ui-size);
+  line-height: 1.3;
+  color: var(--color-text);
+}
+/* Wrap a table in .ds-table-scroll when its columns cannot compress further —
+   the table scrolls inside its own box instead of pushing the page sideways.
+   A table that stays inside its column at 320px / 200% text does not need it;
+   one with mono data columns almost always does (design(7) Accessibility
+   § Text resizing & reflow, WCAG 1.4.10). */
+.ds-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.ds-table-scroll:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+/* Scroll layout: the grid keeps its shape; only the first column wraps. */
+.ds-table--scroll th,
+.ds-table--scroll td {
+  white-space: nowrap;
+}
+.ds-table--scroll tbody :is(td, th):first-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 12ch;
+}
+.ds-table-scroll .ds-table caption {
+  padding: var(--space-sm) var(--space-sm) 0;
+}
+.ds-table caption {
+  text-align: left;
+  font-size: var(--type-data-size);
+  color: var(--color-text-muted);
+  padding-bottom: var(--space-sm);
+}
+/* The timetable: an ink rule above the head, hairline rows, an ink rule
+   closing the last row. No zebra, no cell borders, no hover colour. */
+.ds-table {
+  border-block-start: var(--border-rule) solid var(--color-rule);
+  border-block-end: var(--border-rule) solid var(--color-rule);
+  font-size: var(--type-data-size);
+  font-variant-numeric: tabular-nums;
+}
+.ds-table thead th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-label);
+  border-bottom: var(--border-hairline) solid var(--color-border-strong);
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  font-size: var(--type-label-size);
+}
+.ds-table th[data-align="right"],
+.ds-table td[data-align="right"],
+.ds-table .num {
+  text-align: right;
+}
+.ds-table tbody :is(td, th) {
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+.ds-table tbody tr:last-child :is(td, th) {
+  border-bottom: 0;
+}
+/* A row header (rowHeader) reads as the row's name, in the cell grid. */
+.ds-table tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+.ds-table :is(td, th)[data-mono] {
+  color: var(--color-text);
+}
+/* A key cell is the mono field name beside a value: the frame hue. */
+.ds-table tbody td.key,
+.ds-table tbody :is(td, th)[data-key] {
+  color: var(--color-label);
+}
+/* Stack layout on phones: each row is a block; the first cell is its title
+   and every other cell a "label  value" line. The header stays for screen
+   readers (sr-only), and the roles in Table.jsx keep the table semantics. */
+@media (max-width: 40em) {
+  /* breakpoints.sm */
+  .ds-table--stack,
+  .ds-table--stack tbody,
+  .ds-table--stack tr,
+  .ds-table--stack tbody :is(td, th) {
+    display: block;
+  }
+  .ds-table--stack caption {
+    display: block;
+  }
+  .ds-table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ds-table--stack tbody tr {
+    padding: var(--space-sm) 0;
+    border-bottom: var(--border-hairline) solid var(--color-border);
+  }
+  .ds-table--stack tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .ds-table--stack tbody :is(td, th) {
+    background: none;
+    border: 0;
+    padding: var(--space-2xs) 0;
+  }
+  .ds-table--stack tbody :is(td, th):first-child {
+    color: var(--color-text-heading);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .ds-table--stack tbody :is(td, th):not(:first-child) {
+    display: grid;
+    grid-template-columns: minmax(8rem, 40%) 1fr;
+    gap: var(--space-sm);
+    text-align: left;
+  }
+  /* The label is already the column header: alt text "" keeps screen readers
+     from reading it twice. Browsers without alt text keep the first line. */
+  .ds-table--stack tbody :is(td, th):not(:first-child)::before {
+    content: attr(data-label);
+    content: attr(data-label) / "";
+    color: var(--color-label);
+    font-size: var(--type-data-size);
+  }
+  .ds-table--stack tbody :is(td, th)[data-align="right"] {
+    text-align: left;
+  }
+}
+
+/* ── Tabs ───────────────────────────────────────────────── */
+/* Flat tabs: a 2px rule under the selected tab, no bevel. */
+.ds-tabs__list {
+  display: flex;
+  gap: var(--space-lg);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  overflow-x: auto;
+}
+.ds-tabs__tab {
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  line-height: 1.4;
+  min-height: var(--control-h);
+  white-space: nowrap;
+  position: relative;
+  padding: var(--space-sm) 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.ds-tabs__tab[aria-selected="true"] {
+  color: var(--color-text-heading);
+  font-weight: 600;
+}
+.ds-tabs__tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--border-hairline) * -1);
+  height: var(--border-marker);
+  background: var(--color-rule);
+}
+.ds-tabs__panel {
+  padding: var(--space-md) 0 0;
+  background: transparent;
+  color: var(--color-surface-foreground);
+}
+
+/* ── Pagination ─────────────────────────────────────────── */
+.ds-pager {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+}
+.ds-pager a,
+.ds-pager span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: var(--type-ui-size);
+  min-width: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+}
+.ds-pager a {
+  background: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-raised);
+  border-bottom-width: var(--border-bevel-edge);
+}
+.ds-pager a:active {
+  border-bottom-width: var(--border-bevel);
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+.ds-pager [aria-current="page"] {
+  color: var(--color-text-heading);
+  font-weight: 500;
+  background: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+.ds-pager__gap {
+  color: var(--color-text-faint);
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+.ds-pager span.ds-pager__gap {
+  border: none;
+  background: none;
+}
+.ds-pager__arrow {
+  color: var(--color-text);
+}
+.ds-pager__flip {
+  transform: scaleX(-1); /* static mirror of the right chevron, not motion */
+}
+
+/* ── Modal (native <dialog>) ────────────────────────────── */
+.ds-modal {
+  background: var(--color-surface-raised);
+  color: var(--color-surface-raised-foreground);
+  border: var(--border-rule) solid var(--color-rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  /* Border-box, and never wider than the viewport less a gutter: <dialog> is
+     content-box by default, so padding used to push it past a phone's edge. */
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2 * var(--space-md)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-md));
+  overflow: auto;
+  padding: var(--space-lg);
+  overflow-wrap: anywhere;
+}
+.ds-modal::backdrop {
+  background: var(--color-scrim);
+}
+/* An open Modal or Drawer locks the page scroll; the gutter stays, so the
+   page does not shift sideways when its scrollbar goes. */
+html:has(:is(.ds-modal, .ds-drawer):modal) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+.ds-modal__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  gap: var(--space-md);
+}
+.ds-modal__title {
+  font-family: var(--font-heading);
+  font-size: var(--type-h2-size);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-heading);
+  margin: 0;
+}
+.ds-modal__close {
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: var(--border-hairline) solid transparent;
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 var(--space-xs);
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+.ds-modal__close:hover {
+  color: var(--color-text-heading);
+}
+.ds-modal__close:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-modal__body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  line-height: 1.55;
+  margin: 0;
+}
+.ds-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}
+/* Phones: the choices stack full width, the confirming one on top under the
+   thumb; the DOM order (cancel, then confirm) stays for keyboards. */
+@media (max-width: 40em) {
+  /* breakpoints.sm */
+  .ds-modal {
+    padding: var(--space-md);
+  }
+  .ds-modal__actions {
+    flex-direction: column-reverse;
+  }
+  .ds-modal__actions > * {
+    width: 100%;
+  }
+}
+
+/* Hover is a pointer affordance — restore base state on touch so a tap
+   doesn't strand the accent border/colour (:active still gives feedback). */
+@media (hover: none) {
+  a.ds-tag:hover {
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+}
+
+/* Print: keep components whole across page breaks, drop the loading tail. */
+@media print {
+  .ds-btn[aria-busy="true"]::after {
+    content: none;
+  }
+  .ds-btn,
+  .ds-field__input,
+  .ds-tag,
+  .ds-status,
+  .ds-term,
+  .ds-codeblock,
+  .ds-cv,
+  .ds-log__entry,
+  .ds-callout,
+  .ds-alert {
+    break-inside: avoid;
+  }
+}
+
+/* ══ Cell ════════════════════════════════════════════════════════════════
+   One dense record per row: mono key in a fixed column, value as language or
+   as a readout, affordance glyph in the rule colour. The rail and its ticks
+   are the border-strong, not border. Rows take --cell-h from the density
+   scope; the whole row is the target. A selected row in a keyboard list
+   (aria-selected, aria-current, .is-selected) takes the selection fill behind
+   a 3px marker in the rule colour. */
+.ds-cell {
+  display: grid;
+  grid-template-columns: 11rem 1fr auto;
+  align-items: baseline;
+  gap: var(--space-sm) var(--space-md);
+  min-height: var(--cell-h);
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-md);
+  position: relative;
+  color: var(--color-text);
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+}
+/* The tick: a 6px stub off the rail, level with the key's first line. */
+.ds-cell::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(var(--cell-h) / 2);
+  width: 6px;
+  height: var(--border-hairline);
+  background: var(--color-border-strong);
+}
+.ds-cell + .ds-cell {
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+.ds-cell[aria-selected="true"],
+.ds-cell[aria-current="true"],
+.ds-cell.is-selected {
+  background: var(--color-selection-bg);
+  box-shadow: inset var(--border-marker) 0 0 var(--color-rule);
+}
+.ds-cell--interactive {
+  cursor: pointer;
+}
+.ds-cell--interactive:hover {
+  background: var(--color-selection-bg);
+}
+.ds-cell--interactive:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+.ds-cell__key {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--color-label);
+  line-height: 1.4;
+}
+.ds-cell__note {
+  display: block;
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2xs);
+}
+.ds-cell__value {
+  font-size: var(--type-body-size);
+  line-height: 1.4;
+}
+.ds-cell__value--mono {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+}
+.ds-cell__value--numeric {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+}
+/* Rule colour, not text-faint: the affordance has to read as operable in grayscale,
+   where a faint chevron is just chrome. */
+.ds-cell__affordance {
+  color: var(--color-rule);
+  font-size: var(--type-h1-size);
+  /* Sits on the row's text baseline; a zero line box keeps the larger glyph
+     from growing the row. */
+  line-height: 0;
+  position: relative;
+  top: 0.12em;
+}
+
+@media (max-width: 40em) {
+  .ds-cell {
+    grid-template-columns: 1fr auto;
+  }
+  .ds-cell__key {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ══ CellGroup ═══════════════════════════════════════════════════════════ */
+.ds-cellgroup + .ds-cellgroup {
+  margin-top: var(--space-lg);
+}
+.ds-cellgroup__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+  margin: 0 0 var(--space-xs);
+}
+.ds-cellgroup__label::after {
+  content: "";
+  flex: 1;
+  height: var(--border-hairline);
+  background: var(--color-border);
+}
+.ds-cellgroup__list {
+  border-left: var(--border-hairline) solid var(--color-border-strong);
+}
+
+/* ══ Descriptions ════════════════════════════════════════════════════════
+   The read-only face of a record: mono terms, values as language, hairline
+   per item. Collapses to one column below sm. */
+.ds-descriptions__title {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+  margin: 0 0 var(--space-sm);
+}
+.ds-descriptions__list {
+  display: grid;
+  grid-template-columns: repeat(var(--ds-desc-cols, 1), minmax(0, 1fr));
+  gap: 0 var(--space-xl);
+  margin: 0;
+}
+.ds-descriptions__item {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: baseline;
+  padding: var(--space-sm) 0;
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+.ds-descriptions__term {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--color-label);
+}
+.ds-descriptions__desc {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text);
+}
+.ds-descriptions__desc--numeric {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-heading);
+}
+@media (max-width: 40em) {
+  .ds-descriptions__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ds-descriptions__item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2xs);
+  }
+}
+
+/* ══ Toast ═══════════════════════════════════════════════════════════════
+   Leaves the flow, so it is one of the five objects allowed --shadow-float.
+   Reports only; anything requiring a decision is a Modal. */
+.ds-toast-stack {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: min(24rem, calc(100vw - 2 * var(--space-md)));
+}
+.ds-toast-stack--bottom {
+  bottom: var(--space-lg);
+}
+.ds-toast-stack--top {
+  top: var(--space-lg);
+  flex-direction: column-reverse;
+}
+.ds-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--control-h);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+  background: var(--color-surface-raised);
+  color: var(--color-surface-raised-foreground);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+/* An error toast takes the status colour on a 2px edge. */
+.ds-toast--err {
+  border: var(--border-rule) solid var(--color-status-err);
+}
+.ds-toast__glyph {
+  display: inline-flex;
+}
+.ds-toast__word {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+.ds-toast__body {
+  flex: 1;
+}
+.ds-toast__dismiss {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 0 var(--space-2xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.ds-toast__dismiss:hover {
+  color: var(--color-text-heading);
+}
+.ds-toast__dismiss:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-toast--ok .ds-toast__glyph {
+  color: var(--color-status-ok);
+}
+.ds-toast--warn .ds-toast__glyph {
+  color: var(--color-status-warn);
+}
+.ds-toast--err .ds-toast__glyph {
+  color: var(--color-status-err);
+}
+.ds-toast--info .ds-toast__glyph {
+  color: var(--color-status-info);
+}
+
+/* ══ Segmented ═══════════════════════════════════════════════════════════
+   A row of keys. The selected key is pressed: inverted bevel, sunk 1px. */
+.ds-segmented {
+  display: inline-flex;
+}
+.ds-segmented__option {
+  font: inherit;
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  line-height: 1.4;
+  min-height: var(--control-h);
+  padding: 0 var(--space-md);
+  box-sizing: border-box;
+  background: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-bottom-width: var(--border-bevel-edge);
+  border-color: var(--ds-bevel-raised);
+  border-radius: 0;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-press);
+}
+/* Joined keys: the inner corners square, the seams overlap by one bevel. */
+.ds-segmented__option:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.ds-segmented__option:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.ds-segmented__option + .ds-segmented__option {
+  margin-inline-start: calc(var(--border-bevel) * -1);
+}
+.ds-segmented__option:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  position: relative;
+  z-index: 1;
+}
+.ds-segmented__option.is-selected {
+  color: var(--color-text-heading);
+  border-bottom-width: var(--border-bevel);
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+
+/* ══ Steps ═══════════════════════════════════════════════════════════════ */
+.ds-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-steps__step {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-sm) var(--space-sm);
+  min-height: var(--cell-h);
+  padding: var(--space-sm) 0;
+}
+.ds-steps--vertical .ds-steps__step {
+  position: relative;
+  padding-left: var(--space-md);
+}
+.ds-steps--vertical .ds-steps__step::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  bottom: 0;
+  width: var(--border-hairline);
+  background: var(--color-border-strong);
+}
+.ds-steps--vertical .ds-steps__step:first-child::before {
+  top: 50%;
+}
+.ds-steps--vertical .ds-steps__step:last-child::before {
+  bottom: 50%;
+}
+.ds-steps--horizontal {
+  display: flex;
+  gap: var(--space-xl);
+}
+.ds-steps--horizontal .ds-steps__step {
+  flex: 1;
+}
+.ds-steps__glyph {
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1em;
+}
+.ds-steps__glyph .ds-icon {
+  inline-size: 1em;
+  block-size: 1em;
+}
+.ds-steps__index {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--color-text-faint);
+}
+.ds-steps__title {
+  font-size: var(--type-body-size);
+  color: var(--color-text-muted);
+}
+.ds-steps__note {
+  display: block;
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2xs);
+}
+.ds-steps__step.is-done .ds-steps__glyph {
+  color: var(--color-status-ok);
+}
+.ds-steps__step.is-done .ds-steps__title {
+  color: var(--color-text);
+}
+/* Current is marked in the frame hue, done in status-ok, the todo glyph in
+   text-faint; todo labels stay text-muted, since they are read. The current
+   title also takes weight, so it survives desaturation. */
+.ds-steps__step.is-current .ds-steps__glyph,
+.ds-steps__step.is-current .ds-steps__index {
+  color: var(--color-label);
+}
+.ds-steps__step.is-current .ds-steps__title {
+  color: var(--color-text-heading);
+  font-weight: 600;
+}
+.ds-steps__step.is-todo .ds-steps__glyph {
+  color: var(--color-text-faint);
+}
+
+/* ══ Empty ═══════════════════════════════════════════════════════════════ */
+/* One plain sentence on the ground, under a hairline. */
+.ds-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: var(--border-hairline) dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  text-align: left;
+}
+.ds-empty__note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+.ds-empty__action {
+  margin-top: 0;
+}
+
+/* ══ Result ══════════════════════════════════════════════════════════════ */
+.ds-result {
+  max-width: 52ch;
+  padding: var(--space-xl) 0;
+}
+.ds-result__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+}
+.ds-result__code {
+  color: var(--color-text-heading);
+}
+.ds-result__title {
+  font-family: var(--font-heading);
+  font-size: var(--type-h1-size);
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-heading);
+}
+.ds-result__body {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.ds-result__action {
+  margin-top: var(--space-lg);
+}
+.ds-result__glyph {
+  display: inline-flex;
+}
+.ds-result--ok .ds-result__glyph {
+  color: var(--color-status-ok);
+}
+.ds-result--err .ds-result__glyph {
+  color: var(--color-status-err);
+}
+.ds-result--warn .ds-result__glyph {
+  color: var(--color-status-warn);
+}
+.ds-result--info .ds-result__glyph {
+  color: var(--color-status-info);
+}
+
+/* ══ EntryGrid ═══════════════════════════════════════════════════════════
+   The mini-program launcher, rebuilt on the icon set this system has. The
+   glyph is type, not illustration; the target holds the density touch floor. */
+.ds-entrygrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--ds-entry-cols, 4), minmax(0, 1fr));
+  border-top: var(--border-hairline) solid var(--color-border);
+  border-left: var(--border-hairline) solid var(--color-border);
+}
+.ds-entrygrid__cell {
+  border-right: var(--border-hairline) solid var(--color-border);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+.ds-entrygrid__link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: calc(var(--cell-h) * 1.8);
+  padding: var(--space-md) var(--space-sm);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: background-color var(--transition-fast);
+}
+.ds-entrygrid__link:hover {
+  background: var(--color-selection-bg);
+}
+.ds-entrygrid__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+.ds-entrygrid__glyph {
+  font-family: var(--font-mono);
+  font-size: var(--type-h2-size);
+  line-height: 1;
+  color: var(--color-rule);
+}
+.ds-entrygrid__label {
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.ds-entrygrid__badge {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-label-size);
+  line-height: 1;
+  padding: 2px var(--space-2xs);
+  border-radius: var(--radius);
+  background: var(--color-destructive);
+  color: var(--color-destructive-foreground);
+}
+
+/* ── Plate ──────────────────────────────────────────────── */
+/* A framed panel: hairline box, a lowercase mono label strip on top, an
+   optional caption below. Flat, 2px corner, no shadow. */
+.ds-plate {
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.ds-plate__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+}
+.ds-plate__body {
+  padding: var(--space-xl);
+}
+.ds-plate__caption {
+  padding: var(--space-sm) var(--space-md);
+  border-top: var(--border-hairline) solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  color: var(--color-text-muted);
+}
+
+/* ── Frame ──────────────────────────────────────────────── */
+/* The page frame: a centred column held between two hairline rules, the
+   way the whole page sits inside a drawn border. Section rules cross the frame
+   edge to edge; labels are lowercase mono. */
+.ds-frame {
+  max-width: calc(var(--layout-content-max) + 2 * var(--space-2xl));
+  margin-inline: auto;
+  padding-inline: var(--space-xl);
+  border-inline: var(--border-hairline) solid var(--color-border);
+}
+.ds-rule {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+.ds-label {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+}
+
+/* ── Legend ─────────────────────────────────────────────── */
+/* A key: glyph or swatch, name over value, mono readings. */
+.ds-legend {
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+}
+.ds-legend__head {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  color: var(--color-label);
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.ds-legend__grid {
+  /* `columns` is a maximum: each column keeps at least 8rem, so a narrow
+     screen drops to fewer columns instead of crushing the readings. */
+  --ds-legend-gap: var(--space-md);
+  display: grid;
+  gap: var(--space-sm) var(--ds-legend-gap);
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(
+      max(
+        min(8rem, 100%),
+        calc((100% - (var(--ds-legend-cols, 3) - 1) * var(--ds-legend-gap)) / var(--ds-legend-cols, 3))
+      ),
+      1fr
+    )
+  );
+}
+.ds-legend__row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+}
+.ds-legend__glyph {
+  flex: none;
+}
+.ds-legend__swatch {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  align-self: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border-strong);
+  display: inline-block;
+}
+.ds-legend__name {
+  display: block;
+  color: var(--color-label);
+}
+.ds-legend__value {
+  display: block;
+  color: var(--color-text-muted);
+}
+
+/* ── Checkbox · RadioGroup · Switch ─────────────────────── */
+/* Drawn 2px boxes over real inputs: the checkbox and the radio are recessed
+   like a field, the mark is ink. The radio is square too (one corner, no
+   circles); a filled block marks it, a tick marks the checkbox. The label
+   row is the touch target, not the box. */
+.ds-check {
+  display: flex;
+  flex-direction: column;
+  font: 400 var(--type-ui-size) / 1.4 var(--font-body);
+}
+.ds-check__row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--control-h);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.ds-check__input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--color-surface-raised);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  cursor: inherit;
+}
+.ds-check__input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-rule);
+  clip-path: polygon(14% 52%, 30% 38%, 42% 52%, 74% 20%, 88% 34%, 42% 80%);
+  transform: scale(0);
+}
+.ds-check__input[type="radio"]::before {
+  inset: 3px;
+  clip-path: none;
+}
+.ds-check__input:checked::before {
+  transform: scale(1);
+}
+.ds-check__input:indeterminate::before {
+  inset: 50% 3px auto;
+  height: 2px;
+  margin-top: -1px;
+  clip-path: none;
+  transform: scale(1);
+}
+.ds-check__input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.ds-check__input:disabled {
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+}
+.ds-check__input:disabled::before {
+  background: var(--color-text-faint);
+}
+.ds-check__help {
+  color: var(--color-text-muted);
+  padding-inline-start: calc(1.125rem + var(--space-sm));
+  line-height: 1.4;
+}
+.ds-check__row:has(:disabled) {
+  color: var(--color-text-faint);
+  cursor: not-allowed;
+}
+.ds-radios {
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  min-width: 0;
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.ds-radios__legend {
+  font: var(--type-label);
+  color: var(--color-label);
+  padding: 0 var(--space-xs);
+}
+.ds-radios__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+.ds-radios--row .ds-radios__options {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: var(--space-lg);
+}
+/* The switch: a pressable key over a real, focusable checkbox. The track is
+   recessed, the thumb is a raised key. On is the thumb at the end and an ink
+   track, so the state survives grayscale. */
+.ds-switch {
+  position: relative;
+}
+.ds-switch__input {
+  position: absolute;
+  width: 2.75rem;
+  height: 1.5rem;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.ds-switch__track {
+  flex: none;
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+  transition: background-color var(--transition-fast);
+}
+.ds-switch__track::before {
+  content: "";
+  position: absolute;
+  top: var(--space-2xs);
+  left: var(--space-2xs);
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+  border: var(--border-hairline) solid;
+  border-color: var(--ds-bevel-raised);
+  border-bottom-width: 2px;
+  border-radius: var(--radius);
+  background: var(--color-bevel-face);
+  transition: transform var(--transition-press);
+}
+.ds-switch__input:checked + .ds-switch__track {
+  background: var(--color-rule);
+}
+.ds-switch__input:checked + .ds-switch__track::before {
+  transform: translateX(1.25rem);
+}
+.ds-switch__input:active + .ds-switch__track::before {
+  border-color: var(--ds-bevel-pressed);
+}
+.ds-switch__input:focus-visible + .ds-switch__track {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.ds-switch__input:disabled + .ds-switch__track {
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+}
+.ds-switch__input:disabled + .ds-switch__track::before {
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+}
+.ds-switch__help {
+  padding-inline-start: calc(2.75rem + var(--space-sm));
+}
+
+/* ── Select · Slider ────────────────────────────────────── */
+.ds-select {
+  position: relative;
+  display: block;
+}
+.ds-select__input {
+  appearance: none;
+  padding-inline-end: var(--space-lg);
+  cursor: pointer;
+}
+/* The chevron is drawn from two borders, not a glyph. */
+.ds-select::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: var(--space-sm);
+  top: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-top: -0.35rem;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.ds-slider__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+.ds-slider__value {
+  font-family: var(--font-mono);
+  font-size: var(--type-ui-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-heading);
+}
+/* Recessed track, rule-colour fill up to the thumb (--ds-fill, set by the component
+   as a percentage; a hard-stop fill, not a gradient), raised thumb. */
+.ds-slider__input {
+  appearance: none;
+  accent-color: var(--color-rule);
+  width: 100%;
+  margin: 0;
+  min-height: var(--control-h);
+  background: transparent;
+  cursor: pointer;
+  --ds-fill: 50%;
+}
+.ds-slider__input::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  box-sizing: border-box;
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(var(--color-rule), var(--color-rule)) 0 / var(--ds-fill) 100% no-repeat,
+    var(--color-surface-raised);
+}
+.ds-slider__input::-moz-range-track {
+  height: 0.5rem;
+  box-sizing: border-box;
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-pressed);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+}
+.ds-slider__input::-moz-range-progress {
+  height: 0.5rem;
+  background: var(--color-rule);
+}
+.ds-slider__input::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1.25rem;
+  margin-top: calc((0.5rem - 1.25rem) / 2);
+  box-sizing: border-box;
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-raised);
+  border-radius: var(--radius);
+  background: var(--color-bevel-face);
+}
+.ds-slider__input::-moz-range-thumb {
+  width: 1rem;
+  height: 1.25rem;
+  box-sizing: border-box;
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-raised);
+  border-radius: var(--radius);
+  background: var(--color-bevel-face);
+}
+.ds-slider__input:active::-webkit-slider-thumb {
+  border-color: var(--ds-bevel-pressed);
+}
+.ds-slider__input:active::-moz-range-thumb {
+  border-color: var(--ds-bevel-pressed);
+}
+.ds-slider__input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ── Card ───────────────────────────────────────────────── */
+/* Scoped to .ds-card--box: ProjectCard shares .ds-card and .ds-card__title. */
+.ds-card--box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface);
+  color: var(--color-surface-foreground);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+.ds-card--box > .ds-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-h3-size);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-text-heading);
+}
+.ds-card__meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-label);
+}
+.ds-card__body {
+  color: var(--color-text);
+  line-height: 1.55;
+}
+.ds-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: auto;
+  padding-top: var(--space-sm);
+}
+.ds-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+/* The title link covers the card; the footer rises above it. */
+.ds-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.ds-card__foot {
+  position: relative;
+}
+.ds-card--link {
+  transition: border-color var(--transition-fast);
+}
+.ds-card--link:hover {
+  border-color: var(--color-border-strong);
+}
+.ds-card--link:hover .ds-card__link {
+  text-decoration: underline 2px;
+  text-decoration-color: var(--color-link-underline-hover);
+  text-underline-offset: 3px;
+}
+.ds-card__link:focus-visible {
+  outline: none;
+}
+.ds-card--link:has(.ds-card__link:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ── Accordion (native <details>) ───────────────────────── */
+.ds-accordion {
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+.ds-accordion__item {
+  border-bottom: var(--border-hairline) solid var(--color-border);
+}
+.ds-accordion__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--control-h);
+  padding: var(--space-sm) 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  list-style: none;
+  font: 600 var(--type-ui-size) / 1.4 var(--font-body);
+  color: var(--color-text-heading);
+}
+.ds-accordion__summary::-webkit-details-marker {
+  display: none;
+}
+/* The disclosure mark is a plus, a minus once open, in the frame hue. */
+.ds-accordion__summary::after {
+  content: "+";
+  flex: none;
+  font: 500 1.25rem / 1 var(--font-mono);
+  color: var(--color-label);
+}
+.ds-accordion__item[open] > .ds-accordion__summary::after {
+  content: "\2212";
+}
+.ds-accordion__summary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.ds-accordion__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  overflow-wrap: anywhere;
+}
+.ds-accordion__meta {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+.ds-accordion__panel {
+  padding: 0 0 var(--space-md);
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+/* ── Tooltip ────────────────────────────────────────────── */
+.ds-tip {
+  position: relative;
+  display: inline-flex;
+}
+.ds-tip__bubble {
+  position: absolute;
+  inset-inline-start: 0;
+  z-index: var(--z-toast);
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2 * var(--space-md)));
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--type-small-size);
+  line-height: 1.4;
+  visibility: hidden;
+}
+/* The bubble is hoverable (WCAG 1.4.13); this strip bridges the gap to the
+   trigger, so the pointer can cross it without the bubble closing. */
+.ds-tip__bubble::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: var(--space-xs);
+}
+/* Strong and other heading-ink phrases would match the bubble's ground. */
+.ds-tip__bubble :where(strong, b, var, dfn, cite, samp, a) {
+  color: inherit;
+}
+.ds-tip--top .ds-tip__bubble {
+  bottom: calc(100% + var(--space-xs));
+}
+.ds-tip--top .ds-tip__bubble::before {
+  top: 100%;
+}
+.ds-tip--bottom .ds-tip__bubble {
+  top: calc(100% + var(--space-xs));
+}
+.ds-tip--bottom .ds-tip__bubble::before {
+  bottom: 100%;
+}
+.ds-tip:hover .ds-tip__bubble,
+.ds-tip:focus-within .ds-tip__bubble {
+  visibility: visible;
+}
+.ds-tip.is-hidden .ds-tip__bubble {
+  visibility: hidden;
+}
+
+/* ── Progress ───────────────────────────────────────────── */
+.ds-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--type-ui-size);
+}
+.ds-progress__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  color: var(--color-text);
+}
+.ds-progress__value {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.ds-progress__track {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  height: 0.75rem;
+  overflow: hidden;
+  background: var(--color-bg-subtle);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.ds-progress__fill {
+  display: block;
+  height: 100%;
+  background: var(--color-rule);
+}
+/* Indeterminate: a third of the track slides across (translate only). */
+.ds-progress__track.is-indeterminate .ds-progress__fill {
+  width: 33%;
+  animation: ds-progress-run 1.2s steps(12) infinite;
+}
+@keyframes ds-progress-run {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+/* ── Popover · Menu (native popover API) ────────────────── */
+.ds-popover {
+  box-sizing: border-box;
+  position: fixed;
+  inset: auto;
+  top: var(--ds-pop-y, 0);
+  left: var(--ds-pop-x, 0);
+  margin: 0;
+  min-width: 12rem;
+  max-width: min(24rem, calc(100vw - 2 * var(--space-sm)));
+  max-height: calc(100dvh - 2 * var(--space-sm));
+  overflow: auto;
+  padding: var(--space-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-surface-raised-foreground);
+  border: var(--border-rule) solid var(--color-rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+}
+.ds-menu {
+  padding: var(--space-xs) 0;
+}
+.ds-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  width: 100%;
+  min-height: var(--control-h);
+  box-sizing: border-box;
+  padding: 0 var(--space-md);
+  border: 0;
+  border-inline-start: var(--border-marker) solid transparent;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+  line-height: 1.4;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ds-menu__item:hover,
+.ds-menu__item:focus-visible,
+.ds-menu__item[aria-current="true"],
+.ds-menu__item[aria-checked="true"] {
+  background: var(--color-selection-bg);
+  color: var(--color-selection-bg-foreground);
+  border-inline-start-color: var(--color-rule);
+  outline: none;
+}
+.ds-menu__item--destructive {
+  color: var(--color-destructive);
+}
+.ds-menu__item[aria-disabled="true"] {
+  color: var(--color-text-faint);
+  cursor: not-allowed;
+}
+.ds-menu__item kbd {
+  font: 500 0.75rem / 1 var(--font-mono);
+  color: var(--color-label);
+}
+.ds-menu__sep {
+  height: 0;
+  margin: var(--space-xs) 0;
+  border-top: var(--border-hairline) solid var(--color-border);
+}
+/* Phones: popovers and menus dock to the bottom edge as a sheet. */
+@media (max-width: 40em) {
+  /* breakpoints.sm */
+  .ds-popover {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    max-height: 70dvh;
+    box-sizing: border-box;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding-bottom: max(var(--space-sm), env(safe-area-inset-bottom));
+  }
+  .ds-popover::backdrop {
+    background: var(--color-scrim);
+  }
+  .ds-menu__item {
+    min-height: var(--touch-min);
+  }
+}
+
+/* ── Drawer (native <dialog>, docked) ───────────────────── */
+.ds-drawer {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  background: transparent;
+  color: var(--color-surface-raised-foreground);
+}
+.ds-drawer::backdrop {
+  background: var(--color-scrim);
+}
+.ds-drawer__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-lg);
+  background: var(--color-surface-raised);
+  border: 0 solid var(--color-rule);
+  box-shadow: var(--shadow-float);
+}
+/* The docked edge carries the 2px rule; the other sides stay open. */
+.ds-drawer--end .ds-drawer__panel {
+  border-inline-start-width: var(--border-rule);
+}
+.ds-drawer--start .ds-drawer__panel {
+  border-inline-end-width: var(--border-rule);
+}
+.ds-drawer--bottom .ds-drawer__panel {
+  border-block-start-width: var(--border-rule);
+}
+.ds-drawer--start,
+.ds-drawer--end {
+  top: 0;
+  bottom: 0;
+  height: 100dvh;
+  width: min(22rem, 100vw);
+}
+.ds-drawer--start {
+  left: 0;
+  right: auto;
+}
+.ds-drawer--end {
+  right: 0;
+  left: auto;
+}
+.ds-drawer--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  width: 100%;
+  max-height: 85dvh;
+}
+/* The sheet is as tall as its content up to 85dvh; the panel takes that cap,
+   so only the body scrolls and the head with its close button stays. */
+.ds-drawer--bottom .ds-drawer__panel {
+  height: auto;
+  max-height: inherit;
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ds-drawer[open] .ds-drawer__panel {
+    animation: ds-drawer-in var(--transition-base) both;
+  }
+}
+.ds-drawer--start[open] .ds-drawer__panel {
+  --ds-drawer-from: translateX(-100%);
+}
+.ds-drawer--end[open] .ds-drawer__panel {
+  --ds-drawer-from: translateX(100%);
+}
+.ds-drawer--bottom[open] .ds-drawer__panel {
+  --ds-drawer-from: translateY(100%);
+}
+@keyframes ds-drawer-in {
+  from {
+    transform: var(--ds-drawer-from);
+  }
+}
+.ds-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+.ds-drawer__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--type-h2-size);
+  font-weight: 500;
+  color: var(--color-text-heading);
+}
+.ds-drawer__close {
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  margin-inline-end: calc(var(--space-sm) * -1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.ds-drawer__close:hover {
+  color: var(--color-text-heading);
+}
+.ds-drawer__close:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  color: var(--color-text);
+  line-height: 1.55;
+}
+.ds-drawer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+}
+
+/* ── Navbar ─────────────────────────────────────────────── */
+.ds-navbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: calc(var(--touch-min) + 2 * var(--space-sm));
+  padding: var(--space-md) 0 var(--space-sm);
+  border-bottom: var(--border-rule) solid var(--color-rule);
+  font-family: var(--font-body);
+  font-size: var(--type-ui-size);
+}
+.ds-navbar__brand {
+  flex: none;
+}
+.ds-navbar__nav {
+  flex: 1;
+  min-width: 0;
+}
+.ds-navbar__links,
+.ds-navbar__sheet {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-navbar__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+}
+.ds-navbar__link {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--control-h);
+  padding: var(--space-xs) 0;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--type-ui-size);
+  line-height: 1.4;
+  border-bottom: var(--border-rule) solid transparent;
+}
+.ds-navbar__link:hover {
+  border-bottom-color: var(--color-border-strong);
+}
+.ds-navbar__link[aria-current="page"] {
+  color: var(--color-text-heading);
+  font-weight: 600;
+  border-bottom-color: var(--color-rule);
+}
+.ds-navbar__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.ds-navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: none;
+}
+.ds-navbar__menu {
+  display: none;
+}
+.ds-navbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--touch-min);
+  padding: 0 var(--space-sm);
+  background: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-raised);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: var(--type-ui-size);
+  cursor: pointer;
+  list-style: none;
+}
+.ds-navbar__menu[open] .ds-navbar__toggle {
+  border-color: var(--ds-bevel-pressed);
+  transform: translateY(1px);
+}
+.ds-navbar__toggle::-webkit-details-marker {
+  display: none;
+}
+.ds-navbar__toggle:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+@media (max-width: 40em) {
+  /* breakpoints.sm */
+  /* Brand, toggle and actions share one row; the open menu drops below the
+     bar at full width, over the page. */
+  .ds-navbar {
+    position: relative;
+  }
+  .ds-navbar__nav {
+    flex: none;
+    order: 2;
+  }
+  .ds-navbar__brand {
+    order: 1;
+    margin-inline-end: auto;
+  }
+  .ds-navbar__actions {
+    order: 3;
+  }
+  .ds-navbar__links {
+    display: none;
+  }
+  .ds-navbar__menu {
+    display: block;
+  }
+  .ds-navbar__sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: var(--z-sticky);
+    padding: 0 var(--space-md);
+    background: var(--color-bg);
+    border-bottom: var(--border-hairline) solid var(--color-border-strong);
+  }
+  .ds-navbar__sheet .ds-navbar__link {
+    min-height: var(--touch-min);
+    width: 100%;
+    font-size: var(--type-ui-size);
+  }
+  .ds-navbar__sheet li + li {
+    border-top: var(--border-hairline) solid var(--color-border);
+  }
+}
+
+/* ── Stack · Grid ───────────────────────────────────────── */
+.ds-stack {
+  display: flex;
+  gap: var(--ds-stack-gap, var(--space-md));
+  min-width: 0;
+}
+.ds-stack--column {
+  flex-direction: column;
+}
+.ds-stack--row {
+  flex-direction: row;
+  align-items: center;
+}
+.ds-stack--wrap {
+  flex-wrap: wrap;
+}
+.ds-grid {
+  display: grid;
+  gap: var(--ds-grid-gap, var(--space-md));
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--ds-grid-min, 15rem), 100%), 1fr));
+}
+ul.ds-grid,
+ol.ds-grid,
+ul.ds-stack,
+ol.ds-stack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* elements.css spaces the items of a bare list; component lists set their own
+   gap. One element selector: it beats :where(li) and loses to any class. */
+:where(
+    .ds-entrygrid,
+    .ds-tag-list,
+    .ds-steps,
+    .ds-cv__highlights,
+    .ds-navbar__links,
+    .ds-navbar__sheet,
+    ul.ds-grid,
+    ol.ds-grid,
+    ul.ds-stack,
+    ol.ds-stack
+  )
+  > li {
+  margin: 0;
+}
+
+/* ── Halftone — the one dot-screen area per page ────────────
+   The only place a gradient is allowed. Text never sits on the dots:
+   children live on the plain .ds-halftone__panel. */
+.ds-halftone {
+  background-color: var(--color-surface);
+  background-image: radial-gradient(
+    var(--color-halftone-dot) var(--halftone-dot-radius),
+    transparent calc(var(--halftone-dot-radius) + 0.3px)
+  );
+  background-size: var(--halftone-pitch) var(--halftone-pitch);
+  border: var(--border-hairline) solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: var(--space-lg);
+}
+.ds-halftone__panel {
+  background: var(--color-bg);
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* ── BarChart — flat bars, printed values ───────────────────
+   No gridlines, no legend. Series cycle chart-1 to chart-5 by row. */
+.ds-barchart {
+  margin: 0;
+}
+.ds-barchart__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.ds-barchart__row {
+  display: grid;
+  grid-template-columns: minmax(4rem, 8rem) minmax(0, 1fr) 4rem;
+  gap: var(--space-md);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  line-height: 1.3;
+  color: var(--color-chart-ink);
+}
+.ds-barchart__track {
+  block-size: 30px;
+}
+.ds-barchart__fill {
+  block-size: 100%;
+  border-radius: var(--radius);
+  background: var(--color-chart-1);
+}
+.ds-barchart__row:nth-child(5n + 2) .ds-barchart__fill {
+  background: var(--color-chart-2);
+}
+.ds-barchart__row:nth-child(5n + 3) .ds-barchart__fill {
+  background: var(--color-chart-3);
+}
+.ds-barchart__row:nth-child(5n + 4) .ds-barchart__fill {
+  background: var(--color-chart-4);
+}
+.ds-barchart__row:nth-child(5n + 5) .ds-barchart__fill {
+  background: var(--color-chart-5);
+}
+.ds-barchart__value {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.ds-barchart__caption {
+  margin-block-start: var(--space-sm);
+  font: var(--type-label);
+  color: var(--color-text-muted);
+}
+
+/* ── Link · Quote · Footer · SkipLink · Figure · Inputs (v3 ports) ─────── */
+.ds-link {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--transition-fast);
+}
+.ds-link:hover,
+.ds-link:active {
+  text-decoration-color: var(--color-link-underline-hover);
+}
+.ds-link__icon {
+  inline-size: 1em;
+  block-size: 1em;
+  margin-inline-start: 0.2em;
+  vertical-align: -0.125em;
+}
+[data-contrast="more"] .ds-link {
+  text-decoration-thickness: 3px;
+}
+
+.ds-quote {
+  margin: 0;
+  padding: 0 0 0 var(--space-xl);
+  border-inline-start: 0; /* elements.css stripes a bare blockquote; Quote has none */
+  position: relative;
+}
+.ds-quote::before {
+  content: "\201C";
+  position: absolute;
+  inset-inline-start: 0;
+  top: -0.15em;
+  font: 500 3rem/1 var(--font-display);
+  color: var(--color-label);
+}
+.ds-quote p {
+  margin: 0;
+  font: italic 400 1.1875rem/1.55 var(--font-body);
+  color: var(--color-text-heading);
+}
+.ds-quote__cite {
+  margin-block-start: var(--space-sm);
+  font: 400 0.875rem/1.4 var(--font-mono);
+  color: var(--color-text-muted);
+}
+
+.ds-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-lg);
+  padding: var(--space-md) 0;
+  border-top: 2px solid var(--color-rule);
+  font: 400 0.8125rem/1.4 var(--font-mono);
+  color: var(--color-text-muted);
+}
+.ds-footer__start {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.ds-footer .ds-mark {
+  font-size: 0.875rem;
+}
+.ds-footer a {
+  color: var(--color-link);
+}
+
+.ds-sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ds-skip {
+  position: absolute;
+  inset-inline-start: var(--space-md);
+  top: -100px;
+  z-index: var(--z-skip);
+}
+.ds-skip:focus,
+.ds-skip.is-shown {
+  top: var(--space-md);
+}
+.ds-skip-demo {
+  position: relative;
+  min-block-size: 3.5rem;
+}
+
+.ds-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.ds-figure__media {
+  border: var(--border-hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.ds-figure__media > img,
+.ds-figure__media > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+.ds-figure__caption {
+  font: 400 0.875rem/1.45 var(--font-body);
+  color: var(--color-text-muted);
+}
+.ds-figure__caption b {
+  font: 500 0.8125rem/1.3 var(--font-mono);
+  color: var(--color-label);
+  margin-inline-end: var(--space-xs);
+}
+.ds-sidenote {
+  font: 400 0.875rem/1.45 var(--font-body);
+  color: var(--color-text-muted);
+}
+@media (min-width: 53.75em) {
+  .ds-sidenote {
+    float: right;
+    clear: right;
+    inline-size: var(--layout-rail);
+    margin-inline-end: calc(-1 * var(--layout-rail) - var(--space-xl));
+  }
+}
+
+/* Inputs share .ds-field__input (the recessed bevel); only the shapes differ. */
+.ds-input--textarea {
+  min-block-size: 6rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+.ds-input--search {
+  appearance: none;
+}
+.ds-input--date {
+  min-block-size: var(--control-h);
+}
+.ds-input--file {
+  padding: var(--space-xs);
+  min-block-size: auto;
+}
+.ds-input--file::file-selector-button {
+  margin-inline-end: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bevel-face);
+  border: var(--border-bevel) solid;
+  border-color: var(--ds-bevel-raised);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.ds-input--file::file-selector-button:active {
+  border-color: var(--ds-bevel-pressed);
+}
+
+/* ── More contrast ──────────────────────────────────────────
+   The structural half of the contrast themes (colours live in tokens.css):
+   2px lines, thicker underlines and focus ring, and no halftone. It applies
+   when the OS asks (prefers-contrast: more) or a page sets
+   data-contrast="more" on <html>; the media copy is gated on
+   :root:not([data-contrast]) so it follows the same selection as tokens.css.
+   Written twice because a media query and an
+   attribute cannot share one selector list; keep the two copies identical. */
+@media (prefers-contrast: more) {
+  :root:not([data-contrast]) {
+    --focus-ring-width: 3px;
+  }
+  :root:not([data-contrast]) .ds-alert,
+  :root:not([data-contrast]) .ds-card,
+  :root:not([data-contrast]) .ds-card--box,
+  :root:not([data-contrast]) .ds-callout,
+  :root:not([data-contrast]) .ds-term,
+  :root:not([data-contrast]) .ds-plate,
+  :root:not([data-contrast]) .ds-legend,
+  :root:not([data-contrast]) .ds-empty,
+  :root:not([data-contrast]) .ds-tag,
+  :root:not([data-contrast]) .ds-status,
+  :root:not([data-contrast]) .ds-codeblock pre,
+  :root:not([data-contrast]) .ds-halftone,
+  :root:not([data-contrast]) .ds-halftone__panel,
+  :root:not([data-contrast]) .ds-progress__track,
+  :root:not([data-contrast]) .ds-toast {
+    border-width: 2px;
+  }
+  :root:not([data-contrast]) .ds-table tbody td,
+  :root:not([data-contrast]) .ds-table tbody th,
+  :root:not([data-contrast]) .ds-table thead th {
+    border-bottom-width: 2px;
+  }
+  :root:not([data-contrast]) .ds-cell + .ds-cell,
+  :root:not([data-contrast]) .ds-descriptions__item,
+  :root:not([data-contrast]) .ds-skills__row + .ds-skills__row {
+    border-top-width: 2px;
+  }
+  :root:not([data-contrast]) .ds-accordion {
+    border-top-width: 2px;
+  }
+  :root:not([data-contrast]) .ds-accordion__item {
+    border-bottom-width: 2px;
+  }
+  :root:not([data-contrast]) a,
+  :root:not([data-contrast]) .ds-btn--link,
+  :root:not([data-contrast]) .ds-breadcrumb a,
+  :root:not([data-contrast]) .ds-card__title a:hover,
+  :root:not([data-contrast]) .ds-card--link:hover .ds-card__link {
+    text-decoration-thickness: 3px;
+  }
+  :root:not([data-contrast]) .ds-halftone {
+    background-image: none;
+  }
+  :root:not([data-contrast]) :focus-visible {
+    outline-width: 3px;
+  }
+}
+:root[data-contrast="more"] {
+  --focus-ring-width: 3px;
+}
+:root[data-contrast="more"] .ds-alert,
+:root[data-contrast="more"] .ds-card,
+:root[data-contrast="more"] .ds-card--box,
+:root[data-contrast="more"] .ds-callout,
+:root[data-contrast="more"] .ds-term,
+:root[data-contrast="more"] .ds-plate,
+:root[data-contrast="more"] .ds-legend,
+:root[data-contrast="more"] .ds-empty,
+:root[data-contrast="more"] .ds-tag,
+:root[data-contrast="more"] .ds-status,
+:root[data-contrast="more"] .ds-codeblock pre,
+:root[data-contrast="more"] .ds-halftone,
+:root[data-contrast="more"] .ds-halftone__panel,
+:root[data-contrast="more"] .ds-progress__track,
+:root[data-contrast="more"] .ds-toast {
+  border-width: 2px;
+}
+:root[data-contrast="more"] .ds-table tbody td,
+:root[data-contrast="more"] .ds-table tbody th,
+:root[data-contrast="more"] .ds-table thead th {
+  border-bottom-width: 2px;
+}
+:root[data-contrast="more"] .ds-cell + .ds-cell,
+:root[data-contrast="more"] .ds-descriptions__item,
+:root[data-contrast="more"] .ds-skills__row + .ds-skills__row {
+  border-top-width: 2px;
+}
+:root[data-contrast="more"] .ds-accordion {
+  border-top-width: 2px;
+}
+:root[data-contrast="more"] .ds-accordion__item {
+  border-bottom-width: 2px;
+}
+:root[data-contrast="more"] a,
+:root[data-contrast="more"] .ds-btn--link,
+:root[data-contrast="more"] .ds-breadcrumb a,
+:root[data-contrast="more"] .ds-card__title a:hover,
+:root[data-contrast="more"] .ds-card--link:hover .ds-card__link {
+  text-decoration-thickness: 3px;
+}
+:root[data-contrast="more"] .ds-halftone {
+  background-image: none;
+}
+:root[data-contrast="more"] :focus-visible {
+  outline-width: 3px;
+}

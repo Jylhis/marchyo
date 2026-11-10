@@ -2,16 +2,15 @@
 let
   inherit (lib) mkOption types;
 
-  # Closed plugin kind set, kind -> manifest entryPoints key (pure data, so
-  # this platform-neutral declaration stays Darwin-safe).
+  # Closed plugin kind set, kind -> manifest entryPoints key (pure data).
   pluginKinds = import ../../../packages/marchyo-shell/plugin-kinds.nix;
   pluginKindsDoc = lib.concatStringsSep ", " (
     lib.mapAttrsToList (k: key: "`${k}` (entry point `${key}`)") pluginKinds
   );
 
   # Raw, IFD-free spec for a CLI-added plugin: pinned git source plus manifest
-  # fields. No pkgs references, per the darwin eval gate; marchyo-shell.nix
-  # turns each spec into a built plugin via mkMarchyoShellPlugin on Linux.
+  # fields. No pkgs references; marchyo-shell.nix turns
+  # each spec into a built plugin via mkMarchyoShellPlugin.
   extraPluginType = types.submodule {
     options = {
       id = mkOption {
@@ -60,7 +59,7 @@ let
   # freeform submodule, so keys the schema does not name pass through to
   # shell.json unchanged. Typed leaves default to null and are dropped from the
   # rendered file when unset (modules/home/marchyo-shell.nix), so the shell's
-  # own defaults apply. Pure lib types only, per the darwin eval gate.
+  # own defaults apply. Pure lib types only.
   freeform = types.attrsOf types.anything;
 
   widgetEntryType = types.submodule {
@@ -95,12 +94,14 @@ let
           freeformType = freeform;
           options = {
             left = sectionOption "left";
+            centerBegin = sectionOption "centerBegin";
             center = sectionOption "center";
+            centerEnd = sectionOption "centerEnd";
             right = sectionOption "right";
           };
         };
         default = { };
-        description = "Bar layout: `left`, `center`, and `right` widget sections.";
+        description = "Bar layout: `left`, `centerBegin`, `center`, `centerEnd` and `right` widget sections. `center` stays at the middle of the bar; `centerBegin` grows leftwards from it and `centerEnd` rightwards.";
       };
       style = mkOption {
         type = types.nullOr (
@@ -161,6 +162,41 @@ let
         description = "Idle thresholds. Always global.";
       };
 
+      clock = mkOption {
+        type = types.submodule {
+          freeformType = freeform;
+          options.seconds = mkOption {
+            type = types.nullOr types.bool;
+            default = null;
+            description = "Show live seconds in the bar clock (shell default false).";
+          };
+        };
+        default = { };
+        description = "Bar clock behaviour. Right-click on the clock flips seconds for the session.";
+      };
+
+      battery = mkOption {
+        type = types.submodule {
+          freeformType = freeform;
+          options.percentage = mkOption {
+            type = types.nullOr types.bool;
+            default = null;
+            description = "Show the charge number beside the battery glyph (shell default true).";
+          };
+          options.lowThreshold = mkOption {
+            type = types.nullOr (types.ints.between 0 100);
+            default = null;
+            example = 15;
+            description = ''
+              Charge percentage at or below which the shell sends one critical
+              low-battery notification while discharging (shell default 10).
+            '';
+          };
+        };
+        default = { };
+        description = "Bar battery behaviour. Right-click on the widget flips the number for the session.";
+      };
+
       caffeine = mkOption {
         type = types.submodule {
           freeformType = freeform;
@@ -202,11 +238,22 @@ in
         Unified Quickshell desktop shell, the default desktop shell. A single
         long-running Quickshell process renders the Jylhis-themed top bar,
         the launcher, the OSD, the panels, the notification toasts and
-        centre, the lock screen, and the polkit agent, replacing waybar,
-        Vicinae, SwayOSD, mako, hyprlock, and hyprpolkitagent (each mutually
-        exclusive; see tests/eval/marchyo-shell.nix). Defaults to on with
+        centre, the lock screen, and the polkit agent, replacing hyprlock
+        and hyprpolkitagent (each mutually exclusive; see
+        tests/eval/marchyo-shell.nix). Defaults to on with
         `marchyo.desktop.enable` (set in modules/nixos/desktop-config.nix).
         Set it to `false` to keep the discrete stack. See shell/README.md.
+      '';
+    };
+
+    diskWarnPercent = lib.mkOption {
+      type = lib.types.ints.between 1 99;
+      default = 10;
+      example = 15;
+      description = ''
+        Free-space percentage of the filesystem holding the Nix store at or
+        below which the `marchyo.disk` bar widget appears. Delivered to the
+        shell as `health.diskWarnPercent` in shell.json.
       '';
     };
 
@@ -292,6 +339,10 @@ in
         - `bar.style`: `flat` (the shell default) or `segmented`, two-tone
           cluster backgrounds with curved joins.
         - `idle.{screensaver,lock}` — idle thresholds in seconds.
+        - `clock.seconds` — live seconds in the bar clock (default `false`;
+          right-click the clock to flip it for the session).
+        - `battery.percentage` — charge number beside the battery glyph
+          (default `true`; right-click the widget to flip it for the session).
         - `caffeine.autoVideo` — hold an idle inhibitor while a video plays
           (default `true`).
         - `monitors.<output>`: per-output overrides (e.g. `bar.layout` or

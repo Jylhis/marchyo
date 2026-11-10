@@ -6,14 +6,15 @@ import qs.Services
 // Caffeine (keep-awake) indicator: a pure view over Services/Caffeine, which owns
 // the one probe/toggle pair for the seat (the widget is instantiated once per
 // monitor).
-BarItem {
+BarIndicator {
     id: root
 
     interactive: true
     compact: true
+    indicatorActive: Caffeine.active
     text: Caffeine.active ? "󰅶" : "󰾪"
-    textColor: Caffeine.active ? Color.accent : Color.textMuted
-    tooltipText: Caffeine.manual ? "Caffeine on — screen stays awake" : Caffeine.autoActive ? "Caffeine auto: " + Caffeine.autoPlayer : "Caffeine off"
+    textColor: Caffeine.active ? Colors.accent : Colors.textMuted
+    tooltipText: Caffeine.manual ? I18n.t("caffeine.tooltipOn") : Caffeine.autoActive ? I18n.t("caffeine.tooltipAuto", Caffeine.autoPlayer) : I18n.t("caffeine.tooltipOff")
 
     onClicked: Caffeine.toggle()
 }

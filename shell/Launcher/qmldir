@@ -7,5 +7,9 @@ EmojiProvider 1.0 EmojiProvider.qml
 ClipboardProvider 1.0 ClipboardProvider.qml
 CalcProvider 1.0 CalcProvider.qml
 ThemeProvider 1.0 ThemeProvider.qml
+FontProvider 1.0 FontProvider.qml
 WindowsProvider 1.0 WindowsProvider.qml
 PowerProvider 1.0 PowerProvider.qml
+MenuProvider 1.0 MenuProvider.qml
+KeysProvider 1.0 KeysProvider.qml
+DmenuProvider 1.0 DmenuProvider.qml

@@ -206,10 +206,16 @@ describe("parseMatugenMaterial", () => {
 });
 
 describe("parity fixture slots", () => {
-  test("selection-bg follows base02, contour keeps the Jylhis hex", () => {
+  test("selection-bg follows base02, scrim keeps the Jylhis hex", () => {
     const resolve = tokenResolver(parity.palette, parity.base16);
     expect(resolve("selection-bg")).toBe(parity.base16.base02!);
-    expect(resolve("contour")).toBe(parity.palette.tokens.contour!);
+    expect(resolve("scrim")).toBe(parity.palette.tokens.scrim!);
+  });
+  test("legacy aliases take their live role's slot", () => {
+    const resolve = tokenResolver(parity.palette, parity.base16);
+    expect(resolve("brand")).toBe(resolve("accent"));
+    expect(resolve("contour")).toBe(resolve("text-muted"));
+    expect(resolve("decorator")).toBe(resolve("border-strong"));
   });
 });
 
@@ -232,7 +238,7 @@ describe("resolvedPalette", () => {
 });
 
 describe("toCamel", () => {
-  test("matches lib/camel-case.nix", () => {
+  test("matches nixpkgs lib.toCamelCase", () => {
     expect(toCamel("bg")).toBe("bg");
     expect(toCamel("bg-subtle")).toBe("bgSubtle");
     expect(toCamel("syn-comment")).toBe("synComment");
@@ -330,17 +336,23 @@ describe("fillTemplate", () => {
   const resolve = tokenResolver(parity.palette, parity.base16);
   test("fills token placeholders and the shade", () => {
     const out = fillTemplate(
-      "a {{token:bg}} b {{token:contour}} c {{shade}} {{token:bg}}",
+      "a {{token:bg}} b {{token:scrim}} c {{shade}} {{token:bg}}",
       resolve,
     );
     expect(out).toBe(
-      `a ${parity.base16.base00} b ${parity.palette.tokens.contour} ` +
+      `a ${parity.base16.base00} b ${parity.palette.tokens.scrim} ` +
         `c ${parity.expected.shade} ${parity.base16.base00}`,
     );
     expect(out).not.toContain("{{");
   });
+  test("bare placeholders drop the leading #", () => {
+    expect(fillTemplate("c={{bare:bg}}", resolve)).toBe(
+      `c=${parity.base16.base00!.replace("#", "")}`,
+    );
+  });
   test("an unknown token throws instead of shipping a placeholder", () => {
     expect(() => fillTemplate("{{token:nope}}", resolve)).toThrow(/nope/);
+    expect(() => fillTemplate("{{bare:nope}}", resolve)).toThrow(/nope/);
   });
 });
 
@@ -359,7 +371,7 @@ describe("hyprlandConfFor", () => {
     expect(hyprlandConfFor(tokenResolver(parity.palette, b))).toBe(
       [
         "misc:background_color rgb(100000)",
-        "general:col.active_border rgba(100009ff)",
+        "general:col.active_border rgba(100005ff)",
         "general:col.inactive_border rgba(100004ff)",
         "",
       ].join("\n"),
@@ -399,9 +411,9 @@ describe("fzfOptsFor", () => {
   test("maps roles through the palette.json slot table", () => {
     expect(opts).toContain("fg:#100005"); // text -> base05
     expect(opts).toContain("bg:#100000"); // bg -> base00
-    expect(opts).toContain("hl:#100009"); // accent -> base09
+    expect(opts).toContain("hl:#100005:underline:bold"); // text -> base05, marked by weight
     expect(opts).toContain("fg+:#100006"); // text-heading -> base06
-    expect(opts).toContain("bg+:#100001"); // accent-subtle -> base01
+    expect(opts).toContain("bg+:#100002"); // selection-bg -> base02
     expect(opts).toContain("marker:#10000b"); // green -> base0B
     expect(opts).toContain("border:#100003"); // border -> base03
     expect(opts).toContain("gutter:#100000"); // bg -> base00

@@ -14,8 +14,8 @@ BarItem {
     interactive: true
     compact: true
     text: String.fromCodePoint(0xF062E)
-    textColor: root.open ? Color.accent : Color.text
-    tooltipText: "Control Center"
+    textColor: root.open ? Colors.accent : Colors.text
+    tooltipText: I18n.t("controlcenter.title")
 
     onClicked: PanelManager.toggle("controlcenter", root)
 }

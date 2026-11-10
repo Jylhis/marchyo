@@ -133,6 +133,7 @@ assert.deepStrictEqual(Providers.route("apps", "fire"), { provider: "apps", quer
 assert.deepStrictEqual(Providers.route("apps", ""), { provider: "apps", query: "" });
 assert.deepStrictEqual(Providers.route("apps", "=2+2"), { provider: "calc", query: "2+2" });
 assert.deepStrictEqual(Providers.route("apps", "= 10 usd to eur"), { provider: "calc", query: "10 usd to eur" });
+assert.deepStrictEqual(Providers.route("theme", "light"), { provider: "theme", query: "light" });
 assert.deepStrictEqual(Providers.route("apps", ">theme"), { provider: "theme", query: "" });
 assert.deepStrictEqual(Providers.route("apps", ">theme light"), { provider: "theme", query: "light" });
 assert.deepStrictEqual(Providers.route("apps", "#term"), { provider: "windows", query: "term" });
@@ -197,13 +198,42 @@ assert.deepStrictEqual(Providers.POWER_ACTIONS.map(a => a.verb),
     ["lock", "logout", "suspend", "hibernate", "reboot", "shutdown"]);
 
 // `marchyo theme list --format json`.
-assert.deepStrictEqual(Providers.parseThemes('{"themes":[{"name":"jylhis-dark","variant":"dark","current":false},' +
+assert.deepStrictEqual(Providers.parseThemes('{"themes":[{"name":"jylhis-dark","variant":"dark","current":false,' +
+    '"preview":"/t/jylhis-dark/preview.png","wallpaper":"/t/jylhis-dark/wallpaper.png"},' +
     '{"name":"jylhis-light","variant":"light","current":true},{"variant":"x"}]}'), [
-    { name: "jylhis-dark", variant: "dark", current: false },
-    { name: "jylhis-light", variant: "light", current: true }
+    { name: "jylhis-dark", variant: "dark", current: false, preview: "/t/jylhis-dark/preview.png", wallpaper: "/t/jylhis-dark/wallpaper.png" },
+    { name: "jylhis-light", variant: "light", current: true, preview: "", wallpaper: "" }
 ]);
 assert.deepStrictEqual(Providers.parseThemes("not json"), []);
 assert.deepStrictEqual(Providers.parseThemes('{"themes":7}'), []);
+
+// `marchyo font list --kind <kind> --format json`: string lists take the
+// listing's kind; object entries carry their own.
+assert.deepStrictEqual(
+    Providers.parseFonts('{"kind":"ui","fonts":["Inter","Cantarell"],"current":{"mono":"Mono A","ui":"Inter"}}'),
+    {
+        fonts: [
+            { family: "Inter", kind: "ui", current: true },
+            { family: "Cantarell", kind: "ui", current: false }
+        ],
+        current: { mono: "Mono A", ui: "Inter" }
+    });
+assert.deepStrictEqual(
+    Providers.parseFonts('{"kind":"mono","fonts":["Mono A",7,""]}').fonts,
+    [{ family: "Mono A", kind: "mono", current: false }]);
+assert.deepStrictEqual(
+    Providers.parseFonts('{"fonts":[{"family":"Mono A","kind":"mono"},{"family":"Inter","kind":"ui","current":true}]}').fonts,
+    [{ family: "Mono A", kind: "mono", current: false }, { family: "Inter", kind: "ui", current: true }]);
+assert.deepStrictEqual(Providers.parseFonts("not json"), { fonts: [], current: {} });
+
+// ">font mono <name>" / ">font ui <name>" narrow the list to one kind.
+assert.deepStrictEqual(Providers.splitFontKind("mono jet"), { kind: "mono", query: "jet" });
+assert.deepStrictEqual(Providers.splitFontKind("UI: inter"), { kind: "ui", query: "inter" });
+assert.deepStrictEqual(Providers.splitFontKind("ui"), { kind: "ui", query: "" });
+assert.deepStrictEqual(Providers.splitFontKind("monospace"), { kind: "", query: "monospace" });
+assert.deepStrictEqual(Providers.splitFontKind(""), { kind: "", query: "" });
+assert.strictEqual(Providers.route("apps", ">font mono x", {}).provider, "font");
+assert.strictEqual(Providers.route("font", "ui x", {}).provider, "font");
 
 // `hyprctl clients -j`: hidden/unmapped dropped, most recently focused first,
 // empty titles fall back to the class.

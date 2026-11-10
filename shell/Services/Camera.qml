@@ -12,10 +12,11 @@ import qs.Commons
 //    `state` reads Unlinked unless the group is bound by a PwObjectTracker.
 // 2. Direct V4L2 opens (most browsers and conferencing apps open /dev/video*
 //    themselves, bypassing PipeWire): a bounded `find` over /proc/<pid>/fd for
-//    links to /dev/video*, then one `ps` for the holders' command names. It
-//    polls only while PipeWire reports a camera node, so a host without a
-//    camera never runs it. The PipeWire daemons are dropped from its result:
-//    their opens are the PipeWire consumers already named by signal 1.
+//    links to /dev/video*, then one `ps` for the holders' command names. The
+//    scan runs on inotify open/close events on the /dev/video* nodes, plus a
+//    60s reconcile (3s while the watcher is down), and only while PipeWire reports a camera node, so a host
+//    without a camera never runs it. The PipeWire daemons are dropped from its
+//    result: their opens are the PipeWire consumers already named by signal 1.
 QtObject {
     id: root
 
@@ -32,7 +33,10 @@ QtObject {
 
     // A camera node exists; gates the /proc poll.
     readonly property bool present: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < nodes.length; i++) {
             if (nodes[i] && !nodes[i].isStream && nodes[i].type === PwNodeType.VideoSource)
                 return true;
@@ -43,7 +47,10 @@ QtObject {
     // Consumer nodes linked to a Video/Source node.
     readonly property var consumers: {
         const out = [];
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const groups = Pipewire.linkGroups ? Pipewire.linkGroups.values : [];
+        // qmllint enable missing-property
         for (let i = 0; i < groups.length; i++) {
             const g = groups[i];
             if (g && g.source && g.target && g.source.type === PwNodeType.VideoSource && out.indexOf(g.target) < 0)
@@ -94,6 +101,8 @@ QtObject {
     onPresentChanged: {
         if (!root.present)
             root.setDeviceUsers([]);
+        else if (!root.devList.running)
+            root.devList.running = true;
     }
 
     // Prunes every /proc/<pid>/* subtree except fd/, so it reads one fd table
@@ -142,14 +151,127 @@ QtObject {
         }
     }
 
-    readonly property var poll: Timer {
-        interval: 3000
+    // /dev/video* nodes to watch, re-listed whenever PipeWire's camera set
+    // changes (a hotplugged camera shows up there first).
+    property var videoDevices: []
+
+    readonly property int cameraNodes: {
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
+        const nodes = Pipewire.nodes ? Pipewire.nodes.values : [];
+        // qmllint enable missing-property
+        let n = 0;
+        for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i] && !nodes[i].isStream && nodes[i].type === PwNodeType.VideoSource)
+                n++;
+        }
+        return n;
+    }
+    onCameraNodesChanged: {
+        if (root.present && !root.devList.running)
+            root.devList.running = true;
+    }
+
+    readonly property var devList: Process {
+        command: [Config.ls, "/dev"]
+        stdout: StdioCollector {
+            readonly property int maxChars: 256 * 1024
+            onStreamFinished: {
+                if (text.length > maxChars)
+                    return;
+                const out = text.split("\n").map(n => n.trim()).filter(n => /^video[0-9]+$/.test(n)).map(n => "/dev/" + n);
+                if (out.join() !== root.videoDevices.join())
+                    root.videoDevices = out;
+            }
+        }
+    }
+
+    // inotify open/close events on the camera nodes: an app that opens a
+    // camera directly fires one, so the /proc scan runs on demand. The
+    // watcher relaunches when the node list changes (a new command only
+    // applies on launch) and restarts with backoff when it exits; while it
+    // is down the reconcile below runs at the 3s polling cadence.
+    readonly property bool wantWatch: root.present && root.videoDevices.length > 0
+    readonly property bool watching: root.watcher.running
+    property string watchArgs: ""
+    property bool relaunch: false
+    property int watchBackoff: 1000
+    property real watchStarted: 0
+
+    onWantWatchChanged: root.syncWatcher()
+    onVideoDevicesChanged: root.syncWatcher()
+
+    function syncWatcher(): void {
+        if (!root.wantWatch) {
+            root.watchRetry.stop();
+            if (root.watcher.running)
+                root.watcher.running = false;
+            return;
+        }
+        const args = [Config.inotifywait, "-m", "-q", "-e", "open,close", "--format", "%e"].concat(root.videoDevices);
+        if (root.watcher.running) {
+            if (JSON.stringify(args) === root.watchArgs)
+                return;
+            root.relaunch = true;
+            root.watcher.running = false;
+            return;
+        }
+        root.watchArgs = JSON.stringify(args);
+        root.watcher.command = args;
+        root.watchStarted = Date.now();
+        root.watcher.running = true;
+    }
+
+    readonly property var watcher: Process {
+        stdout: SplitParser {
+            onRead: settle.restart()
+        }
+        onExited: {
+            if (root.relaunch) {
+                root.relaunch = false;
+                root.syncWatcher();
+                return;
+            }
+            if (!root.wantWatch)
+                return;
+            if (Date.now() - root.watchStarted > 30000)
+                root.watchBackoff = 1000;
+            root.watchRetry.interval = root.watchBackoff;
+            root.watchRetry.restart();
+            root.watchBackoff = Math.min(root.watchBackoff * 2, 60000);
+            settle.restart();
+        }
+    }
+
+    readonly property var watchRetry: Timer {
+        onTriggered: root.syncWatcher()
+    }
+
+    // Coalesces an open/close burst (PipeWire and the app each touch the
+    // node) into one scan, and waits out a scan that is still running.
+    readonly property var settle: Timer {
+        id: settle
+        interval: 300
+        onTriggered: {
+            if (scan.running || names.running)
+                settle.restart();
+            else
+                scan.running = true;
+        }
+    }
+
+    // Bounded reconcile for what inotify cannot see (a holder that opened the
+    // node before the watcher started): every 60s while the watcher runs, at
+    // the 3s polling cadence while it does not.
+    readonly property var reconcile: Timer {
+        interval: root.watching ? 60000 : 3000
         running: root.present
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            if (!scan.running && !names.running)
-                scan.running = true;
+            if (!root.devList.running)
+                root.devList.running = true;
+            settle.restart();
         }
     }
 }

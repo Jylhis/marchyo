@@ -7,15 +7,39 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// StatusNotifier system tray, grouped behind a "·" expander (waybar parity) so
-// the bar stays compact when the tray is idle.
+// StatusNotifier system tray. Items listed in the entry's `settings.pinned`
+// (an SNI id or title) always show; every other item folds into a drawer behind
+// a "·" expander, so the bar stays compact when the tray is idle. With no
+// pinned items the whole tray is the drawer.
 RowLayout {
     id: root
 
-    spacing: Style.spacing
+    spacing: Style.space("xs")
+
+    // Per-entry layout settings (applyWidget): { pinned: [id or title, ...] }.
+    property var settings: ({})
+    readonly property var pinned: Array.isArray(root.settings.pinned) ? root.settings.pinned : []
 
     property bool expanded: false
+    // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+    // qmllint disable missing-property
     readonly property int itemCount: SystemTray.items ? SystemTray.items.values.length : 0
+    // qmllint enable missing-property
+    readonly property int foldedCount: {
+        let n = 0;
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
+        const items = SystemTray.items ? SystemTray.items.values : [];
+        // qmllint enable missing-property
+        for (let i = 0; i < items.length; i++)
+            if (!root.isPinned(items[i]))
+                n++;
+        return n;
+    }
+
+    function isPinned(item): bool {
+        return item && (root.pinned.indexOf(item.id) >= 0 || root.pinned.indexOf(item.title) >= 0);
+    }
 
     // Hide the whole widget, not just the expander, when the tray is empty:
     // a visible root with only hidden children still leaks its slot's spacing
@@ -28,9 +52,9 @@ RowLayout {
     BarItem {
         interactive: true
         compact: true
-        visible: root.itemCount > 0
+        visible: root.foldedCount > 0
         text: "·"
-        tooltipText: root.expanded ? "Hide tray icons" : "Show tray icons"
+        tooltipText: I18n.t(root.expanded ? "tray.hide" : "tray.show")
         onClicked: root.expanded = !root.expanded
     }
 
@@ -41,16 +65,20 @@ RowLayout {
             id: trayItem
 
             required property var modelData
-            visible: root.expanded
-            implicitWidth: root.expanded ? Style.fontSize + 4 : 0
-            implicitHeight: Style.fontSize + 4
+            readonly property bool open: root.expanded || root.isPinned(modelData)
+            visible: open
+            implicitWidth: open ? Style.fontSize + Style.space("xs") : 0
+            implicitHeight: Style.fontSize + Style.space("xs")
 
             QsMenuAnchor {
                 id: menuAnchor
                 menu: trayItem.modelData && trayItem.modelData.hasMenu ? trayItem.modelData.menu : null
                 anchor.item: trayItem
-                anchor.edges: Edges.Bottom | Edges.Left
-                anchor.gravity: Edges.Top | Edges.Right
+                // The linter types a `|` of Edges flags as int; Edges::Flags takes it at runtime.
+                // qmllint disable incompatible-type
+                anchor.edges: (Style.barBottom ? Edges.Top : Edges.Bottom) | Edges.Left
+                anchor.gravity: (Style.barBottom ? Edges.Bottom : Edges.Top) | Edges.Right
+                // qmllint enable incompatible-type
             }
 
             IconImage {

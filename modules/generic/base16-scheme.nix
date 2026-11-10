@@ -49,7 +49,7 @@ let
     in
     if matches == [ ] then null else builtins.head matches;
 
-  hexByte = import ../../lib/hex-byte.nix { inherit lib; };
+  hexByte = lib.fromHexString;
 
   # Fallback polarity: BT.601-weighted luminance of base00 (the background).
   luminanceVariant =

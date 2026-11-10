@@ -7,8 +7,10 @@ import Quickshell.Io
 // Theme.qml), with a runtime override from the session theme marker.
 //
 // `marchyo theme set` writes the active theme's colors.json to
-// /var/lib/marchyo/greeter/theme.json (a root:users 1775 dir, see
-// modules/nixos/boot.nix). That file is user-writable, so the greeter never
+// /var/lib/marchyo/greeter/theme-<user>.json (a root:users 1775 dir, see
+// modules/nixos/boot.nix), one file per user; the greeter follows the marker
+// of `user`, the last user who logged in. The files are user-writable, so the
+// greeter never
 // points a FileView at it: a FileView on the directory (preload: false, never
 // read) is the doorbell, and a bounded, time-limited `head` reads the file.
 // Only #rrggbb strings for keys the baked palette already has are taken;
@@ -24,8 +26,15 @@ QtObject {
     // and var properties notify per value, not per member.
     property var palette: root.baked
 
+    // Whose session theme to follow (shell.qml sets the last user). Only a
+    // plain login name forms a marker path; anything else keeps the baked
+    // palette.
+    property string user: ""
+    readonly property bool userValid: /^[a-z_][a-z0-9_-]{0,31}$/.test(root.user)
     readonly property string markerDir: "/var/lib/marchyo/greeter"
-    readonly property string markerPath: root.markerDir + "/theme.json"
+    readonly property string markerPath: root.userValid ? root.markerDir + "/theme-" + root.user + ".json" : ""
+
+    onMarkerPathChanged: root.refresh()
     readonly property int maxChars: 16 * 1024
 
     // The build-time host palette every runtime value falls back to.
@@ -89,10 +98,14 @@ QtObject {
     }
 
     function refresh(): void {
-        if (readProc.running)
-            readProc.pending = true;
+        if (root.markerPath === "") {
+            root.reset();
+            return;
+        }
+        if (root.readProc.running)
+            root.readProc.pending = true;
         else
-            readProc.running = true;
+            root.readProc.running = true;
     }
 
     // Doorbell: rings on any entry change in the marker dir (the CLI's
@@ -108,7 +121,6 @@ QtObject {
     // `timeout` bounds a FIFO planted at the marker path; `head -c` bounds
     // the size. A missing file yields empty output, which resets.
     readonly property var readProc: Process {
-        id: readProc
         property bool pending: false
         command: [Config.timeout, "2", Config.head, "-c", String(root.maxChars + 1), "--", root.markerPath]
         stdout: StdioCollector {
@@ -120,9 +132,9 @@ QtObject {
             }
         }
         onExited: {
-            if (readProc.pending) {
-                readProc.pending = false;
-                readProc.running = true;
+            if (root.readProc.pending) {
+                root.readProc.pending = false;
+                root.readProc.running = true;
             }
         }
     }

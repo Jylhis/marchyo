@@ -1,13 +1,13 @@
 # jj config wired to the marchyo user model like git (modules/home/git.nix):
 # identity comes from marchyo.users.<username>. Cross-platform.
 {
-  osConfig ? { },
+  osConfig,
   config,
   lib,
   ...
 }:
 let
-  marchyoUsers = (osConfig.marchyo or { }).users or { };
+  marchyoUsers = osConfig.marchyo.users;
   hasUser = builtins.hasAttr config.home.username marchyoUsers;
   userConfig =
     if hasUser then

@@ -1,0 +1,175 @@
+# shellcheck shell=bash
+# Sourced by dev/sandbox inside the sandbox: a private system bus with python-dbusmock
+# services and a private PipeWire. Exports DBUS_SYSTEM_BUS_ADDRESS.
+
+nm=/org/freedesktop/NetworkManager
+
+bus() { gdbus call --address "$DBUS_SYSTEM_BUS_ADDRESS" "$@"; }
+
+call() {
+  local dest=$1 path=$2 method=$3
+  shift 3
+  bus --dest "$dest" --object-path "$path" --method "$method" "$@"
+}
+
+mock() { call "$1" "$2" "${MOCK_IFACE:-org.freedesktop.DBus.Mock}.$3" "${@:4}"; }
+
+# The object path in a gdbus reply such as ('/org/x',).
+path_of() { sed -n "s/^(\(<\)\?'\([^']*\)'.*/\2/p"; }
+
+wait_name() {
+  local i
+  for ((i = 0; i < 100; i++)); do
+    [[ $(call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner \
+      "$1" 2>/dev/null) == "(true,)" ]] && return 0
+    sleep 0.1
+  done
+  die "bus name $1 did not appear"
+}
+
+start_bus() {
+  local conf=$R/system-bus.conf
+  cat >"$conf" <<CONF
+<busconfig>
+  <type>system</type>
+  <listen>unix:path=$R/sysbus</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+    <allow user="*"/>
+  </policy>
+</busconfig>
+CONF
+  dbus-daemon --config-file="$conf" --nofork --nopidfile >"$R/system-bus.log" 2>&1 &
+  export DBUS_SYSTEM_BUS_ADDRESS=unix:path=$R/sysbus
+  local i
+  for ((i = 0; i < 100; i++)); do
+    [[ -S $R/sysbus ]] && return 0
+    sleep 0.1
+  done
+  die "system bus socket did not appear"
+}
+
+# start_template NAME BUS_NAME [JSON_PARAMETERS]
+start_template() {
+  python3 -m dbusmock --system -t "$1" -p "${3:-{\}}" >>"$R/mocks.log" 2>&1 &
+  wait_name "$2"
+}
+
+# add_prop DEST PATH IFACE NAME VARIANT: ignores a property the template already has.
+add_prop() { mock "$1" "$2" AddProperty "$3" "$4" "$5" >/dev/null 2>&1 || true; }
+
+mock_battery_props() {
+  local dev=org.freedesktop.UPower.Device p
+  for p in /org/freedesktop/UPower/devices/BAT0 /org/freedesktop/UPower/devices/DisplayDevice; do
+    add_prop org.freedesktop.UPower "$p" $dev PowerSupply "<true>"
+    add_prop org.freedesktop.UPower "$p" $dev Capacity "<100.0>"
+    add_prop org.freedesktop.UPower "$p" $dev NativePath "<'BAT0'>"
+    add_prop org.freedesktop.UPower "$p" $dev Model "<'Sandbox Battery'>"
+    add_prop org.freedesktop.UPower "$p" $dev EnergyRate "<8.0>"
+    add_prop org.freedesktop.UPower "$p" $dev TimeToFull "<int64 0>"
+    add_prop org.freedesktop.UPower "$p" $dev IconName "<'battery-good-symbolic'>"
+  done
+}
+
+mock_upower() {
+  start_template upower org.freedesktop.UPower '{"OnBattery": true}'
+  local up=org.freedesktop.UPower root=/org/freedesktop/UPower
+  mock $up $root AddDischargingBattery BAT0 "Sandbox Battery" \
+    "$BATTERY_PERCENT" "$BATTERY_SECONDS_TO_EMPTY" >/dev/null
+  # type 2 battery, state 2 discharging, warning level 1 none
+  mock $up $root SetupDisplayDevice 2 2 "$BATTERY_PERCENT" 40.0 60.0 8.0 \
+    "$BATTERY_SECONDS_TO_EMPTY" 0 true battery-good-symbolic 1 >/dev/null
+  mock_battery_props
+}
+
+mock_wifi_props() {
+  local d=org.freedesktop.NetworkManager
+  add_prop $d "$1" $d.Device HwAddress "<'02:00:00:00:00:01'>"
+  add_prop $d "$1" $d.Device Autoconnect "<true>"
+  add_prop $d "$1" $d.Device InterfaceFlags "<uint32 1>"
+  add_prop $d "$1" $d.Device.Wireless LastScan "<int64 0>"
+  add_prop $d "$1" $d.Device.Wireless ActiveAccessPoint "<objectpath '$2'>"
+}
+
+mock_networkmanager() {
+  local d=org.freedesktop.NetworkManager
+  start_template networkmanager $d
+  local dev ap conn
+  # device state 100 is activated
+  dev=$(mock $d $nm AddWiFiDevice wlan0 wlan0 100 | path_of)
+  ap=$(mock $d $nm AddAccessPoint "$dev" ap0 "$WIFI_SSID" 00:11:22:33:44:55 2 2412 54000 \
+    "$WIFI_STRENGTH" 256 | path_of)
+  conn=$(mock $d $nm AddWiFiConnection "$dev" wifi0 "$WIFI_SSID" wpa-psk | path_of)
+  mock $d $nm AddActiveConnection "['$dev']" "$conn" "$ap" wifi0 2 >/dev/null
+  mock $d $nm AddMethod $d GetAllDevices "" ao \
+    'ret = [k for k in objects.keys() if "/Devices" in k]' >/dev/null
+  mock_wifi_props "$dev" "$ap"
+  add_prop $d $nm $d ConnectivityCheckAvailable "<false>"
+  add_prop $d $nm $d ConnectivityCheckEnabled "<false>"
+}
+
+mock_bluez() {
+  local b=org.bluez
+  start_template bluez5 $b
+  local MOCK_IFACE=org.bluez.Mock
+  mock $b / AddAdapter hci0 "$BT_ADAPTER_ALIAS" >/dev/null
+  mock $b / AddDevice hci0 "$BT_DEVICE_ADDRESS" "$BT_DEVICE_ALIAS" >/dev/null
+  mock $b / PairDevice hci0 "$BT_DEVICE_ADDRESS" >/dev/null
+  call $b /org/bluez/hci0 org.bluez.Adapter1.SetDiscoveryFilter "{}" >/dev/null
+}
+
+mock_login() {
+  start_template logind org.freedesktop.login1
+  mock org.freedesktop.login1 /org/freedesktop/login1 AddSession 1 seat0 "$(id -u)" \
+    "$(id -un)" true >/dev/null
+}
+
+mock_static() {
+  local ppd=org.freedesktop.UPower.PowerProfiles
+  start_template upower_power_profiles_daemon $ppd
+  call $ppd /org/freedesktop/UPower/PowerProfiles org.freedesktop.DBus.Properties.Set \
+    $ppd ActiveProfileHolds "<@aa{sv} []>" >/dev/null
+  start_template polkitd org.freedesktop.PolicyKit1
+}
+
+start_pipewire() {
+  local pw=$XDG_CONFIG_HOME/pipewire/pipewire.conf.d
+  mkdir -p "$pw"
+  cat >"$pw/10-null-sink.conf" <<CONF
+context.objects = [
+  { factory = adapter
+    args = {
+      factory.name = support.null-audio-sink
+      node.name = sandbox-sink
+      node.description = "$SINK_DESCRIPTION"
+      media.class = Audio/Sink
+      audio.position = [ FL FR ]
+      object.linked = true
+    }
+  }
+]
+CONF
+  pipewire >"$R/pipewire.log" 2>&1 &
+  wireplumber >"$R/wireplumber.log" 2>&1 &
+  local i
+  for ((i = 0; i < 100; i++)); do
+    [[ -S $R/pipewire-0 ]] && return 0
+    sleep 0.1
+  done
+  die "pipewire socket did not appear"
+}
+
+system_bus_up() {
+  # shellcheck disable=SC1091
+  source "$1/system-bus.env"
+  start_bus
+  mock_upower
+  mock_networkmanager
+  mock_bluez
+  mock_login
+  mock_static
+  start_pipewire
+}

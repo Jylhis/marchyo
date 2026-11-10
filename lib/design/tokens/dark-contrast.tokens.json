@@ -1,0 +1,516 @@
+{
+  "color": {
+    "bg": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0,
+          0,
+          0
+        ],
+        "hex": "#000000"
+      }
+    },
+    "bg-subtle": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.051,
+          0.0471,
+          0.0392
+        ],
+        "hex": "#0d0c0a"
+      }
+    },
+    "surface": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.0784,
+          0.0706,
+          0.0588
+        ],
+        "hex": "#14120f"
+      }
+    },
+    "surface-raised": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.1098,
+          0.098,
+          0.0824
+        ],
+        "hex": "#1c1915"
+      }
+    },
+    "text": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          1,
+          1
+        ],
+        "hex": "#ffffff"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-muted": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.8392,
+          0.8118,
+          0.7647
+        ],
+        "hex": "#d6cfc3"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-heading": {
+      "$value": "{color.text}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "text-faint": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.6588,
+          0.6039,
+          0.5255
+        ],
+        "hex": "#a89a86"
+      },
+      "$description": "Decoration and disabled states only. The artifact does not require AAA for this role."
+    },
+    "label": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.7098,
+          0.3098
+        ],
+        "hex": "#ffb54f"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "on-primary": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.0431,
+          0.0431,
+          0.0431
+        ],
+        "hex": "#0b0b0b"
+      },
+      "$description": "Preserves the artifact foreground when the page ground becomes pure black.",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.primary}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "link": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.6588,
+          0.8,
+          1
+        ],
+        "hex": "#a8ccff"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "border": {
+      "$value": "{color.text-faint}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 4.5
+            }
+          ]
+        }
+      }
+    },
+    "border-strong": {
+      "$value": "{color.text-muted}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 4.5
+            }
+          ]
+        }
+      }
+    },
+    "rule": {
+      "$value": "{color.label}"
+    },
+    "bevel-face": {
+      "$value": "{color.surface}"
+    },
+    "bevel-lo": {
+      "$value": "{color.bg}"
+    },
+    "bevel-edge": {
+      "$value": "{color.label}"
+    },
+    "destructive": {
+      "$value": "{status.err}"
+    }
+  },
+  "status": {
+    "err": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.5412,
+          0.4902
+        ],
+        "hex": "#ff8a7d"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "ok": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.6235,
+          0.8784,
+          0.6588
+        ],
+        "hex": "#9fe0a8"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "info": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.4941,
+          0.8784,
+          0.8157
+        ],
+        "hex": "#7ee0d0"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "warn": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.8157,
+          0.5412
+        ],
+        "hex": "#ffd08a"
+      },
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "chart": {
+    "ink": {
+      "$value": "{color.text}",
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "ansi": {
+    "black": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.102,
+          0.0902,
+          0.0745
+        ],
+        "hex": "#1a1713"
+      }
+    },
+    "red": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.4157,
+          0.3529
+        ],
+        "hex": "#ff6a5a"
+      }
+    },
+    "green": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.498,
+          0.8196,
+          0.5412
+        ],
+        "hex": "#7fd18a"
+      }
+    },
+    "blue": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.5412,
+          0.7216,
+          1
+        ],
+        "hex": "#8ab8ff"
+      }
+    },
+    "white": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.6118,
+          0.5804,
+          0.5333
+        ],
+        "hex": "#9c9488"
+      }
+    },
+    "bright-black": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.4549,
+          0.4157,
+          0.3608
+        ],
+        "hex": "#746a5c"
+      }
+    },
+    "bright-white": {
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.9686,
+          0.9529,
+          0.9255
+        ],
+        "hex": "#f7f3ec"
+      }
+    }
+  },
+  "syntax": {
+    "keyword": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "string": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "number": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "function": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "builtin": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "type": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "variable": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "comment": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    },
+    "docstring": {
+      "$extensions": {
+        "com.jylhis": {
+          "contrast": [
+            {
+              "on": "{color.bg}",
+              "min": 7
+            }
+          ]
+        }
+      }
+    }
+  },
+  "foreground": {
+    "destructive": {
+      "$value": "{color.on-primary}",
+      "$description": "Preserves the artifact foreground on destructive fills when bg becomes pure black."
+    }
+  }
+}

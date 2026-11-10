@@ -3,13 +3,12 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
-  defaults = (osConfig.marchyo or { }).defaults or { };
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
+  defaults = osConfig.marchyo.defaults;
 
   browserDesktopFiles = {
     brave = "brave-browser.desktop";
@@ -42,25 +41,26 @@ let
     thunar = "thunar.desktop";
   };
 
-  # TUI mail clients ship a Terminal=true desktop file with a mailto handler;
+  # The TUI mail client ships a Terminal=true desktop file with a mailto handler;
   # web/null clients get none and fall back to the browser.
   emailDesktopFiles = {
     aerc = "aerc.desktop";
-    neomutt = "neomutt.desktop";
   };
 
-  browser = defaults.browser or null;
-  editor = defaults.editor or null;
-  videoPlayer = defaults.videoPlayer or null;
-  audioPlayer = defaults.audioPlayer or null;
-  fileManager = defaults.fileManager or null;
-  email = defaults.email or null;
+  inherit (defaults)
+    browser
+    editor
+    videoPlayer
+    audioPlayer
+    fileManager
+    email
+    ;
 
   browserDesktop = lib.optional (browser != null) browserDesktopFiles.${browser};
   editorDesktop = lib.optional (
     editor != null && builtins.hasAttr editor editorDesktopFiles
   ) editorDesktopFiles.${editor};
-  # TUI players (e.g. cmus) have no single-file MIME handler; hasAttr-guard so
+  # A player without a desktop-file entry has no MIME handler; hasAttr-guard so
   # selecting one simply registers no association instead of failing eval.
   videoDesktop = lib.optional (
     videoPlayer != null && builtins.hasAttr videoPlayer videoPlayerDesktopFiles
@@ -103,7 +103,7 @@ let
     "inode/directory" = fileManagerDesktop;
   };
 
-  # mailto: aerc/neomutt get their own desktop file; gmail/outlook (and any
+  # mailto: aerc gets its own desktop file; gmail/outlook (and any
   # client without a desktop file) fall back to opening in the browser.
   emailMimeTypes =
     if email == null then
@@ -115,8 +115,8 @@ let
     else
       { };
 
-  emacsCfg = (osConfig.marchyo or { }).emacs or { };
-  orgProtocolEnabled = (emacsCfg.enable or false) && (emacsCfg.orgProtocol.enable or true);
+  emacsCfg = osConfig.marchyo.emacs;
+  orgProtocolEnabled = emacsCfg.enable && emacsCfg.orgProtocol.enable;
   orgProtocolMimeTypes = lib.optionalAttrs orgProtocolEnabled {
     "x-scheme-handler/org-protocol" = [ "emacsclient.desktop" ];
   };

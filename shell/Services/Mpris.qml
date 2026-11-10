@@ -15,8 +15,11 @@ QtObject {
     // player's playback state changes (the Connections below poke `rev`).
     property int rev: 0
     readonly property var player: {
-        rev; // re-evaluate on model/state changes
+        void root.rev; // re-evaluate on model/state changes
+        // Quickshell's per-module qmltypes declare UntypedObjectModel as an opaque stub, so qmllint cannot see ObjectModel.values.
+        // qmllint disable missing-property
         const list = Mpris.players ? Mpris.players.values : [];
+        // qmllint enable missing-property
         if (list.length === 0)
             return null;
         for (let i = 0; i < list.length; i++) {
@@ -52,7 +55,10 @@ QtObject {
     // Nudge `rev` so `player` re-picks when the player set changes; stateConn
     // below does the same when the current player's playback state changes.
     readonly property var conn: Connections {
+        // UntypedObjectModel is an opaque stub in Quickshell's per-module qmltypes, so qmllint does not know it is a QObject.
+        // qmllint disable incompatible-type
         target: Mpris.players
+        // qmllint enable incompatible-type
         function onValuesChanged() {
             root.rev++;
         }

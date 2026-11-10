@@ -16,7 +16,7 @@ Provider {
     providerId: "calc"
     prefix: Providers.prefixFor("calc")
     selectOnEmpty: true
-    emptyText: root.expression.length === 0 ? "type an expression" : "no result"
+    emptyText: root.expression.length === 0 ? I18n.t("launcher.calcType") : I18n.t("launcher.calcNoResult")
 
     readonly property string expression: root.query.trim()
 
@@ -45,10 +45,9 @@ Provider {
         ];
     }
 
-    onExpressionChanged: debounce.restart()
+    onExpressionChanged: root.debounce.restart()
 
     readonly property var debounce: Timer {
-        id: debounce
         interval: 120
         onTriggered: root.evaluate()
     }
@@ -56,16 +55,15 @@ Provider {
     function evaluate() {
         if (root.expression.length === 0 || root.expression === root.answerFor)
             return;
-        if (proc.running) {
+        if (root.proc.running) {
             root.queued = true;
             return;
         }
         root.evaluating = root.expression;
-        proc.running = true;
+        root.proc.running = true;
     }
 
     readonly property var proc: Process {
-        id: proc
         // The expression travels as one argv element after "--", so qalc
         // never reads it as an option and no shell interprets it.
         command: [Config.qalc, "-t", "--", root.evaluating]

@@ -3,9 +3,9 @@ title: Theming
 description: Customize system appearance with the Jylhis design system and base16 color schemes
 ---
 
-Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Waybar, Mako, Ghostty, fzf, bat, hyprlock, starship, the console, the Vicinae launcher, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, ncspot, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild. There is no Stylix: marchyo retired it once every surface it covered had a marchyo-owned path.
+Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Ghostty, fzf, bat, hyprlock, starship, the console, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild. There is no Stylix: marchyo retired it once every surface it covered had a marchyo-owned path.
 
-The launcher is a slightly different case, and split by shell: with `marchyo.shell.enable` the in-shell launcher themes itself from the design tokens at runtime (the shell's `Color` singleton — no registration needed), while the discrete stack's Vicinae gets two real themes (`jylhis-dark` for dark, `jylhis-light` for light) generated from the design tokens and registered both, so the full color surface — text, inputs, buttons, list and grid selection, scrollbars, tooltips — is covered rather than just the background/accent basics. See [Launcher](/docs/configuration/launcher/).
+The in-shell launcher themes itself from the design tokens at runtime (the shell's `Color` singleton), so it needs no theme registration. See [Launcher](/docs/configuration/launcher/).
 
 ## Options
 
@@ -16,8 +16,10 @@ The launcher is a slightly different case, and split by shell: with `marchyo.she
 | `marchyo.theme.scheme` | `string` or `null` | `null` | Override the base16 color scheme (a tinted-schemes catalog name) |
 | `marchyo.theme.fontScale` | `number` (0.5–4.0) | `1.25` | Global font-size multiplier applied to every text surface |
 | `marchyo.theme.themes` | `list of string or inline base16 theme` | `["jylhis-dark" "jylhis-light"]` | Themes available for runtime switching (pre-built into the closure) |
+| `marchyo.theme.themes.[].wallpapers` | `list of path` | `[]` | Further wallpapers of an inline theme, listed in the theme dir's `wallpapers/` ([details](#wallpaper)) |
+| `marchyo.theme.appearance.gaps` | `bool` | `false` | Gaps between tiled windows and the screen edge ([details](#window-appearance)) |
 | `marchyo.theme.followWallpaper` | `bool` | `false` | `marchyo bg set` / `bg next` also generate a matugen theme from the new wallpaper ([details](#follow-the-wallpaper)) |
-| `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo grid wallpaper where supported |
+| `marchyo.theme.wallpaper.enable` | `bool` | `true` | Enable the generated Marchyo wallpapers where supported |
 | `marchyo.theme.wallpaper.package` | `package` | `pkgs.marchyo-wallpapers` | Package providing generated Marchyo wallpaper assets |
 
 ## Basic usage
@@ -31,16 +33,15 @@ marchyo.theme = {
 
 ## Color schemes
 
-By default the theme is the [Jylhis Design System](https://github.com/jylhis/design) palette, derived from its `themes/jylhis.json`:
+By default the theme is the [Jylhis Design System](https://github.com/jylhis/design) palette, derived from its DTCG `tokens/`:
 
 | Variant | Palette |
 |---------|---------|
-| `"dark"` | Jylhis Dark (the "Negative" mode) |
-| `"light"` | Jylhis Light (the "Print" mode) |
+| `"dark"` | Jylhis Dark (the "Black" mode) |
+| `"light"` | Jylhis Light (the "Paper" mode) |
 
-Both variants sit on a cool, near-neutral ground with a single bronze
-interactive accent, a benchmark-vermilion brand mark, and a structural contour
-blue used for linework only. Code colors are Emacs Modus Operandi (light) /
+Both variants sit on a neutral grey ground (off-white paper or near-black)
+with a single international-orange accent for interaction and the mark. Code colors are Emacs Modus Operandi (light) /
 Vivendi (dark), so syntax reads identically in every editor and terminal.
 
 To use a different base16 scheme instead, set `marchyo.theme.scheme` to the name of a `.yaml` file in the [tinted-theming/schemes](https://github.com/tinted-theming/schemes) catalog (the `base16/` directory):
@@ -60,41 +61,48 @@ A base16 theme in [runtime switching](#runtime-theme-switching) (a catalog or in
 | `base01` | `bg-subtle`, `accent-subtle` |
 | `base02` | `surface`, `selection-bg` |
 | `base03` | `text-faint`, `border`, `syn-comment` |
-| `base04` | `text-muted`, `border-strong` |
+| `base04` | `text-muted`, `border-strong`, `contour`, `decorator` |
 | `base05` | `text` |
 | `base06` | `text-heading` |
 | `base07` | `surface-raised` |
 | `base08` | `status-err`, `destructive`, `syn-variable` |
-| `base09` | `accent`, `accent-hover`, `cursor`, `syn-number` |
+| `base09` | `accent`, `accent-hover`, `cursor`, `brand`, `syn-number` |
 | `base0A` | `status-warn` |
 | `base0B` | `syn-string`, `status-ok` |
 | `base0C` | `syn-type`, `syn-builtin` |
 | `base0D` | `status-info`, `syn-function` |
 | `base0E` | `syn-keyword` |
-| `base0F` | `brand` |
 
-`selection-bg`, `destructive` and the extra `syn-*` tokens follow the slot the [base16 styling guidelines](https://github.com/tinted-theming/home/blob/main/styling.md) name for that role (Selection Background, Diff Deleted, Variables, Integers, Support, Functions). `contour`, `decorator`, `scrim` and `syn-docstring` have no base16 role and keep the Jylhis hex. A matugen theme additionally takes `border`, `border-strong` and `accent-subtle` from Material's `outline_variant`, `outline` and `primary_container` when matugen emits them.
+`selection-bg`, `destructive` and the extra `syn-*` tokens follow the slot the [base16 styling guidelines](https://github.com/tinted-theming/home/blob/main/styling.md) name for that role (Selection Background, Diff Deleted, Variables, Integers, Support, Functions). The legacy aliases `brand`, `contour` and `decorator` share the slot of the role they alias. `scrim` and `syn-docstring` have no base16 role and keep the Jylhis hex. No token reads `base0F`. A matugen theme additionally takes `border`, `border-strong` and `accent-subtle` from Material's `outline_variant`, `outline` and `primary_container` when matugen emits them.
 
 ## Fonts
 
-Marchyo carries the design system's three type roles across the system — the
-fontconfig role mapping (`modules/generic/fontconfig.nix`), the GNOME interface
+Marchyo carries the design system's UI type roles across the system — the
+fontconfig role mapping (`modules/nixos/fonts.nix`), the GNOME interface
 fonts Qt and GTK apps resolve (`modules/home/jylhis-theme.nix`), and every
-surface that names a family directly. The defaults are:
+surface that names a family directly. The families come from the design
+system's `lib.fonts`. The display face (Jost) is installed but only the web
+uses it as a role. The defaults are:
 
-| Role | Family | Package |
-|------|--------|---------|
-| Display / headings (serif) | Zilla Slab | `pkgs.zilla-slab` |
-| Body (sansSerif) | Hanken Grotesk | `pkgs.hanken-grotesk` |
-| Monospace | BlexMono Nerd Font (IBM Plex Mono, Nerd Font patched) | `pkgs.nerd-fonts.blex-mono` |
+- Serif: DejaVu Serif (`pkgs.dejavu_fonts`).
+- Body and UI (sansSerif): Fira Sans (`pkgs.fira-sans`).
+- Monospace: IBM Plex Mono (`pkgs.ibm-plex`).
 
-The Nerd Font patch of IBM Plex Mono is used for monospace because the desktop
-chrome — Waybar, Mako, hyprlock, Ghostty — needs the icon glyphs. To change the
+The shell, hyprlock, Ghostty and the Emacs fixed face name BlexMono Nerd Font
+(`pkgs.nerd-fonts.blex-mono`, IBM Plex Mono patched) directly, because they
+need the icon glyphs. To change the
 role mapping, override the fontconfig defaults:
 
 ```nix
 fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
 ```
+
+Home Manager scans `~/.nix-profile/share/fonts`, and fontconfig's per-user
+cache under `~/.cache/fontconfig` can outlive a generation and keep serving
+fonts that left the profile. Marchyo hashes the profile font set at every
+activation and rebuilds the cache when it changes
+(`marchyo.fonts.cleanUserCache`, default on); running apps pick the fonts up
+after a restart.
 
 ### Font size
 
@@ -114,7 +122,7 @@ proportions between surfaces are preserved.
 
 ## Runtime theme switching
 
-`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Waybar CSS, Mako config, Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, the k9s skin, lazygit, spotify-player and gdu colors, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
+`marchyo.theme.themes` lists the themes available for **runtime** switching — no rebuild needed. Each listed theme's desktop assets (Hyprland colors, Ghostty colors, wallpaper, GTK CSS + the dconf color-scheme, bat config, fzf colors, hyprlock colors, console palette, the k9s skin, lazygit, spotify-player and gdu colors, the [application surfaces](#application-surfaces), the [terminal, editor and browser surfaces](#terminal-editor-and-browser-surfaces), a `wallpapers/` dir, and a `palette.json` token map) are pre-built into the system closure so a switch is an instant symlink swap. The default list is the Jylhis pair; add any tinted-schemes catalog name to make it switchable:
 
 ```nix
 marchyo.theme.themes = [
@@ -145,18 +153,24 @@ marchyo.theme.themes = [
       base08 = "#c34043"; base09 = "#ffa066"; base0A = "#dca561"; base0B = "#98bb6c";
       base0C = "#7fb4ca"; base0D = "#7e9cd8"; base0E = "#957fb8"; base0F = "#d27e99";
     };
-    # wallpaper = ./kanagawa.png;  # optional; defaults to the Jylhis grid
+    # wallpaper = ./kanagawa.png;     # optional; defaults to the Jylhis grid
+    # wallpapers = [ ./kanagawa-2.png ];  # optional; offered by `marchyo bg list`
   }
 ];
 ```
 
 Runtime switching covers every surface except the Plymouth boot splash (it is
-not on screen during a session) and ncspot (its theme sits inline in
-`config.toml`, which has no include, so it follows the build-time
-`variant`/`scheme` at rebuild). Qt follows the GTK swap: the session runs
+not on screen during a session). Qt follows the GTK swap: the session runs
 `QT_QPA_PLATFORMTHEME=gtk3`, so Qt apps pick up the swapped `gtk.css` and dconf
-color-scheme on next launch. The switch is ephemeral: the next activation
-resets to the declarative default.
+color-scheme on next launch. Marchyo owns the effective theme: a saved selection
+takes precedence over the Nix default. Activation and session startup restore
+that selection, or initialize the default when no override exists. Application
+assets and the desktop preference derive from the same selection; Home Manager
+does not independently reset the preference while runtime theming is enabled.
+A failed preference update preserves the previous selection and application
+links. `marchyo runtime restore` reports failures with a nonzero status and
+continues restoring independent overrides. `--revert` restores the Nix default;
+`--apply` makes the selection declarative.
 
 The TUI apps read their colours through the `~/.config/marchyo/current-theme`
 pointer. k9s restyles open sessions: `marchyo theme` relinks
@@ -169,7 +183,7 @@ time they start. `~/.config/spotify-player/theme.toml` and
 `LG_CONFIG_FILE` is a session variable, so it applies from the next login.
 These TUI colours come from base16 slots: with `marchyo.theme.scheme` set, the
 declarative theme's files carry that scheme's slots, as the build-time config
-does. Off the desktop, and on Darwin, the TUI apps keep the build-time colours.
+does. Off the desktop, the TUI apps keep the build-time colours.
 
 GTK apps follow a runtime switch on next launch (newly started apps read the
 swapped `~/.config/gtk-{3,4}.0/gtk.css`; libadwaita apps additionally restyle
@@ -181,9 +195,38 @@ running terminals. The Quickshell bar (`marchyo.shell.enable`)
 recolors live as well — it reads the active theme's palette through the same
 pointer — and `Super+Shift+L` cycles the theme from the compositor.
 
+## Application surfaces
+
+Every theme dir also carries colours for two more applications, generated from the same base16 slots (the Jylhis pair, catalog and inline themes, and `theme generate` all emit them):
+
+- **tmux**: see [tmux](#tmux). The status line, messages, pane borders and pane background follow the theme.
+- **fcitx5**: `fcitx5-theme.conf` is linked as the classicui theme `marchyo` (`~/.local/share/fcitx5/themes/marchyo/theme.conf`, with the stock glyphs). `marchyo.theme.enable` makes the fcitx5 module select it, and a switch reloads classicui.
+
+Both read their files through the `current-theme` pointer, so the declarative reset on activation covers them.
+
+### tmux
+
+`marchyo.tmux.enable` defaults to `marchyo.development.enable`. It turns on `programs.tmux` with the `tmux-256color` terminal and true colour, mouse, vi copy mode (`v` selects, `y` copies), windows and panes numbered from 1, no escape delay and a 50000-line history. The theme colours are baked in at build time; on a desktop the module then sources `~/.config/marchyo/current-theme/tmux.conf` (`source-file -q`), and `marchyo theme` runs `tmux source-file` on a running server. `Super+Alt+Return` opens the `Work` session (`tmux new -A -s Work`).
+
+## Terminal, editor and browser surfaces
+
+Every theme dir carries seven more files from the same base16 slots, and the build-variant dir ships each one as a `templates/` placeholder file that `theme generate` fills.
+
+- **btop**: `btop.theme`. btop reads it as the `marchyo` theme through `~/.config/btop/themes/marchyo.theme`, which links into the `current-theme` pointer.
+- **kitty**: `kitty.conf`, a colour block that `kitty @ set-colors` applies and `kitty.conf` can `include`.
+- **foot**: `foot-theme.ini`, bare `RRGGBB` colours in both the `colors-dark` and `colors-light` sections. Its template uses `{{bare:<token>}}` (the hex without `#`) beside `{{token:<token>}}`.
+- **alacritty**: `alacritty-theme.toml`, imported with `general.import`.
+- **helix**: `helix-theme.toml`, selected with `theme = "marchyo"`.
+- **Neovim**: `nvim-theme.lua`, a colourscheme file (`colors/marchyo.lua`) that sets `background` from the colour of `base00`.
+- **Emacs**: `emacs-theme.el`, which defines and enables the `marchyo` theme when loaded.
+
+Chromium, Chrome and Brave get no theme file. They follow the light/dark colour scheme that the desktop portal reports, so a runtime switch reaches them.
+
+Only btop is configured by Marchyo itself. The other apps read their files from the places the CLI links them to, or from the theme dir directly.
+
 ## Wallpaper
 
-A generated Marchyo grid wallpaper is enabled by default wherever it is supported. To disable it, or to supply your own wallpaper asset package:
+Generated Marchyo wallpapers are enabled by default wherever they are supported: the Jylhis grid, dots, diagonal bands and contour lines, each in a light and a dark variant (3840 by 2160, drawn from the design tokens). The grid is the default; the others appear in the `wallpapers/` dir of the Jylhis theme dirs and in `marchyo bg list`. An inline theme adds its own with `wallpapers`. To disable the generated set, or to supply your own wallpaper asset package:
 
 ```nix
 marchyo.theme.wallpaper = {
@@ -203,14 +246,14 @@ marchyo theme generate ~/Pictures/wall.jpg --dark   # force a dark scheme
 marchyo theme generate --revert                     # back to the declarative theme
 ```
 
-matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty), Hyprland window borders, Mako, Waybar, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), k9s, lazygit, spotify-player, gdu, and the wallpaper itself.
+matugen extracts a base16 palette from the image, which Marchyo maps through the same token slots the catalog schemes use. A generated theme restyles every surface a `theme set` does: the shell (bar, panels, toasts), the terminal (Ghostty, kitty, foot, alacritty), btop, helix, Neovim, Emacs, Hyprland window borders, GTK (plus the dconf color-scheme), `bat`, `fzf`, the hyprlock fallback lock screen, the console palette (best-effort, as for every switch), k9s, lazygit, spotify-player, gdu, the application surfaces (tmux, fcitx5), and the wallpaper itself.
 
-The colours come from two files the build ships in the declarative variant's theme dir: `palette.json` (every design token's hex, `syn-*` included, and the token-to-base16-slot table) and `templates/` (the Mako, Waybar and GTK configs with each colour as a token placeholder). `theme generate` fills each placeholder with the matugen slot for that token, and a token with no base16 slot keeps the build variant's hex. For `bat` it writes a `marchyo-generated.tmTheme` into bat's themes directory and runs `bat cache --build`.
+The colours come from two files the build ships in the declarative variant's theme dir: `palette.json` (every design token's hex, `syn-*` included, and the token-to-base16-slot table) and `templates/` (the GTK CSS and the terminal, editor and browser surfaces, with each colour as a token placeholder). `theme generate` fills each placeholder with the matugen slot for that token, and a token with no base16 slot keeps the build variant's hex. For `bat` it writes a `marchyo-generated.tmTheme` into bat's themes directory and runs `bat cache --build`.
 
 Qt follows the runtime GTK swap on next launch (`QT_QPA_PLATFORMTHEME=gtk3`),
 and `starship` styles through ANSI slot names, so it already recolors with the
 terminal's live palette. Only the Plymouth boot splash (not on screen during a
-session) and ncspot keep the declarative theme until the next rebuild
+session) keeps the declarative theme until the next rebuild
 ([Runtime theme switching](#runtime-theme-switching)). Like `marchyo bg`, the generated theme is runtime-only: a rebuild (or `--revert`) resets to `marchyo.theme.variant`/`scheme`. Requires the desktop feature (matugen ships with it).
 
 ### Follow the wallpaper
@@ -250,6 +293,7 @@ marchyo.theme.appearance = {
   # cornerRadiusScale = 0.0; # square every corner (default 1.0)
   # uiScale = 1.2;           # larger chrome without changing font size
   # animationSpeed = 2.0;    # faster transitions (default 1.0)
+  # reduceMotion = true;    # no animations/blur/transparency (default on in VMs)
   # highContrast = true;     # thicker panel/notification borders
 };
 ```
@@ -261,6 +305,7 @@ marchyo.theme.appearance = {
 | `cornerRadiusScale` | `float` | `1.0` | Multiplier on corner radii (`0.0` squares corners) |
 | `uiScale` | `float` | `1.0` | Geometry multiplier on top of `fontScale`, fonts unchanged |
 | `animationSpeed` | `float` | `1.0` | Animation speed (higher is faster) |
+| `reduceMotion` | `bool` | `true` in a VM guest | No animations, blur or shadows, opaque windows, instant shell transitions |
 | `highContrast` | `bool` | `false` | Thicker separators for higher-contrast chrome |
 
 With the shell on, Hyprland also turns on short compositor animations driven by
@@ -269,15 +314,73 @@ pop in, the bar slides from its edge, and toasts and tooltips keep their own
 QML transitions. Workspace switches and border colour changes stay instant.
 With the shell off, compositor animations stay disabled.
 
+## Window appearance
+
+Four further `marchyo.theme.appearance` options set how Hyprland draws
+windows. Each also switches live, and `--revert` returns to the declared value.
+
+```nix
+marchyo.theme.appearance = {
+  # transparency = "glassy";  # opaque (default) | transparent | glassy
+  # corners = "rounded";      # theme (default) | sharp | rounded
+  # animations = "off";       # auto (default) | on | off
+  # gaps = true;              # 5 px between windows, 10 px to the screen edge
+};
+```
+
+| Option | Values | Default | Description |
+|--------|--------|---------|-------------|
+| `transparency` | `opaque`, `transparent`, `glassy` | `opaque` | `transparent` makes windows translucent. `glassy` also blurs windows and the shell's layer surfaces, so the bar is glass (its own opacity is `surfaceAlpha`). `reduceMotion` keeps windows opaque |
+| `corners` | `theme`, `sharp`, `rounded` | `theme` | `theme` and `sharp` keep square corners; `rounded` rounds windows |
+| `animations` | `auto`, `on`, `off` | `auto` | `auto` keeps the default and turns animations off at session start when `systemd-detect-virt -q` reports a VM |
+| `gaps` | `bool` | `false` | `false` keeps the gapless tmux-style grid. `true` sets `gaps_in` to 5 and `gaps_out` to 10. Switch live with `marchyo theme gaps` |
+
+The declared window appearance, together with the GTK icon theme name, is written to `~/.config/marchyo/appearance.json`, which the CLI reads on `--revert`.
+
+Live switches (they last until the next session or rebuild, and `marchyo runtime
+restore` replays them):
+
+```console
+$ marchyo theme transparency glassy
+$ marchyo theme corners rounded
+$ marchyo toggle animations off
+$ marchyo toggle reduce-motion on
+$ marchyo theme corners --revert
+```
+
+`marchyo toggle reduce-motion on` sets every shell transition to 0 ms until you turn it off
+(the eval-time `reduceMotion` option stays the default). The shell also drops to 0 ms while
+Hyprland's `animations:enabled` is off, and re-reads that option on every config reload.
+
+The Appearance entry in `marchyo menu` groups theme, background, font,
+transparency, corners, animations, window gaps and the fullscreen desktop.
+Windows are excluded from blur when the shell's glass is on and `glassy` is not
+declared, so a live switch to `glassy` makes them translucent but blurs them
+only after declaring `glassy` and rebuilding.
+
+### Window utilities
+
+- `marchyo window pop` (`Super + Alt + O`) floats, centres and pins the focused
+  tile, and puts it back on the next call. A popped window is centred again when
+  it moves to another monitor.
+- `marchyo window close-all` closes every window and returns to workspace 1.
+- `marchyo window tiled-fullscreen` toggles tiled fullscreen (`Super + Ctrl + F`).
+- `marchyo toggle gaps` switches between the zero-gap grid and spaced tiles.
+- `marchyo toggle fullscreen-desktop` hides the bar and drops gaps, borders and
+  rounding together.
+
 ## Login greeter
 
 The greetd login greeter is built in the host's `marchyo.theme.variant`, so a
 light host shows a light login screen. It also follows the session theme:
 every `marchyo theme set`, `next`, or `generate` writes the active theme's
-colours to `/var/lib/marchyo/greeter/theme.json`, and the greeter picks them up
-at start and whenever the file changes. The directory is owned by `root:users`
+colours to `/var/lib/marchyo/greeter/theme-<user>.json`, and the greeter shows
+the theme of the last user who logged in, at start and whenever that file
+changes. The directory is owned by `root:users`
 with mode `1775`, so session users can write their own marker but cannot
 replace another user's. The greeter accepts only `#rrggbb` values for colour
 keys it already knows; a missing or invalid file falls back to the built-in
 variant palette. A declarative rebuild does not touch the marker, so the
 greeter keeps the last theme the CLI activated.
+
+{/* Assisted-by: Codex:gpt-6 */}

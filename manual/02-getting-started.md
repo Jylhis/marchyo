@@ -98,11 +98,10 @@ The template is the easy path, but not the only one:
 
 - **Add Marchyo to an existing flake.** If you already manage NixOS with a flake,
   add `marchyo` as an input and build with `marchyo.lib.mkNixosSystem`; it selects
-  the right nixpkgs, Home Manager, and modules for you. On a Mac, `mkDarwinSystem`
-  works the same way.
-- **Home Manager only.** If you just want Marchyo's user environment on top of an
-  existing Linux system, the `marchyo.lib.mkHomeConfiguration` builder wires up the
-  Home Manager side alone.
+  the right nixpkgs, Home Manager, and modules for you.
 
-The full flake wiring for these lives in the configuration reference on the site;
+Marchyo's user environment (its Home Manager modules) reads the system options,
+so there is no Home Manager-only install.
+
+The full flake wiring lives in the configuration reference on the site;
 this manual assumes the workstation path from here on.

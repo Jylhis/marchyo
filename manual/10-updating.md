@@ -37,8 +37,6 @@ nix flake update marchyo
 sudo nixos-rebuild switch --flake .#yourhost
 ```
 
-On a Mac it's `darwin-rebuild switch --flake .#yourhost` instead.
-
 :::note
 `nix flake update` rewrites `flake.lock`, the file that records exactly what your
 system is built from. Commit it after an update — that's what makes the change
@@ -46,8 +44,8 @@ reproducible and reviewable, and lets you build the identical system again later
 :::
 
 Marchyo picks the package set for you, so there's no separate `nixpkgs` to manage.
-Updating Marchyo is what moves your packages forward. (On most systems that's the
-rolling "unstable" set; Intel Macs are pinned to a stable release.)
+Updating Marchyo is what moves your packages forward, along the rolling
+"unstable" set.
 
 ## Rolling back
 

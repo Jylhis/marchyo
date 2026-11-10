@@ -4,6 +4,7 @@ import {
   data,
   parseChangeFlags,
   usageError,
+  tr,
 } from "@marchyo/core";
 import {
   TOGGLES,
@@ -28,7 +29,7 @@ export async function runToggle(
   if (!def) {
     return usageError(
       rt,
-      `unknown toggle: "${name}"`,
+      tr("toggle.unknownToggle", name),
       `marchyo toggle <${TOGGLES.map((t) => t.name).join("|")}>`,
     );
   }
@@ -44,7 +45,7 @@ export async function runToggle(
     if (stateArg !== "on" && stateArg !== "off") {
       return usageError(
         rt,
-        `invalid state: "${stateArg}"`,
+        tr("toggle.invalidState", stateArg),
         `marchyo toggle ${name} [on|off]`,
       );
     }
@@ -56,14 +57,14 @@ export async function runToggle(
   if (def.applyOnly && mode === "runtime") {
     return usageError(
       rt,
-      `${name} has no live toggle — it changes hardware configuration`,
+      tr("toggle.hasNoLiveToggleIt", name),
       `marchyo toggle ${name} ${stateArg ?? "on"} --apply`,
     );
   }
   if (def.applyOnly && value === undefined && mode === "apply") {
     return usageError(
       rt,
-      `${name} needs an explicit state with --apply`,
+      tr("toggle.needsAnExplicitStateWith", name),
       `marchyo toggle ${name} on --apply`,
     );
   }

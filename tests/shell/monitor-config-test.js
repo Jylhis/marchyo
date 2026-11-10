@@ -27,7 +27,9 @@ function test(name, fn) {
 
 const DEFAULTS = {
   left: [{ id: "d.left" }],
+  centerBegin: [{ id: "d.begin" }],
   center: [{ id: "d.center" }],
+  centerEnd: [],
   right: [{ id: "d.right" }],
 };
 
@@ -132,7 +134,9 @@ test("the always-global list is idle, caffeine, monitors", () => {
 test("barLayout falls back per section to the defaults", () => {
   assert.deepEqual(MonitorConfig.barLayout(config, "DP-1", DEFAULTS), {
     left: [{ id: "g.left" }],
+    centerBegin: [{ id: "d.begin" }],
     center: [{ id: "d.center" }],
+    centerEnd: [],
     right: [{ id: "m.right" }],
   });
 });
@@ -152,7 +156,7 @@ test("a non-array section falls back to the default", () => {
 });
 
 test("missing defaults yield empty sections", () => {
-  assert.deepEqual(MonitorConfig.barLayout({}, "", null), { left: [], center: [], right: [] });
+  assert.deepEqual(MonitorConfig.barLayout({}, "", null), { left: [], centerBegin: [], center: [], centerEnd: [], right: [] });
 });
 
 // ── barStyle ─────────────────────────────────────────────────────────────────

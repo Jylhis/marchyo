@@ -2,62 +2,23 @@
 let
   inherit (inputs)
     nixpkgs
-    nixpkgs-stable
     home-manager
-    home-manager-stable
-    home-manager-droid
-    nix-darwin
-    nix-darwin-stable
-    nix-on-droid
-    nixos-hardware
-    vicinae
     ncro
-    noctalia
-    sops-nix
     treefmt-nix
+    disko
     ;
 
   overlay = import ./overlay.nix { inherit inputs; };
 
   overlayList = [ overlay ];
 
-  # Single source of truth for the per-system input set, and the ONLY place the
-  # x86_64-darwin special-case is decided (the builders below and legacyPackages
-  # all flow through it). x86_64-darwin is the last nixpkgs release supporting
-  # Intel macOS (26.11 drops it), so it rides stable nixos-26.05 with the
-  # matching release-branch home-manager / nix-darwin; everything else
-  # rides unstable.
-  inputsFor =
-    system:
-    if system == "x86_64-darwin" then
-      {
-        nixpkgs = nixpkgs-stable;
-        home-manager = home-manager-stable;
-        nix-darwin = nix-darwin-stable;
-      }
-    else
-      {
-        inherit
-          nixpkgs
-          home-manager
-          nix-darwin
-          ;
-      };
-
   mkPkgs =
     system:
-    import (inputsFor system).nixpkgs {
+    import nixpkgs {
       inherit system;
       overlays = overlayList;
       config.allowUnfree = true;
     };
-
-  # Droid input stack, pinned independently of the unstable/stable selector:
-  # nix-on-droid's own nixpkgs with HM-24.05 home-manager-droid.
-  droidInputs = {
-    nixpkgs = nix-on-droid.inputs.nixpkgs;
-    home-manager = home-manager-droid;
-  };
 
   sharedNixosConfig =
     { lib, ... }:
@@ -99,137 +60,14 @@ let
       services.getty.autologinUser = "developer";
     };
 
-  sharedDarwinConfig =
-    { pkgs, ... }:
-    {
-      nixpkgs.config.allowUnfree = true;
-      system.stateVersion = 6;
-
-      environment.systemPackages = [
-        pkgs.ghostty-bin.terminfo
-      ];
-
-      marchyo = {
-        development.enable = true;
-        users.developer = {
-          fullname = "Marchyo Developer";
-          email = "dev@example.org";
-        };
-      };
-
-      users.users.developer = {
-        home = "/Users/developer";
-      };
-    };
-
-  # Mock osConfig for standalone HM configs: the minimum structure HM modules
-  # access directly (without `or` defaults).
-  mockOsConfig = {
-    marchyo = {
-      keyboard = {
-        layouts = [ "us" ];
-        options = [ ];
-        autoActivateIME = false;
-        imeTriggerKey = [ ];
-        composeKey = null;
-      };
-      defaultLocale = "en_US.UTF-8";
-      users.developer = {
-        enable = true;
-        name = "developer";
-        fullname = "Marchyo Developer";
-        email = "dev@example.org";
-      };
-      desktop = {
-        enable = false;
-      };
-      development.enable = false;
-      graphics = {
-        vendors = [ ];
-        prime = {
-          enable = false;
-          mode = "";
-        };
-      };
-      defaults = { };
-      theme = {
-        enable = false;
-        variant = "dark";
-        wallpaper.enable = true;
-      };
-    };
-  };
-
-  # Shared config for nixOnDroidConfigurations (nix-on-droid's own module
-  # vocabulary, NOT NixOS options).
-  sharedNixOnDroidConfig =
-    { pkgs, ... }:
-    {
-      time.timeZone = "UTC";
-      system.stateVersion = "24.05";
-      user.shell = "${pkgs.bashInteractive}/bin/bash";
-    };
-
-  mkHomeConfiguration =
-    {
-      system,
-      homeDirectory,
-    }:
-    home-manager.lib.homeManagerConfiguration {
-      pkgs = mkPkgs system;
-      extraSpecialArgs = {
-        osConfig = mockOsConfig;
-        inherit
-          inputs
-          noctalia
-          vicinae
-          ;
-      };
-      modules = [
-        homeManagerModules.default
-        noctalia.homeModules.default
-        vicinae.homeManagerModules.default
-        sops-nix.homeManagerModules.sops
-        {
-          home.username = "developer";
-          home.homeDirectory = homeDirectory;
-          home.stateVersion = "25.11";
-        }
-      ];
-    };
-
-  hmSharedConfig = {
-    home-manager = {
-      useGlobalPkgs = true;
-      sharedModules = [
-        noctalia.homeModules.default
-        vicinae.homeManagerModules.default
-        sops-nix.homeManagerModules.sops
-      ];
-      extraSpecialArgs = {
-        inherit
-          inputs
-          noctalia
-          vicinae
-          ;
-      };
-    };
-  };
-
   nixosModules = {
     default = {
       imports = [
         home-manager.nixosModules.home-manager
-        hmSharedConfig
-        sops-nix.nixosModules.sops
-        # Declares programs.vicinae.input-server: the cap_dac_override wrapper
-        # the launcher needs to inject keystrokes. Upstream defaults it ON, so
-        # modules/nixos/launcher.nix gates it behind marchyo.launcher.* (so
-        # importing this module alone does not install the capability).
-        vicinae.nixosModules.default
-        # ncro service options; enablement is gated by marchyo.nix.router.enable
-        # in modules/nixos/ncro.nix. NixOS only (systemd DynamicUser service),
-        # deliberately absent from mkDarwinModules and hmSharedConfig.
+        { home-manager.useGlobalPkgs = true; }
+        # ncro service options; modules/nixos/ncro.nix turns services.ncro on
+        # by default. NixOS only (systemd DynamicUser service),
+        # deliberately absent from hmSharedConfig.
         ncro.nixosModules.default
         { nixpkgs.overlays = overlayList; }
 
@@ -237,45 +75,133 @@ let
       ];
     };
     inherit (home-manager.nixosModules) home-manager;
-    # Complete nixos-hardware profile set, re-exported wholesale (profiles are
-    # lazy, so unused ones cost nothing). A host imports its profile directly:
-    #   imports = [ marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen ];
-    hardware = nixos-hardware.nixosModules;
+    # disko's module, so hosts using lib.diskoLayout need no disko input.
+    disko = disko.nixosModules.disko;
   };
 
-  # Darwin module set, parameterized by which home-manager darwin module to
-  # bake in so each darwinConfiguration pairs its nixpkgs with the matching HM
-  # (release branches assume their matching nixpkgs):
-  #   aarch64 → unstable nixpkgs  + home-manager (master)
-  #   x86_64  → nixos-26.05 stable + home-manager-stable (release-26.05)
-  mkDarwinModules = hmDarwinModule: {
-    imports = [
-      hmDarwinModule
-      hmSharedConfig
-      { nixpkgs.overlays = overlayList; }
+  # Disk layouts under disko/, by file name. Each is a function of its target
+  # disk(s) returning a NixOS module that sets disko.devices; import it next to
+  # nixosModules.disko.
+  diskoLayouts = map (nixpkgs.lib.removeSuffix ".nix") (
+    builtins.attrNames (nixpkgs.lib.filterAttrs (_: t: t == "regular") (builtins.readDir ./disko))
+  );
+  diskoLayout =
+    name: args:
+    if builtins.elem name diskoLayouts then
+      import (./disko + "/${name}.nix") args
+    else
+      throw "marchyo.lib.diskoLayout: unknown layout '${name}' (known: ${builtins.concatStringsSep ", " diskoLayouts})";
 
-      ./modules/darwin/default.nix
-    ];
-  };
-
-  darwinModules = {
-    default = mkDarwinModules home-manager.darwinModules.home-manager;
-  };
+  # Installer ISOs (installer/iso-<variant>.nix). Plain NixOS installation
+  # images; they do not import the marchyo modules.
+  mkIso =
+    { system, variant }:
+    nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [ (./installer + "/iso-${variant}.nix") ];
+    };
+  isoVariants = [
+    "minimal"
+    "graphical"
+  ];
 
   homeManagerModules = {
     default = ./modules/home/default.nix;
     _1password = ./modules/home/_1password.nix;
   };
 
-  # nix-on-droid module. Droid-native and minimal: no marchyo overlay, no NixOS
-  # modules, and NOT the marchyo HM modules (nix-on-droid ships HM 24.05).
-  nixOnDroidModules = {
-    default = ./modules/nix-on-droid/default.nix;
-  };
+  mergeUnique = import ./lib/merge-unique.nix { inherit (nixpkgs) lib; };
 
-  # Batteries-included system builders: a consumer that adds only `marchyo` as
-  # an input builds any system with these, with nixpkgs / home-manager /
-  # nix-darwin / overlay / modules selected automatically via inputsFor.
+  # The test suite (tests/) for one system. Deliberately a function, not a
+  # shared per-system attrset: the suite's reference systems are large, and a
+  # suite reachable only from the `checks` being evaluated becomes garbage once
+  # they are, instead of staying alive for the rest of `nix flake check`.
+  # legacyPackages (heavyChecks, testPredicates) instantiates its own.
+  mkTestSuite =
+    system:
+    import ./tests {
+      inherit system;
+      inherit (nixpkgs) lib;
+      inherit
+        nixpkgs
+        home-manager
+        ;
+      nixosModules = nixosModules.default;
+      homeManagerModules = homeManagerModules.default;
+      diskoModule = nixosModules.disko;
+      inherit diskoLayout diskoLayouts;
+    };
+
+  # Checks that build something (packages, rendered configs, theme assets) or
+  # evaluate a whole installer image. Too slow for every PR; `just check-full`
+  # and the weekly CI job build them all.
+  mkHeavyChecks =
+    { system }:
+    let
+      pkgs = mkPkgs system;
+    in
+    mergeUnique "heavy check" (
+      [
+        {
+          source = "tests/";
+          attrs = (mkTestSuite system).heavyChecks;
+        }
+        {
+          source = "outputs.nix (package builds)";
+          attrs = {
+            # Build the Plymouth theme in both variants: the only place the light
+            # variant's asset pipeline (resvg/imagemagick + the package's
+            # installCheckPhase) is exercised; the toplevel build only bakes the
+            # dark one.
+            build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
+            build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
+            # marchyo-shell wrapper assertions.
+            build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
+              wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
+              grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$wrapper" \
+                || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
+              grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
+                || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
+              greeter="${pkgs.marchyo-shell}/bin/marchyo-greeter"
+              grep -q "share/marchyo/greeter" "$greeter" \
+                || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
+              grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
+                || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
+              greeterConfig="${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml"
+              grep -q "nix/store" "$greeterConfig" \
+                || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
+              # The generator hand-writes the sessionCommand array; without commas
+              # between elements it is a QML parse error, the greeter fails to load,
+              # and greetd crash-loops with no login window. Assert it is
+              # comma-separated.
+              grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
+                || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
+              touch "$out"
+            '';
+          };
+        }
+      ]
+      # Evaluate each ISO's drvPath without building it: the string context is
+      # dropped, so the check does not depend on the image. A full installer
+      # evaluation each; `nix flake check` already evaluates the iso-* packages.
+      ++ nixpkgs.lib.optional (system == "x86_64-linux") {
+        source = "outputs.nix (installer ISOs)";
+        attrs = builtins.listToAttrs (
+          map (
+            variant:
+            nixpkgs.lib.nameValuePair "eval-iso-${variant}" (
+              pkgs.writeText "eval-iso-${variant}" (
+                builtins.unsafeDiscardStringContext
+                  (mkIso { inherit system variant; }).config.system.build.isoImage.drvPath
+              )
+            )
+          ) isoVariants
+        );
+      }
+    );
+
+  # Batteries-included system builder: a consumer that adds only `marchyo` as
+  # an input gets marchyo's nixpkgs, home-manager, overlay and modules.
 
   # allowUnfree is set plainly, not via a priority wrapper: nixpkgs.config is a
   # freeform attrset, so mkDefault/mkForce would leak through to nixpkgs
@@ -289,7 +215,7 @@ let
       overlays ? [ ],
       config ? { },
     }:
-    (inputsFor system).nixpkgs.lib.nixosSystem {
+    nixpkgs.lib.nixosSystem {
       inherit system specialArgs;
       modules = [
         nixosModules.default
@@ -304,99 +230,11 @@ let
       ++ modules;
     };
 
-  # Darwin builder: selects the nix-darwin / home-manager modules
-  # matching the system's nixpkgs. `overlays`/`config` are the consumer's
-  # additions on top of marchyo's overlayList / allowUnfree.
-  #
-  # For x86_64-darwin nix-darwin is handed an externally-built stable pkgs and
-  # the shared modules' config/overlays are mkForce-cleared (nix-darwin rejects
-  # nixpkgs.pkgs alongside nixpkgs.overlays). The consumer's overlays and config
-  # therefore must be baked INTO that instantiation here; setting them via a
-  # module would be silently cleared.
-  mkDarwinSystem =
-    {
-      system,
-      modules ? [ ],
-      specialArgs ? { },
-      overlays ? [ ],
-      config ? { },
-    }:
-    let
-      sel = inputsFor system;
-      cfg = {
-        allowUnfree = true;
-      }
-      // config;
-    in
-    sel.nix-darwin.lib.darwinSystem {
-      inherit system specialArgs;
-      modules = [
-        (mkDarwinModules sel.home-manager.darwinModules.home-manager)
-      ]
-      ++ (
-        if system == "x86_64-darwin" then
-          [
-            (
-              { lib, ... }:
-              {
-                nixpkgs.pkgs = import sel.nixpkgs {
-                  inherit system;
-                  overlays = overlayList ++ overlays;
-                  config = cfg;
-                };
-                nixpkgs.config = lib.mkForce { };
-                nixpkgs.overlays = lib.mkForce [ ];
-              }
-            )
-          ]
-        else
-          [
-            {
-              nixpkgs.overlays = overlays;
-              nixpkgs.config = cfg;
-            }
-          ]
-      )
-      ++ modules;
-    };
-
-  # nix-on-droid builder, fixed to aarch64-linux (the only Android target).
-  # The marchyo overlay is NOT forced on (it is Linux-desktop-shaped); overlays
-  # default to [] and a consumer can opt in. The droid stack stays on HM 24.05,
-  # so the marchyo HM modules (modules/home/*) and the marchyo.* options
-  # namespace stay out of scope; the droid modules reuse only the
-  # HM-version-agnostic generic modules.
-  mkNixOnDroidConfiguration =
-    {
-      modules ? [ ],
-      extraSpecialArgs ? { },
-      overlays ? [ ],
-      config ? { },
-    }:
-    nix-on-droid.lib.nixOnDroidConfiguration {
-      pkgs = import droidInputs.nixpkgs {
-        system = "aarch64-linux";
-        inherit overlays;
-        config = {
-          allowUnfree = true;
-        }
-        // config;
-      };
-      inherit extraSpecialArgs;
-      modules = [
-        nixOnDroidModules.default
-        sharedNixOnDroidConfig
-      ]
-      ++ modules;
-      home-manager-path = droidInputs.home-manager.outPath;
-    };
 in
 {
   inherit
     nixosModules
-    darwinModules
     homeManagerModules
-    nixOnDroidModules
     ;
 
   # System-parameterized builders, so a plain top-level output (not wrapped in
@@ -404,11 +242,9 @@ in
   lib = {
     inherit
       mkNixosSystem
-      mkDarwinSystem
-      mkNixOnDroidConfiguration
-      mkHomeConfiguration
-      inputsFor
       mkPkgs
+      diskoLayout
+      diskoLayouts
       ;
   };
 
@@ -423,7 +259,7 @@ in
   };
 
   # Reference configs built through the exported builders, so they exercise the
-  # system-aware input selection end to end.
+  # builder end to end.
   nixosConfigurations = {
     x86_64 = mkNixosSystem {
       system = "x86_64-linux";
@@ -445,60 +281,29 @@ in
     };
   };
 
-  darwinConfigurations = {
-    aarch64 = mkDarwinSystem {
-      system = "aarch64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-aarch64"; }
-      ];
+  # The nixpkgs set with marchyo's overlay, plus the test suite's extras:
+  # heavyChecks (the build checks, see mkHeavyChecks) and testPredicates (the
+  # unwrapped predicate results, to read the error a failing predicate threw).
+  legacyPackages =
+    system:
+    mkPkgs system
+    // {
+      heavyChecks = mkHeavyChecks { inherit system; };
+      testPredicates = (mkTestSuite system).predicates;
     };
-    x86_64 = mkDarwinSystem {
-      system = "x86_64-darwin";
-      modules = [
-        sharedDarwinConfig
-        { networking.hostName = "marchyo-x86-64"; }
-      ];
-    };
-  };
-
-  # Standalone Home Manager configurations (Linux only: many HM modules depend
-  # on Wayland/Hyprland and are not darwin-compatible; darwin home-manager is
-  # tested through darwinConfigurations instead).
-  homeConfigurations = {
-    "x86_64-linux" = mkHomeConfiguration {
-      system = "x86_64-linux";
-      homeDirectory = "/home/developer";
-    };
-    "aarch64-linux" = mkHomeConfiguration {
-      system = "aarch64-linux";
-      homeDirectory = "/home/developer";
-    };
-  };
-
-  # nix-on-droid (Android terminal). Build with:
-  #   nix build .#nixOnDroidConfigurations.aarch64.activationPackage
-  nixOnDroidConfigurations = {
-    aarch64 = mkNixOnDroidConfiguration { };
-  };
-
-  legacyPackages = mkPkgs;
 
   mkPackages =
     { system }:
     let
-      selectedNixpkgs = (inputsFor system).nixpkgs;
-      pkgs = import selectedNixpkgs {
+      pkgs = import nixpkgs {
         inherit system;
         overlays = overlayList;
       };
     in
     {
-      inherit (pkgs) marchyo-wallpapers marchyo-cli;
-    }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       inherit (pkgs)
-        hyprmon
+        marchyo-wallpapers
+        marchyo-cli
         marchyo-shell
         plymouth-marchyo-theme
         ;
@@ -513,157 +318,114 @@ in
         nixosModule = nixosModules.default;
       };
     }
-    // selectedNixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-      inherit (pkgs) wallpapper;
-    };
+    # `nix build .#iso-minimal` / `.#iso-graphical` (`just iso`).
+    // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") (
+      builtins.listToAttrs (
+        map (
+          variant:
+          nixpkgs.lib.nameValuePair "iso-${variant}"
+            (mkIso { inherit system variant; }).config.system.build.isoImage
+        ) isoVariants
+      )
+    );
 
+  # The cheap checks: the reference-system predicate checks and the other
+  # eval-only checks from tests/, plus the headless shell suites below. Build
+  # checks live in heavyChecks (legacyPackages.<system>.heavyChecks, built by
+  # `just check-full` and the scheduled CI job).
   mkChecks =
     { system }:
-    import ./tests {
-      inherit system;
-      inherit (nixpkgs) lib;
-      inherit
-        nixpkgs
-        home-manager
-        nix-on-droid
-        home-manager-droid
-        # nix-darwin evaluates fine on Linux, so the checks exercise the darwin
-        # module set (incl. the curated HM wiring) through the same builder
-        # consumers use.
-        mkDarwinSystem
-        ;
-      nixosModules = nixosModules.default;
-      homeManagerModules = homeManagerModules.default;
-      nixosHardwareModules = nixosModules.hardware;
-    }
-    # The one non-eval check: build the Plymouth theme in both variants. The
-    # only place the light variant's asset pipeline (resvg/imagemagick + the
-    # package's installCheckPhase) is exercised; CI's toplevel build only bakes
-    # the dark one. Plus marchyo-shell wrapper assertions and the two headless
-    # shell suites (tests/shell/).
-    // (
-      let
-        pkgs = mkPkgs system;
-      in
-      nixpkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        build-plymouth-theme-dark = pkgs.plymouth-marchyo-theme;
-        build-plymouth-theme-light = pkgs.plymouth-marchyo-theme.override { variant = "light"; };
-        build-marchyo-shell-wrapper = pkgs.runCommand "check-marchyo-shell-wrapper" { } ''
-          wrapper="${pkgs.marchyo-shell}/bin/marchyo-shell"
-          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$wrapper" \
-            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-shell wrapper"; exit 1; }
-          grep -qE "QT_QPA_PLATFORMTHEME=['\"]?gtk3" "$wrapper" \
-            || { echo "FAIL: QT_QPA_PLATFORMTHEME=gtk3 missing from marchyo-shell wrapper"; exit 1; }
-          greeter="${pkgs.marchyo-shell}/bin/marchyo-greeter"
-          grep -q "share/marchyo/greeter" "$greeter" \
-            || { echo "FAIL: marchyo-greeter wrapper does not point at the greeter config"; exit 1; }
-          grep -qE "TZDIR=.{0,15}/etc/zoneinfo" "$greeter" \
-            || { echo "FAIL: TZDIR=/etc/zoneinfo missing from marchyo-greeter wrapper"; exit 1; }
-          greeterConfig="${pkgs.marchyo-shell}/share/marchyo/greeter/Commons/Config.qml"
-          grep -q "nix/store" "$greeterConfig" \
-            || { echo "FAIL: greeter Config.qml session command is not store-baked"; exit 1; }
-          # The generator hand-writes the sessionCommand array; without commas
-          # between elements it is a QML parse error, the greeter fails to load,
-          # and greetd crash-loops with no login window. Assert it is
-          # comma-separated.
-          grep -qE 'sessionCommand:[^]]*"[^"]*",[[:space:]]*"[^"]*",[[:space:]]*"[^"]*"' "$greeterConfig" \
-            || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
-          touch "$out"
-        '';
-
-        # Headless suites for the Quickshell tree. Both stage only the trees
-        # they read, rather than ${./.}: the whole repo as a build input would
-        # rebuild them on every site/ or docs/ edit. Each suite derives its root
-        # from its own location, so the staged layout mirrors the repo's.
-        shell-format-unit =
-          pkgs.runCommand "check-shell-js-unit"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              mkdir -p src/shell src/tests
-              cp -r ${./shell/Commons} src/shell/Commons
-              cp -r ${./tests/shell} src/tests/shell
-              cd src
-              # Globbed, not listed: a new *-test.js must not be able to sit in
-              # the tree unrun. The count assertion keeps a rename from turning
-              # the glob into a vacuous pass.
-              count=0
-              for t in tests/shell/*-test.js; do
-                node "$t"
-                count=$((count + 1))
-              done
-              [ "$count" -gt 0 ] || { echo "FAIL: no tests/shell/*-test.js found"; exit 1; }
-              touch "$out"
-            '';
-
-        # site/src/pages/search.astro's option table is hand-maintained with no
-        # generator, so nothing stops it drifting from the options tree. This is
-        # the guard.
-        site-option-paths =
-          pkgs.runCommand "check-site-option-paths"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              # Only the parents: `cp -r dir target` nests when target exists.
-              mkdir -p src/tests src/site/src
-              cp -r ${./tests/site} src/tests/site
-              cp -r ${./site/src/pages} src/site/src/pages
-              cp -r ${./modules} src/modules
-              cd src
-              node tests/site/option-paths-test.js
-              touch "$out"
-            '';
-
-        # theme-runtime.nix's activation reset and the CLI's relink targets are
-        # hand-maintained on opposite sides of a language boundary; a CLI target
-        # missing from the Nix list breaks the next activation.
-        cli-theme-surfaces =
-          pkgs.runCommand "check-cli-theme-surfaces"
-            {
-              nativeBuildInputs = [ pkgs.nodejs ];
-            }
-            ''
-              # Only the parents: `cp -r dir target` nests when target exists.
-              mkdir -p src/tests src/modules src/packages/marchyo-cli/packages/user-cli/src
-              cp -r ${./tests/cli} src/tests/cli
-              cp -r ${./modules/home} src/modules/home
-              cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
-                src/packages/marchyo-cli/packages/user-cli/src/commands
-              cd src
-              node tests/cli/theme-surfaces-test.js
-              touch "$out"
-            '';
-
-        shell-contracts =
-          pkgs.runCommand "check-shell-contracts"
-            {
-              nativeBuildInputs = [
-                pkgs.gnugrep
-                pkgs.gawk
-              ];
-            }
-            ''
-              mkdir -p src/tests src/packages
-              cp -r ${./shell} src/shell
-              cp -r ${./greeter} src/greeter
-              cp -r ${./modules} src/modules
-              cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
-              mkdir -p src/packages/marchyo-cli
-              cp -r ${./packages/marchyo-cli/packages} src/packages/marchyo-cli/packages
-              cp -r ${./tests/shell} src/tests/shell
-              cd src
-              bash tests/shell/contracts-test.sh
-              touch "$out"
-            '';
+    let
+      pkgs = mkPkgs system;
+    in
+    mergeUnique "check" [
+      {
+        source = "tests/";
+        attrs = (mkTestSuite system).checks;
       }
-    );
+      {
+        source = "outputs.nix (shell suites)";
+        attrs = {
+          # Headless suites for the Quickshell tree. Both stage only the trees
+          # they read, rather than ${./.}: the whole repo as a build input would
+          # rebuild them on every site/ or docs/ edit. Each suite derives its root
+          # from its own location, so the staged layout mirrors the repo's.
+          shell-format-unit =
+            pkgs.runCommand "check-shell-js-unit"
+              {
+                nativeBuildInputs = [ pkgs.nodejs ];
+              }
+              ''
+                mkdir -p src/tests
+                cp -r ${./shell} src/shell
+                cp -r ${./tests/shell} src/tests/shell
+                cd src
+                # Globbed, not listed: a new *-test.js must not be able to sit in
+                # the tree unrun. The count assertion keeps a rename from turning
+                # the glob into a vacuous pass.
+                count=0
+                for t in tests/shell/*-test.js; do
+                  node "$t"
+                  count=$((count + 1))
+                done
+                [ "$count" -gt 0 ] || { echo "FAIL: no tests/shell/*-test.js found"; exit 1; }
+                touch "$out"
+              '';
+
+          # theme-runtime.nix's activation reset and the CLI's relink targets are
+          # hand-maintained on opposite sides of a language boundary; a CLI target
+          # missing from the Nix list breaks the next activation.
+          cli-theme-surfaces =
+            pkgs.runCommand "check-cli-theme-surfaces"
+              {
+                nativeBuildInputs = [ pkgs.nodejs ];
+              }
+              ''
+                # Only the parents: `cp -r dir target` nests when target exists.
+                mkdir -p src/tests src/modules src/lib \
+                  src/packages/marchyo-cli/packages/user-cli/src \
+                  src/packages/marchyo-cli/packages/core
+                cp -r ${./tests/cli} src/tests/cli
+                cp -r ${./modules/home} src/modules/home
+                cp ${./lib/theme-generators.nix} src/lib/theme-generators.nix
+                cp -r ${./packages/marchyo-cli/packages/core/src} \
+                  src/packages/marchyo-cli/packages/core/src
+                cp -r ${./packages/marchyo-cli/packages/user-cli/src/commands} \
+                  src/packages/marchyo-cli/packages/user-cli/src/commands
+                cd src
+                node tests/cli/theme-surfaces-test.js
+                touch "$out"
+              '';
+
+          shell-contracts =
+            pkgs.runCommand "check-shell-contracts"
+              {
+                nativeBuildInputs = [
+                  pkgs.gnugrep
+                  pkgs.gawk
+                ];
+              }
+              ''
+                mkdir -p src/tests src/packages
+                cp -r ${./shell} src/shell
+                cp -r ${./greeter} src/greeter
+                cp -r ${./modules} src/modules
+                cp -r ${./packages/marchyo-shell} src/packages/marchyo-shell
+                mkdir -p src/packages/marchyo-cli
+                cp -r ${./packages/marchyo-cli/packages} src/packages/marchyo-cli/packages
+                cp -r ${./tests/shell} src/tests/shell
+                cd src
+                bash tests/shell/contracts-test.sh
+                touch "$out"
+              '';
+        };
+      }
+    ];
 
   mkFormatter =
     { system }:
     let
-      pkgs = (inputsFor system).nixpkgs.legacyPackages.${system};
+      pkgs = nixpkgs.legacyPackages.${system};
     in
     treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
 

@@ -10,7 +10,7 @@
     incoming="''${1-}"
     if [[ -e /run/current-system && -e "''${incoming-}" ]]; then
       echo "--- diff to current-system"
-      ${pkgs.dix}/bin/dix /run/current-system "''${incoming-}" || true
+      ${pkgs.dix}/bin/dix diff /run/current-system "''${incoming-}" || true
       echo "---"
     fi
   '';

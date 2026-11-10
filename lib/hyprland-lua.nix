@@ -18,12 +18,31 @@ let
 
   # Quote and escape a Nix string as a Lua string literal.
   luaStr = lib.generators.toLua { };
+
+  # The global shortcuts the shell registers (shell/shortcuts.json, read by
+  # shell.qml too).
+  shellShortcuts = map (s: s.name) (lib.importJSON ../shell/shortcuts.json);
 in
 rec {
-  inherit mkLuaInline luaStr;
+  inherit mkLuaInline luaStr shellShortcuts;
 
   # `hl.dsp.<expr>`, e.g. dsp "window.close()".
   dsp = expr: mkLuaInline "hl.dsp.${expr}";
+
+  # Hyprland global shortcut `marchyo:<name>`, delivered straight to the
+  # running shell with no process spawned. Only names the shell registers are
+  # accepted.
+  global =
+    name:
+    if lib.elem name shellShortcuts then
+      dsp "global(${luaStr "marchyo:${name}"})"
+    else
+      throw "hyprland-lua: '${name}' is not a shell global shortcut (shell/shortcuts.json)";
+
+  # Shell command running dispatcher `hl.dsp.<expr>`. Under the Lua config
+  # `hyprctl dispatch <arg>` evaluates <arg> as Lua, so the legacy string form
+  # (`hyprctl dispatch dpms off`) is a syntax error.
+  hyprDispatch = expr: "hyprctl dispatch ${lib.escapeShellArg "hl.dsp.${expr}"}";
 
   # Exec dispatcher for a literal shell command.
   exec = cmd: dsp "exec_cmd(${luaStr cmd})";
@@ -72,6 +91,17 @@ rec {
     lib.concatStringsSep " + " (
       builtins.filter (s: s != "") (lib.splitString " " modifiers) ++ [ key ]
     );
+
+  # One spelling for a Lua bind key string: modifiers upper-case and sorted,
+  # the key lower-case, so "SUPER + SHIFT + CTRL + A" and
+  # "SUPER + CTRL + SHIFT + a" compare equal.
+  normalizeKeys =
+    keys:
+    let
+      parts = map lib.trim (lib.splitString "+" keys);
+      mods = lib.sort lib.lessThan (map lib.toUpper (lib.init parts));
+    in
+    lib.concatStringsSep " + " (mods ++ [ (lib.toLower (lib.last parts)) ]);
 
   # `hl.env("NAME", "value")`. Hyprland's Lua env takes two string arguments,
   # so entries must go through `_args`; a plain attrset such as the legacy

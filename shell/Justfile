@@ -2,21 +2,38 @@
 default:
     @just --list
 
-# Dev loop: run the shell straight from the tree (hot-reloads QML on save).
-# Stops the store-backed user service first so the two instances don't fight
-# over the bar slot and org.freedesktop.Notifications. Dev defaults apply:
-# dark variant, fontScale 1.0, tools from PATH (see README.md). The env vars
-# mirror the marchyo-shell wrapper (packages/marchyo-shell/package.nix) so
-# the dev instance behaves like the store shell: TZDIR lets Qt resolve the
-# system time zone from NixOS's /etc/zoneinfo, and the gtk3 platform theme
-# makes themed icons resolve against marchyo's Adwaita GTK settings.
+# Dev loop: run the tree's shell in the isolated sandbox (nested Hyprland in a
+# window, live reload on save) and follow its log. The live session and the
+# store-backed marchyo-shell service are not touched. See README.md "Sandbox".
 dev:
+    dev/sandbox up --window
+    dev/sandbox log -f
+
+# Old dev loop: stop the store-backed user service and run the tree's shell in
+# the live session. Dev defaults apply (dark variant, fontScale 1.0, tools from
+# PATH). The env vars mirror the marchyo-shell wrapper
+# (packages/marchyo-shell/package.nix): TZDIR lets Qt resolve the system time
+# zone and the gtk3 platform theme resolves themed icons against marchyo's GTK
+# settings.
+dev-live:
     systemctl --user stop marchyo-shell
     TZDIR=/etc/zoneinfo QT_QPA_PLATFORMTHEME=gtk3 quickshell -p .
 
-# Hand the bar back to the store-backed user service after a dev session
+# Hand the bar back to the store-backed user service after a dev-live session
 resume:
     systemctl --user start marchyo-shell
+
+# Run a sandbox subcommand: up, down, status, env, ipc, log, hyprctl
+sandbox *args:
+    dev/sandbox {{args}}
+
+# Screenshot one surface in the sandbox: shot launcher --state query=fire
+shot *args:
+    dev/shot {{args}}
+
+# Stop the sandbox and remove its runtime dir
+sandbox-down:
+    dev/sandbox down
 
 # Type-check the QML tree offscreen: run the harness (harness.qml) under
 # QT_QPA_PLATFORM=offscreen and fail on any QML warning/error pointing at a
@@ -28,7 +45,8 @@ check:
     set -euo pipefail
     log="$(mktemp)"
     trap 'rm -f "$log"' EXIT
-    if ! TZDIR=/etc/zoneinfo QT_QPA_PLATFORM=offscreen timeout 30 quickshell -p ./harness.qml 2>&1 | tee "$log"; then
+    # A live session would answer hyprctl probes (e.g. stranded-lock recovery).
+    if ! env -u HYPRLAND_INSTANCE_SIGNATURE TZDIR=/etc/zoneinfo QT_QPA_PLATFORM=offscreen timeout 30 quickshell -p ./harness.qml 2>&1 | tee "$log"; then
         echo "check: quickshell harness failed or timed out" >&2
         exit 1
     fi

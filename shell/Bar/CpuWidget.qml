@@ -1,4 +1,5 @@
 import qs.Ui
+import qs.Commons
 import qs.Services
 
 // CPU utilisation, read from the shared SystemStats singleton (which owns the
@@ -9,6 +10,6 @@ BarItem {
     interactive: true
     text: "󰐰 " + SystemStats.cpuUsage
     reserveText: "󰐰 100"
-    tooltipText: "CPU " + SystemStats.cpuUsage + "%"
+    tooltipText: I18n.t("cpu.tooltip", SystemStats.cpuUsage)
     onClicked: PanelManager.toggle("monitor", root)
 }

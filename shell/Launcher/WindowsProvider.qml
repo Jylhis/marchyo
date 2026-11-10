@@ -14,19 +14,20 @@ Provider {
     providerId: "windows"
     prefix: Providers.prefixFor("windows")
     selectOnEmpty: true
-    emptyText: "no windows"
+    emptyText: I18n.t("launcher.noWindows")
 
     property var clients: []
 
     readonly property var rows: root.clients.map(c => ({
                 title: c.title,
-                subtitle: c.workspace.length > 0 ? c.cls + " · workspace " + c.workspace : c.cls,
+                subtitle: c.workspace.length > 0 ? I18n.t("launcher.windowWorkspace", c.cls, c.workspace) : c.cls,
                 icon: c.cls.toLowerCase(),
                 score: 0,
                 positions: [],
                 activate: () => {
                     Launcher.close();
-                    Hyprland.dispatch("focuswindow address:" + c.address);
+                    const addr = String(c.address).startsWith("0x") ? c.address : "0x" + c.address;
+                    Hyprland.dispatch("hl.dsp.focus({ window = \"address:" + addr + "\" })");
                 }
             }))
 

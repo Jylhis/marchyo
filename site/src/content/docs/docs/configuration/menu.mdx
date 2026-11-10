@@ -1,0 +1,106 @@
+---
+title: Command menu
+description: The entries of the Marchyo shell command menu (marchyo.menu)
+---
+
+The command menu lists the actions of the Marchyo shell as a tree: capture,
+toggles, appearance, hardware, system, setup, and share. Each entry is one
+attribute of `marchyo.menu.entries`, keyed by a dotted id. The shell reads the
+tree from `~/.config/marchyo/menu.json`, which Marchyo writes with
+`marchyo.desktop.enable`.
+
+The parent of `a.b.c` is `a.b`. An id without a dot is a child of the root.
+Every parent must exist as an entry, or the evaluation fails.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.menu.entries` | `attrsOf submodule` | the default tree | Menu entries keyed by dotted id |
+
+Marchyo defines the default tree per field at default priority. A definition
+adds entries or overrides single fields of default entries. It does not replace
+the tree.
+
+```nix
+{
+  marchyo.menu.entries = {
+    "capture.custom" = {
+      label = "Custom";
+      action = "exec";
+      target = "true";
+    };
+    "system.reboot".disabled = true;
+  };
+}
+```
+
+## Entry fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `label` | `str` | required | Text shown for the entry |
+| `icon` | `str` | `""` | A themed icon name or a glyph |
+| `order` | `int` | `100` | Sort key among siblings; equal orders sort by label |
+| `action` | enum | `"submenu"` | What selecting the entry does |
+| `target` | `str` | `""` | The command or launcher mode for the action |
+| `provider` | `null` or enum | `null` | The data source of a `provider` entry |
+| `aliases` | `listOf str` | `[]` | Extra search words |
+| `description` | `str` | `""` | Secondary text under the label |
+| `when` | `null` or `str` | `null` | Shell command; exit status 0 shows the entry |
+| `checked` | `null` or `str` | `null` | Shell command; exit status 0 shows a check mark |
+| `disabled` | `bool` | `false` | Hide the entry and its children |
+
+### Actions
+
+- `submenu`: opens the entries whose id is a child of this one.
+- `exec`: runs `target` with `sh -c`, detached, then closes the menu.
+- `terminal`: runs `target` in a floating terminal
+  (`marchyo launch floating-terminal sh -c <target>`).
+- `launcher`: opens the shell launcher in the mode `target`: `apps`, `emoji`,
+  `clipboard`, `theme`, or `keys`.
+- `provider`: the children come from the provider named in `provider`.
+
+### Providers
+
+- `apps`: installed applications.
+- `themes`: the switchable themes.
+- `wallpapers`: the wallpapers of the active theme.
+- `fonts`: the installed monospace font families.
+- `power-profiles`: the profiles of power-profiles-daemon.
+- `languages`: the display languages of Marchyo.
+- `agents`: the AI coding agents in use on the machine.
+
+### Guards
+
+`when` and `checked` run through `sh -c` each time the menu opens. They need to
+finish fast and have no side effects. For example, the Hibernate entry has
+`when = "test -e /etc/marchyo/hibernation"`, and each toggle entry has
+`checked = "test \"$(marchyo toggle nightlight --status)\" = on"`.
+
+### Validation
+
+The evaluation fails when:
+
+- the parent of an entry is not an entry,
+- `provider` is set when `action` is not `provider`, or not set when it is,
+- `target` is empty for `exec`, `terminal`, or `launcher`.
+
+## User overlay
+
+A user can change the menu at runtime, without a rebuild, in
+`~/.config/marchyo/menu.local.json`. Marchyo does not generate this file. The
+shell merges it over `menu.json` per key and per field, and reloads it live.
+
+```json
+{
+  "capture.custom": { "label": "Custom", "action": "exec", "target": "true" },
+  "system.reboot": { "disabled": true },
+  "toggle.idle": null
+}
+```
+
+The fields are the same as in the Nix option. A key set to `null` removes the
+entry.
+
+{/* Assisted-by: Claude Code:claude-sonnet-5-5 */}

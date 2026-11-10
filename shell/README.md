@@ -3,9 +3,9 @@
 A custom [Quickshell](https://quickshell.org) desktop shell and the default
 Marchyo desktop shell: a single long-running QML process for the bar, panels,
 OSD, notifications, launcher, lock, and polkit agent. The discrete
-waybar + mako + swayosd + vicinae + hyprlock + hyprpolkitagent stack stays as
-the `marchyo.shell.enable = false` fallback. Design and roadmap:
-**[../TODO.md](../TODO.md)**.
+hyprlock + hyprpolkitagent pair stays as the `marchyo.shell.enable = false`
+fallback. Open work:
+**[TODO.md](../TODO.md)**.
 
 ## Status — Phase 1 (bar) + Phase 2 (OSD + panels) + Phase 3 (notifications) + Phase 5 (launcher) done
 
@@ -19,7 +19,8 @@ summonable **panels** (`Panels/`, toggled from their bar widgets through the
 **build-time, Nix-declared** (the Option A plugin platform): plugins are baked
 into the store shell via `pkgs.mkMarchyoShellPlugin` and never discovered at
 runtime — there is no runtime plugin directory or hot-reload. Native Quickshell
-service bindings plus a stock `IpcHandler` cover everything the shell itself
+service bindings plus one action table (reached through an `IpcHandler` and
+Hyprland global shortcuts) cover everything the shell itself
 needs. `shell/compat/` additionally provides an omarchy plugin host API
 (`qs.compat.Ui` / `qs.compat.Commons`) so upstream omarchy bar widgets run
 near-unmodified; see the "Plugins" docs.
@@ -32,7 +33,7 @@ bar, panel, and OSD), an **event-driven keyboard-layout widget** (no poll),
 toast transitions, a DND queue cap, and a committed offscreen **type-check
 harness** (`just -f shell/Justfile check`).
 
-A second pass (see the references in **[../TODO.md](../TODO.md)**,
+A second pass (see the references at the end of this file,
 a survey of ten public Hyprland/Quickshell projects) moved the last three
 stateful widgets into `Services/` singletons: `shell.qml` builds the bar once per
 screen, so a `Process` or `Timer` inside a widget was one subprocess **per
@@ -43,13 +44,11 @@ shell grew two **headless test suites** that `nix flake check` runs (see
 
 Gated behind `marchyo.shell.enable`, which defaults to on with
 `marchyo.desktop.enable` (cascaded in `modules/nixos/desktop-config.nix`). The
-shell **replaces waybar**, **SwayOSD**, **mako**, **hyprlock** (Phase 4),
-**vicinae** (Phase 5), and **hyprpolkitagent**, each mutually exclusive with its
-discrete counterpart (see `modules/home/waybar.nix`, `modules/home/swayosd.nix`,
-`modules/home/mako.nix`, `modules/home/hyprlock.nix`,
-`modules/home/vicinae.nix`, and `modules/home/hyprland.nix`), so the shell owns
-the bar, the OSD, notifications, the lock, the launcher, and the polkit agent
-outright. Setting `marchyo.shell.enable = false` keeps the discrete stack.
+shell owns the bar, the OSD, notifications, the lock, the launcher, and the
+polkit agent. The lock and the polkit agent are mutually exclusive with
+**hyprlock** (Phase 4) and **hyprpolkitagent** (see `modules/home/hyprlock.nix`
+and `modules/home/hyprland.nix`). Setting `marchyo.shell.enable = false` keeps
+only those two.
 
 Layout:
 
@@ -59,10 +58,12 @@ shell/
   harness.qml          offscreen type-check harness (just check)
   Commons/
     qmldir             declares module qs.Commons
-    Color.qml          design-token colours (palette + status); the Nix build
-                       regenerates it for the host theme variant
+    Colors.qml         design-token colours (palette + status); the Nix build
+                       regenerates it for the host theme variant. Not named
+                       `Color`: Qt 6.12's QtQuick `Color` singleton shadows it
     Style.qml          bar geometry + font sizes; regenerated from
-                       marchyo.theme.fontScale, plus baked feature flags
+                       marchyo.theme.fontScale, plus baked feature flags and the
+                       runtime style switches (font, bar position, bar background)
     Theme.qml          runtime theme state (colors.json behind the
                        current-theme pointer; regenerates per host variant
                        in the Nix build)
@@ -76,6 +77,8 @@ shell/
     PluginIndex.qml    singleton listing the plugins baked into this store shell
                        (build-time Option A model; no runtime discovery), see
                        Plugins below
+    Appearance.js      pure parsers for the runtime style file, the wallpaper
+                       list and the thumbnail script, plus the picker grid navigation
     Format.js          pure parsing helpers (keymap short codes, nmcli device show);
                        plain JS with a CommonJS guard so Node can unit-test it
     Match.js           pure fuzzy scoring + highlight markup over fuzzysort
@@ -83,7 +86,7 @@ shell/
     fuzzysort.js       vendored fuzzysort 3.1.0 (MIT; pinned, see its header)
     Fuzzy.qml          singleton binding Match.js to fuzzysort.js for QML
     LauncherProviders.js  pure launcher prefix routing, ranking, and the
-                       theme / hyprctl clients / qalc output parsers
+                       theme / font / hyprctl clients / qalc output parsers
     EmojiData.js       emoji catalog rows + parse; the Nix build regenerates the
                        rows from pkgs.unicode-emoji (dev subset checked in)
     Cliphist.js        pure cliphist helpers (quoted-printable payload decode,
@@ -120,11 +123,12 @@ shell/
     LauncherWindow.qml the launcher overlay (exclusive keyboard focus layer)
     ResultsView.qml    renders the active provider's results (list or grid)
     Provider.qml       the provider interface every provider below implements
-    AppsProvider.qml   app search over DesktopEntries (replaces vicinae apps)
+    AppsProvider.qml   app search over DesktopEntries
     EmojiProvider.qml  emoji grid over Commons/EmojiData.js
     ClipboardProvider.qml  cliphist history list + paste, image thumbnails
     CalcProvider.qml   "=" calculator over qalc
     ThemeProvider.qml  ">theme" switcher over `marchyo theme list|set`
+    FontProvider.qml   ">font" switcher over `marchyo font list|set`
     WindowsProvider.qml  "#" window switcher over `hyprctl clients -j`
     PowerProvider.qml  "!" session actions (lock / log out / power verbs)
   Services/
@@ -139,20 +143,24 @@ shell/
     BluetoothState.qml singleton: default BlueZ adapter, power, connected devices
     PowerProfileState.qml  singleton: power-profiles-daemon profile + cycle
     QuickToggles.qml   singleton: the Control Center toggle model (no presentation)
-    Dictation.qml      singleton: the one voxtype --follow stream (with restart)
-    Caffeine.qml       singleton: the one keep-awake probe + toggle, plus the auto video inhibit
+    Dictation.qml      singleton: the voxtype --follow stream (with restart), or a slow marchyo dictation status poll
+    Caffeine.qml       singleton: shell-owned keep-awake state + toggle, plus the auto video inhibit
     KeyboardLayout.qml singleton: the one hyprctl probe + activelayout listener
-    LockKeys.qml       singleton: Caps/Num Lock from the keyboard LEDs (polled while shown)
+    LockKeys.qml       singleton: Caps/Num Lock from the keyboard LEDs (re-read on lock-key binds)
     Camera.qml         singleton: camera-in-use apps (PipeWire links + /dev/video* holders)
     Tooltip.qml        singleton: hovered item text/position (drives TooltipWindow)
     Lock.qml           singleton: lock state + the PAM auth machine (Phase 4)
     Polkit.qml         singleton: the session's PolkitAgent + dialog state
     Launcher.qml       singleton: launcher mode, query + prefix routing, paste helper
     Overview.qml       singleton: window overview open flag, query, selection + model
+    RuntimeStyle.qml   singleton: watches the CLI's style.json into Commons/Style
+    Pickers.qml        singleton: theme and wallpaper rows for the pickers
+    Thumbnails.qml     singleton: cached wallpaper thumbnails via marchyo-thumbs
   Panels/
     qmldir             declares module qs.Panels
-    <Name>Panel.qml    one summonable panel (audio / network / power / monitor)
-    ControlCenter.qml  quick-settings panel (sliders + toggle tiles)
+    <Name>Panel.qml    one summonable panel (audio / network / power / monitor / display)
+    ControlCenter.qml  quick-settings panel (sliders + toggle tiles + appearance)
+    ImagePicker.qml    keyboard grid behind the themes and backgrounds panels
   Notifications/
     qmldir             declares module qs.Notifications
     NotificationDaemon.qml  owns org.freedesktop.Notifications (replaces mako)
@@ -166,17 +174,18 @@ shell/
     WindowPreview.qml  one window: live ScreencopyView + title
 ```
 
-The shell also declares a single stock `Quickshell.Io.IpcHandler` (target
-`shell`) in `shell.qml` so Hyprland keybinds can summon panels and poke the OSD;
-see [Keybind summons](#keybind-summons) below.
+`shell.qml` also holds the shell's one action table and its two entry
+points (an `IpcHandler` with target `shell` and the
+`shell/shortcuts.json` global shortcuts) so Hyprland keybinds and the CLI can
+summon panels and poke the OSD; see [Keybind summons](#keybind-summons) below.
 
 ### Shape and materiality
 
-The bar is a **floating pill** by default: detached from the screen edges
-(`Style.barMarginH/V`), rounded (`Style.barRadius`), translucent
-(`Style.surfaceAlpha`), and floating over content (no layout reservation).
-`marchyo.theme.appearance.floatingBar = false` restores the full-width strip
-(all three bake to 0), and `surfaceAlpha = 1.0` restores opaque surfaces.
+The bar is a translucent (`Style.surfaceAlpha`) full-width **strip** by
+default, flush with the screen edges. `marchyo.theme.appearance.floatingBar =
+true` makes it a floating pill: detached from the screen edges
+(`Style.barMarginH/V`), rounded (`Style.barRadius`), and reserving its height
+plus a matching gap below (all three bake to 0 in strip mode), and `surfaceAlpha = 1.0` restores opaque surfaces.
 With alpha below 1 the home Hyprland config enables its blur effect and
 registers blur layer rules for the shell's `marchyo:*` layer-shell
 namespaces (bar, panels, toasts, OSD, launcher, overview, tooltip) — the glass look —
@@ -193,11 +202,11 @@ shell.json through `ShellConfig.barStyleFor(<output>)` (so
 - `segmented`: `Ui/BarSection` fills each cluster (the visible widgets between
   two rendered separators, or a whole section without separators) with a
   `Ui/BarSegment` background. Tones alternate within a section between
-  `Color.bgSubtle` and `Color.surface` tinted with 18% `Color.accent` (both
+  `Colors.bgSubtle` and `Colors.surface` tinted with 18% `Colors.accent` (both
   at `Style.surfaceAlpha`), so a theme swap recolours them. `Ui/BarItem`
   finds its section through the parent chain and hovers in a 36% accent tint
-  of `Color.surface` there, distinct from both tones (flat keeps
-  `Color.surface`). Outer ends are rounded with `Style.barRadius`; adjacent
+  of `Colors.surface` there, distinct from both tones (flat keeps
+  `Colors.surface`). Outer ends are rounded with `Style.barRadius`; adjacent
   segments meet in a circular-arc join centred on the separator, convex on the
   earlier segment and concave on the later one. The join depth is the
   separator plus the smaller padding of its two neighbours, so the curve stays
@@ -218,15 +227,15 @@ below), so nothing depends on the session `PATH`.
 | WorkspacesWidget | `Quickshell.Hyprland` (per-monitor; persistent 1–5, waybar parity) |
 | ClockWidget | `Quickshell.SystemClock` (click = toggle long / ISO-week form) |
 | TrayWidget | `Quickshell.Services.SystemTray` (`·` expander, click = show/hide; right-click = SNI menu via `QsMenuAnchor`) |
-| DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = toggle); baked on/off via `Style.dictationIndicator` |
-| CaffeineWidget | `Services/Caffeine` → `pgrep` probe + `marchyo toggle caffeine`; lit while a video plays (tooltip `auto: <player>`) |
+| DictationWidget | `Services/Dictation` → one `voxtype status --follow` stream (click = `marchyo dictation toggle`); baked on/off via `Style.dictationIndicator` |
+| CaffeineWidget | `Services/Caffeine` → shell-owned state (one `pgrep` probe at startup, then `marchyo toggle caffeine on\|off` and the CLI's `caffeineChanged` report); lit while a video plays (tooltip `auto: <player>`) |
 | ThemeWidget | Commons/Theme → colors.json behind the current-theme pointer (click = marchyo theme next) |
 | DndWidget | in-shell `Services/NotificationState` (click = toggle DND) |
 | KeyboardLayoutWidget | `Services/KeyboardLayout` → `hyprctl devices` probe + `Hyprland` `activelayout` raw events (no poll) |
-| LockKeysWidget | `Services/LockKeys` → `/sys/class/leds/*::capslock` / `*::numlock` brightness, a 500 ms read poll while placed (shows `CAPS` / `NUM`; registered as `marchyo.lockKeys`, not placed by default) |
+| LockKeysWidget | `Services/LockKeys` → `/sys/class/leds/*::capslock` / `*::numlock` brightness, re-read when the `Caps_Lock` / `Num_Lock` binds fire the `lockKeys` global shortcut, plus a 10 s reconcile while placed (shows `CAPS` / `NUM`; registered as `marchyo.lockKeys`, not placed by default) |
 | BluetoothWidget | `Services/BluetoothState` → `Quickshell.Bluetooth` (click = bluetui) |
 | NetworkWidget | `Quickshell.Networking` via `Services/NetworkStatus` (click = network panel) |
-| CameraWidget | `Services/Camera` → `Quickshell.Services.Pipewire` links out of `Video/Source` nodes + a `find` scan of `/proc/*/fd` for `/dev/video*` (3 s, only while PipeWire reports a camera); shown only while a camera is in use, tooltip names the apps |
+| CameraWidget | `Services/Camera` → `Quickshell.Services.Pipewire` links out of `Video/Source` nodes + a `find` scan of `/proc/*/fd` for `/dev/video*`, run on `inotifywait` open/close events on the nodes and a 60 s reconcile (the watcher restarts with backoff; the reconcile runs every 3 s while it is down), only while PipeWire reports a camera; shown only while a camera is in use, tooltip names the apps |
 | AudioWidget | `Services/Audio` → `Quickshell.Services.Pipewire` (scroll = volume, right-click = mute, click = audio panel) |
 | CpuWidget | `Services/SystemStats` (`/proc/stat`) (click = monitor panel) |
 | PowerProfileWidget | `Services/PowerProfileState` → `Quickshell.Services.UPower` `PowerProfiles` (click = cycle) |
@@ -250,12 +259,12 @@ shared `Services/Tooltip` singleton; the one `Ui/TooltipWindow` layer surface
 renders it below the bar, centered under the hovered item on its screen.
 
 TUI launches use `ghostty --class=org.omarchy.* -e <tool>` so Hyprland's existing
-float rule applies — the same classes and commands as `modules/home/waybar.nix`.
+float rule applies.
 
 ### Tool-path baking
 
 `Commons/Config.qml` is a generated singleton of resolved binary paths
-(`packages/marchyo-shell/package.nix`, same idiom as `Color.qml`/`Style.qml`). The
+(`packages/marchyo-shell/package.nix`, same idiom as `Colors.qml`/`Style.qml`). The
 tool packages arrive as `callPackage` args; `lib.getExe` resolves them. The
 checked-in `Config.qml` holds bare `PATH` names so `quickshell -p shell` still runs
 standalone; the build overwrites it.
@@ -284,9 +293,8 @@ current level whenever it changes, replacing SwayOSD. Its triggers are mostly
 
 The Hyprland media keys therefore keep doing the *actual* change (`marchyo
 volume` / `marchyo brightness`: silent `wpctl` / `brightnessctl` + the poke
-for brightness; see `modules/home/hyprland.nix`). Enabling the shell stands SwayOSD down
-(`modules/home/swayosd.nix`); the backlight udev write-access from
-`modules/nixos/osd.nix` still applies, so `brightnessctl` keeps working.
+for brightness; see `modules/home/hyprland.nix`). The backlight udev
+write-access from `modules/nixos/backlight.nix` keeps `brightnessctl` working.
 
 ### Panels
 
@@ -304,7 +312,8 @@ overlay that dismisses on outside click) binds its visibility to
 | NetworkPanel | NetworkWidget | `Networking` + `nmcli` (IPv4 only) | connection status, SSID/signal, IPv4, Wi-Fi radio switch, `nmtui` escape |
 | PowerPanel | BatteryWidget | `UPower` + `PowerProfiles` | battery detail, profile selector, `power menu` escape |
 | MonitorPanel | CpuWidget | `Services/SystemStats` + `df` + hwmon | CPU / mem / disk / temp meters, `btop` escape |
-| ControlCenter | ControlCenterWidget | `Services/QuickToggles` + `Audio` | volume / mic sliders, live mic level, quick-toggle tiles (see below) |
+| ControlCenter | ControlCenterWidget | `Services/QuickToggles` + `Audio` | volume / mic sliders, live mic level, quick-toggle tiles, Appearance section (see below) |
+| ImagePicker (`themes`, `backgrounds`) | `SUPER+CTRL+T`, `SUPER+CTRL+SHIFT+W`, `marchyo shell toggle themes\|backgrounds`, the Control Center buttons | `Services/Pickers` + `Services/Thumbnails` | filter field, keyboard grid, large preview (see "Theme and wallpaper pickers") |
 
 `Services/NetworkStatus` reads the active device, its interface name, the
 connected Wi-Fi network (SSID and signal) and the radio switches from
@@ -326,8 +335,10 @@ AudioPanel's device picker sets the default sink
 Each panel reuses the exact native bindings of its bar widget (via the shared
 `Services/` singletons — `Audio`, `Power`, `NetworkStatus`, `SystemStats`) and
 keeps a button to the corresponding TUI/menu for anything the panel doesn't
-cover. Panels currently render on the default screen (per-output panels are
-deferred).
+cover. A panel opens on the output whose bar was clicked, or on the focused
+output when a key or IPC summoned it (`PanelManager.screenName`). Its card hangs
+off the bar at the right (above a bottom bar), or sits centered when the panel
+sets `centered`.
 
 The MonitorPanel adds two data sources the other panels don't: disk-use of `/`
 (there is no native statvfs binding, so it shells out to the baked `Config.df`,
@@ -337,6 +348,85 @@ polled only while the panel is open) and CPU temperature (the first
 motherboard, not the package). CPU and memory come from the shared
 `Services/SystemStats` singleton, which owns the single `/proc/stat` +
 `/proc/meminfo` sampler that the bar's CpuWidget reads too.
+
+#### Keyboard contract
+
+`Ui/Panel.qml` gives every panel the same keyboard behaviour. `keyboardFocus` is
+overridable and defaults to `OnDemand` when `PanelManager.keyboard` is set (the
+panel was summoned by a key or IPC, not by a bar click) and `None` otherwise.
+Escape closes; Up, Down and Tab walk the Tab chain (`activeFocusOnTab` controls
+only); Enter and Space activate the focused control. A `PointerMoveGate` clears
+`Commons/Pointer.moved` on every keyboard move, so hover cannot steal the
+selection until the pointer really moves. A panel that needs the keyboard on a
+bar click (`ElsewhenPanel`) overrides `keyboardFocus`. New interactive pieces
+need `activeFocusOnTab` and their own Enter/Space handler, which every `Ui/`
+control already has.
+
+#### Ui kit
+
+`Ui/` holds native controls written on `qs.Commons` only: `Button`,
+`ButtonGroup`, `Toggle`, `TextField`, `FilterInput`, `Dropdown`,
+`SearchableDropdown`, `ConfirmDialog`, `PanelHero`, `PanelSectionHeader`,
+`PanelSeparator`, `PanelActionButton`, `PopupCard`, `PopupMenuRow` and
+`PointerMoveGate`, over the shared `ControlSurface`. `ControlSurface` paints the
+five `Style.controls` states (normal, hover, focus, selected, pressed): fill
+colour, fill alpha and border, with the focus ring from the Jylhis `border.focus`
+token. `marchyo shell gallery [section]` opens `Panels/GalleryPanel.qml`, which
+shows every control in every state; `harness.qml` drives each one offscreen.
+
+#### Motion
+
+Every `duration:` goes through `Style.duration(ms)`, which returns 0 when the
+build set `reduceMotion`, when `reduceMotion` is true in the runtime style file
+(`marchyo toggle reduce-motion`, see "Runtime style"), or when Hyprland reports
+`animations:enabled` off. `Services/Motion` owns the `hyprctl getoption` probe
+(at start and on each `configreloaded`).
+`tests/shell/motion-budget-test.js` rejects a bare literal duration and any
+`Style.duration()` literal above `Style.motionLong`, the longest Jylhis motion
+token.
+
+### Runtime style
+
+`Services/RuntimeStyle` watches `$XDG_STATE_HOME/marchyo/shell/style.json`
+(default `~/.local/state`) and writes its values into `Commons/Style`. The CLI
+writes the file atomically; an absent or invalid key restores the baked default.
+
+| Key | Values | Written by | Effect |
+| --- | --- | --- | --- |
+| `reduceMotion` | `true`, `false` | `marchyo toggle reduce-motion` | `Style.motionRuntimeOff`, so `Style.duration()` returns 0 |
+| `uiFont` | font family | `marchyo font set <family> --kind ui` | `Style.uiFont`; `Style.fontFamily` follows it |
+| `barPosition` | `top`, `bottom` | `marchyo theme bar-position` | `Style.barPosition`: the bar, the panel cards, the tooltip, the toast stack and the tray menus move to the bottom edge |
+| `barBackground` | `opaque`, `glassy`, `clear` | `marchyo theme bar-background` | `Style.barAlpha`: 1.0, at most 0.6, or 0 for the bar body; empty keeps `surfaceAlpha` |
+
+`Commons/Appearance.js` parses the file (unit-tested in
+`tests/shell/appearance-test.js`). With a bottom bar the OSD (bottom centre,
+`Style.osdMargin` above the edge) and the overview (search field and tiles
+sized from the top edge) keep their top-bar layout.
+
+### Theme and wallpaper pickers
+
+`Panels/ImagePicker.qml` is one `Ui/Panel` (`centered`) serving two instances
+in `shell.qml`, selected by `kind`: `themes` and `backgrounds`. It holds a
+`FilterInput`, a grid of tiles and a large preview of the selected tile.
+Arrows, Home, End and Page keys move the selection, Enter applies it (the
+panel stays open), and Escape clears the filter and then closes. Clicking a
+tile applies it. The grid starts on the current item.
+
+`Services/Pickers` runs the list command each time the panel opens and applies
+the choice:
+
+| Kind | Rows from | Apply |
+| --- | --- | --- |
+| `themes` | `marchyo theme list --format json`; the tile is the theme's `preview` (`preview.png`), a theme without one gets a plain tile with its name | `marchyo theme set <name>` |
+| `backgrounds` | `marchyo bg list --format json` (theme, package and `~/Pictures/Wallpapers` images) | `marchyo bg set <path>` |
+
+`Services/Thumbnails` serves the wallpaper tiles. `request()` runs
+`Config.thumbs` (`marchyo-thumbs`, `packages/marchyo-shell/thumbs.sh`, with
+ImageMagick), which writes a 480 px thumbnail per image to
+`$XDG_CACHE_HOME/marchyo/thumbs`. The file name hashes the path, the size and
+the mtime, so an edited image gets a new thumbnail and files older than 90
+days are pruned. `sourceFor(path)` returns the thumbnail once it exists and
+the full image until then, and also when the script is missing (the dev tree).
 
 ### Control Center
 
@@ -358,7 +448,7 @@ resets; unavailable entries render no tile.
 | --- | --- | --- | --- |
 | Wi-Fi | `NetworkStatus.wifiEnabled` / `setWifiEnabled` (NetworkManager radio via `Quickshell.Networking`) | a Wi-Fi device exists | network |
 | Bluetooth | `BluetoothState.enabled` / `toggle` (BlueZ adapter power) | a default adapter exists | none |
-| Tailscale | `Tailscale.running` / `setUp` (`tailscale up --timeout=20s` / `down`) | the CLI is baked (`marchyo.services.tailscale.enable`) and answers | tailscale |
+| Tailscale | `Tailscale.running` / `setUp` (`tailscale up --timeout=20s` / `down`) | the CLI is baked (`services.tailscale.enable`) and answers | tailscale |
 | Do not disturb | `NotificationState.dnd` / `toggleDnd` | always | notifications |
 | Caffeine | `Caffeine.active` / `toggle` | always | none |
 | Night light | `Nightlight.enabled` / `toggle` | always | none |
@@ -372,39 +462,57 @@ the first enabled marchyo user (`marchyo.services.tailscale.operator`, applied
 by the `tailscaled-set` unit); a refusal shows as the tile status and in full in
 the Tailscale panel.
 
+Under the tiles an Appearance section holds a window-gaps toggle
+(`marchyo theme gaps on|off`; its state comes from `marchyo toggle gaps
+--status` when the card opens), two `ButtonGroup`s for the bar position and
+background (`marchyo theme bar-position|bar-background`, shown from `Style`),
+a reduce-motion toggle (`marchyo toggle reduce-motion on|off`, shown from
+`Services/RuntimeStyle`), and the `Themes...` and `Wallpapers...` buttons, which
+open the pickers as detail pages through `PanelManager.openDetail`.
+
 ### Keybind summons
 
-`shell.qml` declares one stock `IpcHandler { target: "shell" }` exposing
+Every runtime action lives in one function table, `actions` in `shell.qml`:
 `togglePanel(id)` / `openPanel(id)` / `closePanel(id)` / `closePanels()`, the
-notification controls `toggleDnd()` / `setDnd(on)` / `clearNotifications()`,
-the read-only queries `barState()` / `dndState()` (feeding `marchyo toggle
-waybar|notifications --status`), and `osdShow(...)` — the last is the
-brightness OSD's **primary trigger** (the
-brightness binds poke it after every `brightnessctl` change; see the OSD
-section), plus `ping()` and `reload()`. The `marchyo shell` CLI verbs wrap it (`toggle|open <panel>`,
-`close [<panel>]`, `launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`,
-`bar-state`, `dnd-state`,
-`dismiss [--all]`, `dnd [on|off]`, `overview [on|off]`, `reload`), and the Hyprland binds in
-`modules/home/hyprland.nix` and `window-toggles.nix`, hypridle, and the
-screensaver (all added only when the shell is enabled) run those verbs, by
-store path when `marchyo.cli.enable` is off. Under the hood every call goes
-through the wrapped binary:
+notification controls `toggleDnd()` / `setDnd(on)` / `clearNotifications()` /
+`dismissLast()` / `notifyKeyboard()`, the read-only queries `barState()` /
+`dndState()` / `lockState()` (feeding `marchyo toggle waybar|notifications
+--status`), the launcher and overview summons, `osdShow(...)` (the brightness
+OSD's **primary trigger**; see the OSD section), the state reports
+`caffeineChanged(on)` / `nightlightChanged(on)` / `refreshLockKeys()`, plus
+`ping()` and `reload()`. Three entry points dispatch into it:
 
-```
-marchyo-shell ipc -n call -- shell togglePanel monitor
-```
+- **Global shortcuts.** `shell/shortcuts.json` lists the Hyprland global
+  shortcuts the shell registers (`GlobalShortcut`, appid `marchyo`), each with
+  the table function and arguments it runs. A bind dispatches
+  `hl.dsp.global("marchyo:<name>")` through `hlua.global "<name>"`
+  (`lib/hyprland-lua.nix`, which reads the same file and rejects an unlisted
+  name at eval time), so a keypress spawns no process.
+- **The IpcHandler.** `IpcHandler { target: "shell" }` exposes the same
+  functions to `marchyo-shell ipc -n call -- shell <fn> [args]` (the wrapper
+  bakes its own `-p`, so the call self-targets the running instance).
 
-The `marchyo-shell` wrapper bakes its own `-p <store-path>`, so the call
-self-targets the running instance (no instance id to track). Default binds:
-`SUPER+SHIFT+V` audio, `SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power,
-`SUPER+SHIFT+M` monitor, `SUPER+SHIFT+Q` Control Center; the launcher summons (`toggleLauncher apps|emoji|
-clipboard`) ride `SUPER+R` / `SUPER+period` / `SUPER+CTRL+V`, and
-`SUPER+grave` runs `marchyo shell overview` (`toggleOverview()`). The DND toggle
-(`SUPER+CTRL+comma`) and dismiss-all
-(`SUPER+CTRL+SHIFT+comma`) binds run `marchyo shell dnd` / `marchyo shell
-dismiss --all` and `SUPER+N` runs `marchyo shell toggle notifications` when the
-shell is on; the first two fall back to the CLI/mako when it is off. This is the
-only IPC in the shell; there is no custom bus.
+The `marchyo shell` CLI verbs (`toggle|open <panel>`, `close [<panel>]`,
+`launcher <mode>`, `bar [on|off]`, `lock`, `lock-state`, `bar-state`,
+`dnd-state`, `dismiss [--all]`, `notify-keys`, `dnd [on|off]`,
+`overview [on|off]`, `reload`) call the IpcHandler through `qs ipc`.
+
+Default binds, wired only while the shell is on: `SUPER+SHIFT+V` audio,
+`SUPER+SHIFT+N` network, `SUPER+SHIFT+B` power, `SUPER+SHIFT+M` monitor,
+`SUPER+SHIFT+Q` Control Center, `SUPER+N` the notification centre,
+`SUPER+grave` the overview, `SUPER+SHIFT+SPACE` the bar, `SUPER+CTRL+T` the
+theme picker, `SUPER+CTRL+SHIFT+W` the wallpaper picker, `SUPER+R` /
+`SUPER+period` / `SUPER+CTRL+V` the launcher modes,
+`SUPER+comma` dismiss, `SUPER+CTRL+SHIFT+comma` dismiss all,
+`SUPER+CTRL+ALT+comma` act on the newest, `SUPER+CTRL+comma` do-not-disturb,
+and `SUPER+ALT+comma` keyboard control of
+the toasts (the stack takes exclusive focus, the newest toast is selected,
+number keys press its buttons, Enter clicks it, Up/Down or J/K move, Delete
+dismisses, Escape or ten idle seconds hand the keyboard back; toast expiry
+pauses meanwhile). Non-consuming `Caps_Lock` / `Num_Lock` release binds fire
+`lockKeys` so the lock-key widget re-reads its LEDs. Session-critical binds
+keep a direct exec: `SUPER+L` runs `marchyo shell lock`, and the terminal bind
+execs the terminal.
 
 ### Overview
 
@@ -437,45 +545,64 @@ Summoned by `SUPER+grave` / `marchyo shell overview [on|off]`
 ### Notifications
 
 `Notifications/NotificationDaemon.qml` instantiates a Quickshell
-`NotificationServer` that owns `org.freedesktop.Notifications`, replacing mako.
-It advertises body + limited markup + action buttons + an app image (no inline
-reply, no persistence). On each incoming notification it retains the object
-(`tracked = true`, so the toast and its actions stay live) and hands it to the
-shared `Services/NotificationState` singleton, which applies the do-not-disturb
-policy and the visible cap. `NotificationList.qml` is a top-right layer-shell
-stack that renders `NotificationState.popups` newest-first;
-`NotificationPopup.qml` is one themed card (sharp corners + a 2px urgency-coloured
-border, matching mako's aesthetic) with its own auto-expire timer, click-to-
-dismiss, and action pills.
+`NotificationServer` that owns `org.freedesktop.Notifications`. It advertises
+body, limited markup, action buttons and an app image (no inline reply, no
+server-side persistence). Each incoming notification is retained
+(`tracked = true`) and handed to the `Services/NotificationState` singleton.
+`NotificationList.qml` is the top-right layer-shell stack of decks
+(`NotificationDeck.qml`) of cards (`NotificationPopup.qml`);
+`NotificationCenter.qml` is the history panel.
 
-Do-not-disturb is **in-shell state** on `NotificationState` (no `makoctl`, no
-poll). The bar's DndWidget binds to and toggles it directly; the keybind and CLI
-reach it over IPC (above). Under DND, non-critical notifications are queued and
-suppressed (no toast), then flushed back when DND clears (mako's
-`mode=do-not-disturb` "invisible" semantics), while critical ones always show.
-The queue is capped (`maxQueued` = 20; the oldest overflow is dismissed, not
-re-shown) so a long DND stretch cannot pile up unbounded state. Per-urgency
-timeouts mirror mako: low/normal 5s, critical persistent. The toast stack
-animates: toasts fade/slide in, fade out, and reshuffle smoothly (`Column`
-positioner transitions — mako's toast feel).
+`NotificationState` owns all notification state:
 
-| Piece | Backing |
-| --- | --- |
-| NotificationDaemon | `Quickshell.Services.Notifications` `NotificationServer` |
-| NotificationList | layer-shell `PanelWindow`, top-right, content-sized |
-| NotificationPopup | `Notification` fields; actions via `NotificationAction.invoke()` |
-| DND state | `Services/NotificationState` singleton (shared) |
+- **Rows.** `Commons/notify/Store.js` (copied from omarchy, see its README)
+  snapshots each notification into a vetted row: bounded text, the `transient`
+  hint and, only for a trusted sender, the `marchyo-glyph` icon and the click
+  command and buttons. `entries` holds `{ n, deadline, count, row }`; DND-held
+  notifications are `{ n, row }` in `queued`. Quickshell applies `replaces_id`
+  to the existing object without a new `notification` signal, so the row is
+  recomputed on every property change (`watch`, `refreshRow`) and a click first
+  settles pending updates.
+- **Do-not-disturb** is in-shell state, persisted in `notification-quiet.json`
+  in the Quickshell state directory. It lets through critical urgency,
+  `marchyo-action` (the default sender of `marchyo notify`), per-sender rules,
+  `marchyo.notifications.passApps` and detected verification codes. Everything
+  else is held (capped at `maxQueued`) and recorded in history as silenced; a
+  `transient` notification is dropped instead of held.
+- **History** (`notification-history.json`) skips `transient` rows and stores a
+  verification code only as a placeholder (`Store.sanitiseForPersistence`).
+- **Live toasts** (`notification-live.json`) are restored after a shell
+  restart as `Commons/GhostNotification` objects with a 20 second grace;
+  critical ones stay until dismissed. The file never holds a click command or
+  buttons, so a restored toast has none.
+- **Exec safety.** `marchyo notify --exec` and `--action` carry an argv array in
+  the `marchyo-exec-argv` and `marchyo-actions` hints plus a `marchyo-token`
+  hint, and `--glyph` sets `marchyo-glyph` with the token too. The token is a
+  one-time nonce: the CLI writes `$XDG_RUNTIME_DIR/marchyo/notify-nonce/<nonce>`
+  (mode 0600 in a 0700 directory) and the shell (`tokenOk`) accepts a nonce only
+  once, remembers it and removes the file. A row that fails the check shows no
+  command, no buttons and no glyph. The shell validates the argv with
+  `Security.parseExecArgv` and runs it with `Quickshell.execDetached`: no shell,
+  and nothing from a notification's summary or body ever reaches the argv. Card
+  bodies render `row.bodyRich` (`Markup.render`), never the raw sender markup.
 
-> Live-verify note: D-Bus name acquisition, real toast rendering/stacking,
-> action round-trips, `Quickshell.iconPath` icon resolution, and the
-> `bodyMarkupSupported` HTML subset can only be confirmed on a Wayland host with
-> mako actually stood down.
+The notification centre follows the panel keyboard contract: Up and Down walk
+the rows, Enter opens the row's link or the sender's window, Delete or
+Backspace removes it, Escape closes the panel.
+
+The "What's new" and "Set up" panels (`Panels/WhatsNewPanel.qml`,
+`Panels/SetupPanel.qml`, services `WhatsNew` and `Setup`) render the JSON of
+`marchyo whats-new --json` and `marchyo setup --json`. Open them with
+`marchyo shell open whatsnew` and `marchyo shell open setup`.
+
+> Live-verify note: D-Bus name acquisition, real toast rendering and stacking,
+> action round-trips and icon resolution can only be confirmed on a Wayland host.
 
 ### Lock
 
 `Lock/LockScreen.qml` is a compositor-level `WlSessionLock`
-(ext-session-lock-v1) with in-process PAM authentication — Phase 4, replacing
-hyprlock under the same mutual-exclusion cutover as waybar/mako/SwayOSD.
+(ext-session-lock-v1) with in-process PAM authentication — Phase 4, mutually
+exclusive with hyprlock.
 `Services/Lock` owns the state machine: one `PamContext` (config `login`)
 drives the prompt/retry loop, and `locked = false` happens in exactly one
 place — a successful authentication. Trigger paths:
@@ -509,7 +636,7 @@ it (a `Translate` driven by an explicit animation that settles at 0, no
 `Behavior`), and holds a failure state for 3s: `Services/Lock` owns the
 `failed` flag, its reset `Timer`, and a `failureCount` that re-arms the shake
 on back-to-back failures. While `failed`, the failure line shows over the fresh
-PAM prompt and the field border is `Color.statusErr`.
+PAM prompt and the field border is `Colors.statusErr`.
 
 > **Testing warning:** destroying the shell (crash, or a hot-reload from the
 > dev loop) while locked leaves a conformant compositor showing a solid
@@ -538,8 +665,7 @@ false and no dialog appears.
 
 `Launcher/LauncherWindow.qml` is the Phase 5 launcher, a command palette: a
 full-screen transparent overlay (the Ui/Panel dismiss idiom) with a centered
-card, one shared query field, and one result list, replacing vicinae under
-the same mutual-exclusion cutover as waybar/mako/SwayOSD/hyprlock.
+card, one shared query field, and one result list.
 `Services/Launcher` holds the open mode ("" / "apps" / "emoji" /
 "clipboard") and the query, and routes them to a provider; the surface takes
 `WlrKeyboardFocus.Exclusive` while open and closes on Escape, outside click,
@@ -559,11 +685,22 @@ grid, where Left/Right move by one), Enter activates.
 | emoji | `SUPER+period` | `Commons/EmojiData.js` — rows generated from `pkgs.unicode-emoji`'s emoji-test.txt at package build (dev subset checked in; fully-qualified entries, Component group dropped) | copy + type |
 | clipboard | `SUPER+CTRL+V` | one `cliphist list` per open (fed by the wl-paste watchers in `modules/home/hyprland.nix`); payloads decode in `Commons/Cliphist.js`; image entries get a thumbnail row (see below) | text: copy + type; image: `wl-copy` + Ctrl+V |
 
+| menu | `SUPER+ALT+Space` | `Commons/MenuModel.js` over `~/.config/marchyo/menu.json` (from `marchyo.menu.entries`) merged per key with `menu.local.json`; providers list themes, fonts, languages, power profiles and wallpapers with one `marchyo` command each, apps from `DesktopEntries` | submenu: `Services/Launcher.menuInto()`; exec and terminal run detached after the launcher closes; launcher opens another mode |
+| keys | `SUPER+K` | `~/.config/marchyo/keybindings.json`, rows grouped by modifier plane | `hyprctl dispatch <dispatch>` when the bind has one |
+| dmenu | none (`marchyo menu select|input`) | the request file `$XDG_RUNTIME_DIR/marchyo/menu/<id>.json`, answered in `<id>.out` then `<id>.done` | the chosen value; closing answers with an empty file (a cancel) |
+
+The menu keeps a route (`Launcher.menuRoute`): Escape clears the query, then
+goes up a level, then closes; Backspace on an empty field goes up. A typed
+query searches every entry below the open level (label, aliases, description).
+`when` and `checked` guards are shell commands run once per opening in one
+`sh -c` batch (the commands travel as arguments), cached while the menu is
+open, with a 3 s cap. Shell IPC: `openMenu <route>`, `toggleMenu <route>`,
+`menuRequest <path>`.
+
 Paste (emoji/clipboard) goes through `Services/Launcher.pasteText`:
 `Quickshell.clipboardText` for the copy, then `wtype` after a 0.25 s settle
 — the launcher closes first so wtype delivers to the previously focused
-window. No privileged helper: vicinae's `cap_dac_override` uinput wrapper
-stands down with the cutover (gated in `modules/nixos/launcher.nix`). The
+window. No privileged helper writes `/dev/uinput`. The
 text travels as argv (`exec "$0" "$1"`), never through shell interpolation.
 
 Clipboard image entries (cliphist lists them as `[[ binary data 12 KiB png
@@ -582,13 +719,17 @@ decode | wl-copy --type image/<format>` (`Config.wlCopy`), then Ctrl+V via
 `wtype` after the same settle.
 
 In apps mode a prefix routes the query to another provider; the rest of the
-text is that provider's query. The emoji and clipboard modes search the whole
-text, prefix characters included.
+text is that provider's query. The emoji, clipboard and theme modes search the whole
+text, prefix characters included; the theme and font modes are the `>theme` and
+`>font` lists without the prefix (the global shortcuts `launcher.theme` and
+`launcher.font` open them; the `SUPER+CTRL+T` bind opens the theme picker panel
+instead).
 
 | Prefix | Provider | Backing | Activate |
 | --- | --- | --- | --- |
 | `=` | calc | `qalc -t -- <expr>` (`Config.qalc`, libqalculate: units, conversions, currencies); one evaluation at a time, the latest expression queued | copy the answer |
 | `>theme` | theme | `marchyo theme list --format json`, once per activation | `marchyo theme set <name>` (live switch) |
+| `>font` | font | `marchyo font list --kind mono\|ui --format json`, once per activation; a leading `mono` or `ui` word narrows the kind | `marchyo font set <family> --kind <kind>` |
 | `#` | windows | `hyprctl clients -j`, once per activation (most recently focused first; title and class searched) | focus the window (`focuswindow address:`) |
 | `!` | power | lock, log out, suspend, hibernate, reboot, shut down | `marchyo <verb>`; lock goes to the shell's own lock (`Services/Lock`) |
 
@@ -617,6 +758,9 @@ Kinds are a closed set (`packages/marchyo-shell/plugin-kinds.nix`), and
 | `bar-widget` | `barWidget` | a bar item | `shell.qml` `componentFor()`, placed by manifest id in `bar.layout` |
 | `launcher` | `launcher` | a `qs.Launcher` `Provider` | `Launcher/LauncherWindow`, selected in apps mode by the manifest `prefix` |
 | `daemon` | `daemon` | a non-visual `Item` or `QtObject` | `shell.qml`, one instance at the shell root |
+
+Plugin ids match `[A-Za-z0-9][A-Za-z0-9._-]*` without `..`, and the
+`marchyo.*` namespace is reserved for first-party surfaces.
 
 The build checks that the manifest's `kinds`, `entryPoints` and `prefix` equal
 the declared arguments. A launcher plugin's `prefix` is required, non-empty,
@@ -705,13 +849,125 @@ Run the tree directly for a fast QML iteration loop (no rebuild):
 quickshell -p shell          # from the repo root
 # or, the wrapped, theme-baked package:
 nix run .#marchyo-shell
-# or, via the dev recipe (also stops the store-backed user service first):
+# or, in the isolated sandbox (see below); `dev-live` keeps the old behaviour
+# of stopping the store-backed user service and running in the live session:
 just -f shell/Justfile dev
 ```
 
-The checked-in `Commons/Color.qml` / `Commons/Style.qml` are the Jylhis Dark
+The checked-in `Commons/Colors.qml` / `Commons/Style.qml` are the Jylhis Dark
 `fontScale 1.0` defaults so the dev loop works standalone; the Nix build
 overwrites both for the host's `marchyo.theme.variant` and `fontScale`.
+
+### Sandbox
+
+`dev/sandbox` runs the tree's shell in a nested Hyprland inside bubblewrap, so
+the live session and the `marchyo-shell` service are never modified. It runs
+as the transient user unit `marchyo-shell-sandbox`, so `down` stops every
+process it started.
+
+Isolation:
+
+- Private runtime dir `/run/user/$UID/qsdev.XXXX`, scratch home under it, private XDG dirs, and a private session bus (`dbus-run-session`).
+- bubblewrap with all namespaces unshared and only these binds: `/nix`,
+  `/etc`, `/sys`, `/dev/dri`, the host Wayland socket, the shell tree
+  (read-only, so live reload sees edits) and the runtime dir. The real session
+  bus, the system bus and the host PipeWire are not reachable.
+- Without `--real`, `dev/system-bus` starts a private system bus
+  (`$R/sysbus`, exported as `DBUS_SYSTEM_BUS_ADDRESS`) with python-dbusmock
+  templates for UPower (one discharging battery), NetworkManager (one
+  connected Wi-Fi device, access point and connection), BlueZ (one adapter,
+  one paired device), power-profiles-daemon, logind (session `1`) and polkitd,
+  and a private PipeWire with a null audio sink. The values (battery
+  percentage, SSID, device names) are in `dev/fixtures/NAME/system-bus.env`.
+  `devenv.nix` provides the tools.
+- The unit runs in a cgroup named `session-1.scope` inside its own cgroup
+  namespace, so libsystemd (and with it the shell's polkit agent) finds the
+  mock logind session for the shell's pid.
+- `dev/stubs/` is first on `PATH`: side-effect tools (`systemctl`, `loginctl`,
+  `marchyo`, `cliphist`, `wl-copy`, `wtype`, `nmcli`, `wpctl`, `brightnessctl`,
+  `playerctl`, `hyprlock`, `uwsm`, `pkill`) log their argv to `$R/stubs.log`
+  and exit 0. `voxtype status --follow` reports idle once and stays
+  subscribed. `hyprctl` stays real and talks to the nested compositor.
+- The shell gets `MARCHYO_SHELL_DEV=1` and `MARCHYO_SHELL_OUTPUT=SHOT`.
+- Themed icons come from Adwaita (`MARCHYO_SANDBOX_ICONS`, set by
+  `devenv.nix`) through a generated `gtk-3.0/settings.ini`, not from the
+  host profile.
+
+Commands:
+
+```bash
+shell/dev/sandbox up [--window] [--real] [--fixture NAME]
+shell/dev/sandbox status | down
+eval "$(shell/dev/sandbox env)"   # XDG_RUNTIME_DIR, WAYLAND_DISPLAY, signature
+grim -o SHOT out.png              # with that env: capture the 1920x1080 output
+shell/dev/sandbox ipc call shell openLauncher apps
+shell/dev/sandbox hyprctl monitors
+shell/dev/sandbox log -f
+```
+
+Without `--window` the nested window is moved to the host's silent special
+workspace `special:shell-sandbox`. `--real` binds the real system bus and the
+PipeWire socket instead of starting the mocks. `--fixture NAME` (default
+`default`) copies `dev/fixtures/NAME/config/` into the scratch
+`XDG_CONFIG_HOME` and reads `dev/fixtures/NAME/system-bus.env`; the default
+fixture holds the small `marchyo/` files Home Manager generates (appearance,
+shell). `up` evaluates `keybindings.json` and `menu.json` from the flake's
+reference configuration (`nixosConfigurations.x86_64`, user `developer`) into
+`$R/generated` unless the fixture ships its own copy; if the evaluation fails
+(log in `$R/generate.log`) the shell starts with an empty command menu and
+keybinding sheet.
+
+Gotchas:
+
+- Unix socket paths are limited to 108 bytes, so the runtime dir must stay
+  short. Do not point it at a long scratch path.
+- Hyprland 0.57 cannot run headless-only: without a parent `WAYLAND_DISPLAY`
+  it takes the DRM seat and aborts. `up` refuses to start without the host
+  socket.
+- The headless output `SHOT` is captured with `grim -o SHOT`. The nested
+  window's own output (`WAYLAND-1`) gets no frames while parked, so `grim -o
+  WAYLAND-1` blocks.
+- Hyprland 0.57 reads a Lua config (`hl.monitor`, `hl.config`); a classic
+  `hypr.conf` rule is ignored. The generated `hyprland.lua` sets `SHOT` to
+  scale 1, so `grim` pixels equal the logical coordinates `surfaces` reports.
+- The mocks log to `$R/mocks.log`, `$R/system-bus.log` and `$R/pipewire.log`.
+  A template method the shell calls but the template lacks (for example
+  NetworkManager `GetAllDevices`) shows up as a QML warning; add it in
+  `dev/system-bus` with the mock `AddMethod` or `AddProperty` calls.
+- Mock state is static: toggling Wi-Fi or connecting a device in the shell
+  does not change the mocks.
+- Run the tools with `devenv shell` (it provides `bwrap`, `grim`, `jq`,
+  `dbus-daemon`, `gdbus`, `pipewire`, `wireplumber` and python-dbusmock).
+
+Screenshots. `dev/shot SURFACE` starts the sandbox when it is down, closes
+every surface, opens SURFACE, applies the state, waits for `settled`, and
+prints the PNG path. The QML warnings logged since the previous shot go to
+stderr.
+
+```bash
+shell/dev/shot launcher --state query=fire        # launcher[:MODE], default apps
+shell/dev/shot menu:system                        # the command menu at a route
+shell/dev/shot panel:power --out /tmp/power.png
+shell/dev/shot osd --ipc 'shell osdShow Volume 40 true'
+shell/dev/shot screen                             # the whole SHOT output
+shell/dev/shot launcher --grab                    # the card alone, with alpha
+```
+
+SURFACE is `launcher[:MODE]`, `menu[:ROUTE]`, `panel:ID`, `overview`,
+`screen`, or a name from `dev surfaces` that `--ipc` calls open. `--state`
+takes `query=TEXT` and `select=INDEX`. Without `--grab` the PNG is cropped
+from the composited output, so blur and shadows show. The default output path
+is `~/.cache/marchyo-shell-sandbox/<surface>.png`.
+
+Dev hooks. Three environment variables change the shell for the sandbox; each
+is inert when unset. `MARCHYO_SHELL_OUTPUT=<output>` opens every summoned
+surface on that output when it exists. `MARCHYO_SHELL_NO_MOTION=1` makes every
+`Style.duration()` return 0. `MARCHYO_SHELL_DEV=1` enables the IPC target
+`dev`: `setLauncherQuery <q>`, `launcherSelect <index>`, `surfaces` (JSON name
+to the output-local logical rect of each visible card), `grab <name> <path>`
+(replies `pending`, then writes a PNG; read the outcome with `grabResult`) and
+`settled` (`yes` after a quiet period and two frames). Surfaces register in
+`Services/Dev` with `Dev.register(name, window, card)`.
 
 ### Editor tooling (qmlls)
 
@@ -722,11 +978,12 @@ namespace. Quickshell 0.3.0's built-in tooling support mirrors the scanned
 files**, so qmlls can never resolve `qs.*` through it. (It's a runtime
 artifact: untracked, and recreated by any `quickshell -p shell` run.)
 
-Instead, `devenv.nix` builds a stable alias at `.devenv/qml-modules/qs ->
-shell/` (`enterShell`) and exports
+Instead, the shared `languages.qml` devenv module (enabled in `devenv.nix`)
+builds a stable alias at `$DEVENV_STATE/qml/modules/qs -> shell/`
+(`enterShell`) and exports
 
 ```
-QML_IMPORT_PATH = .devenv/qml-modules : quickshell/lib/qt-6/qml : qtdeclarative/lib/qt-6/qml
+QML_IMPORT_PATH = $DEVENV_STATE/qml/modules : quickshell/lib/qt-6/qml : qtdeclarative/lib/qt-6/qml
 ```
 
 so the checked-in per-directory `qmldir`s (`module qs.Commons`, `qs.Bar`, …)
@@ -765,9 +1022,11 @@ Three layers, split by what each can reach:
 | `tests/shell/format-test.js` | `nix flake check`, or `node tests/shell/format-test.js` | `Commons/Format.js` — the shell's pure parsing (keymap short codes, `nmcli -t device show` records) |
 | `tests/shell/notify-test.js` | `nix flake check`, or `node tests/shell/notify-test.js` | `Commons/Notify.js` — notification match/eviction decisions |
 | `tests/shell/launcher-test.js` | `nix flake check`, or `node tests/shell/launcher-test.js` | the launcher's pure JS: the vendored fuzzysort pin and license header, `Match.js` scoring over it, `LauncherProviders.js` prefix routing, ranking and the theme / `hyprctl clients` / `qalc` parsers, `EmojiData.js` parsing, `Cliphist.js` quoted-printable/UTF-8 decoding and image-entry parsing / cache names |
+| `tests/shell/appearance-test.js` | `nix flake check`, or `node tests/shell/appearance-test.js` | `Commons/Appearance.js`: the runtime style file, the wallpaper list, the thumbnail script lines and the picker grid navigation |
 | `tests/shell/peripherals-test.js` | `nix flake check`, or `node tests/shell/peripherals-test.js` | `Commons/Peripherals.js` — the `solaar show` parser |
 | `tests/shell/monitor-config-test.js` | `nix flake check`, or `node tests/shell/monitor-config-test.js` | `Commons/MonitorConfig.js`: per-monitor shell.json merge, always-global keys, per-section bar fallback |
-| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, and every CLI `shellIpc("<fn>")` call resolving |
+| `tests/shell/motion-budget-test.js` | `nix flake check`, or `node tests/shell/motion-budget-test.js` | every QML `duration:` goes through `Style.duration()` and stays within `Style.motionLong` |
+| `tests/shell/contracts-test.sh` | `nix flake check`, or `bash tests/shell/contracts-test.sh` | static cross-file agreements: qmldir completeness, `Bar/` widgets owning no runtime state, `Services/` all being singletons, the `Config.<tool>` → `package.nix` chain, every `Style.*` property reaching the generated `Style.qml`, and every CLI `shellIpc("<fn>")` call resolving |
 | `just -f shell/Justfile check` | a machine with Quickshell | the tree actually parses, binds and loads |
 
 The JS suites are the reason `Commons/*.js` files are plain `.js` modules with a
@@ -797,3 +1056,54 @@ Panels/OSD/notification surfaces can't load offscreen (they need a layer-shell
 backend), so they are covered by the dev loop and `qmlformat` (treefmt) for
 syntax. "Configuration Loaded" with no `WARN`/`ERROR` from the shell's own
 files means the tree parses and binds cleanly.
+
+## Shell constraints
+
+Keep these when touching `shell/`.
+
+- `Bar/` owns no runtime state: every `Process`/`Timer`/`Connections`/`FileView`/`Socket`
+  lives in a `Services/` singleton (contract-tested).
+- One action table, `actions` in `shell.qml`; the `IpcHandler { target: "shell" }`
+  and the global shortcuts both dispatch to it (contract-tested).
+  Compat-shim handlers use per-plugin targets.
+- Long-lived streams restart with backoff keyed on `onRunningChanged` (see
+  `Services/Dictation.qml`); a dead stream reports in the tooltip.
+- Every `Config.<tool>` is declared in `Commons/Config.qml` and baked by
+  `packages/marchyo-shell/package.nix` (contract-tested).
+- Bound subprocess output with a `maxChars` ceiling.
+- Never point a `FileView` at a user-writable file; watch the directory as a doorbell
+  (`preload: false`).
+- Sandbox probes check the Wayland socket, not `WAYLAND_DISPLAY`.
+- Disable `Behavior`s before a construction-time jump to 0 and re-enable `onFinished`, never
+  `onStopped`.
+- Nerd Font glyphs get stripped by editing tools: make targeted edits only in `Bar/`.
+
+## Not planned
+
+- omarchy's update/migrate/refresh engine, AUR tooling and `omarchy-install-*`: replaced by
+  `nixos-rebuild`, the pins and generations.
+- Runtime plugin fetch/enable: plugins stay Nix-declared and baked (the dev loader
+  only syncs a local checkout, and is off by default).
+- Dev-environment installers (mise and others): use per-project devenv.
+- Per-model kernel patches (expose the kernel package choice instead), a Windows VM, omarchy's
+  server edition.
+- Plymouth runtime theming: it is never on screen during a session.
+- Material You as default, and transparency, blur or glass shell modes.
+
+## References
+
+- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell): IPC CLI, plugins +
+  lockfile, control center. Primary reference.
+- [caelestia-dots/shell](https://github.com/caelestia-dots/shell): launcher providers,
+  per-monitor config, closest services split.
+- [serpantinum](https://github.com/ilyamiro/serpantinum): typed Nix options module,
+  CLI-as-IPC.
+- [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (`ii/` only): overview,
+  quick-toggle models, fuzzysort, cliphist previews.
+- [qylock](https://github.com/Darkkal44/qylock): lock-screen UX (skip its SDDM shim).
+- [flickowoa yorha](https://github.com/flickowoa/dotfiles/tree/hyprland-yorha): compositor
+  effects.
+- [linux-retroism](https://github.com/diinki/linux-retroism),
+  [rumda](https://github.com/Nytril-ark/rumda): readable reference QML.
+- [ekremx25/quickshell](https://github.com/ekremx25/quickshell): notification centre.
+- [awesome-quickshell](https://github.com/ziuus/awesome-quickshell): landscape index.

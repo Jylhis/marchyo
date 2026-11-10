@@ -9,15 +9,24 @@ export default defineConfig({
     // Explicit sitemap ownership. Starlight bundles @astrojs/sitemap and only
     // injects its own when the integration is absent, so declaring it here
     // (single-language site → no i18n config needed) lets us control what ends
-    // up in `sitemap-index.xml`. `/search/` is a client-rendered demo with
-    // hardcoded sample data and is marked noindex, so keep it out of the map.
-    sitemap({
-      filter: (page) => !page.endsWith('/search/'),
-    }),
+    // up in `sitemap-index.xml`.
+    sitemap(),
     starlight({
       title: 'marchyo',
       description: 'A modular NixOS configuration flake with sensible defaults',
-      customCss: ['./src/styles/starlight-theme.css'],
+      // Canonical tokens + self-hosted fonts from the in-repo design system,
+      // then the --sl-* bridge.
+      customCss: ['./vendor/design/colors_and_type.css', './src/styles/starlight-theme.css'],
+      // The tokens switch on [data-mode]; Starlight toggles [data-theme].
+      head: [
+        {
+          tag: 'script',
+          content:
+            "(function(){var d=document.documentElement;" +
+            "function s(){d.dataset.mode=d.dataset.theme==='dark'?'dark':'light';}" +
+            "s();new MutationObserver(s).observe(d,{attributeFilter:['data-theme']});})();",
+        },
+      ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/Jylhis/marchyo' },
       ],
@@ -25,13 +34,13 @@ export default defineConfig({
         baseUrl: 'https://github.com/Jylhis/marchyo/edit/main/site/',
       },
       expressiveCode: {
-        // Keep readable syntax themes but warm the frame to sit on the
-        // paper/roast surface, matching the Jylhis design system.
+        // Keep readable syntax themes; the frame sits on the paper/black
+        // surface of the Jylhis design system.
         themes: ['github-dark', 'github-light'],
         styleOverrides: {
           codeBackground: 'var(--sl-color-bg-inline-code)',
           borderColor: 'var(--sl-color-hairline-light)',
-          borderRadius: '4px',
+          borderRadius: '2px',
         },
       },
       sidebar: [
@@ -55,15 +64,18 @@ export default defineConfig({
             'docs/configuration/localization',
             'docs/configuration/theming',
             'docs/configuration/keyboard',
-            'docs/configuration/console',
             'docs/configuration/graphics',
             'docs/configuration/default-apps',
+            'docs/configuration/webapps',
             'docs/configuration/launcher',
+            'docs/configuration/menu',
             'docs/configuration/notifications',
             'docs/configuration/dictation',
-            'docs/configuration/local-ai',
             'docs/configuration/hardware',
+            'docs/configuration/power',
             'docs/configuration/performance',
+            'docs/configuration/network',
+            'docs/configuration/security',
             'docs/configuration/bees',
           ],
         },
@@ -73,7 +85,11 @@ export default defineConfig({
         },
         {
           label: 'Guides',
-          items: ['docs/guides/workstation-template', 'docs/guides/migration'],
+          items: [
+            'docs/guides/installation',
+            'docs/guides/workstation-template',
+            'docs/guides/migration',
+          ],
         },
         {
           label: 'Development',

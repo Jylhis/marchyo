@@ -1,29 +1,27 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
   hlua = import ../../lib/hyprland-lua.nix { inherit lib; };
-  cfg = (osConfig.marchyo or { }).emacs or { };
-  enabled = cfg.enable or false;
-  emacsPkg = cfg.package or pkgs.emacs-pgtk;
+  cfg = osConfig.marchyo.emacs;
+  enabled = cfg.enable;
+  emacsPkg = cfg.package;
 
-  themeCfg = (osConfig.marchyo or { }).theme or { };
-  themeEnabled = themeCfg.enable or true;
-  themeVariant = themeCfg.variant or "dark";
+  themeCfg = osConfig.marchyo.theme;
+  themeEnabled = themeCfg.enable;
+  themeVariant = themeCfg.variant;
   fs = import ../../lib/font-scale.nix {
     inherit lib;
-    scale = themeCfg.fontScale or 1.25;
+    scale = themeCfg.fontScale;
   };
   jylhisThemeName = if themeVariant == "dark" then "jylhis-dark" else "jylhis-light";
 
-  windmoveEnabled = enabled && (cfg.windmove.enable or true);
-  eventListenerEnabled = enabled && (cfg.eventListener.enable or true);
-  scratchpadEnabled = enabled && (cfg.scratchpad.enable or true);
-  everywhereEnabled = enabled && (cfg.everywhere.enable or true);
-  orgProtocolEnabled = enabled && (cfg.orgProtocol.enable or true);
+  windmoveEnabled = enabled && cfg.windmove.enable;
+  eventListenerEnabled = enabled && cfg.eventListener.enable;
+  everywhereEnabled = enabled && cfg.everywhere.enable;
 
   needsElispPkg = windmoveEnabled || eventListenerEnabled;
 
@@ -43,7 +41,8 @@ let
             (hypr (pcase dir ('left "l") ('right "r") ('up "u") ('down "d"))))
         (condition-case _
             (funcall fn)
-          (user-error (marchyo--hyprctl "dispatch" "movefocus" hypr)))))
+          (user-error (marchyo--hyprctl
+                       "dispatch" (format "hl.dsp.focus({ direction = \"%s\" })" hypr))))))
 
     ;;;###autoload
     (defun marchyo/move-window-or-hypr (dir)
@@ -52,7 +51,8 @@ let
             (hypr (pcase dir ('left "l") ('right "r") ('up "u") ('down "d"))))
         (condition-case _
             (funcall fn)
-          (user-error (marchyo--hyprctl "dispatch" "swapwindow" hypr)))))
+          (user-error (marchyo--hyprctl
+                       "dispatch" (format "hl.dsp.window.swap({ direction = \"%s\" })" hypr))))))
 
     (provide 'marchyo-windmove)
     ;;; marchyo-windmove.el ends here
@@ -181,24 +181,24 @@ let
             case "$mode" in
               focus)
                 emacsclient -e "(marchyo/windmove-or-hypr '$elisp_dir)" >/dev/null 2>&1 \
-                  || hyprctl dispatch movefocus "$dir"
+                  || hyprctl dispatch "hl.dsp.focus({ direction = \"$dir\" })"
                 ;;
               move)
                 emacsclient -e "(marchyo/move-window-or-hypr '$elisp_dir)" >/dev/null 2>&1 \
-                  || hyprctl dispatch swapwindow "$dir"
+                  || hyprctl dispatch "hl.dsp.window.swap({ direction = \"$dir\" })"
                 ;;
             esac
           else
             case "$mode" in
-              focus) hyprctl dispatch movefocus "$dir" ;;
-              move)  hyprctl dispatch swapwindow "$dir" ;;
+              focus) hyprctl dispatch "hl.dsp.focus({ direction = \"$dir\" })" ;;
+              move)  hyprctl dispatch "hl.dsp.window.swap({ direction = \"$dir\" })" ;;
             esac
           fi
           ;;
         *)
           case "$mode" in
-            focus) hyprctl dispatch movefocus "$dir" ;;
-            move)  hyprctl dispatch swapwindow "$dir" ;;
+            focus) hyprctl dispatch "hl.dsp.focus({ direction = \"$dir\" })" ;;
+            move)  hyprctl dispatch "hl.dsp.window.swap({ direction = \"$dir\" })" ;;
           esac
           ;;
       esac
@@ -222,7 +222,7 @@ let
           -F '((name . "emacs-scratchpad") (title . "emacs-scratchpad"))' \
           -e '(scratch-buffer)' >/dev/null 2>&1 || true
       fi
-      hyprctl dispatch togglespecialworkspace magic
+      ${hlua.hyprDispatch ''workspace.toggle_special("magic")''}
     '';
   };
 
@@ -265,41 +265,6 @@ let
       }
     ];
 
-  hyprBinds =
-    let
-      windmove = action: dir: hlua.exec "${windmoveScript}/bin/marchyo-cross-windmove ${action} ${dir}";
-    in
-    lib.optionals enabled [
-      (hlua.bindd "SUPER + SHIFT + E" "New Emacs frame" (hlua.exec "emacsclient -c -n"))
-    ]
-    ++ lib.optionals windmoveEnabled [
-      (hlua.bindd "SUPER + ALT + H" "Focus window (Emacs-aware) left" (windmove "focus" "l"))
-      (hlua.bindd "SUPER + ALT + L" "Focus window (Emacs-aware) right" (windmove "focus" "r"))
-      (hlua.bindd "SUPER + ALT + K" "Focus window (Emacs-aware) up" (windmove "focus" "u"))
-      (hlua.bindd "SUPER + ALT + J" "Focus window (Emacs-aware) down" (windmove "focus" "d"))
-      (hlua.bindd "SUPER + ALT + SHIFT + H" "Swap window (Emacs-aware) left" (windmove "move" "l"))
-      (hlua.bindd "SUPER + ALT + SHIFT + L" "Swap window (Emacs-aware) right" (windmove "move" "r"))
-      (hlua.bindd "SUPER + ALT + SHIFT + K" "Swap window (Emacs-aware) up" (windmove "move" "u"))
-      (hlua.bindd "SUPER + ALT + SHIFT + J" "Swap window (Emacs-aware) down" (windmove "move" "d"))
-    ]
-    ++ lib.optionals scratchpadEnabled [
-      (hlua.bindd "SUPER + Z" "Emacs scratchpad" (
-        hlua.exec "${scratchpadScript}/bin/marchyo-emacs-scratchpad"
-      ))
-    ]
-    ++ lib.optionals everywhereEnabled [
-      (hlua.bindd "SUPER + CTRL + E" "Emacs everywhere" (
-        hlua.exec "emacsclient -ne '(emacs-everywhere)'"
-      ))
-    ]
-    ++ lib.optionals orgProtocolEnabled [
-      # T, not C: SUPER+SHIFT+C is the colour picker (modules/home/hyprland.nix) and
-      # both land in the same bind list, so C would double-bind the chord.
-      # Taken-key ledger: modules/nixos/options/webapps.nix.
-      (hlua.bindd "SUPER + SHIFT + T" "Org capture (task)" (
-        hlua.exec "emacsclient -c -n -e '(org-capture)'"
-      ))
-    ];
 in
 {
   config = lib.mkIf enabled {
@@ -316,10 +281,12 @@ in
             version = "0.1.0";
             src = elispSrc;
           };
-          # The design system's own Emacs themes (Modus-style faces, generated
-          # in-derivation). Replaces the base16 theme Stylix used to inject.
-          jylhisThemes = pkgs.callPackage "${pkgs.jylhis-design-src}/nix/emacs.nix" {
-            inherit (epkgs) trivialBuild;
+          # The design system's own Emacs themes (Modus-style faces), from
+          # the vendored design files.
+          jylhisThemes = epkgs.trivialBuild {
+            pname = "jylhis-emacs-themes";
+            version = "6.0.0";
+            src = "${pkgs.jylhis-design-src}/platforms/emacs";
           };
         in
         (lib.optional needsElispPkg marchyoElisp)
@@ -360,7 +327,11 @@ in
 
     wayland.windowManager.hyprland.settings = {
       window_rule = lib.mkAfter hyprWindowRules;
-      bind = lib.mkAfter hyprBinds;
+    };
+
+    marchyo.keybinds.commands = {
+      emacsWindmove = "${windmoveScript}/bin/marchyo-cross-windmove";
+      emacsScratchpad = "${scratchpadScript}/bin/marchyo-emacs-scratchpad";
     };
   };
 }

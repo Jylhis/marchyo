@@ -14,6 +14,7 @@ import {
   ok,
   runArgv,
   usageError,
+  tr,
 } from "@marchyo/core";
 import {
   type DeviceInfo,
@@ -81,10 +82,10 @@ export async function runReminderSet(
   if (code !== 0) {
     await notify(
       "critical",
-      "Reminder",
-      `Could not schedule reminder - is "${delay}" a valid delay?`,
+      tr("utilities.reminder"),
+      tr("utilities.couldNotScheduleReminderIs", delay),
     );
-    err(rt, `systemd-run rejected the reminder (delay "${delay}"?)`);
+    err(rt, tr("utilities.systemdRunRejectedTheReminder", delay));
     return 1;
   }
 
@@ -93,8 +94,8 @@ export async function runReminderSet(
   const p = (n: number) => String(n).padStart(2, "0");
   const stamp = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`;
   await appendFile(join(stateDir(), "reminders"), `${stamp} | ${delay} | ${msg}\n`);
-  await notify("low", "Reminder set", `In ${delay}: ${msg}`);
-  ok(rt, `reminder in ${delay}: ${msg}`);
+  await notify("low", tr("utilities.reminderSet"), tr("utilities.in", delay, msg));
+  ok(rt, tr("utilities.reminderIn", delay, msg));
   return 0;
 }
 
@@ -141,8 +142,8 @@ export async function runReminderClear(rt: Runtime): Promise<number> {
   await captureArgv(["systemctl", "--user", "stop", "marchyo-reminder-*"]);
   await mkdir(stateDir(), { recursive: true });
   await writeFile(join(stateDir(), "reminders"), "");
-  await notify("low", "Reminders", "Cleared pending reminders");
-  ok(rt, "reminders cleared");
+  await notify("low", tr("utilities.reminders"), tr("utilities.clearedPendingReminders"));
+  ok(rt, tr("utilities.remindersCleared"));
   return 0;
 }
 
@@ -188,15 +189,15 @@ export async function runInfo(rt: Runtime, what: string): Promise<number> {
           status === "Discharging" && Number(capacity) <= 20
             ? "critical"
             : "low";
-        await notify(urgency, `Battery ${capacity}%`, `${bat}: ${status}`);
+        await notify(urgency, tr("utilities.battery", capacity), `${bat}: ${status}`);
       }
-      if (!found) await notify("low", "Battery", "No battery detected");
+      if (!found) await notify("low", tr("utilities.battery2"), tr("utilities.noBatteryDetected"));
       return 0;
     }
     default:
       return usageError(
         rt,
-        `unknown info: "${what}"`,
+        tr("utilities.unknownInfo", what),
         "marchyo info <datetime|battery>",
       );
   }
@@ -218,14 +219,14 @@ export async function runTranscode(
   const src = file ?? (await gumFile(homedir()));
   if (src === null || src === undefined) return 0;
   if (!existsSync(src)) {
-    err(rt, `not a file: ${src}`);
+    err(rt, tr("utilities.notFile", src));
     return 1;
   }
 
   if (opts.ascii) {
     // Text-mode "transcode": animate the file's text with tte. No output.
     if (!commandAvailable("tte")) {
-      err(rt, "tte (terminaltexteffects) not found in PATH");
+      err(rt, tr("utilities.tteTerminaltexteffectsNotFoundIn"));
       return 1;
     }
     return runArgv(["sh", "-c", `tte beams < '${src.replace(/'/g, `'\\''`)}'`]);
@@ -234,7 +235,7 @@ export async function runTranscode(
   if (opts.imageAscii) {
     // Render an image as ASCII/ANSI art to stdout with chafa. No output file.
     if (!commandAvailable("chafa")) {
-      err(rt, "chafa not found in PATH");
+      err(rt, tr("utilities.chafaNotFoundInPath"));
       return 1;
     }
     return runArgv(["chafa", src]);
@@ -258,12 +259,12 @@ export async function runTranscode(
   if (!args) {
     return usageError(
       rt,
-      `invalid target format: "${target}"`,
+      tr("utilities.invalidTargetFormat", target),
       "marchyo transcode <file> --to <mp4|webm|gif> (or --ascii)",
     );
   }
   if (!commandAvailable("ffmpeg")) {
-    err(rt, "ffmpeg not found in PATH");
+    err(rt, tr("utilities.ffmpegNotFoundInPath"));
     return 1;
   }
 
@@ -276,15 +277,19 @@ export async function runTranscode(
 
   const code = await runArgv(["ffmpeg", "-y", "-i", src, ...args, out]);
   if (code !== 0) {
-    await notify("critical", "Transcode", `ffmpeg failed transcoding ${basename(src)}`);
+    await notify("critical", tr("utilities.transcode"), tr("utilities.ffmpegFailedTranscoding", basename(src)));
     return 1;
   }
-  await notify("low", "Transcode", `Saved ${basename(out)}`);
-  ok(rt, `saved ${out}`);
+  await notify("low", tr("utilities.transcode"), tr("utilities.saved", basename(out)));
+  ok(rt, tr("utilities.saved2", out));
   return 0;
 }
 
-export type ShareOpts = { to?: string; clipboard?: boolean; pin?: string };
+export type ShareOpts = {
+  to?: string;
+  clipboard?: boolean;
+  pin?: string;
+};
 
 // Every effect of `marchyo share` that touches the network, the desktop or a
 // prompt, injectable so tests run offline.
@@ -334,7 +339,7 @@ function peerLabel(p: Peer): string {
 
 async function shareToClipboard(rt: Runtime, path: string): Promise<number> {
   if (!commandAvailable("wl-copy")) {
-    err(rt, "wl-copy not found in PATH");
+    err(rt, tr("utilities.wlCopyNotFoundIn"));
     return 1;
   }
   // A file's contents, or a folder's path.
@@ -359,7 +364,7 @@ async function resolvePeer(
     const addr = parseAddress(to);
     if (addr) {
       const p = await deps.register(addr.ip, addr.port, self);
-      if (!p) err(rt, `no LocalSend device answers at ${to}`);
+      if (!p) err(rt, tr("utilities.noLocalsendDeviceAnswersAt", to));
       return p;
     }
   }
@@ -367,28 +372,28 @@ async function resolvePeer(
   if (to !== undefined) {
     const p = matchPeer(peers, to);
     if (!p) {
-      err(rt, `no LocalSend device named "${to}" found`);
-      if (peers.length > 0) hint(rt, `Found: ${peers.map(peerLabel).join(", ")}`);
+      err(rt, tr("utilities.noLocalsendDeviceNamedFound", to));
+      if (peers.length > 0) hint(rt, tr("utilities.found", peers.map(peerLabel).join(", ")));
     }
     return p;
   }
   if (peers.length === 0) {
-    err(rt, "no LocalSend devices found on the local network");
-    hint(rt, "Open LocalSend on the receiving device, or pass --to <ip>");
+    err(rt, tr("utilities.noLocalsendDevicesFoundOn"));
+    hint(rt, tr("utilities.openLocalsendOnTheReceiving"));
     if (
       deps.interactive &&
       (await deps.choose("No LocalSend devices found", ["Open LocalSend", "Cancel"])) ===
         "Open LocalSend" &&
       !deps.openLocalSend()
     ) {
-      err(rt, "localsend_app not found in PATH");
+      err(rt, tr("utilities.localsendAppNotFoundIn"));
     }
     return null;
   }
   if (peers.length === 1) return peers[0]!;
   if (!deps.interactive) {
-    err(rt, `${peers.length} LocalSend devices found; pick one with --to`);
-    hint(rt, `Found: ${peers.map(peerLabel).join(", ")}`);
+    err(rt, tr("utilities.localsendDevicesFoundPickOne", peers.length));
+    hint(rt, tr("utilities.found", peers.map(peerLabel).join(", ")));
     return null;
   }
   const choice = await deps.choose("Send to", peers.map(peerLabel));
@@ -405,14 +410,14 @@ export async function runShare(
 ): Promise<number> {
   for (const p of paths) {
     if (!existsSync(p)) {
-      err(rt, `no such file: ${p}`);
+      err(rt, tr("utilities.noSuchFile", p));
       return 1;
     }
   }
 
   if (opts.clipboard) {
     if (paths.length !== 1) {
-      return usageError(rt, "--clipboard takes exactly one path", "marchyo share --clipboard <path>");
+      return usageError(rt, tr("utilities.clipboardTakesExactlyOnePath"), "marchyo share --clipboard <path>");
     }
     return shareToClipboard(rt, paths[0]!);
   }
@@ -422,7 +427,7 @@ export async function runShare(
     files = await expandPaths(paths);
   } else {
     if (!deps.interactive) {
-      return usageError(rt, "nothing to share", "marchyo share <path...> [--to <alias|ip>]");
+      return usageError(rt, tr("utilities.nothingToShare"), "marchyo share <path...> [--to <alias|ip>]");
     }
     const choice = await deps.choose("Share", ["File", "Folder", "Clipboard"]);
     if (choice === "File" || choice === "Folder") {
@@ -432,7 +437,7 @@ export async function runShare(
     } else if (choice === "Clipboard") {
       const text = await deps.readClipboard();
       if (text === null || text === "") {
-        err(rt, "clipboard is empty (or wl-paste is missing)");
+        err(rt, tr("utilities.clipboardIsEmptyOrWl"));
         return 1;
       }
       files = [textEntry(text)];
@@ -441,7 +446,7 @@ export async function runShare(
     }
   }
   if (files.length === 0) {
-    err(rt, "nothing to send: the selection contains no regular files");
+    err(rt, tr("utilities.nothingToSendTheSelection"));
     return 1;
   }
 
@@ -449,20 +454,20 @@ export async function runShare(
   const peer = await resolvePeer(rt, self, opts.to, deps);
   if (!peer) return 1;
 
-  info(rt, `waiting for ${peer.alias} to accept ${files.length} file(s)`);
+  info(rt, tr("utilities.waitingForToAcceptFile", peer.alias, files.length));
   try {
     const result = await sendFiles(peer, files, {
       self,
       pin: opts.pin,
       fetch: deps.fetch,
-      onAccepted: () => deps.notify("low", "Share", `${peer.alias} accepted`),
+      onAccepted: () => deps.notify("low", tr("utilities.share"), tr("utilities.accepted", peer.alias)),
     });
     const summary =
       result.status === "finished"
         ? `delivered to ${peer.alias}`
         : `sent ${result.sent} file(s) to ${peer.alias}` +
           (result.skipped > 0 ? ` (${result.skipped} declined)` : "");
-    await deps.notify("low", "Share", summary);
+    await deps.notify("low", tr("utilities.share"), summary);
     if (rt.format === "json") {
       data(
         rt,
@@ -478,7 +483,7 @@ export async function runShare(
     const kind = e instanceof LocalSendError ? e.kind : "network";
     await deps.notify(
       "critical",
-      "Share",
+      tr("utilities.share"),
       kind === "rejected" ? `${peer.alias} declined the transfer` : msg,
     );
     err(rt, msg);

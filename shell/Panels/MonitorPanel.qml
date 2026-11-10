@@ -13,7 +13,7 @@ import qs.Services
 Panel {
     id: root
     panelId: "monitor"
-    title: "System"
+    title: I18n.t("monitor.title")
 
     // Disk use of / (df -kP: 1K blocks).
     property real diskUsedKb: 0
@@ -29,7 +29,7 @@ Panel {
     }
 
     readonly property string memText: gib(SystemStats.memUsedKb) + " / " + gib(SystemStats.memTotalKb) + " GiB"
-    readonly property string diskText: diskTotalKb > 0 ? (gib(diskUsedKb) + " / " + gib(diskTotalKb) + " GiB") : "n/a"
+    readonly property string diskText: diskTotalKb > 0 ? (gib(diskUsedKb) + " / " + gib(diskTotalKb) + " GiB") : I18n.t("monitor.unavailable")
 
     Process {
         id: dfProc
@@ -112,7 +112,7 @@ Panel {
         Text {
             Layout.preferredWidth: Style.panelWidth / 5
             text: statRow.label
-            color: Color.textMuted
+            color: Colors.textMuted
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
         }
@@ -121,7 +121,7 @@ Panel {
             Layout.fillWidth: true
             implicitHeight: Style.osdBarHeight
             radius: height / 2
-            color: Color.bgSubtle
+            color: Colors.bgSubtle
 
             Rectangle {
                 anchors.left: parent.left
@@ -129,7 +129,7 @@ Panel {
                 width: parent.width * Math.max(0, Math.min(100, statRow.percent)) / 100
                 height: parent.height
                 radius: height / 2
-                color: Color.accent
+                color: Colors.accent
             }
         }
 
@@ -137,7 +137,7 @@ Panel {
             Layout.preferredWidth: Style.panelWidth / 3
             horizontalAlignment: Text.AlignRight
             text: statRow.detail !== "" ? statRow.detail : (statRow.percent + "%")
-            color: Color.text
+            color: Colors.text
             font.family: Style.fontFamily
             font.pixelSize: Style.fontSizeSmall
             elide: Text.ElideRight
@@ -146,21 +146,21 @@ Panel {
 
     body: [
         StatRow {
-            label: "cpu"
+            label: I18n.t("monitor.cpu")
             percent: SystemStats.cpuUsage
         },
         StatRow {
-            label: "mem"
+            label: I18n.t("monitor.mem")
             percent: SystemStats.memPercent
             detail: root.memText
         },
         StatRow {
-            label: "disk"
+            label: I18n.t("monitor.disk")
             percent: root.diskPercent
             detail: root.diskText
         },
         StatRow {
-            label: "temp"
+            label: I18n.t("monitor.temp")
             visible: root.tempC > 0
             percent: Math.min(100, root.tempC)
             detail: root.tempC + " °C"

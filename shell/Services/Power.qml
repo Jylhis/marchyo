@@ -1,9 +1,11 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 import qs.Commons
 import "../Commons/Format.js" as Format
+import "../Commons/Battery.js" as Battery
 
 // Shared UPower derivations for the battery bar widget and the power panel:
 // the composite display device plus the resolved percentage / state / rate,
@@ -20,6 +22,8 @@ QtObject {
     readonly property bool charging: dev && dev.state === UPowerDeviceState.Charging
     readonly property bool full: dev && dev.state === UPowerDeviceState.FullyCharged
     readonly property bool discharging: dev && dev.state === UPowerDeviceState.Discharging
+    readonly property bool holding: Battery.holding(hasBattery, pluggedIn, dev ? dev.state : -1, UPowerDeviceState.PendingCharge, UPowerDeviceState.FullyCharged, pct)
+    readonly property string glyph: Battery.glyph(pct, charging && !holding, full && !holding)
     readonly property bool pluggedIn: !UPower.onBattery
     // UPower energy-rate in W; positive while charging, negative while discharging.
     readonly property real rate: dev ? dev.changeRate : 0
@@ -34,6 +38,30 @@ QtObject {
     // Rated watts of the best online external supply (0 when the kernel does
     // not report one, e.g. a plain ACPI "Mains" adapter).
     property int chargerW: 0
+
+    readonly property int warningThreshold: Battery.warningThreshold(ShellConfig.battery.lowThreshold)
+    readonly property var batteryWarning: PersistentProperties {
+        reloadableId: "marchyo-battery-warning"
+        property bool notified: false
+    }
+
+    function checkBattery(): void {
+        const next = Battery.warningState(hasBattery, pct, discharging, charging, warningThreshold, batteryWarning.notified);
+        batteryWarning.notified = next.notified;
+        if (next.notify)
+            Quickshell.execDetached([Config.marchyo, "notify", "-u", "critical", "-g", "󰂃", I18n.t("power.lowBattery"), I18n.t("power.lowBatteryBody", I18n.formatNumber(pct))]);
+    }
+
+    property Timer warningCheck: Timer {
+        interval: 0
+        onTriggered: root.checkBattery()
+    }
+    Component.onCompleted: warningCheck.restart()
+    onHasBatteryChanged: warningCheck.restart()
+    onPctChanged: warningCheck.restart()
+    onDischargingChanged: warningCheck.restart()
+    onChargingChanged: warningCheck.restart()
+    onWarningThresholdChanged: warningCheck.restart()
 
     property var _supplyDirs: []
 
@@ -68,9 +96,49 @@ QtObject {
         root.chargerW = w;
     }
 
-    // USB-C PD negotiation lands a moment after UPower flips onBattery.
-    onPluggedInChanged: _chargerSettle.restart()
+    // power_supply uevents: USB-C PD renegotiation arrives as a change event
+    // on the supply, and a hotplugged supply as add/remove. A plug change also
+    // reads at once and again after 2s, when PD negotiation has normally
+    // landed, so the rating stays right while the monitor is down; it
+    // restarts with backoff when it exits.
+    onPluggedInChanged: {
+        _chargerSettle.restart();
+        _chargerNegotiated.restart();
+    }
+    property int _eventsBackoff: 1000
+    property real _eventsStarted: 0
+    property Process _supplyEvents: Process {
+        running: true
+        command: [Config.udevadm, "monitor", "--udev", "--subsystem-match=power_supply"]
+        onRunningChanged: {
+            if (running)
+                root._eventsStarted = Date.now();
+        }
+        onExited: {
+            if (Date.now() - root._eventsStarted > 30000)
+                root._eventsBackoff = 1000;
+            root._eventsRetry.interval = root._eventsBackoff;
+            root._eventsRetry.restart();
+            root._eventsBackoff = Math.min(root._eventsBackoff * 2, 60000);
+        }
+        stdout: SplitParser {
+            onRead: line => {
+                if (!/\(power_supply\)\s*$/.test(line))
+                    return;
+                if (/\s(add|remove)\s/.test(line) && !root._supplyScan.running)
+                    root._supplyScan.running = true;
+                root._chargerSettle.restart();
+            }
+        }
+    }
+    property Timer _eventsRetry: Timer {
+        onTriggered: root._supplyEvents.running = true
+    }
     property Timer _chargerSettle: Timer {
+        interval: 100
+        onTriggered: root._refreshCharger()
+    }
+    property Timer _chargerNegotiated: Timer {
         interval: 2000
         onTriggered: root._refreshCharger()
     }
@@ -79,18 +147,30 @@ QtObject {
     // + charge %, charging glyph while charging, a full glyph when charged, a
     // power-plug glyph when plugged in but neither charging nor full, and an
     // alert glyph when plugged in but still draining.
+    // Charge number next to the glyph. Starts from
+    // marchyo.shell.settings.battery.percentage; right-click on the widget
+    // flips it for the session.
+    property bool showPercent: {
+        const c = ShellConfig.config && ShellConfig.config.battery;
+        return !(c && c.percentage === false);
+    }
+
+    function togglePercent() {
+        root.showPercent = !root.showPercent;
+    }
+
     readonly property string barText: {
         if (!dev)
             return "󰂑";
         if (full)
             return "󰁹";
         if (charging)
-            return "󰂄 " + pct;
+            return root.showPercent ? "󰂄 " + pct : "󰂄";
         if (drainingOnAc)
-            return "󰂃 " + pct;
+            return root.showPercent ? "󰂃 " + pct : "󰂃";
         if (dev.state === UPowerDeviceState.PendingCharge || dev.state === UPowerDeviceState.PendingDischarge)
             return "󰚥";
-        return "󰁹 " + pct;
+        return root.showPercent ? "󰁹 " + pct : "󰁹";
     }
 
     // Percentage tint as a continuous gradient between theme tokens rather than
@@ -103,8 +183,8 @@ QtObject {
     readonly property color barColor: {
         const p = Math.max(0, Math.min(100, pct)) / 100;
         if (p < 0.5)
-            return lerpColor(Color.statusErr, Color.statusWarn, p / 0.5);
-        return lerpColor(Color.statusWarn, Color.statusOk, (p - 0.5) / 0.5);
+            return lerpColor(Colors.statusErr, Colors.statusWarn, p / 0.5);
+        return lerpColor(Colors.statusWarn, Colors.statusOk, (p - 0.5) / 0.5);
     }
 
     // Waybar-parity tooltip: "4.2W↓ 87%" / "6.0W↑ 45%" (power draw + charge).
@@ -114,6 +194,6 @@ QtObject {
         const r = Math.abs(rate);
         const arrow = charging ? "↑" : "↓";
         const s = r > 0.05 ? (r.toFixed(1) + "W" + arrow + " " + pct + "%") : (pct + "%");
-        return drainingOnAc ? (s + " · plugged in, still draining") : s;
+        return drainingOnAc ? I18n.t("power.tooltipDraining", s) : s;
     }
 }

@@ -17,6 +17,10 @@ var PREFIXES = [
         provider: "theme"
     },
     {
+        prefix: ">font",
+        provider: "font"
+    },
+    {
         prefix: "=",
         provider: "calc"
     },
@@ -31,8 +35,9 @@ var PREFIXES = [
 ];
 
 // Launcher modes the IPC opens directly. Only "apps" routes on prefixes; the
-// emoji and clipboard modes search their own data with the whole text.
-var MODES = ["apps", "emoji", "clipboard"];
+// emoji, clipboard, theme, font, menu, keys and dmenu modes search their own data with the
+// whole text.
+var MODES = ["apps", "emoji", "clipboard", "theme", "font", "menu", "keys", "dmenu"];
 
 function prefixFor(provider) {
     for (var i = 0; i < PREFIXES.length; i++)
@@ -161,8 +166,9 @@ function withScore(row, score, positions, order) {
     return copy;
 }
 
-// `marchyo theme list --format json` -> [{ name, variant, current }].
-// Malformed output yields [].
+// `marchyo theme list --format json` -> [{ name, variant, current, preview,
+// wallpaper }]. preview and wallpaper are absolute image paths or "" when the
+// theme dir has none. Malformed output yields [].
 function parseThemes(text) {
     var parsed;
     try {
@@ -179,10 +185,75 @@ function parseThemes(text) {
         out.push({
             name: t.name,
             variant: typeof t.variant === "string" ? t.variant : "",
-            current: t.current === true
+            current: t.current === true,
+            preview: typeof t.preview === "string" ? t.preview : "",
+            wallpaper: typeof t.wallpaper === "string" ? t.wallpaper : ""
         });
     }
     return out;
+}
+
+// ">font mono <name>" and ">font ui <name>" narrow the font list to one kind.
+// Returns { kind: "mono" | "ui" | "", query } with the kind word (and a
+// trailing colon) removed; any other text is the query unchanged.
+function splitFontKind(query) {
+    var q = String(query == null ? "" : query);
+    var m = /^(mono|ui):?(?:\s+|$)/i.exec(q);
+    if (!m)
+        return {
+            kind: "",
+            query: q
+        };
+    return {
+        kind: m[1].toLowerCase(),
+        query: q.slice(m[0].length)
+    };
+}
+
+// `marchyo font list --kind <mono|ui> --format json` ->
+// { fonts: [{ family, kind, current }], current: { mono, ui } }. The CLI
+// answers { kind, fonts: [str], current: { mono, ui } }; entries may also be
+// { family, kind } objects (a mixed listing). Malformed output yields no fonts.
+function parseFonts(text) {
+    var parsed;
+    try {
+        parsed = JSON.parse(String(text == null ? "" : text));
+    } catch (e) {
+        return {
+            fonts: [],
+            current: {}
+        };
+    }
+    var cur = parsed && parsed.current && typeof parsed.current === "object" ? parsed.current : {};
+    var current = {
+        mono: typeof cur.mono === "string" ? cur.mono : "",
+        ui: typeof cur.ui === "string" ? cur.ui : ""
+    };
+    var list = parsed && Array.isArray(parsed.fonts) ? parsed.fonts : [];
+    var fonts = [];
+    for (var i = 0; i < list.length; i++) {
+        var f = list[i];
+        if (typeof f === "string") {
+            var kind = parsed.kind === "ui" ? "ui" : "mono";
+            if (f.length > 0)
+                fonts.push({
+                    family: f,
+                    kind: kind,
+                    current: current[kind] === f
+                });
+        } else if (f && typeof f.family === "string" && f.family.length > 0) {
+            var k = f.kind === "ui" ? "ui" : "mono";
+            fonts.push({
+                family: f.family,
+                kind: k,
+                current: f.current === true || current[k] === f.family
+            });
+        }
+    }
+    return {
+        fonts: fonts,
+        current: current
+    };
 }
 
 // `hyprctl clients -j` -> [{ address, title, cls, workspace }], unmapped and
@@ -244,6 +315,8 @@ if (typeof module !== "undefined")
         route: route,
         rank: rank,
         parseThemes: parseThemes,
+        parseFonts: parseFonts,
+        splitFontKind: splitFontKind,
         parseClients: parseClients,
         parseCalc: parseCalc
     };

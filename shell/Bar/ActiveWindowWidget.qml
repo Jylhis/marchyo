@@ -13,6 +13,6 @@ BarItem {
     shown: root.title !== ""
     elide: true
     text: root.title
-    textColor: Color.textMuted
+    textColor: Colors.textMuted
     tooltipText: root.title
 }

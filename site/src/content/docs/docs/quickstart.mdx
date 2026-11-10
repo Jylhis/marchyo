@@ -16,7 +16,7 @@ This creates a complete configuration with desktop environment, development tool
 ## Option 2: Add to an existing flake
 
 Add Marchyo as your only input and build with `marchyo.lib.mkNixosSystem`. It
-selects the correct nixpkgs (unstable; stable nixos-26.05 for x86_64-darwin),
+selects nixpkgs (unstable),
 home-manager, overlay and marchyo modules automatically — you supply
 only your own config modules.
 
@@ -39,10 +39,6 @@ only your own config modules.
         }
       ];
     };
-
-    # macOS uses marchyo.lib.mkDarwinSystem the same way. On x86_64-darwin it
-    # transparently pins the stable nixos-26.05 set (the last release supporting
-    # Intel macOS); aarch64-darwin and Linux ride unstable.
   };
 }
 ```
@@ -55,33 +51,12 @@ system yourself. The raw `marchyo.inputs.nixpkgs` passthrough is always
 `marchyo.legacyPackages.<system>`.
 :::
 
-## Option 3: Home Manager only
+## Home Manager only?
 
-If you only want the Home Manager modules without the NixOS system modules, use
-the exported `marchyo.lib.mkHomeConfiguration` builder. It wires up the correct
-nixpkgs, the third-party Home Manager modules marchyo depends on (noctalia,
-vicinae, sops-nix), and a mock `osConfig` — a plain
-`homeManagerConfiguration` call with just `marchyo.homeManagerModules.default`
-will not evaluate.
-
-```nix
-{
-  inputs.marchyo.url = "github:Jylhis/marchyo";
-
-  outputs = { marchyo, ... }: {
-    homeConfigurations.developer = marchyo.lib.mkHomeConfiguration {
-      system = "x86_64-linux";
-      homeDirectory = "/home/developer";
-    };
-  };
-}
-```
-
-The builder takes only `system` and `homeDirectory`, and currently manages a
-user named `developer`. It is Linux-only — marchyo exports ready-made
-`homeConfigurations` for `x86_64-linux` and `aarch64-linux` (many Home Manager
-modules depend on Wayland/Hyprland, so there is no darwin variant; on macOS use
-`marchyo.lib.mkDarwinSystem` instead).
+Not supported. marchyo's Home Manager modules read the NixOS options
+(`osConfig.marchyo.*`) as their single source of truth, so they only evaluate
+under the marchyo NixOS module, which imports them for every `marchyo.users`
+entry.
 
 ## Minimal example
 

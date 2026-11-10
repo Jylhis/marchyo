@@ -50,7 +50,6 @@ in
       pkg-config
 
       docker-compose
-      lazydocker
 
       virt-manager
       virt-viewer

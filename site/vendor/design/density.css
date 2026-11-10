@@ -1,0 +1,58 @@
+/*
+ * density.css — the data-density axis.
+ *
+ * Three scopes on <html>: comfortable, default, compact. Only the box changes;
+ * type size does not. Row and control heights are the tokens components read
+ * (--cell-h, --control-h); the spacing steps below md are remapped with them,
+ * because a tighter row with the same gutters just looks cramped.
+ *
+ * 40px is the default floor and 32px the absolute one. 44px is the floor a
+ * coarse pointer gets in place of the compact box, the guideline drawn for
+ * imprecise thumbs on glass. Default rows are full-width with the whole row
+ * as the target, and 40px buys a visible extra row on a phone.
+ */
+
+:root,
+[data-density="default"] {
+  --cell-h: 40px;
+  --control-h: 40px;
+  --touch-min: 40px;
+  --density-gutter: var(--space-md);
+  --density-row-gap: var(--space-sm);
+}
+
+[data-density="comfortable"] {
+  --cell-h: 48px;
+  --control-h: 48px;
+  --touch-min: 48px;
+  --density-gutter: var(--space-lg);
+  --density-row-gap: var(--space-md);
+  --space-2xs: 0.1875rem;
+  --space-xs: 0.375rem;
+  --space-sm: 0.625rem;
+  --space-md: 1.25rem;
+}
+
+[data-density="compact"] {
+  --cell-h: 32px;
+  --control-h: 32px;
+  --touch-min: 32px;
+  --density-gutter: var(--space-sm);
+  --density-row-gap: var(--space-xs);
+  --space-2xs: 0.125rem;
+  --space-xs: 0.1875rem;
+  --space-sm: 0.375rem;
+  --space-md: 0.75rem;
+}
+
+/* Coarse pointers get the touch floor at default and compact density,
+   whatever the attribute says; comfortable is already above it. */
+@media (pointer: coarse) {
+  :root,
+  [data-density="default"],
+  [data-density="compact"] {
+    --cell-h: 44px;
+    --control-h: 44px;
+    --touch-min: 44px;
+  }
+}

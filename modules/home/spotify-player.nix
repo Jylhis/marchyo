@@ -8,22 +8,20 @@
 # current-theme/spotify-player-theme.toml, read at each spotify-player start.
 {
   config,
-  osConfig ? { },
+  osConfig,
   lib,
   pkgs,
   ...
 }:
 let
-  defaults = (osConfig.marchyo or { }).defaults or { };
-  enabled =
-    (osConfig.marchyo.desktop.enable or false) && (defaults.musicPlayer or null) == "spotify-player";
-  theme = (osConfig.marchyo or { }).theme or { };
-  themeEnabled = theme.enable or true;
+  defaults = osConfig.marchyo.defaults;
+  enabled = osConfig.marchyo.desktop.enable && defaults.musicPlayer == "spotify-player";
+  theme = osConfig.marchyo.theme;
+  themeEnabled = theme.enable;
   runtimeThemed = themeEnabled && pkgs.stdenv.hostPlatform.isLinux;
   s = import ../generic/theme-slots.nix {
     inherit pkgs lib;
-    variant = theme.variant or "dark";
-    scheme = theme.scheme or null;
+    inherit (theme) variant scheme;
   };
   gen = import ../../lib/theme-generators.nix { inherit lib; };
 in

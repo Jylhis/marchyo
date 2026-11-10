@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+{
+  printf '%s' "${0##*/}"
+  printf ' %q' "$@"
+  printf '\n'
+} >>"${XDG_RUNTIME_DIR:-/tmp}/stubs.log"

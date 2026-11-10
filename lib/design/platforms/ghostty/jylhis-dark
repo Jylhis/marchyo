@@ -1,0 +1,27 @@
+# Jylhis Dark — Ghostty colour theme. GENERATED from tokens/*.tokens.json.
+# Install as ~/.config/ghostty/themes/jylhis-dark; select with `theme = jylhis-dark`.
+# Slots 0–15 are the token ANSI palette; slot 11 is the accent in dark mode only.
+
+palette = 0=#1a1713
+palette = 1=#ff6a5a
+palette = 2=#7fd18a
+palette = 3=#ffd08a
+palette = 4=#8ab8ff
+palette = 5=#ff6db6
+palette = 6=#00b8c6
+palette = 7=#9c9488
+palette = 8=#746a5c
+palette = 9=#ff7a6a
+palette = 10=#00bb18
+palette = 11=#ffa028
+palette = 12=#749fff
+palette = 13=#ff5fec
+palette = 14=#00b78f
+palette = 15=#f7f3ec
+
+background           = #0b0b0b
+foreground           = #f2ede4
+cursor-color         = #ffa028
+cursor-text          = #0b0b0b
+selection-background = #3a3020
+selection-foreground = #f2ede4

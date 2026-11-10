@@ -32,8 +32,25 @@ export function hyprctlEvalArgv(code: string): string[] {
   return ["hyprctl", "eval", code];
 }
 
-export function hyprctlDispatchArgv(...args: string[]): string[] {
-  return ["hyprctl", "dispatch", ...args];
+// Double-quoted Lua string literal. Hyprland's Lua config evaluates
+// `hyprctl dispatch` arguments as `hl.dsp.*` expressions, so interpolated
+// values must be escaped to stay a single string.
+export function luaString(s: string): string {
+  let out = '"';
+  for (const ch of s) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (ch === "\\") out += "\\\\";
+    else if (ch === '"') out += '\\"';
+    else if (code < 0x20 || code === 0x7f) {
+      out += `\\${String(code).padStart(3, "0")}`;
+    } else out += ch;
+  }
+  return `${out}"`;
+}
+
+// `dispatcher` is a Lua expression such as `hl.dsp.exit()`.
+export function hyprctlDispatchArgv(dispatcher: string): string[] {
+  return ["hyprctl", "dispatch", dispatcher];
 }
 
 export function hyprctlGetOptionArgv(option: string): string[] {
@@ -78,9 +95,7 @@ export function setvtrgbArgv(table: string): string[] {
   return ["setvtrgb", table];
 }
 
-// The dconf color-scheme key marchyo owns (modules/home/gtk.nix writes the
-// build-time value; HM's dconf activation resets it on every rebuild — the
-// same ephemeral-overlay contract as the current-theme pointer).
+// Runtime theming owns this projection of the effective theme selection.
 export const COLOR_SCHEME_KEY = "/org/gnome/desktop/interface/color-scheme";
 
 // `dconf write <key> <gvariant>` — libadwaita/GTK4 apps watch this key over
@@ -94,4 +109,35 @@ export function dconfWriteArgv(key: string, gvariant: string): string[] {
 // quotes are part of the argument itself.
 export function colorSchemeGvariant(variant: "dark" | "light"): string {
   return variant === "dark" ? "'prefer-dark'" : "'prefer-light'";
+}
+
+export const FONT_NAME_KEY = "/org/gnome/desktop/interface/font-name";
+export const ICON_THEME_KEY = "/org/gnome/desktop/interface/icon-theme";
+
+export function dconfReadArgv(key: string): string[] {
+  return ["dconf", "read", key];
+}
+
+export function dconfResetArgv(key: string): string[] {
+  return ["dconf", "reset", key];
+}
+
+// A GVariant string literal: single-quoted, backslash and quote escaped.
+export function gvariantString(value: string): string {
+  return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+}
+
+// Split a GTK font description ("Inter 11", "Noto Sans Bold 10.5") into the
+// family and the trailing size. A description without a size keeps size null.
+export function splitFontName(name: string): { family: string; size: string | null } {
+  const m = name.trim().match(/^(.*\S)\s+(\d+(?:\.\d+)?)$/);
+  return m ? { family: m[1]!, size: m[2]! } : { family: name.trim(), size: null };
+}
+
+// `dconf read` prints a GVariant string ('Inter 11'); empty when unset.
+export function parseGvariantString(out: string): string | null {
+  const m = out.trim().match(/^'(.*)'$/s);
+  if (!m) return null;
+  const v = m[1]!.replace(/\\(['\\])/g, "$1");
+  return v === "" ? null : v;
 }

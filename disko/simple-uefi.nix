@@ -1,6 +1,12 @@
 # Simple UEFI disk configuration with ext4
 #
-# Usage:
+# From a host flake (see the Installation guide):
+#   imports = [
+#     marchyo.nixosModules.disko
+#     (marchyo.lib.diskoLayout "simple-uefi" { device = "/dev/nvme0n1"; })
+#   ];
+#
+# Standalone (disko CLI on a single file):
 #   1. Set the disk device: export DISK=/dev/nvme0n1 (or /dev/sda, etc.)
 #   2. Partition: sudo nix run github:nix-community/disko -- --mode disko disko/simple-uefi.nix --arg device '"'$DISK'"'
 #   3. Install NixOS normally

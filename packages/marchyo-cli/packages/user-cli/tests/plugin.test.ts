@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, spyOn, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type PluginLock, type Runtime, type State, PLUGIN_KINDS } from "@marchyo/core";
@@ -11,7 +11,9 @@ import {
   runPluginList,
   runPluginRemove,
   runPluginUpdate,
+  runPluginValidate,
   validateManifest,
+  validatePluginDir,
 } from "../src/commands/plugin.ts";
 
 // Quiet, non-interactive runtime so the commands never prompt or emit noise.
@@ -55,6 +57,7 @@ afterAll(() => {
 });
 
 function writeManifest(id: string): void {
+  writeFileSync(join(manifestTree, "Panel.qml"), "import QtQuick\nItem {}\n");
   writeFileSync(
     join(manifestTree, "manifest.json"),
     JSON.stringify({
@@ -116,7 +119,7 @@ test("remove of an unknown plugin exits 1", async () => {
 
 const base = { schemaVersion: 1, id: "example.x" };
 
-test("kind map is the closed bar-widget/launcher/daemon set", () => {
+test("kind map is the closed set of plugin kinds", () => {
   expect(PLUGIN_KINDS).toEqual({
     "bar-widget": "barWidget",
     launcher: "launcher",
@@ -125,9 +128,16 @@ test("kind map is the closed bar-widget/launcher/daemon set", () => {
 });
 
 test("manifest with an unknown kind is rejected", () => {
-  const r = validateManifest({ ...base, kinds: ["panel"], entryPoints: { panel: "P.qml" } });
-  expect(r).toContain("unknown plugin kind 'panel'");
+  const r = validateManifest({ ...base, kinds: ["widget"], entryPoints: { widget: "P.qml" } });
+  expect(r).toContain("unknown plugin kind 'widget'");
 });
+
+test("marchyo.* ids are reserved", () => {
+  const m = { kinds: ["daemon"], entryPoints: { daemon: "D.qml" } };
+  expect(validateManifest({ ...base, ...m, id: "marchyo.x" })).toContain("reserved marchyo.*");
+  expect(validateManifest({ ...base, ...m, id: "omarchy.x" })).toMatchObject({ id: "omarchy.x" });
+});
+
 
 test("manifest missing the entry point for a kind is rejected", () => {
   const r = validateManifest({
@@ -289,6 +299,8 @@ test("list --json returns the lock and the pending entries", async () => {
 function manifestTreeFor(m: Record<string, unknown>): string {
   const tree = mkdtempSync(join(dir, "tree-"));
   writeFileSync(join(tree, "manifest.json"), JSON.stringify({ schemaVersion: 1, ...m }));
+  for (const ep of Object.values((m.entryPoints ?? {}) as Record<string, string>))
+    writeFileSync(join(tree, ep), "Item {}");
   return tree;
 }
 
@@ -389,4 +401,58 @@ test("doctor plugin check warns on declared plugins missing from the lock", () =
   const c = checkPluginLock(lock, [weather, notes]);
   expect(c.status).toBe("warn");
   expect(c.detail).toBe("declared but not built yet: acme.notes; rebuild");
+});
+
+// ── plugin directories: validate ───────────────────────────────────────────
+
+function makePlugin(root: string, files: Record<string, string>): string {
+  for (const [rel, text] of Object.entries(files)) {
+    const abs = join(root, rel);
+    mkdirSync(join(abs, ".."), { recursive: true });
+    writeFileSync(abs, text);
+  }
+  return root;
+}
+
+const panelManifest = (over: Record<string, unknown> = {}): string =>
+  JSON.stringify({
+    schemaVersion: 1,
+    id: "acme.panel",
+    kinds: ["daemon"],
+    entryPoints: { daemon: "Panel.qml" },
+    ...over,
+  });
+
+test("validatePluginDir accepts a plugin whose entry points exist", () => {
+  const d = makePlugin(join(dir, "ok-plugin"), {
+    "manifest.json": panelManifest(),
+    "Panel.qml": "Item {}",
+  });
+  const r = validatePluginDir(d);
+  expect(r.problems).toEqual([]);
+  expect(r.manifest?.id).toBe("acme.panel");
+});
+
+test("validatePluginDir reports every problem", () => {
+  const d = makePlugin(join(dir, "bad-plugin"), {
+    "manifest.json": panelManifest({ entryPoints: { daemon: "../Panel.qml" } }),
+  });
+  symlinkSync("/etc/passwd", join(d, "link.qml"));
+  const r = validatePluginDir(d);
+  expect(r.problems.join("\n")).toContain("symlink not allowed: link.qml");
+  expect(r.problems.join("\n")).toContain("unsafe entry point path '../Panel.qml'");
+});
+
+
+test("plugin validate exits 1 on a bad tree and 0 on a good one", async () => {
+  expect(await runPluginValidate(rt, join(dir, "bad-plugin"))).toBe(1);
+  expect(await runPluginValidate(rt, join(dir, "ok-plugin"))).toBe(0);
+  expect(await runPluginValidate(rt, join(dir, "missing"))).toBe(1);
+});
+
+test("plugin ids with traversal or shell characters are rejected", () => {
+  const m = { schemaVersion: 1, kinds: ["daemon"], entryPoints: { daemon: "Panel.qml" } };
+  for (const id of ["../../x", "a/b", "a..b", ".hidden", "x$(id)", "a b"])
+    expect(validateManifest({ ...m, id })).toContain("must match");
+  expect(typeof validateManifest({ ...m, id: "acme.ok-1_x" })).toBe("object");
 });

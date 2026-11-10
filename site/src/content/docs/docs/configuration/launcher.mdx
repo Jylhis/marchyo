@@ -1,129 +1,28 @@
 ---
 title: Launcher
-description: The application launcher — the in-shell launcher (marchyo.shell) and the Vicinae fallback
+description: The application launcher of the Marchyo shell (marchyo.shell)
 ---
 
-Marchyo ships two launchers behind the same three binds — **`Super+R`** (apps),
-**`Super+period`** (emoji picker), **`Super+Ctrl+V`** (clipboard history):
+The Marchyo shell includes the launcher. Three binds open it:
+**`Super+R`** (apps), **`Super+period`** (emoji picker), and
+**`Super+Ctrl+V`** (clipboard history).
 
-- **`marchyo.shell.enable = true`** (the default, the unified Quickshell shell): the shell's
-  own in-shell launcher — apps from the freedesktop entries, emoji from the
-  Unicode catalog, clipboard from cliphist — themed by the design tokens at
-  runtime, pasting via `wtype` with **no privileged helper**. Vicinae and its
-  `cap_dac_override` input server stand down entirely (mutually exclusive).
-- **`marchyo.shell.enable = false`** (the discrete-stack fallback): [Vicinae](https://vicinae.com),
-  a Raycast-style, Wayland layer-shell launcher that also handles snippets, a
-  calculator, and file search, running as a user service.
+The launcher finds apps from the freedesktop entries, emoji from the Unicode
+catalog, and clipboard entries from cliphist. It takes its colours from the
+design tokens at runtime. It pastes with `wtype`, so it needs **no privileged
+helper**.
 
-The launcher is **on by default** with `marchyo.desktop.enable` either way.
+The launcher is **on by default** with `marchyo.desktop.enable`. The binds also
+need `marchyo.shell.enable`; without the shell, Marchyo does not bind them.
 
 ## Options
 
-The options below apply to the Vicinae fallback (with the shell on, only
-`marchyo.launcher.enable` matters and it gates the binds).
-
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `marchyo.launcher.enable` | `bool` | `true` with desktop | Enable the Vicinae launcher |
-| `marchyo.launcher.keybinding` | `"default"` \| `"vim"` \| `"emacs"` | `"emacs"` | In-launcher navigation scheme |
-| `marchyo.launcher.inputServer.enable` | `bool` | `true` | Install the `cap_dac_override` wrapper that lets the launcher type at the cursor |
-| `marchyo.launcher.telemetry.enable` | `bool` | `false` | Vicinae's anonymous usage telemetry (upstream enables this) |
-| `marchyo.launcher.declutter` | `bool` | `true` | Hide the Donate / Report a Bug / About / Set Theme entries from root search |
-| `marchyo.launcher.settings` | `attrs` | `{}` | Extra Vicinae settings merged into `programs.vicinae.settings` |
+| `marchyo.launcher.enable` | `bool` | `true` with desktop | Bind the in-shell launcher |
 
-## Navigation scheme
+The Vicinae options `marchyo.launcher.keybinding`, `inputServer`, `telemetry`,
+`declutter`, and `settings` are retired. A definition of one of them fails the
+evaluation with a pointer to the in-shell launcher.
 
-Marchyo defaults to `"emacs"` to match its Emacs-forward defaults
-(`marchyo.defaults.editor`): `Ctrl+N` / `Ctrl+P` move down and up, and
-`Ctrl+Alt+B` / `Ctrl+Alt+F` move left and right.
-
-Those two chords are also Vicinae's stock bindings for "new" (`Ctrl+N`) and
-"open search filter" (`Ctrl+P`), so Marchyo remaps both to `Ctrl+Shift+N` and
-`Ctrl+Shift+F` whenever the scheme is `"emacs"`. Set the scheme through
-`marchyo.launcher.keybinding` rather than
-`programs.vicinae.settings.keybinding` so the remaps travel with it.
-
-`"vim"` uses `Ctrl+J/K/H/L` and needs no remaps. `"default"` resolves to the
-platform scheme, which is vim-style on Linux.
-
-## The input-server capability
-
-Typing at the cursor — emoji picking, clipboard pasting, and snippet expansion —
-needs a privileged helper. Vicinae injects keystrokes by writing to
-`/dev/uinput`, which is `root:root 0660`, so `marchyo.launcher.inputServer.enable`
-installs `/run/wrappers/bin/vicinae-input-server` carrying the
-`cap_dac_override` capability and points the daemon at it.
-
-This is a real privilege: `cap_dac_override` bypasses file permission checks.
-Turn it off if you would rather not grant it:
-
-```nix
-marchyo.launcher.inputServer.enable = false;
-```
-
-The launcher still works without it. Emoji and clipboard actions fall back to
-copying to the clipboard instead of typing, and snippet expansion does not work.
-
-The capability is only installed when the desktop and the launcher are both
-enabled, so headless hosts never grow it.
-
-## Theming
-
-The launcher is themed directly from the Jylhis design tokens (marchyo owns
-every surface; there is no Stylix). Marchyo generates two real Vicinae themes and
-registers both, so a `marchyo.theme.variant` flip needs no theme rebuild:
-
-- `jylhis-dark` — dark
-- `jylhis-light` — light
-
-Both of Vicinae's theme slots are pinned to the variant Marchyo built for.
-Vicinae otherwise picks light-versus-dark from the colour scheme Qt reports,
-which under Hyprland can disagree with the rest of the desktop.
-
-Because theming is declarative, the **Set Theme** command is hidden by default.
-A theme picked in the GUI is written to Vicinae's own settings file and then
-overridden again on the next launch, so it was already a no-op.
-
-Font size follows [`marchyo.theme.fontScale`](/docs/configuration/theming/); the
-family is Hanken Grotesk, the design system's body face.
-
-## Privacy defaults
-
-Marchyo changes three upstream defaults:
-
-| Setting | Upstream | Marchyo | Why |
-|---------|----------|---------|-----|
-| `telemetry.system_info` | on | **off** | Upstream posts a system-info payload once a day, keyed to an install ID |
-| `favicon_service` | `"twenty"` | `"none"` | Upstream sends every bookmark and quicklink domain to a third party to fetch an icon |
-| `encrypt_sensitive_data` | off on Linux | **on** | Encrypts sensitive values at rest |
-
-Disabling telemetry also removes the "What's New" telemetry notice from root
-search.
-
-## Escape hatch
-
-Anything Marchyo does not expose as an option goes through
-`marchyo.launcher.settings`, which is merged into Vicinae's own settings. Every
-value Marchyo sets uses `lib.mkDefault`, so a plain value here wins:
-
-```nix
-marchyo.launcher.settings = {
-  search_files_in_root = true;
-  launcher_window.size = {
-    width = 900;
-    height = 560;
-  };
-  # Pin entries to the top of root search
-  favorites = [ "clipboard:history" ];
-};
-```
-
-Keys must match Vicinae's own JSON schema, and the daemon **ignores unknown keys
-silently** rather than failing the build. Two are easy to get wrong: the window
-block is `launcher_window` (not `window`), and the font size is
-`font.normal.size` (not `font.size`).
-
-Extensions, secret-bearing setting overrides, and the SoulverCore calculator
-backend are not wired up by Marchyo; reach for `programs.vicinae.extensions`,
-`programs.vicinae.settingOverrides`, and `programs.vicinae.enableSoulver` in
-Home Manager directly if you want them.
+{/* Assisted-by: Claude Code:claude-opus-5-5 */}

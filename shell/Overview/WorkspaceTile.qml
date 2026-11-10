@@ -25,9 +25,9 @@ Rectangle {
     }
 
     radius: Style.panelRadius
-    color: Qt.alpha(Color.bg, Style.surfaceAlpha)
+    color: Qt.alpha(Colors.bg, Style.surfaceAlpha)
     border.width: Style.borderWidth
-    border.color: root.current ? Color.accent : Color.border
+    border.color: root.current ? Colors.accent : Colors.border
     opacity: Overview.query.trim().length > 0 && !root.anyMatch ? 0.4 : 1
     clip: true
 
@@ -51,7 +51,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.margins: Style.spacing * 2
         text: root.workspace.name
-        color: root.current ? Color.accent : Color.textMuted
+        color: root.current ? Colors.accent : Colors.textMuted
         font.family: Style.fontFamily
         font.pixelSize: Style.fontSizeSmall
         font.bold: true

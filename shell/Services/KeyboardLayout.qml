@@ -4,27 +4,39 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import qs.Commons
 import "../Commons/Format.js" as Format
+import "../Commons/KeyboardLayoutModel.js" as Model
 
-// Shared active-keyboard-layout state (waybar's hyprland/language): ONE startup
-// `hyprctl devices -j` probe and ONE Hyprland raw-event listener for the whole
-// seat. Layout is a seat property, so a singleton rather than one probe +
-// listener per monitor.
+// Layout is seat-global, so probes and events are shared by every monitor.
 QtObject {
     id: root
 
     // The full keymap name ("English (US)"), as Hyprland reports it.
     property string keymap: ""
+    property bool multiple: false
+    property string eventKeyboard: ""
+    property bool pendingProbe: false
     // The short code the bar renders (vs the full keymap above).
     readonly property string code: Format.shortCode(root.keymap)
 
     function cycle() {
-        cycleProc.running = true;
+        root.cycleProc.running = true;
     }
 
-    // Startup probe reads the active keymap once; after that Hyprland's
-    // `activelayout` raw event drives updates, so there is no poll.
+    function refresh() {
+        if (root.probe.running)
+            root.pendingProbe = true;
+        else
+            root.probe.running = true;
+    }
+
+    readonly property Timer retry: Timer {
+        interval: 10000
+        repeat: true
+        running: root.keymap.length === 0
+        onTriggered: root.refresh()
+    }
+
     readonly property var probe: Process {
-        id: probe
         command: [Config.hyprctl, "devices", "-j"]
         stdout: StdioCollector {
             // A tripwire, not a memory cap (the stream is already buffered): refuse
@@ -36,33 +48,43 @@ QtObject {
                     return; // Keep the last known layout rather than parsing it.
                 try {
                     const kbs = JSON.parse(text).keyboards || [];
-                    const kb = kbs.find(k => k.main) || kbs[0];
+                    const kb = Model.selectKeyboard(kbs, root.eventKeyboard);
                     root.keymap = (kb && kb.active_keymap) || "";
+                    root.multiple = Model.hasMultipleLayouts(kb);
                 } catch (e)
                 // Leave the last known layout on a parse hiccup.
                 {}
             }
         }
+        onExited: {
+            if (root.pendingProbe) {
+                root.pendingProbe = false;
+                root.refresh();
+            }
+        }
     }
 
     readonly property var cycleProc: Process {
-        id: cycleProc
         command: [Config.hyprctl, "switchxkblayout", "all", "next"]
-        // Nothing to re-probe: the raw-event listener below carries the result.
+        onExited: root.refresh()
     }
 
     readonly property var events: Connections {
         target: Hyprland
         function onRawEvent(event) {
+            if (event.name === "configreloaded") {
+                root.refresh();
+                return;
+            }
             if (event.name !== "activelayout")
                 return;
-            // Payload is "keyboard,layout"; the layout name can itself contain
-            // commas ("English (US, intl.)"), so split on the first separator only.
-            const sep = event.data.indexOf(",");
-            if (sep >= 0)
-                root.keymap = event.data.slice(sep + 1).trim();
+            const name = Model.eventKeyboard(event.data);
+            if (!name)
+                return;
+            root.eventKeyboard = name;
+            root.refresh();
         }
     }
 
-    Component.onCompleted: probe.running = true
+    Component.onCompleted: root.refresh()
 }

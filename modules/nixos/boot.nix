@@ -29,9 +29,10 @@ in
     ];
   };
 
-  # /var/lib/marchyo/greeter holds theme.json, the session theme the greeter
-  # follows (written by `marchyo theme set`). Mode 1775 root:users: session
-  # users (group users) may create files, the sticky bit stops one user from
+  # /var/lib/marchyo/greeter holds one theme-<user>.json per user, the
+  # session theme the greeter follows for the last user who logged in
+  # (written by `marchyo theme set`). Mode 1775 root:users: session users
+  # (group users) may create files, the sticky bit stops one user from
   # replacing or deleting another's marker, and the greeter user (not in
   # users) gets read and list access only.
   systemd.tmpfiles.rules = lib.mkIf cfg.desktop.enable [

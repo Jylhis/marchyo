@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Services
 import "../Commons/LauncherProviders.js" as Providers
@@ -15,8 +16,15 @@ Provider {
     prefix: Providers.prefixFor("power")
     selectOnEmpty: true
 
-    readonly property var rows: Providers.POWER_ACTIONS.map(a => ({
-                title: a.title,
+    // /etc/marchyo/hibernation exists only with marchyo.power.hibernation.enable.
+    readonly property var hibernation: FileView {
+        path: "/etc/marchyo/hibernation"
+        blockLoading: true
+        printErrors: false
+    }
+
+    readonly property var rows: Providers.POWER_ACTIONS.filter(a => a.verb !== "hibernate" || root.hibernation.loaded).map(a => ({
+                title: I18n.t("launcher.power." + a.verb),
                 subtitle: "",
                 icon: a.icon,
                 score: 0,

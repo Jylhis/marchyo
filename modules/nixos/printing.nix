@@ -22,7 +22,12 @@ in
         gutenprint
         brlaser
       ];
+      # CUPS creates a temporary IPP Everywhere queue for each driverless printer.
+      browsed.enable = lib.mkDefault false;
     };
+
+    # Proxies driverless IPP-over-USB printers to localhost and advertises them over avahi.
+    services.ipp-usb.enable = lib.mkDefault true;
 
     # Color management daemon. CUPS registers each printer/scanner with colord
     # over D-Bus (org.freedesktop.ColorManager); without it cupsd logs

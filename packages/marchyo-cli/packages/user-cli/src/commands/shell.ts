@@ -6,6 +6,7 @@ import {
   hint,
   shellIpc,
   usageError,
+  tr,
 } from "@marchyo/core";
 
 // `marchyo shell …`: the verbs over the running shell's IpcHandler. Each verb
@@ -22,7 +23,7 @@ export function reportShellIpcError(rt: Runtime, e: unknown): number {
   if (e.kind === "not-running") {
     hint(rt, "Try: systemctl --user start marchyo-shell");
   } else if (e.kind === "not-installed") {
-    hint(rt, "The shell is enabled with marchyo.shell.enable = true");
+    hint(rt, tr("shell.theShellIsEnabledWith"));
   }
   return 1;
 }
@@ -66,6 +67,21 @@ export async function runShellPanel(
   return call(rt, () => shellIpc("openPanel", panel), "openPanel");
 }
 
+export async function runShellGallery(
+  rt: Runtime,
+  section: string | undefined,
+): Promise<number> {
+  const name = section ?? "";
+  if (name !== "" && !ID_RE.test(name)) {
+    return usageError(
+      rt,
+      tr("shell.invalidGallerySection", name),
+      "marchyo shell gallery [states|buttons|inputs|choices|panel|popups|dialogs]",
+    );
+  }
+  return call(rt, () => shellIpc("openGallery", name), "openGallery");
+}
+
 export async function runShellLauncher(
   rt: Runtime,
   mode: string,
@@ -73,8 +89,8 @@ export async function runShellLauncher(
   if (!ID_RE.test(mode)) {
     return usageError(
       rt,
-      `invalid launcher mode: "${mode}"`,
-      "marchyo shell launcher apps|emoji|clipboard",
+      tr("shell.invalidLauncherMode", mode),
+      "marchyo shell launcher apps|emoji|clipboard|theme",
     );
   }
   return call(rt, () => shellIpc("toggleLauncher", mode), "toggleLauncher");
@@ -88,7 +104,7 @@ export async function runShellBar(
     return call(rt, () => shellIpc("toggleBar"), "toggleBar");
   }
   if (state !== "on" && state !== "off") {
-    return usageError(rt, `invalid bar state: "${state}"`, "marchyo shell bar on|off");
+    return usageError(rt, tr("shell.invalidBarState", state), "marchyo shell bar on|off");
   }
   return call(rt, () => shellIpc("setBar", state), "setBar");
 }
@@ -106,7 +122,7 @@ export async function runShellOverview(
   if (state === "off") {
     return call(rt, () => shellIpc("closeOverview"), "closeOverview");
   }
-  return usageError(rt, `invalid overview state: "${state}"`, "marchyo shell overview on|off");
+  return usageError(rt, tr("shell.invalidOverviewState", state), "marchyo shell overview on|off");
 }
 
 export async function runShellReload(rt: Runtime): Promise<number> {
@@ -139,6 +155,10 @@ export async function runShellDismiss(
   return call(rt, () => shellIpc("dismissLast"), "dismissLast");
 }
 
+export async function runShellNotifyKeys(rt: Runtime): Promise<number> {
+  return call(rt, () => shellIpc("notifyKeyboard"), "notifyKeyboard");
+}
+
 export async function runShellDnd(
   rt: Runtime,
   state: string | undefined,
@@ -147,7 +167,7 @@ export async function runShellDnd(
     return call(rt, () => shellIpc("toggleDnd"), "toggleDnd");
   }
   if (state !== "on" && state !== "off") {
-    return usageError(rt, `invalid dnd state: "${state}"`, "marchyo shell dnd on|off");
+    return usageError(rt, tr("shell.invalidDndState", state), "marchyo shell dnd on|off");
   }
   return call(rt, () => shellIpc("setDnd", state), "setDnd");
 }

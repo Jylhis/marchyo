@@ -11,6 +11,8 @@ import {
   gcArgv,
   listSystemGenerations,
   pickDiffTargets,
+  lockedNixpkgsRev,
+  compareRevs,
   type Generation,
 } from "../src/system.ts";
 import { rebuildArgv } from "../src/flake.ts";
@@ -193,4 +195,39 @@ test("pickDiffTargets: unknown current falls back to last two generations", () =
     gen(2, "/nix/store/new"),
   ]);
   expect(t?.reason).toBe("previous-vs-newest");
+});
+
+// --- update check ---------------------------------------------------------
+
+const LOCK = JSON.stringify({
+  root: "root",
+  nodes: {
+    root: { inputs: { nixpkgs: "nixpkgs_2" } },
+    nixpkgs: { locked: { rev: "old" } },
+    nixpkgs_2: { locked: { rev: "abc123" } },
+  },
+});
+
+test("lockedNixpkgsRev follows the root input to its node", () => {
+  expect(lockedNixpkgsRev(LOCK)).toBe("abc123");
+});
+
+test("lockedNixpkgsRev falls back to a node named nixpkgs", () => {
+  const lock = JSON.stringify({
+    root: "root",
+    nodes: { root: { inputs: {} }, nixpkgs: { locked: { rev: "r1" } } },
+  });
+  expect(lockedNixpkgsRev(lock)).toBe("r1");
+});
+
+test("lockedNixpkgsRev returns empty for unusable locks", () => {
+  expect(lockedNixpkgsRev("")).toBe("");
+  expect(lockedNixpkgsRev("{}")).toBe("");
+});
+
+test("compareRevs flags a pending update only when both revs are known", () => {
+  expect(compareRevs("a", "b").available).toBe(true);
+  expect(compareRevs("a", "a").available).toBe(false);
+  expect(compareRevs("", "b").available).toBe(false);
+  expect(compareRevs("a", "").available).toBe(false);
 });

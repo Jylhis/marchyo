@@ -1,20 +1,18 @@
-{
-  marchyo,
-  ...
-}:
+_:
 
 {
   imports = [
     # Include your hardware configuration
     ./hardware-configuration.nix
 
-    # Per-machine hardware fixes via nixos-hardware, re-exported by marchyo as
-    # marchyo.nixosModules.hardware.<profile>. Pick the profile matching your
-    # machine (full list: https://github.com/NixOS/nixos-hardware), e.g.:
-    # marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen
-    # marchyo.nixosModules.hardware.framework-13-7040-amd
-    # marchyo.nixosModules.hardware.dell-xps-13-9310
-    # marchyo.nixosModules.hardware.common-pc-ssd
+    # Per-machine hardware fixes via nixos-hardware: uncomment the input in
+    # flake.nix, add `inputs` to this module's arguments, then pick the
+    # profile matching your machine (full list:
+    # https://github.com/NixOS/nixos-hardware), e.g.:
+    # inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-9th-gen
+    # inputs.nixos-hardware.nixosModules.framework-13-7040-amd
+    # inputs.nixos-hardware.nixosModules.dell-xps-13-9310
+    # inputs.nixos-hardware.nixosModules.common-pc-ssd
   ];
 
   # Marchyo user configuration
@@ -46,12 +44,12 @@
     efi.canTouchEfiVariables = true;
   };
 
+  # marchyo imports its Home Manager modules for every marchyo.users entry;
+  # per-user Home Manager settings go here.
   home-manager.users.developer = {
-    imports = [
-      marchyo.homeManagerModules.default
-    ];
     home.stateVersion = "25.11";
   };
+
   # User account -- change password after first login
   users.users.developer = {
     isNormalUser = true;

@@ -9,7 +9,10 @@ let
   # the editor. Category tuning and the MaxWarnings=0 threshold live in each
   # tree's .qmllint.ini (qmllint auto-discovers it by walking up from each
   # file). treefmt runs formatters from the project root, so $PWD/shell and
-  # $PWD/greeter are the trees.
+  # $PWD/greeter are the trees. Files are passed as absolute paths: with a
+  # relative path qmllint (6.12) misses the directory's own qmldir for the
+  # file's implicit import and reports every `pragma Singleton` type as "not
+  # declared as singleton in qmldir" although the qmldir declares it.
   qmllint = pkgs.writeShellApplication {
     name = "marchyo-qmllint";
     runtimeInputs = [ pkgs.qt6.qtdeclarative ];
@@ -19,8 +22,8 @@ let
       greeter_files=()
       for f in "$@"; do
         case "$f" in
-          greeter/*) greeter_files+=("$f") ;;
-          shell/*) shell_files+=("$f") ;;
+          greeter/*) greeter_files+=("$PWD/$f") ;;
+          shell/*) shell_files+=("$PWD/$f") ;;
           *) echo "marchyo-qmllint: unrooted QML file: $f" >&2; exit 1 ;;
         esac
       done
@@ -80,8 +83,7 @@ in
     };
   }
   # qmllint pulls in Quickshell's QML modules (Linux-only); gate it so the
-  # formatter output still evaluates on darwin, where the QML shell surfaces
-  # (Wayland layer-shell) never run anyway. Kept lazy in the let binding so
+  # formatter output still evaluates elsewhere. Kept lazy in the let binding so
   # pkgs.quickshell is never forced off Linux.
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     # Static QML check: fails on a non-existent-property assignment (the crash

@@ -15,14 +15,14 @@ let
   # All colors come from the Jylhis Design System theme (the same source
   # of truth as modules/generic/jylhis-palette.nix). Every asset is generated
   # or recolored at build time, so a variant flip retints the whole splash.
-  tokens = builtins.fromJSON (builtins.readFile "${jylhis-design-src}/themes/jylhis.json");
+  tokens = (import "${jylhis-design-src}/nix/palette.nix" { inherit lib; }).theme;
   key = if variant == "light" then "light" else "dark";
   color = name: tokens.palette.${name}.${key};
   synColor = name: tokens.syntax.${name}.${key};
 
   # Semantic role -> token mapping for the splash surfaces.
-  logoColor = color "brand"; # benchmark-vermilion wordmark (large brand mark)
-  caretColor = color "accent"; # the sweeping ">" — motion is interactive-ish
+  logoColor = color "accent"; # the wordmark in ink (amber by night)
+  caretColor = color "primary"; # the sweeping ">" in the signal (red by day)
   # Sparkle particles borrow from the syntax palette (function/keyword/type),
   # mirroring the HTML preview's --sparkle-1/2/3 variables.
   sparkle1Color = synColor "syn-function";
@@ -85,12 +85,12 @@ stdenvNoCC.mkDerivation {
 
     # Word marks: the splash alternates between the two
     # "marchyo": rasterize the reordered omarchy wordmark (logo.svg) in the
-    # brand color at the same 800x188 the old static PNG shipped at.
+    # accent color at the same 800x188 the old static PNG shipped at.
     sed 's/@fill@/${logoColor}/' logo.svg > marchyo-logo.svg
     resvg --width 800 marchyo-logo.svg "$theme/marchyo.png"
     height=$(magick identify -format '%h' "$theme/marchyo.png")
 
-    # "jylhis": JetBrains Mono Bold, brand color, matched to the same height.
+    # "jylhis": JetBrains Mono Bold, accent color, matched to the same height.
     magick -background none -fill '${logoColor}' \
       -font '${monoFont}' -pointsize 300 label:jylhis \
       -resize x"$height" "$theme/jylhis.png"

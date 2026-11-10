@@ -15,7 +15,7 @@ sync when changing option declarations).
 | `marchyo.development.containers.dockerGroup` | `false` | Add users to the root-equivalent `docker` group (Docker backend only) |
 | `marchyo.media.enable` | `false` | Media apps (auto-enabled with desktop) |
 | `marchyo.office.enable` | `false` | Office apps (auto-enabled with desktop) |
-| `marchyo.shell.enable` | `true` with desktop (mkDefault) | Unified Quickshell shell, the default desktop shell (cascaded in `modules/nixos/desktop-config.nix`). `false` keeps the discrete stack: waybar, Vicinae, SwayOSD, mako, hyprlock, hyprpolkitagent |
+| `marchyo.shell.enable` | `true` with desktop (mkDefault) | Unified Quickshell shell, the default desktop shell (cascaded in `modules/nixos/desktop-config.nix`). `false` keeps the discrete hyprlock and hyprpolkitagent and drops the bar, OSD and notifications |
 
 ## User Configuration
 
@@ -45,21 +45,22 @@ marchyo.theme = {
 };
 ```
 
-`marchyo.theme.fontScale` is the single knob for font size system-wide: the math lives in `lib/font-scale.nix` (`round` = round-half-up; `terminusFont` snaps the TTY console to the nearest terminus PSF size). The GNOME interface fonts (dconf `font-name`/`document-font-name`/`monospace-font-name`) scale in `modules/home/jylhis-theme.nix` — Qt apps read them through the gtk3 platform theme. Every other surface reads the scale from `osConfig.marchyo.theme.fontScale` and scales in its own module (`ghostty`, `waybar` — CSS `font-size` + bar `height`, `mako`, `hyprlock`, `vicinae` — `font.normal.size`, `console`, the launcher, Emacs's default face).
+`marchyo.theme.fontScale` is the single knob for font size system-wide: the math lives in `lib/font-scale.nix` (`round` = round-half-up; `terminusFont` snaps the TTY console to the nearest terminus PSF size). The GNOME interface fonts (dconf `font-name`/`document-font-name`/`monospace-font-name`) scale in `modules/home/jylhis-theme.nix` — Qt apps read them through the gtk3 platform theme. Every other surface reads the scale from `osConfig.marchyo.theme.fontScale` and scales in its own module (`ghostty`, the shell, `hyprlock`, `console`, the launcher, Emacs's default face).
 
-The base16 slot palette is derived from the Jylhis Design System `themes/jylhis.json` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light) and consumed by `modules/generic/theme-slots.nix` (plus the runtime theme dirs). To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a tinted-schemes catalog YAML); the slot surfaces and runtime switching follow it.
+The base16 slot palette is derived from the Jylhis Design System tokens vendored in `lib/design` by `modules/generic/jylhis-palette.nix` (`Jylhis Dark` for dark, `Jylhis Light` for light) and consumed by `modules/generic/theme-slots.nix` (plus the runtime theme dirs). To use a different base16 scheme, set `marchyo.theme.scheme = "<name>"` (a tinted-schemes catalog YAML); the slot surfaces and runtime switching follow it.
 
 ### Shell appearance scale axes
 
-`marchyo.theme.appearance.*` are palette-independent scale multipliers and style switches over the base design tokens, affecting only the Quickshell shell (`marchyo.shell`). The scale axes default neutral; the style axes (`floatingBar`, `surfaceAlpha`) are Caelestia-inspired and default on. Baked into `Commons/Style.qml` at build time via the `marchyo-shell` override.
+`marchyo.theme.appearance.*` are palette-independent scale multipliers and style switches over the base design tokens, affecting only the Quickshell shell (`marchyo.shell`). The scale axes default neutral; the style axes are `floatingBar` (default off: a flush strip) and the Caelestia-inspired `surfaceAlpha` (default on). Baked into `Commons/Style.qml` at build time via the `marchyo-shell` override.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.theme.appearance.floatingBar` | `true` | Float the bar as a detached rounded pill with gaps to the screen edges instead of the full-width strip; also lifts panels, toasts, OSD, launcher, and tooltips off the bar geometry |
+| `marchyo.theme.appearance.floatingBar` | `false` | Float the bar as a detached rounded pill with gaps to the screen edges instead of the full-width strip; also lifts panels, toasts, OSD, launcher, and tooltips off the bar geometry |
 | `marchyo.theme.appearance.surfaceAlpha` | `0.85` | Opacity of shell surfaces (bar, panels, toasts, OSD). Below `1` enables the Hyprland blur effect and blur layer rules for the shell's namespaces (glass look); `1.0` restores fully opaque surfaces and keeps blur off |
 | `marchyo.theme.appearance.cornerRadiusScale` | `1.0` | Multiplier on shell corner radii (panels, OSD); `0.0` squares every corner |
 | `marchyo.theme.appearance.uiScale` | `1.0` | Multiplier on shell geometry (bar height, spacing, sizes) on top of `fontScale`, without changing font sizes |
 | `marchyo.theme.appearance.animationSpeed` | `1.0` | Shell animation speed (higher = faster); exposed as `Style.animationDuration` |
+| `marchyo.theme.appearance.reduceMotion` | `true` in a VM guest, else `false` | No Hyprland animations, blur or shadows, opaque windows, and shell animation duration 0 |
 | `marchyo.theme.appearance.highContrast` | `false` | Thicker panel/notification borders for higher-contrast chrome (`Style.highContrast` / `Style.borderWidth`) |
 
 ## Default Applications
@@ -72,18 +73,18 @@ marchyo.defaults = {
   editor = "emacs";                # emacs, vscode, vscodium, zed
   terminalEditor = "emacs";        # emacs, neovim, helix, nano
   videoPlayer = "mpv";            # mpv, vlc, celluloid
-  audioPlayer = "mpv";            # mpv, cmus, vlc, amberol
-  musicPlayer = "spotify-player"; # spotify-player, ncspot, spotify
+  audioPlayer = "mpv";            # mpv, vlc, amberol
+  musicPlayer = "spotify-player"; # spotify-player, spotify
   fileManager = "nautilus";       # nautilus, thunar
   terminalFileManager = "yazi";   # yazi, ranger, lf
   imageEditor = "pinta";         # pinta, gimp, krita
-  email = "aerc";                # aerc, neomutt, gmail, outlook
+  email = "aerc";                # aerc, gmail, outlook
 };
 ```
 
 `"emacs"` (the default editor/terminalEditor) installs `pkgs.emacs` and sets `$VISUAL`/`$EDITOR` to `emacsclient` invocations with plain-Emacs fallbacks; see `modules/nixos/defaults.nix`. Web-based email (`"gmail"`, `"outlook"`) is externally managed — no package is installed by marchyo. The rest of the defaults implementation is in `modules/nixos/defaults.nix`. The default music (`spotify-player`) and mail (`aerc`) clients are TUIs; the music client launches in a floating terminal under Hyprland.
 
-The TUI clients install via their Home-Manager `programs.*` modules (one file each under `modules/home/`: `spotify-player`, `ncspot`, `cmus`, `aerc`, `neomutt`), each gated on the matching `marchyo.defaults.*` selection — `defaults.nix` no longer adds them to `environment.systemPackages`. The Spotify GUI is always installed on x86_64 via `modules/nixos/media.nix`. `qalc` installs via `programs.qalculate` (`modules/home/qalculate.nix`).
+The TUI clients install via their Home-Manager `programs.*` modules (one file each under `modules/home/`: `spotify-player`, `aerc`), each gated on the matching `marchyo.defaults.*` selection — `defaults.nix` no longer adds them to `environment.systemPackages`. The Spotify GUI is always installed on x86_64 via `modules/nixos/media.nix`. `qalc` installs via `programs.qalculate` (`modules/home/qalculate.nix`).
 
 ## Keyboard & Input Methods
 
@@ -98,7 +99,7 @@ marchyo.keyboard = {
     { layout = "kr"; ime = "hangul"; }
   ];
   options = [ "grp:win_space_toggle" ];
-  autoActivateIME = true;
+  autoActivateIME = false;
   imeTriggerKey = [ "Super+I" ];
 };
 ```
@@ -107,8 +108,8 @@ marchyo.keyboard = {
 
 ```nix
 marchyo.graphics = {
-  vendors = [ "intel" ]; # "intel", "amd", "nvidia"
-  nvidia.open = true;    # Open-source drivers (RTX 20xx+)
+  vendors = [ "intel" "nvidia" ]; # "intel", "amd", "nvidia"
+  primary = "intel"; # required with several vendors (PRIME defaults it)
   prime = {
     enable = true;
     intelBusId = "PCI:0:2:0";
@@ -124,16 +125,15 @@ To find GPU bus IDs: `lspci | grep -E 'VGA|3D'`
 
 `marchyo.performance.disableMitigations` (default `true`) disables CPU vulnerability mitigations.
 
-`marchyo.performance.tuning.*` is opt-in kernel/sysctl/IO tuning, off by default. Enabling the master switch turns on the broadly-safe sub-toggles (`network`, `nvme`, `memory`); the aggressive ones (`hugePages`, `compute`) stay off unless set explicitly.
+`marchyo.performance.tuning.*` is opt-in kernel/sysctl/IO tuning, off by default. Enabling the master switch turns on the broadly-safe sub-toggles (`network`, `nvme`, `memory`, `hugePages`); the aggressive `compute` toggle stays off unless set explicitly.
 
 ```nix
-# Safe defaults (network + nvme + memory tuning):
+# Safe defaults (network + nvme + memory + madvise THP):
 marchyo.performance.tuning.enable = true;
 
-# Compute/CUDA workstation — also opt into the aggressive toggles:
+# Compute/CUDA workstation: also opt into the aggressive toggle:
 marchyo.performance.tuning = {
   enable = true;
-  hugePages.enable = true;   # 2MiB THP — can hurt interactive/desktop latency
   compute.enable = true;     # relaxed PAM limits (memlock/rtprio) — trusted hosts only
 };
 ```
@@ -146,21 +146,18 @@ Desktop-cascade features, each on by default with `marchyo.desktop.enable` and i
 
 | Option | Default | Feature |
 |--------|---------|---------|
-| `marchyo.osd.enable` | `true` | SwayOSD volume/brightness overlay on the `marchyo.shell.enable = false` fallback (the shell draws its own OSD) (`modules/home/swayosd.nix` + `modules/nixos/osd.nix` — udev rules + `video` group for backlight) |
 | `marchyo.menus.enable` | `true` | `marchyo-power-menu` (`Super+Escape`) + `marchyo-menu` central menu (`Super+Alt+Space`), gum TUIs in floating ghostty (`modules/home/menus.nix`) |
 | `marchyo.reminders.enable` | `true` | `marchyo-reminder-*` via transient systemd timers (`modules/home/utilities.nix`) |
 | `marchyo.utilities.enable` | `true` | Quick-info notify, `marchyo-transcode`, and `marchyo share` (LocalSend sender, Trigger submenu of `marchyo menu`) (`modules/home/utilities.nix`) |
 | `marchyo.screensaver.enable` | `true` | tte screensaver on 120s idle; keypress/mouse dismiss (`modules/home/screensaver.nix`) |
-| `marchyo.security.firewall.enable` | `true` | `networking.firewall.enable` follows it at `mkDefault` (`modules/nixos/firewall.nix`) |
 | `marchyo.security.fingerprint.enable` | `false` | `services.fprintd` (the hyprlock fallback follows automatically) |
 | `marchyo.security.fido2.enable` | `false` | `security.pam.u2f` + libfido2; enroll with `pamu2fcfg` (`modules/nixos/security-auth.nix`) |
-| `marchyo.services.tailscale.enable` | `true` | tailscale + trusted `tailscale0`, loose RP filter (`modules/nixos/tailscale.nix`) |
+| `services.tailscale.enable` | `true` (marchyo `mkDefault`) | tailscale + trusted `tailscale0`, loose RP filter (`modules/nixos/tailscale.nix`) |
 | `marchyo.services.tailscale.operator` | first enabled marchyo user with desktop + shell, else `null` | `tailscale set --operator` via `services.tailscale.extraSetFlags`, so the shell's Control Center tile can connect/disconnect (`modules/nixos/tailscale.nix`) |
-| `marchyo.services.localsend.enable` | `true` | LocalSend app via `programs.localsend`, Nautilus send action (`modules/nixos/localsend.nix`, `modules/home/nautilus.nix`) |
-| `marchyo.services.localsend.openFirewall` | `true` | Open TCP+UDP 53317 so other devices can discover and send to this host; `marchyo share` sends either way (`modules/nixos/localsend.nix`) |
-| `marchyo.power.hibernation.enable` | `false` | suspend-then-hibernate + hypridle idle-sleep; requires `resumeDevice` (`modules/nixos/hibernation.nix`) |
+| `programs.localsend.enable` | `marchyo.desktop.enable` (marchyo `mkDefault`) | LocalSend app, Nautilus send action (`modules/nixos/localsend.nix`, `modules/home/nautilus.nix`) |
+| `programs.localsend.openFirewall` | `true` (upstream) | Open TCP+UDP 53317 so other devices can discover and send to this host; `marchyo share` sends either way |
 
-Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-floating moved `Super+V`→`Super+T`, `modules/home/hyprland.nix`); DND toggle `Super+Ctrl+comma` + a DND bar indicator (waybar `custom/dnd` with the shell off) (dismiss-all moved to `Super+Ctrl+Shift+comma`); monitor/connectivity/app-launch binds in `modules/home/omarchy-binds.nix`; runtime theme switching via `marchyo theme` over the `marchyo.theme.themes` manifest (`modules/home/theme-runtime.nix` builds the assets — ephemeral overlay, resets on activation); `nixosModules.hardware.<profile>` re-exports nixos-hardware; the `marchyo` CLI is 1.0: the full omarchy-parity surface (system, theme/bg, 11 toggles, capture, menus/launch/power, reminder/info/transcode/share/font, install/webapp/security, runtime restore, completions+man) with the former `marchyo-*` helper scripts absorbed into TypeScript (`packages/marchyo-cli`) and every bind/menu/waybar action dispatching `marchyo …`. Command names/flags/exit codes are frozen until 2.0 (contract snapshot tests); `cli-state.json`/`runtime.json` stay internal. Full reference: `site/src/content/docs/docs/usage/cli.mdx`. See `site/src/content/docs/docs/usage/hotkeys.mdx` for the full bind list.
+Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-floating moved `Super+V`→`Super+T`, `modules/home/hyprland.nix`); DND toggle `Super+Ctrl+comma` + the shell DND bar indicator (dismiss-all moved to `Super+Ctrl+Shift+comma`); monitor/connectivity/app-launch binds in `modules/home/omarchy-binds.nix`; runtime theme switching via `marchyo theme` over the `marchyo.theme.themes` manifest (`modules/home/theme-runtime.nix` builds the assets — ephemeral overlay, resets on activation); `nixosModules.hardware.<profile>` re-exports nixos-hardware; the `marchyo` CLI is 1.0: the full omarchy-parity surface (system, theme/bg, 11 toggles, capture, menus/launch/power, reminder/info/transcode/share/font, install/webapp/security, runtime restore, completions+man) with the former `marchyo-*` helper scripts absorbed into TypeScript (`packages/marchyo-cli`) and every bind/menu action dispatching `marchyo …`. Command names/flags/exit codes are frozen until 2.0 (contract snapshot tests); `cli-state.json`/`runtime.json` stay internal. Full reference: `site/src/content/docs/docs/usage/cli.mdx`. See `site/src/content/docs/docs/usage/hotkeys.mdx` for the full bind list.
 
 ## Dictation (voice-to-text)
 
@@ -168,11 +165,12 @@ Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-fl
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.dictation.enable` | `false` | Enable voxtype dictation (hold F9 to dictate + a Super+Ctrl+X toggle bind) |
+| `marchyo.dictation.enable` | `false` | Enable dictation (hold F9 to dictate + a Super+Ctrl+X toggle bind) |
+| `marchyo.dictation.backend` | `"voxtype"` | `voxtype` (the only backend); see `modules/home/voxtype.nix` |
 | `marchyo.dictation.pushToTalk.enable` | `true` | Daemon evdev hold hotkey; adds dictation users to the `input` group |
 | `marchyo.dictation.pushToTalk.key` | `"F9"` | evdev key held to record (e.g. `"SCROLLLOCK"`, `"PAUSE"`, `"F13"`) |
 | `marchyo.dictation.pushToTalk.mode` | `"push_to_talk"` | `"push_to_talk"` (hold) or `"toggle"` (press to start/stop) |
-| `marchyo.dictation.toggleKey` | `"SUPER CTRL, X"` | Hyprland bind for `voxtype record toggle`; `null` to unbind |
+| `marchyo.dictation.toggleKey` | `"SUPER + CTRL + X"` | Hyprland bind for `marchyo dictation toggle`; `null` to unbind |
 | `marchyo.dictation.gpu` | `true` | Use the Vulkan GPU build (`pkgs.voxtype-vulkan`); set false for the CPU-only `pkgs.voxtype` |
 | `marchyo.dictation.model` | `"large-v3-turbo"` | Whisper model voxtype loads |
 | `marchyo.dictation.language` | `"auto"` | Spoken language (`"auto"` detects per utterance; e.g. `"en"` to pin) |
@@ -190,31 +188,19 @@ Other additions: universal clipboard `Super+C/V/X` via `sendshortcut` (toggle-fl
 | `marchyo.dictation.audioFeedback` | `true` | Start/stop sound cues |
 | `marchyo.dictation.statusWindow` | `true` | Super+Shift+H floating status window + its Hyprland rule |
 
-When enabled, `modules/home/voxtype.nix` configures the **upstream** home-manager `services.voxtype` module (config at `~/.config/voxtype/config.toml`, a `voxtype` user service). It defaults `services.voxtype.package` to `pkgs.voxtype-vulkan` (the GPU/Vulkan Whisper build) rather than the stock CPU-only `pkgs.voxtype` — the stock package is a source build with no GPU engine compiled in, so it runs `large-v3-turbo` on CPU (very slow); the Vulkan build covers NVIDIA/AMD/Intel in one binary and falls back to CPU when no device is present. `marchyo.dictation.gpu = false` forces the CPU build. Recording is driven two ways (omarchy parity): the daemon's evdev push-to-talk hotkey (hold `pushToTalk.key`, default F9) and a `modules/home/hyprland.nix` bind (`toggleKey`, default `Super+Ctrl+X`) that runs `voxtype record toggle`; text is typed at the cursor with a clipboard fallback. The evdev hotkey needs `/dev/input` access, so `modules/nixos/dictation.nix` adds dictation users to the `input` group whenever `pushToTalk.enable` is set (a real privilege: any process the user runs can then observe keystrokes). Set `pushToTalk.enable = false` to rely only on the compositor toggle and skip the group membership. The old `Super+H` toggle bind was dropped. The Waybar segment's left-click toggles recording and right-click opens the status window (omarchy's model-picker/config-editor clicks do not apply to marchyo's declarative config). Options live in `modules/nixos/options/dictation.nix`. With `preloadModel = false`, the ~1.5 GB Whisper model downloads on first recording (a pure rebuild never blocks on the network); set it `true` to fetch it at activation via voxtype's model-loader service.
+With `backend = "voxtype"`, `modules/home/voxtype.nix` configures the **upstream** home-manager `services.voxtype` module (config at `~/.config/voxtype/config.toml`, a `voxtype` user service). It defaults `services.voxtype.package` to `pkgs.voxtype-vulkan` (the GPU/Vulkan Whisper build) rather than the stock CPU-only `pkgs.voxtype` — the stock package is a source build with no GPU engine compiled in, so it runs `large-v3-turbo` on CPU (very slow); the Vulkan build covers NVIDIA/AMD/Intel in one binary and falls back to CPU when no device is present. `marchyo.dictation.gpu = false` forces the CPU build. Recording is driven two ways (omarchy parity): the daemon's evdev push-to-talk hotkey (hold `pushToTalk.key`, default F9) and a `modules/home/hyprland.nix` bind (`toggleKey`, default `Super+Ctrl+X`) that runs `marchyo dictation toggle`; text is typed at the cursor with a clipboard fallback. The evdev hotkey needs `/dev/input` access, so `modules/nixos/dictation.nix` adds dictation users to the `input` group whenever `pushToTalk.enable` is set (a real privilege: any process the user runs can then observe keystrokes). Set `pushToTalk.enable = false` to rely only on the compositor toggle and skip the group membership. The old `Super+H` toggle bind was dropped. The Waybar segment's left-click toggles recording and right-click opens the status window (omarchy's model-picker/config-editor clicks do not apply to marchyo's declarative config). Options live in `modules/nixos/options/dictation.nix`. With `preloadModel = false`, the ~1.5 GB Whisper model downloads on first recording (a pure rebuild never blocks on the network); set it `true` to fetch it at activation via voxtype's model-loader service.
 
 Depth options (all off by default): `onDemandModel` maps to voxtype's `whisper.on_demand_loading` (load the model on record start, unload after transcription) and `gpuIsolation` to `whisper.gpu_isolation`, together the answer to "stop the model daemon rather than leaving VRAM pinned"; `replacements` and `spokenPunctuation` map to voxtype's `[text]` block (emitted only when set). Push-to-talk (hold to record, release to transcribe) is already provided by the daemon's `pushToTalk` hotkey mode. A silence gate / VAD threshold is **not** exposed — voxtype 1.0.x has no config knob for it (only `audio.max_duration_secs`), so it stays a documented gap.
 
 The silence gate (`silenceGate`, on by default) maps to voxtype's `[vad]` section. The daemon runs detection after recording stops and before transcription; a recording without enough detected speech is discarded (cancel cue, empty outcome, nothing typed), which stops Whisper hallucinating text from silence. The default `energy` backend needs no model. The `whisper` backend loads `ggml-silero-vad.bin` from voxtype's models directory, which marchyo does not fetch: when the file is missing the daemon logs a warning at startup and runs ungated.
 
-The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The Waybar `custom/voxtype` module (`modules/home/waybar.nix`) is the repo's **first streaming `exec` custom module**: `voxtype status --format json --follow` emits one JSON object per state change, read via `return-type = "json"`; its `class` field (idle/recording/transcribing) recolors the `#custom-voxtype` selector, and both the module definition and the `pkgs.voxtype` store-path reference are guarded by `lib.optionalAttrs` so a desktop without dictation never pulls voxtype into its closure. The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
-
-## Local AI (Ollama)
-
-`marchyo.ai.local.enable` (off by default) enables the upstream NixOS `services.ollama` (`modules/nixos/ollama.nix`, options in `modules/nixos/options/ai.nix`).
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `marchyo.ai.local.enable` | `false` | Run the Ollama server and export `OLLAMA_HOST` |
-| `marchyo.ai.local.acceleration` | `null` | `"cpu"`, `"vulkan"`, `"rocm"` or `"cuda"`; `null` derives it from `marchyo.graphics.vendors` |
-| `marchyo.ai.local.models` | `[]` | Models pulled by `ollama-model-loader` (`services.ollama.loadModels`) |
-
-Backend selection sets `services.ollama.package = lib.mkDefault pkgs."ollama-<backend>"`: `"nvidia"` in vendors selects `cuda` (also on hybrid laptops), else `"amd"` selects `rocm`, else `"intel"` selects `vulkan`, else `cpu`. `environment.sessionVariables.OLLAMA_HOST` defaults to `http://<services.ollama.host>:<services.ollama.port>`. The option declarations reference no packages, so they evaluate on Darwin.
+The four UI sub-options are on by default when dictation is enabled (each opt-out) and are the "full UI" layer on top of the headless daemon. voxtype's built-in `[output.notification]`/`[audio.feedback]` drive notifications and sound (no bespoke scripts). The shell bar shows the dictation state from the `voxtype status --follow` stream (`marchyo.dictation.indicator`, baked into the shell package). The status window reuses the music-player floating pattern (`--class=org.omarchy.voxtype` matched by the `floating-window` tag rule). `voxtype.nix` also now sets `services.voxtype.wayland.display = "wayland-1"` so the daemon unit has `WAYLAND_DISPLAY` + `wtype`/`wl-clipboard` for `output.mode = "type"` (previously it silently leaned on the clipboard fallback).
 
 ## Notifications (in-shell)
 
-The shell (on by default with the desktop) owns `org.freedesktop.Notifications` (mako stands down) and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.
+The shell (on by default with the desktop) owns `org.freedesktop.Notifications` and adds a **notification history** and **per-sender rules** on top of the live toast stack. Every received notification is snapshotted into a persistent history (data snapshots, not live objects, stored under `Quickshell.statePath` and reloaded on restart), so a dismissed toast or one missed under DND is recoverable. The DND bar widget shows an unread count and opens the history centre on right-click; `Super+N` toggles the centre; `Super+Ctrl+Shift+comma` clears the live stack.
 
-`marchyo.notifications.rules` is a list of per-sender rules matched on `appName` and/or `desktopEntry` (exact, case-insensitive; first match wins), baked into the shell at build time. Only used when the shell is on (mako owns notifications otherwise).
+`marchyo.notifications.rules` is a list of per-sender rules matched on `appName` and/or `desktopEntry` (exact, case-insensitive; first match wins), baked into the shell at build time. Only used when the shell is on.
 
 | Rule field | Default | Description |
 |--------|---------|-------------|
@@ -236,20 +222,15 @@ marchyo.notifications.rules = [
 
 Options live in `modules/nixos/options/notifications.nix`; the apply logic is in `shell/Services/NotificationState.qml` (pure match/eviction helpers in `shell/Commons/Notify.js`, unit-tested).
 
-## Application launcher (Vicinae fallback / in-shell launcher)
+## Application launcher (in-shell launcher)
 
-`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) selects the launcher: with the shell on (the desktop default) the shell's own in-shell launcher (`shell/Launcher/`, Phase 5) answers `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history) — vicinae, its user service, and the `cap_dac_override` input-server wrapper all stand down (mutually exclusive, eval-tested in `tests/eval/marchyo-shell.nix`). The options below then apply only to the discrete-stack (`marchyo.shell.enable = false`) desktop, where they run [Vicinae](https://vicinae.com) as a user service behind the same three binds.
+`marchyo.launcher.enable` (auto-enabled with `marchyo.desktop.enable` via `lib.mkDefault`) binds the shell's own launcher (`shell/Launcher/`): `Super+R` (apps), `Super+period` (emoji picker), and `Super+Ctrl+V` (clipboard history). The binds also need `marchyo.shell.enable`; without the shell they are not bound (eval-tested in `tests/eval/marchyo-shell.nix`).
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `marchyo.launcher.enable` | `true` with desktop (mkDefault) | Enable the launcher (in-shell when the shell is on; vicinae otherwise) |
-| `marchyo.launcher.keybinding` | `"emacs"` | Vicinae in-launcher navigation: `"default"`, `"vim"`, `"emacs"` |
-| `marchyo.launcher.inputServer.enable` | `true` | `cap_dac_override` wrapper for `/dev/uinput` keystroke injection (vicinae only) |
-| `marchyo.launcher.telemetry.enable` | `false` | Vicinae's usage telemetry (upstream enables it) |
-| `marchyo.launcher.declutter` | `true` | Hide Donate / Report a Bug / About / Set Theme from root search |
-| `marchyo.launcher.settings` | `{}` | Freeform passthrough merged into `programs.vicinae.settings` |
+| `marchyo.launcher.enable` | `true` with desktop (mkDefault) | Bind the in-shell launcher |
 
-Options in `modules/nixos/options/launcher.nix` (platform-neutral — darwin imports this directory); implementation split across `modules/nixos/launcher.nix` (the setcap wrapper gate) and `modules/home/vicinae.nix` (settings, themes, user service). Every settings leaf is `lib.mkDefault`, so `marchyo.launcher.settings` overrides with plain values. Marchyo departs from three upstream defaults for privacy: `telemetry.system_info` off (this also empties the "What's New" section, whose only current item is the telemetry notice), `favicon_service = "none"` (upstream's `"twenty"` sends every bookmark/quicklink domain to a third party), and `encrypt_sensitive_data` on (upstream leaves it off on Linux). Deliberately not wired: `extensions`, `settingOverrides`, `enableSoulver`, `global_shortcuts.toggle`, `favorites`/`fallbacks`, window geometry, and the per-provider `preferences` trees — reach for `programs.vicinae.*` directly. Coverage is `tests/eval/launcher.nix`. See also the four vicinae gotchas in [gotchas.md](gotchas.md) (dead config keys, two-sided input-server wiring, theming, emacs keybind collisions).
+Options in `modules/nixos/options/launcher.nix` `modules/nixos/options/removed.nix` declares the retired Vicinae options (`keybinding`, `inputServer`, `telemetry`, `declutter`, `settings`), so a definition fails with a pointer to the in-shell launcher.
 
 ## Web apps (PWA windows + launch binds)
 
@@ -268,9 +249,30 @@ Each app's submodule: `name` (label + slugified `.desktop` id), `url`, `icon` (d
 ### `marchyo.defaults.email = "thunderbird"` is REMOVED
 
 `thunderbird` is no longer a valid `marchyo.defaults.email` value (the enum will
-reject it at evaluation). Switch to a TUI client (`"aerc"`, `"neomutt"`) or a web
+reject it at evaluation). Switch to the TUI client (`"aerc"`) or a web
 client (`"gmail"`, `"outlook"`). There is no in-place migration — Thunderbird's
 native GUI is no longer managed by marchyo.
+
+### Retired features
+
+`modules/nixos/options/removed.nix` declares each retired option, so a
+definition fails with a pointer to its replacement.
+
+- Vicinae (`marchyo.launcher.{keybinding,inputServer,telemetry,declutter,settings}`)
+  and noctalia: the in-shell launcher of `marchyo.shell` covers the launcher;
+  `marchyo.launcher.enable` stays and gates its binds.
+- waybar, mako and SwayOSD (`marchyo.osd.enable`): the shell draws the bar,
+  the notifications and the OSD. With `marchyo.shell.enable = false` there is
+  no bar, notification daemon or OSD; the media keys run plain
+  `wpctl`/`brightnessctl` (`modules/nixos/backlight.nix` keeps the backlight
+  writable).
+- `marchyo.gaming`, `marchyo.console.kmscon`,
+  `marchyo.snapshots` (snapper) and `marchyo.power.hibernation`: configure
+  `programs.steam`, `services.kmscon`,
+  `services.snapper` or `boot.resumeDevice` on the host directly.
+- The `marchyo.defaults` values `audioPlayer = "cmus"`, `musicPlayer =
+  "ncspot"` and `email = "neomutt"`: the enums reject them; enable
+  `programs.cmus`, `programs.ncspot` or `programs.neomutt` in Home Manager.
 
 ### Deprecated Options
 

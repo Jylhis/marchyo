@@ -20,12 +20,12 @@ installed and wired up as the handler for its file types.
 | `editor` | `emacs` | `vscode`, `vscodium`, `zed` |
 | `terminalEditor` | `emacs` | `neovim`, `helix`, `nano` |
 | `videoPlayer` | `mpv` | `vlc`, `celluloid` |
-| `audioPlayer` | `mpv` | `cmus`, `vlc`, `amberol` |
-| `musicPlayer` | `spotify-player` | `ncspot`, `spotify` |
+| `audioPlayer` | `mpv` | `vlc`, `amberol` |
+| `musicPlayer` | `spotify-player` | `spotify` |
 | `fileManager` | `nautilus` | `thunar` |
 | `terminalFileManager` | `yazi` | `ranger`, `lf` |
 | `imageEditor` | `pinta` | `gimp`, `krita` |
-| `email` | `aerc` | `neomutt`, `gmail`, `outlook` |
+| `email` | `aerc` | `gmail`, `outlook` |
 
 For example, to run Firefox and VS Code instead of the defaults:
 
@@ -39,7 +39,7 @@ marchyo.defaults = {
 A couple of notes on the choices. `gmail` and `outlook` for email aren't installed
 apps — they just open the web version in your browser. And `spotify-player` and the
 TUI mail clients are installed but need you to sign in before they do anything; the
-music client opens in a floating terminal on `Super + M`.
+music client opens in a floating terminal on `Super + Shift + M`.
 
 ## The terminal is always Ghostty
 

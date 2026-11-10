@@ -5,16 +5,16 @@
 {
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  marchyoCfg = osConfig.marchyo or { };
-  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && ((marchyoCfg.desktop or { }).enable or false);
-  fileManager = (marchyoCfg.defaults or { }).fileManager or null;
+  marchyoCfg = osConfig.marchyo;
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && marchyoCfg.desktop.enable;
+  fileManager = marchyoCfg.defaults.fileManager;
   enabled = desktopEnabled && fileManager == "nautilus";
 
-  localsendEnabled = ((marchyoCfg.services or { }).localsend or { }).enable or false;
+  localsendEnabled = osConfig.programs.localsend.enable;
 
   # LocalSend has no CLI to pre-fill files, so the script just launches the app,
   # detached (setsid) so it survives Nautilus exiting.

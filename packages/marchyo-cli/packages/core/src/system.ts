@@ -103,7 +103,7 @@ export type DiffTargets = {
 };
 
 // Decide what `marchyo diff` compares (mirrors update-diff.nix, which runs
-// `dix /run/current-system <incoming>`):
+// `dix diff /run/current-system <incoming>`):
 //   - a newer generation than the running system exists -> current vs newest
 //     (e.g. `nixos-rebuild boot` was run but not yet activated)
 //   - the running system IS the newest generation -> previous vs newest
@@ -129,6 +129,43 @@ export function pickDiffTargets(
     left: previous.path,
     right: newest.path,
     reason: "previous-vs-newest",
+  };
+}
+
+export type UpdateCheck = {
+  available: boolean;
+  locked: string;
+  running: string;
+};
+
+// The rev the flake lock pins for the root `nixpkgs` input, or "" when the
+// lock is unreadable or the input is missing. A root input may point at a
+// differently named node; a `follows` path (an array) is not resolved.
+export function lockedNixpkgsRev(lockText: string): string {
+  try {
+    const lock = JSON.parse(lockText) as {
+      root?: string;
+      nodes?: Record<
+        string,
+        { inputs?: Record<string, unknown>; locked?: { rev?: string } }
+      >;
+    };
+    const nodes = lock.nodes ?? {};
+    const target = nodes[lock.root ?? "root"]?.inputs?.nixpkgs;
+    const name = typeof target === "string" ? target : "nixpkgs";
+    const rev = nodes[name]?.locked?.rev;
+    return typeof rev === "string" ? rev : "";
+  } catch {
+    return "";
+  }
+}
+
+// An update is available when both revisions are known and differ.
+export function compareRevs(locked: string, running: string): UpdateCheck {
+  return {
+    available: locked !== "" && running !== "" && locked !== running,
+    locked,
+    running,
   };
 }
 

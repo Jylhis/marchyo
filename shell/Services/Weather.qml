@@ -64,7 +64,7 @@ QtObject {
         // the midday slot (index 4, ~12:00) for the day's icon.
         const days = data.weather || [];
         const out = [];
-        for (var i = 0; i < days.length && out.length < 3; i++) {
+        for (let i = 0; i < days.length && out.length < 3; i++) {
             const d = days[i] || {};
             const mid = d.hourly && d.hourly[4] ? d.hourly[4] : (d.hourly && d.hourly[0] ? d.hourly[0] : {});
             out.push({

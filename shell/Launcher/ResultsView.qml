@@ -38,11 +38,17 @@ Item {
         return root.provider.selectOnEmpty || root.provider.query.trim().length > 0 ? 0 : -1;
     }
 
-    function move(delta) {
+    // Selects row `index`, clamped to the list; -1 when the list is empty.
+    function select(index) {
         const v = root.view;
         if (v.count === 0)
-            return;
-        v.currentIndex = Math.max(0, Math.min(v.count - 1, v.currentIndex + delta));
+            return -1;
+        v.currentIndex = Math.max(0, Math.min(v.count - 1, index));
+        return v.currentIndex;
+    }
+
+    function move(delta) {
+        root.select(root.view.currentIndex + delta);
     }
 
     function activate() {
@@ -52,10 +58,10 @@ Item {
     }
 
     function titleMarkup(r) {
-        const title = Fuzzy.highlight(r.title, r.positions, Color.accent.toString());
+        const title = Fuzzy.highlight(r.title, r.positions, Colors.accent.toString());
         if (!r.subtitle)
             return title;
-        return title + ' <font color="' + Color.textMuted.toString() + '">· ' + Fuzzy.escapeHtml(r.subtitle) + "</font>";
+        return title + ' <font color="' + Colors.textMuted.toString() + '">· ' + Fuzzy.escapeHtml(r.subtitle) + "</font>";
     }
 
     ListView {
@@ -75,9 +81,9 @@ Item {
             readonly property string previewKey: root.provider.previews ? (row.modelData.preview || "") : ""
             width: ListView.view.width
             height: row.previewKey !== "" ? root.previewRowHeight : root.rowHeight
-            color: ListView.isCurrentItem ? Color.surfaceRaised : "transparent"
+            color: ListView.isCurrentItem ? Colors.surfaceRaised : "transparent"
             border.width: ListView.isCurrentItem ? 1 : 0
-            border.color: Color.accent
+            border.color: Colors.accent
 
             // Delegates exist only for rows in (or near) view, so this is
             // what keeps thumbnail decoding to the visible rows.
@@ -110,9 +116,9 @@ Item {
                     visible: row.previewKey !== ""
                     width: root.previewWidth
                     height: root.previewHeight
-                    color: Color.bgSubtle
+                    color: Colors.bgSubtle
                     border.width: 1
-                    border.color: Color.border
+                    border.color: Colors.border
 
                     Image {
                         id: thumb
@@ -131,8 +137,8 @@ Item {
                         anchors.centerIn: parent
                         visible: thumb.status !== Image.Ready
                         // Pending decode vs failed decode / unloadable file.
-                        text: row.previewKey !== "" && root.provider.previewSources[row.previewKey] === undefined ? "\u2026" : "image"
-                        color: Color.textFaint
+                        text: row.previewKey !== "" && root.provider.previewSources[row.previewKey] === undefined ? "\u2026" : I18n.t("launcher.image")
+                        color: Colors.textFaint
                         font.family: Style.fontFamily
                         font.pixelSize: Style.fontSizeSmall
                     }
@@ -142,12 +148,25 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     textFormat: root.provider.highlight ? Text.StyledText : Text.PlainText
                     text: root.provider.highlight ? root.titleMarkup(row.modelData) : row.modelData.title
-                    color: row.ListView.isCurrentItem ? Color.textHeading : Color.text
+                    color: row.ListView.isCurrentItem ? Colors.textHeading : Colors.text
                     font.family: Style.fontFamily
                     font.pixelSize: root.provider.compact ? Style.fontSizeSmall : Style.fontSize
                     elide: Text.ElideRight
-                    width: row.width - Style.paddingH * (root.provider.showIcons ? 4 : 2) - (row.previewKey !== "" ? root.previewWidth + Style.spacing : 0)
+                    width: row.width - Style.paddingH * (root.provider.showIcons ? 4 : 2) - (row.previewKey !== "" ? root.previewWidth + Style.spacing : 0) - trailing.width
                 }
+            }
+
+            // A short marker at the row's right edge: a check, a submenu
+            // chevron or a chord (rows set `trailing`).
+            Text {
+                id: trailing
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: Style.paddingH
+                text: row.modelData.trailing || ""
+                color: row.modelData.checked ? Colors.accent : Colors.textMuted
+                font.family: Style.fontFamily
+                font.pixelSize: root.provider.compact ? Style.fontSizeSmall : Style.fontSize
             }
         }
     }
@@ -174,9 +193,9 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: 2
-                color: cell.GridView.isCurrentItem ? Color.surfaceRaised : "transparent"
+                color: cell.GridView.isCurrentItem ? Colors.surfaceRaised : "transparent"
                 border.width: cell.GridView.isCurrentItem ? 1 : 0
-                border.color: Color.accent
+                border.color: Colors.accent
             }
 
             Text {
@@ -202,7 +221,7 @@ Item {
         anchors.centerIn: parent
         visible: root.view.count === 0
         text: root.provider.emptyText
-        color: Color.textMuted
+        color: Colors.textMuted
         font.family: Style.fontFamily
         font.pixelSize: Style.fontSizeSmall
     }

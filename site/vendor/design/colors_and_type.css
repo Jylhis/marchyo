@@ -1,0 +1,296 @@
+/*
+ * colors_and_type.css
+ * Jylhis Design System — typography + semantic type helpers.
+ *
+ * Color, spacing, and font-family tokens live in tokens.css
+ * (--font-display / --font-body / --font-mono / --font-heading).
+ * This file imports them and adds the semantic type helpers.
+ *
+ * Three families (fonts.css / fonts/, self-hosted, OFL):
+ *   Jost          display: page titles, hero, quotes (--font-display, --font-heading)
+ *   Fira Sans     text: prose, UI, sub-headings        (--font-body)
+ *   IBM Plex Mono data: labels, code, figures          (--font-mono, --font-numeric)
+ * Titles are a geometric sans at weight 500 (Jost is never bold), prose is humanist,
+ * and mono carries everything machine-shaped. Every family covers Finnish.
+ */
+
+@import url("./tokens.css");
+@import url("./fonts.css");
+
+/* ── Text resizing baseline ─────────────────────────────── */
+/* Never override the reader's root font size — every step in the system is a
+   rem multiple of it, so raising the browser's default text size scales the
+   whole system, not just the zoom level. `100%` restates the user-agent
+   default so the intent is explicit and lint-checkable; a px or 62.5% value
+   here would be a WCAG 1.4.4 failure. Spec: design(7) Accessibility. */
+html {
+  font-size: 100%;
+}
+
+/* ── Semantic type helpers ──────────────────────────────── */
+/* Base: humanist body copy at the body style, generous leading. */
+body,
+.ds-body {
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  color: var(--color-text);
+  text-wrap: pretty;
+}
+
+/* Display title. Page h1 and the section .ds-title sit in Jost
+   (--font-heading) at weight 500; tight leading, tight tracking. */
+h1,
+.ds-h1,
+.ds-title {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: var(--color-text-heading);
+  text-wrap: balance;
+}
+
+/* Sub-headings: Jost at weight 500 as well. Size carries the hierarchy and
+   headings are never bold. */
+h2,
+h3,
+h4,
+.ds-h2,
+.ds-h3,
+.ds-h4 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--color-text-heading);
+  text-wrap: balance;
+}
+
+/* Blockquotes hang their opening punctuation into the margin
+   (progressive enhancement — no-op where unsupported). */
+blockquote {
+  hanging-punctuation: first;
+}
+/* Sizes come from the type scale in tokens.css so headings cannot drift
+   from the source of truth. h1 is the large display face;
+   sub-headings step down through the scale at Fira Sans semibold. */
+h1,
+.ds-h1,
+.ds-title {
+  font-size: var(--type-h1-size);
+  line-height: var(--type-h1-line-height);
+  letter-spacing: 0;
+}
+h2,
+.ds-h2 {
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-line-height);
+}
+h3,
+.ds-h3 {
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-line-height);
+}
+h4,
+.ds-h4 {
+  font-size: var(--type-lead-size);
+  line-height: var(--type-lead-line-height);
+}
+
+/* The hero size: one per page at most. */
+.ds-display {
+  font-family: var(--font-display);
+  font-weight: var(--type-display-weight);
+  font-size: var(--type-display-size);
+  line-height: var(--type-display-line-height);
+  letter-spacing: var(--type-display-letter-spacing);
+  color: var(--color-text-heading);
+  text-wrap: balance;
+}
+
+/* Named text styles as helpers: one class per style in tokens.css. */
+.ds-lead {
+  font: var(--type-lead);
+}
+.ds-ui {
+  font: var(--type-ui);
+}
+.ds-ui-strong {
+  font: var(--type-ui-strong);
+}
+.ds-small {
+  font: var(--type-small);
+}
+.ds-data {
+  font: var(--type-data);
+}
+.ds-code {
+  font: var(--type-code);
+}
+
+/* Monospace label (used for role lines, dates, meta, captions) */
+.ds-meta {
+  font-family: var(--font-mono);
+  font-size: var(--type-small-size);
+  color: var(--color-text-muted);
+}
+
+/* Amount — a readout, not a sentence. The mono face, tabular and
+   right-alignable; the currency mark sets smaller and muted, the decimals
+   smaller than the integer, so a column of figures aligns on the integer. */
+.ds-amount {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-h1-size);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--color-text-heading);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.12em;
+}
+.ds-amount-currency {
+  font-size: 0.42em;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.ds-amount-fraction {
+  font-size: 0.58em;
+  color: var(--color-text-muted);
+}
+
+/* Readout — a single machine-shaped value in running chrome (durations,
+   latencies, counts). Same face, at body size. */
+.ds-readout {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-body-size);
+  color: var(--color-text-heading);
+}
+
+/* Subtitle — muted grotesk italic sitting just below a title */
+.ds-subtitle {
+  font-size: var(--type-lead-size);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Man-page style section header: filename(section). Mono label, lowercase. */
+.ds-man-label {
+  font: var(--type-label);
+  color: var(--color-label);
+}
+
+/* Inline code — sized relative to its host so it tracks the surrounding copy,
+   floored at --type-floor so nesting inside small chrome cannot compound the
+   shrink below the system's hard minimum (design(7) Accessibility). */
+.ds-code-inline,
+:not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: max(0.85em, var(--type-floor));
+  background-color: var(--color-code-bg);
+  color: var(--color-code-text);
+  border: var(--border-hairline) solid var(--color-code-border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.3em;
+}
+
+/* Divider with a label: lowercase mono between two hairlines */
+.ds-divider-label {
+  font: var(--type-label);
+  color: var(--color-label);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.ds-divider-label::before,
+.ds-divider-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ── Interaction baseline ───────────────────────────────── */
+/* Selection highlight + input caret. caret-color inherits as a resolved
+   colour, so every mode scope sets it again to take its own cursor. */
+::selection {
+  color: var(--color-selection-bg-foreground);
+  background-color: var(--color-selection-bg);
+}
+:root,
+[data-mode] {
+  caret-color: var(--color-cursor);
+}
+
+/* Focus ring: 2px stroke in the focus-ring colour at 2px offset.
+   A single visible baseline for every keyboard-focused element; components
+   may override placement but should keep the --focus-ring token so the ring
+   stays consistent across the system. Uses :focus-visible so the ring shows
+   for keyboard users without flashing on mouse click. */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Prose links — persistent underline (WCAG 1.4.1: never colour alone).
+   Inline text links must be distinguishable from body copy without relying on
+   colour, so the underline is always present at rest; colour shift on hover is
+   an enhancement. Component chrome (.ds-tag, .ds-card__title a, .ds-callout a,
+   .ds-log__what a, .ds-breadcrumb a, nav a) sets text-decoration:none at class
+   specificity, so it is unaffected. */
+a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+a:hover,
+a:active {
+  text-decoration-color: var(--color-link-underline-hover);
+}
+
+/* Visually-hidden — remove from view, keep in the accessibility tree.
+   Use for screen-reader-only labels (e.g. a heading name behind an icon, or a
+   semantic label on a visually-titled section). Add .sr-only-focusable when the
+   content should reveal itself when focused (skip links). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* Reduced motion — universal guard.
+   Per design(7) Accessibility: every transition and animation in the system
+   respects the user's OS-level reduce-motion preference. Importing this
+   file is sufficient; consumers do not need to repeat the rule. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

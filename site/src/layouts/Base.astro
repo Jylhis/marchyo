@@ -1,17 +1,10 @@
 ---
-// Base shell for the standalone (non-docs) pages — landing + search.
-// Loads the self-hosted variable fonts and the vendored Jylhis design system,
-// and applies the persisted paper/roast theme before first paint (no FOUC).
-// v2 three-role stack: Zilla Slab display (600/700), Hanken Grotesk body
-// (variable), IBM Plex Mono chrome (400/500 + italic).
-import '@fontsource/zilla-slab/600.css';
-import '@fontsource/zilla-slab/700.css';
-import '@fontsource-variable/hanken-grotesk';
-import '@fontsource-variable/hanken-grotesk/wght-italic.css';
-import '@fontsource/ibm-plex-mono/400.css';
-import '@fontsource/ibm-plex-mono/400-italic.css';
-import '@fontsource/ibm-plex-mono/500.css';
-import '../styles/jylhis.css';
+// Base shell for the standalone (non-docs) pages — landing.
+// Loads the vendored Jylhis design system (vendor/design, see `just ds-sync`) (tokens, self-hosted fonts, type,
+// motion, components) and applies the persisted paper/black mode before
+// first paint (no FOUC).
+import '../../vendor/design/styles.css';
+import '../styles/site.css';
 
 interface Props {
   title: string;
@@ -32,7 +25,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#faf7f2" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4efe4" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0b" />
     {/*
       Apply the stored theme before paint to avoid a flash.
 
@@ -45,6 +39,18 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       In the DOM, data-theme='dark' means dark and no attribute means light;
       that contract is unchanged.
     */}
+    <script is:inline>
+      // The design tokens switch on [data-mode]; this page toggles
+      // [data-theme]. Mirror one onto the other.
+      (function () {
+        var d = document.documentElement;
+        function sync() {
+          d.dataset.mode = d.dataset.theme === 'dark' ? 'dark' : 'light';
+        }
+        new MutationObserver(sync).observe(d, { attributeFilter: ['data-theme'] });
+        sync();
+      })();
+    </script>
     <script is:inline>
       (function () {
         try {
@@ -67,9 +73,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <slot />
     {/*
       The theme toggle, once, for every page that uses this layout. It used to
-      be duplicated verbatim in index.astro and search.astro (both comments
-      even said "shared behaviour"), which is how the two drifted from the
-      pre-paint script above.
+      be duplicated per page, which let copies drift from the pre-paint
+      script above.
     */}
     <script is:inline>
       (function () {

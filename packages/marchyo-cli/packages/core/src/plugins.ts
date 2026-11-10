@@ -18,6 +18,13 @@ export function isPluginKind(k: string): k is PluginKind {
   return Object.hasOwn(PLUGIN_KINDS, k);
 }
 
+// Id namespaces no plugin may use (packages/marchyo-shell/plugin.nix).
+export const RESERVED_ID_NAMESPACES = ["marchyo."] as const;
+
+export function reservedIdNamespace(id: string): string | null {
+  return RESERVED_ID_NAMESPACES.find((ns) => id.startsWith(ns)) ?? null;
+}
+
 // Leading characters of the first-party launcher prefixes
 // (shell/Commons/LauncherProviders.js PREFIXES). A plugin prefix may not start
 // with one; packages/marchyo-shell/plugin.nix applies the same rule.

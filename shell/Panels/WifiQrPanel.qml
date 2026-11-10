@@ -4,49 +4,81 @@ import qs.Ui
 import qs.Commons
 import qs.Services
 
-// Wi-Fi QR share overlay. Regenerates the QR each time it opens (the network may
-// have changed). qrencode emits a UTF8 half-block text grid, so rendering needs a
-// monospace font and a tight line height to stack into a square, scannable code.
 Panel {
     id: root
     panelId: "wifiqr"
-    title: "Wi-Fi QR"
+    title: I18n.t("wifiqr.title")
+    property bool reveal: false
 
     onVisibleChanged: {
+        reveal = false;
         if (visible)
             WifiQr.generate();
+        else
+            WifiQr.cancel();
+    }
+
+    component Caption: Text {
+        Layout.fillWidth: true
+        color: Colors.textMuted
+        font.family: Style.fontFamily
+        font.pixelSize: Style.fontSizeSmall
+        textFormat: Text.PlainText
+        wrapMode: Text.Wrap
     }
 
     body: [
-        Text {
-            Layout.fillWidth: true
+        Caption {
             visible: WifiQr.ssid !== ""
             text: WifiQr.ssid
-            color: Color.textHeading
-            font.family: Style.fontFamily
+            color: Colors.textHeading
             font.pixelSize: Style.fontSize
-            elide: Text.ElideRight
         },
-        Text {
-            Layout.fillWidth: true
+        Caption {
+            visible: WifiQr.loading
+            text: I18n.t("wifiqr.generating")
+        },
+        Caption {
             visible: WifiQr.error !== ""
             text: WifiQr.error
-            color: Color.statusErr
-            font.family: Style.fontFamily
-            font.pixelSize: Style.fontSizeSmall
+            color: Colors.statusErr
         },
-        Text {
+        Rectangle {
+            id: canvas
             Layout.alignment: Qt.AlignHCenter
-            visible: WifiQr.qrText !== ""
-            text: WifiQr.qrText
-            color: Color.text
-            font.family: Style.fontFamily
-            font.pixelSize: Style.fontSize
-            // Half-block rows are two cells tall; collapse the line box so the code is
-            // square, not a tall rectangle.
-            lineHeight: 0.5
-            lineHeightMode: Text.ProportionalHeight
-            textFormat: Text.PlainText
+            readonly property int moduleSize: Math.max(1, Math.min(6, Math.floor((root.cardWidth - Style.panelPad * 4) / Math.max(1, WifiQr.matrix.size))))
+            implicitWidth: WifiQr.matrix.size * moduleSize
+            implicitHeight: implicitWidth
+            visible: WifiQr.matrix.size > 0
+            color: "white"
+            radius: Style.panelRadius
+
+            Repeater {
+                model: WifiQr.matrix.cells
+                Rectangle {
+                    required property var modelData
+                    x: modelData.x * canvas.moduleSize
+                    y: modelData.y * canvas.moduleSize
+                    width: canvas.moduleSize
+                    height: width
+                    color: "black"
+                }
+            }
+        },
+        Caption {
+            visible: WifiQr.matrix.size > 0
+            text: I18n.t("wifiqr.scan") + " · " + I18n.t(WifiQr.secured ? "wifiqr.secured" : "wifiqr.open")
+            horizontalAlignment: Text.AlignHCenter
+        },
+        PanelButton {
+            Layout.fillWidth: true
+            visible: WifiQr.matrix.size > 0 && WifiQr.secured
+            text: I18n.t(root.reveal ? "wifiqr.hidePassword" : "wifiqr.showPassword")
+            onClicked: root.reveal = !root.reveal
+        },
+        Caption {
+            visible: root.reveal && WifiQr.password !== ""
+            text: root.reveal ? WifiQr.password : ""
         }
     ]
 }

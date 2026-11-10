@@ -100,9 +100,9 @@ undeclared_tools=""
 unbaked_tools=""
 while read -r tool; do
   [[ -n $tool ]] || continue
-  grep -qE "property string $tool:" "$config_qml" ||
+  grep -qE "property (string|bool) $tool:" "$config_qml" ||
     undeclared_tools+="Config.$tool is used but not declared in ${config_qml#"$ROOT"/}"$'\n'
-  grep -qE "property string $tool: \"\\\$\{" "$package_nix" ||
+  grep -qE "property (string $tool: \"?|bool $tool: )\\\$\{" "$package_nix" ||
     unbaked_tools+="Config.$tool is used but not baked by ${package_nix#"$ROOT"/}"$'\n'
 done < <(grep -rhoE "\bConfig\.[a-zA-Z]+" "$SHELL_DIR" | cut -d. -f2 | sort -u | grep -v '^qml$')
 check "every Config.<tool> the QML uses is declared in Commons/Config.qml" "$undeclared_tools"
@@ -116,7 +116,7 @@ check "every Config.<tool> the QML uses gets a store path from package.nix" "$un
 # the generator reads as undefined in the store shell only. The Config.* check
 # above covered the tool paths; nothing covered the dimensions.
 #
-# Commons/Color.qml deliberately gets no equivalent check: its property names
+# Commons/Colors.qml deliberately gets no equivalent check: its property names
 # are computed in Nix from palette.hex via toCamel, so there is no literal name
 # list in package.nix to grep against.
 
@@ -150,13 +150,12 @@ done <<<"$cli_methods"
 check "every shellIpc method the CLI calls exists in shell.qml" "$missing_ipc"
 
 # One target, one handler: two handlers on the same target make which one
-# answers a call undefined. Every Hyprland bind calls target "shell" (see
-# shell/README.md), so that name is shell.qml's alone, and shell.qml keeps a
-# single stock handler rather than a bus. The compat shim's handlers are not
+# answers a call undefined. The CLI calls target "shell" (see shell/README.md),
+# so that name is shell.qml's alone. The compat shim's handlers are not
 # competitors: compat/Commons/ShellIpc.qml is a base type with no target of its
 # own, compat/Commons/IpcRegistry.qml holds a permanently disabled reflection
-# probe, and compat/Ui/Panel.qml binds whatever target its omarchy plugin asks
-# for. Only claiming the literal "shell" would collide.
+# probe, and compat/Ui/Panel.qml binds whatever target its plugin asks for.
+# Only claiming the literal "shell" would collide.
 ipc_handlers=$(grep -c "IpcHandler {" "$shell_qml")
 if [[ $ipc_handlers == 1 ]]; then
   ok "shell.qml declares exactly one IpcHandler"
@@ -167,6 +166,60 @@ fi
 rival_shell_target=$(grep -rn --include="*.qml" 'target: *"shell"' "$SHELL_DIR" |
   grep -v "^$shell_qml:" | sed "s|^$ROOT/||")
 check 'only shell.qml claims the IPC target "shell"' "$rival_shell_target"
+
+# One function table: the IpcHandler and the global shortcuts both dispatch to
+# shell.qml's `actions`, so the table and the IpcHandler must list the same
+# functions, or a shortcut and a `qs ipc` call answer the same name
+# differently.
+action_names=$(awk '/readonly property var actions: \(\{/{f=1;next} f&&/^        \}\)$/{f=0} f' "$shell_qml" |
+  grep -oE '^            [a-zA-Z]+:' | tr -d ' :' | sort -u)
+handler_names=$(awk '/^    IpcHandler \{/{f=1;next} f&&/^    \}$/{f=0} f' "$shell_qml" |
+  grep -oE '^        function [a-zA-Z]+\(' | sed -E 's/.*function ([a-zA-Z]+)\(/\1/' | sort -u)
+table_drift=""
+[[ -n $action_names ]] || table_drift+="no actions table found in shell.qml"$'\n'
+[[ $action_names == "$handler_names" ]] ||
+  table_drift+="actions: $(tr '\n' ' ' <<<"$action_names")"$'\n'"IpcHandler: $(tr '\n' ' ' <<<"$handler_names")"$'\n'
+check "shell.qml's actions table and IpcHandler expose the same functions" "$table_drift"
+
+missing_actions=""
+while read -r method; do
+  [[ -n $method ]] || continue
+  grep -qxF "$method" <<<"$action_names" ||
+    missing_actions+="the CLI calls shellIpc(\"$method\"), which the actions table does not define"$'\n'
+done <<<"$cli_methods"
+check "every CLI-dispatched method exists in the actions table" "$missing_actions"
+
+# Global shortcuts: shell/shortcuts.json is the one list. shell.qml registers
+# each entry and runs its `call` from the actions table; lib/hyprland-lua.nix's
+# `global` accepts only listed names, and every bind that uses it must name one.
+shortcuts_json="$SHELL_DIR/shortcuts.json"
+shortcut_names=$(grep -oE '"name": *"[^"]+"' "$shortcuts_json" | sed -E 's/.*"([^"]+)"$/\1/' | sort)
+shortcut_calls=$(grep -oE '"call": *"[^"]+"' "$shortcuts_json" | sed -E 's/.*"([^"]+)"$/\1/' | sort -u)
+shortcut_drift=""
+[[ -n $shortcut_names ]] || shortcut_drift+="no shortcuts in ${shortcuts_json#"$ROOT"/}"$'\n'
+dupes=$(uniq -d <<<"$shortcut_names")
+[[ -z $dupes ]] || shortcut_drift+="duplicate shortcut names: $dupes"$'\n'
+while read -r fn; do
+  [[ -n $fn ]] || continue
+  grep -qxF "$fn" <<<"$action_names" ||
+    shortcut_drift+="shortcut call $fn is not in the actions table"$'\n'
+done <<<"$shortcut_calls"
+check "every shell/shortcuts.json call exists in the actions table" "$shortcut_drift"
+
+if grep -q 'GlobalShortcut {' "$shell_qml" && grep -q 'appid: "marchyo"' "$shell_qml" &&
+  grep -q 'shortcuts.json' "$shell_qml"; then
+  ok "shell.qml registers shell/shortcuts.json as marchyo global shortcuts"
+else
+  no "shell.qml registers shell/shortcuts.json as marchyo global shortcuts"
+fi
+
+unknown_globals=""
+while read -r name; do
+  [[ -n $name ]] || continue
+  grep -qxF "$name" <<<"$shortcut_names" ||
+    unknown_globals+="a bind uses global \"$name\", which shell/shortcuts.json does not list"$'\n'
+done < <(grep -rhoE '\bglobal "[^"]+"' "$ROOT/modules" --include="*.nix" | sed -E 's/.*"([^"]+)"$/\1/' | sort -u)
+check "every hlua.global bind names a registered global shortcut" "$unknown_globals"
 
 # ── Commons/*.js dual citizenship ────────────────────────────────────────────
 #
@@ -275,7 +328,7 @@ check "reserved launcher prefix characters match between plugin.nix and the CLI"
 # ── greeter theme marker ─────────────────────────────────────────────────────
 #
 # The session theme marker dir is spelled in three languages: boot.nix creates
-# it, the CLI writes theme.json into it, the greeter reads it.
+# it, the CLI writes theme-<user>.json into it, the greeter reads it.
 greeter_ts="$ROOT/packages/marchyo-cli/packages/core/src/greeter-theme.ts"
 marker_dir=$(grep -oE '^export const GREETER_THEME_DIR = "[^"]+"' "$greeter_ts" | cut -d'"' -f2)
 marker_drift=""
@@ -302,6 +355,38 @@ while read -r tool; do
     greeter_tools+="Config.$tool is used but not baked by greeterConfigQml"$'\n'
 done < <(grep -rhoE "\bConfig\.[a-zA-Z]+" "$GREETER_DIR" --include=*.qml | cut -d. -f2 | sort -u | grep -v "^qml$")
 check "every greeter Config.<tool> is declared and baked" "$greeter_tools"
+
+# ── user-visible QML strings go through I18n ─────────────────────────────────
+#
+# A text/title/label/tooltip/placeholder/emptyText/subtitle assignment, or a
+# `return "..."` feeding one, may hold a string literal only when it has fewer
+# than three consecutive letters (glyphs, numbers, units), or is a program name
+# or an internal identifier.
+# Comparisons (=== "light") and Qt date formats are not user text.
+
+literal_allow='^"(marchyo|btop|nmtui|wiremix|file://|none|power-saver|performance|balanced|lap|heat|unknown|error|disabled)"$'
+untranslated=$(
+  cd "$SHELL_DIR" &&
+    awk -v allow="$literal_allow" '
+      /I18n\./ || /^[[:space:]]*\/\// { next }
+      {
+        line = $0
+        isprop = line ~ /(^|[^A-Za-z.])(text|title|label|tooltipText|placeholderText|emptyText|subtitle)[[:space:]]*:/
+        isret = line ~ /(^|[^A-Za-z.])return[[:space:]]+"/
+        if (!isprop && !isret) next
+        gsub(/(===|!==)[[:space:]]*"[^"]*"/, "", line)
+        gsub(/formatDateTime\([^)]*\)/, "", line)
+        while (match(line, /"[^"]*"/)) {
+          lit = substr(line, RSTART, RLENGTH)
+          if (lit ~ /[A-Za-z][A-Za-z][A-Za-z]/ && lit !~ allow)
+            printf "shell/%s:%d: %s is not translated through I18n\n", FILENAME, FNR, lit
+          line = substr(line, RSTART + RLENGTH)
+        }
+      }
+    ' Bar/*.qml Panels/*.qml Launcher/*.qml Lock/*.qml Notifications/*.qml \
+      Osd/*.qml Overview/*.qml Polkit/*.qml Ui/*.qml Services/*.qml
+)
+check "no user-visible QML string literal bypasses I18n" "$untranslated"
 
 echo "----"
 echo "$pass passed, $fail failed"

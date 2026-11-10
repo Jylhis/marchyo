@@ -2,23 +2,21 @@
   config,
   lib,
   pkgs,
-  osConfig ? { },
+  osConfig,
   ...
 }:
 let
-  desktopEnabled =
-    pkgs.stdenv.hostPlatform.isLinux && ((osConfig.marchyo or { }).desktop.enable or false);
+  desktopEnabled = pkgs.stdenv.hostPlatform.isLinux && osConfig.marchyo.desktop.enable;
   home = config.home.homeDirectory;
-  colorScheme =
-    if ((osConfig.marchyo or { }).theme.variant or "dark") == "dark" then "dark" else "light";
+  colorScheme = if osConfig.marchyo.theme.variant == "dark" then "dark" else "light";
+  runtimeTheme = osConfig.marchyo.theme.enable && osConfig.marchyo.cli.enable;
 in
 {
   config = lib.mkIf desktopEnabled {
     gtk = {
       gtk4.theme = lib.mkDefault config.gtk.theme;
-      # marchyo owns the dark preference outright (no Stylix gtk target).
-      # Adwaita is dual-variant; this picks its half.
-      colorScheme = lib.mkDefault colorScheme;
+      colorScheme = lib.mkDefault (if runtimeTheme then null else colorScheme);
+      gtk3.colorScheme = lib.mkIf runtimeTheme (lib.mkForce null);
       iconTheme = {
         package = pkgs.adwaita-icon-theme;
         name = "Adwaita";
@@ -35,11 +33,8 @@ in
       };
     };
 
-    # HM's gtk3 module and this one both write this key (marchyo is the only
-    # other writer since the stylix retirement); under the light variant their
-    # values diverge, so mkForce resolves it in marchyo's favor. The dropped HM
-    # value is cosmetic (only drives Epiphany's dark-mode request, which
-    # prefer-light serves).
-    dconf.settings."org/gnome/desktop/interface"."color-scheme" = lib.mkForce "prefer-${colorScheme}";
+    dconf.settings."org/gnome/desktop/interface"."color-scheme" = lib.mkIf (!runtimeTheme) (
+      lib.mkForce "prefer-${colorScheme}"
+    );
   };
 }
