@@ -61,6 +61,7 @@
       packages = forAllSystems (system: marchyo.mkPackages { inherit system; });
       checks = forAllSystems (system: marchyo.mkChecks { inherit system; });
       formatter = forAllSystems (system: marchyo.mkFormatter { inherit system; });
+      devShells = forAllSystems (system: marchyo.mkDevShells { inherit system; });
       apps = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (system: marchyo.mkApps { inherit system; });
     };
 }

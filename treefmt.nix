@@ -5,7 +5,7 @@ let
   # resolve their `import qs.*` (per-directory qmldirs) through a temporary
   # `qs -> <tree>` alias root (the trees each own their qs.* namespace, so they
   # get one alias root per tree), plus Quickshell's and QtQuick's own qml
-  # modules, the CI/treefmt analogue of the QML_IMPORT_PATH devenv.nix sets for
+  # modules, the CI/treefmt analogue of the QML_IMPORT_PATH shell.nix sets for
   # the editor. Category tuning and the MaxWarnings=0 threshold live in each
   # tree's .qmllint.ini (qmllint auto-discovers it by walking up from each
   # file). treefmt runs formatters from the project root, so $PWD/shell and
@@ -71,11 +71,10 @@ in
     typos.excludes = [
       "**/*.png"
       "flake.lock"
-      "devenv.lock"
       "site/bun.lock"
     ];
     # qmlformat (from Qt's qtdeclarative), edits in place (-i). Absolute command
-    # path so it needs no PATH entry in the devenv shell or CI.
+    # path so it needs no PATH entry in the dev shell or CI.
     qmlformat = {
       command = "${pkgs.qt6.qtdeclarative}/bin/qmlformat";
       options = [ "-i" ];

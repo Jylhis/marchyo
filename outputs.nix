@@ -429,6 +429,19 @@ in
     in
     treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
 
+  mkDevShells =
+    { system }:
+    {
+      default =
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        import ./shell.nix {
+          inherit pkgs;
+          treefmt = treefmt-nix.lib.mkWrapper pkgs (import ./treefmt.nix);
+        };
+    };
+
   mkApps =
     { system }:
     let

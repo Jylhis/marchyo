@@ -8,7 +8,7 @@ check:
     set -euo pipefail
     nix flake check --no-build
     statix check .
-    deadnix --fail --exclude .devenv result .
+    deadnix --fail --exclude .dev result .
 
 # Run every check, building the heavy ones too (Hyprland --verify-config, theme assets, Plymouth, ISO evals)
 check-full:
@@ -32,57 +32,9 @@ build-nixos config="x86_64":
 iso variant="minimal":
     nix build .#iso-{{variant}}
 
-# Update all inputs: flake.lock -> devenv.yaml + devenv.lock
+# Update all flake inputs
 update:
-    #!/usr/bin/env bash
-    set -euo pipefail
     nix flake update
-    INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
-    for name in $INPUTS; do
-        # Resolve the root input alias first: flake.lock may store the real
-        # node under a suffixed key (e.g. root "nixpkgs" -> node "nixpkgs_2")
-        # while the literal ".nodes.$name" key can be a different, stale
-        # input followed only by some other consumer.
-        NODE=$(jq -er --arg n "$name" '.nodes.root.inputs[$n] // $n' flake.lock) || {
-            echo "FAIL: devenv input '$name' missing from flake.lock"; exit 1; }
-        REV=$(jq -er --arg node "$NODE" '.nodes[$node].locked.rev' flake.lock) || {
-            echo "FAIL: flake.lock node '$NODE' (input '$name') has no locked rev"; exit 1; }
-        echo "Pinning $name -> $REV"
-        sed -i.bak -E "/^  ${name}:$/,/^  [A-Za-z0-9_-]+:$|^[^ ]/ {
-            s|^(    url: github:[^/]+/[^/[:space:]]+)(/[0-9a-f]+)?[[:space:]]*$|\1/${REV}|
-        }" devenv.yaml
-        rm -f devenv.yaml.bak
-    done
-    devenv update
-    echo "Done. All devenv inputs pinned from flake.lock."
-
-# Verify flake.lock and devenv.lock reference the same rev for every shared input
-verify:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "Checking shared input rev sync..."
-    INPUTS=$(awk '/^inputs:$/{f=1;next} f && /^[^ ]/{f=0} f && /^  [A-Za-z0-9_-]+:$/{gsub(/[ :]/,""); print}' devenv.yaml)
-    fail=0
-    for name in $INPUTS; do
-        # Same alias resolution as the update recipe: compare against the
-        # node the flake root actually maps this input to.
-        NODE=$(jq -er --arg n "$name" '.nodes.root.inputs[$n] // $n' flake.lock) \
-            || { echo "FAIL: $name missing from flake.lock"; fail=1; continue; }
-        FLAKE_REV=$(jq -er --arg node "$NODE" '.nodes[$node].locked.rev' flake.lock) \
-            || { echo "FAIL: flake.lock node '$NODE' (input $name) has no locked rev"; fail=1; continue; }
-        DEVENV_REV=$(jq -er --arg n "$name" '.nodes[$n].locked.rev' devenv.lock) \
-            || { echo "FAIL: $name missing from devenv.lock"; fail=1; continue; }
-        if [ "$FLAKE_REV" != "$DEVENV_REV" ]; then
-            echo "FAIL: $name diverged"
-            echo "  flake:  $FLAKE_REV"
-            echo "  devenv: $DEVENV_REV"
-            fail=1
-        else
-            echo "OK: $name @ $FLAKE_REV"
-        fi
-    done
-    [ "$fail" = 0 ] || exit 1
-    echo "All shared inputs in sync."
 
 # Run the default configuration VM (x86_64-linux only)
 run:

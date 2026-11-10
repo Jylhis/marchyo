@@ -7,10 +7,8 @@ result
 # Worktrunk worktrees
 .worktrees/
 
-# devenv
-.devenv/
-.devenv.flake.nix
-devenv.local.nix
+# Dev shell state (shell.nix)
+.dev/
 
 # Quickshell QML tooling: runtime-generated symlink into /run/user (vfs)
 shell/.qmlls.ini

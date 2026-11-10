@@ -15,7 +15,7 @@ Marchyo is a modular NixOS configuration flake providing curated system, and Hom
 
 ## Plain Nix Behind a Thin Flake
 
-All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. Development uses `devenv.sh` (no experimental features required). `flake.lock` is the source of truth for input revisions; the devenv dev shell tracks the primary (unstable) `nixpkgs`, synchronized to `devenv.lock` via `just update`.
+All real Nix logic lives in plain Nix files. `flake.nix` is a thin re-export wrapper that imports `outputs.nix` and forwards outputs. The dev shell is `shell.nix`, exposed as `devShells.<system>.default` and usable with plain `nix-shell`. `flake.lock` is the only source of input revisions; `shell.nix` reads its `nixpkgs` and `treefmt-nix` pins when run without flakes.
 
 ## Flake Inputs
 
@@ -38,8 +38,7 @@ flake.lock          # Single source of truth for all pinned inputs (nixpkgs, hom
 outputs.nix         # All output logic — takes { inputs }, returns modules, packages, checks, etc.
 overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, plymouth-marchyo-theme, plus the vendored design system in lib/design)
 treefmt.nix         # Formatter config for treefmt-nix
-devenv.nix          # Development shell configuration
-devenv.yaml         # devenv inputs (nixpkgs pinned to same rev as flake.lock)
+shell.nix           # Development shell (nix develop / nix-shell)
 Justfile            # Task runner (check, fmt, build, update, verify)
 statix.toml         # Statix linter configuration
 docs/               # Contributor/system-architecture reference (this tree)
@@ -71,7 +70,8 @@ templates/workstation/  # Developer workstation template
 - `templates.workstation` — Starter workstation template (uses nixpkgs passthrough)
 - `apps.x86_64-linux.default` — QEMU VM runner with all features enabled
 - `checks.{system}.*` — Evaluation test suite
-- `formatter.{system}` — treefmt wrapper (shared config with devenv)
+- `formatter.{system}` — treefmt wrapper (same config as the dev shell)
+- `devShells.{system}.default` — the dev shell from `shell.nix`
 - `nixosModules` / `homeManagerModules` — per-platform module sets
 - `nixosConfigurations.{x86_64,aarch64}` — Reference NixOS configs (Linux, unstable), built through `lib.mkNixosSystem`; `x86_64` is built by CI and backs the VM runner
 
@@ -80,7 +80,7 @@ Downstream consumers build with `marchyo.lib.mkNixosSystem`, which brings marchy
 ## Key Files
 
 - `flake.nix` — Flake entry point. Imports `outputs.nix` with flake inputs, wraps per-system outputs with `forAllSystems`.
-- `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.). `devenv.lock` syncs to this via `just update`.
+- `flake.lock` — **Single source of truth** for all pinned input revisions (nixpkgs, home-manager, etc.).
 - `outputs.nix` — All output logic. Takes `{ inputs }:`, returns nixosModules, homeManagerModules, overlays, templates, nixosConfigurations, the `lib` builders (`mkNixosSystem`, `mkPkgs`), and per-system constructors (mkPackages, mkChecks, mkFormatter, mkApps, legacyPackages; the latter also carries `heavyChecks` and `testPredicates`).
 - `overlay.nix` — Nixpkgs overlay. Takes `{ inputs }:`, returns `final: prev:` function. `marchyo-cli`/`marchyo-wallpapers` are cross-platform; Linux-only packages are wrapped in `lib.optionalAttrs stdenv.isLinux`.
 - `lib/systems.nix` — Single source of truth for the system list. `flake.nix` imports `linux` from here; adding/removing a system is a one-file change.

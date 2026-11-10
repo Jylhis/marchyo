@@ -94,7 +94,7 @@ test-my-function =
 
 The GitHub Actions workflow (`.github/workflows/validate.yml`) runs five jobs:
 
-1. **Lint** — `nix fmt -- --ci` plus a `flake.lock` / `devenv.lock` rev-parity check on a single Linux runner. Runs on every push and PR.
+1. **Lint** — `nix fmt -- --ci` on a single Linux runner. Runs on every push and PR.
 2. **Check** — `nix flake check --accept-flake-config` on `x86_64-linux`. Runs on every push and PR.
 3. **Check (aarch64-linux)** — the same checks on an ARM runner. Runs only on pushes to `main`, the weekly schedule and manual dispatch.
 4. **Build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel`. Runs only on pushes to `main`, the weekly schedule and manual dispatch, after lint and check succeed.

@@ -17,7 +17,7 @@ Before submitting changes, ensure:
 |---------|-------------|
 | `nix flake check` | Validate configuration and run all tests |
 | `nix fmt` | Format all code (nixfmt, deadnix, statix, shellcheck, yamlfmt, typos, actionlint) |
-| `devenv shell` | Enter development shell with necessary tools (no experimental features needed) |
+| `nix develop` | Enter the dev shell (`shell.nix`; `nix-shell` works too) |
 | `nix flake show` | Display all flake outputs |
 | `nix run` | Run a QEMU VM with all features enabled (x86_64-linux) |
 

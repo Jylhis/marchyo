@@ -72,12 +72,9 @@ system change; use your own backups for personal data.
 ## Developing on the Marchyo repo itself
 
 If you have a checkout of Marchyo (rather than consuming it as an input), use the
-`just` recipes — `just update` bumps the flake inputs **and** re-syncs
-`devenv.lock` to the same `nixpkgs` revision, and `just verify` checks they stay
-aligned:
+`just` recipes:
 
 ```bash
-just update    # nix flake update + sync devenv.lock
-just verify    # confirm flake.lock and devenv.lock agree
+just update    # nix flake update
 just check     # nix flake check (evaluation tests)
 ```
