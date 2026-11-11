@@ -27,3 +27,6 @@ updates:
     groups:
       site-npm:
         patterns: ["*"]
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
