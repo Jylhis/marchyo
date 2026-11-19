@@ -1,0 +1,149 @@
+---
+title: Hardening
+description: Opt-in kernel, USB, audit and firewall hardening under marchyo.security.hardening
+---
+
+Everything under `marchyo.security.hardening` is off by default and is not set by `marchyo.desktop.enable`.
+With the defaults the system is the same as without the module.
+Each switch works on its own; `hardening.enable` only turns on the conservative set.
+
+## The conservative set
+
+`marchyo.security.hardening.enable` (`bool`, default `false`) turns on:
+
+- `sysctl.enable` (default follows `enable`): kernel and network sysctls.
+- `refuseProtocols` (default `sctp rds tipc` while `enable` is set): kernel modules that cannot be loaded.
+
+It does not turn on IOMMU, USBGuard, the kernel image lock, audit, the firewall or the coredump setting, because each of them changes daily use.
+
+### Sysctls
+
+All values use `lib.mkDefault`, except `kernel.kptr_restrict`: nixpkgs sets it to `1` with `lib.mkDefault` too, so it uses `lib.mkOverride 900`, which wins over that default and still yields to a plain definition in the host configuration.
+
+- `kernel.kptr_restrict = 2`
+- `kernel.dmesg_restrict = 1`: `dmesg` needs root, `journalctl -k` still works for the `systemd-journal` group.
+- `kernel.unprivileged_bpf_disabled = 1` and `net.core.bpf_jit_harden = 2`: the kernel does not allow lowering `unprivileged_bpf_disabled` again until the next reboot.
+- `net.ipv4.tcp_rfc1337 = 1`
+- ICMP redirects are neither accepted nor sent: `accept_redirects` (IPv4 and IPv6), `secure_redirects` and `send_redirects` on `all` and `default`.
+
+Unprivileged user namespaces stay on, so browser and Flatpak sandboxes work.
+`rp_filter` is not touched, because the Tailscale module sets it.
+
+`sysctl.ptraceScope` (`null` or `0` to `3`, default `null`) sets `kernel.yama.ptrace_scope`.
+The kernel default is `1`.
+At `2`, `gdb -p` and `strace -p` on a running process need root; `3` cannot be lowered until reboot.
+
+`refuseProtocols` writes a `modprobe` `install <module> false` line for each entry.
+The default leaves out `dccp`, which kernels since 6.16 no longer have.
+Set the list yourself to refuse other modules or to empty it.
+
+## IOMMU
+
+`iommuStrict.enable` adds `iommu.passthrough=0` and `iommu.strict=1`, plus `amd_iommu=force_isolation` or `intel_iommu=on`.
+The vendor follows `hardware.cpu.amd.updateMicrocode` and `hardware.cpu.intel.updateMicrocode`, which the nixos-hardware CPU modules set, or `iommuStrict.vendor` (`"amd"` or `"intel"`).
+Without either on x86_64, evaluation warns and only the two generic parameters are added.
+The parameters give no protection before the kernel initialises the IOMMU (firmware and boot loader stages) or on firmware that publishes no DMAR (Intel) or IVRS (AMD) table.
+Without an x86 CPU vendor there is no warning, because the vendor parameter does not apply.
+Strict flushing can lower throughput of fast PCIe devices such as an external GPU or NVMe.
+Kernel parameters apply at the next boot: use a boot-only rebuild and keep the previous generation in the boot menu as the way back.
+
+## USBGuard
+
+`usbguard.enable` runs USBGuard.
+A USB device that is plugged in after the daemon started and matches no rule is blocked.
+The Marchyo shell has no prompt for it: authorise a device from a terminal with `usbguard list-devices` and `usbguard allow-device <id>`.
+Thunderbolt authorisation (bolt) is separate and unaffected.
+
+To avoid a lockout, the defaults are:
+
+- `presentDevicePolicy = "keep"`: devices connected when the daemon starts stay in the state they have. The kernel authorised everything that was plugged in at boot, so the keyboard, display and network adapters keep working, and a device that USBGuard blocked earlier stays blocked when the daemon restarts. `"allow"` authorises every present device on each daemon start, including a blocked one. `"apply-policy"` checks present devices against the rules; evaluation fails when it is the effective policy and no `allowedInterfaces` entry starts with `03:`, since the keyboard could be blocked at the next boot.
+- `allowedInterfaces = [ "03:*:*" "09:00:*" "e0:01:01" ]`: human interface devices, hubs and Bluetooth adapters. All entries form one rule, `allow with-interface match-all { 03:*:* 09:00:* e0:01:01 }`, which allows a device when every one of its interfaces matches an entry. Composite keyboards with two HID interfaces, Unifying receivers, keyboards with a built-in hub, hubs with several transaction translators and Bluetooth adapters with alternate settings pass. A device that pairs an HID interface with mass storage does not. The default also admits a hostile keyboard emulator; for a stricter policy drop `03:*:*` and list exact devices in `rules`.
+- `rules`: extra rules in the `usbguard-rules.conf(5)` syntax, for example `allow id 1050:0407 name "YubiKey"`.
+
+A dock is a hub plus separate devices for Ethernet, audio, display and card reader. Only the hub passes the default rule; the other functions stay blocked when hot-plugged until a rule or `usbguard allow-device` admits them.
+A fingerprint reader that re-enumerates after a resume needs an `allow id` rule.
+
+A security key with a smart-card (CCID) interface next to its HID interface is not admitted on hotplug either.
+When `marchyo.security.fido2.enable` and `usbguard.enable` are both set and `rules` is empty, evaluation warns.
+Add a rule for the key, with the id and interfaces from `usbguard list-devices`:
+
+```nix
+marchyo.security.hardening.usbguard.rules = ''
+  allow id 1050:0407 with-interface match-all { 03:*:* 0b:00:00 }
+'';
+```
+
+The rules are managed by Nix and immutable at runtime, so `usbguard allow-device -p` cannot write them.
+An `allow-device` without `-p` lasts until the device is unplugged.
+
+### Who can run usbguard
+
+`ipcGroups` (default `wheel`) are not given the daemon's `IPCAllowedGroups`, which grants every IPC right.
+Each group gets an access-control file in `/var/lib/usbguard/IPCAccessControl.d` with `Devices=list,modify,listen`, `Policy=list`, `Parameters=list` and `Exceptions=listen`.
+Members can list devices, authorise or block a device and follow events.
+They cannot append or remove rules, change daemon parameters or turn the policy off.
+Any process of such a user can still authorise a device without a password, so keep the group small.
+An empty list leaves the `usbguard` command to root.
+
+## Kernel image
+
+`protectKernelImage` sets `security.protectKernelImage`: the `nohibernate` kernel parameter and `kernel.kexec_load_disabled = 1`.
+Evaluation fails when `marchyo.power.hibernation.enable` or `boot.resumeDevice` is set, or when a `marchyo.power.lid` action is `kexec`, `hibernate`, `hybrid-sleep` or `suspend-then-hibernate`.
+Kernel modules stay loadable, so graphics drivers work.
+Module signature enforcement and `kernel.modules_disabled` are not offered, because they break NVIDIA and other out-of-tree modules.
+
+## Audit
+
+`audit.enable` turns on the kernel audit system and auditd (`security.audit` and `security.auditd`).
+Records go to `/var/log/audit/audit.log`, which auditd rotates, and to the journal.
+Evaluation fails when `security.audit.enable` is forced off elsewhere.
+
+`audit.defaultRules.enable` (default `true`) adds the default rules:
+
+- writes to `/etc/passwd`, `/etc/group`, `/etc/shadow` and `/etc/gshadow` (key `identity`)
+- writes to `/etc/sudoers` (key `sudoers`)
+- setuid transitions to root by a logged-in user through `execve` or `execveat`, such as `sudo` and `su` (key `priv-esc`)
+- module loads and unloads by a logged-in user (key `modules`)
+
+The syscall rules are also added for 32-bit syscalls (`arch=b32`) on x86_64.
+The `auid` filters keep boot and daemon activity out of them.
+`audit.extraRules` is a list of `auditctl` lines added after the defaults; with `defaultRules.enable = false` it is the whole rule set.
+The kernel itself writes about 900 records at boot for unit starts, BPF loads and firewall setup; an idle system writes almost none afterwards.
+
+`audit.backlogLimit` (default `8192`) is `audit_backlog_limit`.
+The kernel holds the records of the whole boot until auditd listens, so the limit has to be larger than that burst.
+
+## Application firewall
+
+`firewall.enable` runs the OpenSnitch daemon with `DefaultAction = "allow"` and no rules.
+On its own the daemon is connection monitoring: every connection is allowed and logged.
+On a desktop the UI package is installed but not started.
+Write rules with `services.opensnitch.rules`.
+
+`firewall.ui.enable` (default `false`, needs `marchyo.desktop.enable`) starts the UI for every Marchyo user at login.
+That changes the behaviour: `DefaultAction = "allow"` applies only while no UI is connected.
+Once the UI connects it pushes its own default, which is deny.
+An unmatched connection then raises a prompt, the prompt times out after 30 seconds with a deny that lasts until the daemon restarts, and other new connections are denied while a prompt is open.
+With no rules, the network can be cut, so write rules before enabling it.
+The UI socket is a shared unix socket under `/tmp`, so on a multi-user machine one user answers the prompts for everyone.
+
+## Core dumps
+
+`coredumps` (`null`, `"none"`, `"journal"` or `"external"`, default `null`) sets `systemd.coredump.settings.Coredump.Storage`.
+`null` keeps the default of `external`.
+
+- `"external"`: core files under `/var/lib/systemd/coredump`.
+- `"journal"`: cores in the journal.
+- `"none"`: `Storage=none`, so systemd-coredump keeps no core for system services, and a hard `core` limit of 0 for login sessions of users other than root. PAM limits do not apply to root or to system services. For the login sessions the kernel then does not run the core handler at all, so no journal entry or stack trace exists for them. `coredumpctl debug` has nothing to open, and the core that `marchyo-compositor-watch` asks for does not exist; evaluation warns when the watchdog (`marchyo.desktop.compositorWatch.enable`) is on.
+
+`"journal"` and `"external"` need `systemd.coredump.enable`; evaluation fails otherwise.
+With `"none"` and `systemd.coredump.enable = false` only the hard limit is set.
+
+```nix
+marchyo.security.hardening = {
+  enable = true;
+  protectKernelImage = true;
+  audit.enable = true;
+  iommuStrict.enable = true;
+};
+```

@@ -261,6 +261,17 @@ Options not covered by the sections above, grouped by namespace. Each is declare
 | `marchyo.security.ssh.users` | `[]` | Non-`wheel` users that also need an authorized key (`wheel` members are always checked) |
 | `marchyo.security.ssh.allowNoKeys` | `false` | Skip the authorized-key check for keys that appear at runtime |
 | `marchyo.security.sudo.timestampTimeout` | `10` | Minutes sudo remembers a password (`0` always asks, negative never expires) |
+| `marchyo.security.hardening.enable` | `false` | Conservative set: `sysctl.enable` and `refuseProtocols`; nothing else is implied (`modules/nixos/hardening.nix`) |
+| `marchyo.security.hardening.sysctl.enable` | `hardening.enable` | `kptr_restrict` (`mkOverride 900`, above nixpkgs' `mkDefault`, below a plain definition), `dmesg_restrict`, BPF (`unprivileged_bpf_disabled = 1` cannot be lowered until reboot), redirect and `tcp_rfc1337` sysctls |
+| `marchyo.security.hardening.sysctl.ptraceScope` | `null` | `kernel.yama.ptrace_scope` (`0` to `3`) |
+| `marchyo.security.hardening.refuseProtocols` | `sctp rds tipc` with `enable`, else `[]` | Modules refused through `modprobe` `install ... false` |
+| `marchyo.security.hardening.iommuStrict.enable` | `false` | `iommu.passthrough=0`, `iommu.strict=1` and the AMD or Intel parameter; `iommuStrict.vendor` overrides detection; no protection before IOMMU init or without a DMAR/IVRS table |
+| `marchyo.security.hardening.usbguard.enable` | `false` | USBGuard: `presentDevicePolicy` `keep`, one `match-all` rule for the HID, hub and Bluetooth `allowedInterfaces`, `rules`, `ipcGroups` (access-control file, no rule or parameter changes); warns with `fido2` and no `rules` |
+| `marchyo.security.hardening.protectKernelImage` | `false` | `security.protectKernelImage`; fails with hibernation, `boot.resumeDevice` or a `kexec`, `hibernate`, `hybrid-sleep` or `suspend-then-hibernate` lid action |
+| `marchyo.security.hardening.audit.enable` | `false` | auditd; `audit.defaultRules.enable` (identity files, sudoers, setuid to root via `execve`/`execveat`, module loads; `b32` too on x86_64), `audit.extraRules`, `audit.backlogLimit` (`8192`); fails when `security.audit.enable` is forced off |
+| `marchyo.security.hardening.firewall.enable` | `false` | OpenSnitch daemon (monitoring, default allow, no rules); UI package installed, not started |
+| `marchyo.security.hardening.firewall.ui.enable` | `false` | Autostart the UI; once connected it applies deny with a 30 s prompt timeout; needs `marchyo.desktop.enable` |
+| `marchyo.security.hardening.coredumps` | `null` | `"none"`, `"journal"` or `"external"` for `systemd.coredump.settings.Coredump.Storage`; `"none"` also sets a hard core limit of 0 for non-root login sessions; warns with the compositor watchdog |
 
 ### Shell, menu and monitors
 

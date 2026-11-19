@@ -47,6 +47,8 @@ The value is written to `security.sudo.extraConfig` as `Defaults timestamp_timeo
 - `marchyo.security.fingerprint.enable` (`bool`, default `false`): fprintd with PAM integration.
 - `marchyo.security.fido2.enable` (`bool`, default `false`): FIDO2/U2F keys through pam_u2f.
 
+Kernel, USB, audit and application-firewall hardening is on the [Hardening](/docs/configuration/hardening/) page.
+
 ## Network defaults
 
 Every host gets these sysctls through `lib.mkDefault`, so a host can override each one:
