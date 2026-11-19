@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo whats-new [--notify|--json|--mark-seen]` and the `marchyo-session-notices` user unit: when the packaged `NEWS` changed, one notification opens the What's new panel with the new entries and a dix summary of the last switch. `marchyo setup [--json|--welcome|--done]` and `marchyo setup fix <id>` drive a first-login checklist panel (git identity, SSH key, FIDO2, fingerprint, language, keyboard, theme, dictation) opened by a one-time welcome notification. Both panels open with `marchyo shell open whatsnew|setup`; the `panel.whatsnew` and `panel.setup` shortcuts toggle them (`Super + Ctrl + U`, `Super + Ctrl + H`). `marchyo doctor` checks the notification service and the permissions of the token directory.
+time: 2026-11-01T12:00:34.000000000Z

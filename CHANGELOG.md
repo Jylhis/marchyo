@@ -202,6 +202,8 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - **Shell palette and panels:** the launcher becomes a prefix-routed command palette (`=` maths, `>theme`, `#` windows, `!` power) with clipboard image thumbnails, a Control Center (SUPER+SHIFT+Q) offers volume and mic sliders plus tiles for Wi-Fi, Bluetooth, Tailscale, DND, caffeine, night light and power profile, and SUPER+grave opens a per-monitor workspace overview with live window previews. The bar gains camera-in-use, lock-key, clock-seconds and battery readouts, a power panel and a segmented style.
 - **Shell settings, plugins and commands:** `marchyo.shell.settings` is a typed submodule with per-monitor overrides, plugins declare typed kinds (bar widget, launcher, daemon) and are pinned in a lock file, new `marchyo shell`, `volume`, `brightness` and `doctor` commands report health with `--json`, and `marchyo share` sends files to LocalSend devices on the LAN.
 - Dictation discards recordings with no speech, caffeine holds automatically while a video plays, toasts can be driven from the keyboard, a `reduceMotion` option turns off animations, blur and shadows (default in VM guests), and the Trigger menu gains a speed test.
+- `marchyo.bees` caps each filesystem's memory with a systemd `MemoryHigh` (default hash table size plus 1 GiB) and gains typed `threadCount` and `loadavgTarget` options; `hashTableSizeMB` must be a positive multiple of 16.
+- `marchyo.services.tailscale.operator` defaults to the first enabled marchyo user when the shell is on, so the Control Center Tailscale tile connects and disconnects without sudo; set another user, or `null` to leave the operator unmanaged.
 
 ### Changed
 
@@ -219,6 +221,8 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 ### Fixed
 
 - The audio panel no longer flickers, bar widgets no longer vanish, windows no longer tile under the bar and Qt 6.12 no longer turns shell colours black; runtime theme switches no longer break the next Home Manager activation, and Bluetooth enables the ISO socket experiment for LE Audio.
+- A legacy hyprlang-style `{ n, v }` entry in Hyprland `settings.env` fails evaluation with an assertion naming the entries, instead of silently dropping every later setting (monitors, window rules, autostarts); the workstation template examples use the two-argument form.
+- The obsolete BlueZ `Enable` key is dropped, and `oomd` is disabled when `earlyoom` is in use.
 
 ### Security
 
@@ -234,6 +238,9 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - **Shell plugins:** a `qs.compat` shim runs upstream omarchy Quickshell plugins nearly unmodified, managed with `marchyo plugin add`, `list` and `remove`.
 - `marchyo.monitors` declares monitor layout as typed data, `marchyo.defaults.excludePackages` trims default bundles, opt-in gaming (Steam, Gamescope), ddcutil and fwupd modules arrive, dictation gains jargon replacements and spoken punctuation, and Hyprland hides the cursor while typing.
 - An on-demand security suite adds a lynis hardening VM test, an SBOM app and a vulnerability scan, and the ncro cache router fronts the binary caches.
+- `systemd-coredump` is configured with bounded retention so crashes leave inspectable dumps, and the default office and utility sets gain `xournalpp`, `system-config-printer` and `chafa`.
+- `marchyo transcode` gains an `--image-ascii` path (and a menu choice) that renders an image as ASCII or ANSI art with `chafa`.
+- SUPER+SHIFT+L cycles the runtime theme, and the bar gets a theme-cycle widget that recolours live.
 
 ### Changed
 
@@ -241,6 +248,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - Development tools default to rootless Podman with Docker CLI compatibility, and desktop-only modules gate on `marchyo.desktop.enable` with `mkDefault` service defaults.
 - The jotain Emacs integration is dropped, so the default editor is plain Emacs with `emacsclient` as `EDITOR` and `VISUAL`.
 - Dependency updates (1 commit).
+- `marchyo.emacs` binds org-capture to SUPER+SHIFT+T, because SUPER+SHIFT+C was already the colour picker and enabling Emacs produced two binds for one chord. The horizontal resize binds are labelled by the edge that moves (shrink left, expand right).
 
 ### Removed
 
@@ -250,6 +258,11 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 - Shell fixes: greeter and launcher crash loops, a black login screen, caffeine indicator flicker, per-monitor duplicate probes and the network widget's IP address; runtime theme colours reach Hyprland through `hl.config`, since `hyprctl keyword` did nothing under the Lua parser.
 - Snapshot limits no longer prune daily snapshots, disko layouts require an explicit target device, light-variant rebuilds no longer hit dconf conflicts, and gaming no longer breaks aarch64 evaluation.
+- GTK apps (Nautilus) and the Ghostty tab bar follow the dark variant instead of rendering light, because the light palette baked into the jylhis `gtk.css` is translated to the active `marchyo.theme.variant`.
+- `normalizeLayout` merges defaults into an attribute-set keyboard layout (`{ layout = "cn"; ime = "pinyin"; }`) so variant and label are always present, and both installer ISOs evaluate again after dropping removed nixpkgs aliases (`zfsUnstable`, `neofetch`).
+- The `luks-btrfs` disko layout no longer sets a `passwordFile` that skipped the passphrase prompt, and mounts the ESP with `fmask` and `dmask` `0077` so `/boot` is not world-readable.
+- A failing `dix` closure diff in `update-diff` no longer aborts `nixos-rebuild` on every host.
+- `marchyo bg set` no longer persists the current working directory, and the CLI scaffold module is repaired.
 
 ## 2026-08
 
@@ -258,6 +271,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - **Quickshell shell:** an opt-in `marchyo.shell` top bar themed from the Jylhis tokens reaches waybar parity (workspaces, tray, audio, battery, network, Bluetooth, CPU, caffeine, DND and dictation widgets with tooltips and tray menus). Enabling it retires waybar, SwayOSD and mako: the shell draws its own volume and brightness overlay, owns notifications and opens panels for audio, network, battery and system monitoring.
 - A caffeine keep-awake toggle sits on SUPER+CTRL+K with a bar indicator.
 - An end-user manual with fifteen chapters is published under `/manual` on the documentation site.
+- Opt-in `marchyo.launcher` options configure the Vicinae launcher (`keybinding`, `settings`, `telemetry.enable`), and `marchyo.launcher.inputServer.enable` installs the privileged input-server wrapper on desktops.
 
 ### Changed
 
@@ -272,6 +286,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 - Hyprland no longer exports an unexpanded `XDG_DATA_DIRS` literal that hid most applications from the launcher, and the `marchyo-shell` service no longer crash-loops on startup.
 - aerc headers are readable in the light theme, desktop journal warnings are silenced, wf-recorder builds against ffmpeg 8, and the docs search page clears stale results.
+- The Plymouth caret-wipe animation no longer leaves a sliver of the wordmark visible, and the ESC boot log is themed as an opaque readable panel on both variants.
 
 ### Security
 
@@ -288,12 +303,26 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - Service and hardware options: `marchyo.power.hibernation`, `marchyo.security.fingerprint` and `fido2`, and `marchyo.bees` deduplication.
 - A static Astro and Starlight documentation site replaces the Mintlify pages, with a man-page landing page, a paper and roast theme toggle, and package and option search backed by a Cloudflare D1 index.
 - `marchyo.theme.themes` defines runtime-switchable themes and `marchyo.theme.fontScale` (default 1.25x) scales every text surface.
+- `marchyo.snapshots` configures snapper for btrfs hosts, `marchyo.autoTimezone` (opt-in) sets the timezone automatically, and avahi and zram are enabled. The desktop gains `gum`, `imagemagick`, `inxi`, `dua`, `wiremix`, `cliamp`, `hyprpicker`, `imv`, `gpu-screen-recorder` and `quickshell`, plus `obs-studio` under `marchyo.media.enable`.
+- Hyprland gains Omarchy-style window management on the SUPER+ALT and SUPER+CTRL layers (groups, keyboard resize, silent workspace moves, clipboard and emoji pickers, toggles for Waybar, nightlight, idle lock and recording), monitor scale cycling, a laptop display toggle, and connectivity TUI binds.
+- `marchyo.osd.enable` (default on with the desktop) runs a SwayOSD on-screen display for volume and brightness keys, with backlight udev rules and the `video` group wired up.
+- `marchyo.performance.kernel` selects a kernel variant (`default`, `latest`, `zen`, `xanmod` or `lts`) through `boot.kernelPackages` at `mkDefault`, so hosts can still override it.
+- Every configured GPU vendor gets `vulkan-loader` and `vulkan-tools` (`vulkaninfo`, `vkcube`), and AMD hosts also get `rocminfo`.
+- `nixosModules.hardware` re-exports all `nixos-hardware` profiles, for example `marchyo.nixosModules.hardware.lenovo-thinkpad-x1-9th-gen`.
+- `marchyo.services.localsend.enable` and `marchyo.services.tailscale.enable` (both default true) let hosts opt out of LocalSend and Tailscale, and `marchyo.security.firewall.enable` is a real firewall off-switch. The Tailscale module also trusts `tailscale0`, loosens reverse-path filtering and opens the WireGuard port.
+- With Nautilus as the file manager, the context menu opens Ghostty and offers a "Send with LocalSend" script when LocalSend is enabled.
 
 ### Changed
 
 - **Jylhis Design System v2:** cool grounds, bronze accent, Zilla Slab, Hanken Grotesk and Plex Mono across generated targets, with variants renamed Field and Sheet and an animated Plymouth splash.
 - Bash becomes the default login shell on every platform, screenshot binds move to Super+S, the scratchpad to Super+D, and Waybar clicks open floating popups.
 - Dependency updates (3 commits).
+- `cp` is aliased to `cp --reflink=auto` on Linux shells, so copies use copy-on-write where the filesystem supports it.
+- Ghostty window titles show the last two path segments (and `<path>: <command>` while a command runs) on bash and zsh.
+- Ghostty enables the `ssh-env` and `ssh-terminfo` shell-integration features and `xterm-ghostty` terminfo ships system-wide, so SSH to and from Ghostty keeps remote TUIs working.
+- Hyprland pointer sensitivity rises to 0.15 and the Ghostty base font size drops from 13 to 12.
+- The dark/light toggle and runtime themes are built as separate theme directories, so `marchyo theme` can switch themes without a rebuild.
+- `disko/btrfs.nix` takes a `device` argument and uses the `luks-btrfs` subvolume layout (`@root`, `@home`, `@nix`, `@persist`, `@log`, `@snapshots`, 512M ESP, 8G random-encrypted swap) without LUKS.
 
 ### Removed
 
@@ -302,6 +331,15 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 ### Fixed
 
 - The crash-prone iwd Wi-Fi backend gives way to NetworkManager's default, the starship prompt renders on bash again, and the jotain daemon opens GUI frames from a cold start.
+- hyprlock enables fingerprint authentication only when `services.fprintd` is on, instead of aborting on desktops without a reader.
+- The active-window screenshot bind no longer captures the mouse pointer, matching the other screenshot binds.
+- The Super+/ bind focuses an already running 1Password instead of always starting a new one.
+- Home Manager deprecation warnings for the renamed `programs.fzf` widget options and `home.pointerCursor.enable` are cleared.
+- Plymouth, fzf, Ghostty, Hyprland, mako and Waybar colours follow the Jylhis design tokens, and the fzf theme no longer overwrites marchyo's `FZF_DEFAULT_OPTS` layout options.
+- An infinite recursion in the `marchyo.users` uid wiring is removed.
+- `x86_64-darwin` packages, docs and formatter are routed through the stable nixpkgs, since unstable dropped that platform.
+- The `llm-agents` overlay is built from its packages output after upstream dropped the `overlays` output.
+- The `marchyo` CLI option listing detects the host architecture and falls back to the first `nixosConfiguration` instead of assuming `x86_64`.
 
 ## 2026-06
 
@@ -310,16 +348,24 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - Opt-in `marchyo.performance.tuning` (BBR, NVMe scheduling, dirty pages, huge pages) and a two-disk btrfs RAID1 disko template over per-device LUKS2.
 - The `lib.mkNixosSystem` builder.
 - Token-derived wallpapers, a searchable keybinding cheat sheet (SUPER+K), hardened SSH defaults and trash-cli.
+- Opt-in bring-your-own-key `marchyo.ai` namespace: per-user clients (aichat, pi, claude-code) wired to OpenRouter with task-based model routing, a local OpenViking context layer, Agent Skills and MCP tools, with API keys read from sops-nix secrets at runtime and never entering the Nix store.
+- nix-on-droid support: `nixOnDroidModules`, an aarch64 `nixOnDroidConfigurations` output and a `lib.mkNixOnDroidConfiguration` builder that reuses the shared git and shell modules (terminal and CLI only).
+- `lib.mkDarwinSystem` joins `lib.mkNixosSystem` and picks nixpkgs, home-manager, nix-darwin and stylix per system, with x86_64-darwin paired to the release-26.05 inputs.
+- Opt-in `marchyo.darwin.wallpaper.enable` applies dynamic wallpapers on macOS.
+- Home Manager modules for direnv, jujutsu and kitty.
 
 ### Changed
 
 - Terminal tools replace GUI defaults (btop, qalc, yazi, spotify-player, aerc), and the Hyprland desktop takes a tmux-style look with square corners and flat panes.
 - Jotain Emacs becomes the real default editor, and Wayland modules apply only on Linux with desktop enabled.
 - Dependency updates (2 commits).
+- The primary nixpkgs input moves to nixpkgs-unstable, with home-manager, nix-darwin and stylix tracking master.
 
 ### Fixed
 
 - Mako runs as the notification daemon again, and enabled users join the onepassword group.
+- Plymouth quiet-boot kernel parameters merge with the performance module's `mitigations=off` instead of being dropped.
+- Evaluation no longer fails on the removed `security.polkit.debug` option, the renamed `programs.noctalia` option and the moved `programs.vicinae` options, and `stylix.cursor` is set only on platforms that declare it.
 
 ### Security
 
@@ -332,12 +378,14 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - A `marchyo.emacs` namespace runs a PGTK daemon with Hyprland focus movement, a scratchpad frame and org-capture binds.
 - Laurel audit logging to Vector and Loki, per-editor WakaTime options, and opt-in Solaar and Slack modules.
 - fzf file and directory widgets with previews, zoxide in place of cd, and delta as the git pager.
+- Opt-in `marchyo.darwin` workstation modules: Caps Lock to Ctrl and input-source defaults, declarative Homebrew with curated casks (cleanup defaults to none), and `system.primaryUser` derived from the first enabled marchyo user.
 
 ### Changed
 
 - Theming moves to the Jylhis Design System, with a shared palette helper driving the console, Ghostty, mako, GTK and fzf, and Literata and JetBrains Mono fonts.
 - The default keyboard layout becomes us(altgr-intl) with Compose on the Menu key, and modules, options and tests are auto-discovered from their directories.
 - Nixpkgs and home-manager are pinned to the 26.05 release branches.
+- The graphical installer ISO uses Ghostty as its terminal.
 
 ### Removed
 
@@ -346,6 +394,8 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 ### Fixed
 
 - Hyprland config tracks removed options.
+- The deprecated keyboard variant override wins again on the first layout.
+- The Jylhis design overlay and Home Manager module apply only on Linux, and the empty graphics vendors warning no longer appears when desktop is off.
 
 ## 2026-04
 
@@ -354,12 +404,14 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - Opt-in `marchyo.tracking`: local-first activity collectors for shell, desktop, editor, git and system, aggregated into a weekly analysis report with optional local LLM insights, plus atuin, ActivityWatch and WakaTime wiring.
 - A generated documentation site of module option and library function references, and aarch64 NixOS configurations.
 - A shared zsh configuration with completion and history search.
+- `darwinModules.default` and a nix-darwin input arrive with `darwinConfigurations` for aarch64 and x86_64, the shared modules become Darwin-safe, and a `packages` output exposes `hyprmon` and `plymouth-marchyo-theme`.
 
 ### Changed
 
 - Ghostty replaces kitty as the default terminal.
 - Nix logic moves into `default.nix`, `overlay.nix` and `treefmt.nix` with a `Justfile` for common tasks.
 - Dependency updates (1 commit).
+- `nixosConfigurations.default` is renamed `x86_64`, `homeModules` is renamed `homeManagerModules`, and the `lib` output (a plain nixpkgs.lib re-export) is dropped.
 
 ### Removed
 
@@ -369,6 +421,8 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 - Ghostty alt+1 to alt+9 tab bindings work on Linux GTK, and tracking analysis uses UTC and no longer double-counts active time.
 - Chrome and Spotify defaults fall back sensibly on non-x86_64 Linux.
+- Git no longer enables `fsmonitor` in the default configuration.
+- The aarch64-linux reference configuration evaluates cleanly, and `just check` works on macOS.
 
 ## 2026-03
 
@@ -376,18 +430,28 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 - `marchyo.defaults` picks browser, editors, players, file manager and email, with jotain available as an editor choice.
 - `marchyo.keyboard.composeKey` and a keyboard guide, JACK audio, XDG user directories and a Mintlify documentation site.
+- With `marchyo.development.enable`, a `marchyo-config` Claude Code skill is installed in `~/.claude/skills` for managed users.
+- `slurp` is installed with the Hyprland tools and PipeWire runs WirePlumber.
 
 ### Changed
 
 - Hyprland starts via UWSM with early-loaded NVIDIA modules, the desktop profile enables dconf and Nautilus support, and worktrunk is enabled only in development mode.
+- PipeWire JACK support is on by default instead of off.
+- The `apps` flake output is limited to x86_64-linux.
 
-### Security
+### Removed
 
-- CPU mitigations stay on unless `marchyo.performance.disableMitigations` is set, and `accept-flake-config` is no longer enabled.
+- The `ca-derivations` experimental Nix feature is no longer enabled.
 
 ### Fixed
 
 - The `testNixOS` helper throws when any assertion fails, and deprecation warnings are silenced.
+- Duplicate `SUPER+comma` and `SUPER+period` Hyprland keybinds are removed.
+- The Waybar Bluetooth and network click actions use full store paths.
+
+### Security
+
+- CPU mitigations stay on unless `marchyo.performance.disableMitigations` is set, and `accept-flake-config` is no longer enabled.
 
 ## 2026-02
 
@@ -395,19 +459,24 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 - The worktrunk tool as a Home Manager module with a TOML `settings` option.
 - A development VM app that boots a QEMU marchyo VM.
+- Noctalia shell is a flake input, and a Home Manager module enables `programs.noctalia-shell`.
 
 ### Changed
 
 - Git defaults gain histogram diffs, prune on fetch, autosquash and autostash, and binary caching moves to the jylhis cachix cache.
 - Hyprland window rules use the new match syntax.
+- Theming moves from nix-colors to Stylix, driven by `marchyo.theme.enable` and `marchyo.theme.variant`; the hand-written bat, k9s and Home Manager theme modules are removed and the Stylix Plymouth target is off so the Marchyo splash stays.
+- The greeter starts Hyprland through `start-hyprland` instead of the bare `Hyprland` command.
 
 ### Removed
 
 - The Dropbox module, and the FlakeHub and Determinate inputs.
+- The `linux-doc` package is no longer installed with the help module, because it fails to build.
 
 ### Fixed
 
 - A picosvg patch lets its tests pass with skia-pathops 0.9 and later.
+- The greeter command line is built with `lib.cli.toCommandLineShellGNU` and no longer relies on a removed nixpkgs function.
 
 ## 2026-01
 
@@ -419,10 +488,14 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 ### Changed
 
 - Lib and module tests evaluate purely instead of building toplevels.
+- The NixOS Wayland module sets `MOZ_ENABLE_WAYLAND=1` and `ELECTRON_OZONE_PLATFORM_HINT=auto`, so Firefox and Electron apps use Wayland where they support it and Electron falls back to X11 when needed.
+- The Hyprland cursor is Adwaita at size 24 instead of Bibata, GTK uses the Adwaita icon theme, and `nwg-look` is installed.
+- The custom fcitx5 Waybar module is removed from the bar.
 
 ### Fixed
 
 - Mako urgency settings no longer produce an unparsable config.
+- The Waybar CPU module opens the configured terminal and btop by store path instead of hardcoded command names.
 
 ## 2025-12
 
@@ -455,6 +528,9 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - Documentation and helper scripts: README, configuration guide, modules reference, troubleshooting guide, examples, `update.sh`, `rollback.sh` and `health-check.sh`.
 - `marchyo.lib.mkNixosSystem`, a colourscheme system built on nix-colors Base16 and the Modus schemes, and a btop module.
 - Cachix, SSH, virtualization, tmux, git-advanced, Neovim and VS Code modules, a first-boot welcome, a hyprmon monitor TUI, and a Waybar language indicator for the Hyprland keyboard layout.
+- Vicinae is the default application launcher, themed with the active colour scheme and fed from the vicinae cachix cache; `marchyo.useWofi` switches back to wofi.
+- A Home Manager Xournalpp module with themed styling replaces the package in the NixOS office module.
+- F11 toggles fullscreen in Ghostty and kitty.
 
 ### Changed
 

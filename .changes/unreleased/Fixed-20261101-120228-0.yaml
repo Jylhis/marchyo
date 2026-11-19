@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  A test or check name defined twice throws with both sources instead of silently replacing the first.
+time: 2026-11-01T12:02:28.000000000Z

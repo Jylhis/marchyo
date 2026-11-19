@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo-wallpapers` draws four patterns per polarity (grid, dots, bands, contour: `jylhis-<pattern>-{light,dark}.png`) and `passthru.forPolarity`; `marchyo bg list` prints the selectable wallpapers (the theme's, the package's for the theme's polarity, `~/Pictures/Wallpapers`) and `bg next` cycles that list.
+time: 2026-11-01T12:01:10.000000000Z

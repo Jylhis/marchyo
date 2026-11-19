@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Display panel: rotation choices, placement beside the other monitors, hints, a settling animation after a change and a check that a mirror took effect.
+time: 2026-11-01T12:02:04.000000000Z

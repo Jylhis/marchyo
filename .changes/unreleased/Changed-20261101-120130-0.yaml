@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The binary cache list is `modules/nixos/caches.json`, a plain list definition, so a host's substituters and keys merge with it; ncro's upstreams are derived from `nix.settings.substituters`.
+time: 2026-11-01T12:01:30.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  The `design-vendor-sync` check fails when a colour in `site/vendor/design/tokens.css` differs from the palette in `lib/design/tokens`, or when `shell/Commons/Tokens.qml` differs from the vendored `lib/design/platforms/quickshell/Tokens.qml`.
+time: 2026-11-01T12:00:02.000000000Z

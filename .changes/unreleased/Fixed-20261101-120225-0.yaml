@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Fish completion descriptions escape backslashes before quotes.
+time: 2026-11-01T12:02:25.000000000Z

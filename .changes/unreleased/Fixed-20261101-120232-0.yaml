@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Chromium, Chrome and Brave follow the runtime light/dark switch: no build-time `BrowserThemeColor` policy pins them.
+time: 2026-11-01T12:02:32.000000000Z

@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The keyboard layout widget skips keyboards without a layout, hides itself when only one layout is set, retries until the first reading and follows the keyboard named in a layout event.
+time: 2026-11-01T12:01:58.000000000Z

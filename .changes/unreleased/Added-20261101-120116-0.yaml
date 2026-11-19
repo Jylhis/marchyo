@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Bar style: the Jylhis spacing scale as `Style.space()`, a hover hairline and a keyboard focus ring on bar items, and the heading ink for bar text while the bar background is see-through.
+time: 2026-11-01T12:01:16.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.language` and the `marchyo language [code|list]` verb: a string layer for the shell (`Commons/I18n`) and the CLI with per-key English fallback, `%N` holes, plural forms and locale number formatting. The English catalog lives in `shell/i18n/en`; it is the only one that ships.
+time: 2026-11-01T12:00:45.000000000Z

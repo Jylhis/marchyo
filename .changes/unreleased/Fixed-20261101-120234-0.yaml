@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Marchyo owns the effective runtime theme and derives the desktop preference from it. Activation restores saved selections or initializes the Nix default; packaged dconf works under the restricted activation PATH. Failed preference updates preserve the previous selection and return an error.
+time: 2026-11-01T12:02:34.000000000Z

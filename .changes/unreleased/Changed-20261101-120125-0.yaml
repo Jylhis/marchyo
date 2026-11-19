@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  **Breaking:** `marchyo.performance.disableMitigations` defaults to `false`, so CPU vulnerability mitigations stay on. Set it to `true` to pass `mitigations=off` again. The build warning for a container runtime with mitigations off at the default is gone.
+time: 2026-11-01T12:01:25.000000000Z

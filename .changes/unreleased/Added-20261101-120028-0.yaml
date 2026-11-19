@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.webapps.presets.google` adds the Google Workspace web apps (Gmail, Calendar, Drive, Docs, Sheets, Slides, Meet, Chat, Keep, Forms, Sites, Contacts and Tasks) without launch keys; an app of the same name in `apps` or `extraApps` keeps its entry.
+time: 2026-11-01T12:00:28.000000000Z

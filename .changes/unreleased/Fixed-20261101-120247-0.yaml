@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Hyprland sets `quirks:skip_non_kms_dmabuf_formats = false`, so a monitor that reconnects on DPMS wake no longer gets Mesa clients such as Ghostty and marchyo-shell disconnected by Hyprland 0.57.0.
+time: 2026-11-01T12:02:47.000000000Z

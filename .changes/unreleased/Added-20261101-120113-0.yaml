@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Theme surfaces for btop, kitty, foot, alacritty, Helix, Neovim and Emacs: every theme dir (Jylhis pair, catalog, inline and `theme generate`) carries `btop.theme`, `kitty.conf`, `foot-theme.ini`, `alacritty-theme.toml`, `helix-theme.toml`, `nvim-theme.lua` and `emacs-theme.el`, and `marchyo theme` links or reloads them live.
+time: 2026-11-01T12:01:13.000000000Z

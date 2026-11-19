@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `Super + Ctrl + B` opens the Bluetooth panel; the bluetui manager moves to `Super + Ctrl + Shift + B` (without the shell it stays on `Super + Ctrl + B`).
+time: 2026-11-01T12:01:42.000000000Z

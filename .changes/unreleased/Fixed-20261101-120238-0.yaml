@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Shift+Caps compose with an option that remaps Caps Lock (`ctrl:swapcaps`, `ctrl:nocaps`, `caps:*`) is an assertion error, as its `<CAPS>` symbols turned both keys into Caps Lock.
+time: 2026-11-01T12:02:38.000000000Z

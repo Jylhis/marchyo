@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The shell no longer throws a TypeError at startup: `Services/Motion` still ran the `mkdir` for the removed reduce-motion marker file.
+time: 2026-11-01T12:02:31.000000000Z

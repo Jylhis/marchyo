@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.graphics.prime.integratedOnlySpecialisation` adds an `integrated-only` boot entry that turns off the NVIDIA GPU on hybrid laptops.
+time: 2026-11-01T12:00:55.000000000Z

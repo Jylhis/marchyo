@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Zhuyin (`chewing`) and Cangjie 5 (`cangjie`) input methods, an fcitx5 profile that starts in Latin with a lone Shift toggle and `imeTriggerKey` cycling layouts then engines, and per-language Noto CJK fontconfig fallback.
+time: 2026-11-01T12:00:49.000000000Z

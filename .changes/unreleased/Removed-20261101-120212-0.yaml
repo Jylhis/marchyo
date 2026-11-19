@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  Unfree and unverified packages and niche features: superwhisper, hex-dictation, amp-desktop, gliff (with its remote-session bar widget), hype, signed, monologue, the speaker tuner (`marchyo.audio.tuner`, `omarchy-audio-tuner`), the Cam Link 4K relay (`marchyo.hardware.camlink`), Slack theme injection and Taildrop in `marchyo share`. Dictation is Voxtype only.
+time: 2026-11-01T12:02:12.000000000Z

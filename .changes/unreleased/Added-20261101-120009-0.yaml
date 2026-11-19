@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.terminalMemoryLimit` (`{ high; max; }`, default `null`) bounds each Ghostty surface scope (`app-ghostty-surface-transient-<pid>.scope`) with a prefix drop-in.
+time: 2026-11-01T12:00:09.000000000Z

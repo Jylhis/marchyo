@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  OBS Studio and lazydocker are no longer installed, and the `SUPER + ALT + D` lazydocker bind is removed. Add the packages with `environment.systemPackages` if you want them.
+time: 2026-11-01T12:02:20.000000000Z

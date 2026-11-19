@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Audio panel: output and input sliders up to 150%, microphone controls, a master mute, level meters, device glyphs, a scrolling list and MPRIS player names for streams.
+time: 2026-11-01T12:02:00.000000000Z

@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Notification cards pause their timeout while hovered and swap the age for a close mark, fall back from the app icon to a letter avatar, tint symbolic icons, round photos, expand long bodies, confirm a copy, lay out right to left and gate link activation.
+time: 2026-11-01T12:02:05.000000000Z

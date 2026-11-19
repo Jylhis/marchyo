@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  **Breaking:** Home Manager modules read `osConfig.marchyo` directly, with no `or` fallbacks, and run only under the marchyo NixOS module, which imports them for every `marchyo.users` entry. There is no standalone Home Manager output any more: `homeConfigurations`, `lib.mkHomeConfiguration`, `mockOsConfig` and `just build-home` are gone. `homeManagerModules` stays exported.
+time: 2026-11-01T12:01:31.000000000Z

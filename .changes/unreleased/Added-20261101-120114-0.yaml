@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Bar layout: `marchyo.shell.settings.bar.layout.{centerBegin,centerEnd}` flank the `center` section, which stays at the middle of the bar while they grow outwards. The default layout groups the recording, reminder, dictation, stay-awake and do-not-disturb indicators into one cluster. The tray takes `settings.pinned` (tray ids or titles) to keep icons on the bar and fold the rest behind the `·` drawer.
+time: 2026-11-01T12:01:14.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo font list --kind mono|ui|all` and `marchyo font set <family> --kind mono|ui|all`: the UI font sets the GTK `font-name` and the shell font. A `>font` launcher mode lists fonts.
+time: 2026-11-01T12:01:11.000000000Z

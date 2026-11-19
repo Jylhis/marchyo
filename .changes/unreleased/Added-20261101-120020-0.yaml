@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  The flake exports the disko layouts as `lib.diskoLayout "<layout>" { device = ...; }` (`luks-btrfs-raid1` takes `deviceA` and `deviceB`; `lib.diskoLayouts` lists them), imported next to the re-exported `nixosModules.disko`, and the installer ISOs as `packages.x86_64-linux.iso-minimal` and `iso-graphical`, built with `just iso <variant>`. Checks evaluate every layout on a dummy disk and each ISO's `drvPath`. A new Installation guide covers the flow.
+time: 2026-11-01T12:00:20.000000000Z

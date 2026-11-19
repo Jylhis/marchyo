@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  `lib/hex-byte.nix` and `lib/camel-case.nix`: callers use nixpkgs `lib.fromHexString` and `lib.toCamelCase`, which give the same results on token names and two-digit hexes.
+time: 2026-11-01T12:02:19.000000000Z

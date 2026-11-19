@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The marchyo.org site builds again on Tailwind CSS 4 (Vite plugin instead of the v3 PostCSS setup); TypeScript stays on 6 for `astro check`.
+time: 2026-11-01T12:02:41.000000000Z

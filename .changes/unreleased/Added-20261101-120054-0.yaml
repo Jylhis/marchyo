@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.graphics.amd.{rocm,vaapi}`: ROCm with a `/opt/rocm/hip` link, `HSA_OVERRIDE_GFX_VERSION` and render/video groups; radeonsi VA-API.
+time: 2026-11-01T12:00:54.000000000Z

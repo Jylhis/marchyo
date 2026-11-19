@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  The omarchy plugin layer: the vendored omarchy plugins and runtime (`shell/compat/plugins`, `pkgs.marchyo-shell-plugins`, `pkgs.marchyo-omarchy-shims`), the plugin host, native-role replacement (`replaces`, `marchyo.shell.replacedRoles`), `shell/Commons/OmarchyMenu.js`, the dev loader (`marchyo plugin dev`, `marchyo.shell.devPlugins`) and bar-replacing plugins (`marchyo.shell.barPlugin`). Plugins are the bar-widget, launcher and daemon kinds again, and `shell/compat` keeps the host API for omarchy bar widgets.
+time: 2026-11-01T12:02:09.000000000Z

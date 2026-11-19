@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Notifications stack into decks by sender (per site for browsers) that expand on hover, identical repeats collapse with a count, clicks route to the default action, the sender's window or the first link, and detected verification codes get a Copy button. New options `marchyo.notifications.stackBySender`, `detectCodes` and `passApps`; new shell functions `actNewest`, `dismissOne` and `silence` with matching global shortcuts.
+time: 2026-11-01T12:00:35.000000000Z

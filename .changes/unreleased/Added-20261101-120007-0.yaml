@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.oom.{preferProcesses,ignoreProcesses,freeSwapThreshold}` steer earlyoom: each list becomes one anchored `--prefer` / `--ignore` regex over the process `comm` name, either list adds `--sort-by-rss`, and the threshold sets `services.earlyoom.freeSwapThreshold`. All default to empty or `null`.
+time: 2026-11-01T12:00:07.000000000Z

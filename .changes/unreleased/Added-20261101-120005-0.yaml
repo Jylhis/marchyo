@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  A chord that more than one owner claims (the bind table, other Hyprland binds, XKB options, the fcitx5 trigger keys, Ghostty keybinds, the voxtype push-to-talk key) fails evaluation with a message naming the owners; `marchyo.keyboard.allowedHotkeyClashes` lists chords that may be shared. A web app key that collides with a marchyo bind is still dropped with a warning.
+time: 2026-11-01T12:00:05.000000000Z

@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Image picker: thumbnails fade in over a placeholder, show an error state, unload while off screen, and the preview stays loaded for 60 seconds.
+time: 2026-11-01T12:02:08.000000000Z

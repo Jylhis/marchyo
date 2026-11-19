@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  The Display panel's layout tiles take Tab focus, Shift+arrows to move and R to rotate.
+time: 2026-11-01T12:01:18.000000000Z

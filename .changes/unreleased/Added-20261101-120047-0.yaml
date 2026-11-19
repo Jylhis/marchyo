@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.power.hibernation` (enable, suspendThenHibernateDelay; the resume device is `boot.resumeDevice`) restores hibernation with suspend-then-hibernate, and `marchyo.power.lid` (onBattery, onAC, docked) sets the lid-close action. The power menus list Hibernate only when hibernation is enabled.
+time: 2026-11-01T12:00:47.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo plugin validate <dir>` checks a plugin checkout.
+time: 2026-11-01T12:00:29.000000000Z

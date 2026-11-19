@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo bar put|move|remove|set|list|reset|background|position` edits the bar live: the ops are kept in `$XDG_STATE_HOME/marchyo/shell/bar-layout.json`, applied by the shell over the generated `shell.json` layout, and replayed by `marchyo runtime restore`. Double-clicking empty bar space steps the bar background.
+time: 2026-11-01T12:01:15.000000000Z

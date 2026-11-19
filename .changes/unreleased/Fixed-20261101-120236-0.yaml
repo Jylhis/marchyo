@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The shell loads again: the launcher's power provider holds its hibernation `FileView` in a property, and the offscreen harness now instantiates every launcher provider.
+time: 2026-11-01T12:02:36.000000000Z

@@ -30,6 +30,7 @@ pkgs.mkShell {
     pkgs.deadnix
     pkgs.mergiraf
     pkgs.convco
+    pkgs.changie
     # qmlls, qmlformat, qmllint for shell/ and greeter/.
     pkgs.qt6.qtdeclarative
     # shell/dev/sandbox and shell/dev/shot.

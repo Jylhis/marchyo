@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  The AI tooling: `marchyo.ai.agents`, `accounts`, `skills`, `crashCapture`, `herdr`, `amp` and `local` (Ollama), `marchyo.console`, `marchyo agent`, `marchyo dev init|db`, the agents panel, bar widget and usage meter, `pkgs.marchyo-agent-skills` and the llm-agents overlay block. `marchyo.defaults.aiAgent` with `marchyo.development.enable` still installs one agent CLI and sets `$AI_AGENT`.
+time: 2026-11-01T12:02:11.000000000Z

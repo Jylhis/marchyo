@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The greeter follows every user's theme, not only the first one's: `marchyo theme set` writes `/var/lib/marchyo/greeter/theme-<user>.json` and the greeter reads the marker of the last user who logged in. With one shared `theme.json` in the sticky marker dir, the first writer owned it and every other user's rename failed silently. A marker dir that refuses the write is now reported on stderr.
+time: 2026-11-01T12:02:21.000000000Z

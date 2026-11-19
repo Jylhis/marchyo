@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Low-battery warning: while discharging at or below `marchyo.shell.settings.battery.lowThreshold` percent (default 10), the shell sends one critical `marchyo notify`. Charging or a level above the threshold re-arms it, and the sent flag survives a shell reload.
+time: 2026-11-01T12:01:19.000000000Z

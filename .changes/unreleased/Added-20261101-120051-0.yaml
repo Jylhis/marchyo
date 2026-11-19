@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.keyboard.backlight.enable` binds the keyboard backlight keys and Ctrl plus the display brightness keys to the new `marchyo brightness --keyboard up|down|toggle`.
+time: 2026-11-01T12:00:51.000000000Z

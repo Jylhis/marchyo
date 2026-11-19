@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  fcitx5 starts once, from its XDG autostart unit, not also from Hyprland.
+time: 2026-11-01T12:02:39.000000000Z

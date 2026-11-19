@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Elsewhen world clock panel (`Super + Ctrl + Alt + E`, `panel.elsewhen` shortcut): coastline map, per-city local time and offset, Open-Meteo place search and temperatures, per-city people names, 12/24 hour and C/F toggles, persisted in the shell state directory.
+time: 2026-11-01T12:00:37.000000000Z

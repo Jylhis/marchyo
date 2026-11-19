@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Shell dev hooks, inert unless set: `MARCHYO_SHELL_OUTPUT` pins every summoned surface to one output, `MARCHYO_SHELL_NO_MOTION=1` zeroes motion durations, and `MARCHYO_SHELL_DEV=1` enables the `dev` IPC target (`setLauncherQuery`, `launcherSelect`, `surfaces`, `grab`, `grabResult`, `settled`).
+time: 2026-11-01T12:00:23.000000000Z

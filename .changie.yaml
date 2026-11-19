@@ -1,0 +1,16 @@
+changesDir: .changes
+unreleasedDir: unreleased
+changelogPath: CHANGELOG.md
+headerPath: header.md
+versionExt: md
+versionFormat: "{{ $p := splitList \".\" .VersionNoPrefix }}## {{ index $p 0 }}-{{ printf \"%02d\" (atoi (index $p 1)) }}"
+kindFormat: "\n### {{.Kind}}\n"
+changeFormat: '- {{ regexReplaceAll "\n(.)" .Body "\n  ${1}" }}'
+fragmentFileFormat: '{{.Kind}}-{{.Time.Format "20060102-150405"}}-{{.Time.Nanosecond}}'
+kinds:
+  - label: Added
+  - label: Changed
+  - label: Deprecated
+  - label: Removed
+  - label: Fixed
+  - label: Security

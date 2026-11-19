@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Panels: Bluetooth (`Super + Ctrl + B`, `panel.bluetooth`, on `Services/BluetoothState`), speed test (`Super + Ctrl + Alt + P`, `panel.speedtest`: curl against Cloudflare for latency, download and upload, and a dd write and read in the cache directory) and Dropbox (`Super + Ctrl + Alt + D`, `panel.dropbox`: `dropbox status`, start and stop; it reports a missing `dropbox` command). `marchyo shell toggle bluetooth|speedtest|dropbox` opens them.
+time: 2026-11-01T12:01:17.000000000Z

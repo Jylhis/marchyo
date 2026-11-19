@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.desktop.compositorWatch.enable` (default `true` with `marchyo.desktop.enable`) installs the user unit `marchyo-compositor-watch`: it probes Hyprland with `hyprctl` every 10 seconds and, after three misses in a row, saves the log, process state and thread states under `~/.local/state/marchyo/hyprland/hang-<time>/` and sends SIGABRT (SIGKILL after 10 seconds). `marchyo-compositor-watch --now` does the rescue once from a text console. A `wayland-wm@` drop-in keeps the last five Hyprland logs. The manual's Troubleshooting page has the recovery steps.
+time: 2026-11-01T12:00:03.000000000Z

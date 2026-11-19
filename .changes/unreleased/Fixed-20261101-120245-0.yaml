@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The pre-switch update diff hook and `marchyo diff` call `dix diff`, which dix 3.0 requires.
+time: 2026-11-01T12:02:45.000000000Z

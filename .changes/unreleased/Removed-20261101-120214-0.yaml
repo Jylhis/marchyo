@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  Every shell and CLI catalog except English; `marchyo.language` accepts only `"en"`.
+time: 2026-11-01T12:02:14.000000000Z

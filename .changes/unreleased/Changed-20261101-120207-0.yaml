@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Lock screen: Escape and Ctrl+U clear the password, held keys do not repeat into it, a checking state shows while PAM runs and the password dots shrink to fit.
+time: 2026-11-01T12:02:07.000000000Z

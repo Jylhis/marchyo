@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.mglruMinTtlMs` writes `/sys/kernel/mm/lru_gen/min_ttl_ms` at boot through a hardened oneshot, skipped without MGLRU.
+time: 2026-11-01T12:00:11.000000000Z

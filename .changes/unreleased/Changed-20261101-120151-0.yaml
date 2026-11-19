@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Super+1..0 (previously Super+1..5), Super+Shift+1..0 and Super+Shift+Alt+1..0 act on the focused monitor's workspaces; Super+Tab, Super+Shift+Tab, Super+Ctrl+Tab and Super+scroll stay on the focused monitor; Super+Shift+Alt+arrows move a workspace into the target monitor's block. `marchyo.workspaces.perMonitor = false` keeps the global numbering.
+time: 2026-11-01T12:01:51.000000000Z

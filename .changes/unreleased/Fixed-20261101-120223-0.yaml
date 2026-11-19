@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  `marchyo network portal` builds its window pattern only from plain host names and IPv4 addresses, with regex syntax escaped, so a portal redirect host such as `a|.*` can no longer match and close unrelated windows.
+time: 2026-11-01T12:02:23.000000000Z

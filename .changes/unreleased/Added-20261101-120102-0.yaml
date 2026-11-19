@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.hardware.camera.waitForAccess` (on with the desktop): WirePlumber waits at login until camera media devices are accessible.
+time: 2026-11-01T12:01:02.000000000Z

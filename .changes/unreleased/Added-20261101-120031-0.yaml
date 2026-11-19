@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Every leaf command of the `marchyo` CLI carries examples in `--help`, and a contract test fails a command without a description or examples.
+time: 2026-11-01T12:00:31.000000000Z

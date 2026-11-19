@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.tmux.enable` (default: `marchyo.development.enable`) installs a themed tmux with mouse, true colour and vi copy mode, and `tmux source-file` reloads a running server on a theme switch.
+time: 2026-11-01T12:00:43.000000000Z

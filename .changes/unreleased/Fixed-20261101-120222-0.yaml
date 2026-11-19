@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Home Manager dry runs (`home-manager switch -n`) no longer delete theme runtime links or rebuild the fontconfig cache: those activation steps go through `run`.
+time: 2026-11-01T12:02:22.000000000Z

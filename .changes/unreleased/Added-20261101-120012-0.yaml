@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.flightRecorder.enable` runs `below` with its store bounded to 1 GiB and 7 days.
+time: 2026-11-01T12:00:12.000000000Z

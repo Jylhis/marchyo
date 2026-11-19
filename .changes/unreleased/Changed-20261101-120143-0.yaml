@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `Super + Ctrl + T` opens the theme picker panel instead of the launcher's theme mode. The shell no longer reads the `reduce-motion` marker file; `marchyo toggle reduce-motion` writes the shell style file.
+time: 2026-11-01T12:01:43.000000000Z

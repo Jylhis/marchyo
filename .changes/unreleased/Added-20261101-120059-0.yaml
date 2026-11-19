@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.webapps.presets.m365` and `marchyo.webapps.presets.notion` add Microsoft 365 web apps and Notion, which installs the native Linux app when unfree packages are allowed.
+time: 2026-11-01T12:00:59.000000000Z

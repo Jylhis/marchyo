@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Notifications keep their live toasts across a shell restart (`notification-live.json`, 20 second grace, critical ones stay) and do-not-disturb in `notification-quiet.json`. The `transient` hint keeps a notification out of history and the restore file, silenced rows are marked in history, and verification codes are stored in history only as a placeholder. The libraries `Security.js`, `Detect.js`, `Markup.js`, `Store.js` and `Delivery.js` are copied from omarchy into `shell/Commons/notify/`.
+time: 2026-11-01T12:00:33.000000000Z

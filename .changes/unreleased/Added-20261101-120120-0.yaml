@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Reminder flow: a click on the reminders indicator opens a two-step prompt (minutes, then an optional message) that schedules through `marchyo reminder set`. Invalid minutes raise a `marchyo notify` error.
+time: 2026-11-01T12:01:20.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Lid close with an external display turns the internal panel off and lid open turns it back on, through `marchyo monitor clamshell on|off`.
+time: 2026-11-01T12:00:48.000000000Z

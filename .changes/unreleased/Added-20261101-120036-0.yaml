@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo dictation start|stop|toggle|status` drives voxtype under a lock, and the bar indicator follows it.
+time: 2026-11-01T12:00:36.000000000Z

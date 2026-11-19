@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  On-screen display: level icons, fixed icon and percentage columns, localized digits, bounded messages, a snap to the new value on a fresh open and a fade that respects reduced motion.
+time: 2026-11-01T12:02:06.000000000Z

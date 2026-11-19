@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.security.ssh` runs a key-only OpenSSH server (no password, keyboard-interactive or root login), and evaluation fails while a wheel or listed login user has no authorized key, unless sshd uses a user CA or an `AuthorizedKeysCommand`.
+time: 2026-11-01T12:00:58.000000000Z

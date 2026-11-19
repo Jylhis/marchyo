@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Defaults: the bar is a full-width strip (`marchyo.theme.appearance.floatingBar = false`), the systemd-boot menu is hidden (`boot.loader.timeout = 0`; hold Space at power-on to open it), and input starts in Latin (`marchyo.keyboard.autoActivateIME = false`, fcitx5 `ActiveByDefault`).
+time: 2026-11-01T12:01:36.000000000Z

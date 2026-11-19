@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Keybinding cheat sheet in the shell: `Super + K` opens the launcher `keys` mode, grouped by modifier plane, searching description and chord, with `Enter` running the bind. `keybindings.json` entries carry a `dispatch` field for plain dispatchers.
+time: 2026-11-01T12:00:26.000000000Z

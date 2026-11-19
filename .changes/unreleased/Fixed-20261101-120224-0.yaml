@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The screen recorder stops on SIGINT when its supervisor runs under a shell without job control, such as dash: the recorder starts with the default SIGINT and SIGQUIT dispositions.
+time: 2026-11-01T12:02:24.000000000Z

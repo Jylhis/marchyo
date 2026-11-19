@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.graphics.nvidia.generation` derives the open kernel modules, the default driver branch of `hardware.nvidia.package` and `NVD_BACKEND` from the GPU generation, and `hardware.nvidia-container-toolkit.enable` defaults on with development containers.
+time: 2026-11-01T12:00:53.000000000Z

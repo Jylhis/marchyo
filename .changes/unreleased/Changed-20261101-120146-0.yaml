@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Every Hyprland bind marchyo ships comes from one table, `lib/keybinds.nix`, rendered by `modules/home/keybinds.nix`; feature modules contribute only store-path commands and keyed web apps.
+time: 2026-11-01T12:01:46.000000000Z

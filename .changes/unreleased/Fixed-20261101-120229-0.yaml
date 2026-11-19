@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  `modules/nixos/network.nix` points its iwd note at `docs/gotchas.md` instead of a missing page.
+time: 2026-11-01T12:02:29.000000000Z

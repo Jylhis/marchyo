@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `boot.zfs.forceImportRoot` defaults to `false` (`lib.mkDefault`), the nixpkgs 26.11 default, on marchyo systems and the installer ISOs.
+time: 2026-11-01T12:01:27.000000000Z
