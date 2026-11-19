@@ -35,32 +35,32 @@ suffix() { [[ $1 == *:* ]] && echo "${1#*:}" || echo "${2:-}"; }
 # Open SURFACE and print the name it registers with the dev target.
 open_surface() {
   case $1 in
-    launcher | launcher:*)
-      ipc shell openLauncher "$(suffix "$1" apps)" >/dev/null
-      echo launcher
-      ;;
-    menu | menu:*)
-      ipc shell openMenu "$(suffix "$1")" >/dev/null
-      echo launcher
-      ;;
-    panel:*)
-      ipc shell openPanel "${1#panel:}" >/dev/null
-      echo "$1"
-      ;;
-    overview)
-      ipc shell openOverview >/dev/null
-      echo overview:SHOT
-      ;;
-    *) echo "$1" ;;
+  launcher | launcher:*)
+    ipc shell openLauncher "$(suffix "$1" apps)" >/dev/null
+    echo launcher
+    ;;
+  menu | menu:*)
+    ipc shell openMenu "$(suffix "$1")" >/dev/null
+    echo launcher
+    ;;
+  panel:*)
+    ipc shell openPanel "${1#panel:}" >/dev/null
+    echo "$1"
+    ;;
+  overview)
+    ipc shell openOverview >/dev/null
+    echo overview:SHOT
+    ;;
+  *) echo "$1" ;;
   esac
 }
 
 apply_state() {
   local key=${1%%=*} value=${1#*=}
   case $key in
-    query) ipc dev setLauncherQuery "$value" ;;
-    select) ipc dev launcherSelect "$value" ;;
-    *) die "unknown state key $key" ;;
+  query) ipc dev setLauncherQuery "$value" ;;
+  select) ipc dev launcherSelect "$value" ;;
+  *) die "unknown state key $key" ;;
   esac >/dev/null
 }
 
@@ -104,13 +104,13 @@ shift
 states=() calls=() out='' use_grab=0 fixture=default timeout=10
 while (($#)); do
   case $1 in
-    --state) states+=("${2:?--state needs KEY=VALUE}") && shift ;;
-    --ipc) calls+=("${2:?--ipc needs a call}") && shift ;;
-    --out) out=${2:?--out needs a path} && shift ;;
-    --grab) use_grab=1 ;;
-    --fixture) fixture=${2:?--fixture needs a name} && shift ;;
-    --timeout) timeout=${2:?--timeout needs seconds} && shift ;;
-    *) usage ;;
+  --state) states+=("${2:?--state needs KEY=VALUE}") && shift ;;
+  --ipc) calls+=("${2:?--ipc needs a call}") && shift ;;
+  --out) out=${2:?--out needs a path} && shift ;;
+  --grab) use_grab=1 ;;
+  --fixture) fixture=${2:?--fixture needs a name} && shift ;;
+  --timeout) timeout=${2:?--timeout needs seconds} && shift ;;
+  *) usage ;;
   esac
   shift
 done

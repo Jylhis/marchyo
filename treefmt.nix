@@ -56,6 +56,23 @@ in
     yamlfmt.enable = true;
     typos.enable = true;
     actionlint.enable = true;
+    keep-sorted.enable = true;
+    shfmt = {
+      enable = true;
+      indent_size = 2;
+      # The defaults plus the extensionless shell/dev scripts.
+      includes = [
+        "*.sh"
+        "*.bash"
+        "*.envrc"
+        "*.envrc.*"
+        "shell/dev/sandbox"
+        "shell/dev/shot"
+        "shell/dev/system-bus"
+        "shell/dev/stubs/stub"
+        "shell/dev/stubs/voxtype"
+      ];
+    };
   };
   settings.formatter = {
     shellcheck = {

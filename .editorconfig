@@ -13,3 +13,11 @@ indent_style = tab
 
 [*.md]
 trim_trailing_whitespace = false
+
+[{site/vendor/**,tests/eval/fixtures/**,shell/dev/fixtures/**,packages/marchyo-cli/packages/core/tests/fixtures/**}]
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+end_of_line = unset
+charset = unset

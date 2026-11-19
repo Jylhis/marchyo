@@ -28,6 +28,8 @@ pkgs.mkShell {
     (pkgs.callPackage ./packages/marchyo-cli/package.nix { })
     pkgs.statix
     pkgs.deadnix
+    pkgs.mergiraf
+    pkgs.convco
     # qmlls, qmlformat, qmllint for shell/ and greeter/.
     pkgs.qt6.qtdeclarative
     # shell/dev/sandbox and shell/dev/shot.

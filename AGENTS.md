@@ -8,7 +8,7 @@ Marchyo is a modular NixOS configuration flake with Home Manager support. Consum
 
 ## Declarative only — never suggest imperative changes
 
-This is a declarative NixOS configuration. Never suggest imperative package installs or ad-hoc system mutation (`nix-env -i`, `nix profile install`, `apt`, `pip install --user`, editing dotfiles in `$HOME` by hand, `systemctl enable` on the host). The correct change is always: edit the Nix modules in this repo, then rebuild (`nixos-rebuild switch` or the reference builds below). If a package or service is missing, add it to the appropriate module.
+This is a declarative NixOS configuration. Never suggest imperative package installs or ad-hoc system mutation (`nix-env -i`, `nix profile install`, `apt`, `pip install --user`, editing dotfiles in `$HOME` by hand, `systemctl enable` on the host). The correct change is always: edit the Nix modules in this repo and verify with a build (the reference builds below); the owner activates the system. An agent never runs `nixos-rebuild switch|boot`. If a package or service is missing, add it to the appropriate module.
 
 ## Development and essential commands
 
@@ -23,6 +23,8 @@ just cli-test            # frozen Bun install, typecheck, and unit tests
 just site-build          # npm ci, Astro check, and build
 just -f shell/Justfile check  # live offscreen QML harness; Linux/Wayland host only
 ```
+
+On a fresh clone run `just init` once: it sets the mergiraf merge driver that `.gitattributes` names. Run one `nix build` at a time, and wait on long commands in the background rather than in a foreground polling loop.
 
 `just check` is the fast local gate and deliberately passes `--no-build`. Run plain `nix flake check` when the check derivations must be built, and `just check-full` after changes the heavy checks cover (Hyprland config rendering, theme assets, Plymouth, the shell wrapper, the ISOs). `just update` runs `nix flake update`.
 
@@ -40,6 +42,7 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 
 - Gate feature config with `config = lib.mkIf cfg.feature.enable { ... };`, never `if/then/else` around config attrsets.
 - Use `lib.mkDefault` for defaults downstream configurations can override; use `lib.mkMerge` to combine multiple `mkIf` branches.
+- A `lib.mkForce` carries a comment with the reason.
 - Home Manager modules read NixOS config via optional `{ osConfig ? {}, ... }` and `osConfig.marchyo or {}`.
 
 ## Testing
@@ -62,8 +65,9 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 
 ## Formatting and commits
 
-- Run `just fmt` before committing — CI enforces `nix fmt -- --ci`. Treefmt runs nixfmt, deadnix, statix, shellcheck, yamlfmt, typos, actionlint, qmlformat, and Linux-only qmllint.
+- Run `just fmt` before committing — CI enforces `nix fmt -- --ci`. Treefmt runs nixfmt, deadnix, statix, shellcheck, shfmt, keep-sorted, yamlfmt, typos, actionlint, qmlformat, and Linux-only qmllint.
 - Use conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`, etc.
+- Non-trivial AI-assisted commits end with an `Assisted-by: AGENT:MODEL_ID [tools]` trailer and never carry a `Co-Authored-By` naming an AI; `just commit-lint` checks both.
 - All changes must pass `just check` before a session is complete, and work is not done until it is committed.
 - Keep `site/src/content/docs/docs/configuration/` in sync when changing options under `modules/nixos/options/`.
 - Docs and code comments describe the current state only: no history (what changed, what was replaced, commit refs) and no backstory or motivation. Git holds history.
