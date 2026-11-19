@@ -17,6 +17,10 @@ let
   perf = config.marchyo.performance;
   cfg = perf.tuning;
   nvmeTuned = cfg.enable && cfg.nvme.enable;
+  # Idle-class build I/O yields only under an ioprio-aware scheduler, which
+  # kyber is not.
+  idleBuilds = config.marchyo.nix.buildLimits.enable && config.marchyo.nix.buildLimits.idlePriority;
+  zramSwapOn = config.zramSwap.enable;
   # Partitions have no scheduler of their own, and loop, zram and dm devices
   # are not matched. Zoned disks need mq-deadline. With NVMe tuning on, NVMe
   # disks keep its mq-deadline rule so the two rules never race.
@@ -44,7 +48,9 @@ in
 
     (lib.mkIf perf.kyber.enable {
       services.udev.extraRules = ''
-        ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="${kyberKernels}", ATTR{queue/rotational}=="0", ATTR{queue/zoned}=="none", ATTR{queue/scheduler}="kyber"
+        ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="${kyberKernels}", ATTR{queue/rotational}=="0", ATTR{queue/zoned}=="none", ATTR{queue/scheduler}="${
+          if idleBuilds then "mq-deadline" else "kyber"
+        }"
       '';
     })
 
@@ -75,12 +81,18 @@ in
 
     (lib.mkIf (cfg.enable && cfg.memory.enable) {
       boot.kernel.sysctl = {
-        "vm.swappiness" = lib.mkDefault 10; # Prefer RAM over swap
+        # Compressed RAM is the cheap tier, so zram swap wants a high value;
+        # with disk swap only, prefer RAM.
+        "vm.swappiness" = lib.mkDefault (if zramSwapOn then 180 else 10);
         "vm.vfs_cache_pressure" = lib.mkDefault 50; # Keep filesystem metadata cached
         "vm.min_free_kbytes" = lib.mkDefault 524288; # Reserve 512 MiB for the kernel
         "vm.dirty_bytes" = lib.mkDefault cfg.memory.dirtyBytes;
         "vm.dirty_background_bytes" = lib.mkDefault cfg.memory.dirtyBackgroundBytes;
       };
+    })
+
+    (lib.mkIf (cfg.enable && cfg.memory.enable && zramSwapOn) {
+      boot.kernel.sysctl."vm.watermark_scale_factor" = lib.mkDefault 125;
     })
 
     (lib.mkIf (cfg.enable && cfg.hugePages.enable) {

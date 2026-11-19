@@ -38,6 +38,7 @@ These are on for every host, without `tuning.enable`:
 
 With `tuning.nvme.enable`, NVMe disks get mq-deadline instead of kyber, and kyber keeps the other disks.
 mq-deadline is ioprio-aware, so idle-class nix builds and bees yield disk I/O to interactive work.
+With `marchyo.nix.buildLimits.idlePriority`, the kyber rule sets mq-deadline on the other disks too, for the same reason.
 
 ## Kernel & I/O tuning
 
@@ -51,11 +52,13 @@ toggle stays off and must be opted into explicitly.
 | `marchyo.performance.tuning.enable` | `bool` | `false` | Master switch; enables the safe sub-toggles below |
 | `marchyo.performance.tuning.network.enable` | `bool` | follows `enable` | TCP Fast Open, window scaling, larger socket buffers and backlogs |
 | `marchyo.performance.tuning.nvme.enable` | `bool` | follows `enable` | NVMe udev tuning: mq-deadline scheduler, larger read-ahead and max request size |
-| `marchyo.performance.tuning.memory.enable` | `bool` | follows `enable` | Lower swappiness, keep FS metadata cached, byte-based dirty-page thresholds |
+| `marchyo.performance.tuning.memory.enable` | `bool` | follows `enable` | Swappiness 10 (180 while zram swap is on), keep FS metadata cached, byte-based dirty-page thresholds |
 | `marchyo.performance.tuning.memory.dirtyBytes` | `positive int` | `268435456` | `vm.dirty_bytes` (256 MiB) — synchronous writeback threshold |
 | `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `positive int` | `67108864` | `vm.dirty_background_bytes` (64 MiB) — background writeback threshold |
 | `marchyo.performance.tuning.hugePages.enable` | `bool` | follows `enable` | Transparent huge pages on request (`transparent_hugepage=madvise`) |
 | `marchyo.performance.tuning.compute.enable` | `bool` | `false` | Relaxed PAM limits (memlock/rtprio/nofile/nproc) for trusted compute hosts |
+
+With the memory toggle on, `vm.swappiness` is 180 and `vm.watermark_scale_factor` is 125 while `zramSwap` is enabled (marchyo's default), because compressed RAM is the cheap tier. With zram swap off, swappiness is 10 and the watermark factor stays at the kernel default. All values are `lib.mkDefault`; `vm.min_free_kbytes` is 524288 either way.
 
 ```nix
 # Safe defaults (network + nvme + memory + hugePages):
@@ -80,3 +83,46 @@ The CFS scheduler sysctls from older compute-tuning sets
 **not** included: they were removed when the kernel switched CFS → EEVDF (6.6+)
 and setting them on a current kernel only produces `systemd-sysctl` warnings.
 :::
+
+## Memory pressure
+
+All of these are opt-in and leave the system unchanged at their defaults.
+
+### Out-of-memory killer
+
+earlyoom runs by default. Steer its victim choice with process names. earlyoom matches the process `comm` name (at most 15 characters), so give names, not unit names or command lines. Each list becomes one anchored regex (`--prefer '^(a|b)$'`, `--ignore '^(a|b)$'`), and either list adds `--sort-by-rss` so the largest process dies first. `--avoid` is not used.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.performance.oom.preferProcesses` | `list of str` | `[]` | Killed first |
+| `marchyo.performance.oom.ignoreProcesses` | `list of str` | `[]` | Never killed |
+| `marchyo.performance.oom.freeSwapThreshold` | `null or int (1-100)` | `null` | Free swap percent below which earlyoom kills (`services.earlyoom.freeSwapThreshold`, default 10) |
+
+```nix
+marchyo.performance.oom = {
+  # Session processes of a marchyo desktop.
+  ignoreProcesses = [ "Hyprland" "quickshell" "marchyo-shell" "pipewire" "wireplumber" ];
+  preferProcesses = [ "llama-server" ];
+  freeSwapThreshold = 15;
+};
+```
+
+### Terminal memory limit
+
+```nix
+marchyo.performance.terminalMemoryLimit = { high = "8G"; max = "12G"; };
+```
+
+Ghostty runs each surface in a transient user scope named `app-ghostty-surface-transient-<pid>.scope` (`linux-cgroup = single-instance`, its default, which marchyo's single-instance Ghostty uses). A prefix drop-in sets `MemoryHigh` and `MemoryMax` on all of them; past `max` the kernel kills the largest process of that terminal. Open surfaces keep their old limits.
+
+### Crash handling and MGLRU
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.performance.crash.panicOnOops` | `bool` | `false` | `kernel.panic_on_oops = 1`, `kernel.panic = 10`: reboot after an oops |
+| `marchyo.performance.crash.sysrq` | `null or int` | `null` | `kernel.sysrq` bitmask (180: sync, remount read-only, reboot, keyboard control) |
+| `marchyo.performance.mglruMinTtlMs` | `null or unsigned int` | `null` | Oneshot writing `/sys/kernel/mm/lru_gen/min_ttl_ms`; skipped without MGLRU |
+
+### Flight recorder
+
+`marchyo.performance.flightRecorder.enable = true` runs `below` with a store bounded to 1 GiB and 7 days (`services.below.retention`, overridable). Replay with `below replay`.

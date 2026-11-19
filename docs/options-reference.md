@@ -228,11 +228,25 @@ Options not covered by the sections above, grouped by namespace. Each is declare
 | `marchyo.performance.kyber.enable` | `true` | kyber I/O scheduler on whole non-rotational, non-zoned disks |
 | `marchyo.performance.tuning.network.enable` | `tuning.enable` | TCP Fast Open, window scaling, larger socket buffers |
 | `marchyo.performance.tuning.nvme.enable` | `tuning.enable` | mq-deadline scheduler, larger read-ahead and request size for NVMe |
-| `marchyo.performance.tuning.memory.enable` | `tuning.enable` | Lower swappiness, cached metadata, absolute dirty-page thresholds |
+| `marchyo.performance.tuning.memory.enable` | `tuning.enable` | Swappiness 10 (180 with zram swap), cached metadata, absolute dirty-page thresholds |
 | `marchyo.performance.tuning.memory.dirtyBytes` | `268435456` | `vm.dirty_bytes` |
 | `marchyo.performance.tuning.memory.dirtyBackgroundBytes` | `67108864` | `vm.dirty_background_bytes` |
 | `marchyo.performance.tuning.hugePages.enable` | `tuning.enable` | Transparent huge pages on request (`madvise`) |
 | `marchyo.performance.tuning.compute.enable` | `false` | Relaxed PAM limits and RT scheduling for trusted compute hosts |
+| `marchyo.performance.oom.preferProcesses` | `[]` | Process names earlyoom kills first (one anchored `--prefer` regex) |
+| `marchyo.performance.oom.ignoreProcesses` | `[]` | Process names earlyoom never kills (one anchored `--ignore` regex); either list adds `--sort-by-rss` |
+| `marchyo.performance.oom.freeSwapThreshold` | `null` | Free swap percent below which earlyoom kills (earlyoom default 10) |
+| `marchyo.performance.terminalMemoryLimit` | `null` | `{ high; max; }` memory bounds for each Ghostty surface scope |
+| `marchyo.performance.crash.panicOnOops` | `false` | `kernel.panic_on_oops = 1` and `kernel.panic = 10` |
+| `marchyo.performance.crash.sysrq` | `null` | `kernel.sysrq` bitmask |
+| `marchyo.performance.mglruMinTtlMs` | `null` | Writes `/sys/kernel/mm/lru_gen/min_ttl_ms` at boot |
+| `marchyo.performance.flightRecorder.enable` | `false` | `below` history, bounded to 1 GiB and 7 days |
+| `marchyo.nix.buildLimits.enable` | `false` | `nix-build` slice for local builds with `OOMScoreAdjust = 500` |
+| `marchyo.nix.buildLimits.memoryHigh` | `"50%"` | `MemoryHigh` of the slice |
+| `marchyo.nix.buildLimits.memoryMax` | `"65%"` | `MemoryMax` of the slice |
+| `marchyo.nix.buildLimits.idlePriority` | `false` | Idle CPU and I/O class for builds; kyber's rule sets mq-deadline |
+| `marchyo.logging.journal.maxUse` | `null` | `SystemMaxUse` of journald |
+| `marchyo.logging.journal.retention` | `null` | `MaxRetentionSec` of journald |
 | `marchyo.power.lid.onAC` | `"suspend"` | Lid-close action on external power |
 | `marchyo.power.lid.onBattery` | `"suspend"` | Lid-close action on battery |
 | `marchyo.power.lid.docked` | `"ignore"` | Lid-close action while docked or with another display connected |

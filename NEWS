@@ -31,6 +31,14 @@ grouped by that release.  CHANGELOG.md lists them in detail.
   marchyo.performance.disableMitigations defaults to false; set it to
   true to pass mitigations=off again.
 
+  Memory: with performance.tuning.memory on and zram swap on (the
+  default), vm.swappiness is 180 (was 10) and
+  vm.watermark_scale_factor 125 (was 10).  New opt-in options:
+  performance.oom.{preferProcesses,ignoreProcesses,freeSwapThreshold},
+  nix.buildLimits, performance.terminalMemoryLimit,
+  performance.crash, performance.mglruMinTtlMs,
+  performance.flightRecorder and logging.journal.
+
   Audio: JACK clients run through the pw-jack wrapper (pw-jack APP);
   services.pipewire.jack.enable is no longer set.
 

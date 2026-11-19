@@ -51,6 +51,26 @@ should not hold that power:
 marchyo.nix.trustedUsers = [ "@wheel" ];
 ```
 
+## Build limits
+
+`marchyo.nix.buildLimits` bounds local builds. When enabled, `nix-daemon` runs in a `nix-build` systemd slice with `MemoryHigh` and `MemoryMax`, `OOMScoreAdjust = 500` (a runaway build is the kernel's first victim) and `OOMPolicy = "continue"` (the daemon survives a killed build).
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.nix.buildLimits.enable` | `bool` | `false` | Create the slice and place `nix-daemon` in it |
+| `marchyo.nix.buildLimits.memoryHigh` | `str` | `"50%"` | Soft limit of the slice |
+| `marchyo.nix.buildLimits.memoryMax` | `str` | `"65%"` | Hard limit of the slice |
+| `marchyo.nix.buildLimits.idlePriority` | `bool` | `false` | `nix.daemonCPUSchedPolicy` and `nix.daemonIOSchedClass` set to `idle` (`lib.mkDefault`) |
+
+Idle-class I/O yields only under an ioprio-aware scheduler, so with `idlePriority` the kyber udev rule of `marchyo.performance.kyber` sets mq-deadline instead.
+
+```nix
+marchyo.nix.buildLimits = {
+  enable = true;
+  idlePriority = true;
+};
+```
+
 ## Cache router (ncro)
 
 [ncro](https://github.com/manic-systems/ncro) (Nix Cache Route Optimizer) is a
