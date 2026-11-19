@@ -81,6 +81,7 @@ export default defineConfig({
             'docs/configuration/logging',
             'docs/configuration/network',
             'docs/configuration/security',
+            'docs/configuration/hardening',
             'docs/configuration/nix-cache',
             'docs/configuration/bees',
             'docs/configuration/emacs',

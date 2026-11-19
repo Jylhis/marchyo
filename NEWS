@@ -35,6 +35,19 @@ grouped by that release.  CHANGELOG.md lists them in detail.
   (shell/Commons/Tokens.qml).  The contrast variants are in the palette
   but marchyo.theme.variant does not select them yet.
 
+  Hardening (opt-in): marchyo.security.hardening.enable sets
+  conservative kernel and network sysctls and refuses the sctp, rds
+  and tipc modules.  Strict IOMMU (iommuStrict), USBGuard
+  (usbguard), the kernel image lock (protectKernelImage), auditd
+  (audit), OpenSnitch (firewall) and coredump storage (coredumps) are
+  separate switches, all off, and none follows marchyo.desktop.enable.
+  USBGuard keeps the state of devices present at boot and allows HID,
+  hub and Bluetooth interfaces; other new devices are blocked until
+  "usbguard allow-device ID" or a rule in usbguard.rules.  OpenSnitch
+  runs as the daemon only, allowing and logging connections;
+  firewall.ui.enable starts the UI, after which unmatched connections
+  are denied unless a prompt is answered, so write rules first.
+
   Security (breaking): CPU vulnerability mitigations stay on.
   marchyo.performance.disableMitigations defaults to false; set it to
   true to pass mitigations=off again.
