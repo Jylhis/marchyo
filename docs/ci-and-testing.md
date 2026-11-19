@@ -100,7 +100,7 @@ All changes must pass `just check` (or `nix flake check`).
 
 `.github/workflows/validate.yml` runs on push to `main`, PRs, manual dispatch and a weekly schedule:
 1. **lint** — `nix fmt -- --ci` (formatting check) on a single `ubuntu-latest` runner (formatting is platform-independent).
-2. **check** — `nix flake check --accept-flake-config` on `x86_64-linux` (every run) and `aarch64-linux` (not on PRs).
+2. **check** — `nix flake check --accept-flake-config` on `x86_64-linux`.
 3. **build** — `nix build .#nixosConfigurations.x86_64.config.system.build.toplevel` (full system build, `ubuntu-latest` only, not on PRs, after `lint` and `check` succeed).
 4. **heavy** — builds every `legacyPackages.x86_64-linux.heavyChecks` entry; weekly and on manual dispatch only.
 

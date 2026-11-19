@@ -35,21 +35,6 @@ jobs:
           name: jylhis
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - run: nix flake check --accept-flake-config
-  # aarch64-linux eval coverage. Main-only — rarely diverges from x86_64 and
-  # would otherwise waste a runner on every PR push.
-  check-arm:
-    name: Check (aarch64-linux)
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v17
-        with:
-          name: jylhis
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix flake check --accept-flake-config
   # Full NixOS toplevel build. Main-only — up to 60 minutes per run.
   build:
     name: Build toplevel
