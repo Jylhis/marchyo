@@ -291,6 +291,21 @@ in
         && lib.hasInfix ''DRIVERS=="i915|xe", SYMLINK+="dri/marchyo-intel"'' c.services.udev.extraRules;
     };
 
+    # One vendor with its bus ID set (an integrated plus an external AMD GPU):
+    # Hyprland is pinned to the card at that address.
+    amd-bus-id-pinned = {
+      config = desktopWith {
+        marchyo.graphics = {
+          vendors = [ "amd" ];
+          prime.amdgpuBusId = "PCI:6:0:0";
+        };
+      };
+      predicates.eval-graphics-single-vendor-bus-id-pinned =
+        c:
+        (env c).AQ_DRM_DEVICES == "/dev/dri/marchyo-amd"
+        && lib.hasInfix ''KERNELS=="0000:06:00.0", SYMLINK+="dri/marchyo-amd"'' c.services.udev.extraRules;
+    };
+
     # Intel + AMD, Intel primary, with a PCI address in the domain@bus form.
     intel-amd-primary-intel = {
       config = desktopWith {

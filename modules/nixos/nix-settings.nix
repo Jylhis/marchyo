@@ -7,16 +7,14 @@ let
   # lib.mkForce replaces them); ncro (modules/nixos/ncro.nix) routes whatever
   # the merged substituter list ends up holding.
   inherit ((builtins.fromJSON (builtins.readFile ./caches.json))) caches;
-  cacheUrls = map (c: c.url) caches;
-  cacheKeys = lib.filter (k: k != null) (map (c: c.publicKey) caches);
+  inherit (config.marchyo.nix) extraCaches;
+  cacheUrls = map (c: c.url) (caches ++ extraCaches);
+  cacheKeys = lib.filter (k: k != null) (map (c: c.publicKey) (caches ++ extraCaches));
 in
 {
   nix = {
     settings = {
-      trusted-users = [
-        "@wheel"
-      ]
-      ++ lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
+      trusted-users = config.marchyo.nix.trustedUsers;
       # The daemon frees space mid-build: collect down to max-free once less than min-free remains.
       min-free = lib.mkDefault (10 * 1024 * 1024 * 1024);
       max-free = lib.mkDefault (50 * 1024 * 1024 * 1024);

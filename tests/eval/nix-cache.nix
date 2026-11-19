@@ -60,9 +60,59 @@ in
         public_key = "example.cachix.org-1:abc=";
       } config.services.ncro.settings.upstreams
       && builtins.elem "example.cachix.org-1:abc=" config.nix.settings.trusted-public-keys;
+
+    # Trusted users default to @wheel plus the enabled marchyo users (NixOS adds root).
+    headless.eval-nix-trusted-users-default =
+      config:
+      config.nix.settings.trusted-users == [
+        "root"
+        "@wheel"
+        "testuser"
+      ];
+
+    # marchyo.nix.trustedUsers overrides the list (headless-tweaks-3).
+    headless-tweaks-3.eval-nix-trusted-users-override =
+      config:
+      config.nix.settings.trusted-users == [
+        "root"
+        "@wheel"
+      ];
+
+    # marchyo.nix.extraCaches is appended to the built-in list and, through the
+    # merged substituters, becomes an ncro upstream with its key
+    # (headless-tweaks-3); the built-in caches stay.
+    headless-tweaks-3.eval-nix-extra-caches =
+      config:
+      let
+        upstreamUrls = map (u: u.url) config.services.ncro.settings.upstreams;
+      in
+      builtins.elem "https://extra.example.org" config.nix.settings.substituters
+      && builtins.elem "https://extra.example.org" config.nix.settings.trusted-substituters
+      && builtins.elem "https://jylhis.cachix.org" config.nix.settings.substituters
+      && builtins.elem "extra.example.org-1:def=" config.nix.settings.trusted-public-keys
+      && builtins.elem "https://extra.example.org" upstreamUrls
+      && builtins.elem {
+        url = "https://extra.example.org";
+        public_key = "extra.example.org-1:def=";
+      } config.services.ncro.settings.upstreams;
+
+    # No extra caches by default.
+    headless.eval-nix-extra-caches-default =
+      config:
+      config.marchyo.nix.extraCaches == [ ]
+      && !(builtins.elem "https://extra.example.org" config.nix.settings.substituters);
   };
 
   refConfig = {
+    headless-tweaks-3.marchyo.nix = {
+      trustedUsers = [ "@wheel" ];
+      extraCaches = [
+        {
+          url = "https://extra.example.org";
+          publicKey = "extra.example.org-1:def=";
+        }
+      ];
+    };
     headless-tweaks.services.ncro.enable = false;
     headless-tweaks-2.nix.settings = {
       substituters = [ "https://example.cachix.org" ];

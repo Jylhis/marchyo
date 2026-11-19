@@ -149,7 +149,9 @@ in
         example = "PCI:0:2:0";
         description = ''
           PCI bus ID of the Intel GPU. Used by PRIME, and to pick the exact
-          device for Hyprland's GPU list when several GPUs are listed.
+          device for Hyprland's GPU list when several GPUs are listed. With a
+          single vendor, setting it pins Hyprland to that card, which tells
+          two GPUs of one vendor apart.
           Find with: lspci | grep -E 'VGA|3D' | grep Intel
           Format: PCI:bus:device:function (convert hex to decimal)
         '';
@@ -161,7 +163,9 @@ in
         example = "PCI:6:0:0";
         description = ''
           PCI bus ID of the AMD GPU. Used by PRIME, and to pick the exact
-          device for Hyprland's GPU list when several GPUs are listed.
+          device for Hyprland's GPU list when several GPUs are listed. With a
+          single vendor, setting it pins Hyprland to that card, which tells
+          two GPUs of one vendor apart.
           Find with: lspci | grep -E 'VGA|3D' | grep AMD
           Format: PCI:bus:device:function (convert hex to decimal)
         '';
@@ -173,7 +177,9 @@ in
         example = "PCI:1:0:0";
         description = ''
           PCI bus ID of the NVIDIA GPU. Used by PRIME, and to pick the exact
-          device for Hyprland's GPU list when several GPUs are listed.
+          device for Hyprland's GPU list when several GPUs are listed. With a
+          single vendor, setting it pins Hyprland to that card, which tells
+          two GPUs of one vendor apart.
           Find with: lspci | grep -E 'VGA|3D' | grep NVIDIA
           Format: PCI:bus:device:function (convert hex to decimal)
         '';

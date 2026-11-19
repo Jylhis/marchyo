@@ -91,6 +91,10 @@ programs.vscode = {
 };
 ```
 
+Rootless Podman gets the `cpuset` controller delegated to the user manager
+(for `--cpuset-cpus`) and a weekly `virtualisation.podman.autoPrune`, both at
+`lib.mkDefault`.
+
 ### Using Docker instead of Podman
 
 ```nix

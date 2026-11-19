@@ -58,6 +58,9 @@ installed. `marchyo.graphics.primary` picks the GPU that drives the display:
   from `prime.<vendor>BusId` when set, else the kernel driver), and
   `AQ_DRM_DEVICES` lists them with the primary first, because
   `/dev/dri/card<N>` numbering changes between boots.
+- With one vendor, setting its `prime.<vendor>BusId` pins Hyprland to the card
+  at that address. Use it for two GPUs of one vendor (an integrated GPU plus
+  an external one); only the pinned card is listed in `AQ_DRM_DEVICES`.
 
 ## NVIDIA options
 
@@ -132,9 +135,9 @@ Run `lspci | grep -E 'VGA|3D'` and convert hex bus IDs to the `PCI:bus:device:fu
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `marchyo.graphics.prime.enable` | `bool` | `false` | Enable NVIDIA PRIME |
-| `marchyo.graphics.prime.intelBusId` | `string` | `""` | PCI bus ID of the Intel GPU |
-| `marchyo.graphics.prime.amdgpuBusId` | `string` | `""` | PCI bus ID of the AMD GPU |
-| `marchyo.graphics.prime.nvidiaBusId` | `string` | `""` | PCI bus ID of the NVIDIA GPU |
+| `marchyo.graphics.prime.intelBusId` | `string` | `""` | PCI bus ID of the Intel GPU; with one vendor it also pins Hyprland to that card |
+| `marchyo.graphics.prime.amdgpuBusId` | `string` | `""` | PCI bus ID of the AMD GPU; with one vendor it also pins Hyprland to that card |
+| `marchyo.graphics.prime.nvidiaBusId` | `string` | `""` | PCI bus ID of the NVIDIA GPU; with one vendor it also pins Hyprland to that card |
 | `marchyo.graphics.prime.mode` | `string` | `"offload"` | PRIME render mode |
 
 ### PRIME modes

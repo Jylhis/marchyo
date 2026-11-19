@@ -249,19 +249,28 @@ in
       marchyo.webapps.presets.notion.enable = true;
       nixpkgs.config.allowUnfree = lib.mkForce false;
     };
-    predicates.eval-webapps-presets-notion-webapp =
-      c:
-      let
-        hm = c.home-manager.users.testuser;
-        entry = (entries hm)."marchyo-webapp-notion" or null;
-      in
-      if
-        entry != null
-        && lib.hasInfix "--app=https://www.notion.so/" entry.exec
-        && !(lib.any (p: (p.pname or "") == "notion-app-enhanced") hm.home.packages)
-      then
-        true
-      else
-        "notion preset without unfree did not produce the Notion web app";
+    predicates = {
+      eval-nixpkgs-unfree-user-off =
+        c:
+        let
+          hm = c.home-manager.users.testuser;
+        in
+        !(hm.home.sessionVariables ? NIXPKGS_ALLOW_UNFREE) && !(hm.xdg.configFile ? "nixpkgs/config.nix");
+
+      eval-webapps-presets-notion-webapp =
+        c:
+        let
+          hm = c.home-manager.users.testuser;
+          entry = (entries hm)."marchyo-webapp-notion" or null;
+        in
+        if
+          entry != null
+          && lib.hasInfix "--app=https://www.notion.so/" entry.exec
+          && !(lib.any (p: (p.pname or "") == "notion-app-enhanced") hm.home.packages)
+        then
+          true
+        else
+          "notion preset without unfree did not produce the Notion web app";
+    };
   };
 }

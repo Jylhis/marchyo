@@ -58,6 +58,7 @@ let
 
   settingsOf = c: c.home-manager.users.testuser.wayland.windowManager.hyprland.settings;
   hmOf = c: c.home-manager.users.testuser;
+  hyprOf = c: (hmOf c).wayland.windowManager.hyprland;
 in
 {
   # Hyprland config verification (heavy: builds the config and runs Hyprland).
@@ -85,7 +86,14 @@ in
   };
 
   refs = {
+    # The Lua renderer is set whenever the home module loads, and loading it
+    # does not turn Hyprland on without the desktop.
+    headless.eval-hyprland-config-type-headless =
+      c: (hyprOf c).configType == "lua" && !(hyprOf c).enable;
+
     desktop = {
+      eval-hyprland-config-type = c: (hyprOf c).configType == "lua" && (hyprOf c).enable;
+
       # Shell on: animations run on the popin bezier and the shell namespaces get
       # their per-surface layer rules.
       eval-hyprland-shell-effects =

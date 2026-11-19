@@ -20,6 +20,37 @@ nix.settings = {
 Use `lib.mkForce` on a list to replace marchyo's entries (and NixOS's
 `cache.nixos.org`) instead.
 
+### Extra caches
+
+`marchyo.nix.extraCaches` appends caches to marchyo's list. Each `url` joins
+`substituters` and `trusted-substituters`, each `publicKey` joins
+`trusted-public-keys`, and the ncro router (below) picks the cache up as an
+upstream:
+
+```nix
+marchyo.nix.extraCaches = [
+  {
+    url = "https://my-cache.example.com";
+    publicKey = "my-cache.example.com-1:AAAA...=";
+  }
+];
+```
+
+Name the key after the cache's host (`<host>-<n>:...`) so ncro pairs it with
+the upstream.
+
+## Trusted users
+
+`marchyo.nix.trustedUsers` sets `nix.settings.trusted-users`. It defaults to
+`@wheel` plus every enabled `marchyo.users` entry. A trusted user can import
+store paths without a valid signature and override restricted Nix settings,
+which makes it effectively root. Narrow it on a host where the Marchyo users
+should not hold that power:
+
+```nix
+marchyo.nix.trustedUsers = [ "@wheel" ];
+```
+
 ## Cache router (ncro)
 
 [ncro](https://github.com/manic-systems/ncro) (Nix Cache Route Optimizer) is a

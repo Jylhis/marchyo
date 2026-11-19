@@ -50,6 +50,16 @@ Since these use `lib.mkDefault`, you can override them:
 }
 ```
 
+## Unfree packages
+
+`marchyo.lib.mkNixosSystem` sets `nixpkgs.config.allowUnfree = true`. While it
+is on, Home Manager also sets `NIXPKGS_ALLOW_UNFREE=1` and writes
+`~/.config/nixpkgs/config.nix` for every marchyo user, so `nix run --impure`
+and `import <nixpkgs> {}` accept unfree packages too. Turn it off through the
+builder (`config = { allowUnfree = false; };`); the user-level settings follow.
+A host that imports `marchyo.nixosModules.default` without the builder sets
+`nixpkgs.config.allowUnfree` itself.
+
 ## Boot menu
 
 Marchyo sets `boot.loader.timeout` to `0`, so systemd-boot skips the menu and boots the default entry. Hold <kbd>Space</kbd> at power-on to open the menu.
