@@ -94,13 +94,13 @@ cmd_up() {
   local window=0 real=0 fixture=default
   while (($#)); do
     case $1 in
-      --window) window=1 ;;
-      --real) real=1 ;;
-      --fixture)
-        fixture=${2:?--fixture needs a name}
-        shift
-        ;;
-      *) usage ;;
+    --window) window=1 ;;
+    --real) real=1 ;;
+    --fixture)
+      fixture=${2:?--fixture needs a name}
+      shift
+      ;;
+    *) usage ;;
     esac
     shift
   done
@@ -273,16 +273,16 @@ cmd_guest() {
 sub=${1:-}
 shift || true
 case $sub in
-  up) cmd_up "$@" ;;
-  down) cmd_down ;;
-  status) cmd_status ;;
-  env) cmd_env ;;
-  ipc) cmd_ipc "$@" ;;
-  log) cmd_log "$@" ;;
-  hyprctl) cmd_hyprctl "$@" ;;
-  _run) cmd_run "$@" ;;
-  _scope) cmd_scope "$@" ;;
-  _session) cmd_session "$@" ;;
-  _guest) cmd_guest "$@" ;;
-  *) usage ;;
+up) cmd_up "$@" ;;
+down) cmd_down ;;
+status) cmd_status ;;
+env) cmd_env ;;
+ipc) cmd_ipc "$@" ;;
+log) cmd_log "$@" ;;
+hyprctl) cmd_hyprctl "$@" ;;
+_run) cmd_run "$@" ;;
+_scope) cmd_scope "$@" ;;
+_session) cmd_session "$@" ;;
+_guest) cmd_guest "$@" ;;
+*) usage ;;
 esac

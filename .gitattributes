@@ -1,0 +1,5 @@
+* merge=mergiraf
+NEWS merge=union
+flake.lock -merge
+packages/marchyo-cli/bun.lock -merge
+site/package-lock.json -merge
