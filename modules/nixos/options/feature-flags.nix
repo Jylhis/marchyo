@@ -10,6 +10,22 @@ in
         default = false;
         description = "Enable desktop environment (Hyprland, Wayland, fonts, etc.)";
       };
+
+      compositorWatch.enable = mkOption {
+        type = types.bool;
+        default = true;
+        example = false;
+        description = ''
+          Probe Hyprland with `hyprctl` every 10 seconds. After three misses
+          in a row the user unit `marchyo-compositor-watch` saves the log, the
+          process state and the thread states under
+          `~/.local/state/marchyo/hyprland/hang-<time>/`, then sends SIGABRT
+          (SIGKILL after 10 seconds) so the session returns to the greeter.
+          It also keeps the last five Hyprland logs in the same directory.
+          `marchyo-compositor-watch --now` does the rescue once, for use from
+          a text console. Only used when `marchyo.desktop.enable` is set.
+        '';
+      };
     };
 
     development = {

@@ -178,6 +178,19 @@ let
                 || { echo "FAIL: greeter Config.qml sessionCommand array is not comma-separated (QML parse error)"; exit 1; }
               touch "$out"
             '';
+
+            # Loads the built shell tree and the greeter (quickshell on the
+            # offscreen Qt platform); the other shell checks never load QML.
+            shell-load = pkgs.runCommand "check-shell-load" { } ''
+              shell="${pkgs.marchyo-shell}"
+              # The wrapper forces a gtk3 platform theme that needs a display, so
+              # run quickshell itself.
+              quickshell=$(sed -n 's/^exec "\([^"]*\)".*/\1/p' "$shell/bin/marchyo-shell")
+              [ -x "$quickshell" ] || { echo "FAIL: no quickshell in the marchyo-shell wrapper"; exit 1; }
+              bash ${./tests/shell/load-test.sh} "$quickshell" "$shell/share/marchyo/shell/harness.qml"
+              bash ${./tests/shell/load-test.sh} "$quickshell" "$shell/share/marchyo/greeter" --long-running
+              touch "$out"
+            '';
           };
         }
       ]

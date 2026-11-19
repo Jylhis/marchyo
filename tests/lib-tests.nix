@@ -11,6 +11,80 @@ let
 in
 {
 
+  # hotkey-claims: every source spells a chord the same way, and a chord with
+  # two owners is a clash unless it is allowed.
+  test-hotkey-claims =
+    let
+      h = import ../lib/hotkey-claims.nix { inherit lib; };
+      chords = map (c: c.chord);
+      fcitx = h.fromFcitx5 "fcitx5" {
+        globalOptions."Hotkey/TriggerKeys" = {
+          "0" = "Super+Space";
+          "1" = "Shift_L";
+          "2" = "Control+Alt+P";
+        };
+        addons.unicode.globalSection.TriggerKey = "Super+u";
+        addons.clipboard.globalSection.TriggerKey = "";
+      };
+      claims =
+        h.fromTable "table" [
+          {
+            combo = "SUPER + SPACE";
+            description = "Command menu";
+          }
+          {
+            combo = "ALT + code:10";
+            description = "One";
+          }
+        ]
+        ++ h.fromXkbOptions "xkb" [
+          "grp:win_space_toggle"
+          "ctrl:swapcaps"
+        ]
+        ++ h.fromGhostty "ghostty" [ "alt+1=goto_tab:1" ];
+    in
+    assertTest "hotkey-claims" (
+      h.normalize "SUPER + CTRL + SHIFT + A" == h.normalize "Control+Shift+Super+a"
+      && h.normalize "ALT + code:19" == "ALT + 0"
+      &&
+        chords fcitx == [
+          "SUPER + space"
+          "ALT + CTRL + p"
+          "SUPER + u"
+        ]
+      && chords (h.fromXkbOptions "xkb" [ "terminate:ctrl_alt_bksp" ]) == [ "ALT + CTRL + backspace" ]
+      &&
+        chords (
+          h.fromGhostty "ghostty" [
+            "global:ctrl+a>n=new_window"
+            "cmd+enter=toggle_fullscreen"
+          ]
+        ) == [
+          "CTRL + a"
+          "SUPER + return"
+        ]
+      && chords (h.fromHyprland "host" [ { _args = [ "SUPER + B" ]; } ]) == [ "SUPER + b" ]
+      &&
+        map (c: c.chord) (h.clashes [ ] claims) == [
+          "ALT + 1"
+          "SUPER + space"
+        ]
+      && h.clashes [ "Alt+1" "SUPER + SPACE" ] claims == [ ]
+      &&
+        h.clashes [ ] (
+          h.fromTable "table" [
+            {
+              combo = "F9";
+              description = "press";
+            }
+            {
+              combo = "F9";
+              description = "release";
+            }
+          ]
+        ) == [ ]
+    ) "Expected one chord spelling per source and a clash per chord with two owners";
+
   # console-table: setvtrgb 3-line RGB table from hex colours (handles both
   # "#rrggbb" and bare "rrggbb"; splits each hex into decimal R/G/B lines).
   test-console-table =

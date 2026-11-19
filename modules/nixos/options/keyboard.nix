@@ -180,6 +180,20 @@ in
       '';
     };
 
+    allowedHotkeyClashes = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      example = [ "SUPER + SPACE" ];
+      description = ''
+        Chords that may have more than one owner. The evaluation fails when
+        a chord is claimed by more than one of: the marchyo bind table, other
+        Hyprland binds, an XKB option (grp:*_space_toggle,
+        terminate:ctrl_alt_bksp), the fcitx5 trigger keys, a Ghostty keybind
+        and the voxtype push-to-talk key. Write a chord as a Hyprland bind
+        does: modifiers and key joined with "+".
+      '';
+    };
+
     imeTriggerKey = mkOption {
       type = types.listOf types.str;
       default = [ "Super+I" ];

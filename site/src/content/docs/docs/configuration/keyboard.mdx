@@ -201,6 +201,12 @@ marchyo.keyboard = {
 };
 ```
 
+## Hotkey clashes
+
+A key chord that more than one owner claims fails the evaluation, with a message naming both owners, for example `Hotkey SHIFT + SUPER + space has several owners: marchyo bind table (Toggle top bar), Ghostty (new_tab)`. The owners are the marchyo bind table, other Hyprland binds of the configuration, the XKB options (`grp:*_space_toggle`, `terminate:ctrl_alt_bksp`), the fcitx5 trigger keys, Ghostty keybinds and the voxtype push-to-talk key. The XKB options and the fcitx5 trigger keys count as one owner, because the default `grp:win_space_toggle` and fcitx5's `Super+Space` are the same layout switching. Chords compare by key name with sorted, case-folded modifiers (`Super+Space` equals `SUPER + space`; `CONTROL` equals `CTRL`, `WIN` equals `SUPER`).
+
+A web app key that collides with a marchyo bind is not an error: the web app gets no bind and evaluation warns. List chords that may have several owners on purpose in `marchyo.keyboard.allowedHotkeyClashes` (for example `[ "SUPER + SPACE" ]`).
+
 ## How it works
 
 1. **NixOS (`services.xserver.xkb`)** — Basic layout codes and variants are applied to the console/TTY for fallback support outside the graphical environment.
@@ -218,4 +224,5 @@ marchyo.keyboard = {
 | `marchyo.keyboard.backlight.enable` | bool | `true` | Keyboard backlight key binds |
 | `marchyo.keyboard.autoActivateIME` | bool | `false` | Start with the IME engine active |
 | `marchyo.keyboard.imeTriggerKey` | list of strings | `["Super+I"]` | Keys that cycle layouts, then engines |
+| `marchyo.keyboard.allowedHotkeyClashes` | list of strings | `[]` | Chords that may have more than one owner |
 | `marchyo.keyboard.variant` | string | `""` | Deprecated: sets the variant of the first layout and warns. Use `{ layout = "us"; variant = "intl"; }` in `layouts` ([migration](/docs/guides/migration/)) |

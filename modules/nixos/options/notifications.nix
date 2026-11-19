@@ -1,9 +1,39 @@
-{ lib, ... }:
+{ config, lib, ... }:
 let
   inherit (lib) mkOption types;
 in
 {
   options.marchyo.notifications = {
+    unitFailures = {
+      enable = mkOption {
+        type = types.bool;
+        default = config.marchyo.desktop.enable;
+        defaultText = lib.literalExpression "config.marchyo.desktop.enable";
+        example = false;
+        description = ''
+          Follow the journal and send a critical notification when a system or
+          user unit fails. The "Show log" action opens `journalctl -b -u <unit>`
+          in a terminal. A user who cannot read the system journal (outside
+          `wheel`, `adm` and `systemd-journal`) sees only the failures of their own
+          user units.
+        '';
+      };
+
+      ignore = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        example = [
+          "app-*.scope"
+          "flatpak-*"
+        ];
+        description = ''
+          Shell glob patterns matched against the full unit name (for example
+          `foo.service`). Failures of matching units are not announced. A unit
+          is announced at most once per minute.
+        '';
+      };
+    };
+
     stackBySender = mkOption {
       type = types.bool;
       default = true;
