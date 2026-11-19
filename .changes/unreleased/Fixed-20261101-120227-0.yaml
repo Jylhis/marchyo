@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  `nix fmt -- --ci` passes, qmllint with zero warnings; `Displays.qml` and `Power.qml` declared properties as Timer, Process or PersistentProperties while they held objects with extra members, which hid those members from type checks.
+time: 2026-11-01T12:02:27.000000000Z

@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The shell failed to start: the launcher declared a method named `escape`, which shadows the JavaScript global, so QML rejected `LauncherWindow`. The offscreen harness now compiles every top-level shell window.
+time: 2026-11-01T12:02:35.000000000Z

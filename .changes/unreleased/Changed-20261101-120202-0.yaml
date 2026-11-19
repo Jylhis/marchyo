@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Power panel: an animated charge meter with state glyphs, a holding-at-limit state, a stats grid (energy, rate, charger, time left or to full) and keyboard navigation between power profiles.
+time: 2026-11-01T12:02:02.000000000Z

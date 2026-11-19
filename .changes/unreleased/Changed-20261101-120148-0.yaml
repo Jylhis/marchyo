@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `marchyo toggle gaps` and `transparency` apply through `hyprctl eval`, since `hyprctl keyword` has no effect under the Lua config.
+time: 2026-11-01T12:01:48.000000000Z

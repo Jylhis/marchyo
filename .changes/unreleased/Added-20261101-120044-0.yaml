@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Git and Jujutsu use the mergiraf syntax-aware merge driver by default (`programs.mergiraf`).
+time: 2026-11-01T12:00:44.000000000Z

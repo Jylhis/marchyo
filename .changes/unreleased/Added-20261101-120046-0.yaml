@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Captive-portal detection: `marchyo.network.connectivityCheck.{enable,uri,response,interval}` configures the NetworkManager connectivity check, the bar network icon and panel show Portal and Limited states, and `marchyo network portal` opens the sign-in window in a floating 900x760 web-app window, pauses a Tailscale exit node until online, and closes the window afterwards.
+time: 2026-11-01T12:00:46.000000000Z

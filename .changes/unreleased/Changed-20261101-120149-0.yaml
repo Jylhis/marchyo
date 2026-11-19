@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `rerere.autoupdate` defaults to off, so git no longer stages replayed conflict resolutions.
+time: 2026-11-01T12:01:49.000000000Z

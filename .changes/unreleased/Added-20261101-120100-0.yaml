@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Home Manager profile installs split `doc` and `devdoc` outputs, so HTML documentation from packages such as Python is available under the profile.
+time: 2026-11-01T12:01:00.000000000Z

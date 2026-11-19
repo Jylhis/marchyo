@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Panel, launcher, overview, bar and notification binds dispatch the shell's global shortcuts instead of spawning `marchyo shell`; the lock and terminal binds keep a direct exec.
+time: 2026-11-01T12:01:52.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Theme surfaces for tmux and fcitx5 classicui: every theme dir (Jylhis pair, catalog, inline and `theme generate`) carries `tmux.conf` and `fcitx5-theme.conf`, and `marchyo theme` applies them live.
+time: 2026-11-01T12:00:42.000000000Z

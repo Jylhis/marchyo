@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.nix.trustedUsers` sets `nix.settings.trusted-users` (default `@wheel` plus every enabled marchyo user, as before), and `marchyo.nix.extraCaches` appends binary caches (`url` and `publicKey`) to the built-in list: they join `substituters`, `trusted-substituters`, `trusted-public-keys` and the ncro upstreams.
+time: 2026-11-01T12:00:14.000000000Z

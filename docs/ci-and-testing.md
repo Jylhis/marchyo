@@ -84,6 +84,7 @@ The QML tree in `shell/` gets two headless suites, wired into `mkChecks`. Neithe
 
 - **`shell-format-unit`** — runs the pure-JS suites over `shell/Commons/*.js`: `format-test.js`, `notify-test.js`, `launcher-test.js`, and `peripherals-test.js`. Each `Commons/*.js` is a plain module with a CommonJS guard so QML imports it unchanged while Node can load it.
 - **`shell-contracts`** — `bash tests/shell/contracts-test.sh`, static cross-file agreements that QML only resolves at runtime: qmldir completeness, `Bar/` widgets owning no `Process`/`Timer`/`Connections` (they are instantiated once per monitor), every `Services/` component being a singleton, every `Config.<tool>` being baked by `packages/marchyo-shell/package.nix`, and every shell IPC function name resolving to a function in `shell.qml`: each `shellIpc("<fn>")` call in the CLI sources (`modules/home/` reaches the shell only through `marchyo shell` verbs).
+- **`changelog`**: runs `.changes/merge.sh` (`changie merge`) on a copy of `.changes/`, `.changie.yaml` and `CHANGELOG.md` and fails when the result differs from the committed `CHANGELOG.md`.
 
 Both stage only the trees they read rather than the whole repo, so an unrelated `site/` or `docs/` edit does not rebuild them.
 

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `Super + Ctrl + Alt + G` opens the Ui gallery panel, and `marchyo doctor` warns when the generated bind table lacks it.
+time: 2026-11-01T12:00:30.000000000Z

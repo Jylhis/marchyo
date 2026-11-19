@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Shell Ui kit: the reduce-motion watch survives a fresh profile, the Elsewhen search submits on Enter, a closed searchable dropdown drops its filter focus, and ConfirmDialog restores focus on close and traps all arrow keys.
+time: 2026-11-01T12:02:40.000000000Z

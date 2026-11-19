@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  nix-on-droid support (`nixOnDroidModules`, `nixOnDroidConfigurations`, `lib.mkNixOnDroidConfiguration`), the remaining nix-darwin pieces, sops-nix, and the nixos-hardware input with its `nixosModules.hardware` re-export; hosts import sops-nix and nixos-hardware profiles themselves.
+time: 2026-11-01T12:02:16.000000000Z

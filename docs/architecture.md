@@ -39,9 +39,11 @@ outputs.nix         # All output logic — takes { inputs }, returns modules, pa
 overlay.nix         # Nixpkgs overlay (marchyo-cli/-shell/-wallpapers, mkMarchyoShellPlugin, plymouth-marchyo-theme, jylhis-themes, plus the vendored design system in lib/design)
 treefmt.nix         # Formatter config for treefmt-nix
 shell.nix           # Development shell (nix develop / nix-shell)
-Justfile            # Task runner (check, check-full, fmt, build-nixos, iso, update, run/vm, cli-test, cli-repin, site-dev, site-build, sbom, vuln-scan, security-vm, security-scan)
+Justfile            # Task runner (change, changelog, check, check-full, fmt, build-nixos, iso, update, run/vm, cli-test, cli-repin, site-dev, site-build, sbom, vuln-scan, security-vm, security-scan)
 statix.toml         # Statix linter configuration
-CHANGELOG.md        # Release history
+CHANGELOG.md        # Release history, generated from .changes/ by `just changelog`
+.changes/           # changie fragments (unreleased/), closed months (vYYYY.M.0.md), header.md and merge.sh
+.changie.yaml       # changie configuration
 NEWS                # User-visible changes by release, newest first
 docs/               # Contributor/system-architecture reference (this tree)
 manual/             # Published end-user documentation (rendered by site/)

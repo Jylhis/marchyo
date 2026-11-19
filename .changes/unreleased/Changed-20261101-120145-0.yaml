@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `marchyo keybindings` lists `~/.config/marchyo/keybindings.json`, written from the bind table with a group per row, then any described bind added downstream.
+time: 2026-11-01T12:01:45.000000000Z

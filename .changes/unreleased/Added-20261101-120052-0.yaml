@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.keyboard.composeKey = "shift-caps"` makes Shift+Caps Lock the Compose key while Caps Lock keeps its normal job (Hyprland only).
+time: 2026-11-01T12:00:52.000000000Z

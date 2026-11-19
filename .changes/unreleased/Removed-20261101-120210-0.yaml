@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  The private unix shell socket: the CLI's shell calls always go through `qs ipc`.
+time: 2026-11-01T12:02:10.000000000Z

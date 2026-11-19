@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.kyber.enable` (default on) sets the kyber I/O scheduler on whole non-rotational disks; with `tuning.nvme.enable`, NVMe disks keep mq-deadline.
+time: 2026-11-01T12:00:56.000000000Z

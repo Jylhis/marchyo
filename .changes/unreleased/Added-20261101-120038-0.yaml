@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Self-hiding bar indicators `marchyo.update`, `marchyo.disk` and `marchyo.health` (from `marchyo doctor --json`), a rollback button in the Power panel, and the `marchyo.shell.diskWarnPercent` option.
+time: 2026-11-01T12:00:38.000000000Z

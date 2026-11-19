@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Checks are named predicates over shared reference systems (`tests/lib.nix`), each evaluated once and run as one `ref-<name>` check that lists every failing predicate; negative tests run together in `eval-assertions`. Build-heavy checks (the Plymouth variants, the shell wrapper, the theme asset dirs, the `hyprland --verify-config` runs and the ISO evaluations) move to `legacyPackages.<system>.heavyChecks`, built by `just check-full` and a weekly CI job. See `tests/README.md`.
+time: 2026-11-01T12:01:37.000000000Z

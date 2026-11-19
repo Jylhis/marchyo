@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  fcitx5 is configured only when `marchyo.desktop.enable` is set, so headless hosts no longer get the graphical input method.
+time: 2026-11-01T12:02:43.000000000Z

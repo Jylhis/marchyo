@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  btop's settings are `lib.mkDefault` values, so a plain `programs.btop.settings.<name>` overrides them without `lib.mkForce`.
+time: 2026-11-01T12:01:24.000000000Z

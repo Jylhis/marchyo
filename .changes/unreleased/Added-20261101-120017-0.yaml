@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  btop shows the `gpu0` box when `marchyo.graphics.vendors` lists Intel or AMD; NVIDIA alone gets none, because the nixpkgs btop cannot load NVML.
+time: 2026-11-01T12:00:17.000000000Z

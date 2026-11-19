@@ -69,6 +69,8 @@ Features are gated behind enable flags: `marchyo.desktop.enable`, `marchyo.devel
 - Use conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 - Non-trivial AI-assisted commits end with an `Assisted-by: AGENT:MODEL_ID [tools]` trailer and never carry a `Co-Authored-By` naming an AI; `just commit-lint` checks both.
 - All changes must pass `just check` before a session is complete, and work is not done until it is committed.
+- A behavioural commit (`feat`, `fix`, `perf`, `revert`, a user-visible `refactor`, or a security change) adds a changelog fragment with `just change` in the same commit. `CHANGELOG.md` is generated from `.changes/`: nobody edits it by hand, and `just changelog` regenerates it (the `changelog` check fails on a stale file). `NEWS` stays hand-written.
+- A month is closed with `changie batch vYYYY.M.0` (month without a leading zero, for example `changie batch v2026.11.0`), then `just changelog`; the version file renders as `## YYYY-MM`, and the unreleased fragments always form the open month, named after the newest fragment.
 - Keep `site/src/content/docs/docs/configuration/` in sync when changing options under `modules/nixos/options/`.
 - Docs and code comments describe the current state only: no history (what changed, what was replaced, commit refs) and no backstory or motivation. Git holds history.
 

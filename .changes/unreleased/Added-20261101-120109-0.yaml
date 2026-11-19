@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Theme and wallpaper pickers: panels `themes` (`Super + Ctrl + T`) and `backgrounds` (`Super + Ctrl + Shift + W`) show a grid with a large preview, filter-as-you-type and keyboard navigation (`marchyo shell toggle themes|backgrounds`). Wallpaper thumbnails are cached in `$XDG_CACHE_HOME/marchyo/thumbs`, keyed by size and mtime. Every theme dir carries a `wallpapers/` dir fed by the new `marchyo.theme.themes.[].wallpapers`; a theme without a preview image gets a plain tile.
+time: 2026-11-01T12:01:09.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  The shell registers Hyprland global shortcuts (`marchyo:<name>`, listed in `shell/shortcuts.json`), and `hlua.global` in `lib/hyprland-lua.nix` binds them.
+time: 2026-11-01T12:01:01.000000000Z

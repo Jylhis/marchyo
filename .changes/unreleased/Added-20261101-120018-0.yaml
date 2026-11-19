@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  With the Podman container backend, the user manager delegates the `cpuset` controller (`podman run --cpuset-cpus`) and `virtualisation.podman.autoPrune` runs weekly (both at `lib.mkDefault`).
+time: 2026-11-01T12:00:18.000000000Z

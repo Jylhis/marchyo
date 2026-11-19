@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo shell gallery [section]` opens a dev gallery panel (`panel.gallery` shortcut) with every Ui control in every state.
+time: 2026-11-01T12:01:07.000000000Z

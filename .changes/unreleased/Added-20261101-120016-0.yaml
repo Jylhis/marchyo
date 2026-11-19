@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Home Manager sets `NIXPKGS_ALLOW_UNFREE=1` and writes `~/.config/nixpkgs/config.nix` with `allowUnfree = true` for every marchyo user while `nixpkgs.config.allowUnfree` is on (it is, with `lib.mkNixosSystem`).
+time: 2026-11-01T12:00:16.000000000Z

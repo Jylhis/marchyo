@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Memory tuning is zram-aware: with `marchyo.performance.tuning.memory.enable` and `zramSwap.enable` (the default) both on, `vm.swappiness` is 180 (was 10) and `vm.watermark_scale_factor` is 125 (was the kernel default 10). With zram swap off, swappiness stays 10. All stay `lib.mkDefault`; `vm.min_free_kbytes` is unchanged (524288).
+time: 2026-11-01T12:01:22.000000000Z

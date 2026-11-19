@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Bluetooth panel: devices grouped by state, pending connect and disconnect states, forget buttons and keyboard shortcuts, audio output switching, scans owned by the panel, state messages and a name filter.
+time: 2026-11-01T12:02:01.000000000Z

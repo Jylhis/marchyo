@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Only Linux systems are supported (`lib/systems.nix`), and `lib.inputsFor` is gone.
+time: 2026-11-01T12:01:35.000000000Z

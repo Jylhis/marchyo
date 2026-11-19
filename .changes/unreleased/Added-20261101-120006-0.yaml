@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  The `shell-load` heavy check loads the built shell (`harness.qml`) and the greeter under quickshell on the offscreen Qt platform and fails on a QML load or binding error.
+time: 2026-11-01T12:00:06.000000000Z

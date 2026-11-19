@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `services.pipewire.jack.enable` is no longer set (deprecated in nixpkgs); the desktop installs `pipewire.jack`, so a JACK client runs with `pw-jack <app>`.
+time: 2026-11-01T12:01:26.000000000Z

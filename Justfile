@@ -112,6 +112,16 @@ init:
     git config merge.mergiraf.name mergiraf
     git config merge.mergiraf.driver 'mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L'
 
+# Write a changelog fragment for the current change (interactive)
+[group('changelog')]
+change:
+    changie new
+
+# Regenerate CHANGELOG.md from .changes/
+[group('changelog')]
+changelog:
+    .changes/merge.sh
+
 # Lint commit subjects (convco), reject AI Co-Authored-By trailers, warn on a missing Assisted-by
 [group('check')]
 commit-lint range='origin/main..HEAD':

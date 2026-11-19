@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The dev shell is `shell.nix` (`nix develop` or `nix-shell`), pinned by `flake.lock` alone; devenv, `devenv.lock` and `just verify` are gone. The `qs` alias for QML tooling lives in `.dev/qml-modules`.
+time: 2026-11-01T12:01:39.000000000Z

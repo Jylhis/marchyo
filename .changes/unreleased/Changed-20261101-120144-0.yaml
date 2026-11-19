@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  A web app key on a chord marchyo binds gets no bind and a warning; the cheat sheet shows number-row keycodes as digits and matches downstream binds on chord and description.
+time: 2026-11-01T12:01:44.000000000Z

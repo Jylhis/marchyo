@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Bar status indicators (do not disturb, caffeine, night light, dictation, camera, microphone, screen recording, remote session) form a group: inactive ones appear dimmed while the pointer is on the bar and fold away 120 ms after it leaves, and active ones keep their place. The microphone indicator mutes on right click, steps the input volume by 5% on the wheel and opens the audio panel on middle click.
+time: 2026-11-01T12:01:59.000000000Z

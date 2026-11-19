@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.security.sudo.timestampTimeout` (default 10 minutes) sets `Defaults timestamp_timeout`.
+time: 2026-11-01T12:00:57.000000000Z

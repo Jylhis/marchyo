@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  A single GPU vendor with its `marchyo.graphics.prime.<vendor>BusId` set is pinned too: the `/dev/dri/marchyo-<vendor>` udev node matches that PCI address and `AQ_DRM_DEVICES` lists it, which tells an integrated and an external GPU of one vendor apart.
+time: 2026-11-01T12:00:15.000000000Z

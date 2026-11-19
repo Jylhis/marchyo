@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.performance.crash.panicOnOops` (`kernel.panic_on_oops = 1`, `kernel.panic = 10`) and `crash.sysrq` (`kernel.sysrq` bitmask), both off by default.
+time: 2026-11-01T12:00:10.000000000Z

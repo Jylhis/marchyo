@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Every user-visible string in the shell (bar, panels, launcher, lock, notifications, OSD, overview, polkit) and the runtime messages, notifications and menu labels of the `marchyo` CLI go through the string layer. `tests/shell/contracts-test.sh` fails on a QML text literal that bypasses `I18n`.
+time: 2026-11-01T12:01:47.000000000Z

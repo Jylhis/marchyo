@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.keyboard.fnMode` (`media` or `function`) sets the top-row default through the hid_apple, hid_asus and asus_wmi module options.
+time: 2026-11-01T12:00:50.000000000Z

@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Wi-Fi QR panel: a scannable square-module code, loading and error states, a password reveal, and a pending read is cancelled when the panel closes.
+time: 2026-11-01T12:02:03.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Shell Ui kit in `shell/Ui`, written on the Jylhis tokens: `Button`, `ButtonGroup`, `Toggle`, `TextField`, `FilterInput`, `Dropdown`, `SearchableDropdown`, `ConfirmDialog`, `PanelHero`, `PanelSectionHeader`, `PanelSeparator`, `PanelActionButton`, `PopupCard`, `PopupMenuRow` and `PointerMoveGate`. `Commons/Style` carries the control states (normal, hover, focus, selected, pressed) as fill colour, fill alpha and border, generated from the Jylhis border tokens.
+time: 2026-11-01T12:01:05.000000000Z

@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Skip the default email web app when `marchyo.defaults.email` is unset, which failed evaluation with `expected a string but found null`.
+time: 2026-11-01T12:02:33.000000000Z

@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Printers run driverless: USB printers are served through ipp-usb, and cups-browsed is off by default because its queues stuck at NO_DEST_FOUND while CUPS creates IPP Everywhere queues itself.
+time: 2026-11-01T12:02:48.000000000Z

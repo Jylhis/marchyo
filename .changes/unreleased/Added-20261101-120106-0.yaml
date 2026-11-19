@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Shell panels follow one keyboard contract: a panel opened by a key or IPC takes on-demand keyboard focus, Escape closes it, Up, Down and Tab move along the controls, Enter and Space activate, and hover is ignored while the keyboard drives. `Ui/Panel` exposes an overridable `keyboardFocus`.
+time: 2026-11-01T12:01:06.000000000Z

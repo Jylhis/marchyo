@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Display panel (`Panels/DisplayPanel.qml`, `panel.display` global shortcut): one display at a time with on/off, brightness (brightnessctl, ddcutil), scale, resolution and refresh rate, a layout map to drag displays around, right-click rotation and Extend|Mirror for the built-in panel. Changes apply in one `hyprctl eval` that shifts neighbours so no displays overlap, and are saved by monitor identity (make, model, serial) to `$XDG_STATE_HOME/marchyo/monitors/settings`, which Hyprland loads after `marchyo.monitors`; the file survives rebuilds. `marchyo.monitorPanel.persist = false` stops loading it. `marchyo monitor reset` deletes it and `marchyo monitor save --nix` prints the current layout as a `marchyo.monitors` snippet.
+time: 2026-11-01T12:01:04.000000000Z

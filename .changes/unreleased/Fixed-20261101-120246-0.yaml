@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Ghostty loads a Ghostty-only GTK stylesheet that shrinks its tab bar font without changing the interface font of other GTK apps.
+time: 2026-11-01T12:02:46.000000000Z

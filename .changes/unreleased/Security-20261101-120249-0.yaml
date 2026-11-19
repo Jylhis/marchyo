@@ -1,0 +1,4 @@
+kind: Security
+body: |-
+  ARP answers and announcements use only the interface's own address (`arp_ignore = 1`, `arp_announce = 2`), so a dock's Ethernet and Wi-Fi on one network keep their own routes.
+time: 2026-11-01T12:02:49.000000000Z

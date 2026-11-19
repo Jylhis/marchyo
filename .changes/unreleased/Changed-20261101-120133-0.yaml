@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The design system 6.0 is vendored in `lib/design` (palette and font readers, the DTCG token files, GTK stylesheets, the starship preset, the Emacs entry points and generated Ghostty, bat and Emacs theme snapshots) and replaces the `jylhis-design` flake input; `pkgs.jylhis-design-src` points at it.
+time: 2026-11-01T12:01:33.000000000Z

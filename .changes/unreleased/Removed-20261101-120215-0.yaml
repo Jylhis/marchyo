@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  The site's `/os` app and the `/search/` demo page (with its `site-option-paths` check and `site-option-defaults` eval test), and the shell dev MCP server (`shell/dev/mcp`, `mcp-test`).
+time: 2026-11-01T12:02:15.000000000Z

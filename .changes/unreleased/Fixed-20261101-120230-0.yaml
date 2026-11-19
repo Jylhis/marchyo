@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  Container DNS on podman networks: `modules/nixos/containers.nix` set `dns_enable`, which podman ignores; it now sets `dns_enabled`.
+time: 2026-11-01T12:02:30.000000000Z

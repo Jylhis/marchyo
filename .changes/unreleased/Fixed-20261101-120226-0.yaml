@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  The CI lock-sync check resolves the root nixpkgs input alias in `flake.lock` instead of reading `.nodes.nixpkgs`.
+time: 2026-11-01T12:02:26.000000000Z

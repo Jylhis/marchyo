@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  BBR congestion control with the fq qdisc and TCP MTU probing are on by default, outside `marchyo.performance.tuning.network`.
+time: 2026-11-01T12:01:55.000000000Z

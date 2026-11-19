@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `wayland.windowManager.hyprland.configType` is set to `"lua"` whenever the marchyo home module loads, not only with the desktop on, and no longer at `lib.mkDefault`.
+time: 2026-11-01T12:01:23.000000000Z

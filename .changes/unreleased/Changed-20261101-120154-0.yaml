@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Shell services are event-driven: the camera indicator scans on inotify events on `/dev/video*`, caffeine and night light are shell-owned state the CLI reports to, screen recording follows a marker file `marchyo capture record` holds, the lock-key widget re-reads on Caps Lock and Num Lock binds, and the charger rating follows power_supply uevents.
+time: 2026-11-01T12:01:54.000000000Z

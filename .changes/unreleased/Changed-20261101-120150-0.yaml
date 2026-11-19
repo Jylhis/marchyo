@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Git's `merge.conflictStyle` is `diff3` instead of `zdiff3`, as the mergiraf module sets it.
+time: 2026-11-01T12:01:50.000000000Z

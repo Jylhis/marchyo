@@ -1,0 +1,4 @@
+kind: Security
+body: |-
+  The minimal installer ISO allows key-only root SSH (`prohibit-password`, no password authentication) instead of password root login.
+time: 2026-11-01T12:02:50.000000000Z

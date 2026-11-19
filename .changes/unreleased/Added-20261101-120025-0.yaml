@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Command menu: `marchyo.menu.entries` (an attrset of dotted ids with icon, label, action, target, provider, aliases, description, when, checked, disabled and order) renders `~/.config/marchyo/menu.json`, merged per key with `menu.local.json` and reloaded live. The launcher gets a `menu` mode (route stack with a breadcrumb, Escape or Backspace on an empty field goes up, a typed query searches the whole subtree, guards run in one batched process per opening) with providers for apps, themes, wallpapers, fonts, power profiles and languages. `marchyo menu [route]` opens it over shell IPC (`--tui` keeps the gum menu), and `marchyo menu select|input` are a dmenu mode for scripts.
+time: 2026-11-01T12:00:25.000000000Z

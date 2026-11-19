@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Flake inputs are nixpkgs (nixos-unstable), home-manager, treefmt-nix, ncro, tinted-schemes and disko, each following the root nixpkgs; `default.nix` and flake-compat are gone. `nixConfig` lists the jylhis, jylhis-extra and nix-community caches.
+time: 2026-11-01T12:01:34.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.defaults.email = "gmail"` or `"outlook"` registers that web app (Gmail, Outlook) in `marchyo.webapps` when web apps are enabled, without the full Google or Microsoft 365 preset.
+time: 2026-11-01T12:00:24.000000000Z

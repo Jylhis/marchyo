@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  `marchyo-wallpapers` `passthru.light` and `passthru.dark` resolve to the realised output path instead of a dangling `placeholder`.
+time: 2026-11-01T12:02:42.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.nix.buildLimits` (off by default) runs `nix-daemon` in a `nix-build` slice with `memoryHigh` (`50%`) and `memoryMax` (`65%`), `OOMScoreAdjust = 500` and `OOMPolicy = "continue"`; `idlePriority` sets the daemon's idle CPU and I/O classes, and the kyber udev rule then sets mq-deadline, the scheduler under which idle-class I/O yields.
+time: 2026-11-01T12:00:08.000000000Z

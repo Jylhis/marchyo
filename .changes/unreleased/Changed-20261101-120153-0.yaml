@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  `marchyo logout`, `reboot` and `shutdown` close every window and wait up to 2 s for the apps in a transient user unit, then end the session or run `systemctl reboot|poweroff --no-wall`.
+time: 2026-11-01T12:01:53.000000000Z

@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The notification centre follows the panel keyboard contract: Up and Down walk the rows, Enter opens the row's link or the sender's window, Delete removes it. A left click on a row now opens it (it removed the row before); a right click removes it.
+time: 2026-11-01T12:01:40.000000000Z

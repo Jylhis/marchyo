@@ -1,0 +1,4 @@
+kind: Fixed
+body: |-
+  `marchyo toggle nightlight` sets the temperature over `hyprctl hyprsunset` instead of starting a second hyprsunset that kept `hyprsunset.service` from starting.
+time: 2026-11-01T12:02:37.000000000Z

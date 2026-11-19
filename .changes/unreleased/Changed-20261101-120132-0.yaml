@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The bash aliases, zoxide, nh and git (gitFull with LFS) are configured in Home Manager only, instead of in both NixOS and Home Manager from `modules/generic`; trippy and the fontconfig role mapping stay at system level. The `inputs` `extraSpecialArgs` is gone.
+time: 2026-11-01T12:01:32.000000000Z

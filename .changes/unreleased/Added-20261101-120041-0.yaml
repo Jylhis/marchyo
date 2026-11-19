@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Window utilities: `marchyo window pop|close-all|tiled-fullscreen` (pop-out on `Super + Alt + O`, recentred on monitor moves), `marchyo toggle fullscreen-desktop`, and an Appearance entry in `marchyo menu`.
+time: 2026-11-01T12:00:41.000000000Z

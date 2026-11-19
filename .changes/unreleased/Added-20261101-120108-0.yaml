@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo toggle reduce-motion` sets every shell transition to 0 ms at run time; `Style.duration()` also returns 0 while Hyprland's `animations:enabled` is off, probed at start and on each config reload. `tests/shell/motion-budget-test.js` fails on a bare animation duration or one over the longest Jylhis motion token.
+time: 2026-11-01T12:01:08.000000000Z

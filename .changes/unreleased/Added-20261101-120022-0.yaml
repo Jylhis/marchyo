@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `shell/dev/shot SURFACE` screenshots one shell surface in the sandbox (`launcher[:MODE]`, `menu[:ROUTE]`, `panel:ID`, `overview`, `screen`, or any registered surface opened by `--ipc` calls), after `--state query=|select=` and a settle wait, cropped from the composited output or, with `--grab`, the card alone; it prints the PNG path and the QML warnings since the previous shot.
+time: 2026-11-01T12:00:22.000000000Z

@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo update --check` reports whether the flake lock pins a newer nixpkgs than the running system.
+time: 2026-11-01T12:00:39.000000000Z

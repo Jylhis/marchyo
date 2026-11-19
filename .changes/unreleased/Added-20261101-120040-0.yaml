@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.theme.appearance.{transparency,corners,animations}`: opaque, transparent or glassy windows, theme, sharp or rounded corners, and auto, on or off animations (auto turns them off in a VM at session start). Live switches: `marchyo theme transparency|corners [--revert]` and `marchyo toggle animations`.
+time: 2026-11-01T12:00:40.000000000Z

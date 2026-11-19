@@ -431,6 +431,32 @@ in
                 bash tests/shell/contracts-test.sh
                 touch "$out"
               '';
+
+          # CHANGELOG.md is generated: it must equal the merge of .changes/.
+          changelog =
+            pkgs.runCommand "check-changelog"
+              {
+                nativeBuildInputs = [
+                  pkgs.changie
+                  pkgs.gnused
+                  pkgs.gawk
+                  pkgs.diffutils
+                ];
+              }
+              ''
+                mkdir src
+                cp -r ${./.changes} src/.changes
+                cp ${./.changie.yaml} src/.changie.yaml
+                cp ${./CHANGELOG.md} src/CHANGELOG.md
+                chmod -R u+w src
+                cd src
+                bash .changes/merge.sh
+                diff -u ${./CHANGELOG.md} CHANGELOG.md || {
+                  echo "CHANGELOG.md is stale: run just changelog" >&2
+                  exit 1
+                }
+                touch "$out"
+              '';
         };
       }
     ];

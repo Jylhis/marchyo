@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  Appearance controls: `marchyo.theme.appearance.gaps`, `marchyo theme gaps [on|off] [--apply|--revert]`, `marchyo theme bar-position top|bottom`, `marchyo theme bar-background opaque|glassy|clear` and `marchyo theme icons [name]`, in an Appearance section of the Control Center. The CLI writes `$XDG_STATE_HOME/marchyo/shell/style.json` (`reduceMotion`, `uiFont`, `barPosition`, `barBackground`), which the shell watches. `marchyo toggle reduce-motion` takes `--apply` and persists `marchyo.theme.appearance.reduceMotion`.
+time: 2026-11-01T12:01:12.000000000Z

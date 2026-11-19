@@ -1,0 +1,4 @@
+kind: Removed
+body: |-
+  `marchyo.defaults.browser` no longer sets `$BROWSER`. xdg-settings mapped it to the first desktop file running the browser binary (often a Chrome web app), so the browser reported it was not the default.
+time: 2026-11-01T12:02:18.000000000Z

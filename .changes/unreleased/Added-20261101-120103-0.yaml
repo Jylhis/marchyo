@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.workspaces.perMonitor` (default on): every monitor has its own workspaces 1-10 in a block keyed by make, model and serial, ported from Omarchy's monitor-workspaces.lua. `marchyo.monitors` seeds the block order, workspaces of an unplugged monitor return when it comes back, the bar labels each monitor's workspaces 1-10, and `marchyo monitor workspaces reset` clears the cache in `$XDG_STATE_HOME/marchyo/monitors/`.
+time: 2026-11-01T12:01:03.000000000Z

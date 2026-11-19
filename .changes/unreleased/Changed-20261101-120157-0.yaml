@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Bar items scale on press, animate colour and opacity changes, take a middle click, hide their tooltip when they disappear and warm the tooltip up once per hover run. A one-glyph compact item keeps a fixed slot, so glyph width does not move the bar.
+time: 2026-11-01T12:01:57.000000000Z

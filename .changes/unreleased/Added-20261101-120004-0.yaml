@@ -1,0 +1,4 @@
+kind: Added
+body: |-
+  `marchyo.notifications.unitFailures.{enable,ignore}` runs `marchyo-unit-failure-watch`, which sends a critical notification with a Show log button when a system or user unit fails. `enable` follows `marchyo.desktop.enable`; `ignore` takes shell globs on the unit name.
+time: 2026-11-01T12:00:04.000000000Z

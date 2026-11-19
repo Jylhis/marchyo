@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  Runtime theme, wallpaper, font and appearance overrides survive home-manager activations: an activation hook runs `marchyo runtime restore` (theme first, then wallpaper, fonts, appearance and toggles), best effort and never failing the activation.
+time: 2026-11-01T12:01:41.000000000Z
