@@ -7,7 +7,8 @@ let
   # lib.mkForce replaces them); ncro (modules/nixos/ncro.nix) routes whatever
   # the merged substituter list ends up holding.
   inherit ((builtins.fromJSON (builtins.readFile ./caches.json))) caches;
-  inherit (config.marchyo.nix) extraCaches;
+  inherit (config.marchyo.nix) extraCaches buildLimits;
+  idleBuilds = buildLimits.enable && buildLimits.idlePriority;
   cacheUrls = map (c: c.url) (caches ++ extraCaches);
   cacheKeys = lib.filter (k: k != null) (map (c: c.publicKey) (caches ++ extraCaches));
 in
@@ -30,6 +31,8 @@ in
       trusted-public-keys = cacheKeys;
     };
     optimise.automatic = lib.mkDefault true;
+    daemonCPUSchedPolicy = lib.mkIf idleBuilds (lib.mkDefault "idle");
+    daemonIOSchedClass = lib.mkIf idleBuilds (lib.mkDefault "idle");
   };
 
   # Hosts that schedule nix.gc themselves keep it; the rest get nh.
@@ -40,5 +43,19 @@ in
       dates = lib.mkDefault "weekly";
       extraArgs = lib.mkDefault "--keep 10 --keep-since 14d";
     };
+  };
+
+  systemd.slices.nix-build = lib.mkIf buildLimits.enable {
+    description = "Nix builds";
+    sliceConfig = {
+      MemoryHigh = buildLimits.memoryHigh;
+      MemoryMax = buildLimits.memoryMax;
+    };
+  };
+
+  systemd.services.nix-daemon.serviceConfig = lib.mkIf buildLimits.enable {
+    Slice = "nix-build.slice";
+    OOMScoreAdjust = 500;
+    OOMPolicy = "continue";
   };
 }

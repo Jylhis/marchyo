@@ -1,0 +1,18 @@
+---
+title: Logging
+description: Journal size and retention
+---
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `marchyo.logging.journal.maxUse` | `null or str` | `null` | `SystemMaxUse` in `journald.conf`; `null` keeps the journald default (10% of the filesystem, at most 4G) |
+| `marchyo.logging.journal.retention` | `null or str` | `null` | `MaxRetentionSec`, a systemd time span; `null` keeps entries until `maxUse` is reached |
+
+```nix
+marchyo.logging.journal = {
+  maxUse = "1G";
+  retention = "1month";
+};
+```
+
+Both set `services.journald.settings.Journal` keys only when given.

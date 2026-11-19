@@ -11,6 +11,13 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 ### Added
 
+- `marchyo.performance.oom.{preferProcesses,ignoreProcesses,freeSwapThreshold}` steer earlyoom: each list becomes one anchored `--prefer` / `--ignore` regex over the process `comm` name, either list adds `--sort-by-rss`, and the threshold sets `services.earlyoom.freeSwapThreshold`. All default to empty or `null`.
+- `marchyo.nix.buildLimits` (off by default) runs `nix-daemon` in a `nix-build` slice with `memoryHigh` (`50%`) and `memoryMax` (`65%`), `OOMScoreAdjust = 500` and `OOMPolicy = "continue"`; `idlePriority` sets the daemon's idle CPU and I/O classes, and the kyber udev rule then sets mq-deadline, the scheduler under which idle-class I/O yields.
+- `marchyo.performance.terminalMemoryLimit` (`{ high; max; }`, default `null`) bounds each Ghostty surface scope (`app-ghostty-surface-transient-<pid>.scope`) with a prefix drop-in.
+- `marchyo.performance.crash.panicOnOops` (`kernel.panic_on_oops = 1`, `kernel.panic = 10`) and `crash.sysrq` (`kernel.sysrq` bitmask), both off by default.
+- `marchyo.performance.mglruMinTtlMs` writes `/sys/kernel/mm/lru_gen/min_ttl_ms` at boot through a hardened oneshot, skipped without MGLRU.
+- `marchyo.performance.flightRecorder.enable` runs `below` with its store bounded to 1 GiB and 7 days.
+- `marchyo.logging.journal.maxUse` and `retention` set journald's `SystemMaxUse` and `MaxRetentionSec`.
 - `marchyo.nix.trustedUsers` sets `nix.settings.trusted-users` (default `@wheel` plus every enabled marchyo user, as before), and `marchyo.nix.extraCaches` appends binary caches (`url` and `publicKey`) to the built-in list: they join `substituters`, `trusted-substituters`, `trusted-public-keys` and the ncro upstreams.
 - A single GPU vendor with its `marchyo.graphics.prime.<vendor>BusId` set is pinned too: the `/dev/dri/marchyo-<vendor>` udev node matches that PCI address and `AQ_DRM_DEVICES` lists it, which tells an integrated and an external GPU of one vendor apart.
 - Home Manager sets `NIXPKGS_ALLOW_UNFREE=1` and writes `~/.config/nixpkgs/config.nix` with `allowUnfree = true` for every marchyo user while `nixpkgs.config.allowUnfree` is on (it is, with `lib.mkNixosSystem`).
@@ -81,6 +88,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 ### Changed
 
+- Memory tuning is zram-aware: with `marchyo.performance.tuning.memory.enable` and `zramSwap.enable` (the default) both on, `vm.swappiness` is 180 (was 10) and `vm.watermark_scale_factor` is 125 (was the kernel default 10). With zram swap off, swappiness stays 10. All stay `lib.mkDefault`; `vm.min_free_kbytes` is unchanged (524288).
 - `wayland.windowManager.hyprland.configType` is set to `"lua"` whenever the marchyo home module loads, not only with the desktop on, and no longer at `lib.mkDefault`.
 - btop's settings are `lib.mkDefault` values, so a plain `programs.btop.settings.<name>` overrides them without `lib.mkForce`.
 - **Breaking:** `marchyo.performance.disableMitigations` defaults to `false`, so CPU vulnerability mitigations stay on. Set it to `true` to pass `mitigations=off` again. The build warning for a container runtime with mitigations off at the default is gone.

@@ -40,6 +40,45 @@ in
       '';
     };
 
+    buildLimits = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Run local builds in the `nix-build` systemd slice with the memory
+          bounds below. `nix-daemon` joins the slice with `OOMScoreAdjust = 500`
+          (the kernel kills a runaway build before the session) and
+          `OOMPolicy = "continue"` (the daemon survives a killed build).
+        '';
+      };
+
+      memoryHigh = mkOption {
+        type = types.str;
+        default = "50%";
+        example = "16G";
+        description = "`MemoryHigh` of the `nix-build` slice: past it builds are throttled.";
+      };
+
+      memoryMax = mkOption {
+        type = types.str;
+        default = "65%";
+        example = "24G";
+        description = "`MemoryMax` of the `nix-build` slice: past it the kernel kills build processes.";
+      };
+
+      idlePriority = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Run builds with idle CPU and I/O classes
+          (`nix.daemonCPUSchedPolicy` and `nix.daemonIOSchedClass`, both
+          `lib.mkDefault`), so they use what the session leaves. The kyber
+          rule of `marchyo.performance.kyber` then sets mq-deadline, the
+          scheduler under which idle-class I/O yields.
+        '';
+      };
+    };
+
     extraCaches = mkOption {
       type = types.listOf cacheType;
       default = [ ];

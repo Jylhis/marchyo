@@ -78,6 +78,7 @@ export default defineConfig({
             'docs/configuration/hardware',
             'docs/configuration/power',
             'docs/configuration/performance',
+            'docs/configuration/logging',
             'docs/configuration/network',
             'docs/configuration/security',
             'docs/configuration/nix-cache',
