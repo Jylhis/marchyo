@@ -16,20 +16,15 @@ in
   options.marchyo.performance = {
     disableMitigations = mkOption {
       type = types.bool;
-      default = true;
+      default = false;
       description = ''
         Disable CPU vulnerability mitigations (Spectre, Meltdown, etc.) by
         passing `mitigations=off`, trading security for performance.
 
-        WARNING: this defaults to `true`, so mitigations are OFF unless you set
-        it to `false`. That default suits the trusted single-user workstations
-        marchyo targets (gaming, benchmarking, local development). Set it to
-        `false` on any host that runs untrusted code or untrusted containers —
-        including anything reachable by others, or a CI/build machine executing
-        code you did not write.
-
-        A host that enables a container runtime while this is on gets a build
-        warning; see `modules/nixos/performance.nix`.
+        Enable it only on a trusted single-user workstation (gaming,
+        benchmarking, local development). Leave it off on any host that runs
+        untrusted code or untrusted containers, is reachable by others, or
+        builds code you did not write.
       '';
     };
 

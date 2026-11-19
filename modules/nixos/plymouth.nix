@@ -25,7 +25,7 @@
       # NOTE: plain (priority-100) list, NOT mkDefault. kernelParams is a list
       # option, and a mkDefault list is dropped wholesale the moment any other
       # module defines kernelParams at normal priority (e.g. performance.nix's
-      # `mitigations=off`, which is on by default). A plain list merges instead.
+      # `mitigations=off` under disableMitigations). A plain list merges instead.
       # Downstreams that need to drop these can still use mkForce. `splash` and
       # `loglevel=` come from boot.plymouth and consoleLogLevel.
       kernelParams = [

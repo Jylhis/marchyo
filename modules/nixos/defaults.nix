@@ -61,8 +61,7 @@ let
   # unconditionally via modules/nixos/media.nix (x86_64-only).
 
   fileManagerPackages = {
-    inherit (pkgs) nautilus;
-    inherit (pkgs.xfce) thunar;
+    inherit (pkgs) nautilus thunar;
   };
 
   terminalFileManagerPackages = {

@@ -123,7 +123,7 @@ To find GPU bus IDs: `lspci | grep -E 'VGA|3D'`
 
 ## Performance Tuning
 
-`marchyo.performance.disableMitigations` (default `true`) disables CPU vulnerability mitigations.
+`marchyo.performance.disableMitigations` (default `false`) disables CPU vulnerability mitigations.
 
 `marchyo.performance.tuning.*` is opt-in kernel/sysctl/IO tuning, off by default. Enabling the master switch turns on the broadly-safe sub-toggles (`network`, `nvme`, `memory`, `hugePages`); the aggressive `compute` toggle stays off unless set explicitly.
 

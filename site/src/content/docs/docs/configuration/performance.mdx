@@ -7,21 +7,17 @@ description: Performance tuning options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `marchyo.performance.disableMitigations` | `bool` | `true` | Disable CPU vulnerability mitigations for maximum performance |
+| `marchyo.performance.disableMitigations` | `bool` | `false` | Disable CPU vulnerability mitigations for maximum performance |
+
+Mitigations (Spectre, Meltdown, etc.) are on by default. To trade them for performance:
 
 ```nix
 marchyo.performance.disableMitigations = true;
 ```
 
 :::caution
-This defaults to `true`, so mitigations (Spectre, Meltdown, etc.) are **off** unless you turn them back on. That suits the trusted single-user workstations Marchyo targets. Set it to `false` on any host that runs untrusted code or untrusted containers, is reachable by others, or builds code you did not write. Enabling a container runtime while mitigations are off produces a build warning.
+Turn this on only on a trusted single-user workstation. Leave it off on any host that runs untrusted code or untrusted containers, is reachable by others, or builds code you did not write.
 :::
-
-To keep mitigations enabled:
-
-```nix
-marchyo.performance.disableMitigations = false;
-```
 
 ## Kernel selection
 

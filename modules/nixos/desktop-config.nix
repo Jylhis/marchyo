@@ -55,7 +55,6 @@ in
       alsa.enable = lib.mkDefault true;
       alsa.support32Bit = lib.mkDefault true;
       pulse.enable = lib.mkDefault true;
-      jack.enable = lib.mkDefault true;
       wireplumber.enable = lib.mkDefault true;
     };
 
@@ -70,7 +69,9 @@ in
 
     # xdg-user-dirs-gtk generates GTK bookmarks for sidebar folders (Documents, Downloads, etc.)
     # wsdd lets gvfs discover Windows network shares (gvfs logs a missing wsdd otherwise)
+    # pw-jack runs a JACK client against PipeWire
     environment.systemPackages = [
+      config.services.pipewire.package.jack
       pkgs.xdg-user-dirs-gtk
       pkgs.wsdd
     ];

@@ -26,6 +26,8 @@
   networking.hostName = "marchyo-installer-graphical";
   system.stateVersion = "25.11";
 
+  boot.zfs.forceImportRoot = false;
+
   # Enable Flakes and Modern Nix Commands
   nix.settings.experimental-features = [
     "nix-command"

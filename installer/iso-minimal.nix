@@ -32,6 +32,8 @@
   # System identification
   networking.hostName = "marchyo-installer";
 
+  boot.zfs.forceImportRoot = false;
+
   # ISO metadata
   image.fileName = lib.mkForce "marchyo-installer-minimal-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
 
