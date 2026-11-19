@@ -25,6 +25,8 @@ A second group of flags default to `true` and only take effect when `marchyo.des
 | `marchyo.utilities.enable` | Date/time and battery notifications, `marchyo transcode`, `marchyo share` |
 | `marchyo.reminders.enable` | `marchyo reminder` timers and their keybindings |
 | `marchyo.screensaver.enable` | Terminal screensaver on idle |
+| `marchyo.desktop.compositorWatch.enable` | Restarts a hung Hyprland and keeps its logs ([details](#compositor-watchdog)) |
+| `marchyo.notifications.unitFailures.enable` | Notification when a system or user unit fails ([details](/docs/configuration/notifications/#unit-failures)) |
 
 ## Cascading defaults
 
@@ -84,6 +86,12 @@ When `marchyo.desktop.enable = true`, Marchyo configures:
 - **Desktop shell**: the unified Quickshell shell (bar, launcher, OSD, panels, notifications, lock, and polkit agent; see [Desktop Shell](/docs/configuration/shell/)). `marchyo.shell.enable = false` keeps only hyprlock and hyprpolkitagent, with no bar, OSD or notification daemon
 - **Terminal emulator** — Ghostty
 - **Default applications** — Configurable via [`marchyo.defaults.*`](/docs/configuration/default-apps/)
+
+### Compositor watchdog
+
+`marchyo.desktop.compositorWatch.enable` (default `true`, used with `marchyo.desktop.enable`) installs the user unit `marchyo-compositor-watch`. It probes Hyprland with `hyprctl` every 10 seconds. After three misses in a row it saves the Hyprland log, the process state and the thread states under `~/.local/state/marchyo/hyprland/hang-<time>/`, then sends SIGABRT (SIGKILL after 10 seconds) so the session returns to the greeter and systemd-coredump keeps a core. A gap of more than 30 seconds between probes, as after a suspend, resets the count. With `programs.hyprland.withUWSM` (the default), the log of every ended session is also copied to `~/.local/state/marchyo/hyprland/`, newest five kept, because the compositor log lives on tmpfs.
+
+`marchyo-compositor-watch --now` does the rescue once without the probe, for use from a text console or over SSH. The recovery steps are in the manual under Troubleshooting. Set the option to `false` to remove the unit, the command and the log keeping.
 
 ## Development tools
 

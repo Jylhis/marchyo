@@ -74,6 +74,25 @@ let
     "marchyo.webapps: the key of web app '${e.description}' (${e.combo}) is a marchyo bind, so the web app gets no bind. Pick another key (see marchyo.webapps.apps.*.key)."
   ) (lib.filter clashes selected);
 
+  # Every owner of a global chord. A chord with more than one owner fails the
+  # evaluation (lib/hotkey-claims.nix).
+  hotkeys = import ../../lib/hotkey-claims.nix { inherit lib; };
+  hyprBinds = config.wayland.windowManager.hyprland.settings.bind or [ ];
+  voxtypeHotkey = dictationEnabled && dictationBackend == "voxtype" && dictationCfg.pushToTalk.enable;
+  # The default XKB toggle and fcitx5's trigger keys are one feature
+  # (marchyo.keyboard) on the same chord, so they share an owner.
+  layoutSwitching = "keyboard layout switching";
+  claims =
+    hotkeys.fromTable "marchyo bind table" active
+    ++ hotkeys.fromHyprland "Hyprland binds of this configuration" (
+      lib.subtractLists (map render active) hyprBinds
+    )
+    ++ hotkeys.fromXkbOptions layoutSwitching config.home.keyboard.options
+    ++ hotkeys.fromFcitx5 layoutSwitching osConfig.i18n.inputMethod.fcitx5.settings
+    ++ hotkeys.fromGhostty "Ghostty" (config.programs.ghostty.settings.keybind or [ ])
+    ++ lib.optional voxtypeHotkey (hotkeys.claim "voxtype" dictationCfg.pushToTalk.key "push-to-talk");
+  hotkeyClashes = hotkeys.clashes marchyoCfg.keyboard.allowedHotkeyClashes claims;
+
   # Windows that get Ctrl+Shift+C/V from Super+C/V: the configured terminal
   # (the `terminal` Lua local) plus the terminals marchyo knows by class.
   terminalSetting = config.wayland.windowManager.hyprland.settings.terminal._var or "ghostty";
@@ -173,6 +192,10 @@ in
     }
     (lib.mkIf desktopEnabled {
       warnings = clashWarnings;
+      assertions = map (clash: {
+        assertion = false;
+        message = hotkeys.message clash;
+      }) hotkeyClashes;
       wayland.windowManager.hyprland.settings.bind = map render active;
       wayland.windowManager.hyprland.settings.window_rule = [
         {

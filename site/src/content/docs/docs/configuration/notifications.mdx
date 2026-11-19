@@ -90,6 +90,19 @@ the **Set up** panel (`marchyo shell open setup`): a checklist of git identity,
 SSH key, FIDO2 and fingerprint, language, keyboard, theme, agent login and
 dictation, each with a Fix button. `marchyo setup --done` ends the reminders.
 
+## Unit failures
+
+`marchyo.notifications.unitFailures.enable` (default: follows `marchyo.desktop.enable`) runs the user unit `marchyo-unit-failure-watch`. It follows the journal for systemd's "unit failed" message and sends a critical notification, `<unit> failed` with the result, whose **Show log** button opens `journalctl -b -u <unit>` in a terminal. A user outside `wheel`, `adm` and `systemd-journal` cannot read the system journal and is told only about the failures of their own user units. A unit is announced at most once per minute, and the watcher never announces itself.
+
+`marchyo.notifications.unitFailures.ignore` is a list of shell globs matched against the full unit name; matching units are never announced.
+
+```nix
+marchyo.notifications.unitFailures.ignore = [
+  "app-*.scope"
+  "flatpak-*"
+];
+```
+
 ## Per-sender rules
 
 `marchyo.notifications.rules` is a list of rules matched on a notification's

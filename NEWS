@@ -159,6 +159,15 @@ grouped by that release.  CHANGELOG.md lists them in detail.
   one-time token, and the shell checks it again when a notification is
   replaced.
 
+  Hung desktop: with marchyo.desktop.enable, the user unit
+  marchyo-compositor-watch restarts a Hyprland that stops answering
+  and saves the log and process state under
+  ~/.local/state/marchyo/hyprland/.  From a text console,
+  "marchyo-compositor-watch --now" does it once.  A system or user unit
+  that fails now raises a notification with a Show log button
+  (marchyo.notifications.unitFailures).  Two owners of one key chord
+  fail the build; marchyo.keyboard.allowedHotkeyClashes allows a chord.
+
   What changed and first-login setup: when Marchyo's NEWS changed, one
   notification opens a panel with the new entries and a summary of the
   last switch.  On the first login a welcome notification opens a setup

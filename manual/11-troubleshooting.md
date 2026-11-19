@@ -35,6 +35,40 @@ answer. Here are the ones people hit first.
   `input` group, which Marchyo adds for you when push-to-talk is enabled. See
   [Dictation](/docs/configuration/dictation/).
 
+## The desktop is frozen
+
+When only the Hyprland compositor hangs, the kernel, the services and the network keep
+running, but the screen and the keyboard do not answer. The terminals die with the
+compositor. Try these in order and stop at the first one that works.
+
+1. **Wait about 40 seconds.** The user unit `marchyo-compositor-watch` probes Hyprland
+   with `hyprctl` every 10 seconds. After three failed probes in a row it saves
+   evidence, sends SIGABRT to Hyprland (SIGKILL after 10 seconds) and the session
+   returns to the greeter. It is on with `marchyo.desktop.enable`; turn it off with
+   `marchyo.desktop.compositorWatch.enable = false`.
+2. **Switch to a text console.** Press `Alt+SysRq+R` to take the keyboard from the
+   compositor (this needs `marchyo.performance.crash.sysrq` to allow keyboard
+   control, for example `180`), then `Ctrl+Alt+F3` and log in. Over SSH, log in as the
+   same user instead.
+3. **Run the rescue once.** `marchyo-compositor-watch --now` does the same capture and
+   kill as the watchdog without the probe, prints where it saved the evidence, and the
+   session returns to the greeter. Over SSH it needs the session's `XDG_RUNTIME_DIR`,
+   for example `XDG_RUNTIME_DIR=/run/user/$(id -u) marchyo-compositor-watch --now`.
+4. **Press the power key once, briefly.** logind runs a clean poweroff. Do not hold it.
+
+### Where the evidence is
+
+Each rescue writes `~/.local/state/marchyo/hyprland/hang-<time>/` with
+`hyprland.log` (the Hyprland log, which otherwise lives on tmpfs), `status`
+(`/proc/<pid>/status`), `threads` (`/proc/<pid>/task/*/stat`, one line per thread) and
+`sched` (the scheduling policy from `chrt`). The SIGABRT also leaves a core dump:
+`coredumpctl list Hyprland`. After a normal session end the last five Hyprland logs stay
+in `~/.local/state/marchyo/hyprland/`. The watchdog's own log is
+`journalctl --user -u marchyo-compositor-watch -b`.
+
+With `marchyo.performance.flightRecorder.enable = true`, `sudo below replay -t "<time>"`
+shows CPU, memory, pressure and process history around the hang.
+
 ## Questions people ask
 
 **How does Marchyo relate to omarchy?**
