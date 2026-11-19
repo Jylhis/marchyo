@@ -20,6 +20,17 @@ in
     # not stand up a rootful daemon or grant passwordless root to the session.
     headless-dev.eval-containers-podman-by-default = podmanOnly;
 
+    # Rootless podman gets cpuset delegated to the user manager and a weekly
+    # prune; the Docker backend (dev-tweaks) gets neither.
+    headless-dev.eval-containers-podman-delegate-and-prune =
+      cfg:
+      cfg.systemd.services."user@".serviceConfig.Delegate == "pids memory cpu cpuset"
+      && cfg.virtualisation.podman.autoPrune.enable;
+    dev-tweaks.eval-containers-docker-no-delegate =
+      cfg:
+      !(cfg.systemd.services."user@".serviceConfig ? Delegate)
+      && !cfg.virtualisation.podman.autoPrune.enable;
+
     # Docker backend opt-in (dev-tweaks: backend = "docker"): selecting the
     # Docker backend enables the daemon, but the user is NOT placed in the
     # root-equivalent `docker` group. This is the regression guard — opting

@@ -6,7 +6,12 @@
   ...
 }:
 let
-  inherit (lib) mkIf mkMerge;
+  inherit (lib) mkIf mkMerge mkDefault;
+
+  # btop reads Intel and AMD GPUs from sysfs. NVIDIA needs NVML, which the
+  # nixpkgs btop (no cudaSupport) cannot dlopen on NixOS, so an NVIDIA-only
+  # host gets no GPU box by default.
+  hasSupportedGpu = lib.any (v: v != "nvidia") osConfig.marchyo.graphics.vendors;
 
   # The theme dir's btop.theme is reached through the current-theme pointer
   # (theme-runtime.nix), so a runtime theme switch needs no relink.
@@ -23,7 +28,7 @@ in
   programs.btop = {
     enable = true;
     settings = mkMerge [
-      {
+      (lib.mapAttrs (_: mkDefault) {
         theme_background = true;
         truecolor = true;
         force_tty = false;
@@ -35,7 +40,7 @@ in
         graph_symbol_mem = "default";
         graph_symbol_net = "default";
         graph_symbol_proc = "default";
-        shown_boxes = "cpu mem net proc";
+        shown_boxes = "cpu mem net proc${lib.optionalString hasSupportedGpu " gpu0"}";
         update_ms = 2000;
         proc_sorting = "cpu lazy";
         proc_reversed = false;
@@ -97,8 +102,8 @@ in
         custom_gpu_name3 = "";
         custom_gpu_name4 = "";
         custom_gpu_name5 = "";
-      }
-      (mkIf themed { color_theme = "marchyo"; })
+      })
+      (mkIf themed { color_theme = mkDefault "marchyo"; })
     ];
   };
 }

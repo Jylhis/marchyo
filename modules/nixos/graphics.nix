@@ -79,6 +79,11 @@ let
   drmOrder =
     lib.optional (cfg.primary != null) cfg.primary ++ lib.remove cfg.primary (lib.unique cfg.vendors);
 
+  # Several vendors always pin. A single vendor pins only when its bus ID is
+  # set, which selects one card among several of that vendor (an integrated GPU
+  # plus an external one).
+  pinDrm = cfg.primary != null && (multiGpu || busIds.${cfg.primary} != "");
+
   mUsers = lib.attrNames (lib.filterAttrs (_name: user: user.enable) config.marchyo.users);
 
   nvidiaModules = [
@@ -243,9 +248,9 @@ in
       };
     })
 
-    # Several GPUs: give each a stable node and have Hyprland render on the
-    # primary one first.
-    (lib.mkIf (multiGpu && cfg.primary != null) {
+    # Several GPUs, or one vendor with a bus ID: give each a stable node and
+    # have Hyprland render on the primary one first.
+    (lib.mkIf pinDrm {
       services.udev.extraRules = lib.concatMapStringsSep "\n" udevRule drmOrder;
 
       environment.sessionVariables = lib.mkIf config.marchyo.desktop.enable {

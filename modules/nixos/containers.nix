@@ -20,6 +20,7 @@ in
         enable = lib.mkDefault true;
         defaultNetwork.settings.dns_enabled = lib.mkDefault true;
         dockerCompat = true;
+        autoPrune.enable = lib.mkDefault true;
       };
 
       docker = lib.mkIf (backend == "docker") {
@@ -27,6 +28,12 @@ in
         daemon.settings.features.cdi = true;
       };
     };
+
+    # systemd delegates "pids memory cpu" to the user manager; rootless podman
+    # needs cpuset as well for `--cpuset-cpus` and `--cpuset-mems`.
+    systemd.services."user@".serviceConfig.Delegate = lib.mkIf (backend == "podman") (
+      lib.mkDefault "pids memory cpu cpuset"
+    );
 
     environment.systemPackages =
       with pkgs;

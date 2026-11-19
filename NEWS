@@ -78,6 +78,16 @@ grouped by that release.  CHANGELOG.md lists them in detail.
 
 ** New features
 
+  Nix: marchyo.nix.extraCaches adds binary caches (url, publicKey) to
+  marchyo's list, and marchyo.nix.trustedUsers sets the Nix trusted
+  users (default @wheel plus the marchyo users).  Home Manager sets
+  NIXPKGS_ALLOW_UNFREE and ~/.config/nixpkgs/config.nix while the
+  system allows unfree packages.
+
+  Graphics: with one GPU vendor, setting marchyo.graphics.prime.<vendor>BusId
+  pins Hyprland to that card, so an integrated and an external GPU of
+  one vendor can be told apart.
+
   Web app preset marchyo.webapps.presets.google adds the Google
   Workspace apps: Gmail, Calendar, Drive, Docs, Sheets, Slides, Meet,
   Chat, Keep, Forms, Sites, Contacts and Tasks.
