@@ -12,8 +12,7 @@ let
 
   # Follow marchyo.defaults.fileManager, falling back to xdg-open when null.
   fileManagerPackages = {
-    inherit (pkgs) nautilus;
-    inherit (pkgs.xfce) thunar;
+    inherit (pkgs) nautilus thunar;
   };
   fileManagerName = marchyoCfg.defaults.fileManager;
   fileManagerDeps =

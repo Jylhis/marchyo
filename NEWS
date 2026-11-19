@@ -27,6 +27,13 @@ grouped by that release.  CHANGELOG.md lists them in detail.
   Shift+Caps Lock).  The default web apps keep their Super+Shift keys,
   GitHub on Super+Shift+G included.
 
+  Security (breaking): CPU vulnerability mitigations stay on.
+  marchyo.performance.disableMitigations defaults to false; set it to
+  true to pass mitigations=off again.
+
+  Audio: JACK clients run through the pw-jack wrapper (pw-jack APP);
+  services.pipewire.jack.enable is no longer set.
+
   Options (breaking): options that only passed a value on to an
   upstream NixOS option are retired.  Renamed ones keep working with a
   warning (the marchyo. prefix is left out on the left):

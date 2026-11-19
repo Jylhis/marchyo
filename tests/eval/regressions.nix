@@ -5,11 +5,21 @@
 {
   refs = {
     # boot.kernelParams is a list option. plymouth.nix's quiet-boot params must
-    # MERGE with performance.nix's `mitigations=off` (on by default), not be
-    # dropped. They were previously set with mkDefault, which a normal-priority
-    # list definition discards wholesale.
-    headless.eval-kernelparams-merge =
+    # MERGE with performance.nix's `mitigations=off` (headless-tweaks sets
+    # disableMitigations), not be dropped: a mkDefault list is discarded
+    # wholesale by a normal-priority list definition.
+    headless-tweaks.eval-kernelparams-merge =
       c: lib.elem "quiet" c.boot.kernelParams && lib.elem "mitigations=off" c.boot.kernelParams;
+
+    # nixpkgs warns while boot.zfs.forceImportRoot is undefined on a ZFS host.
+    headless.eval-zfs-no-force-import = c: !c.boot.zfs.forceImportRoot;
+
+    # JACK clients run through `pw-jack`; services.pipewire.jack.enable is
+    # deprecated upstream.
+    desktop.eval-pipewire-jack-wrapper =
+      c:
+      !c.services.pipewire.jack.enable
+      && lib.elem c.services.pipewire.package.jack c.environment.systemPackages;
 
     # A consumer can still drop the quiet-boot params with mkForce
     # (headless-tweaks-2 sets boot.kernelParams = mkForce [ "mitigations=off" ]).

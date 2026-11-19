@@ -16,6 +16,8 @@ in
     configurationLimit = lib.mkDefault 5;
   };
 
+  boot.zfs.forceImportRoot = lib.mkDefault false;
+
   services.greetd = lib.mkIf cfg.desktop.enable {
     enable = true;
     settings.default_session.command = lib.concatStringsSep " " [
