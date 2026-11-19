@@ -462,6 +462,10 @@
       "$value": "{color.text}",
       "$description": "fill of an irreversible action: ink by day (red is the primary), red by night; always with the close icon and a verb"
     },
+    "destructive-face": {
+      "$value": "{color.destructive}",
+      "$description": "ground of the destructive key: the destructive ink by day; the plain key face by night, where the label carries the red, so the primary stays the one loud fill"
+    },
     "scrim": {
       "$value": {
         "colorSpace": "srgb",

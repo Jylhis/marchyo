@@ -64,7 +64,7 @@
       (syn-docstring "#92a07e") ; muted green
       ;; Semantic status — Modus red/yellow/green/blue accents
       (err  "#ff6a5a")
-      (warn "#ffd08a")
+      (warn "#ffe45c")
       (ok   "#7fd18a")
       (info "#4fd1bd"))
 
@@ -391,7 +391,7 @@
    `(ansi-color-black               ((,class :foreground "#1a1713" :background "#1a1713")))
    `(ansi-color-red                 ((,class :foreground "#ff6a5a" :background "#ff6a5a")))
    `(ansi-color-green               ((,class :foreground "#7fd18a" :background "#7fd18a")))
-   `(ansi-color-yellow              ((,class :foreground "#ffd08a" :background "#ffd08a")))
+   `(ansi-color-yellow              ((,class :foreground "#ffe45c" :background "#ffe45c")))
    `(ansi-color-blue                ((,class :foreground "#8ab8ff" :background "#8ab8ff")))
    `(ansi-color-magenta             ((,class :foreground "#ff6db6" :background "#ff6db6")))
    `(ansi-color-cyan                ((,class :foreground "#00b8c6" :background "#00b8c6")))
@@ -433,15 +433,15 @@
 (custom-theme-set-variables
  'jylhis-dark
  '(ansi-color-names-vector
-   ["#1a1713" "#ff6a5a" "#7fd18a" "#ffd08a"
+   ["#1a1713" "#ff6a5a" "#7fd18a" "#ffe45c"
     "#8ab8ff" "#ff6db6" "#00b8c6" "#9c9488"])
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(hl-todo-keyword-faces
    '(("FIXME"      . "#ff6a5a")
      ("BUG"        . "#ff6a5a")
-     ("TODO"       . "#ffd08a")
-     ("HACK"       . "#ffd08a")
+     ("TODO"       . "#ffe45c")
+     ("HACK"       . "#ffe45c")
      ("NOTE"       . "#4fd1bd")
      ("REVIEW"     . "#4fd1bd")
      ("DEPRECATED" . "#746a5c"))))

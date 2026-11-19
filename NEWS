@@ -27,6 +27,14 @@ grouped by that release.  CHANGELOG.md lists them in detail.
   Shift+Caps Lock).  The default web apps keep their Super+Shift keys,
   GitHub on Super+Shift+G included.
 
+  Design system 7.0.0: in dark mode the warning colour, the focus ring
+  and terminal yellow are a lemon yellow (#ffe45c, was #ffd08a) in the
+  GTK, Ghostty, bat, Emacs, shell and console themes; light mode keeps
+  its colours.  The palette gains destructive-face, and the shell tree
+  carries the design system's generated token singleton
+  (shell/Commons/Tokens.qml).  The contrast variants are in the palette
+  but marchyo.theme.variant does not select them yet.
+
   Security (breaking): CPU vulnerability mitigations stay on.
   marchyo.performance.disableMitigations defaults to false; set it to
   true to pass mitigations=off again.

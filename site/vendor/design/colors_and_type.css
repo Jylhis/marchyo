@@ -39,14 +39,13 @@ body,
 }
 
 /* Display title. Page h1 and the section .ds-title sit in Jost
-   (--font-heading) at weight 500; tight leading, tight tracking. */
+   (--font-heading) at weight 500. */
 h1,
 .ds-h1,
 .ds-title {
   font-family: var(--font-heading);
   font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
   color: var(--color-text-heading);
   text-wrap: balance;
 }
@@ -72,15 +71,13 @@ h4,
 blockquote {
   hanging-punctuation: first;
 }
-/* Sizes come from the type scale in tokens.css so headings cannot drift
-   from the source of truth. h1 is the large display face;
-   sub-headings step down through the scale at Fira Sans semibold. */
+/* Sizes come from the named type styles in tokens.css so headings cannot
+   drift from the source of truth. h4 takes the lead size. */
 h1,
 .ds-h1,
 .ds-title {
   font-size: var(--type-h1-size);
   line-height: var(--type-h1-line-height);
-  letter-spacing: 0;
 }
 h2,
 .ds-h2 {
@@ -161,16 +158,7 @@ h4,
   color: var(--color-text-muted);
 }
 
-/* Readout — a single machine-shaped value in running chrome (durations,
-   latencies, counts). Same face, at body size. */
-.ds-readout {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--type-body-size);
-  color: var(--color-text-heading);
-}
-
-/* Subtitle — muted grotesk italic sitting just below a title */
+/* Subtitle: muted italic body face just below a title */
 .ds-subtitle {
   font-size: var(--type-lead-size);
   color: var(--color-text-muted);
@@ -193,7 +181,7 @@ h4,
   background-color: var(--color-code-bg);
   color: var(--color-code-text);
   border: var(--border-hairline) solid var(--color-code-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   padding: 0.1em 0.3em;
 }
 

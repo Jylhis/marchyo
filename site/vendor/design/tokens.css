@@ -33,11 +33,9 @@
   --color-focus-ring: #22201c;
   --color-selection-bg: #f0dfb8;
   --color-cursor: #eb0000;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #1e4f8a;
-  --color-accent-hover: #1a1814;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #22201c;
+  --color-destructive-face: #22201c;
   /* Borders */
   --color-border: #847c6e;
   --color-border-strong: #5e574c;
@@ -93,13 +91,9 @@
   --color-chart-4: #3e7a3a;
   --color-chart-5: #b58a5a;
   --color-chart-ink: #22201c;
-  --color-accent-subtle: #f0dfb8;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
-  --color-accent-foreground: #f4efe4;
-  --color-accent-hover-foreground: #f4efe4;
   --color-destructive-foreground: #f4efe4;
+  --color-destructive-face-foreground: #f4efe4;
   --color-bg-subtle-foreground: #22201c;
   --color-surface-foreground: #22201c;
   --color-surface-raised-foreground: #22201c;
@@ -127,13 +121,6 @@
   /* Radii: one corner */
   --radius-none: 0px;
   --radius: 2px;
-  /* Deprecated in 5.0: aliases of none and default; removed in 6.0 */
-  --radius-xs: var(--radius-none);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-pill: var(--radius);
   /* Border widths */
   --border-hairline: 1px;
   --border-rule: 2px;
@@ -207,17 +194,6 @@
   --type-code-line-height: 1.55; /* @kind other */
   --type-code-weight: 400; /* @kind other */
   --type-code: 400 0.875rem/1.55 var(--font-mono); /* @kind other */
-  /* Type scale: deprecated in 5.0, aliases of the styles; removed in 6.0 */
-  --type-scale-0: var(--type-display-size);
-  --type-scale-1: var(--type-h1-size);
-  --type-scale-2: var(--type-h2-size);
-  --type-scale-3: var(--type-lead-size);
-  --type-scale-4: var(--type-h3-size);
-  --type-scale-5: var(--type-body-size);
-  --type-scale-6: var(--type-ui-size);
-  --type-scale-7: var(--type-small-size);
-  --type-scale-8: var(--type-data-size);
-  --type-scale-9: var(--type-label-size);
   /* Type scaling floors */
   --type-readable-min: 0.875rem;
   --type-floor: 0.8125rem;
@@ -237,6 +213,8 @@
   --transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
   --transition-long: 480ms cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */
   --transition-press: 80ms cubic-bezier(0, 0, 0.58, 1); /* @kind other */
+  --transition-surface-enter: 250ms cubic-bezier(0.2, 0.6, 0.2, 1); /* @kind other */
+  --transition-surface-exit: 150ms cubic-bezier(0.25, 0.1, 0.25, 1); /* @kind other */
 }
 
 /* Jylhis — Amber — amber on terminal black */
@@ -263,14 +241,12 @@
   /* Links and focus */
   --color-link: #8ab8ff;
   --color-link-underline-hover: #ffd08a;
-  --color-focus-ring: #ffd08a;
+  --color-focus-ring: #ffe45c;
   --color-selection-bg: #3a3020;
   --color-cursor: #ffa028;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #8ab8ff;
-  --color-accent-hover: #f7f3ec;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #ff6a5a;
+  --color-destructive-face: #1a1713;
   /* Borders */
   --color-border: #786e60;
   --color-border-strong: #8a8070;
@@ -316,7 +292,7 @@
   --syntax-docstring-style: italic; /* @kind other */
   /* Status */
   --color-status-err: #ff6a5a;
-  --color-status-warn: #ffd08a;
+  --color-status-warn: #ffe45c;
   --color-status-ok: #7fd18a;
   --color-status-info: #4fd1bd;
   /* Chart: the Du Bois palette, inside charts only */
@@ -326,13 +302,9 @@
   --color-chart-4: #5fa85f;
   --color-chart-5: #c9a06e;
   --color-chart-ink: #f2ede4;
-  --color-accent-subtle: #3a3020;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-  --color-accent-foreground: #0b0b0b;
-  --color-accent-hover-foreground: #0b0b0b;
   --color-destructive-foreground: #0b0b0b;
+  --color-destructive-face-foreground: #ff6a5a;
   --color-bg-subtle-foreground: #f2ede4;
   --color-surface-foreground: #f2ede4;
   --color-surface-raised-foreground: #f2ede4;
@@ -369,11 +341,9 @@
   --color-focus-ring: #22201c;
   --color-selection-bg: #f0dfb8;
   --color-cursor: #eb0000;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #1e4f8a;
-  --color-accent-hover: #1a1814;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #22201c;
+  --color-destructive-face: #22201c;
   /* Borders */
   --color-border: #847c6e;
   --color-border-strong: #5e574c;
@@ -429,13 +399,9 @@
   --color-chart-4: #3e7a3a;
   --color-chart-5: #b58a5a;
   --color-chart-ink: #22201c;
-  --color-accent-subtle: #f0dfb8;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
-  --color-accent-foreground: #f4efe4;
-  --color-accent-hover-foreground: #f4efe4;
   --color-destructive-foreground: #f4efe4;
+  --color-destructive-face-foreground: #f4efe4;
   --color-bg-subtle-foreground: #22201c;
   --color-surface-foreground: #22201c;
   --color-surface-raised-foreground: #22201c;
@@ -478,14 +444,12 @@
     /* Links and focus */
     --color-link: #8ab8ff;
     --color-link-underline-hover: #ffd08a;
-    --color-focus-ring: #ffd08a;
+    --color-focus-ring: #ffe45c;
     --color-selection-bg: #3a3020;
     --color-cursor: #ffa028;
-    /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-    --color-accent: #8ab8ff;
-    --color-accent-hover: #f7f3ec;
     --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
     --color-destructive: #ff6a5a;
+    --color-destructive-face: #1a1713;
     /* Borders */
     --color-border: #786e60;
     --color-border-strong: #8a8070;
@@ -531,7 +495,7 @@
     --syntax-docstring-style: italic; /* @kind other */
     /* Status */
     --color-status-err: #ff6a5a;
-    --color-status-warn: #ffd08a;
+    --color-status-warn: #ffe45c;
     --color-status-ok: #7fd18a;
     --color-status-info: #4fd1bd;
     /* Chart: the Du Bois palette, inside charts only */
@@ -541,13 +505,9 @@
     --color-chart-4: #5fa85f;
     --color-chart-5: #c9a06e;
     --color-chart-ink: #f2ede4;
-    --color-accent-subtle: #3a3020;
-    --shadow-raised: none; /* @kind shadow */
-    --shadow-keycap: none; /* @kind shadow */
     --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-    --color-accent-foreground: #0b0b0b;
-    --color-accent-hover-foreground: #0b0b0b;
     --color-destructive-foreground: #0b0b0b;
+    --color-destructive-face-foreground: #ff6a5a;
     --color-bg-subtle-foreground: #f2ede4;
     --color-surface-foreground: #f2ede4;
     --color-surface-raised-foreground: #f2ede4;
@@ -587,11 +547,9 @@
     --color-focus-ring: #22201c;
     --color-selection-bg: #f0dfb8;
     --color-cursor: #eb0000;
-    /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-    --color-accent: #1e4f8a;
-    --color-accent-hover: #1a1814;
     --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
     --color-destructive: #22201c;
+    --color-destructive-face: #22201c;
     /* Borders */
     --color-border: #847c6e;
     --color-border-strong: #5e574c;
@@ -647,13 +605,9 @@
     --color-chart-4: #3e7a3a;
     --color-chart-5: #b58a5a;
     --color-chart-ink: #22201c;
-    --color-accent-subtle: #f0dfb8;
-    --shadow-raised: none; /* @kind shadow */
-    --shadow-keycap: none; /* @kind shadow */
     --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
-    --color-accent-foreground: #f4efe4;
-    --color-accent-hover-foreground: #f4efe4;
     --color-destructive-foreground: #f4efe4;
+    --color-destructive-face-foreground: #f4efe4;
     --color-bg-subtle-foreground: #22201c;
     --color-surface-foreground: #22201c;
     --color-surface-raised-foreground: #22201c;
@@ -689,11 +643,9 @@
   --color-focus-ring: #22201c;
   --color-selection-bg: #e8cf94;
   --color-cursor: #c40000;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #163c6a;
-  --color-accent-hover: #0f0e0c;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #22201c;
+  --color-destructive-face: #22201c;
   /* Borders */
   --color-border: #5e574c;
   --color-border-strong: #3d382f;
@@ -749,13 +701,9 @@
   --color-chart-4: #3e7a3a;
   --color-chart-5: #b58a5a;
   --color-chart-ink: #22201c;
-  --color-accent-subtle: #e8cf94;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
-  --color-accent-foreground: #f4efe4;
-  --color-accent-hover-foreground: #f4efe4;
   --color-destructive-foreground: #f4efe4;
+  --color-destructive-face-foreground: #f4efe4;
   --color-bg-subtle-foreground: #0f0e0c;
   --color-surface-foreground: #0f0e0c;
   --color-surface-raised-foreground: #0f0e0c;
@@ -794,14 +742,12 @@
   /* Links and focus */
   --color-link: #a8ccff;
   --color-link-underline-hover: #ffd08a;
-  --color-focus-ring: #ffd08a;
+  --color-focus-ring: #ffe45c;
   --color-selection-bg: #3a3020;
   --color-cursor: #ffa028;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #a8ccff;
-  --color-accent-hover: #ffffff;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #ff8a7d;
+  --color-destructive-face: #14120f;
   /* Borders */
   --color-border: #a89a86;
   --color-border-strong: #d6cfc3;
@@ -847,7 +793,7 @@
   --syntax-docstring-style: italic; /* @kind other */
   /* Status */
   --color-status-err: #ff8a7d;
-  --color-status-warn: #ffd08a;
+  --color-status-warn: #ffe45c;
   --color-status-ok: #9fe0a8;
   --color-status-info: #7ee0d0;
   /* Chart: the Du Bois palette, inside charts only */
@@ -857,13 +803,9 @@
   --color-chart-4: #5fa85f;
   --color-chart-5: #c9a06e;
   --color-chart-ink: #ffffff;
-  --color-accent-subtle: #3a3020;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-  --color-accent-foreground: #000000;
-  --color-accent-hover-foreground: #000000;
   --color-destructive-foreground: #0b0b0b;
+  --color-destructive-face-foreground: #ff8a7d;
   --color-bg-subtle-foreground: #ffffff;
   --color-surface-foreground: #ffffff;
   --color-surface-raised-foreground: #ffffff;
@@ -901,14 +843,12 @@
   /* Links and focus */
   --color-link: #a8ccff;
   --color-link-underline-hover: #ffd08a;
-  --color-focus-ring: #ffd08a;
+  --color-focus-ring: #ffe45c;
   --color-selection-bg: #3a3020;
   --color-cursor: #ffa028;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #a8ccff;
-  --color-accent-hover: #ffffff;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #ff8a7d;
+  --color-destructive-face: #14120f;
   /* Borders */
   --color-border: #a89a86;
   --color-border-strong: #d6cfc3;
@@ -954,7 +894,7 @@
   --syntax-docstring-style: italic; /* @kind other */
   /* Status */
   --color-status-err: #ff8a7d;
-  --color-status-warn: #ffd08a;
+  --color-status-warn: #ffe45c;
   --color-status-ok: #9fe0a8;
   --color-status-info: #7ee0d0;
   /* Chart: the Du Bois palette, inside charts only */
@@ -964,13 +904,9 @@
   --color-chart-4: #5fa85f;
   --color-chart-5: #c9a06e;
   --color-chart-ink: #ffffff;
-  --color-accent-subtle: #3a3020;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-  --color-accent-foreground: #000000;
-  --color-accent-hover-foreground: #000000;
   --color-destructive-foreground: #0b0b0b;
+  --color-destructive-face-foreground: #ff8a7d;
   --color-bg-subtle-foreground: #ffffff;
   --color-surface-foreground: #ffffff;
   --color-surface-raised-foreground: #ffffff;
@@ -1011,11 +947,9 @@
   --color-focus-ring: #22201c;
   --color-selection-bg: #e8cf94;
   --color-cursor: #c40000;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #163c6a;
-  --color-accent-hover: #0f0e0c;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #22201c;
+  --color-destructive-face: #22201c;
   /* Borders */
   --color-border: #5e574c;
   --color-border-strong: #3d382f;
@@ -1071,13 +1005,9 @@
   --color-chart-4: #3e7a3a;
   --color-chart-5: #b58a5a;
   --color-chart-ink: #22201c;
-  --color-accent-subtle: #e8cf94;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(34, 32, 28, 0.18); /* @kind shadow */
-  --color-accent-foreground: #f4efe4;
-  --color-accent-hover-foreground: #f4efe4;
   --color-destructive-foreground: #f4efe4;
+  --color-destructive-face-foreground: #f4efe4;
   --color-bg-subtle-foreground: #0f0e0c;
   --color-surface-foreground: #0f0e0c;
   --color-surface-raised-foreground: #0f0e0c;
@@ -1116,14 +1046,12 @@
   /* Links and focus */
   --color-link: #a8ccff;
   --color-link-underline-hover: #ffd08a;
-  --color-focus-ring: #ffd08a;
+  --color-focus-ring: #ffe45c;
   --color-selection-bg: #3a3020;
   --color-cursor: #ffa028;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #a8ccff;
-  --color-accent-hover: #ffffff;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #ff8a7d;
+  --color-destructive-face: #14120f;
   /* Borders */
   --color-border: #a89a86;
   --color-border-strong: #d6cfc3;
@@ -1169,7 +1097,7 @@
   --syntax-docstring-style: italic; /* @kind other */
   /* Status */
   --color-status-err: #ff8a7d;
-  --color-status-warn: #ffd08a;
+  --color-status-warn: #ffe45c;
   --color-status-ok: #9fe0a8;
   --color-status-info: #7ee0d0;
   /* Chart: the Du Bois palette, inside charts only */
@@ -1179,13 +1107,9 @@
   --color-chart-4: #5fa85f;
   --color-chart-5: #c9a06e;
   --color-chart-ink: #ffffff;
-  --color-accent-subtle: #3a3020;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-  --color-accent-foreground: #000000;
-  --color-accent-hover-foreground: #000000;
   --color-destructive-foreground: #0b0b0b;
+  --color-destructive-face-foreground: #ff8a7d;
   --color-bg-subtle-foreground: #ffffff;
   --color-surface-foreground: #ffffff;
   --color-surface-raised-foreground: #ffffff;
@@ -1223,14 +1147,12 @@
   /* Links and focus */
   --color-link: #a8ccff;
   --color-link-underline-hover: #ffd08a;
-  --color-focus-ring: #ffd08a;
+  --color-focus-ring: #ffe45c;
   --color-selection-bg: #3a3020;
   --color-cursor: #ffa028;
-  /* Deprecated 4.x accent: an alias of link; use link, focus-ring or primary */
-  --color-accent: #a8ccff;
-  --color-accent-hover: #ffffff;
   --focus-ring: var(--focus-ring-width) solid var(--color-focus-ring);
   --color-destructive: #ff8a7d;
+  --color-destructive-face: #14120f;
   /* Borders */
   --color-border: #a89a86;
   --color-border-strong: #d6cfc3;
@@ -1276,7 +1198,7 @@
   --syntax-docstring-style: italic; /* @kind other */
   /* Status */
   --color-status-err: #ff8a7d;
-  --color-status-warn: #ffd08a;
+  --color-status-warn: #ffe45c;
   --color-status-ok: #9fe0a8;
   --color-status-info: #7ee0d0;
   /* Chart: the Du Bois palette, inside charts only */
@@ -1286,13 +1208,9 @@
   --color-chart-4: #5fa85f;
   --color-chart-5: #c9a06e;
   --color-chart-ink: #ffffff;
-  --color-accent-subtle: #3a3020;
-  --shadow-raised: none; /* @kind shadow */
-  --shadow-keycap: none; /* @kind shadow */
   --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.6); /* @kind shadow */
-  --color-accent-foreground: #000000;
-  --color-accent-hover-foreground: #000000;
   --color-destructive-foreground: #0b0b0b;
+  --color-destructive-face-foreground: #ff8a7d;
   --color-bg-subtle-foreground: #ffffff;
   --color-surface-foreground: #ffffff;
   --color-surface-raised-foreground: #ffffff;

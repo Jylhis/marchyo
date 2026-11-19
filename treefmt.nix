@@ -96,6 +96,10 @@ in
       command = "${pkgs.qt6.qtdeclarative}/bin/qmlformat";
       options = [ "-i" ];
       includes = [ "*.qml" ];
+      excludes = [
+        "shell/Commons/Tokens.qml"
+        "lib/design/**"
+      ];
     };
   }
   # qmllint pulls in Quickshell's QML modules (Linux-only); gate it so the
@@ -112,7 +116,10 @@ in
       # namespace). QML test fixtures live outside both trees (e.g. a shell
       # plugin bar-widget under tests/eval/fixtures/ resolves qs.* only once
       # loaded into the shell config root at runtime), so exclude them.
-      excludes = [ "tests/**" ];
+      excludes = [
+        "tests/**"
+        "lib/design/**"
+      ];
     };
   };
 }

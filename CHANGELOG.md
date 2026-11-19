@@ -11,6 +11,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 ### Added
 
+- The `design-vendor-sync` check fails when a colour in `site/vendor/design/tokens.css` differs from the palette in `lib/design/tokens`, or when `shell/Commons/Tokens.qml` differs from the vendored `lib/design/platforms/quickshell/Tokens.qml`.
 - `marchyo.desktop.compositorWatch.enable` (default `true` with `marchyo.desktop.enable`) installs the user unit `marchyo-compositor-watch`: it probes Hyprland with `hyprctl` every 10 seconds and, after three misses in a row, saves the log, process state and thread states under `~/.local/state/marchyo/hyprland/hang-<time>/` and sends SIGABRT (SIGKILL after 10 seconds). `marchyo-compositor-watch --now` does the rescue once from a text console. A `wayland-wm@` drop-in keeps the last five Hyprland logs. The manual's Troubleshooting page has the recovery steps.
 - `marchyo.notifications.unitFailures.{enable,ignore}` runs `marchyo-unit-failure-watch`, which sends a critical notification with a Show log button when a system or user unit fails. `enable` follows `marchyo.desktop.enable`; `ignore` takes shell globs on the unit name.
 - A chord that more than one owner claims (the bind table, other Hyprland binds, XKB options, the fcitx5 trigger keys, Ghostty keybinds, the voxtype push-to-talk key) fails evaluation with a message naming the owners; `marchyo.keyboard.allowedHotkeyClashes` lists chords that may be shared. A web app key that collides with a marchyo bind is still dropped with a warning.
@@ -92,6 +93,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 
 ### Changed
 
+- The vendored design system is 7.0.0. In dark mode `status-warn`, the focus ring and terminal yellow (ANSI 3, base16 `base0A`) are a lemon yellow, `#ffe45c` (was `#ffd08a`), in the GTK, Ghostty, bat, Emacs, shell and console themes; light mode is unchanged. The palette gains `destructive-face` (the ground of the destructive key: the red by day, the plain key face by night). `shell/Commons/Tokens.qml` is the design system's generated token singleton, registered in the Commons `qmldir`, and the website's vendored CSS follows 7.0.0 (the removed `--color-accent`, `--radius-*` and `--type-scale-N` variables became `--color-link`, `--radius` and `--type-<style>-size`).
 - Memory tuning is zram-aware: with `marchyo.performance.tuning.memory.enable` and `zramSwap.enable` (the default) both on, `vm.swappiness` is 180 (was 10) and `vm.watermark_scale_factor` is 125 (was the kernel default 10). With zram swap off, swappiness stays 10. All stay `lib.mkDefault`; `vm.min_free_kbytes` is unchanged (524288).
 - `wayland.windowManager.hyprland.configType` is set to `"lua"` whenever the marchyo home module loads, not only with the desktop on, and no longer at `lib.mkDefault`.
 - btop's settings are `lib.mkDefault` values, so a plain `programs.btop.settings.<name>` overrides them without `lib.mkForce`.

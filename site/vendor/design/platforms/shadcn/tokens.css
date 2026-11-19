@@ -61,13 +61,6 @@
   /* radii: one corner */
   --radius-none: 0px;
   --radius: 2px;
-  /* Deprecated in 5.0: aliases of none and default; removed in 6.0 */
-  --radius-xs: var(--radius-none);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-pill: var(--radius);
   /* font families */
   --font-display: "Jost", Futura, "Century Gothic", sans-serif;
   --font-body: "Fira Sans", "Source Sans 3", system-ui, sans-serif;
@@ -104,7 +97,7 @@
   --destructive-foreground: 0 0% 4.3%;
   --border: 35 11.1% 42.4%;
   --input: 36.9 10.4% 49%;
-  --ring: 35.9 100% 77.1%;
+  --ring: 50.1 100% 68%;
   /* Jylhis extensions */
   --heading: 38.2 40.7% 94.7%;
   --faint: 35 11.5% 40.8%;
@@ -118,8 +111,8 @@
   /* status */
   --status-err: 5.8 100% 67.6%;
   --status-err-bg: 6 33.3% 11.8%;
-  --status-warn: 35.9 100% 77.1%;
-  --status-warn-bg: 38.6 21.2% 12.9%;
+  --status-warn: 50.1 100% 68%;
+  --status-warn-bg: 50.5 31.1% 12%;
   --status-ok: 128 47.1% 65.9%;
   --status-ok-bg: 126 16.7% 11.8%;
   --status-info: 170.8 58.6% 56.5%;
@@ -210,7 +203,7 @@
     --destructive-foreground: 0 0% 4.3%;
     --border: 35 11.1% 42.4%;
     --input: 36.9 10.4% 49%;
-    --ring: 35.9 100% 77.1%;
+    --ring: 50.1 100% 68%;
     /* Jylhis extensions */
     --heading: 38.2 40.7% 94.7%;
     --faint: 35 11.5% 40.8%;
@@ -224,8 +217,8 @@
     /* status */
     --status-err: 5.8 100% 67.6%;
     --status-err-bg: 6 33.3% 11.8%;
-    --status-warn: 35.9 100% 77.1%;
-    --status-warn-bg: 38.6 21.2% 12.9%;
+    --status-warn: 50.1 100% 68%;
+    --status-warn-bg: 50.5 31.1% 12%;
     --status-ok: 128 47.1% 65.9%;
     --status-ok-bg: 126 16.7% 11.8%;
     --status-info: 170.8 58.6% 56.5%;
@@ -373,7 +366,7 @@
   --destructive-foreground: 0 0% 4.3%;
   --border: 35.3 16.3% 59.2%;
   --input: 37.9 18.8% 80.2%;
-  --ring: 35.9 100% 77.1%;
+  --ring: 50.1 100% 68%;
   /* Jylhis extensions */
   --heading: 0 0% 100%;
   --faint: 35.3 16.3% 59.2%;
@@ -387,8 +380,8 @@
   /* status */
   --status-err: 6 100% 74.5%;
   --status-err-bg: 7.5 34.8% 9%;
-  --status-warn: 35.9 100% 77.1%;
-  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-warn: 50.1 100% 68%;
+  --status-warn-bg: 48 47.6% 8.2%;
   --status-ok: 128.3 51.2% 75.1%;
   --status-ok-bg: 127.5 17.4% 9%;
   --status-info: 170.2 61.2% 68.6%;
@@ -429,7 +422,7 @@
   --destructive-foreground: 0 0% 4.3%;
   --border: 35.3 16.3% 59.2%;
   --input: 37.9 18.8% 80.2%;
-  --ring: 35.9 100% 77.1%;
+  --ring: 50.1 100% 68%;
   /* Jylhis extensions */
   --heading: 0 0% 100%;
   --faint: 35.3 16.3% 59.2%;
@@ -443,8 +436,8 @@
   /* status */
   --status-err: 6 100% 74.5%;
   --status-err-bg: 7.5 34.8% 9%;
-  --status-warn: 35.9 100% 77.1%;
-  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-warn: 50.1 100% 68%;
+  --status-warn-bg: 48 47.6% 8.2%;
   --status-ok: 128.3 51.2% 75.1%;
   --status-ok-bg: 127.5 17.4% 9%;
   --status-info: 170.2 61.2% 68.6%;
@@ -598,7 +591,7 @@
   --destructive-foreground: 0 0% 4.3%;
   --border: 35.3 16.3% 59.2%;
   --input: 37.9 18.8% 80.2%;
-  --ring: 35.9 100% 77.1%;
+  --ring: 50.1 100% 68%;
   /* Jylhis extensions */
   --heading: 0 0% 100%;
   --faint: 35.3 16.3% 59.2%;
@@ -612,8 +605,8 @@
   /* status */
   --status-err: 6 100% 74.5%;
   --status-err-bg: 7.5 34.8% 9%;
-  --status-warn: 35.9 100% 77.1%;
-  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-warn: 50.1 100% 68%;
+  --status-warn-bg: 48 47.6% 8.2%;
   --status-ok: 128.3 51.2% 75.1%;
   --status-ok-bg: 127.5 17.4% 9%;
   --status-info: 170.2 61.2% 68.6%;
@@ -654,7 +647,7 @@
   --destructive-foreground: 0 0% 4.3%;
   --border: 35.3 16.3% 59.2%;
   --input: 37.9 18.8% 80.2%;
-  --ring: 35.9 100% 77.1%;
+  --ring: 50.1 100% 68%;
   /* Jylhis extensions */
   --heading: 0 0% 100%;
   --faint: 35.3 16.3% 59.2%;
@@ -668,8 +661,8 @@
   /* status */
   --status-err: 6 100% 74.5%;
   --status-err-bg: 7.5 34.8% 9%;
-  --status-warn: 35.9 100% 77.1%;
-  --status-warn-bg: 34.3 29.2% 9.4%;
+  --status-warn: 50.1 100% 68%;
+  --status-warn-bg: 48 47.6% 8.2%;
   --status-ok: 128.3 51.2% 75.1%;
   --status-ok-bg: 127.5 17.4% 9%;
   --status-info: 170.2 61.2% 68.6%;

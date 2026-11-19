@@ -5,6 +5,7 @@
  * caret blinks: the interface draws itself the way a terminal reports. Each
  * idiom maps to an existing motion token.
  *
+ *   extend      — a surface opens from its anchor edge     (base 250ms in, fast 150ms out)
  *   line-extend — a hairline rule extends from its start  (slow, 300ms)
  *   readout     — a mono value types on with steps()      (long, 480ms, stepped)
  *   caret       — a block caret blinks                     (1.1s, loop)
@@ -80,6 +81,35 @@
   }
 }
 
+/* A surface (menu, panel, popover) extends from its anchor edge: the clip
+   opens from that edge while the box slides --space-sm toward its place.
+   No opacity. Entry uses surface-enter, exit the shorter surface-exit.
+   Add .is-open to show; data-anchor="bottom" opens upward. */
+.ds-extend {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(calc(-1 * var(--space-sm)));
+  transition:
+    clip-path var(--transition-surface-exit),
+    transform var(--transition-surface-exit);
+}
+.ds-extend[data-anchor="bottom"] {
+  clip-path: inset(100% 0 0 0);
+  transform: translateY(var(--space-sm));
+}
+.ds-extend.is-open {
+  clip-path: inset(0);
+  transform: translateY(0);
+  transition:
+    clip-path var(--transition-surface-enter),
+    transform var(--transition-surface-enter);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-extend,
+  .ds-extend.is-open {
+    transition: none;
+  }
+}
+
 /* A hairline rule that extends from its start. Add .is-drawn to run. */
 .ds-line-extend {
   height: 1px;
@@ -99,6 +129,8 @@
    tracking or a non-mono face, measure the element instead. Add .is-read to
    run. */
 .ds-readout {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;

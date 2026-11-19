@@ -20,7 +20,7 @@ Documentation is organized into two trees (mirroring the omarchy model):
   graphics, performance, desktop extras, dictation, launcher, web apps) and
   breaking changes.
 - [gotchas.md](gotchas.md) — the accumulated sharp edges (theme source of truth,
-  design system 6.0, font stack, the stylix retirement, the in-shell launcher, Plymouth
+  design system 7.0, font stack, the stylix retirement, the in-shell launcher, Plymouth
   generation, ghostty ssh, hyprlock fingerprint, …).
 - [ci-and-testing.md](ci-and-testing.md) — commands, the test suite, CI pipeline,
   session-completion checklist.

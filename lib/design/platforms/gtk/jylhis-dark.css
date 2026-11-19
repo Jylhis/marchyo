@@ -17,8 +17,8 @@
 @define-color success_color         #7fd18a;
 @define-color success_bg_color      #7fd18a;
 @define-color success_fg_color      #0b0b0b;
-@define-color warning_color         #ffd08a;
-@define-color warning_bg_color      #ffd08a;
+@define-color warning_color         #ffe45c;
+@define-color warning_bg_color      #ffe45c;
 @define-color warning_fg_color      #0b0b0b;
 @define-color error_color           #ff6a5a;
 @define-color error_bg_color        #ff6a5a;

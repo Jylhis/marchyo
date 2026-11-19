@@ -58,18 +58,16 @@
   color: var(--color-primary-foreground);
   border-color: var(--ds-bevel-primary);
 }
-.ds-btn--ghost,
-.ds-btn--default,
-.ds-btn--secondary {
+.ds-btn--ghost {
   background: var(--color-bevel-face);
   color: var(--color-text);
   border-color: var(--ds-bevel-raised);
 }
-.ds-btn--danger,
-.ds-btn--destructive {
-  background: var(--color-destructive);
-  color: var(--color-destructive-foreground);
+.ds-btn--danger {
+  background: var(--color-destructive-face);
+  color: var(--color-destructive-face-foreground);
   border-color: var(--color-bevel-lo);
+  border-bottom-color: var(--color-destructive);
 }
 .ds-btn--link {
   background: none;
@@ -100,10 +98,7 @@
    disabled controls go flat. */
 .ds-btn--primary,
 .ds-btn--ghost,
-.ds-btn--default,
-.ds-btn--secondary,
 .ds-btn--danger,
-.ds-btn--destructive,
 .ds-btn--search,
 .ds-btn--icon {
   display: inline-flex;
@@ -121,10 +116,7 @@
 }
 .ds-btn--primary:active:enabled,
 .ds-btn--ghost:active:enabled,
-.ds-btn--default:active:enabled,
-.ds-btn--secondary:active:enabled,
 .ds-btn--danger:active:enabled,
-.ds-btn--destructive:active:enabled,
 .ds-btn--search:active:enabled,
 .ds-btn--icon:active:enabled,
 .ds-btn[aria-pressed="true"]:enabled {
@@ -137,10 +129,7 @@
 }
 .ds-btn--primary:disabled,
 .ds-btn--ghost:disabled,
-.ds-btn--default:disabled,
-.ds-btn--secondary:disabled,
 .ds-btn--danger:disabled,
-.ds-btn--destructive:disabled,
 .ds-btn--search:disabled,
 .ds-btn--icon:disabled {
   border-width: var(--border-hairline);
@@ -220,7 +209,7 @@
   align-items: center;
   font: 500 var(--type-label-size) / 1.5 var(--font-mono);
   padding: 1px var(--space-sm);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--color-bg-subtle);
   border: var(--border-hairline) solid var(--color-border);
   color: var(--color-text);
@@ -370,6 +359,27 @@ a.ds-tag:active {
 .ds-alert p {
   margin: 0;
   color: var(--color-text);
+}
+/* Each kind takes its status colour on the edge and as a 10% tint of the
+   ground; the tokens claim the status text on that tint (design(7) Status). */
+.ds-alert--info {
+  --ds-alert-status: var(--color-status-info);
+}
+.ds-alert--ok {
+  --ds-alert-status: var(--color-status-ok);
+}
+.ds-alert--warn {
+  --ds-alert-status: var(--color-status-warn);
+}
+.ds-alert--err {
+  --ds-alert-status: var(--color-status-err);
+}
+.ds-alert--info,
+.ds-alert--ok,
+.ds-alert--warn,
+.ds-alert--err {
+  background: color-mix(in srgb, var(--ds-alert-status) 10%, var(--color-surface));
+  border-color: var(--ds-alert-status);
 }
 .ds-alert--info .ds-alert__head {
   color: var(--color-status-info);
@@ -658,56 +668,6 @@ textarea.ds-field__input {
    grayscale theme carries the distinction in weight and italic when it has no
    hue to spare. Always use these rather than setting a colour
    and a weight by hand. */
-.ds-syn-keyword {
-  color: var(--color-syntax-keyword);
-  font-weight: var(--syntax-keyword-weight);
-  font-style: var(--syntax-keyword-style);
-}
-.ds-syn-string {
-  color: var(--color-syntax-string);
-  font-weight: var(--syntax-string-weight);
-  font-style: var(--syntax-string-style);
-}
-.ds-syn-number {
-  color: var(--color-syntax-number);
-  font-weight: var(--syntax-number-weight);
-  font-style: var(--syntax-number-style);
-}
-.ds-syn-function {
-  color: var(--color-syntax-function);
-  font-weight: var(--syntax-function-weight);
-  font-style: var(--syntax-function-style);
-}
-.ds-syn-builtin {
-  color: var(--color-syntax-builtin);
-  font-weight: var(--syntax-builtin-weight);
-  font-style: var(--syntax-builtin-style);
-}
-.ds-syn-type {
-  color: var(--color-syntax-type);
-  font-weight: var(--syntax-type-weight);
-  font-style: var(--syntax-type-style);
-}
-.ds-syn-variable {
-  color: var(--color-syntax-variable);
-  font-weight: var(--syntax-variable-weight);
-  font-style: var(--syntax-variable-style);
-}
-.ds-syn-comment {
-  color: var(--color-syntax-comment);
-  font-weight: var(--syntax-comment-weight);
-  font-style: var(--syntax-comment-style);
-}
-.ds-syn-docstring {
-  color: var(--color-syntax-docstring);
-  font-weight: var(--syntax-docstring-weight);
-  font-style: var(--syntax-docstring-style);
-}
-.ds-syn-tag {
-  color: var(--color-syntax-tag);
-  font-weight: var(--syntax-type-weight);
-  font-style: var(--syntax-type-style);
-}
 
 /* ── CvEntry (one role on a CV) ─────────────────────────── */
 .ds-cv {
@@ -835,15 +795,6 @@ a.ds-cv__company {
 .ds-skills__sep {
   color: var(--color-text-faint);
   user-select: none;
-}
-.ds-skills--syntax .ds-skills__key {
-  color: var(--color-syntax-keyword);
-  font-style: var(--syntax-keyword-style);
-}
-.ds-skills--syntax .ds-skills__value {
-  color: var(--color-syntax-string);
-  font-weight: var(--syntax-string-weight);
-  font-style: var(--syntax-string-style);
 }
 
 /* ── Changelog (commit-log history) ─────────────────────── */
@@ -1226,12 +1177,13 @@ a.ds-cv__company {
   transform: translateY(1px);
 }
 .ds-pager [aria-current="page"] {
-  color: var(--color-text-heading);
-  font-weight: 500;
-  background: var(--color-bevel-face);
+  color: var(--color-selection-bg-foreground);
+  font-weight: 600;
+  background: var(--color-selection-bg);
   border: var(--border-bevel) solid;
+  border-bottom-width: var(--border-marker);
   border-color: var(--ds-bevel-pressed);
-  transform: translateY(1px);
+  border-bottom-color: var(--color-rule);
 }
 .ds-pager__gap {
   color: var(--color-text-faint);
@@ -1382,6 +1334,7 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
   align-items: baseline;
   gap: var(--space-sm) var(--space-md);
   min-height: var(--cell-h);
+  box-sizing: border-box;
   padding: var(--space-xs) 0 var(--space-xs) var(--space-md);
   position: relative;
   color: var(--color-text);
@@ -1493,7 +1446,11 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
 
 /* ══ Descriptions ════════════════════════════════════════════════════════
    The read-only face of a record: mono terms, values as language, hairline
-   per item. Collapses to one column below sm. */
+   per item. The block is a size container: it collapses to one column when
+   its own width, not the viewport, is too narrow for two terms and values. */
+.ds-descriptions {
+  container-type: inline-size;
+}
 .ds-descriptions__title {
   font-family: var(--font-mono);
   font-size: var(--type-label-size);
@@ -1530,10 +1487,16 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
   font-variant-numeric: tabular-nums;
   color: var(--color-text-heading);
 }
-@media (max-width: 40em) {
+@container (max-width: 40rem) {
   .ds-descriptions__list {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Beats the inline span, which would open an implicit second column. */
+  .ds-descriptions__item {
+    grid-column: 1 / -1 !important;
+  }
+}
+@container (max-width: 20rem) {
   .ds-descriptions__item {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-2xs);
@@ -1621,7 +1584,8 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
 }
 
 /* ══ Segmented ═══════════════════════════════════════════════════════════
-   A row of keys. The selected key is pressed: inverted bevel, sunk 1px. */
+   A row of keys. The selected key is held down: inverted bevel on the
+   selection ground, with the marker line under it. */
 .ds-segmented {
   display: inline-flex;
 }
@@ -1662,10 +1626,12 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
   z-index: 1;
 }
 .ds-segmented__option.is-selected {
-  color: var(--color-text-heading);
-  border-bottom-width: var(--border-bevel);
+  color: var(--color-selection-bg-foreground);
+  font-weight: 600;
+  background: var(--color-selection-bg);
+  border-bottom-width: var(--border-marker);
   border-color: var(--ds-bevel-pressed);
-  transform: translateY(1px);
+  border-bottom-color: var(--color-rule);
 }
 
 /* ══ Steps ═══════════════════════════════════════════════════════════════ */
@@ -2044,6 +2010,12 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
   background: var(--color-rule);
   clip-path: polygon(14% 52%, 30% 38%, 42% 52%, 74% 20%, 88% 34%, 42% 80%);
   transform: scale(0);
+}
+/* A radio is a dot, the one round shape (design(7) Corner): an empty radio
+   and an empty checkbox differ by outline, not only by their mark. */
+.ds-check__input[type="radio"],
+.ds-check__input[type="radio"]::before {
+  border-radius: 50%;
 }
 .ds-check__input[type="radio"]::before {
   inset: 3px;
@@ -2738,6 +2710,15 @@ html:has(:is(.ds-modal, .ds-drawer):modal) {
 .ds-navbar__brand {
   flex: none;
 }
+.ds-navbar__brand a {
+  color: var(--color-text-heading);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ds-navbar__brand a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
 .ds-navbar__nav {
   flex: 1;
   min-width: 0;
@@ -2974,7 +2955,7 @@ ol.ds-stack {
   color: var(--color-text-muted);
 }
 
-/* ── Link · Quote · Footer · SkipLink · Figure · Inputs (v3 ports) ─────── */
+/* ── Link · Quote · Footer · SkipLink · Figure · Field shapes (v3 ports) ─────── */
 .ds-link {
   color: var(--color-link);
   text-decoration: underline;
@@ -3108,7 +3089,7 @@ ol.ds-stack {
   }
 }
 
-/* Inputs share .ds-field__input (the recessed bevel); only the shapes differ. */
+/* Field inputs share .ds-field__input (the recessed bevel); only the shapes differ. */
 .ds-input--textarea {
   min-block-size: 6rem;
   line-height: 1.5;

@@ -116,7 +116,7 @@
     <dict>
       <key>name</key><string>Diff changed</string>
       <key>scope</key><string>markup.changed</string>
-      <key>settings</key><dict><key>foreground</key><string>#ffd08a</string></dict>
+      <key>settings</key><dict><key>foreground</key><string>#ffe45c</string></dict>
     </dict>
   </array>
 </dict>

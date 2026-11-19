@@ -286,10 +286,10 @@
         "colorSpace": "srgb",
         "components": [
           1,
-          0.8157,
-          0.5412
+          0.8941,
+          0.3608
         ],
-        "hex": "#ffd08a"
+        "hex": "#ffe45c"
       },
       "$extensions": {
         "com.jylhis": {
