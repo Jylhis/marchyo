@@ -29,8 +29,8 @@
   --sl-color-bg-sidebar: var(--color-bg-subtle);
   --sl-color-bg-inline-code: var(--color-code-bg);
   --sl-color-text: var(--color-text);
-  --sl-color-text-accent: var(--color-accent);
-  --sl-color-text-invert: var(--color-accent-foreground);
+  --sl-color-text-accent: var(--color-link);
+  --sl-color-text-invert: var(--color-bg);
   --sl-color-hairline-light: var(--color-border);
   --sl-color-hairline: var(--color-border);
   --sl-color-hairline-shade: var(--color-border-strong);
@@ -90,7 +90,7 @@ h1.astro-hero-title,
 /* Frame the code block so it sits on the paper/black surface. */
 .sl-markdown-content :not(pre) > code {
   border: 1px solid var(--sl-color-hairline-light);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
 }
 
 /* The design system's link colour outranks Starlight's :where() rule for

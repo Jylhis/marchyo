@@ -18,10 +18,10 @@ body {
 
 .copy-chip {
   font-family: var(--font-mono);
-  font-size: var(--type-scale-9);
+  font-size: var(--type-label-size);
   padding: 3px 10px;
   border: var(--border-hairline) solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -30,8 +30,8 @@ body {
     border-color var(--transition-base);
 }
 .copy-chip:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-link);
+  border-color: var(--color-link);
 }
 .copy-chip:focus-visible {
   outline: var(--focus-ring);
@@ -44,17 +44,17 @@ body {
   color: var(--color-text-muted);
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius);
   font-family: var(--font-mono);
-  font-size: var(--type-scale-8);
+  font-size: var(--type-data-size);
   cursor: pointer;
   transition:
     color var(--transition-base),
     border-color var(--transition-base);
 }
 .theme-toggle:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-link);
+  border-color: var(--color-link);
 }
 .theme-toggle:focus-visible {
   outline: var(--focus-ring);

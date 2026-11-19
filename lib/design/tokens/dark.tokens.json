@@ -224,7 +224,15 @@
       "$value": "{color.bg}"
     },
     "primary-hi": {
-      "$value": "{status.warn}"
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          1,
+          0.8157,
+          0.5412
+        ],
+        "hex": "#ffd08a"
+      }
     },
     "primary-lo": {
       "$value": {
@@ -270,7 +278,7 @@
       }
     },
     "link-underline-hover": {
-      "$value": "{status.warn}"
+      "$value": "{color.primary-hi}"
     },
     "focus-ring": {
       "$value": "{status.warn}",
@@ -407,6 +415,9 @@
     },
     "destructive": {
       "$value": "{status.err}"
+    },
+    "destructive-face": {
+      "$value": "{color.bevel-face}"
     },
     "scrim": {
       "$value": {
@@ -663,10 +674,10 @@
         "colorSpace": "srgb",
         "components": [
           1,
-          0.8157,
-          0.5412
+          0.8941,
+          0.3608
         ],
-        "hex": "#ffd08a"
+        "hex": "#ffe45c"
       },
       "$extensions": {
         "com.jylhis": {
@@ -986,6 +997,12 @@
         "alpha": 0.28,
         "hex": "#ffa028"
       }
+    }
+  },
+  "foreground": {
+    "destructive-face": {
+      "$value": "{color.destructive}",
+      "$description": "Amber: the red is the label of the destructive key, not its fill."
     }
   }
 }

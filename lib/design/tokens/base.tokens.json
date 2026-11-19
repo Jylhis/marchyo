@@ -1,10 +1,10 @@
 {
-  "$description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode — paper and black, one international-orange accent.",
+  "$description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode: warm paper with one red signal, and amber on black.",
   "$extensions": {
     "com.jylhis": {
       "meta": {
         "name": "Jylhis Design System",
-        "description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode — paper and black, one international-orange accent."
+        "description": "Theme-independent core framework: structure, type, spacing, motion, density. One theme (Jylhis) with a light and a dark mode: warm paper with one red signal, and amber on black."
       },
       "theme": {
         "name": "Jylhis",
@@ -51,7 +51,7 @@
         },
         "accent": {
           "label": "Links and focus",
-          "blurb": "ink links, the focus ring, selection and the cursor; accent, accent-hover and accent-subtle are deprecated aliases kept for 4.x readers",
+          "blurb": "blue links, the focus ring, selection and the cursor; accent, accent-hover and accent-subtle are aliases that only the desktop, terminal and editor targets read",
           "members": [
             "link",
             "link-underline-hover",
@@ -67,7 +67,8 @@
           "label": "Consequence",
           "blurb": "the irreversible-action role: ink by day so it never reads as the primary, red by night",
           "members": [
-            "destructive"
+            "destructive",
+            "destructive-face"
           ]
         },
         "line": {
@@ -255,7 +256,7 @@
     }
   },
   "type": {
-    "$description": "Named typography styles. Jost for display (weight 500), Fira Sans for text, IBM Plex Mono for data, labels and code. The --type-scale-N variables are deprecated aliases (0 display, 1 h1, 2 h2, 3 lead, 4 h3, 5 body, 6 ui, 7 small, 8 data, 9 label).",
+    "$description": "Named typography styles. Jost for display (weight 500), Fira Sans for text, IBM Plex Mono for data, labels and code.",
     "style": {
       "$type": "typography",
       "display": {
@@ -508,7 +509,7 @@
   },
   "radius": {
     "$type": "dimension",
-    "$description": "One corner: none (0) for rules, cells and the halftone field, default (2px) for everything else. xs to pill are deprecated aliases of those two, kept until 6.0.",
+    "$description": "One corner: none (0) for rules, cells and the halftone field, default (2px) for everything else.",
     "none": {
       "$value": {
         "value": 0,
@@ -520,24 +521,6 @@
         "value": 2,
         "unit": "px"
       }
-    },
-    "xs": {
-      "$value": "{radius.none}"
-    },
-    "sm": {
-      "$value": "{radius.default}"
-    },
-    "md": {
-      "$value": "{radius.default}"
-    },
-    "lg": {
-      "$value": "{radius.default}"
-    },
-    "xl": {
-      "$value": "{radius.default}"
-    },
-    "pill": {
-      "$value": "{radius.default}"
     }
   },
   "breakpoint": {
@@ -894,6 +877,85 @@
         ]
       },
       "$description": "pressing a bevelled control: the shortest ease-out, nothing after it"
+    },
+    "surface-enter": {
+      "$value": "{motion.base}",
+      "$description": "a surface extends from its anchor edge (clip and translate, no opacity); see .ds-extend"
+    },
+    "surface-exit": {
+      "$value": "{motion.fast}",
+      "$description": "a surface retracts to its anchor edge; shorter than the entry"
+    }
+  },
+  "desktop": {
+    "$description": "Geometry of the desktop shell (bar, panels, launcher, toasts, OSD, tooltips). Consumers read these instead of inventing sizes.",
+    "bar-height": {
+      "$type": "dimension",
+      "$value": "{density.compact.cell-h}"
+    },
+    "panel-width-sm": {
+      "$type": "dimension",
+      "$value": {
+        "value": 20,
+        "unit": "rem"
+      }
+    },
+    "panel-width-md": {
+      "$type": "dimension",
+      "$value": {
+        "value": 24,
+        "unit": "rem"
+      }
+    },
+    "panel-width-lg": {
+      "$type": "dimension",
+      "$value": {
+        "value": 30,
+        "unit": "rem"
+      }
+    },
+    "launcher-width": {
+      "$type": "dimension",
+      "$value": {
+        "value": 40,
+        "unit": "rem"
+      }
+    },
+    "launcher-rows": {
+      "$type": "number",
+      "$value": 8
+    },
+    "toast-width": {
+      "$type": "dimension",
+      "$value": {
+        "value": 24,
+        "unit": "rem"
+      }
+    },
+    "toast-timeout": {
+      "$type": "duration",
+      "$value": {
+        "value": 6000,
+        "unit": "ms"
+      }
+    },
+    "toast-max": {
+      "$type": "number",
+      "$value": 3
+    },
+    "osd-width": {
+      "$type": "dimension",
+      "$value": {
+        "value": 12,
+        "unit": "rem"
+      }
+    },
+    "tooltip-delay": {
+      "$type": "duration",
+      "$value": {
+        "value": 500,
+        "unit": "ms"
+      }
     }
   },
   "foreground": {
@@ -919,6 +981,15 @@
     "destructive": {
       "$value": "{color.bg}",
       "$description": "label on the destructive fill — irreversible button",
+      "$extensions": {
+        "com.jylhis": {
+          "min": 4.5
+        }
+      }
+    },
+    "destructive-face": {
+      "$value": "{color.bg}",
+      "$description": "label on the destructive key",
       "$extensions": {
         "com.jylhis": {
           "min": 4.5

@@ -11,7 +11,11 @@ const path = require("node:path");
 
 const SHELL = path.join(__dirname, "..", "..", "shell");
 const SKIP_DIRS = new Set(["compat"]);
-const SKIP_FILES = new Set(["harness.qml", path.join("Commons", "Style.qml")]);
+const SKIP_FILES = new Set([
+  "harness.qml",
+  path.join("Commons", "Style.qml"),
+  path.join("Commons", "Tokens.qml"),
+]);
 
 function test(name, fn) {
   try {

@@ -285,7 +285,7 @@ in
           # the vendored design files.
           jylhisThemes = epkgs.trivialBuild {
             pname = "jylhis-emacs-themes";
-            version = "6.0.0";
+            version = "7.0.0";
             src = "${pkgs.jylhis-design-src}/platforms/emacs";
           };
         in

@@ -4,7 +4,7 @@ Tool-agnostic guidance for AI agents working in this repository. This file is th
 
 ## What this repository is
 
-Marchyo is a modular NixOS configuration flake with Home Manager support. Consumers build systems with `marchyo.lib.mkNixosSystem`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`; update that copy by hand after a design change.
+Marchyo is a modular NixOS configuration flake with Home Manager support. Consumers build systems with `marchyo.lib.mkNixosSystem`; all custom options live under the `marchyo.*` namespace. All real logic lives in plain Nix files — `flake.nix` is a thin wrapper around `outputs.nix`, and `flake.lock` is the single source of truth for input revisions. `shell/` is the QML/Quickshell desktop shell, `packages/marchyo-cli/` is a Bun/TypeScript workspace, and `site/` is the Astro/Starlight website. The site deploys from the Jylhis/marchyo projection, which has no `lib/design`, so it imports a tracked copy in `site/vendor/design`. Refresh both copies with the steps in `lib/design/README.md`; the `design-vendor-sync` check fails when the copy's colours or `shell/Commons/Tokens.qml` drift from `lib/design`.
 
 ## Declarative only — never suggest imperative changes
 

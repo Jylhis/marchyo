@@ -9,3 +9,4 @@ singleton Fuzzy 1.0 Fuzzy.qml
 singleton I18n 1.0 I18n.qml
 singleton Pointer 1.0 Pointer.qml
 GhostNotification 1.0 GhostNotification.qml
+singleton Tokens 1.0 Tokens.qml
