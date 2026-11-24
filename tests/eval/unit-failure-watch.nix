@@ -17,7 +17,8 @@ in
 
     desktop-tweaks-4.eval-unit-failure-watch-ignore =
       c:
-      lib.any (lib.hasPrefix "MARCHYO_UNIT_FAILURE_IGNORE_FILE=") c.systemd.user.services.${unit}.serviceConfig.Environment
+      lib.any (lib.hasPrefix "MARCHYO_UNIT_FAILURE_IGNORE_FILE=")
+        c.systemd.user.services.${unit}.serviceConfig.Environment
       && c.marchyo.notifications.unitFailures.ignore == [ "foo-*.service" ];
   };
 
