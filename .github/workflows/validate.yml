@@ -22,6 +22,10 @@ jobs:
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      # Pull-only: no auth token, so it also works on Dependabot PRs.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: jylhis
       - name: Format check
         run: nix fmt -- --ci
   # Fast PR gate: x86_64-linux eval-only checks. Runs on every PR and main push.
