@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
 import manualLinks from './src/plugins/manual-links.mjs';
+import { beaconData, beaconSrc, ogImage, ogImageAlt } from './src/analytics.mjs';
 
 export default defineConfig({
   site: 'https://marchyo.org',
@@ -29,6 +30,15 @@ export default defineConfig({
             "function s(){d.dataset.mode=d.dataset.theme==='dark'?'dark':'light';}" +
             "s();new MutationObserver(s).observe(d,{attributeFilter:['data-theme']});})();",
         },
+        // Link previews: Starlight writes the other Open Graph tags itself.
+        { tag: 'meta', attrs: { property: 'og:image', content: ogImage } },
+        { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+        { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+        { tag: 'meta', attrs: { property: 'og:image:alt', content: ogImageAlt } },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: ogImage } },
+        { tag: 'meta', attrs: { name: 'twitter:image:alt', content: ogImageAlt } },
+        // Cloudflare Web Analytics (src/analytics.mjs).
+        { tag: 'script', attrs: { defer: true, src: beaconSrc, 'data-cf-beacon': beaconData } },
       ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/Jylhis/marchyo' },

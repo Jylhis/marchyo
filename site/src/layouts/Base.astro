@@ -5,6 +5,7 @@
 // components. Applies the persisted paper/amber mode before first paint (no FOUC).
 import '../../vendor/design/styles.css';
 import '../styles/site.css';
+import { beaconData, beaconSrc, ogImage, ogImageAlt } from '../analytics.mjs';
 
 interface Props {
   title: string;
@@ -14,6 +15,30 @@ interface Props {
 
 const { title, description, noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+
+// Structured data: the site, and the project it documents.
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Marchyo',
+    alternateName: 'marchyo',
+    url: 'https://marchyo.org/',
+    description,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: 'Marchyo',
+    description,
+    url: 'https://marchyo.org/',
+    codeRepository: 'https://github.com/Jylhis/marchyo',
+    programmingLanguage: 'Nix',
+    runtimePlatform: 'NixOS',
+    license: 'https://opensource.org/licenses/MIT',
+    author: { '@type': 'Person', name: 'Markus Jylhänkangas', url: 'https://jylhis.com/' },
+  },
+];
 ---
 
 <html lang="en">
@@ -25,6 +50,25 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="marchyo" />
+    <meta property="og:locale" content="en" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    {/* Cloudflare Web Analytics (src/analytics.mjs). */}
+    <script is:inline defer src={beaconSrc} data-cf-beacon={beaconData}></script>
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4efe4" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0b" />
     {/*
