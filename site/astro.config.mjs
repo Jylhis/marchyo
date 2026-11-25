@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
 import manualLinks from './src/plugins/manual-links.mjs';
-import { beaconData, beaconSrc, ogImage, ogImageAlt } from './src/analytics.mjs';
+import { ogImage, ogImageAlt } from './src/site-meta.mjs';
 
 export default defineConfig({
   site: 'https://marchyo.org',
@@ -37,8 +37,6 @@ export default defineConfig({
         { tag: 'meta', attrs: { property: 'og:image:alt', content: ogImageAlt } },
         { tag: 'meta', attrs: { name: 'twitter:image', content: ogImage } },
         { tag: 'meta', attrs: { name: 'twitter:image:alt', content: ogImageAlt } },
-        // Cloudflare Web Analytics (src/analytics.mjs).
-        { tag: 'script', attrs: { defer: true, src: beaconSrc, 'data-cf-beacon': beaconData } },
       ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/Jylhis/marchyo' },
