@@ -41,6 +41,8 @@ apps — they just open the web version in your browser. And `spotify-player` an
 TUI mail clients are installed but need you to sign in before they do anything; the
 music client opens in a floating terminal on `Super + M`.
 
+`email` picks the handler of mailto links.
+
 ## The terminal is always Ghostty
 
 You'll notice there's no `terminal` option. That's deliberate — the terminal is
