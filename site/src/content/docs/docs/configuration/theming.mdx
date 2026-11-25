@@ -3,7 +3,7 @@ title: Theming
 description: Customize system appearance with the Jylhis design system and base16 color schemes
 ---
 
-Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Ghostty, fzf, bat, hyprlock, starship, the console, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild.
+Marchyo owns every themed surface itself, all derived from the [Jylhis Design System](https://github.com/jylhis/design): the desktop (GTK, Hyprland, the Quickshell shell, Ghostty, fzf, bat, hyprlock, starship, the console, the Plymouth boot splash), Qt (through the GTK settings, `QT_QPA_PLATFORMTHEME=gtk3`), the TUI long tail (lazygit, k9s, spotify-player, gdu), and Emacs (the design system's own jylhis themes). Most surfaces restyle at runtime via `marchyo theme set/next` — no rebuild. There is no Stylix: marchyo retired it once every surface it covered had a marchyo-owned path.
 
 The in-shell launcher themes itself from the design tokens at runtime (the shell's `Colors` singleton), so it needs no theme registration. See [Launcher](/docs/configuration/launcher/).
 

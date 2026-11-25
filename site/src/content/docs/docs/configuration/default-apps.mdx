@@ -76,6 +76,8 @@ Some choices are "externally managed" — Marchyo does not install a package for
 
 `"emacs"` is the default `editor` and `terminalEditor`. When selected, Marchyo installs `pkgs.emacs` and sets `$VISUAL` to `emacsclient -c -a emacs` (graphical frame) and `$EDITOR` to `emacsclient -t -a 'emacs -nw'` (terminal), each with a plain-Emacs fallback when no daemon is running. Switch `editor` to `"vscode"`/… or `terminalEditor` to `"neovim"`/… to use another editor. The two selectors resolve independently, so you can mix (e.g. `editor = "emacs"` with `terminalEditor = "neovim"`).
 
+`marchyo.defaults.email` selects the handler of mailto links.
+
 :::note
   The TUI music (`spotify-player`) and mail (`aerc`) clients are installed but require account configuration before use. The music client launches in a floating terminal under Hyprland (Super+M).
 :::

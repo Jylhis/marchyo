@@ -1,0 +1,4 @@
+kind: Changed
+body: |-
+  The marchyo.org site builds with Astro 7.4.13, Starlight 0.42.11 and Wrangler 4.165, and takes `sharp` as a direct dependency. The Worker is named `marchyo` in `site/wrangler.jsonc`, matching the live Cloudflare Worker, and `marchyo.defaults.email` is documented as the mailto handler on the default apps page and in the manual.
+time: 2026-11-01T12:02:51.000000000Z
