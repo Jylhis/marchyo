@@ -1,0 +1,15 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Agent discovery (RFC 8288): the homepage points at the machine-readable
+# description of the site.
+/
+  Link: </llms.txt>; rel="describedby"; type="text/plain"
+
+# Astro-bundled assets (fonts included) are content-hashed: safe to cache forever.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
