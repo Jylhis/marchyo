@@ -5,7 +5,7 @@
 // components. Applies the persisted paper/amber mode before first paint (no FOUC).
 import '../../vendor/design/styles.css';
 import '../styles/site.css';
-import { beaconData, beaconSrc, ogImage, ogImageAlt } from '../analytics.mjs';
+import { ogImage, ogImageAlt } from '../site-meta.mjs';
 
 interface Props {
   title: string;
@@ -67,8 +67,6 @@ const jsonLd = [
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={ogImageAlt} />
     <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    {/* Cloudflare Web Analytics (src/analytics.mjs). */}
-    <script is:inline defer src={beaconSrc} data-cf-beacon={beaconData}></script>
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4efe4" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0b0b" />
     {/*

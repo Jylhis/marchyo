@@ -1,4 +1,4 @@
 kind: Added
 body: |-
-  The website has an `llms.txt` index of the manual and the documentation for AI agents, a link preview image with Open Graph and Twitter tags on every page, structured data on the landing page, security headers and the Cloudflare Web Analytics beacon.
+  The website has an `llms.txt` index of the manual and the documentation for AI agents, a link preview image with Open Graph and Twitter tags on every page, structured data on the landing page and security headers.
 time: 2026-11-25T19:00:00.000000000Z

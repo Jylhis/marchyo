@@ -91,7 +91,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - The Display panel's layout tiles take Tab focus, Shift+arrows to move and R to rotate.
 - Low-battery warning: while discharging at or below `marchyo.shell.settings.battery.lowThreshold` percent (default 10), the shell sends one critical `marchyo notify`. Charging or a level above the threshold re-arms it, and the sent flag survives a shell reload.
 - Reminder flow: a click on the reminders indicator opens a two-step prompt (minutes, then an optional message) that schedules through `marchyo reminder set`. Invalid minutes raise a `marchyo notify` error.
-- The website has an `llms.txt` index of the manual and the documentation for AI agents, a link preview image with Open Graph and Twitter tags on every page, structured data on the landing page, security headers and the Cloudflare Web Analytics beacon.
+- The website has an `llms.txt` index of the manual and the documentation for AI agents, a link preview image with Open Graph and Twitter tags on every page, structured data on the landing page and security headers.
 
 ### Changed
 
