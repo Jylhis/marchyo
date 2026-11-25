@@ -27,7 +27,7 @@ import Base from '../layouts/Base.astro';
 
     <section class="man__section">
       <h2 class="man__h">NAME</h2>
-      <p class="man__name"><strong>marchyo</strong> — a modular NixOS configuration flake with sensible defaults</p>
+      <h1 class="man__name"><strong>marchyo</strong> — a modular NixOS configuration flake with sensible defaults</h1>
     </section>
 
     <section class="man__section">
@@ -232,12 +232,17 @@ outputs = &lbrace; marchyo, ... &rbrace;: &lbrace;
     font-weight: 600;
     letter-spacing: 0.06em;
   }
+  /* The page's h1, set as a line of body text like the NAME line of a man page. */
   .man__name {
     margin: 0;
     padding-left: 2ch;
     font-family: var(--font-mono);
     font-size: 1.05rem;
+    font-weight: 400;
     line-height: 1.5;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--color-text);
   }
   .man__lead {
     margin: 0;
