@@ -143,6 +143,7 @@ Entries before 2026-11 were reconstructed from git history (first commit 2025-09
 - On-screen display: level icons, fixed icon and percentage columns, localized digits, bounded messages, a snap to the new value on a fresh open and a fade that respects reduced motion.
 - Lock screen: Escape and Ctrl+U clear the password, held keys do not repeat into it, a checking state shows while PAM runs and the password dots shrink to fit.
 - Image picker: thumbnails fade in over a placeholder, show an error state, unload while off screen, and the preview stays loaded for 60 seconds.
+- The marchyo.org site builds with Astro 7.4.13, Starlight 0.42.11 and Wrangler 4.165, and takes `sharp` as a direct dependency. The Worker is named `marchyo` in `site/wrangler.jsonc`, matching the live Cloudflare Worker, and `marchyo.defaults.email` is documented as the mailto handler on the default apps page and in the manual.
 
 ### Removed
 
